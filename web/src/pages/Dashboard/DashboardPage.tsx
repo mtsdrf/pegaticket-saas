@@ -1,10 +1,8 @@
 import AddBusinessOutlinedIcon from '@mui/icons-material/AddBusinessOutlined'
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
-import PersonAddAlt1OutlinedIcon from '@mui/icons-material/PersonAddAlt1Outlined'
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined'
@@ -37,7 +35,6 @@ import type { OperationHealthStageSummary } from '../../types/report'
 
 const QUICK_ACTIONS = [
   { icon: ReceiptLongOutlinedIcon, label: 'Novo pedido', to: '/pedidos/novo' },
-  { icon: PersonAddAlt1OutlinedIcon, label: 'Adicionar cliente', to: '/clientes/novo' },
   { icon: Inventory2OutlinedIcon, label: 'Cadastrar produto', to: '/produtos/novo' },
 ]
 
@@ -153,7 +150,7 @@ export function DashboardPage() {
   const canOpenStorefrontQueue = can(ACCESS.storefrontOrdersRead)
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
-  const { indicators, charts, operationHealth, receivableSummary, isLoading, error } = useDashboardReport(from, to, canViewStats)
+  const { indicators, charts, operationHealth, isLoading, error } = useDashboardReport(from, to, canViewStats)
   const { checklist, dismiss: dismissChecklist } = useOnboardingChecklist()
   const showOnboardingChecklist = checklist !== null && checklist.completed < checklist.total && !checklist.is_dismissed
   const growthCaption = indicators
@@ -164,7 +161,6 @@ export function DashboardPage() {
   const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_orders === 0
   const quickActions = QUICK_ACTIONS.filter((action) => {
     if (action.to === '/pedidos/novo') return can(ACCESS.ordersCreate)
-    if (action.to === '/clientes/novo') return can(ACCESS.clientsCreate)
     if (action.to === '/produtos/novo') return can(ACCESS.productsCreate)
     return true
   })
@@ -312,11 +308,6 @@ export function DashboardPage() {
                     Fazer primeiro pedido
                   </Button>
                 ) : null}
-                {can(ACCESS.clientsCreate) ? (
-                  <Button component={RouterLink} to="/clientes/novo" variant="outlined">
-                    Cadastrar cliente
-                  </Button>
-                ) : null}
                 {can(ACCESS.productsCreate) ? (
                   <Button component={RouterLink} to="/produtos/novo" variant="outlined">
                     Cadastrar produto
@@ -364,22 +355,13 @@ export function DashboardPage() {
             index={2}
           />
           <MetricCard
-            icon={WarningAmberOutlinedIcon}
-            label="A receber em atraso"
-            value={receivableSummary ? formatCurrency(receivableSummary.overdue_amount) : null}
-            caption={receivableSummary ? `${receivableSummary.overdue_count} título${receivableSummary.overdue_count === 1 ? '' : 's'} vencido${receivableSummary.overdue_count === 1 ? '' : 's'}` : null}
-            tone={receivableSummary && receivableSummary.overdue_count > 0 ? 'warning' : 'primary'}
-            isLoading={isLoading}
-            index={3}
-          />
-          <MetricCard
             icon={LocalShippingOutlinedIcon}
             label="Pedidos não entregues"
             value={indicators ? String(indicators.undelivered_orders) : null}
             caption={indicators ? `${indicators.delivered_orders} já entregue${indicators.delivered_orders === 1 ? '' : 's'}` : null}
             tone={indicators && indicators.undelivered_orders > 0 ? 'warning' : 'primary'}
             isLoading={isLoading}
-            index={4}
+            index={3}
           />
           <MetricCard
             icon={SellOutlinedIcon}
@@ -388,7 +370,7 @@ export function DashboardPage() {
             caption={indicators ? `${indicators.delivered_orders} entregues e ${indicators.paid_orders} pagos` : null}
             tone="primary"
             isLoading={isLoading}
-            index={5}
+            index={4}
           />
         </Box>
 

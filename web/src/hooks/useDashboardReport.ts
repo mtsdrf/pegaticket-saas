@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react'
 import * as reportService from '../services/reportService'
-import * as reportDetailService from '../services/reportDetailService'
 import { getApiErrorMessage } from '../types/api'
 import type { OperationHealthSummary, ReportCharts, ReportIndicators } from '../types/report'
-import type { ReceivableSummary } from '../types/reportDetail'
 import { useAuth } from './useAuth'
 
 interface DashboardReportState {
   indicators: ReportIndicators | null
   charts: ReportCharts | null
   operationHealth: OperationHealthSummary | null
-  receivableSummary: ReceivableSummary | null
   isLoading: boolean
   error: string | null
 }
@@ -21,7 +18,6 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
     indicators: null,
     charts: null,
     operationHealth: null,
-    receivableSummary: null,
     isLoading: true,
     error: null,
   })
@@ -30,7 +26,7 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
     // Usuário sem a permissão `dashboard:read` não deve nem chamar a API
     // (sempre daria 403) — quem decide isso é a página, via `enabled`.
     if (!enabled) {
-      setState({ indicators: null, charts: null, operationHealth: null, receivableSummary: null, isLoading: false, error: null })
+      setState({ indicators: null, charts: null, operationHealth: null, isLoading: false, error: null })
       return
     }
 
@@ -52,10 +48,9 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
       reportService.getIndicators(params),
       reportService.getCharts(params),
       reportService.getOperationHealth(),
-      reportDetailService.getReceivableSummary(),
     ])
-      .then(([indicators, charts, operationHealth, receivableSummary]) => {
-        if (!cancelled) setState({ indicators, charts, operationHealth, receivableSummary, isLoading: false, error: null })
+      .then(([indicators, charts, operationHealth]) => {
+        if (!cancelled) setState({ indicators, charts, operationHealth, isLoading: false, error: null })
       })
       .catch((error) => {
         if (!cancelled) {
@@ -63,7 +58,6 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
             indicators: null,
             charts: null,
             operationHealth: null,
-            receivableSummary: null,
             isLoading: false,
             error: getApiErrorMessage(error, 'Não foi possível carregar os números da operação agora.'),
           })

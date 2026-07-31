@@ -1,10 +1,7 @@
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
-import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { lazy, type ComponentType } from 'react'
@@ -18,9 +15,7 @@ import type { PermissionRequirement } from '../../../types/access'
 // de code-splitting já usado pelas demais páginas em `AppRoutes.tsx`.
 const CompanyBlock = lazy(() => import('./CompanyBlock').then((m) => ({ default: m.CompanyBlock })))
 const OperationsBlock = lazy(() => import('./OperationsBlock').then((m) => ({ default: m.OperationsBlock })))
-const ScheduleAddressBlock = lazy(() => import('./ScheduleAddressBlock').then((m) => ({ default: m.ScheduleAddressBlock })))
 const PaymentBlock = lazy(() => import('./PaymentBlock').then((m) => ({ default: m.PaymentBlock })))
-const RetentionBlock = lazy(() => import('./RetentionBlock').then((m) => ({ default: m.RetentionBlock })))
 const DataPrivacyBlock = lazy(() => import('./DataPrivacyBlock').then((m) => ({ default: m.DataPrivacyBlock })))
 
 export interface SettingsBlockConfig {
@@ -74,15 +69,6 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     Component: OperationsBlock,
   },
   {
-    key: 'horario-endereco',
-    path: 'horario-endereco',
-    label: 'Horário e Endereço',
-    description: 'Horário de funcionamento e endereço da loja.',
-    icon: ScheduleOutlinedIcon,
-    permission: ACCESS.storefrontUpdate,
-    Component: ScheduleAddressBlock,
-  },
-  {
     key: 'pagamento',
     path: 'pagamento',
     label: 'Pagamento',
@@ -90,15 +76,6 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     icon: PaymentsOutlinedIcon,
     permission: ACCESS.tenantSettingsRead,
     Component: PaymentBlock,
-  },
-  {
-    key: 'retencao',
-    path: 'retencao',
-    label: 'Retenção e Marketing',
-    description: 'Régua de reativação de clientes inativos.',
-    icon: CampaignOutlinedIcon,
-    permission: ACCESS.reactivationRead,
-    Component: RetentionBlock,
   },
   {
     key: 'dados-privacidade',
@@ -117,14 +94,6 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
  * (mantêm rota própria, só ganham ponto de entrada único e consistente).
  */
 export const SETTINGS_LINKS: SettingsLinkConfig[] = [
-  {
-    key: 'loja-online',
-    to: '/configuracoes/loja-online',
-    label: 'Loja Online',
-    description: 'Taxas de entrega, cupons e promoções.',
-    icon: StorefrontOutlinedIcon,
-    permission: ACCESS.storefrontUpdate,
-  },
   {
     key: 'assinatura',
     to: '/configuracoes/assinatura',

@@ -32,7 +32,6 @@ use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Subscription\PaymentWebhookController;
 use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Payment\PaymentIssueController;
-use App\Http\Controllers\Client\ClientCategoryController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductCategoryPriceController;
 use App\Http\Controllers\Location\EstadoController;
@@ -40,31 +39,14 @@ use App\Http\Controllers\Location\CidadeController;
 use App\Http\Controllers\Location\BairroController;
 use App\Http\Controllers\Location\EnderecoController;
 use App\Http\Controllers\Location\LocationController;
-use App\Http\Controllers\Client\DiaIdealController;
-use App\Http\Controllers\Client\PeriodoIdealController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
-use App\Http\Controllers\Storefront\ReactivationRuleController;
-use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductImportController;
 use App\Http\Controllers\Onboarding\OnboardingController;
-use App\Http\Controllers\Stock\StockLocationController;
-use App\Http\Controllers\Stock\StockMovementController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Order\OrderInstallmentController;
 use App\Http\Controllers\Order\OrderTrackingController;
-use App\Http\Controllers\Pdv\CashSessionController;
-use App\Http\Controllers\Pdv\PdvOfflineSnapshotController;
-use App\Http\Controllers\Pdv\PdvSaleController;
-use App\Http\Controllers\Pdv\OperatorPinController;
-use App\Http\Controllers\Balcao\StationController;
-use App\Http\Controllers\Balcao\TableController;
-use App\Http\Controllers\Balcao\ComandaController;
-use App\Http\Controllers\Balcao\BalcaoOfflineSnapshotController;
-use App\Http\Controllers\Balcao\TableReservationController;
-use App\Http\Controllers\Balcao\TableWaitlistController;
 use App\Http\Controllers\Report\ReportController;
-use App\Http\Controllers\Report\ReceivableInteractionController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
 use App\Http\Controllers\Portal\PortalAuthController;
@@ -81,9 +63,6 @@ use App\Http\Controllers\Storefront\CartEventController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
 use App\Http\Controllers\Storefront\StorefrontLocationController;
-use App\Http\Controllers\Storefront\StoreBusinessHoursController;
-use App\Http\Controllers\Storefront\StoreAddressController;
-use App\Http\Controllers\Storefront\StoreDeliveryFeeController;
 use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\ProductPromotionController;
 use App\Http\Controllers\Support\SupportTicketController;
@@ -552,20 +531,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:tenant_users,create', 'throttle:10,1,tenant-users-invite']);
         });
 
-        Route::prefix('client-categories')->group(function () {
-            Route::get('/', [ClientCategoryController::class, 'index'])
-                ->middleware(['tenant', 'perm:client_categories,read', 'throttle:100,1,client-categories-list']);
-
-            Route::post('/', [ClientCategoryController::class, 'store'])
-                ->middleware(['tenant', 'perm:client_categories,create', 'throttle:30,1,client-categories-create']);
-
-            Route::put('/{clientCategory}', [ClientCategoryController::class, 'update'])
-                ->middleware(['tenant', 'perm:client_categories,update', 'throttle:30,1,client-categories-update']);
-
-            Route::delete('/{clientCategory}', [ClientCategoryController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:client_categories,delete', 'throttle:10,1,client-categories-delete']);
-        });
-
         Route::prefix('product-categories')->group(function () {
             Route::get('/', [ProductCategoryController::class, 'index'])
                 ->middleware(['tenant', 'perm:product_categories,read', 'throttle:100,1,product-categories-list']);
@@ -638,50 +603,12 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:enderecos,delete', 'throttle:10,1,enderecos-delete']);
         });
 
-        Route::prefix('dias-ideais')->group(function () {
-            Route::get('/', [DiaIdealController::class, 'index'])
-                ->middleware(['tenant', 'perm:dias_ideais,read', 'throttle:100,1,dias-ideais-list']);
-
-            Route::post('/', [DiaIdealController::class, 'store'])
-                ->middleware(['tenant', 'perm:dias_ideais,create', 'throttle:30,1,dias-ideais-create']);
-
-            Route::put('/{diaIdeal}', [DiaIdealController::class, 'update'])
-                ->middleware(['tenant', 'perm:dias_ideais,update', 'throttle:30,1,dias-ideais-update']);
-
-            Route::delete('/{diaIdeal}', [DiaIdealController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:dias_ideais,delete', 'throttle:10,1,dias-ideais-delete']);
-        });
-
-        Route::prefix('periodos-ideais')->group(function () {
-            Route::get('/', [PeriodoIdealController::class, 'index'])
-                ->middleware(['tenant', 'perm:periodos_ideais,read', 'throttle:100,1,periodos-ideais-list']);
-
-            Route::post('/', [PeriodoIdealController::class, 'store'])
-                ->middleware(['tenant', 'perm:periodos_ideais,create', 'throttle:30,1,periodos-ideais-create']);
-
-            Route::put('/{periodoIdeal}', [PeriodoIdealController::class, 'update'])
-                ->middleware(['tenant', 'perm:periodos_ideais,update', 'throttle:30,1,periodos-ideais-update']);
-
-            Route::delete('/{periodoIdeal}', [PeriodoIdealController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:periodos_ideais,delete', 'throttle:10,1,periodos-ideais-delete']);
-        });
-
         Route::prefix('tenant-settings')->group(function () {
             Route::get('/', [TenantSettingsController::class, 'show'])
                 ->middleware(['tenant', 'perm:tenant_settings,read', 'throttle:100,1,tenant-settings-show']);
 
             Route::put('/', [TenantSettingsController::class, 'update'])
                 ->middleware(['tenant', 'perm:tenant_settings,update', 'throttle:30,1,tenant-settings-update']);
-        });
-
-        // Régua de reativação de cliente (roadmap A5, item 18) — 1 regra
-        // por tenant, mesmo padrão singleton de tenant-settings.
-        Route::prefix('reactivation-rule')->group(function () {
-            Route::get('/', [ReactivationRuleController::class, 'show'])
-                ->middleware(['tenant', 'perm:reactivation,read', 'throttle:100,1,reactivation-rule-show']);
-
-            Route::put('/', [ReactivationRuleController::class, 'update'])
-                ->middleware(['tenant', 'perm:reactivation,update', 'throttle:30,1,reactivation-rule-update']);
         });
 
         // Perfil da própria empresa editável pelo dono (nome + logo apenas).
@@ -724,41 +651,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/tenant-data-export', [TenantDataExportController::class, 'store'])
             ->middleware(['tenant', 'perm:tenant-profile,export', 'throttle:3,60,tenant-data-export']);
 
-        // Configuração de horário de funcionamento da loja (Delivery Fase 2)
-        // — sempre exatamente 7 linhas por tenant (get/replace em lote, não
-        // é CRUD genérico). Ver App\Services\Storefront\StoreBusinessHoursService.
-        Route::prefix('store-settings/business-hours')->group(function () {
-            Route::get('/', [StoreBusinessHoursController::class, 'show'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:100,1,store-business-hours-show']);
-
-            Route::put('/', [StoreBusinessHoursController::class, 'update'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:30,1,store-business-hours-update']);
-        });
-
-        // Endereço próprio da empresa (loja pública) — reaproveita o model
-        // genérico Endereco via tenants.endereco_id. Ver
-        // App\Services\Storefront\StoreAddressService.
-        Route::prefix('store-settings/address')->group(function () {
-            Route::get('/', [StoreAddressController::class, 'show'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:100,1,store-address-show']);
-
-            Route::put('/', [StoreAddressController::class, 'update'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:30,1,store-address-update']);
-        });
-
-        // Taxa de entrega por bairro (Delivery Fase 2) — CRUD normal.
-        // Ver App\Services\Storefront\StoreDeliveryFeeService.
-        Route::prefix('store-delivery-fees')->group(function () {
-            Route::get('/', [StoreDeliveryFeeController::class, 'index'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:100,1,store-delivery-fees-list']);
-
-            Route::post('/', [StoreDeliveryFeeController::class, 'store'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:30,1,store-delivery-fees-create']);
-
-            Route::delete('/{uuid}', [StoreDeliveryFeeController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,store-delivery-fees-delete']);
-        });
-
         // Cupons de desconto sobre o carrinho todo (Delivery Fase 3) — CRUD
         // completo (create/update, diferente do upsert de taxa de entrega).
         // Ver App\Services\Storefront\CouponService.
@@ -788,32 +680,6 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{uuid}', [ProductPromotionController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,product-promotions-delete']);
-        });
-
-        Route::prefix('clients')->group(function () {
-            Route::get('/', [ClientController::class, 'index'])
-                ->middleware(['tenant', 'perm:clients,read', 'throttle:100,1,clients-list']);
-
-            Route::post('/', [ClientController::class, 'store'])
-                ->middleware(['tenant', 'perm:clients,create', 'throttle:30,1,clients-create']);
-
-            Route::get('/{client}', [ClientController::class, 'show'])
-                ->middleware(['tenant', 'perm:clients,read', 'throttle:100,1,clients-show']);
-
-            Route::put('/{client}', [ClientController::class, 'update'])
-                ->middleware(['tenant', 'perm:clients,update', 'throttle:30,1,clients-update']);
-
-            Route::delete('/{client}', [ClientController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:clients,delete', 'throttle:10,1,clients-delete']);
-
-            Route::post('/{client}/categories/sync', [ClientController::class, 'syncCategories'])
-                ->middleware(['tenant', 'perm:clients,update', 'throttle:20,1,clients-sync-categories']);
-
-            // Diretório de clientes (cadastro completo, endereço inteiro) —
-            // não confundir com /reports/clients/pdf, que é o relatório
-            // financeiro de clientes em dia.
-            Route::post('/export-pdf', [ClientController::class, 'pdf'])
-                ->middleware(['tenant', 'perm:clients,read', 'throttle:20,1,clients-export-pdf']);
         });
 
         Route::prefix('products')->group(function () {
@@ -860,58 +726,6 @@ Route::prefix('v1')->group(function () {
 
             Route::post('/import/commit', [ProductImportController::class, 'commit'])
                 ->middleware(['tenant', 'perm:products,create', 'throttle:5,1,products-import-commit']);
-        });
-
-        Route::prefix('stock-locations')->group(function () {
-            Route::get('/', [StockLocationController::class, 'index'])
-                ->middleware(['tenant', 'perm:stock_locations,read', 'throttle:100,1,stock-locations-list']);
-
-            Route::post('/', [StockLocationController::class, 'store'])
-                ->middleware(['tenant', 'perm:stock_locations,create', 'throttle:30,1,stock-locations-create']);
-
-            Route::put('/{stockLocation}', [StockLocationController::class, 'update'])
-                ->middleware(['tenant', 'perm:stock_locations,update', 'throttle:30,1,stock-locations-update']);
-
-            Route::delete('/{stockLocation}', [StockLocationController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:stock_locations,delete', 'throttle:10,1,stock-locations-delete']);
-        });
-
-        Route::prefix('stock')->group(function () {
-            Route::get('/balances', [StockMovementController::class, 'balances'])
-                ->middleware(['tenant', 'perm:stock,read', 'throttle:100,1,stock-balances-list']);
-
-            Route::get('/movements', [StockMovementController::class, 'movements'])
-                ->middleware(['tenant', 'perm:stock,read', 'throttle:100,1,stock-movements-list']);
-
-            Route::post('/movements/entry', [StockMovementController::class, 'entry'])
-                ->middleware(['tenant', 'perm:stock,entry', 'throttle:60,1,stock-movements-entry']);
-
-            Route::post('/movements/exit', [StockMovementController::class, 'exit'])
-                ->middleware(['tenant', 'perm:stock,exit', 'throttle:60,1,stock-movements-exit']);
-
-            Route::post('/movements/adjustment', [StockMovementController::class, 'adjustment'])
-                ->middleware(['tenant', 'perm:stock,adjustment', 'throttle:60,1,stock-movements-adjustment']);
-
-            Route::post('/movements/transfer', [StockMovementController::class, 'transfer'])
-                ->middleware(['tenant', 'perm:stock,transfer', 'throttle:60,1,stock-movements-transfer']);
-
-            Route::post('/movements/return', [StockMovementController::class, 'returnMovement'])
-                ->middleware(['tenant', 'perm:stock,entry', 'throttle:60,1,stock-movements-return']);
-
-            Route::post('/movements/loss', [StockMovementController::class, 'loss'])
-                ->middleware(['tenant', 'perm:stock,exit', 'throttle:60,1,stock-movements-loss']);
-
-            Route::post('/movements/block', [StockMovementController::class, 'block'])
-                ->middleware(['tenant', 'perm:stock,block', 'throttle:60,1,stock-movements-block']);
-
-            Route::post('/movements/unblock', [StockMovementController::class, 'unblock'])
-                ->middleware(['tenant', 'perm:stock,block', 'throttle:60,1,stock-movements-unblock']);
-
-            Route::post('/movements/reserve', [StockMovementController::class, 'reserve'])
-                ->middleware(['tenant', 'perm:stock,reserve', 'throttle:60,1,stock-movements-reserve']);
-
-            Route::post('/movements/reserve-cancel', [StockMovementController::class, 'reserveCancel'])
-                ->middleware(['tenant', 'perm:stock,reserve', 'throttle:60,1,stock-movements-reserve-cancel']);
         });
 
         Route::prefix('orders')->group(function () {
@@ -1057,117 +871,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:storefront-orders,read', 'throttle:120,1,storefront-orders-workflow-transitions']);
         });
 
-        // PDV — caixa (abertura/fechamento/sangria/suprimento) + venda rápida
-        // de balcão (roadmap PDV, Fase PDV-1). Functionality própria `pdv`,
-        // operada pelo STAFF do tenant (reaproveita a sessão já autenticada,
-        // sem identidade nova). Pagamento no PDV-1 é sempre "declarado"
-        // (múltiplas linhas `payments` status=paid na hora). Ver
-        // App\Services\Pdv\CashSessionService / PdvSaleService.
-        Route::prefix('pdv')->group(function () {
-            Route::get('/offline-snapshot', [PdvOfflineSnapshotController::class, 'show'])
-                ->middleware(['tenant', 'perm:pdv,read', 'throttle:30,1,pdv-offline-snapshot']);
-
-            Route::get('/cash-sessions', [CashSessionController::class, 'index'])
-                ->middleware(['tenant', 'perm:pdv,read', 'throttle:100,1,pdv-cash-sessions-list']);
-
-            Route::get('/cash-sessions/current', [CashSessionController::class, 'current'])
-                ->middleware(['tenant', 'perm:pdv,read', 'throttle:120,1,pdv-cash-sessions-current']);
-
-            Route::post('/cash-sessions', [CashSessionController::class, 'store'])
-                ->middleware(['tenant', 'perm:pdv,open', 'throttle:30,1,pdv-cash-sessions-open']);
-
-            Route::post('/cash-sessions/{uuid}/movements', [CashSessionController::class, 'movements'])
-                ->middleware(['tenant', 'perm:pdv,movement', 'throttle:60,1,pdv-cash-sessions-movements']);
-
-            Route::post('/cash-sessions/{uuid}/close', [CashSessionController::class, 'close'])
-                ->middleware(['tenant', 'perm:pdv,close', 'throttle:30,1,pdv-cash-sessions-close']);
-
-            Route::post('/sales', [PdvSaleController::class, 'store'])
-                ->middleware(['tenant', 'perm:pdv,sell', 'throttle:120,1,pdv-sales-create']);
-
-            // PIN de operador (roadmap A4, item 15) — camada de identificação
-            // DENTRO da sessão de staff já autenticada, não uma perm de
-            // `pdv` (é ação sobre o próprio operador / verificação de PIN,
-            // não sobre o recurso PDV em si). Ver App\Services\Pdv\UserPinService.
-            Route::put('/operator-pin', [OperatorPinController::class, 'setOwnPin'])
-                ->middleware(['tenant', 'perm:pdv,read', 'throttle:10,1,pdv-operator-pin-set']);
-
-            Route::post('/operator-session', [OperatorPinController::class, 'resolve'])
-                ->middleware(['tenant', 'perm:pdv,read', 'throttle:20,1,pdv-operator-session']);
-        });
-
-        // Balcão — mesa/comanda/cozinha/bar + fechamento (roadmap Balcão,
-        // Fases 1+2). Agregado próprio (Station/Table/Comanda/ComandaItem) que
-        // vive o ciclo da mesa; o Order (origin='counter') só é materializado
-        // no fechamento, reaproveitando a infra de pedido/pagamento do PDV.
-        // Functionality própria `balcao`, operada pelo STAFF do tenant.
-        Route::prefix('balcao')->group(function () {
-            Route::get('/offline-snapshot', [BalcaoOfflineSnapshotController::class, 'show'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:30,1,balcao-offline-snapshot']);
-
-            // CRUD de estações (cozinha/bar/chapa).
-            Route::get('/stations', [StationController::class, 'index'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-stations-list']);
-            Route::post('/stations', [StationController::class, 'store'])
-                ->middleware(['tenant', 'perm:balcao,create', 'throttle:30,1,balcao-stations-create']);
-            Route::put('/stations/{station}', [StationController::class, 'update'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-stations-update']);
-            Route::delete('/stations/{station}', [StationController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:balcao,delete', 'throttle:30,1,balcao-stations-delete']);
-
-            // Fila do KDS de uma estação (polling).
-            Route::get('/stations/{station}/tickets', [StationController::class, 'tickets'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:240,1,balcao-station-tickets']);
-
-            // CRUD de mesas.
-            Route::get('/tables', [TableController::class, 'index'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-tables-list']);
-            Route::post('/tables', [TableController::class, 'store'])
-                ->middleware(['tenant', 'perm:balcao,create', 'throttle:30,1,balcao-tables-create']);
-            Route::put('/tables/{table}', [TableController::class, 'update'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-tables-update']);
-            Route::delete('/tables/{table}', [TableController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:balcao,delete', 'throttle:30,1,balcao-tables-delete']);
-
-            Route::get('/reservas', [TableReservationController::class, 'index'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-reservations-list']);
-            Route::get('/reservas/disponibilidade', [TableReservationController::class, 'availability'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-reservations-availability']);
-            Route::post('/reservas', [TableReservationController::class, 'store'])
-                ->middleware(['tenant', 'perm:balcao,create', 'throttle:30,1,balcao-reservations-create']);
-            Route::post('/reservas/{uuid}/seat', [TableReservationController::class, 'seat'])
-                ->middleware(['tenant', 'perm:balcao,open', 'throttle:30,1,balcao-reservations-seat']);
-            Route::post('/reservas/{uuid}/cancel', [TableReservationController::class, 'cancel'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-reservations-cancel']);
-            Route::post('/reservas/{uuid}/no-show', [TableReservationController::class, 'noShow'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-reservations-no-show']);
-
-            Route::get('/fila-espera', [TableWaitlistController::class, 'index'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-waitlist-list']);
-            Route::post('/fila-espera', [TableWaitlistController::class, 'store'])
-                ->middleware(['tenant', 'perm:balcao,create', 'throttle:30,1,balcao-waitlist-create']);
-            Route::post('/fila-espera/{uuid}/call', [TableWaitlistController::class, 'call'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-waitlist-call']);
-            Route::post('/fila-espera/{uuid}/seat', [TableWaitlistController::class, 'seat'])
-                ->middleware(['tenant', 'perm:balcao,open', 'throttle:30,1,balcao-waitlist-seat']);
-            Route::post('/fila-espera/{uuid}/cancel', [TableWaitlistController::class, 'cancel'])
-                ->middleware(['tenant', 'perm:balcao,update', 'throttle:30,1,balcao-waitlist-cancel']);
-
-            // Comandas.
-            Route::get('/comandas', [ComandaController::class, 'index'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-comandas-list']);
-            Route::post('/comandas', [ComandaController::class, 'store'])
-                ->middleware(['tenant', 'perm:balcao,open', 'throttle:60,1,balcao-comandas-open']);
-            Route::post('/comandas/{uuid}/items', [ComandaController::class, 'addItem'])
-                ->middleware(['tenant', 'perm:balcao,add_item', 'throttle:240,1,balcao-comandas-add-item']);
-            Route::patch('/comandas/{uuid}/items/{itemUuid}/prep-status', [ComandaController::class, 'updatePrepStatus'])
-                ->middleware(['tenant', 'perm:balcao,prep', 'throttle:240,1,balcao-comandas-prep-status']);
-            Route::get('/comandas/{uuid}/items/{itemUuid}/workflow-transitions', [WorkflowTransitionLogController::class, 'comandaItem'])
-                ->middleware(['tenant', 'perm:balcao,read', 'throttle:120,1,balcao-comandas-workflow-transitions']);
-            Route::post('/comandas/{uuid}/close', [ComandaController::class, 'close'])
-                ->middleware(['tenant', 'perm:balcao,close', 'throttle:60,1,balcao-comandas-close']);
-        });
-
         Route::prefix('reports')->group(function () {
             Route::get('/indicators', [ReportController::class, 'indicators'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-indicators']);
@@ -1189,31 +892,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/by-channel', [ReportController::class, 'byChannel'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-by-channel']);
 
-            Route::get('/clients', [ReportController::class, 'clients'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-clients']);
-
-            Route::get('/receivables', [ReportController::class, 'receivables'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-receivables']);
-
-            Route::get('/receivables/summary', [ReportController::class, 'receivablesSummary'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-receivables-summary']);
-
             // CMV real (roadmap A3.13) — custo médio ponderado a partir das
             // entradas de estoque com unit_cost preenchido.
             Route::get('/cmv', [ReportController::class, 'cmv'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-cmv']);
 
-            Route::get('/receivables/{order}/interactions', [ReceivableInteractionController::class, 'index'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-receivable-interactions']);
-
-            Route::post('/receivables/{order}/interactions', [ReceivableInteractionController::class, 'store'])
-                ->middleware(['tenant', 'perm:reports,update', 'throttle:30,1,reports-receivable-interactions-create']);
-
             Route::post('/orders/pdf', [ReportController::class, 'ordersPdf'])
                 ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-orders-pdf']);
-
-            Route::post('/clients/pdf', [ReportController::class, 'clientsPdf'])
-                ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-clients-pdf']);
 
             // Analytics (Fase 1 do roadmap) — Functionality própria
             // `analytics`, presente só nos planos professional/premium;

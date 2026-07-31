@@ -6,15 +6,11 @@ import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
-import PeopleOutlineOutlinedIcon from '@mui/icons-material/PeopleOutlineOutlined'
-import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined'
-import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined'
-import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 import {
   AppBar,
@@ -84,17 +80,6 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/', label: 'Visão geral', icon: DashboardOutlinedIcon, exact: true },
   {
     kind: 'group',
-    label: 'Clientes',
-    icon: PeopleOutlineOutlinedIcon,
-    children: [
-      { to: '/clientes', label: 'Clientes', exact: true, access: ACCESS.clientsRead },
-      { to: '/clientes/categorias', label: 'Categorias de cliente', access: ACCESS.clientCategoriesRead },
-      { to: '/clientes/dias-ideais', label: 'Dias ideais', access: ACCESS.diasIdeaisRead },
-      { to: '/clientes/periodos-ideais', label: 'Períodos ideais', access: ACCESS.periodosIdeaisRead },
-    ],
-  },
-  {
-    kind: 'group',
     label: 'Endereço',
     icon: LocationOnOutlinedIcon,
     children: [
@@ -113,29 +98,6 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/produtos', label: 'Produtos', exact: true, access: ACCESS.productsRead },
     ],
   },
-  {
-    kind: 'group',
-    label: 'Estoque',
-    icon: WarehouseOutlinedIcon,
-    children: [
-      { to: '/estoque/locais', label: 'Locais de estoque', access: ACCESS.stockLocationsRead },
-      { to: '/estoque/saldos', label: 'Saldos', access: ACCESS.stockRead },
-      { to: '/estoque/movimentos', label: 'Movimentações', access: ACCESS.stockRead },
-    ],
-  },
-  { kind: 'link', to: '/pdv', label: 'PDV', icon: PointOfSaleOutlinedIcon, access: ACCESS.pdvRead },
-  {
-    // Grupo (não link flat) para o KDS ter entrada própria e evitar o problema
-    // de link ativo com /balcao/mesas não cobrir /balcao/kds. Sem colisão de
-    // prefixo com outros itens (nenhum outro começa com /balcao).
-    kind: 'group',
-    label: 'Balcão',
-    icon: TableRestaurantOutlinedIcon,
-    children: [
-      { to: '/balcao/mesas', label: 'Mesas', access: ACCESS.balcaoRead },
-      { to: '/balcao/kds', label: 'Cozinha / Bar', access: ACCESS.balcaoRead },
-    ],
-  },
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
   { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
   { kind: 'link', to: '/pedidos-loja', label: 'Pedidos da Loja', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontOrdersRead },
@@ -148,8 +110,6 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/analises', label: 'Análises', access: ACCESS.reportsRead },
       { to: '/relatorios/canais', label: 'Resultado por canal', access: ACCESS.reportsRead },
       { to: '/relatorios/pedidos', label: 'Relatório de pedidos', access: ACCESS.reportsRead },
-      { to: '/relatorios/clientes', label: 'Base de clientes', access: ACCESS.reportsRead },
-      { to: '/relatorios/recebiveis', label: 'Recebíveis', access: ACCESS.reportsRead },
       { to: '/financeiro/conciliacao', label: 'Conciliação financeira', access: ACCESS.financeRead },
     ],
   },

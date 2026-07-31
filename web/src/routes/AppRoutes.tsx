@@ -59,29 +59,6 @@ const StorefrontCheckoutPage = lazy(() =>
   import('../pages/Storefront/StorefrontCheckoutPage').then((m) => ({ default: m.StorefrontCheckoutPage })),
 )
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
-const ClientListPage = lazy(() => import('../pages/Client/ClientListPage').then((m) => ({ default: m.ClientListPage })))
-const ClientFormPage = lazy(() => import('../pages/Client/ClientFormPage').then((m) => ({ default: m.ClientFormPage })))
-const ClientOrdersPage = lazy(() =>
-  import('../pages/Client/ClientOrdersPage').then((m) => ({ default: m.ClientOrdersPage })),
-)
-const ClientCategoryListPage = lazy(() =>
-  import('../pages/ClientCategory/ClientCategoryListPage').then((m) => ({ default: m.ClientCategoryListPage })),
-)
-const ClientCategoryFormPage = lazy(() =>
-  import('../pages/ClientCategory/ClientCategoryFormPage').then((m) => ({ default: m.ClientCategoryFormPage })),
-)
-const DiaIdealListPage = lazy(() =>
-  import('../pages/ClientIdeal/DiaIdealListPage').then((m) => ({ default: m.DiaIdealListPage })),
-)
-const DiaIdealFormPage = lazy(() =>
-  import('../pages/ClientIdeal/DiaIdealFormPage').then((m) => ({ default: m.DiaIdealFormPage })),
-)
-const PeriodoIdealListPage = lazy(() =>
-  import('../pages/ClientIdeal/PeriodoIdealListPage').then((m) => ({ default: m.PeriodoIdealListPage })),
-)
-const PeriodoIdealFormPage = lazy(() =>
-  import('../pages/ClientIdeal/PeriodoIdealFormPage').then((m) => ({ default: m.PeriodoIdealFormPage })),
-)
 const EstadoListPage = lazy(() => import('../pages/Location/EstadoListPage').then((m) => ({ default: m.EstadoListPage })))
 const EstadoFormPage = lazy(() => import('../pages/Location/EstadoFormPage').then((m) => ({ default: m.EstadoFormPage })))
 const CidadeListPage = lazy(() => import('../pages/Location/CidadeListPage').then((m) => ({ default: m.CidadeListPage })))
@@ -96,46 +73,11 @@ const EnderecoFormPage = lazy(() =>
 )
 const ProductListPage = lazy(() => import('../pages/Product/ProductListPage').then((m) => ({ default: m.ProductListPage })))
 const ProductFormPage = lazy(() => import('../pages/Product/ProductFormPage').then((m) => ({ default: m.ProductFormPage })))
-const StockLocationListPage = lazy(() =>
-  import('../pages/StockLocation/StockLocationListPage').then((m) => ({ default: m.StockLocationListPage })),
-)
-const StockLocationFormPage = lazy(() =>
-  import('../pages/StockLocation/StockLocationFormPage').then((m) => ({ default: m.StockLocationFormPage })),
-)
-const StockBalanceListPage = lazy(() =>
-  import('../pages/Stock/StockBalanceListPage').then((m) => ({ default: m.StockBalanceListPage })),
-)
-const StockMovementListPage = lazy(() =>
-  import('../pages/Stock/StockMovementListPage').then((m) => ({ default: m.StockMovementListPage })),
-)
-const StockMovementFormPage = lazy(() =>
-  import('../pages/Stock/StockMovementFormPage').then((m) => ({ default: m.StockMovementFormPage })),
-)
 const OrderListPage = lazy(() => import('../pages/Order/OrderListPage').then((m) => ({ default: m.OrderListPage })))
 const StorefrontOrderManagementPage = lazy(() =>
   import('../pages/Order/StorefrontOrderManagementPage').then((m) => ({ default: m.StorefrontOrderManagementPage })),
 )
 const OrderFormPage = lazy(() => import('../pages/Order/OrderFormPage').then((m) => ({ default: m.OrderFormPage })))
-const PdvCashSessionGatePage = lazy(() =>
-  import('../pages/Pdv/PdvCashSessionGatePage').then((m) => ({ default: m.PdvCashSessionGatePage })),
-)
-const PdvSalePage = lazy(() => import('../pages/Pdv/PdvSalePage').then((m) => ({ default: m.PdvSalePage })))
-const PdvCloseSessionPage = lazy(() =>
-  import('../pages/Pdv/PdvCloseSessionPage').then((m) => ({ default: m.PdvCloseSessionPage })),
-)
-const PdvReceiptPrintView = lazy(() =>
-  import('../pages/Pdv/PdvReceiptPrintView').then((m) => ({ default: m.PdvReceiptPrintView })),
-)
-const BalcaoTablesPage = lazy(() =>
-  import('../pages/Balcao/BalcaoTablesPage').then((m) => ({ default: m.BalcaoTablesPage })),
-)
-const BalcaoComandaPage = lazy(() =>
-  import('../pages/Balcao/BalcaoComandaPage').then((m) => ({ default: m.BalcaoComandaPage })),
-)
-const BalcaoKdsPage = lazy(() => import('../pages/Balcao/BalcaoKdsPage').then((m) => ({ default: m.BalcaoKdsPage })))
-const BalcaoReceiptView = lazy(() =>
-  import('../pages/Balcao/BalcaoReceiptView').then((m) => ({ default: m.BalcaoReceiptView })),
-)
 const AnalyticsPage = lazy(() =>
   import('../pages/Analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
 )
@@ -144,12 +86,6 @@ const OrderReportListPage = lazy(() =>
 )
 const ChannelReportPage = lazy(() =>
   import('../pages/Report/ChannelReportPage').then((m) => ({ default: m.ChannelReportPage })),
-)
-const ClientReportListPage = lazy(() =>
-  import('../pages/Report/ClientReportListPage').then((m) => ({ default: m.ClientReportListPage })),
-)
-const ReceivableReportListPage = lazy(() =>
-  import('../pages/Report/ReceivableReportListPage').then((m) => ({ default: m.ReceivableReportListPage })),
 )
 const ReconciliationPage = lazy(() =>
   import('../pages/Finance/ReconciliationPage').then((m) => ({ default: m.ReconciliationPage })),
@@ -203,9 +139,6 @@ const SettingsIndexPage = lazy(() =>
 )
 const SettingsBlockPage = lazy(() =>
   import('../pages/Settings/SettingsBlockPage').then((m) => ({ default: m.SettingsBlockPage })),
-)
-const StoreBusinessSettingsPage = lazy(() =>
-  import('../pages/Settings/StoreBusinessSettingsPage').then((m) => ({ default: m.StoreBusinessSettingsPage })),
 )
 const SubscriptionPage = lazy(() =>
   import('../pages/Settings/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })),
@@ -290,19 +223,6 @@ export function AppRoutes() {
             <Route path="/" element={<DashboardPage />} />
             {/* Auto-serviço: sem PermissionRoute de propósito — todo usuário logado edita o próprio perfil. */}
             <Route path="/minha-conta" element={<MyAccountPage />} />
-            <Route path="/clientes" element={<PermissionRoute requirement={ACCESS.clientsRead}><ClientListPage /></PermissionRoute>} />
-            <Route path="/clientes/novo" element={<PermissionRoute requirement={ACCESS.clientsCreate}><ClientFormPage /></PermissionRoute>} />
-            <Route path="/clientes/:uuid/editar" element={<PermissionRoute requirement={ACCESS.clientsUpdate}><ClientFormPage /></PermissionRoute>} />
-            <Route path="/clientes/:uuid/pedidos" element={<PermissionRoute requirement={ACCESS.clientsRead}><ClientOrdersPage /></PermissionRoute>} />
-            <Route path="/clientes/categorias" element={<PermissionRoute requirement={ACCESS.clientCategoriesRead}><ClientCategoryListPage /></PermissionRoute>} />
-            <Route path="/clientes/categorias/nova" element={<PermissionRoute requirement={ACCESS.clientCategoriesCreate}><ClientCategoryFormPage /></PermissionRoute>} />
-            <Route path="/clientes/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.clientCategoriesUpdate}><ClientCategoryFormPage /></PermissionRoute>} />
-            <Route path="/clientes/dias-ideais" element={<PermissionRoute requirement={ACCESS.diasIdeaisRead}><DiaIdealListPage /></PermissionRoute>} />
-            <Route path="/clientes/dias-ideais/novo" element={<PermissionRoute requirement={ACCESS.diasIdeaisCreate}><DiaIdealFormPage /></PermissionRoute>} />
-            <Route path="/clientes/dias-ideais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.diasIdeaisUpdate}><DiaIdealFormPage /></PermissionRoute>} />
-            <Route path="/clientes/periodos-ideais" element={<PermissionRoute requirement={ACCESS.periodosIdeaisRead}><PeriodoIdealListPage /></PermissionRoute>} />
-            <Route path="/clientes/periodos-ideais/novo" element={<PermissionRoute requirement={ACCESS.periodosIdeaisCreate}><PeriodoIdealFormPage /></PermissionRoute>} />
-            <Route path="/clientes/periodos-ideais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.periodosIdeaisUpdate}><PeriodoIdealFormPage /></PermissionRoute>} />
 
             <Route path="/estados" element={<PermissionRoute requirement={ACCESS.estadosRead}><EstadoListPage /></PermissionRoute>} />
             <Route path="/estados/novo" element={<PermissionRoute requirement={ACCESS.estadosCreate}><EstadoFormPage /></PermissionRoute>} />
@@ -324,38 +244,15 @@ export function AppRoutes() {
             <Route path="/produtos/categorias/nova" element={<PermissionRoute requirement={ACCESS.productCategoriesCreate}><ProductCategoryFormPage /></PermissionRoute>} />
             <Route path="/produtos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.productCategoriesUpdate}><ProductCategoryFormPage /></PermissionRoute>} />
 
-            <Route path="/estoque/locais" element={<PermissionRoute requirement={ACCESS.stockLocationsRead}><StockLocationListPage /></PermissionRoute>} />
-            <Route path="/estoque/locais/novo" element={<PermissionRoute requirement={ACCESS.stockLocationsCreate}><StockLocationFormPage /></PermissionRoute>} />
-            <Route path="/estoque/locais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.stockLocationsUpdate}><StockLocationFormPage /></PermissionRoute>} />
-            <Route path="/estoque/saldos" element={<PermissionRoute requirement={ACCESS.stockRead}><StockBalanceListPage /></PermissionRoute>} />
-            <Route path="/estoque/movimentos" element={<PermissionRoute requirement={ACCESS.stockRead}><StockMovementListPage /></PermissionRoute>} />
-            <Route path="/estoque/movimentos/nova" element={<PermissionRoute requirement={ACCESS.stockCreate}><StockMovementFormPage /></PermissionRoute>} />
-
             <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.ordersCreate}><OrderFormPage /></PermissionRoute>} />
             <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
             <Route path="/treinamentos" element={<TrainingCenterPage />} />
-            {/* PDV — o gate de caixa (PermissionRoute `pdv:read`) envolve toda a
-                sub-árvore: sem caixa aberto mostra a abertura, com caixa aberto
-                libera venda/fechamento/recibo via <Outlet /> + PdvSessionContext. */}
-            <Route path="/pdv" element={<PermissionRoute requirement={ACCESS.pdvRead}><PdvCashSessionGatePage /></PermissionRoute>}>
-              <Route index element={<PdvSalePage />} />
-              <Route path="fechar" element={<PdvCloseSessionPage />} />
-              <Route path="recibo" element={<PdvReceiptPrintView />} />
-            </Route>
-            {/* Balcão (Fases 1+2) — mesas/comanda/KDS/recibo, todos gated por `balcao:read`.
-                Cada ação granular (open/add_item/prep/close) gate por botão dentro da tela. */}
-            <Route path="/balcao/mesas" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoTablesPage /></PermissionRoute>} />
-            <Route path="/balcao/comandas/:uuid" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoComandaPage /></PermissionRoute>} />
-            <Route path="/balcao/kds" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoKdsPage /></PermissionRoute>} />
-            <Route path="/balcao/recibo" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoReceiptView /></PermissionRoute>} />
 
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
             <Route path="/relatorios/pedidos" element={<PermissionRoute requirement={ACCESS.reportsRead}><OrderReportListPage /></PermissionRoute>} />
-            <Route path="/relatorios/clientes" element={<PermissionRoute requirement={ACCESS.reportsRead}><ClientReportListPage /></PermissionRoute>} />
-            <Route path="/relatorios/recebiveis" element={<PermissionRoute requirement={ACCESS.reportsRead}><ReceivableReportListPage /></PermissionRoute>} />
             <Route path="/financeiro/conciliacao" element={<PermissionRoute requirement={ACCESS.financeRead}><ReconciliationPage /></PermissionRoute>} />
 
             <Route path="/admin/usuarios" element={<PermissionRoute requirement={ACCESS.adminUsersRead}><UserListPage /></PermissionRoute>} />
@@ -401,14 +298,6 @@ export function AppRoutes() {
                   }
                 />
               ))}
-              <Route
-                path="loja-online"
-                element={
-                  <PermissionRoute requirement={ACCESS.storefrontUpdate}>
-                    <StoreBusinessSettingsPage />
-                  </PermissionRoute>
-                }
-              />
               <Route
                 path="assinatura"
                 element={

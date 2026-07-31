@@ -8,7 +8,6 @@ import { FORM_FIELD_SURFACE_SX } from '../../styles/formFieldStyles'
 import { useUserProfile } from '../../hooks/useUserProfile'
 import { FORM_GRID_2_SX, PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
-import * as pdvService from '../../services/pdvService'
 import * as profileService from '../../services/profileService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PASSWORD_POLICY_HINT, generateStrongPassword } from '../../utils/password'
@@ -337,107 +336,6 @@ function PasswordSection() {
   )
 }
 
-const EMPTY_PIN_FORM = { pin: '', pin_confirmation: '' }
-
-/**
- * PIN de operador do PDV/Balcão (roadmap A4, item 15) — cadastro/troca do
- * próprio operador, no tenant ativo (`PUT /pdv/operator-pin`). Não é senha de
- * login: é a 2ª camada de identificação usada só dentro do terminal, por isso
- * fica na área de auto-serviço, sem exigir permissão dedicada (qualquer
- * usuário logado pode ter seu próprio PIN, mesmo que ainda não use PDV/Balcão).
- */
-function OperatorPinSection() {
-  const [form, setForm] = useState(EMPTY_PIN_FORM)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
-  const [formError, setFormError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  function updateField(key: keyof typeof form, value: string) {
-    setForm((current) => ({ ...current, [key]: value.replace(/\D/g, '').slice(0, 6) }))
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setFormError(null)
-    setSuccessMessage(null)
-    setFieldErrors({})
-
-    if (form.pin.length < 4) {
-      setFieldErrors({ pin: ['O PIN deve ter de 4 a 6 dígitos.'] })
-      return
-    }
-    if (form.pin !== form.pin_confirmation) {
-      setFieldErrors({ pin_confirmation: ['A confirmação não corresponde ao PIN informado.'] })
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      await pdvService.setOperatorPin({ pin: form.pin })
-      setSuccessMessage('PIN salvo com sucesso.')
-      setForm(EMPTY_PIN_FORM)
-    } catch (error) {
-      if (error instanceof ApiRequestError && error.code === 'INVALID_PIN') {
-        setFieldErrors({ pin: [error.message] })
-      } else {
-        setFormError(getApiErrorMessage(error, 'Não foi possível salvar o PIN agora.'))
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return (
-    <Paper variant="outlined" sx={SECTION_SX}>
-      <SectionTitle
-        title="PIN de operador (PDV/Balcão)"
-        subtitle="4 a 6 dígitos usados para se identificar rapidamente ao vender no PDV ou no Balcão da empresa atual."
-      />
-
-      <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-        {formError && (
-          <Alert severity="error" sx={{ mb: 2.5 }}>
-            {formError}
-          </Alert>
-        )}
-        {successMessage && (
-          <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSuccessMessage(null)}>
-            {successMessage}
-          </Alert>
-        )}
-
-        <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, maxWidth: { sm: 400 } }}>
-          <TextField
-            label="Novo PIN"
-            value={form.pin}
-            onChange={(event) => updateField('pin', event.target.value)}
-            error={Boolean(fieldErrors.pin)}
-            helperText={fieldErrors.pin?.[0] ?? 'Só números, 4 a 6 dígitos.'}
-            required
-            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 4 } } }}
-          />
-          <TextField
-            label="Confirmar PIN"
-            value={form.pin_confirmation}
-            onChange={(event) => updateField('pin_confirmation', event.target.value)}
-            error={Boolean(fieldErrors.pin_confirmation)}
-            helperText={fieldErrors.pin_confirmation?.[0]}
-            required
-            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 4 } } }}
-          />
-        </Box>
-
-        <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
-          <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ minWidth: 140 }}>
-            {isSubmitting ? 'Salvando…' : 'Salvar PIN'}
-          </Button>
-        </Stack>
-      </Box>
-    </Paper>
-  )
-}
-
 /** Auto-serviço: qualquer usuário logado edita o próprio perfil, sem exigir permissão (`ProtectedRoute`, sem `PermissionRoute`). */
 export function MyAccountPage() {
   const { profile, isLoading, error, refresh } = useUserProfile()
@@ -472,7 +370,6 @@ export function MyAccountPage() {
             <BasicDataSection />
             <EmailSection />
             <PasswordSection />
-            <OperatorPinSection />
           </Stack>
         )
       )}
