@@ -128,12 +128,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/rastreio/{order:uuid}', [OrderTrackingController::class, 'show'])
         ->middleware('throttle:60,1,order-tracking-public');
 
-    // Tela de preparo do pedido no celular (roadmap Loja) — 100% pública,
-    // sem jwt/tenant/customer.jwt, protegida só pelo token temporário
-    // (OrderPrepLink) via ?token=. 404 genérico pra token errado/expirado/
-    // de outro pedido/pedido inexistente (nunca revela existência). Ver
-    // App\Http\Controllers\Order\OrderPrepViewController.
-
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
     // arquivo estático em /storage/*, sem passar por middleware nenhum;
     // agora são lidas do banco e servidas por rota de API, 100% pública
@@ -284,9 +278,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])
             ->middleware('throttle:30,1,portal-push-subscriptions-create');
 
-        // Saldo de cashback (roadmap Delivery, Fase 5) — reaproveitado
-        // também pelo checkout da loja (mesmo guard customer.jwt), ver
-        // PortalCashbackController.
         // "Meus vouchers" = histórico de cupons já usados (read-only).
         Route::get('/coupon-redemptions', [PortalCouponController::class, 'index'])
             ->middleware('throttle:60,1,portal-coupon-redemptions-list');

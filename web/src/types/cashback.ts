@@ -1,4 +1,4 @@
-/** Resposta de `GET /portal/cashback` (com `?tenant_slug`) — ver `PortalCashbackController`. */
+/** Resposta de saldo de cashback por loja no portal do cliente final. */
 export interface CashbackBalance {
   enabled: boolean
   /** Nome customizado do programa (ex.: "eCash") ou "Cashback" padrão — fallback resolvido sempre no backend. */

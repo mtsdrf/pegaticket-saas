@@ -9,7 +9,3 @@ export function getOrderWorkflowTimeline(orderUuid: string): Promise<WorkflowTra
 export function getStorefrontOrderWorkflowTimeline(orderUuid: string): Promise<WorkflowTransitionLog[]> {
   return unwrap(apiClient.get<ApiSuccess<WorkflowTransitionLog[]>>(`/storefront-orders/${orderUuid}/workflow-transitions`))
 }
-
-export function getComandaItemWorkflowTimeline(comandaUuid: string, itemUuid: string): Promise<WorkflowTransitionLog[]> {
-  return unwrap(apiClient.get<ApiSuccess<WorkflowTransitionLog[]>>(`/balcao/comandas/${comandaUuid}/items/${itemUuid}/workflow-transitions`))
-}

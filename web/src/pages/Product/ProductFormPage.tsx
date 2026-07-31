@@ -21,7 +21,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ACCESS } from '../../access/requirements'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
-import { ProductCategoryPricesSection } from '../../components/product/ProductCategoryPricesSection'
 import { ProductImageUpload } from '../../components/product/ProductImageUpload'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import * as productService from '../../services/productService'
@@ -826,25 +825,9 @@ export function ProductFormPage() {
       </Accordion>
 
       {can(ACCESS.productsUpdate) && (
-        <>
-          {isEditMode && uuid ? (
-            <Accordion
-              variant="outlined"
-              sx={{ mt: 2, ...SOFT_PANEL_SX, '&::before': { display: 'none' } }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>Preços por categoria de cliente</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <ProductCategoryPricesSection productUuid={uuid} />
-              </AccordionDetails>
-            </Accordion>
-          ) : (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Preços por categoria de cliente (atacado/varejo) ficam disponíveis depois que o produto for salvo.
-            </Alert>
-          )}
-        </>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Preços por categoria de cliente foram descontinuados nesta migração e não fazem mais parte do cadastro do produto.
+        </Alert>
       )}
     </CrudFormShell>
   )

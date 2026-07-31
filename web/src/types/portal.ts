@@ -61,7 +61,7 @@ export interface PortalReorderItem {
   is_available: boolean
 }
 
-/** Endereço serializado por `PortalAddressController` — mesmo shape em `GET /portal/addresses` (dentro de cada item) e na resposta do `PUT`. */
+/** Endereço serializado do perfil do cliente final. */
 export interface PortalAddressEndereco {
   logradouro: string | null
   numero: string | null

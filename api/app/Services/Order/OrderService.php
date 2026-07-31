@@ -83,8 +83,7 @@ class OrderService
      * Link temporário de preparo (roadmap Loja) — token curto (48 chars
      * aleatórios) que expira em 15 minutos, aberto sem login pelo celular
      * via QR code. Não apaga links antigos: cada geração é independente e
-     * expira sozinha (podem coexistir). Ver OrderPrepViewController para o
-     * endpoint público de leitura.
+     * expira sozinha (podem coexistir).
      */
     public function generatePrepLink(Order $order): OrderPrepLink
     {

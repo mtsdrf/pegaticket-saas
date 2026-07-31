@@ -43,14 +43,6 @@ export interface StorefrontTenant {
 /** `grid` (cards com foto grande, 1:1) ou `list` (padrão — lista compacta com imagem à direita). */
 export type StorefrontCatalogLayout = 'grid' | 'list'
 
-export interface PublicReservationTenant {
-  slug: string
-  name: string
-  logo_url: string | null
-  allow_table_reservations: boolean
-  storefront_enabled: boolean
-}
-
 export interface StorefrontProductTypeRef {
   name: string
   product_category: { name: string } | null
@@ -214,15 +206,6 @@ export interface StorefrontCheckoutResult {
   order: { uuid: string }
 }
 
-export interface StorefrontTableReservationPayload {
-  customer_name: string
-  customer_phone?: string | null
-  customer_email?: string | null
-  party_size: number
-  scheduled_for: string
-  duration_minutes?: number
-  notes?: string | null
-}
 
 /** Código de erro específico quando `tenant_settings.block_order_without_stock` está ligado e falta estoque. */
 export const INSUFFICIENT_STOCK_CODE = 'INSUFFICIENT_STOCK'

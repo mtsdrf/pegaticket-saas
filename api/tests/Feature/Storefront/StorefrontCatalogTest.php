@@ -7,7 +7,6 @@ use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
 use App\Models\Location\Estado;
-use App\Models\Balcao\Table;
 use App\Models\Order\Order;
 use App\Models\Order\OrderItem;
 use App\Models\Product\Product;
@@ -65,55 +64,6 @@ class StorefrontCatalogTest extends TestCase
     {
         $this->getJson('/api/v1/loja/nao-existe-' . Str::random(8))
             ->assertStatus(404);
-    }
-
-    #[Test]
-    public function public_reservations_show_works_without_storefront_when_balcao_is_enabled(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(false, ['name' => 'Casa de Reservas']);
-        $this->grantBalcaoFunctionality($tenant);
-
-        Table::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenant->id,
-            'label' => 'Mesa 01',
-            'area' => 'Salão',
-            'seats' => 4,
-            'status' => Table::STATUS_FREE,
-        ]);
-
-        $this->getJson('/api/v1/reservas/' . $tenant->slug)
-            ->assertStatus(200)
-            ->assertJsonPath('data.slug', $tenant->slug)
-            ->assertJsonPath('data.name', 'Casa de Reservas')
-            ->assertJsonPath('data.allow_table_reservations', true)
-            ->assertJsonPath('data.storefront_enabled', false);
-    }
-
-    #[Test]
-    public function public_reservations_can_be_created_without_storefront_when_balcao_is_enabled(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(false);
-        $this->grantBalcaoFunctionality($tenant);
-
-        Table::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenant->id,
-            'label' => 'Mesa 02',
-            'area' => 'Salão',
-            'seats' => 4,
-            'status' => Table::STATUS_FREE,
-        ]);
-
-        $this->postJson('/api/v1/reservas/' . $tenant->slug, [
-            'customer_name' => 'Cliente Reserva',
-            'customer_phone' => '11999990000',
-            'party_size' => 2,
-            'scheduled_for' => now()->addHours(3)->toDateTimeString(),
-            'duration_minutes' => 90,
-        ])->assertStatus(201)
-            ->assertJsonPath('data.source', 'online')
-            ->assertJsonPath('data.customer_name', 'Cliente Reserva');
     }
 
     #[Test]

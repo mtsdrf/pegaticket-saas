@@ -1,42 +1,20 @@
 import { getPortalAccessToken } from './portalApiClient'
 import { publicApiClient } from './publicApiClient'
 import type { ApiSuccess } from '../types/api'
-import type { Order } from '../types/order'
 import type { PaginationMeta } from '../types/pagination'
 import type {
-  PublicReservationTenant,
   StorefrontCategory,
   StorefrontCheckoutItemPayload,
   StorefrontCouponValidationResult,
   StorefrontListResult,
   StorefrontProduct,
   StorefrontProductFilters,
-  StorefrontTableReservationPayload,
   StorefrontTenant,
 } from '../types/storefront'
-import type { TableReservation } from '../types/balcao'
-
-/**
- * Leitura pública do pedido pra tela de preparo no celular (roadmap Loja) —
- * 100% anônima (`publicApiClient`), protegida só pelo `token` temporário.
- * Token inválido/expirado/inexistente → 404 genérico (`ApiRequestError`),
- * tratado por quem chama (`PrepOrderPage`) como "link expirado ou inválido".
- */
-export function getStorefrontOrderPrep(uuid: string, token: string): Promise<Order> {
-  return publicApiClient
-    .get<ApiSuccess<Order>>(`/storefront-orders/${uuid}/prep`, { params: { token } })
-    .then((response) => response.data.data)
-}
 
 export function getStorefront(slug: string): Promise<StorefrontTenant> {
   return publicApiClient
     .get<ApiSuccess<StorefrontTenant>>(`/loja/${slug}`)
-    .then((response) => response.data.data)
-}
-
-export function getPublicReservationTenant(slug: string): Promise<PublicReservationTenant> {
-  return publicApiClient
-    .get<ApiSuccess<PublicReservationTenant>>(`/reservas/${slug}`)
     .then((response) => response.data.data)
 }
 
@@ -110,23 +88,5 @@ export function validateStorefrontCoupon(
 ): Promise<StorefrontCouponValidationResult> {
   return publicApiClient
     .post<ApiSuccess<StorefrontCouponValidationResult>>(`/loja/${slug}/cupons/validar`, { code, items })
-    .then((response) => response.data.data)
-}
-
-export function createStorefrontTableReservation(
-  slug: string,
-  payload: StorefrontTableReservationPayload,
-): Promise<TableReservation> {
-  return publicApiClient
-    .post<ApiSuccess<TableReservation>>(`/loja/${slug}/reservas`, payload)
-    .then((response) => response.data.data)
-}
-
-export function createPublicTableReservation(
-  slug: string,
-  payload: StorefrontTableReservationPayload,
-): Promise<TableReservation> {
-  return publicApiClient
-    .post<ApiSuccess<TableReservation>>(`/reservas/${slug}`, payload)
     .then((response) => response.data.data)
 }
