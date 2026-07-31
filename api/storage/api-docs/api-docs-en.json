@@ -1,0 +1,740 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Enterprise API",
+        "description": "Complete RESTful API with JWT authentication, granular permissions system, audit logging, and rate limiting. This API provides programmatic access to all enterprise management system resources.",
+        "termsOfService": "https://company.com/terms-of-service",
+        "contact": {
+            "name": "API Support Team",
+            "url": "https://company.com/support",
+            "email": "api-support@company.com"
+        },
+        "license": {
+            "name": "Proprietary",
+            "url": "https://company.com/license"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Local Development Server"
+        },
+        {
+            "url": "https://api.company.com",
+            "description": "Production Server"
+        },
+        {
+            "url": "https://staging-api.company.com",
+            "description": "Staging Server"
+        }
+    ],
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User login",
+                "description": "Authenticates a user and returns access (JWT) and refresh tokens.\n * \n * **Flow:**\n * 1. Send email and password\n * 2. Receive `access_token` (valid for 15 minutes)\n * 3. Receive `refresh_token` (valid for 30 days)\n * 4. Use the `access_token` in all protected requests\n * \n * **Security:**\n * - Rate limiting: maximum 5 attempts per minute\n * - Password is verified with bcrypt hash\n * - All attempts (success/failure) are logged in audit logs\n * - Supports multiple simultaneous devices (each login generates a new refresh token)",
+                "operationId": "authLogin",
+                "requestBody": {
+                    "description": "User authentication credentials",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "User's email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@company.com"
+                                    },
+                                    "password": {
+                                        "description": "User's password (minimum 8 characters)",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Password@123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "headers": {
+                            "X-RateLimit-Limit": {
+                                "description": "Maximum number of allowed requests",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "X-RateLimit-Remaining": {
+                                "description": "Number of remaining requests",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 4
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "description": "Authenticated user's basic data",
+                                                    "properties": {
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "8796e85c-7e9c-4788-a503-840ede8cf78a"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "format": "email",
+                                                            "example": "john@company.com"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-01-01T10:00:00.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tokens": {
+                                                    "description": "Authentication tokens",
+                                                    "properties": {
+                                                        "access_token": {
+                                                            "description": "JWT token for request authentication (expires in 15 minutes)",
+                                                            "type": "string",
+                                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                        },
+                                                        "refresh_token": {
+                                                            "description": "Token to renew access_token without logging in again (expires in 30 days)",
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "87368cbd-d979-46b4-9f92-7e27b5a0a1c2"
+                                                        },
+                                                        "token_type": {
+                                                            "description": "Token type (always 'Bearer')",
+                                                            "type": "string",
+                                                            "example": "Bearer"
+                                                        },
+                                                        "expires_in": {
+                                                            "description": "Access token expiration time in seconds",
+                                                            "type": "integer",
+                                                            "example": 900
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid credentials."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_CREDENTIALS"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login attempts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RateLimitErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User logout",
+                "description": "Revokes the current access token by adding it to the blacklist and ending the user's session.\n * \n * **Important:**\n * - The current token cannot be used after logout\n * - Other devices/sessions of the same user are not affected\n * - Blacklisted tokens are kept until their original expiration date\n * - The logout action is recorded in audit logs\n * \n * **After logout:**\n * - Use the previously saved `refresh_token` to obtain a new access_token, OR\n * - Login again with email and password",
+                "operationId": "authLogout",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout successful."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token not provided or invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token not provided."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "TOKEN_NOT_PROVIDED"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error processing logout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error processing logout."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "LOGOUT_ERROR"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "description": "Renews the access token (access_token) using a valid refresh_token, without needing to login again.\n * \n * **Token Rotation:**\n * - The sent `refresh_token` is REVOKED after use\n * - A NEW `refresh_token` is generated and returned\n * - This prevents refresh token reuse and increases security\n * - The new `access_token` is valid for 15 minutes\n * - The new `refresh_token` is valid for 30 days\n * \n * **When to use:**\n * - When the `access_token` expires (after 15 minutes)\n * - To keep the user logged in without asking for credentials again\n * - Implement automatic renewal in the frontend when receiving 401 error with code TOKEN_EXPIRED\n * \n * **Security:**\n * - Rate limiting: maximum 10 attempts per minute\n * - Refresh tokens are hashed with SHA-512 in the database\n * - IP and User-Agent validation (optional, configurable)\n * - All renewals are recorded in audit logs",
+                "operationId": "authRefresh",
+                "requestBody": {
+                    "description": "Refresh token obtained at login",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "description": "Refresh token received at login or last refresh",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "87368cbd-d979-46b4-9f92-7e27b5a0a1c2"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "headers": {
+                            "X-RateLimit-Limit": {
+                                "description": "Maximum number of allowed requests",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 10
+                                }
+                            },
+                            "X-RateLimit-Remaining": {
+                                "description": "Number of remaining requests",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 9
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token refreshed successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "tokens": {
+                                                    "description": "New authentication tokens",
+                                                    "properties": {
+                                                        "access_token": {
+                                                            "description": "New JWT token for authentication (expires in 15 minutes)",
+                                                            "type": "string",
+                                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                        },
+                                                        "refresh_token": {
+                                                            "description": "New refresh token (the previous one was revoked)",
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "9d2f1c3e-8a7b-4f2e-b9c1-5e8d7f4a2b1c"
+                                                        },
+                                                        "token_type": {
+                                                            "type": "string",
+                                                            "example": "Bearer"
+                                                        },
+                                                        "expires_in": {
+                                                            "description": "Expiration time of the new access_token in seconds",
+                                                            "type": "integer",
+                                                            "example": 900
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid, expired, or already used refresh token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid refresh token."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_REFRESH_TOKEN"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many refresh attempts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RateLimitErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SuccessResponse": {
+                "title": "Success Response",
+                "description": "Standard API success response structure",
+                "required": [
+                    "success",
+                    "data"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Indicates if the request was successful",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "description": "Human-readable success message",
+                        "type": "string",
+                        "example": "Operation completed successfully."
+                    },
+                    "data": {
+                        "description": "Response data (can be object, array, or null)"
+                    },
+                    "meta": {
+                        "description": "Additional metadata (pagination, timestamps, etc)",
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "title": "Error Response",
+                "description": "Standard API error response structure",
+                "required": [
+                    "success",
+                    "message",
+                    "code"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Always false for error responses",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "description": "Human-readable error message",
+                        "type": "string",
+                        "example": "An error occurred while processing the request."
+                    },
+                    "code": {
+                        "description": "Unique error code for identification and programmatic handling",
+                        "type": "string",
+                        "example": "ERROR_CODE"
+                    },
+                    "errors": {
+                        "description": "Specific error details (empty if no details available)",
+                        "type": "object",
+                        "example": []
+                    },
+                    "meta": {
+                        "description": "Additional error metadata",
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "title": "Validation Error Response",
+                "description": "Response returned when there are validation errors in submitted data",
+                "required": [
+                    "success",
+                    "message",
+                    "code",
+                    "errors"
+                ],
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Validation error."
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "VALIDATION_ERROR"
+                    },
+                    "errors": {
+                        "description": "Validation errors organized by field",
+                        "type": "object",
+                        "example": {
+                            "email": [
+                                "The email field is required.",
+                                "The email must be valid."
+                            ],
+                            "password": [
+                                "The password must be at least 8 characters."
+                            ]
+                        }
+                    },
+                    "meta": {
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "RateLimitErrorResponse": {
+                "title": "Rate Limit Exceeded Response",
+                "description": "Response when request rate limit per minute is exceeded",
+                "required": [
+                    "success",
+                    "message",
+                    "code"
+                ],
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Too many attempts. Please try again in 1 minute(s)."
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "TOO_MANY_REQUESTS"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": []
+                    },
+                    "meta": {
+                        "properties": {
+                            "retry_after_seconds": {
+                                "description": "Seconds until you can try again",
+                                "type": "integer",
+                                "example": 60
+                            },
+                            "retry_after": {
+                                "description": "ISO-8601 timestamp of when you can try again",
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-01-04T23:46:00+00:00"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "title": "Pagination Metadata",
+                "description": "Information about result pagination",
+                "properties": {
+                    "current_page": {
+                        "description": "Current page number",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "from": {
+                        "description": "Index of first item on current page (1-based)",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "last_page": {
+                        "description": "Last available page number",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "per_page": {
+                        "description": "Number of items per page",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "to": {
+                        "description": "Index of last item on current page (1-based)",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total": {
+                        "description": "Total number of items across all pages",
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "links": {
+                        "description": "Navigation URLs between pages",
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=10"
+                            },
+                            "prev": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "next": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=2"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "UUID": {
+                "description": "Universally Unique Identifier (UUID version 4)",
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "example": "8796e85c-7e9c-4788-a503-840ede8cf78a"
+            },
+            "Timestamp": {
+                "description": "Date and time in ISO-8601 format (UTC)",
+                "type": "string",
+                "format": "date-time",
+                "example": "2025-01-04T23:30:00.000000Z"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentication and session management endpoints.\n * \n * **Authentication Flow:**\n * 1. **Login:** Obtain `access_token` and `refresh_token`\n * 2. **Usage:** Include `access_token` in the header of all protected requests\n * 3. **Renewal:** Use `refresh_token` when access token expires\n * 4. **Logout:** Revoke current token to end session\n * \n * **Security:**\n * - Rate limiting: 5 login attempts per minute\n * - Tokens are hashed with SHA-512\n * - All actions are logged in audit logs\n * - Support for multiple simultaneous devices",
+            "externalDocs": {
+                "description": "Complete Authentication Guide",
+                "url": "https://docs.company.com/authentication"
+            }
+        }
+    ]
+}

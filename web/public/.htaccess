@@ -1,0 +1,37 @@
+<IfModule mod_headers.c>
+    # Bundle JS/CSS/fontes do Vite (nome com hash de conteúdo, ex: index-BQXDW7TA.js)
+    # podem cachear por muito tempo: a URL muda sozinha a cada build novo, nunca
+    # serve conteúdo desatualizado.
+    <FilesMatch "\.(js|css|woff2?|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # index.html / service worker / manifest: nome de arquivo NUNCA muda entre
+    # deploys — sem isso o navegador pode ficar preso numa versão antiga do app
+    # depois de uma atualização, sem nenhum aviso pro usuário. Sobrescreve a regra
+    # de cima pros arquivos que também terminam em .js (FilesMatch mais específico
+    # vindo depois vence, Header set não é cumulativo).
+    <FilesMatch "^(index\.html|sw\.js|registerSW\.js|workbox-.*\.js|.*\.webmanifest)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    # Favicon/ícones/logo: nome fixo (sem hash), igual index.html/sw.js, mas mudam
+    # raramente — cache curto em vez de no-cache total evita ficarem presos em
+    # cache do navegador por tempo indefinido após uma troca de marca, sem abrir
+    # mão do cache pra visitas repetidas no mesmo dia.
+    <FilesMatch "^(favicon\.ico|favicon-\d+x\d+\.png|apple-touch-icon\.png|android-chrome-\d+x\d+\.png|logo\.(png|svg))$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteBase /
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^ index.html [L]
+</IfModule>

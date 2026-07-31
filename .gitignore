@@ -1,0 +1,43 @@
+# Dump de banco (dado sensível/legado, nunca versionar)
+/dump_base.sql
+*.sql
+
+# --- api/ (Laravel) ---
+/api/vendor
+/api/.env
+/api/.env.backup
+/api/.env.production
+/api/.phpunit.result.cache
+/api/Homestead.json
+/api/Homestead.yaml
+/api/npm-debug.log
+/api/yarn-error.log
+/api/public/hot
+/api/public/storage
+/api/storage/*.key
+/api/storage/pail
+/api/auth.json
+/api/database/database.sqlite
+
+# --- web/ (Vite/React) ---
+/web/node_modules
+/web/dist
+/web/dev-dist
+/web/dist-ssr
+/web/*.local
+/web/.env
+
+# --- site/ (Vite/React, landing institucional maskats.com) ---
+/site/node_modules
+/site/dist
+/site/dist-ssr
+/site/*.local
+/site/.env
+
+# Configurações locais do Claude Code (não versionar)
+.claude/settings.local.json
+
+# Editor / SO
+.DS_Store
+.idea
+*.sw?

@@ -1,0 +1,740 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Empresarial",
+        "description": "API RESTful completa com autenticação JWT, sistema de permissões granular, logs de auditoria e limitação de taxa. Esta API fornece acesso programático a todos os recursos do sistema de gerenciamento empresarial.",
+        "termsOfService": "https://empresa.com.br/termos-de-uso",
+        "contact": {
+            "name": "Equipe de Suporte da API",
+            "url": "https://empresa.com.br/suporte",
+            "email": "suporte-api@empresa.com.br"
+        },
+        "license": {
+            "name": "Proprietário",
+            "url": "https://empresa.com.br/licenca"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Servidor de Desenvolvimento Local"
+        },
+        {
+            "url": "https://api.empresa.com.br",
+            "description": "Servidor de Produção"
+        },
+        {
+            "url": "https://homologacao-api.empresa.com.br",
+            "description": "Servidor de Homologação"
+        }
+    ],
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Realizar login",
+                "description": "Autentica um usuário e retorna tokens de acesso (JWT) e atualização.\n * \n * **Fluxo:**\n * 1. Envie email e senha\n * 2. Receba `access_token` (válido por 15 minutos)\n * 3. Receba `refresh_token` (válido por 30 dias)\n * 4. Use o `access_token` em todas as requisições protegidas\n * \n * **Segurança:**\n * - Rate limiting: máximo 5 tentativas por minuto\n * - Senha é verificada com hash bcrypt\n * - Todas as tentativas (sucesso/falha) são registradas em logs de auditoria\n * - Suporta múltiplos dispositivos simultâneos (cada login gera um novo refresh token)",
+                "operationId": "authLogin",
+                "requestBody": {
+                    "description": "Credenciais de autenticação do usuário",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "Endereço de email do usuário",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@empresa.com.br"
+                                    },
+                                    "password": {
+                                        "description": "Senha do usuário (mínimo 8 caracteres)",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Senha@123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "headers": {
+                            "X-RateLimit-Limit": {
+                                "description": "Número máximo de requisições permitidas",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "X-RateLimit-Remaining": {
+                                "description": "Número de requisições restantes",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 4
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login realizado com sucesso."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "description": "Dados básicos do usuário autenticado",
+                                                    "properties": {
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "8796e85c-7e9c-4788-a503-840ede8cf78a"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "João Silva"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "format": "email",
+                                                            "example": "joao@empresa.com.br"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-01-01T10:00:00.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tokens": {
+                                                    "description": "Tokens de autenticação",
+                                                    "properties": {
+                                                        "access_token": {
+                                                            "description": "Token JWT para autenticação nas requisições (expira em 15 minutos)",
+                                                            "type": "string",
+                                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwMDAvYXBpL3YxL2F1dGgvbG9naW4iLCJpYXQiOjE3Njc1NzE3NTUsImV4cCI6MTc2NzU3MjY1NSwibmJmIjoxNzY3NTcxNzU1LCJqdGkiOiJ4R3JXY1N4MFcxV0xEVGpNIiwic3ViIjoiMSIsInBydiI6ImI5MTI3OTk3OGYxMWFhN2JjNTY3MDQ4N2ZmZjAxZTIyODI1M2ZlNDgiLCJ1dWlkIjoiODc5NmU4NWMtN2U5Yy00Nzg4LWE1MDMtODQwZWRlOGNmNzhhIn0.kQPFRoWXBXXu0uUAZJQvfEuinmWl1vfdXJhbntYvzR0"
+                                                        },
+                                                        "refresh_token": {
+                                                            "description": "Token para renovar o access_token sem fazer login novamente (expira em 30 dias)",
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "87368cbd-d979-46b4-9f92-7e27b5a0a1c2"
+                                                        },
+                                                        "token_type": {
+                                                            "description": "Tipo de token (sempre 'Bearer')",
+                                                            "type": "string",
+                                                            "example": "Bearer"
+                                                        },
+                                                        "expires_in": {
+                                                            "description": "Tempo de expiração do access_token em segundos",
+                                                            "type": "integer",
+                                                            "example": 900
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Credenciais inválidas."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_CREDENTIALS"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Muitas tentativas de login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RateLimitErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Realizar logout",
+                "description": "Revoga o token de acesso atual adicionando-o à blacklist e encerrando a sessão do usuário.\n * \n * **Importante:**\n * - O token atual não poderá mais ser usado após o logout\n * - Outros dispositivos/sessões do mesmo usuário não são afetados\n * - Tokens na blacklist são mantidos até sua data de expiração original\n * - A ação de logout é registrada nos logs de auditoria\n * \n * **Após o logout:**\n * - Use o `refresh_token` salvo anteriormente para obter novo access_token, OU\n * - Faça login novamente com email e senha",
+                "operationId": "authLogout",
+                "responses": {
+                    "200": {
+                        "description": "Logout realizado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout realizado com sucesso."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token não fornecido."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "TOKEN_NOT_PROVIDED"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao processar logout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao processar logout."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "LOGOUT_ERROR"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Renovar token de acesso",
+                "description": "Renova o token de acesso (access_token) usando um refresh_token válido, sem necessidade de fazer login novamente.\n * \n * **Rotação de Tokens:**\n * - O `refresh_token` enviado é REVOGADO após o uso\n * - Um NOVO `refresh_token` é gerado e retornado\n * - Isso previne reutilização de refresh tokens e aumenta a segurança\n * - O novo `access_token` tem validade de 15 minutos\n * - O novo `refresh_token` tem validade de 30 dias\n * \n * **Quando usar:**\n * - Quando o `access_token` expirar (após 15 minutos)\n * - Para manter o usuário logado sem pedir credenciais novamente\n * - Implemente renovação automática no frontend quando receber erro 401 com code TOKEN_EXPIRED\n * \n * **Segurança:**\n * - Rate limiting: máximo 10 tentativas por minuto\n * - Refresh tokens são hasheados com SHA-512 no banco\n * - Validação de IP e User-Agent (opcional, configurável)\n * - Todas as renovações são registradas em logs de auditoria",
+                "operationId": "authRefresh",
+                "requestBody": {
+                    "description": "Refresh token obtido no login",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "description": "Token de atualização recebido no login ou no último refresh",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "87368cbd-d979-46b4-9f92-7e27b5a0a1c2"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token renovado com sucesso",
+                        "headers": {
+                            "X-RateLimit-Limit": {
+                                "description": "Número máximo de requisições permitidas",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 10
+                                }
+                            },
+                            "X-RateLimit-Remaining": {
+                                "description": "Número de requisições restantes",
+                                "schema": {
+                                    "type": "integer",
+                                    "example": 9
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token renovado com sucesso."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "tokens": {
+                                                    "description": "Novos tokens de autenticação",
+                                                    "properties": {
+                                                        "access_token": {
+                                                            "description": "Novo token JWT para autenticação (expira em 15 minutos)",
+                                                            "type": "string",
+                                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                        },
+                                                        "refresh_token": {
+                                                            "description": "Novo refresh token (o anterior foi revogado)",
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "9d2f1c3e-8a7b-4f2e-b9c1-5e8d7f4a2b1c"
+                                                        },
+                                                        "token_type": {
+                                                            "type": "string",
+                                                            "example": "Bearer"
+                                                        },
+                                                        "expires_in": {
+                                                            "description": "Tempo de expiração do novo access_token em segundos",
+                                                            "type": "integer",
+                                                            "example": 900
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Refresh token inválido, expirado ou já usado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token de atualização inválido."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_REFRESH_TOKEN"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": []
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "example": []
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Muitas tentativas de renovação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RateLimitErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SuccessResponse": {
+                "title": "Resposta de Sucesso",
+                "description": "Estrutura padrão de resposta de sucesso da API",
+                "required": [
+                    "success",
+                    "data"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Indica se a requisição foi bem-sucedida",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "description": "Mensagem de sucesso legível para o usuário",
+                        "type": "string",
+                        "example": "Operação concluída com sucesso."
+                    },
+                    "data": {
+                        "description": "Dados da resposta (pode ser objeto, array ou null)"
+                    },
+                    "meta": {
+                        "description": "Metadados adicionais (paginação, timestamps, etc)",
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "title": "Resposta de Erro",
+                "description": "Estrutura padrão de resposta de erro da API",
+                "required": [
+                    "success",
+                    "message",
+                    "code"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Sempre false para respostas de erro",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "description": "Mensagem de erro legível para o usuário",
+                        "type": "string",
+                        "example": "Ocorreu um erro ao processar a requisição."
+                    },
+                    "code": {
+                        "description": "Código de erro único para identificação e tratamento programático",
+                        "type": "string",
+                        "example": "ERROR_CODE"
+                    },
+                    "errors": {
+                        "description": "Detalhes específicos do erro (vazio se não houver detalhes)",
+                        "type": "object",
+                        "example": []
+                    },
+                    "meta": {
+                        "description": "Metadados adicionais do erro",
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "title": "Resposta de Erro de Validação",
+                "description": "Resposta retornada quando há erros de validação nos dados enviados",
+                "required": [
+                    "success",
+                    "message",
+                    "code",
+                    "errors"
+                ],
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Erro de validação."
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "VALIDATION_ERROR"
+                    },
+                    "errors": {
+                        "description": "Erros de validação organizados por campo",
+                        "type": "object",
+                        "example": {
+                            "email": [
+                                "O campo email é obrigatório.",
+                                "O email deve ser válido."
+                            ],
+                            "password": [
+                                "A senha deve ter pelo menos 8 caracteres."
+                            ]
+                        }
+                    },
+                    "meta": {
+                        "type": "object",
+                        "example": []
+                    }
+                },
+                "type": "object"
+            },
+            "RateLimitErrorResponse": {
+                "title": "Resposta de Limite de Taxa Excedido",
+                "description": "Resposta quando o limite de requisições por minuto é excedido",
+                "required": [
+                    "success",
+                    "message",
+                    "code"
+                ],
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Muitas tentativas. Tente novamente em 1 minuto(s)."
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "TOO_MANY_REQUESTS"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": []
+                    },
+                    "meta": {
+                        "properties": {
+                            "retry_after_seconds": {
+                                "description": "Segundos até poder tentar novamente",
+                                "type": "integer",
+                                "example": 60
+                            },
+                            "retry_after": {
+                                "description": "Timestamp ISO-8601 de quando poderá tentar novamente",
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-01-04T23:46:00+00:00"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "title": "Metadados de Paginação",
+                "description": "Informações sobre paginação de resultados",
+                "properties": {
+                    "current_page": {
+                        "description": "Número da página atual",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "from": {
+                        "description": "Índice do primeiro item da página atual (base 1)",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "last_page": {
+                        "description": "Número da última página disponível",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "per_page": {
+                        "description": "Quantidade de itens por página",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "to": {
+                        "description": "Índice do último item da página atual (base 1)",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total": {
+                        "description": "Número total de itens em todas as páginas",
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "links": {
+                        "description": "URLs de navegação entre páginas",
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=10"
+                            },
+                            "prev": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "next": {
+                                "type": "string",
+                                "example": "http://api.com/users?page=2"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "UUID": {
+                "description": "Identificador Único Universal (UUID versão 4)",
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "example": "8796e85c-7e9c-4788-a503-840ede8cf78a"
+            },
+            "Timestamp": {
+                "description": "Data e hora no formato ISO-8601 (UTC)",
+                "type": "string",
+                "format": "date-time",
+                "example": "2025-01-04T23:30:00.000000Z"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Autenticação",
+            "description": "Endpoints de autenticação e gerenciamento de sessão. \n * \n * **Fluxo de Autenticação:**\n * 1. **Login:** Obtenha `access_token` e `refresh_token`\n * 2. **Uso:** Inclua o `access_token` no header de todas as requisições protegidas\n * 3. **Renovação:** Use o `refresh_token` quando o access token expirar\n * 4. **Logout:** Revogue o token atual para encerrar a sessão\n * \n * **Segurança:**\n * - Rate limiting: 5 tentativas de login por minuto\n * - Tokens são hasheados com SHA-512\n * - Todas as ações são registradas em logs de auditoria\n * - Suporte a múltiplos dispositivos simultâneos",
+            "externalDocs": {
+                "description": "Guia Completo de Autenticação",
+                "url": "https://docs.empresa.com.br/autenticacao"
+            }
+        }
+    ]
+}

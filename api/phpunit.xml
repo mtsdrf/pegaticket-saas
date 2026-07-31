@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <!--
+            Fixos só para a suíte de testes (nunca usados em produção — o
+            .env real do servidor nunca é tocado, é excluído até do rsync de
+            deploy). Sem isso, `composer test` depende de um .env já existir
+            com APP_KEY/JWT_SECRET gerados manualmente — verdade em toda
+            máquina de dev (persistida desde o `composer setup` inicial),
+            mas falso num checkout novo do runner de CI, onde não existe
+            nenhum .env antes do primeiro `composer install`. Faltando isso,
+            login/JWT quebra silenciosamente em qualquer teste que autentica
+            (SetsUpTenantScopedUser::baseToken() recebe null), o que só foi
+            descoberto quando o gate de CI (deploy.yml) rodou testes de
+            verdade pela primeira vez.
+        -->
+        <env name="APP_KEY" value="base64:E8wQpjiWUhVr8aJFi56RJc0q0urjsAw+bbeEh6QVXMo="/>
+        <env name="JWT_SECRET" value="fd7c210772c68e7998eab922e9bbe9d0e0e64043b5fbf921a9435b75ad6752c2"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="PAYMENT_PROVIDER" value="manual"/>
+        <env name="MERCADOPAGO_TEST_PAYER_EMAIL" value=""/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

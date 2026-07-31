@@ -1,0 +1,886 @@
+{
+    "info": {
+        "name": "Laravel 12 Base API (v1)",
+        "_postman_id": "7e98a9b2-c1c0-45f7-a16d-5d4df622db45",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Collection para Auth (JWT + Refresh), Users, Groups (sync users/permissions) e Functionalities."
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "{{protocol}}://{{host}}:{{port}}/{{apiPrefix}}"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@admin.com\",\n  \"password\": \"Admin@123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "const json = pm.response.json();",
+                                    "if (json && json.success && json.data) {",
+                                    "  pm.environment.set('accessToken', json.data.access_token || '');",
+                                    "  pm.environment.set('refreshToken', json.data.refresh_token || '');",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/refresh",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "const json = pm.response.json();",
+                                    "if (json && json.success && json.data) {",
+                                    "  pm.environment.set('accessToken', json.data.access_token || '');",
+                                    "  pm.environment.set('refreshToken', json.data.refresh_token || '');",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Users",
+            "item": [
+                {
+                    "name": "List Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users?per_page=15",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "users"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"User Test\",\n  \"email\": \"user.test@example.com\",\n  \"password\": \"User@123456\",\n  \"is_active\": true,\n  \"group_uuids\": []\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 201', function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "const json = pm.response.json();",
+                                    "if (json && json.success && json.data && json.data.uuid) {",
+                                    "  pm.environment.set('userUuid', json.data.uuid);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Show User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/{{userUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "users",
+                                "{{userUuid}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/{{userUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "users",
+                                "{{userUuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"User Test Updated\",\n  \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Delete User (Soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/{{userUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "users",
+                                "{{userUuid}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Groups",
+            "item": [
+                {
+                    "name": "List Groups",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups?per_page=15",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups"
+                            ],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Operadores\",\n  \"slug\": \"operators\",\n  \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 201', function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "const json = pm.response.json();",
+                                    "if (json && json.success && json.data && json.data.uuid) {",
+                                    "  pm.environment.set('groupUuid', json.data.uuid);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Show Group",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups/{{groupUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups",
+                                "{{groupUuid}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Group",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups/{{groupUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups",
+                                "{{groupUuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Operadores Atualizado\",\n  \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Group (Soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups/{{groupUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups",
+                                "{{groupUuid}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Sync Group Users (Soft Sync)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups/{{groupUuid}}/users/sync",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups",
+                                "{{groupUuid}}",
+                                "users",
+                                "sync"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_uuids\": [\"{{userUuid}}\"]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Sync Group Permissions (Soft Sync)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/groups/{{groupUuid}}/permissions/sync",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "groups",
+                                "{{groupUuid}}",
+                                "permissions",
+                                "sync"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"permissions\": [\n    {\n      \"functionality_slug\": \"users\",\n      \"actions\": [\"read\", \"create\", \"update\", \"delete\"]\n    },\n    {\n      \"functionality_slug\": \"groups\",\n      \"actions\": [\"read\", \"create\", \"update\", \"delete\"]\n    },\n    {\n      \"functionality_slug\": \"functionalities\",\n      \"actions\": [\"read\", \"create\", \"update\", \"delete\"]\n    }\n  ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Functionalities",
+            "item": [
+                {
+                    "name": "List Functionalities",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/functionalities?per_page=15",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "functionalities"
+                            ],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Functionality",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/functionalities",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "functionalities"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Orders\",\n  \"slug\": \"orders\",\n  \"description\": \"Orders management\",\n  \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 201', function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "const json = pm.response.json();",
+                                    "if (json && json.success && json.data && json.data.uuid) {",
+                                    "  pm.environment.set('functionalityUuid', json.data.uuid);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Show Functionality",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/functionalities/{{functionalityUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "functionalities",
+                                "{{functionalityUuid}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Functionality",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/functionalities/{{functionalityUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "functionalities",
+                                "{{functionalityUuid}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"description\": \"Orders management (updated)\",\n  \"is_active\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Functionality (Soft)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "{{lang}}"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/functionalities/{{functionalityUuid}}",
+                            "host": [
+                                "{{host}}"
+                            ],
+                            "protocol": "{{protocol}}",
+                            "port": "{{port}}",
+                            "path": [
+                                "{{apiPrefix}}",
+                                "functionalities",
+                                "{{functionalityUuid}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

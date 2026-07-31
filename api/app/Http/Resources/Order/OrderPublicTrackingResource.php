@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Resources\Order;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * Resource dedicado à rota pública GET /rastreio/{order:uuid} (Fase 5.1 do
+ * roadmap — link de acompanhamento sem login enviado por WhatsApp).
+ * Allow-list deliberada: NUNCA reaproveitar OrderResource aqui nem
+ * adicionar campo novo sem confirmação explícita — é rota pública, todo
+ * campo extra é superfície de vazamento. Nunca expor `notes`/
+ * `cancellation_reason` (podem conter observação interna da equipe),
+ * `client.uuid`/`client.phone`, `stock_location`, `created_by/updated_by`
+ * nem uuid de items/installments.
+ */
+class OrderPublicTrackingResource extends JsonResource
+{
+    public function toArray($request): array
+    {
+        return [
+            'uuid' => $this->uuid,
+            'tenant_name' => $this->whenLoaded('tenant', fn() => $this->tenant->name),
+            'client_name' => $this->whenLoaded('client', fn() => $this->client->name),
+            'is_installment' => $this->is_installment,
+            'total_amount' => $this->total_amount,
+            'delivery_fee' => (float) $this->delivery_fee,
+            'discount_amount' => (float) $this->discount_amount,
+            'coupon_code' => $this->whenLoaded('coupon', fn() => $this->coupon?->code),
+            'is_paid' => $this->is_paid,
+            'paid_at' => $this->paid_at,
+            'is_delivered' => $this->is_delivered,
+            'delivered_at' => $this->delivered_at,
+            'is_out_for_delivery' => $this->is_out_for_delivery,
+            'out_for_delivery_at' => $this->out_for_delivery_at,
+            // Fila de aprovação da loja (Delivery Fase 1) — expor cru
+            // (pending_approval|confirmed|rejected) permite o frontend
+            // distinguir "aguardando aprovação"/"recusado" de "em
+            // preparação"; antes só existia is_cancelled (cancelled_at !==
+            // null), que nunca cobria status=rejected (pedido recusado
+            // aparecia pro cliente como "em preparação" — bug real).
+            'status' => $this->status,
+            'expected_delivery_date' => $this->expected_delivery_date,
+            'is_cancelled' => $this->cancelled_at !== null,
+            'created_at' => $this->created_at,
+            'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
+                'product_name' => $item->product->name,
+                'quantity' => $item->quantity,
+                // Não sensível (rótulo de exibição, ex. "un"/"kg") — usado
+                // só pra decidir se a quantidade mostra casas decimais.
+                'unit' => $item->product->unit,
+                'unit_price' => $item->unit_price,
+                'line_total' => $item->line_total,
+                'notes' => $item->notes,
+            ])),
+            'installments' => $this->when(
+                $this->is_installment,
+                fn() => $this->whenLoaded('installments', fn() => $this->installments
+                    ->sortBy('installment_number')
+                    ->values()
+                    ->map(fn($installment) => [
+                        'installment_number' => $installment->installment_number,
+                        'amount' => $installment->amount,
+                        'due_date' => $installment->due_date,
+                        'is_paid' => $installment->is_paid,
+                        'paid_at' => $installment->paid_at,
+                    ])),
+                []
+            ),
+        ];
+    }
+}

@@ -1,0 +1,481 @@
+import MarkEmailUnreadOutlinedIcon from '@mui/icons-material/MarkEmailUnreadOutlined'
+import { Alert, Box, Button, Divider, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import { useEffect, useState, type FormEvent } from 'react'
+import { AvatarUpload } from '../../components/account/AvatarUpload'
+import { PasswordField } from '../../components/form/PasswordField'
+import { PageHeader } from '../../components/layout/PageHeader'
+import { FORM_FIELD_SURFACE_SX } from '../../styles/formFieldStyles'
+import { useUserProfile } from '../../hooks/useUserProfile'
+import { FORM_GRID_2_SX, PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
+import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
+import * as pdvService from '../../services/pdvService'
+import * as profileService from '../../services/profileService'
+import { ApiRequestError, getApiErrorMessage } from '../../types/api'
+import { PASSWORD_POLICY_HINT, generateStrongPassword } from '../../utils/password'
+
+const SECTION_SX = {
+  p: { xs: 2, sm: 3 },
+  ...ELEVATED_SURFACE_SX,
+  ...FORM_FIELD_SURFACE_SX,
+} as const
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Typography
+        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 18, sm: 20 }, fontWeight: 700, color: 'var(--mk-text)' }}
+      >
+        {title}
+      </Typography>
+      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mt: 0.25 }}>{subtitle}</Typography>
+    </Box>
+  )
+}
+
+function BasicDataSection() {
+  const { profile, setProfile } = useUserProfile()
+  const [name, setName] = useState(profile?.name ?? '')
+  const [phone, setPhone] = useState(profile?.phone ?? '')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name)
+      setPhone(profile.phone ?? '')
+    }
+  }, [profile])
+
+  if (!profile) return null
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+    setSuccessMessage(null)
+    setFieldErrors({})
+    setIsSubmitting(true)
+
+    try {
+      const updated = await profileService.updateProfile(
+        { name: name.trim(), phone: phone.trim() || null },
+        avatarFile,
+      )
+      setProfile(updated)
+      setAvatarFile(null)
+      setSuccessMessage('Dados atualizados com sucesso.')
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, 'Não foi possível salvar seus dados agora.'))
+      if (error instanceof ApiRequestError) {
+        setFieldErrors(error.errors)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={SECTION_SX}>
+      <SectionTitle title="Dados básicos" subtitle="Seu nome, telefone e sua foto de perfil." />
+
+      <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 2.5 }}>
+            {formError}
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
+
+        <Stack spacing={2.5}>
+          <AvatarUpload name={profile.name} existingAvatarUrl={profile.avatar_url} onFileSelected={setAvatarFile} />
+
+          <TextField
+            label="Nome"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            error={Boolean(fieldErrors.name)}
+            helperText={fieldErrors.name?.[0]}
+            required
+            sx={{ maxWidth: { sm: 400 } }}
+            slotProps={{ htmlInput: { maxLength: 255 } }}
+          />
+
+          <TextField
+            label="Telefone"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            error={Boolean(fieldErrors.phone)}
+            helperText={fieldErrors.phone?.[0] ?? 'Usado como dado de contato da cobrança da assinatura.'}
+            placeholder="(11) 91234-5678"
+            autoComplete="tel"
+            sx={{ maxWidth: { sm: 400 } }}
+            slotProps={{ htmlInput: { maxLength: 30 } }}
+          />
+        </Stack>
+
+        <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ minWidth: 140 }}>
+            {isSubmitting ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
+  )
+}
+
+function EmailSection() {
+  const { profile, refresh } = useUserProfile()
+  const [newEmail, setNewEmail] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (!profile) return null
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+    setSuccessMessage(null)
+    setFieldErrors({})
+    setIsSubmitting(true)
+
+    try {
+      await profileService.requestEmailChange({ new_email: newEmail.trim(), current_password: currentPassword })
+      setSuccessMessage(
+        `Enviamos um link de confirmação para ${newEmail.trim()}. O e-mail só será alterado depois que você confirmar pelo link.`,
+      )
+      setNewEmail('')
+      setCurrentPassword('')
+      await refresh()
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, 'Não foi possível solicitar a troca de e-mail agora.'))
+      if (error instanceof ApiRequestError) {
+        setFieldErrors(error.errors)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={SECTION_SX}>
+      <SectionTitle title="E-mail" subtitle="E-mail usado para entrar no Maskats." />
+
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: profile.pending_email ? 1.5 : 2.5 }}>
+        <Typography sx={{ fontSize: 14.5, color: 'var(--mk-text)' }}>{profile.email}</Typography>
+      </Stack>
+
+      {profile.pending_email && (
+        <Alert
+          severity="warning"
+          icon={<MarkEmailUnreadOutlinedIcon fontSize="inherit" />}
+          sx={{ mb: 2.5 }}
+        >
+          Confirmação pendente para <strong>{profile.pending_email}</strong> — verifique sua caixa de entrada para
+          concluir a troca.
+        </Alert>
+      )}
+
+      <Divider sx={{ mb: 2.5 }} />
+
+      <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'var(--mk-text)', mb: 1.5 }}>
+        Trocar e-mail de acesso
+      </Typography>
+
+      <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 2.5 }}>
+            {formError}
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
+
+        <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, maxWidth: { sm: 560 } }}>
+          <TextField
+            label="Novo e-mail"
+            type="email"
+            value={newEmail}
+            onChange={(event) => setNewEmail(event.target.value)}
+            error={Boolean(fieldErrors.new_email)}
+            helperText={fieldErrors.new_email?.[0]}
+            required
+            autoComplete="email"
+            slotProps={{ htmlInput: { maxLength: 255 } }}
+          />
+          <PasswordField
+            label="Senha atual"
+            value={currentPassword}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            error={Boolean(fieldErrors.current_password)}
+            helperText={fieldErrors.current_password?.[0]}
+            required
+            autoComplete="current-password"
+          />
+        </Box>
+
+        <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ minWidth: 180 }}>
+            {isSubmitting ? 'Enviando…' : 'Solicitar troca de e-mail'}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
+  )
+}
+
+const EMPTY_PASSWORD_FORM = { current_password: '', new_password: '', new_password_confirmation: '' }
+
+function PasswordSection() {
+  const [form, setForm] = useState(EMPTY_PASSWORD_FORM)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function handleGeneratePassword() {
+    const generated = generateStrongPassword()
+    setForm((current) => ({ ...current, new_password: generated, new_password_confirmation: generated }))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+    setSuccessMessage(null)
+    setFieldErrors({})
+
+    if (form.new_password !== form.new_password_confirmation) {
+      setFieldErrors({ new_password_confirmation: ['A confirmação não corresponde à nova senha.'] })
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await profileService.changePassword(form)
+      setSuccessMessage('Senha alterada com sucesso.')
+      setForm(EMPTY_PASSWORD_FORM)
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, 'Não foi possível alterar sua senha agora.'))
+      if (error instanceof ApiRequestError) {
+        setFieldErrors(error.errors)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={SECTION_SX}>
+      <SectionTitle title="Senha" subtitle="Use uma senha forte que você não utiliza em outro lugar." />
+
+      <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 2.5 }}>
+            {formError}
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
+
+        <Stack spacing={2} sx={{ maxWidth: { sm: 400 } }}>
+          <PasswordField
+            label="Senha atual"
+            value={form.current_password}
+            onChange={(event) => updateField('current_password', event.target.value)}
+            error={Boolean(fieldErrors.current_password)}
+            helperText={fieldErrors.current_password?.[0]}
+            required
+            autoComplete="current-password"
+          />
+          <PasswordField
+            label="Nova senha"
+            value={form.new_password}
+            onChange={(event) => updateField('new_password', event.target.value)}
+            onGenerate={handleGeneratePassword}
+            error={Boolean(fieldErrors.new_password)}
+            helperText={fieldErrors.new_password?.[0] ?? PASSWORD_POLICY_HINT}
+            required
+            autoComplete="new-password"
+            slotProps={{ htmlInput: { maxLength: 255, minLength: 12 } }}
+          />
+          <PasswordField
+            label="Confirmar nova senha"
+            value={form.new_password_confirmation}
+            onChange={(event) => updateField('new_password_confirmation', event.target.value)}
+            error={Boolean(fieldErrors.new_password_confirmation)}
+            helperText={fieldErrors.new_password_confirmation?.[0]}
+            required
+            autoComplete="new-password"
+          />
+        </Stack>
+
+        <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ minWidth: 140 }}>
+            {isSubmitting ? 'Salvando…' : 'Alterar senha'}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
+  )
+}
+
+const EMPTY_PIN_FORM = { pin: '', pin_confirmation: '' }
+
+/**
+ * PIN de operador do PDV/Balcão (roadmap A4, item 15) — cadastro/troca do
+ * próprio operador, no tenant ativo (`PUT /pdv/operator-pin`). Não é senha de
+ * login: é a 2ª camada de identificação usada só dentro do terminal, por isso
+ * fica na área de auto-serviço, sem exigir permissão dedicada (qualquer
+ * usuário logado pode ter seu próprio PIN, mesmo que ainda não use PDV/Balcão).
+ */
+function OperatorPinSection() {
+  const [form, setForm] = useState(EMPTY_PIN_FORM)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((current) => ({ ...current, [key]: value.replace(/\D/g, '').slice(0, 6) }))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+    setSuccessMessage(null)
+    setFieldErrors({})
+
+    if (form.pin.length < 4) {
+      setFieldErrors({ pin: ['O PIN deve ter de 4 a 6 dígitos.'] })
+      return
+    }
+    if (form.pin !== form.pin_confirmation) {
+      setFieldErrors({ pin_confirmation: ['A confirmação não corresponde ao PIN informado.'] })
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await pdvService.setOperatorPin({ pin: form.pin })
+      setSuccessMessage('PIN salvo com sucesso.')
+      setForm(EMPTY_PIN_FORM)
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'INVALID_PIN') {
+        setFieldErrors({ pin: [error.message] })
+      } else {
+        setFormError(getApiErrorMessage(error, 'Não foi possível salvar o PIN agora.'))
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={SECTION_SX}>
+      <SectionTitle
+        title="PIN de operador (PDV/Balcão)"
+        subtitle="4 a 6 dígitos usados para se identificar rapidamente ao vender no PDV ou no Balcão da empresa atual."
+      />
+
+      <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 2.5 }}>
+            {formError}
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
+
+        <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, maxWidth: { sm: 400 } }}>
+          <TextField
+            label="Novo PIN"
+            value={form.pin}
+            onChange={(event) => updateField('pin', event.target.value)}
+            error={Boolean(fieldErrors.pin)}
+            helperText={fieldErrors.pin?.[0] ?? 'Só números, 4 a 6 dígitos.'}
+            required
+            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 4 } } }}
+          />
+          <TextField
+            label="Confirmar PIN"
+            value={form.pin_confirmation}
+            onChange={(event) => updateField('pin_confirmation', event.target.value)}
+            error={Boolean(fieldErrors.pin_confirmation)}
+            helperText={fieldErrors.pin_confirmation?.[0]}
+            required
+            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 4 } } }}
+          />
+        </Box>
+
+        <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ minWidth: 140 }}>
+            {isSubmitting ? 'Salvando…' : 'Salvar PIN'}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
+  )
+}
+
+/** Auto-serviço: qualquer usuário logado edita o próprio perfil, sem exigir permissão (`ProtectedRoute`, sem `PermissionRoute`). */
+export function MyAccountPage() {
+  const { profile, isLoading, error, refresh } = useUserProfile()
+
+  return (
+    <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: { xs: '100%', sm: 900, lg: 1100 } }}>
+      <PageHeader title="Meus dados" subtitle="Gerencie suas informações de acesso ao Maskats." />
+
+      {error && !profile && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2.5 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => void refresh()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+
+      {isLoading && !profile ? (
+        <Stack spacing={3}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} variant="rounded" height={180} />
+          ))}
+        </Stack>
+      ) : (
+        profile && (
+          <Stack spacing={3}>
+            <BasicDataSection />
+            <EmailSection />
+            <PasswordSection />
+            <OperatorPinSection />
+          </Stack>
+        )
+      )}
+    </Box>
+  )
+}

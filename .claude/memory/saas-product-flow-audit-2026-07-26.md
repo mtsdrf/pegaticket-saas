@@ -1,0 +1,84 @@
+---
+name: saas-product-flow-audit-2026-07-26
+description: Auditoria completa do fluxo SaaS do Maskats realizada em 26 de julho de 2026.
+metadata:
+  type: project
+---
+
+# Auditoria do fluxo SaaS em 2026-07-26
+
+- Foi executada uma auditoria completa do fluxo SaaS do Maskats sem alteração de código, usando o agente `product-flow-orchestrator` como referência metodológica.
+- O mapeamento percorreu:
+  - agentes disponíveis em `.claude/agents/`
+  - documentação em `docs/`
+  - memória do projeto em `.claude/memory/`
+  - frontend React em `web/src/`
+  - backend Laravel em `api/app/`, `api/routes/` e `api/tests/`
+  - rotas reais via `php artisan route:list --path=api/v1 --except-vendor`
+- Inventário observado no momento da auditoria:
+  - `168` migrations
+  - `378` rotas `api/v1`
+  - `145` páginas React
+  - `102` componentes React
+  - `155` arquivos de teste em `api/tests`
+- O sistema atual já cobre domínios maduros de:
+  - autenticação
+  - multi-tenancy
+  - RBAC híbrido global + empresa
+  - clientes, produtos, estoque e pedidos
+  - loja online e portal do cliente
+  - PDV e balcão com offline controlado
+  - assinatura SaaS e billing
+  - fiscal interno/manual
+  - LGPD operacional
+  - marketplace/iFood
+  - suporte, contabilidade e treinamento
+- Conclusão principal da auditoria:
+  - o maior gap do produto não é falta de módulo
+  - o maior gap é a fragmentação da operação em trilhas paralelas de pedido:
+    - pedido interno
+    - pedido da loja
+    - pedido do PDV
+    - pedido do balcão
+    - pedido do iFood
+  - todas convergem parcialmente para `Order`, mas a experiência operacional ainda não converge para uma esteira única
+- Comparação funcional com a referência pública do Anota AI:
+  - o Maskats já possui fundações técnicas mais profundas em várias áreas
+  - o concorrente parece mais simples na narrativa operacional
+  - a lição prática não é copiar UI, e sim unificar a experiência do pedido ponta a ponta
+- Proposta arquitetural e de produto registrada:
+  - unificar a navegação principal por esteira operacional, não por origem do pedido
+  - tratar origem apenas como atributo/filtro do pedido
+  - criar ou consolidar quatro camadas centrais:
+    - central operacional de pedidos
+    - central de produção
+    - central de expedição
+    - central de entregas
+  - reforçar um fluxo guiado de implantação inicial da empresa
+- Backlog prioritário derivado da auditoria:
+  - `P0`
+    - transformar `Pedidos` em central operacional multi-origem
+    - explicitar produção
+    - explicitar expedição
+    - criar implantação guiada da empresa
+    - consolidar linguagem de status e transições
+  - `P1`
+    - reposicionar `Pedidos da loja` e `Pedidos iFood` como visões especializadas da mesma operação
+    - integrar melhor balcão/KDS com a esteira canônica
+    - criar painel de saúde operacional de integrações e conflitos offline
+  - `P2`
+    - painel dedicado de entregador/despacho
+    - reforço do self-service da empresa
+    - evolução fiscal oficial
+    - novos parceiros de delivery
+- Distribuição recomendada entre agentes:
+  - `software-architect-specialist`: arquitetura da esteira e transições
+  - `backend-laravel`: APIs canônicas da operação
+  - `frontend-react`: central operacional, produção, expedição e implantação
+  - `delivery-integration-specialist`: acoplamento com iFood e futuros parceiros
+  - `payment-integration-specialist`: alinhamento de estados financeiros
+  - `fiscal-document-specialist`: acoplamento entre pedido e fiscal
+  - `security-specialist`: revisão de permissão por transição
+  - `qa-testing-master`: estratégia de testes ponta a ponta
+  - `ui-ux-master`: simplificação da jornada principal
+- O documento-base da auditoria foi salvo em [docs/roadmap/2026-07-26-saas-product-flow-audit.md](/home/mtsdrf/workspace/maskats-saas/docs/roadmap/2026-07-26-saas-product-flow-audit.md).

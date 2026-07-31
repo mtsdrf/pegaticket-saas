@@ -1,0 +1,27 @@
+<IfModule mod_headers.c>
+    # Bundle JS/CSS/fontes do Vite (nome com hash de conteúdo) podem cachear
+    # por muito tempo: a URL muda sozinha a cada build novo.
+    <FilesMatch "\.(js|css|woff2?|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # HTML de cada página (nome fixo, sem hash): nunca cachear, pra não
+    # prender o visitante numa versão antiga do site depois de um deploy.
+    <FilesMatch "\.html$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    <FilesMatch "^(favicon\.ico|favicon-\d+x\d+\.png|apple-touch-icon\.png|logo\.(png|svg))$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteBase /
+
+    # Site multi-página (sem SPA router — ver vite.config.ts): cada URL
+    # pública mapeia pro .html gerado pelo build com o mesmo nome.
+    RewriteRule ^precos/?$ precos.html [L]
+</IfModule>

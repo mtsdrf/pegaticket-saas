@@ -1,0 +1,372 @@
+name: Deploy para produção
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    # Hostinger bloqueia conexão SSH vinda do IP dinâmico do runner
+    # hospedado pelo GitHub (confirmado: teste manual do mesmo host/porta
+    # funciona, ssh-keyscan do runner do GitHub trava até timeout sem
+    # resposta — bloqueio de firewall por origem de IP de datacenter/nuvem,
+    # não problema de credencial). Runner próprio roda numa máquina com IP
+    # que a Hostinger já aceita (a mesma de onde o SSH manual já funciona).
+    # Setup do runner: ver docs/self-hosted-runner-setup.md.
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Backend: build local (composer install) no runner, não no servidor —
+      # evita depender de composer/versão de PHP do shared hosting pra
+      # instalar dependências, mesmo padrão que o deploy manual já usava.
+      # PHP/Composer já vêm pré-instalados nesta máquina (runner
+      # self-hosted) — não usar shivammathur/setup-php aqui: no fallback
+      # não-Ubuntu ele tenta instalar/gerenciar via sudo, e o serviço do
+      # runner roda sem TTY/sessão interativa (systemd), então o sudo
+      # nunca consegue autenticar (nem por senha nem por digital) e o job
+      # trava/falha nesse passo. Só confirmar que a versão certa está no
+      # PATH.
+      - name: Verificar PHP disponível no runner
+        run: php -v
+
+      # Um checkout novo do runner não traz .env (gitignored) — Dotenv tenta
+      # ler o arquivo mesmo assim e, faltando, isso vira warning->exception
+      # em cascata em boa parte da suíte (login/JWT quebra silenciosamente:
+      # SetsUpTenantScopedUser::baseToken() recebe null). phpunit.xml já
+      # define APP_KEY/JWT_SECRET fixos de teste via <env>, então o arquivo
+      # só precisa EXISTIR (pode ficar vazio) para o bootstrap não falhar.
+      # Só descoberto porque este é o primeiro deploy em que o gate de
+      # testes roda de verdade no runner — nunca dava pra ver isso rodando
+      # só localmente, onde o .env já existe desde o `composer setup`
+      # inicial.
+      - name: Garantir .env para o bootstrap dos testes (api/)
+        working-directory: api
+        run: touch .env
+
+      # Instala COM dev deps primeiro para poder rodar a suíte de testes
+      # (phpunit é dev dependency). O gate de testes abaixo precisa passar
+      # antes de qualquer rsync/deploy — se um teste falhar, o job inteiro
+      # falha aqui e nada é publicado no servidor.
+      - name: Composer install com dev (para testes)
+        working-directory: api
+        run: composer install --optimize-autoloader --no-interaction
+
+      # Gate de CI: roda a suíte completa antes de deployar. Usa o driver de
+      # banco de teste padrão do projeto (sqlite em memória via phpunit.xml),
+      # sem tocar no banco de produção. Falha do job aqui aborta o deploy.
+      - name: Rodar testes (api/)
+        working-directory: api
+        run: composer test
+
+      # Reinstala SEM dev deps para o artefato que vai pro servidor
+      # (produção nunca precisa de phpunit/faker/etc.).
+      - name: Composer install (api/)
+        working-directory: api
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      # Frontend: build no runner, gera web/dist/ pronto pra publicar.
+      # VITE_* vêm de Secrets/Variables do repo, nunca ficam hardcoded aqui
+      # nem em web/.env.production (que não é versionado).
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            site/package-lock.json
+
+      - name: npm ci (web/)
+        working-directory: web
+        run: npm ci
+
+      - name: Lint web (web/)
+        working-directory: web
+        run: npm run lint
+
+      - name: Build web (web/)
+        working-directory: web
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
+        run: npm run build
+
+      - name: Instalar Chromium do Playwright (web/)
+        working-directory: web
+        run: npx playwright install chromium
+
+      - name: Rodar E2E do frontend (web/)
+        working-directory: web
+        env:
+          CI: '1'
+        run: npm run test:e2e
+
+      # Site institucional/landing (site/): mesmo padrão de build do web/,
+      # publicado à parte em site.maskats.com (subdomínio próprio, sem
+      # autenticação). VITE_APP_URL é a URL pública do app principal (não é
+      # segredo — é só o link do CTA "Entrar no painel"), mas é obrigatória
+      # no GitHub Actions para manter o deploy explícito e sem fallback
+      # silencioso.
+      - name: npm ci (site/)
+        working-directory: site
+        run: npm ci
+
+      - name: Build site (site/)
+        working-directory: site
+        env:
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+        run: npm run build
+
+      # SSH: chave dedicada ao deploy (não a pessoal do usuário), pública
+      # cadastrada em ~/.ssh/authorized_keys no servidor Hostinger.
+      - name: Configurar SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+
+      - name: Preparar confiança SSH do deploy
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/known_hosts
+
+          if ssh-keyscan -T 15 -p "$DEPLOY_SSH_PORT" -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key adicionada ao known_hosts via ssh-keyscan."
+          else
+            echo "ssh-keyscan indisponível para $DEPLOY_SSH_HOST:$DEPLOY_SSH_PORT; usando StrictHostKeyChecking=accept-new como fallback controlado."
+          fi
+
+      - name: Pré-validação de conectividade SSH
+        env:
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: |
+          if timeout 10 bash -c "</dev/tcp/$DEPLOY_SSH_HOST/$DEPLOY_SSH_PORT" 2>/dev/null; then
+            echo "Conectividade TCP com $DEPLOY_SSH_HOST:$DEPLOY_SSH_PORT confirmada."
+          else
+            echo "::error::SSH recusado ou indisponível em $DEPLOY_SSH_HOST:$DEPLOY_SSH_PORT. Verifique DEPLOY_SSH_HOST, DEPLOY_SSH_PORT, se o SSH da hospedagem está ativo no hPanel e se a origem do runner está permitida pelo firewall/provedor."
+            exit 1
+          fi
+
+      # --delete espelha o servidor com o repo (remove arquivo órfão de algo
+      # deletado), mas os --exclude protegem o .env real de produção e os
+      # diretórios graváveis em runtime (logs, cache/sessions/views do
+      # framework) — nunca sobrescritos nem apagados pelo deploy. Exclude é
+      # só '.env' (exato) — um padrão '.env.*' também bloquearia
+      # '.env.example', que precisa chegar no servidor pro passo de
+      # sincronização de variáveis (abaixo) funcionar.
+      - name: Deploy API via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude='.env' \
+            --exclude='storage/logs/**' \
+            --exclude='storage/framework/**' \
+            --exclude='tests/' \
+            --exclude='.git/' \
+            -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            api/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_API_PATH }}/"
+
+      # --delete aqui é seguro e desejado: a estratégia de cache do
+      # index.html/Service Worker (web/public/.htaccess + reload automático
+      # em web/src/main.tsx) já assume que chunk antigo pode sumir do
+      # servidor a qualquer deploy.
+      - name: Deploy Web via rsync
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            web/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/"
+
+      # Publica site/dist/ no subdomínio site.maskats.com — path apontado
+      # por DEPLOY_SITE_PATH precisa ser criado manualmente uma vez (hPanel
+      # Hostinger, document root do subdomínio), mesmo padrão dos outros 2
+      # secrets de path (nenhuma config de vhost é versionada no repo, ver
+      # docs/hostinger-shared-deploy.md).
+      - name: Deploy Site via rsync
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            site/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_SITE_PATH }}/"
+
+      # .env.example nunca tem valor real de segredo (só nome de chave +
+      # placeholder vazio/default público, disciplina já seguida no
+      # projeto) — sincronizar SÓ ADICIONA ao .env de produção as chaves
+      # que ainda não existem lá, nunca sobrescreve uma chave já
+      # configurada. Uma variável sensível nova entra vazia (o app trata
+      # como não configurada até alguém preencher o valor real via SSH);
+      # nenhum segredo passa pelo Git/Actions nesse processo.
+      - name: Sincronizar variáveis novas no .env de produção
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            cd "${{ secrets.DEPLOY_API_PATH }}"
+            touch .env
+            while IFS= read -r line; do
+              case "$line" in
+                ''|'#'*) continue ;;
+              esac
+              key="${line%%=*}"
+              if ! grep -q "^${key}=" .env; then
+                echo "$line" >> .env
+                echo "Nova variável adicionada ao .env: $key"
+              fi
+            done < .env.example
+
+      # Valores sensíveis do backend não devem depender de edição manual no
+      # servidor a cada deploy. Este passo faz upsert só das variáveis
+      # publicadas no GitHub Secrets e ignora qualquer valor vazio para não
+      # apagar uma configuração válida já existente.
+      - name: Aplicar secrets do backend no .env de produção
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          PAYMENT_PROVIDER: ${{ secrets.PAYMENT_PROVIDER }}
+          R2_ENABLED: ${{ secrets.R2_ENABLED }}
+          MEDIA_AVATARS_DISK: ${{ secrets.MEDIA_AVATARS_DISK }}
+          MEDIA_PRODUCTS_DISK: ${{ secrets.MEDIA_PRODUCTS_DISK }}
+          MEDIA_TENANTS_DISK: ${{ secrets.MEDIA_TENANTS_DISK }}
+          MEDIA_USE_DIRECT_PUBLIC_URLS: ${{ secrets.MEDIA_USE_DIRECT_PUBLIC_URLS }}
+          MEDIA_PUBLIC_CACHE_SECONDS: ${{ secrets.MEDIA_PUBLIC_CACHE_SECONDS }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_AVATARS: ${{ secrets.R2_BUCKET_AVATARS }}
+          R2_BUCKET_PRODUCTS: ${{ secrets.R2_BUCKET_PRODUCTS }}
+          R2_BUCKET_TENANTS: ${{ secrets.R2_BUCKET_TENANTS }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_REGION: ${{ secrets.R2_REGION }}
+          R2_USE_PATH_STYLE_ENDPOINT: ${{ secrets.R2_USE_PATH_STYLE_ENDPOINT }}
+          # FRONTEND_URL é obrigatório no Actions: preapproval/order do
+          # Mercado Pago rejeita back_url apontando pra localhost (achado
+          # real em 2026-07-24), então o deploy não deve mascarar ausência
+          # dessa variável com fallback silencioso.
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          MERCADOPAGO_ENVIRONMENT: ${{ secrets.MERCADOPAGO_ENVIRONMENT }}
+          MERCADOPAGO_ACCESS_TOKEN_TEST: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN_TEST }}
+          MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.MERCADOPAGO_PUBLIC_KEY_TEST }}
+          MERCADOPAGO_TEST_PAYER_EMAIL: ${{ secrets.MERCADOPAGO_TEST_PAYER_EMAIL }}
+          MERCADOPAGO_ACCESS_TOKEN_PROD: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN_PROD }}
+          MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.MERCADOPAGO_PUBLIC_KEY_PROD }}
+          MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          envs: PAYMENT_PROVIDER,R2_ENABLED,MEDIA_AVATARS_DISK,MEDIA_PRODUCTS_DISK,MEDIA_TENANTS_DISK,MEDIA_USE_DIRECT_PUBLIC_URLS,MEDIA_PUBLIC_CACHE_SECONDS,R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET_AVATARS,R2_BUCKET_PRODUCTS,R2_BUCKET_TENANTS,R2_ENDPOINT,R2_REGION,R2_USE_PATH_STYLE_ENDPOINT,FRONTEND_URL,MERCADOPAGO_ENVIRONMENT,MERCADOPAGO_ACCESS_TOKEN_TEST,MERCADOPAGO_PUBLIC_KEY_TEST,MERCADOPAGO_TEST_PAYER_EMAIL,MERCADOPAGO_ACCESS_TOKEN_PROD,MERCADOPAGO_PUBLIC_KEY_PROD,MERCADOPAGO_WEBHOOK_SECRET
+          script: |
+            cd "${{ secrets.DEPLOY_API_PATH }}"
+            /opt/alt/php85/usr/bin/php <<'PHP'
+            <?php
+            $envFile = '.env';
+            $content = file_exists($envFile) ? file_get_contents($envFile) : '';
+
+            if ($content === false) {
+                fwrite(STDERR, "Não foi possível ler o arquivo .env\n");
+                exit(1);
+            }
+
+            $variables = [
+                'PAYMENT_PROVIDER' => getenv('PAYMENT_PROVIDER') ?: null,
+                'R2_ENABLED' => getenv('R2_ENABLED') ?: null,
+                'MEDIA_AVATARS_DISK' => getenv('MEDIA_AVATARS_DISK') ?: null,
+                'MEDIA_PRODUCTS_DISK' => getenv('MEDIA_PRODUCTS_DISK') ?: null,
+                'MEDIA_TENANTS_DISK' => getenv('MEDIA_TENANTS_DISK') ?: null,
+                'MEDIA_USE_DIRECT_PUBLIC_URLS' => getenv('MEDIA_USE_DIRECT_PUBLIC_URLS') ?: null,
+                'MEDIA_PUBLIC_CACHE_SECONDS' => getenv('MEDIA_PUBLIC_CACHE_SECONDS') ?: null,
+                'R2_ACCOUNT_ID' => getenv('R2_ACCOUNT_ID') ?: null,
+                'R2_ACCESS_KEY_ID' => getenv('R2_ACCESS_KEY_ID') ?: null,
+                'R2_SECRET_ACCESS_KEY' => getenv('R2_SECRET_ACCESS_KEY') ?: null,
+                'R2_BUCKET_AVATARS' => getenv('R2_BUCKET_AVATARS') ?: null,
+                'R2_BUCKET_PRODUCTS' => getenv('R2_BUCKET_PRODUCTS') ?: null,
+                'R2_BUCKET_TENANTS' => getenv('R2_BUCKET_TENANTS') ?: null,
+                'R2_ENDPOINT' => getenv('R2_ENDPOINT') ?: null,
+                'R2_REGION' => getenv('R2_REGION') ?: null,
+                'R2_USE_PATH_STYLE_ENDPOINT' => getenv('R2_USE_PATH_STYLE_ENDPOINT') ?: null,
+                'FRONTEND_URL' => getenv('FRONTEND_URL') ?: null,
+                'MERCADOPAGO_ENVIRONMENT' => getenv('MERCADOPAGO_ENVIRONMENT') ?: null,
+                'MERCADOPAGO_ACCESS_TOKEN_TEST' => getenv('MERCADOPAGO_ACCESS_TOKEN_TEST') ?: null,
+                'MERCADOPAGO_PUBLIC_KEY_TEST' => getenv('MERCADOPAGO_PUBLIC_KEY_TEST') ?: null,
+                'MERCADOPAGO_TEST_PAYER_EMAIL' => getenv('MERCADOPAGO_TEST_PAYER_EMAIL') ?: null,
+                'MERCADOPAGO_ACCESS_TOKEN_PROD' => getenv('MERCADOPAGO_ACCESS_TOKEN_PROD') ?: null,
+                'MERCADOPAGO_PUBLIC_KEY_PROD' => getenv('MERCADOPAGO_PUBLIC_KEY_PROD') ?: null,
+                'MERCADOPAGO_WEBHOOK_SECRET' => getenv('MERCADOPAGO_WEBHOOK_SECRET') ?: null,
+            ];
+
+            foreach ($variables as $key => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $replacement = $key . '=' . $value;
+                $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+
+                if (preg_match($pattern, $content) === 1) {
+                    $content = preg_replace($pattern, $replacement, $content, 1);
+                    echo "Secret atualizado no .env: {$key}\n";
+                    continue;
+                }
+
+                $content = rtrim($content, "\n") . "\n" . $replacement . "\n";
+                echo "Secret adicionado ao .env: {$key}\n";
+            }
+
+            file_put_contents($envFile, $content);
+            PHP
+
+      # Só migrate + optimize. Sem db:seed --force (é bootstrap inicial
+      # único, não passo de deploy contínuo) e sem storage:link (obsoleto —
+      # uploads são BLOB no banco, e symlink() está desabilitado no PHP da
+      # Hostinger, esse comando falharia).
+      - name: Rodar migrations e otimizar (via SSH)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            cd "${{ secrets.DEPLOY_API_PATH }}"
+            # storage/framework/** é excluído do rsync (conteúdo é runtime,
+            # SESSION_DRIVER/CACHE_STORE=database não dependem dele), então
+            # as subpastas nunca chegam sozinhas via rsync — sem isso,
+            # 'optimize' falha em view:cache com "View path not found"
+            # (view.compiled = realpath() de um diretório inexistente).
+            mkdir -p storage/framework/{sessions,views,cache/data} bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+            /opt/alt/php85/usr/bin/php artisan migrate --force
+            /opt/alt/php85/usr/bin/php artisan optimize
+
+      - name: Smoke público pós-deploy (web/)
+        working-directory: web
+        env:
+          CI: '1'
+          PLAYWRIGHT_BASE_URL: ${{ secrets.FRONTEND_URL }}
+        run: npm run test:e2e:smoke -- --grep "carrega a tela de login"
+
+      - name: Smoke autenticado pós-deploy (web/)
+        if: ${{ env.FRONTEND_URL != '' && env.SMOKE_LOGIN_EMAIL != '' && env.SMOKE_LOGIN_PASSWORD != '' }}
+        working-directory: web
+        env:
+          CI: '1'
+          PLAYWRIGHT_BASE_URL: ${{ secrets.FRONTEND_URL }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          SMOKE_LOGIN_EMAIL: ${{ secrets.SMOKE_LOGIN_EMAIL }}
+          SMOKE_LOGIN_PASSWORD: ${{ secrets.SMOKE_LOGIN_PASSWORD }}
+        run: npm run test:e2e:smoke:auth

@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Http\Requests\Auth;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
+
+class AcceptTenantUserInviteRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'token' => ['required', 'string'],
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return __('messages.validation.messages');
+    }
+}

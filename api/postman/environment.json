@@ -1,0 +1,23 @@
+
+{
+  "id": "b3fefc6c-8cdd-4f2a-9c51-8e01d7f7d5c1",
+  "name": "Laravel 12 Base - Local",
+  "values": [
+    { "key": "protocol", "value": "http", "enabled": true },
+    { "key": "host", "value": "localhost", "enabled": true },
+    { "key": "port", "value": "8000", "enabled": true },
+    { "key": "apiPrefix", "value": "api/v1", "enabled": true },
+
+    { "key": "lang", "value": "pt_BR", "enabled": true },
+
+    { "key": "accessToken", "value": "", "enabled": true },
+    { "key": "refreshToken", "value": "", "enabled": true },
+
+    { "key": "userUuid", "value": "", "enabled": true },
+    { "key": "groupUuid", "value": "", "enabled": true },
+    { "key": "functionalityUuid", "value": "", "enabled": true }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_using": "Postman/10",
+  "_postman_exported_at": "2026-01-03T21:38:40.000Z"
+}
