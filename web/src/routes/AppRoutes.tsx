@@ -143,6 +143,15 @@ const SettingsBlockPage = lazy(() =>
 const SubscriptionPage = lazy(() =>
   import('../pages/Settings/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })),
 )
+const TaxRulesPage = lazy(() =>
+  import('../pages/Fiscal/TaxRulesPage').then((m) => ({ default: m.TaxRulesPage })),
+)
+const FiscalOperationProfilesPage = lazy(() =>
+  import('../pages/Fiscal/FiscalOperationProfilesPage').then((m) => ({ default: m.FiscalOperationProfilesPage })),
+)
+const FiscalOperationProfileFormPage = lazy(() =>
+  import('../pages/Fiscal/FiscalOperationProfileFormPage').then((m) => ({ default: m.FiscalOperationProfileFormPage })),
+)
 const LegalDocumentPage = lazy(() =>
   import('../pages/Legal/LegalDocumentPage').then((m) => ({ default: m.LegalDocumentPage })),
 )
@@ -303,6 +312,30 @@ export function AppRoutes() {
                 element={
                   <PermissionRoute requirement={ACCESS.subscriptionRead} requireOwner ownerBypassesAccess>
                     <SubscriptionPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="regras-tributarias"
+                element={
+                  <PermissionRoute requirement={ACCESS.taxRulesRead}>
+                    <TaxRulesPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="perfis-fiscais"
+                element={
+                  <PermissionRoute requirement={ACCESS.taxRulesRead}>
+                    <FiscalOperationProfilesPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="perfis-fiscais/:uuid/editar"
+                element={
+                  <PermissionRoute requirement={ACCESS.taxRulesUpdate}>
+                    <FiscalOperationProfileFormPage />
                   </PermissionRoute>
                 }
               />

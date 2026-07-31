@@ -38,7 +38,7 @@ class ProductPdfTest extends TestCase
     {
         preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdfContent, $matches);
 
-        $text = '';
+        $text = [];
 
         foreach ($matches[1] as $stream) {
             $decoded = @gzuncompress($stream);
@@ -47,15 +47,20 @@ class ProductPdfTest extends TestCase
                 $decoded = @gzinflate($stream);
             }
 
-            if ($decoded !== false) {
-                $text .= $decoded;
+            if ($decoded === false) {
+                continue;
+            }
+
+            // Captura apenas literais de texto do content stream para evitar
+            // que operadores internos do PDF poluam as asserções.
+            preg_match_all('/\((.*?)\)/s', str_replace("\x00", '', $decoded), $fragments);
+
+            foreach ($fragments[1] as $fragment) {
+                $text[] = str_replace(['\\(', '\\)', '\\\\'], ['(', ')', '\\'], $fragment);
             }
         }
 
-        // DomPDF usa Identity-H (UTF-16BE, 2 bytes por caractere) pra texto
-        // com DejaVu Sans — cada char latino vira 0x00 + byte ASCII. Remover
-        // os \x00 recompõe o texto legível pra assertStringContainsString.
-        return str_replace("\x00", '', $text);
+        return (string) preg_replace('/\s+/', ' ', trim(implode(' ', $text)));
     }
 
     #[Test]

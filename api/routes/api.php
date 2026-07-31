@@ -49,6 +49,9 @@ use App\Http\Controllers\Order\OrderTrackingController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
+use App\Http\Controllers\Fiscal\FiscalOperationProfileController;
+use App\Http\Controllers\Fiscal\FiscalReadinessController;
+use App\Http\Controllers\Fiscal\TaxRuleController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalLinkController;
 use App\Http\Controllers\Portal\PortalCouponController;
@@ -712,6 +715,37 @@ Route::prefix('v1')->group(function () {
             Route::post('/import/commit', [ProductImportController::class, 'commit'])
                 ->middleware(['tenant', 'perm:products,create', 'throttle:5,1,products-import-commit']);
         });
+
+        Route::prefix('tax-rules')->group(function () {
+            Route::get('/', [TaxRuleController::class, 'index'])
+                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,tax-rules-list']);
+
+            Route::post('/', [TaxRuleController::class, 'store'])
+                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,tax-rules-store']);
+
+            Route::put('/{taxRule:uuid}', [TaxRuleController::class, 'update'])
+                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,tax-rules-update']);
+
+            Route::delete('/{taxRule:uuid}', [TaxRuleController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:20,1,tax-rules-delete']);
+        });
+
+        Route::prefix('fiscal-operation-profiles')->group(function () {
+            Route::get('/', [FiscalOperationProfileController::class, 'index'])
+                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,fiscal-operation-profiles-list']);
+
+            Route::post('/', [FiscalOperationProfileController::class, 'store'])
+                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,fiscal-operation-profiles-store']);
+
+            Route::put('/{fiscalOperationProfile:uuid}', [FiscalOperationProfileController::class, 'update'])
+                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,fiscal-operation-profiles-update']);
+
+            Route::delete('/{fiscalOperationProfile:uuid}', [FiscalOperationProfileController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:20,1,fiscal-operation-profiles-delete']);
+        });
+
+        Route::get('/fiscal-readiness', [FiscalReadinessController::class, 'show'])
+            ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:60,1,fiscal-readiness-show']);
 
         // Dependência técnica do cadastro de produto: o formulário ainda
         // precisa listar tipos válidos para preencher `product_type_uuid`,
