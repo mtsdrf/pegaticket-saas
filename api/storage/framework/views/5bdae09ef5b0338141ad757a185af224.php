@@ -1,0 +1,2 @@
+<footer class="mk-pdf-footer">Maskats — Gestão clara para empresas em movimento.</footer>
+<?php /**PATH /home/mtsdrf/workspace/pegaticket-saas/api/resources/views/reports/partials/pdf-footer.blade.php ENDPATH**/ ?>

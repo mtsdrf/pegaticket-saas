@@ -7,8 +7,6 @@ use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
 use App\Models\Location\Estado;
-use App\Models\Marketplace\MarketplaceIntegration;
-use App\Models\Marketplace\MarketplaceOrder;
 use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
 use App\Models\Order\OrderItem;
@@ -227,7 +225,7 @@ class ReportTest extends TestCase
     }
 
     #[Test]
-    public function operation_health_aggregates_internal_and_marketplace_attention(): void
+    public function operation_health_aggregates_internal_attention(): void
     {
         $this->grantPermission('dashboard', 'read');
         $client = $this->createClientWithCity($this->tenant->id);
@@ -254,72 +252,12 @@ class ReportTest extends TestCase
             'is_delivered' => true,
             'is_paid' => false,
         ]);
-        $importedInternalOrder = $this->createOrder($this->tenant->id, $client, $location, [
-            'status' => 'confirmed',
-            'is_delivered' => true,
-            'is_paid' => true,
-        ]);
 
         $approvalAttentionOrder->forceFill(['created_at' => now()->subMinutes(6)])->saveQuietly();
         $approvalCriticalOrder->forceFill(['created_at' => now()->subMinutes(18)])->saveQuietly();
         $productionCriticalOrder->forceFill(['created_at' => now()->subMinutes(55)])->saveQuietly();
         $dispatchAttentionOrder->forceFill(['created_at' => now()->subMinutes(14)])->saveQuietly();
         $financialCriticalOrder->forceFill(['created_at' => now()->subDays(2)])->saveQuietly();
-        $importedInternalOrder->forceFill(['created_at' => now()->subMinutes(90)])->saveQuietly();
-
-        $integration = MarketplaceIntegration::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'provider' => 'ifood',
-            'name' => 'iFood principal',
-            'environment' => 'sandbox',
-            'auth_mode' => 'centralized',
-            'status' => 'connected',
-            'is_active' => true,
-            'settings' => [],
-        ]);
-
-        MarketplaceOrder::create([
-            'uuid' => (string) Str::uuid(),
-            'integration_id' => $integration->id,
-            'tenant_id' => $this->tenant->id,
-            'external_id' => 'pending-critical',
-            'status' => 'placed',
-            'payload' => ['id' => 'pending-critical'],
-            'raw_updated_at' => now()->subMinutes(20),
-        ]);
-
-        MarketplaceOrder::create([
-            'uuid' => (string) Str::uuid(),
-            'integration_id' => $integration->id,
-            'tenant_id' => $this->tenant->id,
-            'external_id' => 'pending-attention',
-            'status' => 'placed',
-            'payload' => ['id' => 'pending-attention'],
-            'raw_updated_at' => now()->subMinutes(9),
-        ]);
-
-        MarketplaceOrder::create([
-            'uuid' => (string) Str::uuid(),
-            'integration_id' => $integration->id,
-            'tenant_id' => $this->tenant->id,
-            'external_id' => 'import-error',
-            'status' => 'placed',
-            'payload' => ['id' => 'import-error'],
-            'raw_updated_at' => now()->subMinutes(22),
-            'import_error_message' => 'Falha de importação',
-        ]);
-
-        MarketplaceOrder::create([
-            'uuid' => (string) Str::uuid(),
-            'integration_id' => $integration->id,
-            'tenant_id' => $this->tenant->id,
-            'external_id' => 'stale-imported',
-            'status' => 'confirmed',
-            'payload' => ['id' => 'stale-imported'],
-            'last_synced_at' => now()->subMinutes(90),
-            'internal_order_id' => $importedInternalOrder->id,
-        ]);
 
         $response = $this->auth()->getJson('/api/v1/reports/operation-health')->assertStatus(200);
 
@@ -333,15 +271,8 @@ class ReportTest extends TestCase
             ->assertJsonPath('data.internal.dispatch.attention', 1)
             ->assertJsonPath('data.internal.financial_pending.total', 1)
             ->assertJsonPath('data.internal.financial_pending.critical', 1)
-            ->assertJsonPath('data.marketplace.pending_attention', 1)
-            ->assertJsonPath('data.marketplace.pending_critical', 1)
-            ->assertJsonPath('data.marketplace.import_error', 1)
-            ->assertJsonPath('data.marketplace.imported_without_recent_signal', 1)
-            ->assertJsonPath('data.marketplace.oldest_pending_minutes', 20)
-            ->assertJsonPath('data.marketplace.oldest_import_error_minutes', 22)
-            ->assertJsonPath('data.marketplace.oldest_imported_without_recent_signal_minutes', 90)
-            ->assertJsonPath('data.totals.items_requiring_attention', 9)
-            ->assertJsonPath('data.totals.critical_items', 5);
+            ->assertJsonPath('data.totals.items_requiring_attention', 5)
+            ->assertJsonPath('data.totals.critical_items', 3);
     }
 
     #[Test]

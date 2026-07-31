@@ -27,9 +27,9 @@ use Illuminate\Support\Str;
 /**
  * Adapter Mercado Pago (roadmap Fase B, item 1 — PSP real). Chama a API
  * REST do Mercado Pago diretamente via Http facade (sem SDK — mesmo padrão
- * já usado no projeto para HTTP externo, ver ReverseGeocodeService/
- * SendWebhookJob), o que dá controle total de timeout/log/retry em
- * hospedagem compartilhada e evita mais uma dependência de composer.
+ * já usado no projeto para HTTP externo, ver ReverseGeocodeService), o que
+ * dá controle total de timeout/log/retry em hospedagem compartilhada e
+ * evita mais uma dependência de composer.
  *
  * PCI: o backend NUNCA recebe dado de cartão cru — createCardCharge recebe
  * só o token já gerado pelo MP.js no frontend. Nenhum access_token/payload

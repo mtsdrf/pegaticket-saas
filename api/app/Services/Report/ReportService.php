@@ -132,21 +132,14 @@ class ReportService
             }
         }
 
-        $marketplaceSummary = $this->marketplaceOperationHealth($tenantId);
         $internalAttentionItems = collect($stageSummary)->sum(fn (array $stage) => $stage['attention'] + $stage['critical']);
         $internalCriticalItems = collect($stageSummary)->sum(fn (array $stage) => $stage['critical']);
-        $marketplaceAttentionItems = $marketplaceSummary['pending_attention']
-            + $marketplaceSummary['pending_critical']
-            + $marketplaceSummary['import_error']
-            + $marketplaceSummary['imported_without_recent_signal'];
-        $marketplaceCriticalItems = $marketplaceSummary['pending_critical'] + $marketplaceSummary['import_error'];
 
         return [
             'internal' => $stageSummary,
-            'marketplace' => $marketplaceSummary,
             'totals' => [
-                'items_requiring_attention' => $internalAttentionItems + $marketplaceAttentionItems,
-                'critical_items' => $internalCriticalItems + $marketplaceCriticalItems,
+                'items_requiring_attention' => $internalAttentionItems,
+                'critical_items' => $internalCriticalItems,
             ],
         ];
     }
@@ -444,77 +437,6 @@ class ReportService
     private function minutesSince(mixed $dateTime): int
     {
         return max(0, Carbon::parse($dateTime)->diffInMinutes(now()));
-    }
-
-    private function marketplaceOperationHealth(int $tenantId): array
-    {
-        $now = now();
-        $orderSnapshots = DB::table('marketplace_orders')
-            ->join('marketplace_integrations', 'marketplace_integrations.id', '=', 'marketplace_orders.integration_id')
-            ->where('marketplace_integrations.tenant_id', $tenantId)
-            ->whereNull('marketplace_integrations.deleted_at')
-            ->whereNull('marketplace_orders.deleted_at')
-            ->select([
-                'marketplace_orders.internal_order_id',
-                'marketplace_orders.import_error_message',
-                'marketplace_orders.last_synced_at',
-                'marketplace_orders.raw_updated_at',
-            ])
-            ->get();
-
-        $pendingAttention = 0;
-        $pendingCritical = 0;
-        $importError = 0;
-        $importedWithoutRecentSignal = 0;
-        $oldestPendingMinutes = null;
-        $oldestImportErrorMinutes = null;
-        $oldestImportedWithoutSignalMinutes = null;
-
-        foreach ($orderSnapshots as $orderSnapshot) {
-            $referenceAt = $orderSnapshot->last_synced_at ?? $orderSnapshot->raw_updated_at;
-            $ageInMinutes = $referenceAt ? (int) floor(Carbon::parse($referenceAt)->diffInMinutes($now)) : null;
-
-            if ($orderSnapshot->internal_order_id === null && empty($orderSnapshot->import_error_message)) {
-                if ($ageInMinutes !== null) {
-                    $oldestPendingMinutes = $oldestPendingMinutes === null
-                        ? $ageInMinutes
-                        : max($oldestPendingMinutes, $ageInMinutes);
-                }
-
-                if ($ageInMinutes !== null && $ageInMinutes >= 15) {
-                    $pendingCritical++;
-                } elseif ($ageInMinutes !== null && $ageInMinutes >= 5) {
-                    $pendingAttention++;
-                }
-            }
-
-            if ($orderSnapshot->internal_order_id === null && filled($orderSnapshot->import_error_message)) {
-                $importError++;
-
-                if ($ageInMinutes !== null) {
-                    $oldestImportErrorMinutes = $oldestImportErrorMinutes === null
-                        ? $ageInMinutes
-                        : max($oldestImportErrorMinutes, $ageInMinutes);
-                }
-            }
-
-            if ($orderSnapshot->internal_order_id !== null && $ageInMinutes !== null && $ageInMinutes >= 60) {
-                $importedWithoutRecentSignal++;
-                $oldestImportedWithoutSignalMinutes = $oldestImportedWithoutSignalMinutes === null
-                    ? $ageInMinutes
-                    : max($oldestImportedWithoutSignalMinutes, $ageInMinutes);
-            }
-        }
-
-        return [
-            'pending_attention' => $pendingAttention,
-            'pending_critical' => $pendingCritical,
-            'import_error' => $importError,
-            'imported_without_recent_signal' => $importedWithoutRecentSignal,
-            'oldest_pending_minutes' => $oldestPendingMinutes,
-            'oldest_import_error_minutes' => $oldestImportErrorMinutes,
-            'oldest_imported_without_recent_signal_minutes' => $oldestImportedWithoutSignalMinutes,
-        ];
     }
 
     /**

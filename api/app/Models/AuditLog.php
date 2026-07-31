@@ -119,13 +119,12 @@ class AuditLog extends Model
     }
 
     /**
-     * Registra auditoria cujo ATOR NÃO é um User (ex.: AccountingOffice, no
-     * módulo do contador — roadmap 2C). `user_id` fica SEMPRE null (nunca cai
-     * no fallback AuthContext::safeUserId(), que resolveria o subject do JWT
-     * ativo — inclusive um token de contador — e gravaria um id que não é de
-     * `users`, corrompendo a FK/relacionamento `user()`). A identidade real do
-     * ator vai em `meta` (ex.: accounting_office_id/uuid), decidido pelo
-     * chamador. Ver AccountingReportService/AuditAccountingListener.
+     * Registra auditoria cujo ATOR NÃO é um User (ex.: identidade externa
+     * autenticada por um JWT próprio, fora de `users`). `user_id` fica
+     * SEMPRE null (nunca cai no fallback AuthContext::safeUserId(), que
+     * resolveria o subject do JWT ativo e gravaria um id que não é de
+     * `users`, corrompendo a FK/relacionamento `user()`). A identidade real
+     * do ator vai em `meta`, decidido pelo chamador.
      */
     public static function recordForNonUser(string $event, array $meta = []): void
     {
