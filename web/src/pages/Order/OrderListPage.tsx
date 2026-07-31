@@ -41,7 +41,7 @@ const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
   { value: 'all', label: 'Todos os canais' },
   { value: 'staff', label: 'Manual' },
   { value: 'storefront', label: 'Loja' },
-  { value: 'pdv', label: 'PDV' },
+  { value: 'pdv', label: 'Venda interna' },
   { value: 'counter', label: 'Balcão' },
   { value: 'ifood', label: 'iFood' },
 ]
@@ -49,7 +49,7 @@ const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
 const ORIGIN_META: Record<OrderOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Pedido manual', shortLabel: 'Manual' },
   storefront: { label: 'Loja online', shortLabel: 'Loja' },
-  pdv: { label: 'PDV', shortLabel: 'PDV' },
+  pdv: { label: 'Venda interna', shortLabel: 'Interna' },
   counter: { label: 'Balcão', shortLabel: 'Balcão' },
   ifood: { label: 'iFood importado', shortLabel: 'iFood' },
 }
@@ -1673,7 +1673,7 @@ export function OrderListPage() {
               />
               <Chip
                 size="small"
-                label={`PDV: ${snapshot.byOrigin.pdv ?? 0}`}
+                label={`Interna: ${snapshot.byOrigin.pdv ?? 0}`}
                 icon={<PointOfSaleOutlinedIcon fontSize="small" />}
                 variant="outlined"
               />

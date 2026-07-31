@@ -135,7 +135,7 @@ export interface OperationHealthSummary {
 export const CHANNEL_LABELS: Record<string, string> = {
   staff: 'Lançado internamente',
   storefront: 'Loja online',
-  pdv: 'PDV',
+  pdv: 'Venda interna',
   counter: 'Balcão',
 }
 

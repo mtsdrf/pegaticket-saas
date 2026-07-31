@@ -14,7 +14,7 @@ class ActionsSeeder extends Seeder
             ['key' => 'create', 'name' => 'Criar'],
             ['key' => 'update', 'name' => 'Atualizar'],
             ['key' => 'delete', 'name' => 'Excluir'],
-            // Ações de movimentação de estoque (stock,{action}).
+            // Ações de disponibilidade/movimentação (stock,{action}).
             ['key' => 'entry', 'name' => 'Entrada'],
             ['key' => 'exit', 'name' => 'Saída'],
             ['key' => 'adjustment', 'name' => 'Ajuste'],
@@ -42,13 +42,13 @@ class ActionsSeeder extends Seeder
             // Ação do acesso do contador (accounting-access,revoke). 'read'/
             // 'create'/'approve' já existem acima e são reaproveitados.
             ['key' => 'revoke', 'name' => 'Revogar'],
-            // Ações do PDV (pdv,{action}) — Fase PDV-1. 'read' já existe acima
-            // (listar sessões / sessão atual).
-            ['key' => 'open', 'name' => 'Abrir caixa'],
-            ['key' => 'close', 'name' => 'Fechar caixa'],
-            ['key' => 'movement', 'name' => 'Sangria/Suprimento'],
-            ['key' => 'sell', 'name' => 'Vender no PDV'],
-            // Ações do Balcão (balcao,{action}) — roadmap Balcão, Fases 1+2.
+            // Ações da venda interna assistida (pdv,{action}). 'read' já
+            // existe acima (listar sessões / sessão atual).
+            ['key' => 'open', 'name' => 'Abrir operação'],
+            ['key' => 'close', 'name' => 'Fechar operação'],
+            ['key' => 'movement', 'name' => 'Movimentar caixa'],
+            ['key' => 'sell', 'name' => 'Vender internamente'],
+            // Ações da operação assistida (balcao,{action}).
             // 'read'/'create'/'update'/'delete' (CRUD de mesas/estações) e
             // 'open'/'close' (abrir/fechar comanda) já existem acima e são
             // reaproveitados.

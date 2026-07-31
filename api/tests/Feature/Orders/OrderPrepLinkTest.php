@@ -4,7 +4,6 @@ namespace Tests\Feature\Orders;
 
 use App\Models\Client\Client;
 use App\Models\Order\Order;
-use App\Models\Order\OrderPrepLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,10 +12,9 @@ use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
 /**
- * Link temporário de preparo (roadmap Loja): POST /storefront-orders/
- * {order}/prep-link (staff, perm:storefront-orders,read) gera o token;
- * GET /storefront-orders/{uuid}/prep?token= (público) lê o pedido. 404
- * genérico pra token errado/expirado/de outro pedido/pedido inexistente.
+ * Geração de link temporário de preparo (roadmap Loja): o endpoint staff
+ * `POST /storefront-orders/{order}/prep-link` segue ativo para emissão do
+ * token, mesmo após a remoção da view pública antiga de preparo.
  */
 class OrderPrepLinkTest extends TestCase
 {
@@ -69,65 +67,16 @@ class OrderPrepLinkTest extends TestCase
     }
 
     #[Test]
-    public function valid_token_returns_order_data_with_client_address_and_phone(): void
-    {
-        $order = $this->createOrderWithClient();
-        $token = $this->generateToken($order);
-
-        $response = $this->getJson('/api/v1/storefront-orders/' . $order->uuid . '/prep?token=' . $token);
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.uuid', $order->uuid)
-            ->assertJsonPath('data.client.phone_primary', '11988887777')
-            ->assertJsonPath('data.client.endereco.logradouro', 'Rua Teste, 123');
-
-        $this->assertNotNull($response->json('data.client.endereco.bairro_name'));
-        $this->assertNotNull($response->json('data.client.endereco.cidade_name'));
-    }
-
-    #[Test]
-    public function expired_token_returns_404(): void
+    public function prep_link_generation_returns_a_token_for_a_storefront_order(): void
     {
         $order = $this->createOrderWithClient();
 
-        $link = OrderPrepLink::create([
-            'tenant_id' => $this->tenant->id,
-            'order_id' => $order->id,
-            'token' => Str::random(48),
-            'expires_at' => now()->subMinute(),
-        ]);
+        $response = $this->auth()
+            ->postJson('/api/v1/storefront-orders/' . $order->uuid . '/prep-link')
+            ->assertStatus(201);
 
-        $this->getJson('/api/v1/storefront-orders/' . $order->uuid . '/prep?token=' . $link->token)
-            ->assertStatus(404);
-    }
-
-    #[Test]
-    public function token_of_another_order_returns_404(): void
-    {
-        $orderA = $this->createOrderWithClient();
-        $orderB = $this->createOrderWithClient();
-
-        $tokenA = $this->generateToken($orderA);
-
-        $this->getJson('/api/v1/storefront-orders/' . $orderB->uuid . '/prep?token=' . $tokenA)
-            ->assertStatus(404);
-    }
-
-    #[Test]
-    public function nonexistent_order_returns_404(): void
-    {
-        $this->getJson('/api/v1/storefront-orders/' . Str::uuid() . '/prep?token=' . Str::random(48))
-            ->assertStatus(404);
-    }
-
-    #[Test]
-    public function wrong_token_for_existing_order_returns_404(): void
-    {
-        $order = $this->createOrderWithClient();
-        $this->generateToken($order);
-
-        $this->getJson('/api/v1/storefront-orders/' . $order->uuid . '/prep?token=' . Str::random(48))
-            ->assertStatus(404);
+        $this->assertIsString($response->json('data.token'));
+        $this->assertNotSame('', $response->json('data.token'));
     }
 
     #[Test]

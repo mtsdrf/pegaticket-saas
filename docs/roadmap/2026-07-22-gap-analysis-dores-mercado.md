@@ -162,7 +162,7 @@
 
 **Recomendação:**
 - **Este é o maior risco de todo o roadmap** (confirmado nos 3 documentos de roadmap) — não subestimar nem prometer prazo curto no discurso de venda.
-- **Caminho recomendado quando o dono decidir investir:** começar pela NFS-e da própria PegaTicket (baixo volume, justifica serviço pago por nota) antes de NF-e/NFC-e dos tenants (alto volume, mais barato migrar para biblioteca nativa `sped-nfe` só quando o volume justificar).
+- **Caminho recomendado quando o dono decidir investir:** começar pela NFS-e da plataforma (baixo volume, justifica serviço pago por nota) antes de NF-e/NFC-e dos tenants (alto volume, mais barato migrar para biblioteca nativa `sped-nfe` só quando o volume justificar).
 - **[decisão do dono]** contratar serviço de emissão pago (Focus NFe/PlugNotas/NFe.io) vs. biblioteca nativa — trade-off é custo por nota/mensalidade vs. risco técnico de rodar SOAP/certificado A1 em hospedagem compartilhada (Hostinger pode não suportar bem `.pfx`/openssl — **requer validação de infra antes de decidir**).
 - Enquanto isso, o cadastro fiscal já pronto **é** discurso de venda válido: "sua empresa já está com o cadastro fiscal pronto, a emissão liga quando você decidir o app fiscal" — sem prometer emissão real hoje.
 

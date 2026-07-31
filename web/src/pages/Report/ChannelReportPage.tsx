@@ -1,5 +1,4 @@
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
-import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined'
@@ -22,7 +21,7 @@ import { presetRange } from '../../utils/period'
 const CHANNEL_ICONS: Record<string, SvgIconComponent> = {
   staff: ReceiptLongOutlinedIcon,
   storefront: StorefrontOutlinedIcon,
-  pdv: PointOfSaleOutlinedIcon,
+  pdv: ReceiptLongOutlinedIcon,
   counter: TableRestaurantOutlinedIcon,
 }
 

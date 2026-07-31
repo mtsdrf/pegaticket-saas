@@ -3,7 +3,6 @@ import GroupRemoveOutlinedIcon from '@mui/icons-material/GroupRemoveOutlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined'
 import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined'
-import RedeemOutlinedIcon from '@mui/icons-material/RedeemOutlined'
 import { Box } from '@mui/material'
 import { useEffect } from 'react'
 import { AnalyticsErrorAlert } from '../../../components/analytics/AnalyticsErrorAlert'
@@ -24,13 +23,12 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
   const periodKey = `${from}|${to}`
 
   const margin = useAnalyticsData(() => analyticsService.getMarginSummary({ from, to }), periodKey)
-  const cashback = useAnalyticsData(() => analyticsService.getCashbackLiability(), 'cashback-liability')
   const concentration = useAnalyticsData(() => analyticsService.getRevenueConcentration({ from, to }), periodKey)
   const otif = useAnalyticsData(() => analyticsService.getDeliveryOtif({ from, to }), periodKey)
   const coupon = useAnalyticsData(() => analyticsService.getCouponRoi({ from, to }), periodKey)
   const churn = useAnalyticsData(() => analyticsService.getChurnClients(), 'churn-clients')
 
-  const sources = [margin, cashback, concentration, otif, coupon, churn]
+  const sources = [margin, concentration, otif, coupon, churn]
 
   const planLocked = sources.some((source) => source.planLocked)
   useEffect(() => {
@@ -43,7 +41,6 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
   }
 
   const marginData = margin.data
-  const cashbackData = cashback.data
   const concentrationData = concentration.data
   const otifData = otif.data
   const couponData = coupon.data
@@ -57,7 +54,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     <Box
       sx={{
         display: 'grid',
-        // Contagem fixa (6 indicadores): colunas explícitas por breakpoint
+        // Contagem fixa (5 indicadores): colunas explícitas por breakpoint
         // que dividem exatamente a contagem (ver design-system.md), nunca
         // deixando card órfão esticado.
         gridTemplateColumns: { xs: 'repeat(1,1fr)', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)' },
@@ -78,15 +75,6 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         index={0}
       />
       <MetricCard
-        icon={RedeemOutlinedIcon}
-        label="Cashback em aberto"
-        value={cashbackData ? formatCurrency(cashbackData.outstanding_balance) : null}
-        caption={cashbackData ? `${formatPercentage(cashbackData.redemption_rate_percentage)} já resgatado historicamente` : null}
-        tone="primary"
-        isLoading={cashback.isLoading}
-        index={1}
-      />
-      <MetricCard
         icon={PieChartOutlineOutlinedIcon}
         label="Concentração de receita"
         value={concentrationData ? formatPercentage(concentrationData.concentration_percentage) : null}
@@ -97,7 +85,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         }
         tone={highConcentration ? 'warning' : 'info'}
         isLoading={concentration.isLoading}
-        index={2}
+        index={1}
       />
       <MetricCard
         icon={LocalShippingOutlinedIcon}
@@ -112,7 +100,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         }
         tone={smallOtifSample ? 'warning' : 'accent'}
         isLoading={otif.isLoading}
-        index={3}
+        index={2}
       />
       <MetricCard
         icon={ConfirmationNumberOutlinedIcon}
@@ -125,7 +113,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         }
         tone="info"
         isLoading={coupon.isLoading}
-        index={4}
+        index={3}
       />
       <MetricCard
         icon={GroupRemoveOutlinedIcon}
@@ -134,7 +122,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         caption={churnData ? `${formatCurrency(churnData.estimated_monthly_revenue_at_risk)}/mês em risco` : null}
         tone={churnData && churnData.churned_clients_count > 0 ? 'warning' : 'primary'}
         isLoading={churn.isLoading}
-        index={5}
+        index={4}
       />
     </Box>
   )

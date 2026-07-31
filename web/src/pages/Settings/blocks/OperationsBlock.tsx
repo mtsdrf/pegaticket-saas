@@ -19,9 +19,9 @@ import type { StorefrontCatalogLayout } from '../../../types/storefront'
 
 /**
  * Bloco "Pedidos e Operação" — subconjunto de `tenant_settings` (extraído de
- * `TenantSettingsPage`, 2026-07-24). Edita só os campos dela; o restante do
- * objeto (`accepted_payment_methods`, `cashback_*`) vai preservado do que
- * foi carregado por `useTenantSettingsData`, não editado aqui.
+ * `TenantSettingsPage`, 2026-07-24). Edita só os campos operacionais; o
+ * restante do objeto (`accepted_payment_methods`, `cashback_*`) é preservado
+ * do payload carregado por `useTenantSettingsData`.
  */
 export function OperationsBlock() {
   const { settings, setSettings, isLoading, loadError, reload } = useTenantSettingsData()
@@ -127,7 +127,7 @@ export function OperationsBlock() {
         label="Ativar loja online"
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando desligado, a página pública da empresa continua mostrando endereço, horários, contatos e reservas, mas o catálogo de produtos e o checkout deixam de aparecer.
+        Quando desligado, a página pública continua acessível apenas como vitrine institucional; o catálogo e o checkout deixam de aparecer.
       </Typography>
 
       <FormControlLabel
@@ -136,25 +136,23 @@ export function OperationsBlock() {
         sx={{ mt: 2.5 }}
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando ativado, as mensagens de WhatsApp enviadas para o cliente (na criação do pedido e no resumo enviado
-        sob demanda) incluem um link para acompanhar o status da entrega.
+        Quando ativado, as mensagens de WhatsApp incluem um link para o comprador acompanhar a evolução do pedido.
       </Typography>
 
       <FormControlLabel
         control={
           <Switch checked={blockOrderWithoutStock} onChange={(event) => setBlockOrderWithoutStock(event.target.checked)} />
         }
-        label="Bloquear pedido quando não há estoque suficiente"
+        label="Bloquear pedido quando não há disponibilidade suficiente"
         sx={{ mt: 2.5 }}
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando ativado, um pedido não pode ser criado se algum item não tiver estoque suficiente reservado — vale
-        hoje principalmente para pedidos feitos pela loja pública.
+        Quando ativado, um pedido não pode ser criado se algum item não tiver disponibilidade suficiente para reserva no servidor.
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
         <TextField
-          label="Pedido mínimo da loja online"
+          label="Pedido mínimo do canal público"
           type="number"
           value={minimumOrderValue}
           onChange={(event) => setMinimumOrderValue(event.target.value)}
@@ -179,24 +177,23 @@ export function OperationsBlock() {
         />
       </Stack>
 
-      <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Retirada na loja</Typography>
+      <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Retirada presencial</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Permite que o cliente escolha retirar o pedido no endereço da sua loja em vez de receber em casa.
+        Permite que o comprador escolha retirada presencial em vez de entrega.
       </Typography>
       <FormControlLabel
         control={<Switch checked={allowStorePickup} onChange={(event) => setAllowStorePickup(event.target.checked)} />}
-        label="Permitir retirada na loja"
+        label="Permitir retirada presencial"
       />
       {allowStorePickup && (
         <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-          Cadastre o endereço da sua loja no bloco "Horário e Endereço" — sem endereço, o cliente não consegue
-          escolher a retirada.
+          Garanta que o ponto de retirada esteja corretamente configurado para o comprador conseguir concluir essa opção.
         </Typography>
       )}
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Entrega</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Permite que o cliente escolha receber o pedido no endereço dele em vez de retirar na loja.
+        Permite que o comprador escolha receber o pedido em vez de retirar presencialmente.
       </Typography>
       <FormControlLabel
         control={<Switch checked={allowDelivery} onChange={(event) => setAllowDelivery(event.target.checked)} />}
@@ -205,7 +202,7 @@ export function OperationsBlock() {
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Layout do catálogo</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Escolha como os produtos aparecem para o cliente na loja online.
+        Escolha como os itens aparecem para o comprador no canal público.
       </Typography>
       <RadioGroup
         value={catalogLayout}

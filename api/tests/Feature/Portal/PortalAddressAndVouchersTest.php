@@ -4,9 +4,6 @@ namespace Tests\Feature\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Location\Bairro;
-use App\Models\Location\Cidade;
-use App\Models\Location\Estado;
 use App\Models\Order\Order;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\CouponRedemption;
@@ -20,9 +17,9 @@ use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
 use Tests\TestCase;
 
 /**
- * "Meus endereços" (GET/PUT /portal/addresses) e "Meus vouchers"
- * (GET /portal/coupon-redemptions) do portal do cliente final (roadmap
- * Loja). Guard de posse: só endereços/vouchers do cliente autenticado.
+ * Histórico de vouchers do portal do cliente final
+ * (`GET /portal/coupon-redemptions`). Guard de posse: só resgates do
+ * cliente autenticado.
  */
 class PortalAddressAndVouchersTest extends TestCase
 {
@@ -66,94 +63,6 @@ class PortalAddressAndVouchersTest extends TestCase
             'client_id' => $client->id,
             'confirmed_at' => now(),
         ]);
-    }
-
-    #[Test]
-    public function index_lists_addresses_of_confirmed_linked_stores_only(): void
-    {
-        [$customer, $token] = $this->authenticatedCustomer();
-
-        $tenant = $this->createTenant('Loja Vinculada');
-        $client = $this->createClient($tenant->id);
-        $this->confirmLink($customer, $tenant, $client);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/portal/addresses');
-
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.client_uuid', $client->uuid)
-            ->assertJsonPath('data.0.tenant_name', 'Loja Vinculada')
-            ->assertJsonPath('data.0.endereco.logradouro', 'Rua Teste, 123');
-    }
-
-    #[Test]
-    public function update_changes_the_address_of_an_owned_client(): void
-    {
-        [$customer, $token] = $this->authenticatedCustomer();
-
-        $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $this->confirmLink($customer, $tenant, $client);
-
-        // Novo bairro (cidade/estado próprios) pra trocar.
-        $estado = Estado::create(['uuid' => (string) Str::uuid(), 'name' => 'Novo Estado', 'uf' => 'NE']);
-        $cidade = Cidade::create(['uuid' => (string) Str::uuid(), 'estado_id' => $estado->id, 'name' => 'Nova Cidade']);
-        $bairro = Bairro::create(['uuid' => (string) Str::uuid(), 'cidade_id' => $cidade->id, 'name' => 'Novo Bairro']);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/v1/portal/addresses/' . $client->uuid, [
-                'logradouro' => 'Rua Nova, 999',
-                'numero' => '999',
-                'complemento' => 'Apto 1',
-                'cep' => '02000-000',
-                'bairro_uuid' => $bairro->uuid,
-            ]);
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.logradouro', 'Rua Nova, 999')
-            ->assertJsonPath('data.bairro_name', 'Novo Bairro')
-            ->assertJsonPath('data.cidade_name', 'Nova Cidade');
-
-        $endereco = $client->fresh()->endereco;
-        $this->assertSame('Rua Nova, 999', $endereco->logradouro);
-        $this->assertSame($bairro->id, $endereco->bairro_id);
-        $this->assertSame($cidade->id, $endereco->cidade_id);
-        $this->assertSame($estado->id, $endereco->estado_id);
-    }
-
-    #[Test]
-    public function update_of_a_client_without_confirmed_link_returns_404(): void
-    {
-        [, $token] = $this->authenticatedCustomer();
-
-        // Client de outra loja, SEM vínculo confirmado do cliente autenticado.
-        $otherTenant = $this->createTenant();
-        $otherClient = $this->createClient($otherTenant->id);
-
-        $bairro = Bairro::create([
-            'uuid' => (string) Str::uuid(),
-            'cidade_id' => Cidade::create([
-                'uuid' => (string) Str::uuid(),
-                'estado_id' => Estado::create(['uuid' => (string) Str::uuid(), 'name' => 'E', 'uf' => 'EE'])->id,
-                'name' => 'C',
-            ])->id,
-            'name' => 'B',
-        ]);
-
-        $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/v1/portal/addresses/' . $otherClient->uuid, [
-                'logradouro' => 'Rua Invasora, 1',
-                'bairro_uuid' => $bairro->uuid,
-            ])
-            ->assertStatus(404);
-    }
-
-    #[Test]
-    public function addresses_require_authentication(): void
-    {
-        $this->getJson('/api/v1/portal/addresses')->assertStatus(401);
-        $this->putJson('/api/v1/portal/addresses/' . Str::uuid(), [])->assertStatus(401);
     }
 
     #[Test]

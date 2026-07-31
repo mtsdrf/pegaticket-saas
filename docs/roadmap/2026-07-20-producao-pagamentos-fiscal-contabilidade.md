@@ -19,7 +19,7 @@ Recomendação de sequência macro (detalhada no roadmap final):
 1. **Endurecimento de produção** (segurança, observabilidade, LGPD, backup/DR) — bloqueante para cobrar qualquer centavo de cliente real. Esforço **M**.
 2. **Cobrança de planos via Pix** (a PegaTicket cobrando os tenants) — menor superfície regulatória, Pix tem custo quase zero. Habilita o negócio a existir. Esforço **M/G**.
 3. **Pagamento de pedidos via Pix** (cliente final pagando o tenant) — reaproveita a infra de Pix do item 2, mas exige decisão de arquitetura de recebimento (conta por tenant vs. marketplace). Esforço **G**.
-4. **Documento fiscal (NF-e/NFC-e/NFS-e)** — a área mais complexa, arriscada e cara em esforço de todo o roadmap. NFS-e (para a própria PegaTicket emitir nota dos planos) primeiro; NF-e/NFC-e dos tenants depois. Esforço **GG**.
+4. **Documento fiscal (NF-e/NFC-e/NFS-e)** — a área mais complexa, arriscada e cara em esforço de todo o roadmap. NFS-e (para a plataforma emitir nota dos planos) primeiro; NF-e/NFC-e dos tenants depois. Esforço **GG**.
 5. **Módulo do contador** — depende de dados fiscais e financeiros existirem para ter o que entregar. Esforço **G**.
 
 Cartão de crédito e emissão fiscal são os dois pontos onde **não existe caminho 100% nativo legal**: cartão exige um PSP regulado; NF-e/NFC-e/NFS-e exigem comunicação homologada com SEFAZ/prefeitura via certificado digital. Em ambos, o documento indica a opção mais barata (idealmente sem mensalidade fixa, custo por transação/emissão) e justifica por que não dá para contornar.
@@ -98,8 +98,8 @@ Checklist crítico e realista. Classificação: **P0** = bloqueia cobrar cliente
 
 ### 1.6 Retenção e backup/DR (P0)
 
-- **Backup automático: verificar.** Existe `backup_prod_pegaticket.sql` na raiz (23MB) — indica que backup é **manual**. Isto é **P0**. Mínimo viável barato: cron `mysqldump` diário + `gzip` + cópia para storage fora do servidor (a própria Hostinger oferece backup, mas **não confie só no backup do provedor** — leve uma cópia para outro lugar, ex.: bucket barato ou até Google Drive via rclone). Definir **RPO** (perda máxima aceitável, ex.: 24h) e **RTO** (tempo de restauração, ex.: 4h) e **testar restauração** pelo menos uma vez.
-- **Cuidado LGPD**: `backup_prod_pegaticket.sql` versionado/deixado na raiz do repo é **risco de vazamento de dado pessoal** — garantir que está no `.gitignore` e removido de qualquer histórico público. **[verificar]**
+- **Backup automático: verificar.** Havia um dump SQL de produção (23MB) circulando no contexto operacional do projeto, o que indica que o processo de backup ainda era **manual**. Isto é **P0**. Mínimo viável barato: cron `mysqldump` diário + `gzip` + cópia para storage fora do servidor (a própria Hostinger oferece backup, mas **não confie só no backup do provedor** — leve uma cópia para outro lugar, ex.: bucket barato ou até Google Drive via rclone). Definir **RPO** (perda máxima aceitável, ex.: 24h) e **RTO** (tempo de restauração, ex.: 4h) e **testar restauração** pelo menos uma vez.
+- **Cuidado LGPD**: qualquer dump SQL de produção deixado na raiz do repo ou fora de um fluxo controlado é **risco de vazamento de dado pessoal** — garantir que está no `.gitignore` e removido de qualquer histórico público. **[verificar]**
 - **Política de retenção por categoria**: dados fiscais têm prazo legal de guarda (em regra 5 anos, podendo variar) **[requer validação contábil/jurídica]**; não podem ser apagados por um pedido genérico de exclusão LGPD. Documentar.
 
 ### 1.7 Deploy, documentação operacional e suporte (P1/P2)
@@ -201,7 +201,7 @@ Processar dinheiro (Pix e cartão) **não pode ser 100% nativo** — exige insti
 
 - **NF-e (modelo 55)** — nota de **mercadoria**, operações entre empresas (B2B), transporte de produto. Relevante para os tenants atacadistas/distribuidoras. Autorizada pela **SEFAZ do estado**.
 - **NFC-e (modelo 65)** — **cupom fiscal eletrônico** ao **consumidor final** no varejo/PDV. Relevante para tenants que vendem no balcão. Autorizada pela SEFAZ, exige **CSC** (Código de Segurança do Contribuinte) e gera **QR Code**. Regras variam por UF; **"cupom fiscal" não é padrão nacional único** — algumas UFs usam SAT/MFE. **[requer validação por UF]**
-- **NFS-e** — nota de **serviço**, competência **municipal**. **Interessa diretamente à própria PegaTicket**: para emitir nota dos planos SaaS cobrados dos tenants (Seção 2), a PegaTicket precisa emitir NFS-e do serviço de software. Existe agora o **padrão nacional NFS-e** (via ambiente nacional/Sefin), mas muitos municípios ainda têm padrão próprio.
+- **NFS-e** — nota de **serviço**, competência **municipal**. **Interessa diretamente à plataforma**: para emitir nota dos planos SaaS cobrados dos tenants (Seção 2), a operação da PegaTicket precisa emitir NFS-e do serviço de software. Existe agora o **padrão nacional NFS-e** (via ambiente nacional/Sefin), mas muitos municípios ainda têm padrão próprio.
 
 ### 3.2 O que a emissão exige tecnicamente (comum a NF-e/NFC-e)
 
@@ -219,7 +219,7 @@ Três caminhos, sob o filtro de orçamento baixo:
 3. **100% do zero (montar SOAP/XML na mão)** — **não recomendado**. Reinventa o que a `sped-nfe` já resolve, com risco altíssimo. Descartar.
 
 **Recomendação pragmática (orçamento baixo + risco controlado):**
-- **NFS-e da própria PegaTicket (planos):** começar com a **API do padrão nacional NFS-e** se o município da PegaTicket já aderiu; se não, avaliar `sped-nfse` ou um serviço barato só para essa emissão de baixo volume. Volume baixo (uma nota por fatura de plano) → o custo por nota de um serviço pago é **irrelevante** aqui, e economiza MUITO esforço. **Recomendo serviço pago barato por nota para a NFS-e dos planos.**
+- **NFS-e da plataforma (planos):** começar com a **API do padrão nacional NFS-e** se o município operacional da empresa já aderiu; se não, avaliar `sped-nfse` ou um serviço barato só para essa emissão de baixo volume. Volume baixo (uma nota por fatura de plano) → o custo por nota de um serviço pago é **irrelevante** aqui, e economiza MUITO esforço. **Recomendo serviço pago barato por nota para a NFS-e dos planos.**
 - **NF-e/NFC-e dos tenants:** aqui o volume pode crescer e justificar o open-source `sped-nfe`. **Mas** dado o risco e a complexidade estadual, a decisão honesta é: **começar com uma API de emissão paga por nota** (Focus NFe / PlugNotas / NFe.io têm faixas por volume) para lançar rápido e validar demanda, e **só migrar para `sped-nfe` nativo quando o volume de notas justificar economicamente** o esforço de manutenção. Construir a **camada de abstração `FiscalProvider`** (adapter) desde o dia 1 para poder trocar serviço→nativo sem reescrever o domínio.
 
 ### 3.4 Motor tributário e cadastros (nativo, obrigatório em qualquer caminho)

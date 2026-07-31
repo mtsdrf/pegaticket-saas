@@ -4,7 +4,7 @@ Fonte: `dump_base.sql` (raiz do projeto), export phpMyAdmin 5.2.2, MariaDB 11.8.
 
 **Código-fonte do sistema legado localizado e analisado** (2026-07-06, confirmado pelo usuário): `/home/mtsdrf/workspace/pegaticket/` — `backend/` (Laravel 8, PHP 7.3/8.0, tymon/jwt-auth) + `frontend/` (React 17, react-router-dom v5, Bootstrap 4) + `landing_page/`. Isso resolveu a maioria das dúvidas de negócio que antes eram só inferência de schema — ver [[06-business-rules]] (seção "Confirmado pelo código-fonte") e [[07-implementation-roadmap]].
 
-**2026-07-22**: novo dump COM dados reais (`backup_prod_pegaticket.sql`, mesmas 20 tabelas) analisado para migração de 1 único estabelecimento (id=4, "Js Queijos e Doces") — volume real por tabela, integridade referencial nos dados de fato, e mapeamento campo-a-campo contra `api/database/migrations` atual. Ver [[09-estab4-migration-data-audit]].
+**2026-07-22**: novo dump COM dados reais (23MB, mesmas 20 tabelas) analisado para migração de 1 único estabelecimento (id=4, "Js Queijos e Doces") — volume real por tabela, integridade referencial nos dados de fato, e mapeamento campo-a-campo contra `api/database/migrations` atual. Ver [[09-estab4-migration-data-audit]].
 
 ## Conteúdo do dump
 - **Só estrutura** — nenhum `INSERT`, sem dados reais. Sem risco de exposição de dado sensível nesta análise.

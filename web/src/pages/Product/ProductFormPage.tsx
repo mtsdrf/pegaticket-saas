@@ -723,7 +723,7 @@ export function ProductFormPage() {
         sx={{ mt: 2, ...SOFT_PANEL_SX, '&::before': { display: 'none' } }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>Avançado (estoque e custos)</Typography>
+          <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>Avançado (disponibilidade e custos)</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
@@ -770,7 +770,7 @@ export function ProductFormPage() {
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 2 }}>
               <TextField
-                label="Estoque mínimo"
+                label="Disponibilidade mínima"
                 type="number"
                 value={form.min_stock}
                 onChange={(event) => updateField('min_stock', event.target.value)}
@@ -779,7 +779,7 @@ export function ProductFormPage() {
                 slotProps={{ htmlInput: { min: 0, step: '0.001' } }}
               />
               <TextField
-                label="Estoque máximo"
+                label="Disponibilidade máxima"
                 type="number"
                 value={form.max_stock}
                 onChange={(event) => updateField('max_stock', event.target.value)}

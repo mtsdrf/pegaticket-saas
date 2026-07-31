@@ -63,7 +63,7 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     key: 'pedidos',
     path: 'pedidos',
     label: 'Pedidos e Operação',
-    description: 'Estoque, pedido mínimo, tempo de preparo e retirada na loja.',
+    description: 'Disponibilidade, regras do canal público e parâmetros operacionais.',
     icon: TuneOutlinedIcon,
     permission: ACCESS.tenantSettingsRead,
     Component: OperationsBlock,

@@ -4,7 +4,6 @@ import type {
   AbcDimension,
   AbcItem,
   AnalyticsPeriodParams,
-  CashbackLiability,
   ChurnClients,
   CouponRoi,
   DeliveryOtif,
@@ -22,7 +21,6 @@ import type {
   SalesSummaryBucket,
   SalesSummaryTotals,
   StalledProducts,
-  StockRuptures,
   TopClient,
   TopProduct,
 } from '../types/analytics'
@@ -275,11 +273,6 @@ export async function getMarginSummary(params: AnalyticsPeriodParams): Promise<M
   return response.data.data
 }
 
-export async function getCashbackLiability(): Promise<CashbackLiability> {
-  const response = await apiClient.get<ApiSuccess<CashbackLiability>>('/reports/analytics/cashback-liability')
-  return response.data.data
-}
-
 export async function getRevenueConcentration(params: AnalyticsPeriodParams): Promise<RevenueConcentration> {
   const response = await apiClient.get<ApiSuccess<RevenueConcentration>>('/reports/analytics/revenue-concentration', { params })
   return response.data.data
@@ -302,11 +295,6 @@ export async function getChurnClients(): Promise<ChurnClients> {
 
 export async function getStalledProducts(): Promise<StalledProducts> {
   const response = await apiClient.get<ApiSuccess<StalledProducts>>('/reports/analytics/stalled-products')
-  return response.data.data
-}
-
-export async function getStockRuptures(): Promise<StockRuptures> {
-  const response = await apiClient.get<ApiSuccess<StockRuptures>>('/reports/analytics/stock-ruptures')
   return response.data.data
 }
 

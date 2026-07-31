@@ -1,9 +1,40 @@
 # Roadmap de migração para o contexto PegaTicket
 
-Status: mapeamento e decisões de negócio confirmados em 2026-07-30 — nenhuma remoção foi executada ainda no código.
+Status em 2026-07-31: limpeza parcial já executada no código, com rebrand ativo consolidado e parte dos endpoints/telas legados removidos; o roadmap funcional, porém, ainda não chegou ao marco de "base limpa para construir o domínio novo".
 Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`, `database/seeders/FunctionalitiesSeeder.php`, `routes/api.php`, cruzado com `especificacao-plataforma-ingressos.md` (raiz) e `.claude/memory/product-roadmap.md`.
 
 ---
+
+## Status real de execução (2026-07-31)
+
+- O rebrand ativo para `PegaTicket` já foi consolidado no código, docs e configs principais.
+- O critério de saída da faxina ("test/build verdes") já foi atingido em uma fotografia pontual, mas isso **não** significa que todo o legado de domínio foi removido.
+- O roadmap foi executado de forma **não linear**: há itens das fases 5 e 7 já resolvidos, enquanto fases intermediárias ainda têm resíduos importantes.
+
+### O que já saiu ou foi alinhado
+
+- Endpoints/testes legados de endereço do portal, reativação e preparo público de pedido já foram removidos/alinhados.
+- Contexto visual e nomenclatura da marca anterior foram eliminados do código ativo.
+- Parte do storefront físico já foi podada para o contexto atual.
+
+### O que ainda impede avançar para a construção do domínio de ingressos
+
+- `PDV` ainda existe no backend (`api/app/{DTOs,Events,Exceptions,Http/Requests,Listeners,Models,Services}/Pdv`) e continua refletido em regras/UX.
+- `Stock` ainda existe no backend (`api/app/{DTOs,Events,Http/Requests,Http/Resources,Listeners,Models,Services}/Stock`) e ainda contamina relatórios, pedidos e seeders de demonstração.
+- `FunctionalitiesSeeder` e `InitialPlansSeeder` ainda estão no domínio antigo (`product_types`, `clients`, `stock`, `cashback`, `reactivation`, `pdv`, `balcao`).
+- Há trechos de frontend e analytics ainda orientados a varejo físico/estoque (`OrderFormPage`, `ProductsTab`, filtros/origens de pedido com `pdv`).
+
+### Leitura objetiva da fase atual
+
+- `Fase 1`: essencialmente concluída.
+- `Fase 2`: em grande parte concluída, mas precisa sempre ser confirmada contra diretórios/rotas reais antes de encerrar oficialmente.
+- `Fase 3`: **não concluída**.
+- `Fase 4`: **não concluída**.
+- `Fase 5`: parcialmente concluída.
+- `Fase 6`: **não concluída**.
+- `Fase 7`: branding principal concluído, mas a ordem original do roadmap ficou invertida em relação às fases funcionais.
+
+Conclusão: em 2026-07-31 o projeto está em **faxina avançada, porém ainda dentro da etapa de remoção/alinhamento**. Ainda não é o momento correto de considerar iniciada a fase de construção do domínio novo (`InventoryHoldService`, lotes, emissão/check-in etc.).
 
 ## 0. Confirmação de modelo de negócio (2026-07-30)
 
@@ -118,9 +149,9 @@ Legenda: **MANTER** (usar como está) · **ADAPTAR** (aproveitar arquitetura/pad
 
 A ordem importa porque `plan_functionalities`/seeders/rotas referenciam as functionalities dos módulos removidos — remover controller sem limpar o resto deixa lixo (permissão fantasma, rota morta, seed quebrado).
 
-### Fase 0 — Preparação (sem apagar nada ainda)
+### Fase 0 — Preparação
 1. ~~Confirmar decisões de negócio~~ **Concluído 2026-07-30** — todas as decisões da seção 2 e 5 resolvidas (ver histórico acima).
-2. Criar branch de trabalho só pra remoção (`git checkout -b chore/remove-legacy-domain`), sem misturar com feature nova. **Próximo passo — ainda não executado.**
+2. Criar branch de trabalho só pra remoção (`git checkout -b chore/remove-legacy-domain`), sem misturar com feature nova. Recomendação original do roadmap; o trabalho real acabou acontecendo em etapas sucessivas no branch em uso.
 
 ### Fase 1 — Frontend morto/isolado (menor risco, zero dependência de backend)
 1. `web/src/pages/SocialMedia/*` (feature fantasma, zero controller real).

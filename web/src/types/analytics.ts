@@ -103,13 +103,6 @@ export interface MarginSummary {
   coverage_percentage: number
 }
 
-export interface CashbackLiability {
-  outstanding_balance: string
-  total_earned_all_time: string
-  total_redeemed_all_time: string
-  redemption_rate_percentage: number
-}
-
 export interface RevenueConcentration {
   total_revenue: string
   top10_revenue: string
@@ -161,16 +154,6 @@ export interface StalledProduct {
 export interface StalledProducts {
   items: StalledProduct[]
   total_value_tied_up: string
-  count: number
-}
-
-export interface StockRupture {
-  product_name: string
-  units_sold_last_90_days: number
-}
-
-export interface StockRuptures {
-  items: StockRupture[]
   count: number
 }
 

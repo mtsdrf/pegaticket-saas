@@ -1,6 +1,6 @@
 # Auditoria de dados — migração do estabelecimento id=4 (Js Queijos e Doces)
 
-Passo 1 (análise pura, sem script/plano de migração) do fluxo `database-reverse-engineer`. Fonte: `backup_prod_pegaticket.sql` (raiz do repo, 23MB, mysqldump COM dados reais — diferente de `dump_base.sql` usado em [[01-schema-overview]]/[[07-implementation-roadmap]], que era só estrutura). Analisado em 2026-07-22 via parsing Python dos `INSERT INTO` (sem subir MySQL), nunca contra `DB_HOST` do projeto.
+Passo 1 (análise pura, sem script/plano de migração) do fluxo `database-reverse-engineer`. Fonte: dump SQL com dados reais (23MB, mysqldump — diferente de `dump_base.sql` usado em [[01-schema-overview]]/[[07-implementation-roadmap]], que era só estrutura). Analisado em 2026-07-22 via parsing Python dos `INSERT INTO` (sem subir MySQL), nunca contra `DB_HOST` do projeto.
 
 **Alvo único de migração**: `estabelecimento.id = 4`, uuid `5f90a014-a13a-41d8-bd20-f90f11a3e1ba`, nome "Js Queijos e Doces". Único estabelecimento a migrar — os outros 3 (`id=1` admin PegaTicket, `id=2` teste, `id=3` outro cliente real) ficam de fora.
 
