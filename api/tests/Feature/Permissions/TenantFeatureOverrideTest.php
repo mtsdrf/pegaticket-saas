@@ -135,7 +135,7 @@ class TenantFeatureOverrideTest extends TestCase
     }
 
     /**
-     * Tenant com plano incluindo 'users' mas não 'clients' — mesmo cenário
+     * Tenant com plano incluindo 'users' mas não 'orders' — mesmo cenário
      * base de PlanGatePermissionsTest, reaproveitado aqui para testar o
      * override por cima.
      */
@@ -191,7 +191,7 @@ class TenantFeatureOverrideTest extends TestCase
         // Permissão via tenant_role para AMBAS as functionalities usadas
         // nos testes — o gate de plano/override é testado independente do
         // RBAC de permissão em si.
-        foreach (['clients', 'users'] as $slug) {
+        foreach (['orders', 'users'] as $slug) {
             DB::table('tenant_role_permissions')->insert([
                 'uuid' => (string) Str::uuid(),
                 'tenant_role_id' => $role->id,
@@ -221,7 +221,7 @@ class TenantFeatureOverrideTest extends TestCase
 
         $sync = $this->admin()->postJson("/api/v1/tenants/{$tenant->uuid}/feature-overrides/sync", [
             'overrides' => [
-                ['functionality' => 'clients', 'is_enabled' => true],
+                ['functionality' => 'orders', 'is_enabled' => true],
             ],
         ]);
 
@@ -234,7 +234,7 @@ class TenantFeatureOverrideTest extends TestCase
         $list = $this->admin()->getJson("/api/v1/tenants/{$tenant->uuid}/feature-overrides");
 
         $list->assertStatus(200)
-            ->assertJsonFragment(['functionality' => 'clients', 'is_enabled' => true]);
+            ->assertJsonFragment(['functionality' => 'orders', 'is_enabled' => true]);
     }
 
     #[Test]
@@ -242,9 +242,9 @@ class TenantFeatureOverrideTest extends TestCase
     {
         [$tenant, $token] = $this->createTenantWithPlan();
 
-        // Sem override: plano não inclui 'clients' -> 403.
+        // Sem override: plano não inclui 'orders' -> 403.
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(403)
             ->assertJson(['code' => 'PLAN_UPGRADE_REQUIRED']);
 
@@ -252,13 +252,13 @@ class TenantFeatureOverrideTest extends TestCase
 
         $this->admin()->postJson("/api/v1/tenants/{$tenant->uuid}/feature-overrides/sync", [
             'overrides' => [
-                ['functionality' => 'clients', 'is_enabled' => true],
+                ['functionality' => 'orders', 'is_enabled' => true],
             ],
         ])->assertStatus(200);
 
         // Com override habilitado: acesso liberado mesmo fora do plano.
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(200);
     }
 
@@ -297,7 +297,7 @@ class TenantFeatureOverrideTest extends TestCase
             ->assertStatus(200);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(403)
             ->assertJson(['code' => 'PLAN_UPGRADE_REQUIRED']);
     }

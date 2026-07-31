@@ -5,7 +5,9 @@ namespace Tests\Feature\Reports;
 use App\Models\Product\Product;
 use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductType;
+use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
+use App\Models\Stock\StockMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,20 +38,37 @@ class ReportCmvTest extends TestCase
 
     protected function entry(Product $product, StockLocation $location, float $quantity, ?float $unitCost, string $reason): void
     {
-        $this->grantPermission('stock', 'entry');
+        $balance = StockBalance::firstOrCreate(
+            [
+                'tenant_id' => $product->tenant_id,
+                'product_id' => $product->id,
+                'location_id' => $location->id,
+            ],
+            [
+                'quantity_on_hand' => 0,
+                'quantity_reserved' => 0,
+                'quantity_blocked' => 0,
+            ]
+        );
 
-        $payload = [
-            'product_uuid' => $product->uuid,
-            'location_uuid' => $location->uuid,
+        $before = (float) $balance->quantity_on_hand;
+        $after = $before + $quantity;
+
+        $balance->update([
+            'quantity_on_hand' => $after,
+        ]);
+
+        StockMovement::create([
+            'tenant_id' => $product->tenant_id,
+            'product_id' => $product->id,
+            'location_id' => $location->id,
+            'type' => 'entry',
             'quantity' => $quantity,
+            'unit_cost' => $unitCost,
+            'balance_before' => $before,
+            'balance_after' => $after,
             'reason' => $reason,
-        ];
-
-        if ($unitCost !== null) {
-            $payload['unit_cost'] = $unitCost;
-        }
-
-        $this->auth()->postJson('/api/v1/stock/movements/entry', $payload)->assertStatus(201);
+        ]);
     }
 
     protected function createProduct(int $tenantId, array $overrides = []): Product

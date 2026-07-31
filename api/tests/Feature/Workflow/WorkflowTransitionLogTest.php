@@ -26,9 +26,6 @@ class WorkflowTransitionLogTest extends TestCase
         $this->grantPermission('orders', 'update');
         $this->grantPermission('orders', 'deliver');
         $this->grantPermission('storefront-orders', 'read');
-        foreach (['read', 'create', 'update', 'delete', 'open', 'close', 'add_item', 'prep'] as $action) {
-            $this->grantPermission('balcao', $action);
-        }
         $this->grantPermission('stock', 'entry');
     }
 
@@ -81,78 +78,6 @@ class WorkflowTransitionLogTest extends TestCase
     }
 
     #[Test]
-    public function comanda_item_cancellation_persists_reason_in_operational_transition_log(): void
-    {
-        \App\Models\Tenant\TenantSettings::create([
-            'tenant_id' => $this->tenant->id,
-            'service_fee_percent' => 0,
-            'service_fee_mandatory' => false,
-        ]);
-
-        $station = \App\Models\Balcao\Station::create([
-            'tenant_id' => $this->tenant->id,
-            'name' => 'Cozinha Teste',
-            'type' => 'kitchen',
-            'is_active' => true,
-        ]);
-
-        $category = \App\Models\Product\ProductCategory::create([
-            'tenant_id' => $this->tenant->id,
-            'name' => 'Pratos',
-            'is_active' => true,
-            'station_id' => $station->id,
-        ]);
-
-        $type = \App\Models\Product\ProductType::create([
-            'tenant_id' => $this->tenant->id,
-            'product_category_id' => $category->id,
-            'name' => 'Executivo',
-            'is_active' => true,
-        ]);
-
-        $product = \App\Models\Product\Product::create([
-            'tenant_id' => $this->tenant->id,
-            'product_type_id' => $type->id,
-            'name' => 'Prato Feito',
-            'price' => 18,
-            'is_available' => true,
-        ]);
-
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
-
-        $comanda = $this->auth()->postJson('/api/v1/balcao/comandas')->assertStatus(201)->json('data');
-        $item = $this->auth()->postJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items", [
-            'product_uuid' => $product->uuid,
-            'qty' => 1,
-        ])->assertStatus(201)->json('data');
-
-        $this->auth()->patchJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items/{$item['uuid']}/prep-status", [
-            'prep_status' => 'sent_to_station',
-        ])->assertStatus(200);
-
-        $reason = 'Cliente desistiu do item.';
-
-        $this->auth()->patchJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items/{$item['uuid']}/prep-status", [
-            'prep_status' => 'cancelled',
-            'cancelled_reason' => $reason,
-        ])->assertStatus(200);
-
-        $log = WorkflowTransitionLog::query()
-            ->where('workflow_type', 'comanda_item')
-            ->where('entity_uuid', $item['uuid'])
-            ->where('transition_type', 'cancel')
-            ->latest('id')
-            ->first();
-
-        $this->assertNotNull($log);
-        $this->assertSame('sent_to_station', $log->from_stage);
-        $this->assertSame('cancelled', $log->to_stage);
-        $this->assertSame($reason, $log->reason);
-        $this->assertSame($this->userId, $log->user_id);
-    }
-
-    #[Test]
     public function order_timeline_endpoint_returns_operational_history(): void
     {
         $client = $this->createClient($this->tenant->id);
@@ -186,72 +111,4 @@ class WorkflowTransitionLogTest extends TestCase
         $this->assertSame('workflow-user@test.com', $timeline->json('data.0.user.email'));
     }
 
-    #[Test]
-    public function comanda_item_timeline_endpoint_returns_reason_and_actor(): void
-    {
-        \App\Models\Tenant\TenantSettings::create([
-            'tenant_id' => $this->tenant->id,
-            'service_fee_percent' => 0,
-            'service_fee_mandatory' => false,
-        ]);
-
-        $station = \App\Models\Balcao\Station::create([
-            'tenant_id' => $this->tenant->id,
-            'name' => 'Cozinha Timeline',
-            'type' => 'kitchen',
-            'is_active' => true,
-        ]);
-
-        $category = \App\Models\Product\ProductCategory::create([
-            'tenant_id' => $this->tenant->id,
-            'name' => 'Pratos',
-            'is_active' => true,
-            'station_id' => $station->id,
-        ]);
-
-        $type = \App\Models\Product\ProductType::create([
-            'tenant_id' => $this->tenant->id,
-            'product_category_id' => $category->id,
-            'name' => 'Executivo',
-            'is_active' => true,
-        ]);
-
-        $product = \App\Models\Product\Product::create([
-            'tenant_id' => $this->tenant->id,
-            'product_type_id' => $type->id,
-            'name' => 'Prato da timeline',
-            'price' => 18,
-            'is_available' => true,
-        ]);
-
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
-
-        $comanda = $this->auth()->postJson('/api/v1/balcao/comandas')->assertStatus(201)->json('data');
-        $item = $this->auth()->postJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items", [
-            'product_uuid' => $product->uuid,
-            'qty' => 1,
-        ])->assertStatus(201)->json('data');
-
-        $this->auth()->patchJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items/{$item['uuid']}/prep-status", [
-            'prep_status' => 'sent_to_station',
-        ])->assertStatus(200);
-
-        $reason = 'Ingrediente indisponível.';
-
-        $this->auth()->patchJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items/{$item['uuid']}/prep-status", [
-            'prep_status' => 'cancelled',
-            'cancelled_reason' => $reason,
-        ])->assertStatus(200);
-
-        $timeline = $this->auth()->getJson("/api/v1/balcao/comandas/{$comanda['uuid']}/items/{$item['uuid']}/workflow-transitions")
-            ->assertStatus(200)
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', __('messages.workflow.timeline_list'));
-
-        $this->assertNotEmpty($timeline->json('data'));
-        $this->assertSame('comanda_item', $timeline->json('data.0.workflow_type'));
-        $this->assertSame($reason, $timeline->json('data.0.reason'));
-        $this->assertSame('workflow-user@test.com', $timeline->json('data.0.user.email'));
-    }
 }

@@ -34,6 +34,7 @@ use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductCategoryPriceController;
+use App\Http\Controllers\Product\ProductTypeController;
 use App\Http\Controllers\Location\EstadoController;
 use App\Http\Controllers\Location\CidadeController;
 use App\Http\Controllers\Location\BairroController;
@@ -718,6 +719,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/import/commit', [ProductImportController::class, 'commit'])
                 ->middleware(['tenant', 'perm:products,create', 'throttle:5,1,products-import-commit']);
         });
+
+        // Dependência técnica do cadastro de produto: o formulário ainda
+        // precisa listar tipos válidos para preencher `product_type_uuid`,
+        // mas o módulo CRUD de tipos já não é mais exposto na navegação.
+        Route::get('/product-types', [ProductTypeController::class, 'index'])
+            ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,product-types-list']);
 
         Route::prefix('orders')->group(function () {
             Route::get('/', [OrderController::class, 'index'])

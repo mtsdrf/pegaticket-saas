@@ -23,7 +23,7 @@ class SubscriptionAccessGateTest extends TestCase
     {
         parent::setUp();
         $this->setUpTenantScopedUser('gate-owner@example.com', 'owner', 'Proprietário');
-        $this->grantPermission('clients', 'read');
+        $this->grantPermission('orders', 'read');
         $this->grantPermission('subscription', 'read');
     }
 
@@ -38,7 +38,7 @@ class SubscriptionAccessGateTest extends TestCase
         $this->createSubscription(['tenant_id' => $this->tenant->id, 'status' => 'suspended']);
 
         $this->withHeaders($this->auth())
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(403)
             ->assertJsonPath('code', 'SUBSCRIPTION_SUSPENDED');
     }
@@ -69,7 +69,7 @@ class SubscriptionAccessGateTest extends TestCase
     public function tenant_without_subscription_is_not_blocked(): void
     {
         $this->withHeaders($this->auth())
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(200);
     }
 
@@ -79,7 +79,7 @@ class SubscriptionAccessGateTest extends TestCase
         $this->createSubscription(['tenant_id' => $this->tenant->id, 'status' => 'active']);
 
         $this->withHeaders($this->auth())
-            ->getJson('/api/v1/clients')
+            ->getJson('/api/v1/orders')
             ->assertStatus(200);
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Location\Estado;
 use App\Models\Product\Product;
 use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductType;
+use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -145,13 +146,17 @@ trait CreatesOrderFixtures
 
     protected function stockEntry(int $tenantId, Product $product, StockLocation $location, int $quantity): void
     {
-        $this->grantPermission('stock', 'entry');
-
-        $this->auth()->postJson('/api/v1/stock/movements/entry', [
-            'product_uuid' => $product->uuid,
-            'location_uuid' => $location->uuid,
-            'quantity' => $quantity,
-            'reason' => 'Estoque inicial',
-        ])->assertStatus(201);
+        StockBalance::updateOrCreate(
+            [
+                'tenant_id' => $tenantId,
+                'product_id' => $product->id,
+                'location_id' => $location->id,
+            ],
+            [
+                'quantity_on_hand' => $quantity,
+                'quantity_reserved' => 0,
+                'quantity_blocked' => 0,
+            ]
+        );
     }
 }
