@@ -19,12 +19,10 @@ class PlanPricesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Preços-base mensais (placeholder — ajustar conforme decisão
-        // comercial; o modelo já suporta versionamento por valid_from/to).
+        // Plano unico: preserva o preço-base do pacote mais completo que ja
+        // vinha sendo praticado comercialmente antes da consolidacao.
         $monthlyBase = [
-            'prata' => 99.90,
-            'ouro' => 199.90,
-            'diamante' => 349.90,
+            'pegaticket' => 349.90,
         ];
 
         $periods = [
@@ -55,6 +53,26 @@ class PlanPricesSeeder extends Seeder
                         'deleted_at' => null,
                     ]
                 );
+            }
+        }
+
+        $activePlanId = Plan::query()->where('slug', 'pegaticket')->whereNull('deleted_at')->value('id');
+        if ($activePlanId !== null) {
+            $activePriceIdsByPeriod = PlanPrice::query()
+                ->where('plan_id', $activePlanId)
+                ->where('is_active', true)
+                ->whereNull('deleted_at')
+                ->pluck('id', 'billing_period');
+
+            foreach ($activePriceIdsByPeriod as $period => $planPriceId) {
+                \DB::table('subscriptions')
+                    ->whereNull('deleted_at')
+                    ->where('billing_period', $period)
+                    ->update([
+                        'plan_id' => $activePlanId,
+                        'plan_price_id' => $planPriceId,
+                        'updated_at' => now(),
+                    ]);
             }
         }
     }

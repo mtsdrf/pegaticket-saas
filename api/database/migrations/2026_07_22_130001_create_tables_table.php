@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Mesa física do salão (roadmap Balcão, Fases 1+2). Uma mesa pode ter mais
+ * Mesa física do salão no fluxo presencial legado. Uma mesa pode ter mais
  * de uma comanda aberta simultânea (divisão por pessoa) — por isso o status
  * da mesa é gerido no fechamento da última comanda, não 1:1 com comanda.
  * tenant-scoped.

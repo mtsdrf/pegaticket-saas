@@ -26,26 +26,11 @@ function PlanChip({ planSlug, planName }: { planSlug?: string | null; planName?:
   if (!planName) return null
 
   const normalized = planSlug?.toLowerCase()
-  const palette =
-    normalized === 'diamante'
-      ? {
-          // Rubi/ametista — trocado do dourado original (2026-07-14, ver design-system.md) pra
-          // diferenciar melhor do plano Ouro logo abaixo. Fundo sólido (sem gradiente) desde 2026-07-30.
-          color: '#7A1152',
-          border: 'color-mix(in srgb, #9F1D6B 45%, white)',
-          background: 'color-mix(in srgb, #F6D5E6 55%, white)',
-        }
-      : normalized === 'ouro'
-        ? {
-            color: '#92400E',
-            border: 'color-mix(in srgb, #FBBF24 42%, white)',
-            background: 'color-mix(in srgb, #FEF3C7 68%, white)',
-          }
-        : {
-            color: '#334155',
-            border: 'color-mix(in srgb, #94A3B8 42%, white)',
-            background: 'color-mix(in srgb, #E2E8F0 72%, white)',
-          }
+  const palette = {
+    color: '#0F4C5C',
+    border: 'color-mix(in srgb, #2A7F9E 36%, white)',
+    background: 'color-mix(in srgb, #D8F0F7 72%, white)',
+  }
 
   return (
     <Chip
@@ -63,6 +48,7 @@ function PlanChip({ planSlug, planName }: { planSlug?: string | null; planName?:
         background: palette.background,
         '& .MuiChip-label': { px: 1.1 },
       }}
+      title={normalized ? `Plano ${normalized}` : undefined}
     />
   )
 }

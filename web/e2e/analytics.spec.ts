@@ -145,14 +145,14 @@ test.describe('Análises', () => {
         dimension === 'clients'
           ? [
               {
-                client_name: 'Cliente Ouro',
+                client_name: 'Cliente Horizonte',
                 revenue: 1800,
                 participation_percentage: 37.3,
                 cumulative_percentage: 37.3,
                 curve_class: 'A',
               },
               {
-                client_name: 'Cliente Prata',
+                client_name: 'Cliente Aurora',
                 revenue: 940,
                 participation_percentage: 19.5,
                 cumulative_percentage: 56.8,
@@ -287,8 +287,8 @@ test.describe('Análises', () => {
           success: true,
           message: 'OK',
           data: [
-            { client_name: 'Cliente Ouro', order_count: 8, total_amount: 1800, rfm: 'vip' },
-            { client_name: 'Cliente Prata', order_count: 5, total_amount: 940, rfm: 'recorrente' },
+            { client_name: 'Cliente Horizonte', order_count: 8, total_amount: 1800, rfm: 'vip' },
+            { client_name: 'Cliente Aurora', order_count: 5, total_amount: 940, rfm: 'recorrente' },
           ],
           meta: {},
         }),
@@ -303,8 +303,8 @@ test.describe('Análises', () => {
           success: true,
           message: 'OK',
           data: [
-            { client_name: 'Cliente Ouro', avg_days_to_pay: 2, paid_orders_count: 5 },
-            { client_name: 'Cliente Prata', avg_days_to_pay: 7, paid_orders_count: 3 },
+            { client_name: 'Cliente Horizonte', avg_days_to_pay: 2, paid_orders_count: 5 },
+            { client_name: 'Cliente Aurora', avg_days_to_pay: 7, paid_orders_count: 3 },
           ],
           meta: {},
         }),
@@ -319,14 +319,14 @@ test.describe('Análises', () => {
           ? [
               {
                 order_uuid: 'order-1',
-                client_name: 'Cliente Ouro',
+                client_name: 'Cliente Horizonte',
                 open_amount: 210.4,
                 days_overdue: 12,
                 type: 'pagamento',
               },
               {
                 order_uuid: 'order-2',
-                client_name: 'Cliente Prata',
+                client_name: 'Cliente Aurora',
                 open_amount: 98,
                 days_overdue: 33,
                 type: 'entrega',
@@ -335,7 +335,7 @@ test.describe('Análises', () => {
           : [
               {
                 order_uuid: 'order-3',
-                client_name: 'Cliente Bronze',
+                client_name: 'Cliente Horizonte Sul',
                 open_amount: 55,
                 days_overdue: 4,
                 type: 'pagamento',
@@ -389,16 +389,16 @@ test.describe('Análises', () => {
 
     await page.getByRole('tab', { name: 'Clientes' }).click()
     await expect(page.getByText('Melhores clientes')).toBeVisible()
-    await expect(page.getByText('Cliente Ouro').first()).toBeVisible()
+    await expect(page.getByText('Cliente Horizonte').first()).toBeVisible()
     await expect(page.getByText('Atrasos de pagamento')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Atrasos' }).click()
     await expect(page.getByText('Pedidos em atraso')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Cliente Prata' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Cliente Aurora' })).toBeVisible()
     await expect(page.getByText('33 dias')).toBeVisible()
 
     await page.getByRole('button', { name: 'Go to page 2' }).click()
-    await expect(page.getByRole('cell', { name: 'Cliente Bronze' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Cliente Horizonte Sul' })).toBeVisible()
     await expect(page.getByText('4 dias')).toBeVisible()
   })
 })

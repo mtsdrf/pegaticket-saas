@@ -63,7 +63,7 @@ class MigrateLegacyEstablishmentCommand extends Command
     private const OWNER_EMAIL = 'je_silveira14@hotmail.com';
     private const EMPLOYEE_EMAIL = 'jenifer@gmail.com';
     private const EMPLOYEE_NAME = 'Jenifer';
-    private const PLAN_SLUG = 'diamante';
+    private const PLAN_SLUG = 'pegaticket';
     private const CHUNK_SIZE = 500;
 
     /** Números já validados de forma independente pelo usuário (ver prompt original). */

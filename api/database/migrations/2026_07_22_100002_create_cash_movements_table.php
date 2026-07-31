@@ -5,10 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Movimento de caixa (roadmap PDV, Fase PDV-1) — sangria (`withdrawal`, saída
- * de dinheiro) ou suprimento (`supply`, entrada de dinheiro) durante uma
- * sessão aberta. amount sempre positivo; o sinal é dado pelo `type` no
- * cálculo do esperado no fechamento.
+ * Movimento de caixa — sangria (`withdrawal`, saída de dinheiro) ou
+ * suprimento (`supply`, entrada de dinheiro) durante uma sessão aberta.
+ * amount sempre positivo; o sinal é dado pelo `type` no cálculo do esperado
+ * no fechamento.
  */
 return new class extends Migration {
     public function up(): void

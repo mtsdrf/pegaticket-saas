@@ -49,8 +49,8 @@ test.describe('Assinatura da empresa', () => {
           tenant_name: 'Empresa QA',
           role: 'Proprietário',
           role_slug: 'owner',
-          plan_slug: 'prata',
-          plan_name: 'Prata',
+          plan_slug: 'pegaticket',
+          plan_name: 'PegaTicket',
         },
       ],
     })
@@ -65,10 +65,10 @@ test.describe('Assinatura da empresa', () => {
       body: [
         {
           plan: {
-            uuid: 'plan-prata',
-            name: 'Prata',
-            slug: 'silver',
-            description: 'Plano inicial para operação essencial.',
+            uuid: 'plan-pegaticket',
+            name: 'PegaTicket',
+            slug: 'pegaticket',
+            description: 'Plano completo com todos os recursos liberados.',
           },
           billing_periods: [
             {
@@ -101,9 +101,9 @@ test.describe('Assinatura da empresa', () => {
     await expect(page.getByText('Nenhuma assinatura ativa')).toBeVisible()
     await expect(page.getByText('Sua empresa ainda não possui uma assinatura registrada.')).toBeVisible()
     await expect(page.getByText('Perfil proprietário')).toBeVisible()
-    await page.getByRole('button', { name: /Prata Plano inicial para operação essencial\./ }).click()
+    await page.getByRole('button', { name: /PegaTicket Plano completo com todos os recursos liberados\./ }).click()
 
-    await expect(page.getByText('O que está incluído no plano Prata')).toBeVisible()
+    await expect(page.getByText('O que está incluído no plano PegaTicket')).toBeVisible()
     await expect(page.getByRole('radiogroup', { name: 'Período de cobrança' })).toBeVisible()
 
     const startButton = page.getByRole('button', { name: 'Iniciar assinatura' })
@@ -125,8 +125,8 @@ test.describe('Assinatura da empresa', () => {
           tenant_name: 'Empresa QA',
           role: 'Proprietário',
           role_slug: 'owner',
-          plan_slug: 'prata',
-          plan_name: 'Prata',
+          plan_slug: 'pegaticket',
+          plan_name: 'PegaTicket',
         },
       ],
     })
@@ -138,9 +138,9 @@ test.describe('Assinatura da empresa', () => {
         status: 'canceled',
         billing_period: 'monthly',
         plan: {
-          uuid: 'plan-prata',
-          name: 'Prata',
-          slug: 'prata',
+          uuid: 'plan-pegaticket',
+          name: 'PegaTicket',
+          slug: 'pegaticket',
         },
         trial_ends_at: null,
         is_trial: false,
@@ -163,10 +163,10 @@ test.describe('Assinatura da empresa', () => {
       body: [
         {
           plan: {
-            uuid: 'plan-diamante',
-            name: 'Diamante',
-            slug: 'diamante',
-            description: 'Plano completo para retomada.',
+            uuid: 'plan-pegaticket',
+            name: 'PegaTicket',
+            slug: 'pegaticket',
+            description: 'Plano completo com todos os recursos liberados.',
           },
           billing_periods: [
             {
@@ -206,8 +206,8 @@ test.describe('Assinatura da empresa', () => {
           tenant_name: 'Empresa QA',
           role: 'Proprietário',
           role_slug: 'owner',
-          plan_slug: 'diamante',
-          plan_name: 'Diamante',
+          plan_slug: 'pegaticket',
+          plan_name: 'PegaTicket',
         },
       ],
     })
@@ -219,9 +219,9 @@ test.describe('Assinatura da empresa', () => {
         status: 'suspended',
         billing_period: 'monthly',
         plan: {
-          uuid: 'plan-diamante',
-          name: 'Diamante',
-          slug: 'diamante',
+          uuid: 'plan-pegaticket',
+          name: 'PegaTicket',
+          slug: 'pegaticket',
         },
         trial_ends_at: null,
         is_trial: false,
@@ -262,8 +262,8 @@ test.describe('Assinatura da empresa', () => {
           tenant_name: 'Empresa QA',
           role: 'Proprietário',
           role_slug: 'owner',
-          plan_slug: 'diamante',
-          plan_name: 'Diamante',
+          plan_slug: 'pegaticket',
+          plan_name: 'PegaTicket',
         },
       ],
     })
@@ -275,9 +275,9 @@ test.describe('Assinatura da empresa', () => {
         status: 'active',
         billing_period: 'monthly',
         plan: {
-          uuid: 'plan-diamante',
-          name: 'Diamante',
-          slug: 'diamante',
+          uuid: 'plan-pegaticket',
+          name: 'PegaTicket',
+          slug: 'pegaticket',
         },
         trial_ends_at: null,
         is_trial: false,
@@ -345,9 +345,9 @@ test.describe('Assinatura da empresa', () => {
           status: 'active',
           billing_period: 'monthly',
           plan: {
-            uuid: 'plan-diamante',
-            name: 'Diamante',
-            slug: 'diamante',
+            uuid: 'plan-pegaticket',
+            name: 'PegaTicket',
+            slug: 'pegaticket',
           },
           trial_ends_at: null,
           current_period_start: '2026-07-01T00:00:00Z',
@@ -362,9 +362,9 @@ test.describe('Assinatura da empresa', () => {
           status: 'canceled',
           billing_period: 'monthly',
           plan: {
-            uuid: 'plan-prata',
-            name: 'Prata',
-            slug: 'prata',
+            uuid: 'plan-pegaticket',
+            name: 'PegaTicket',
+            slug: 'pegaticket',
           },
           trial_ends_at: null,
           current_period_start: '2026-06-01T00:00:00Z',
@@ -407,7 +407,7 @@ test.describe('Assinatura da empresa', () => {
         paid_at: null,
         created_at: '2026-07-28T10:00:00Z',
         metadata: {
-          qr_code: '00020126580014BR.GOV.BCB.PIX0114+55119999999995204000053039865802BR5925MASKATS TESTE6009SAO PAULO62070503***6304ABCD',
+          qr_code: '00020126580014BR.GOV.BCB.PIX0114+55119999999995204000053039865802BR5925PEGATICKET TESTE6009SAO PAULO62070503***6304ABCD',
           ticket_url: 'https://mercadopago.example/pix/invoice-open-1',
         },
       },
@@ -424,8 +424,7 @@ test.describe('Assinatura da empresa', () => {
     await expect(page.getByText('Valor não confirmado', { exact: true })).toBeVisible()
 
     await page.getByText('Histórico de assinaturas').scrollIntoViewIfNeeded()
-    await expect(page.getByRole('cell', { name: 'Diamante' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Prata' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'PegaTicket' }).first()).toBeVisible()
     await expect(page.getByText(/^Ativa$/).first()).toBeVisible()
     await expect(page.getByText(/^Cancelada$/).first()).toBeVisible()
 

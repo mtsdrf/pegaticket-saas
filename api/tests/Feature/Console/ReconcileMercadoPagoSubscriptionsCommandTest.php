@@ -27,7 +27,7 @@ class ReconcileMercadoPagoSubscriptionsCommandTest extends TestCase
     #[Test]
     public function command_cancels_locally_when_remote_preapproval_is_cancelled(): void
     {
-        $plan = $this->createPlan('prata');
+        $plan = $this->createPlan('pegaticket');
         $price = $this->createPlanPrice($plan, 'monthly', 99.90, 0);
         $tenant = $this->createTenant();
 
@@ -58,7 +58,7 @@ class ReconcileMercadoPagoSubscriptionsCommandTest extends TestCase
     #[Test]
     public function command_activates_a_pending_subscription_when_remote_preapproval_is_authorized(): void
     {
-        $plan = $this->createPlan('ouro');
+        $plan = $this->createPlan('plano-operacao');
         $price = $this->createPlanPrice($plan, 'monthly', 149.90, 0);
         $tenant = $this->createTenant();
 
@@ -87,7 +87,7 @@ class ReconcileMercadoPagoSubscriptionsCommandTest extends TestCase
     #[Test]
     public function command_keeps_local_status_when_remote_preapproval_state_is_not_actionable(): void
     {
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-analytics');
         $price = $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $tenant = $this->createTenant();
 

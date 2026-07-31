@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * transitoriamente pra checar elegibilidade de cupom. `needs_change`/
  * `change_for_amount` são novos: informativo pro operador saber que o
  * cliente pagará em dinheiro e precisará de troco pra um valor específico.
- * Todos nullable/default preservam 100% os fluxos staff/pdv existentes.
+ * Todos nullable/default preservam 100% os fluxos de pedido já existentes.
  */
 return new class extends Migration {
     public function up(): void

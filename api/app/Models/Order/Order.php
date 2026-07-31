@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class Order extends BaseModel
 {
+    public const LEGACY_ORIGIN_MAP = [
+        'counter' => 'staff',
+    ];
+
     protected $table = 'orders';
 
     protected $fillable = [
@@ -129,6 +133,15 @@ class Order extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
+    public static function normalizeOrigin(?string $origin): string
+    {
+        if ($origin === null || $origin === '') {
+            return 'staff';
+        }
+
+        return self::LEGACY_ORIGIN_MAP[$origin] ?? $origin;
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -145,8 +158,8 @@ class Order extends BaseModel
     }
 
     /**
-     * Operador identificado por PIN (roadmap A4, item 15) que bateu a venda
-     * de PDV — distinto de created_by (usuário do JWT da sessão).
+     * Operador identificado por PIN que concluiu a operação — distinto de
+     * created_by (usuário do JWT da sessão).
      */
     public function operator()
     {

@@ -28,7 +28,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Funciona para o meu tipo de negócio?',
     answer:
-      'O PegaTicket atende atacadistas, varejistas, laticínios e distribuidoras de bebidas nos planos Prata e Ouro; bares e casas noturnas com atendimento em mesas/comandas usam o módulo Balcão, disponível no plano Diamante.',
+      'O PegaTicket atende operacoes com catalogo, pedidos, loja online, estoque, integracoes e governanca fiscal em um plano unico, com tudo liberado.',
   },
   {
     question: 'Posso ter mais de uma unidade/filial?',
@@ -36,9 +36,9 @@ export const FAQ_ITEMS: FaqItem[] = [
       'Sim, o sistema é multiempresa e organiza lojas, filiais e depósitos dentro da mesma conta, com usuários e permissões próprios por unidade.',
   },
   {
-    question: 'Posso mudar de plano depois?',
+    question: 'Existe troca de plano?',
     answer:
-      'Sim, é possível alterar o plano da assinatura conforme a operação cresce, sem precisar recomeçar o cadastro.',
+      'Neste momento nao. A plataforma trabalha com um plano unico, com todas as funcionalidades atuais liberadas.',
   },
   {
     question: 'Como funciona o suporte durante a implantação?',

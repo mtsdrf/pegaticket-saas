@@ -20,7 +20,6 @@ function storefrontTenant(slug: string, name: string) {
     address_lng: null,
     accepted_payment_methods: ['cash', 'credit_card'],
     allow_store_pickup: true,
-    allow_table_reservations: false,
     storefront_enabled: true,
   }
 }

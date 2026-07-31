@@ -1,21 +1,18 @@
-import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import AutoAwesomeMosaicRoundedIcon from '@mui/icons-material/AutoAwesomeMosaicRounded'
-import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
-import LocalBarRoundedIcon from '@mui/icons-material/LocalBarRounded'
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded'
 import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded'
-import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded'
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
+import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded'
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded'
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
 import type { SvgIconComponent } from '@mui/icons-material'
 
 /**
- * Um card por módulo real do produto — mapeado 1:1 das functionalities de
- * `api/database/seeders/InitialPlansSeeder.php` (fonte única, não inventar
- * módulo sem lastro no seeder/plano real).
+ * Recorte comercial dos módulos hoje ativos nos planos do produto. Não é um
+ * espelho 1:1 de todas as functionalities técnicas do backend; aqui entram
+ * só os blocos que fazem sentido na comparação pública de planos.
  */
 export interface ModuleInfo {
   key: string
@@ -35,7 +32,7 @@ export const MODULES: ModuleInfo[] = [
     key: 'orders',
     icon: ShoppingBagRoundedIcon,
     title: 'Pedidos',
-    description: 'Pedidos de loja, balcão e atacado centralizados, do recebimento até a entrega.',
+    description: 'Pedidos de loja, atendimento interno e atacado centralizados, do recebimento até a entrega.',
   },
   {
     key: 'clients',
@@ -56,16 +53,16 @@ export const MODULES: ModuleInfo[] = [
     description: 'Controle de estoque por depósito/filial, com movimentações e disponibilidade em tempo real.',
   },
   {
-    key: 'pdv',
-    icon: PointOfSaleRoundedIcon,
-    title: 'PDV',
-    description: 'Frente de caixa para venda presencial, integrada ao mesmo estoque e catálogo.',
+    key: 'storefront-orders',
+    icon: ShoppingBagRoundedIcon,
+    title: 'Operação da loja',
+    description: 'Fila dedicada para aprovar, despachar, entregar e receber pedidos vindos da loja online.',
   },
   {
-    key: 'cashback',
-    icon: CardGiftcardRoundedIcon,
-    title: 'Cashback & fidelidade',
-    description: 'Programa de cashback para o cliente voltar a comprar direto com você.',
+    key: 'integrations',
+    icon: SettingsEthernetRoundedIcon,
+    title: 'Integrações',
+    description: 'Chaves de API, webhooks, pedidos externos e conexões operacionais avançadas.',
   },
   {
     key: 'analytics',
@@ -74,27 +71,15 @@ export const MODULES: ModuleInfo[] = [
     description: 'Indicadores avançados de vendas e planejamento de rotas de entrega.',
   },
   {
-    key: 'balcao',
-    icon: LocalBarRoundedIcon,
-    title: 'Balcão',
-    description: 'Mesas, comandas e comunicação com cozinha e bar para restaurantes, bares e casas noturnas.',
-  },
-  {
     key: 'subscription',
     icon: RouteRoundedIcon,
     title: 'Assinatura self-service',
     description: 'Gestão da própria assinatura PegaTicket: plano, ciclo, faturas e cancelamento.',
   },
   {
-    key: 'accounting-access',
-    icon: AccountBalanceRoundedIcon,
-    title: 'Acesso do contador',
-    description: 'Login dedicado para o escritório de contabilidade acompanhar a empresa.',
-  },
-  {
-    key: 'tax-rules',
+    key: 'compliance',
     icon: ReceiptLongRoundedIcon,
-    title: 'Regras fiscais',
-    description: 'Configuração de regras fiscais aplicadas aos pedidos da empresa.',
+    title: 'Fiscal & contador',
+    description: 'Governança fiscal, perfis tributários e acesso dedicado para o escritório contábil.',
   },
 ]

@@ -3,6 +3,7 @@
 namespace App\Services\Tenant;
 
 use App\Events\Tenant\TenantDataExported;
+use App\Models\Order\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use ZipArchive;
@@ -94,6 +95,12 @@ class TenantDataExportService
                 'orders.created_at as created_at',
             ])
             ->get();
+
+        $rows->transform(function (object $row) {
+            $row->origin = Order::normalizeOrigin($row->origin);
+
+            return $row;
+        });
 
         return $this->toCsv(
             ['uuid', 'client_name', 'total_amount', 'origin', 'is_paid', 'is_delivered', 'cancelled_at', 'created_at'],

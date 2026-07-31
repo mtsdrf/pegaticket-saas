@@ -5,12 +5,12 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Comanda: o agregado que vive o ciclo da mesa (roadmap Balcão, Fases 1+2).
- * Decisão central do módulo: NÃO estender Order com "mesa aberta" — a comanda
+ * Comanda: agregado do fluxo presencial legado que vivia o ciclo da mesa.
+ * Decisão central da época: NÃO estender Order com "mesa aberta" — a comanda
  * vive aberta e só materializa um Order (origin='counter') no fechamento
  * (order_id preenchido nesse momento). service_fee_percent é congelado da
- * config do tenant no momento da abertura. table_id nullable = venda de
- * balcão sem mesa; label nullable = nome da pessoa (divisão por pessoa).
+ * config do tenant no momento da abertura. table_id nullable = atendimento
+ * sem mesa; label nullable = nome da pessoa (divisão por pessoa).
  */
 return new class extends Migration {
     public function up(): void

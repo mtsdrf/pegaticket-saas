@@ -47,7 +47,7 @@ class SupportTicketTest extends TestCase
     #[Test]
     public function attaches_diagnostics_snapshot_when_requested(): void
     {
-        $plan = $this->createPlan('ouro');
+        $plan = $this->createPlan('plano-suporte');
         $planPrice = $this->createPlanPrice($plan);
         $this->createSubscription([
             'tenant_id' => $this->tenant->id,

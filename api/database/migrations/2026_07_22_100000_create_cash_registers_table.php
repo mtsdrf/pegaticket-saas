@@ -5,12 +5,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Caixa/PDV (roadmap PDV, Fase PDV-1) — registrador físico/lógico de caixa
- * do tenant. stock_location_id opcional (nullOnDelete): o local de estoque
- * de onde a venda de balcão dá baixa; quando ausente, a venda usa o local
- * default do tenant (mesma resolução de OrderService). Sem CRUD dedicado
- * nesta fase — CashSessionService resolve-ou-cria um "Caixa Principal"
- * default por tenant (ver architecture-decisions.md).
+ * Registrador físico/lógico de caixa do tenant. stock_location_id opcional
+ * (nullOnDelete): define o local de estoque usado pela operação assistida;
+ * quando ausente, a venda usa o local default do tenant (mesma resolução de
+ * OrderService). Sem CRUD dedicado nesta fase — CashSessionService
+ * resolve-ou-cria um "Caixa Principal" default por tenant.
  */
 return new class extends Migration {
     public function up(): void

@@ -17,8 +17,8 @@ test.describe('Central de treinamento', () => {
           tenant_name: 'Empresa Escola',
           role: 'Proprietário',
           role_slug: 'owner',
-          plan_slug: 'diamante',
-          plan_name: 'Diamante',
+          plan_slug: 'pegaticket',
+          plan_name: 'PegaTicket',
         },
       ],
     })
@@ -85,7 +85,7 @@ test.describe('Central de treinamento', () => {
 
     await expect(page.getByRole('heading', { name: 'Central de Treinamento' })).toBeVisible()
     await expect(page.getByText('Empresa Escola')).toBeVisible()
-    await expect(page.getByText('Diamante')).toBeVisible()
+    await expect(page.getByText('PegaTicket')).toBeVisible()
     await expect(page.getByText('2 de 5 marcos concluídos')).toBeVisible()
     await expect(page.getByText('40%')).toBeVisible()
     await expect(page.getByText('Implantação guiada da empresa', { exact: true }).first()).toBeVisible()

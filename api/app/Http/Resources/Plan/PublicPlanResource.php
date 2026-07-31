@@ -16,7 +16,7 @@ class PublicPlanResource extends JsonResource
             'description' => $this->description,
             'sort_order' => $this->sort_order,
             'trial_days' => (int) config('saas.trial_days', 30),
-            'is_trial_default' => $this->slug === 'prata',
+            'is_trial_default' => true,
         ];
     }
 }

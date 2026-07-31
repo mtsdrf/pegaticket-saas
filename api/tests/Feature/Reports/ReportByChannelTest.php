@@ -18,11 +18,8 @@ use Tests\TestCase;
 
 /**
  * Roadmap A1.3 — GET /reports/by-channel, agregado por orders.origin.
- * O drill-down é o endpoint de listagem já existente (GET /orders?origin=
- * ...&date_from=...&date_to=...), sem rota nova — coberto aqui só a
- * confirmação de que o filtro `origin` já funciona (regressão), a
- * agregação em si é testada em OrderTest.php/rotas de orders já
- * existentes.
+ * Origens legadas como `counter` seguem normalizadas para `staff`, tanto na
+ * agregação quanto no drill-down.
  */
 class ReportByChannelTest extends TestCase
 {
@@ -115,7 +112,7 @@ class ReportByChannelTest extends TestCase
     }
 
     #[Test]
-    public function aggregates_orders_by_origin_excluding_cancelled(): void
+    public function aggregates_orders_by_origin_normalizing_legacy_channels_and_excluding_cancelled(): void
     {
         $this->grantPermission('reports', 'read');
         $client = $this->createClientWithCity($this->tenant->id);
@@ -124,8 +121,10 @@ class ReportByChannelTest extends TestCase
         $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'staff', 'total_amount' => 100]);
         $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'staff', 'total_amount' => 200]);
         $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'storefront', 'total_amount' => 50]);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter', 'total_amount' => 80]);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter', 'total_amount' => 20]);
         $this->createOrder($this->tenant->id, $client, $location, [
-            'origin' => 'pdv',
+            'origin' => 'counter',
             'total_amount' => 999,
             'cancelled_at' => now(),
         ]);
@@ -137,59 +136,59 @@ class ReportByChannelTest extends TestCase
 
         $byOrigin = collect($data)->keyBy('origin');
 
-        $this->assertEquals(2, $byOrigin['staff']['order_count']);
-        $this->assertEquals('300.00', $byOrigin['staff']['total_amount']);
-        $this->assertEquals('150.00', $byOrigin['staff']['average_ticket']);
+        $this->assertEquals(4, $byOrigin['staff']['order_count']);
+        $this->assertEquals('400.00', $byOrigin['staff']['total_amount']);
+        $this->assertEquals('100.00', $byOrigin['staff']['average_ticket']);
 
         $this->assertEquals(1, $byOrigin['storefront']['order_count']);
         $this->assertEquals('50.00', $byOrigin['storefront']['total_amount']);
 
-        $this->assertFalse($byOrigin->has('pdv'), 'pedido cancelado não deve entrar na agregação');
+        $this->assertFalse($byOrigin->has('counter'));
     }
 
     #[Test]
-    public function drill_down_via_orders_list_filters_by_origin_and_period(): void
+    public function drill_down_via_orders_list_normalizes_staff_filter_with_legacy_channels(): void
     {
         $this->grantPermission('orders', 'read');
         $client = $this->createClientWithCity($this->tenant->id);
         $location = $this->createLocation($this->tenant->id);
 
         $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'staff']);
-        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'pdv']);
-        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'pdv']);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter']);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter']);
 
-        $response = $this->auth()->getJson('/api/v1/orders?origin=pdv');
+        $response = $this->auth()->getJson('/api/v1/orders?origin=staff');
 
         $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
+        $this->assertCount(3, $response->json('data'));
         collect($response->json('data'))->each(
-            fn (array $order) => $this->assertEquals('pdv', $order['origin'])
+            fn (array $order) => $this->assertEquals('staff', $order['origin'])
         );
     }
 
     #[Test]
-    public function drill_down_via_reports_orders_filters_by_origin_and_period(): void
+    public function drill_down_via_reports_orders_normalizes_staff_filter_with_legacy_channels(): void
     {
         $this->grantPermission('reports', 'read');
         $client = $this->createClientWithCity($this->tenant->id);
         $location = $this->createLocation($this->tenant->id);
 
         $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'staff']);
-        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'pdv']);
-        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'pdv']);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter']);
+        $this->createOrder($this->tenant->id, $client, $location, ['origin' => 'counter']);
 
-        $response = $this->auth()->getJson('/api/v1/reports/orders?origin=pdv');
+        $response = $this->auth()->getJson('/api/v1/reports/orders?origin=staff');
 
         $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
+        $this->assertCount(3, $response->json('data'));
         collect($response->json('data'))->each(
-            fn (array $order) => $this->assertEquals('pdv', $order['origin'])
+            fn (array $order) => $this->assertEquals('staff', $order['origin'])
         );
 
-        $summary = $this->auth()->getJson('/api/v1/reports/orders/summary?origin=pdv')
+        $summary = $this->auth()->getJson('/api/v1/reports/orders/summary?origin=staff')
             ->assertStatus(200)
             ->json('data');
 
-        $this->assertEquals(2, $summary['total']);
+        $this->assertEquals(3, $summary['total']);
     }
 }

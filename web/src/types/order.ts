@@ -90,7 +90,7 @@ export interface OrderFiscalDocument {
  * `cancellation_requested` (roadmap A4) é transitório — só pedido `origin: 'storefront'` chega nele, via solicitação do cliente final no Portal; volta pro status anterior ao aprovar/rejeitar.
  */
 export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
-export type OrderOrigin = 'staff' | 'storefront' | 'pdv' | 'counter' | 'ifood'
+export type OrderOrigin = 'staff' | 'storefront' | 'ifood'
 export type OrderOperationStage = 'approval' | 'production' | 'dispatch' | 'financial_pending'
 
 export interface Order {
@@ -100,7 +100,7 @@ export interface Order {
   total_amount: number
   /** Delivery Fase 2 — já somado ao `total_amount`; pedidos staff (sem loja) ficam com `0`. */
   delivery_fee: number
-  /** Balcão — taxa de serviço, já somada ao `total_amount`; pedidos staff/pdv/loja ficam com `0`. */
+  /** Taxa de serviço, já somada ao `total_amount`; nos canais atuais costuma permanecer `0`. */
   service_fee: number
   /** Delivery Fase 3 — já subtraído do `total_amount`; pedidos staff/sem cupom ficam com `0`. */
   discount_amount: number

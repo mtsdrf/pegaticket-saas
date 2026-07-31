@@ -1082,27 +1082,6 @@ return [
         'sent' => 'Mensagem enviada com sucesso.',
     ],
 
-    'pdv' => [
-        'session_list' => 'Sessões de caixa.',
-        'session_current' => 'Sessão de caixa atual.',
-        'offline_snapshot_ready' => 'Base offline do PDV atualizada com sucesso.',
-        'session_opened' => 'Caixa aberto com sucesso.',
-        'session_closed' => 'Caixa fechado com sucesso.',
-        'movement_registered' => 'Movimento de caixa registrado.',
-        'sale_completed' => 'Venda registrada com sucesso.',
-        'session_already_open' => 'Já existe uma sessão de caixa aberta para este caixa.',
-        'session_already_closed' => 'Esta sessão de caixa já está fechada.',
-        'no_open_session' => 'Nenhuma sessão de caixa aberta. Abra o caixa antes de vender.',
-        'payment_mismatch' => 'A soma das formas de pagamento não confere com o total da venda.',
-    ],
-
-    'operator_pin' => [
-        'pin_set' => 'PIN salvo com sucesso.',
-        'pin_in_use' => 'Este PIN já está em uso por outro operador nesta empresa.',
-        'invalid_pin' => 'PIN inválido.',
-        'resolved' => 'Operador identificado.',
-    ],
-
     'support_ticket' => [
         'list' => 'Chamados de suporte.',
         'created' => 'Chamado aberto com sucesso.',
@@ -1128,7 +1107,7 @@ return [
     'comanda' => [
         'list' => 'Comandas abertas.',
         'opened' => 'Comanda aberta com sucesso.',
-        'offline_snapshot_ready' => 'Base offline do balcão atualizada com sucesso.',
+        'offline_snapshot_ready' => 'Base offline operacional atualizada com sucesso.',
         'closed' => 'Comanda fechada com sucesso.',
         'item_added' => 'Item adicionado à comanda.',
         'item_prep_status_updated' => 'Status de preparo atualizado.',

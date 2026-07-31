@@ -50,10 +50,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * Carga de DEMONSTRAÇÃO COMERCIAL segmentada por plano — 3 empresas
- * (`demo-prata`/`demo-ouro`/`demo-diamante`), uma por plano, cada uma com
- * dono + 1 funcionário de perfil restrito, com dados em todos os módulos
- * que aquele plano libera. Roda sozinha, sob demanda:
+ * Carga de DEMONSTRAÇÃO COMERCIAL do plano unico — 1 empresa demo com dono
+ * + 1 funcionario de perfil restrito, cobrindo os modulos principais do
+ * produto atual. Roda sozinha, sob demanda:
  *   php artisan db:seed --class=DemoPlansPresentationSeeder
  *
  * Mesmo truque de contexto fora do HTTP que DemoTenantSeeder já usa
@@ -62,8 +61,8 @@ use Illuminate\Support\Str;
  * auditoria e saldo de estoque fiquem idênticos a uma operação real.
  *
  * Idempotência: guard por slug de tenant, POR TENANT (não aborta os outros
- * dois se um já existir) — cada `buildTenant()` roda na própria
- * DB::transaction.
+     * um se ele já existir) — `buildTenant()` roda na própria
+     * DB::transaction.
  */
 class DemoPlansPresentationSeeder extends Seeder
 {
@@ -92,39 +91,18 @@ class DemoPlansPresentationSeeder extends Seeder
         $this->command?->table(['Empresa', 'Plano', 'Usuário', 'E-mail', 'Senha'], $rows);
     }
 
-    /** @return array<int, array{slug: string, name: string, plan_slug: string, tier: string, owner_email: string, owner_name: string, employee_email: string, employee_name: string}> */
+    /** @return array<int, array{slug: string, name: string, plan_slug: string, owner_email: string, owner_name: string, employee_email: string, employee_name: string}> */
     private function tenantConfigs(): array
     {
         return [
             [
-                'slug' => 'demo-prata',
-                'name' => 'Cafeteria Prata Demo',
-                'plan_slug' => 'prata',
-                'tier' => 'prata',
-                'owner_email' => 'dono.prata@pegaticket.com',
-                'owner_name' => 'Dono — Plano Prata',
-                'employee_email' => 'funcionario.prata@pegaticket.com',
-                'employee_name' => 'Funcionário — Plano Prata',
-            ],
-            [
-                'slug' => 'demo-ouro',
-                'name' => 'Cafeteria Ouro Demo',
-                'plan_slug' => 'ouro',
-                'tier' => 'ouro',
-                'owner_email' => 'dono.ouro@pegaticket.com',
-                'owner_name' => 'Dono — Plano Ouro',
-                'employee_email' => 'funcionario.ouro@pegaticket.com',
-                'employee_name' => 'Funcionário — Plano Ouro',
-            ],
-            [
-                'slug' => 'demo-diamante',
-                'name' => 'Restaurante Diamante Demo',
-                'plan_slug' => 'diamante',
-                'tier' => 'diamante',
-                'owner_email' => 'dono.diamante@pegaticket.com',
-                'owner_name' => 'Dono — Plano Diamante',
-                'employee_email' => 'funcionario.diamante@pegaticket.com',
-                'employee_name' => 'Funcionário — Plano Diamante',
+                'slug' => 'demo-pegaticket',
+                'name' => 'Operacao Demo PegaTicket',
+                'plan_slug' => 'pegaticket',
+                'owner_email' => 'dono.demo@pegaticket.com',
+                'owner_name' => 'Dono — Plano PegaTicket',
+                'employee_email' => 'funcionario.demo@pegaticket.com',
+                'employee_name' => 'Funcionário — Plano PegaTicket',
             ],
         ];
     }
@@ -163,23 +141,18 @@ class DemoPlansPresentationSeeder extends Seeder
 
         $this->setupEmployee($tenant, $cfg);
 
-        if (in_array($cfg['tier'], ['ouro', 'diamante'], true)) {
-            $this->setupCoupon($tenant);
-            $this->setupPromotion($tenant, $catalog['products']);
-        }
-
-        if ($cfg['tier'] === 'diamante') {
-            $this->setupSubscription($tenant, $plan);
-        }
+        $this->setupCoupon($tenant);
+        $this->setupPromotion($tenant, $catalog['products']);
+        $this->setupSubscription($tenant, $plan);
 
         return [
-            [$cfg['name'], ucfirst($cfg['tier']), $cfg['owner_name'], $cfg['owner_email'], self::PASSWORD],
-            [$cfg['name'], ucfirst($cfg['tier']), $cfg['employee_name'], $cfg['employee_email'], self::PASSWORD],
+            [$cfg['name'], 'PegaTicket', $cfg['owner_name'], $cfg['owner_email'], self::PASSWORD],
+            [$cfg['name'], 'PegaTicket', $cfg['employee_name'], $cfg['employee_email'], self::PASSWORD],
         ];
     }
 
     /**
-     * Geografia (Estado/Cidade/Bairro) reaproveitada entre os 3 tenants via
+     * Geografia (Estado/Cidade/Bairro) reaproveitada pela demo via
      * firstOr, mesmo truque do DemoTenantSeeder — evita colisão de `uf`
      * (bairros/cidades são globais, não tenant-scoped).
      *
@@ -287,7 +260,7 @@ class DemoPlansPresentationSeeder extends Seeder
      * Estoque necessário SEMPRE (Order::create reserva estoque de verdade
      * independente do plano expor ou não a UI de "Estoque" — reserve()
      * lança InsufficientStockException sem saldo), não é exclusivo de
-     * Ouro/Diamante.
+     * extras comerciais antigas.
      *
      * @param array<int, array{model: Product, price: float}> $products
      */
@@ -431,36 +404,22 @@ class DemoPlansPresentationSeeder extends Seeder
      */
     private function setupEmployee(Tenant $tenant, array $cfg): void
     {
-        $permissionsByTier = [
-            'prata' => [
-                'orders:read', 'orders:create',
-                'clients:read', 'clients:create',
-                'products:read',
-                'dashboard:read',
-                'storefront-orders:read', 'storefront-orders:update',
-            ],
-            'ouro' => ['stock:read'],
-            'diamante' => [],
+        $permissions = [
+            ['functionality' => 'orders', 'action' => 'read'],
+            ['functionality' => 'orders', 'action' => 'create'],
+            ['functionality' => 'clients', 'action' => 'read'],
+            ['functionality' => 'clients', 'action' => 'create'],
+            ['functionality' => 'products', 'action' => 'read'],
+            ['functionality' => 'dashboard', 'action' => 'read'],
+            ['functionality' => 'storefront-orders', 'action' => 'read'],
+            ['functionality' => 'stock', 'action' => 'read'],
         ];
-
-        $pairs = $permissionsByTier['prata'];
-        if (in_array($cfg['tier'], ['ouro', 'diamante'], true)) {
-            $pairs = array_merge($pairs, $permissionsByTier['ouro']);
-        }
-        if ($cfg['tier'] === 'diamante') {
-            $pairs = array_merge($pairs, $permissionsByTier['diamante']);
-        }
 
         $role = app(TenantRoleService::class)->create(CreateTenantRoleDTO::fromArray([
             'name' => 'Funcionário',
             'slug' => 'funcionario',
             'is_active' => true,
         ], $tenant->id));
-
-        $permissions = array_map(function (string $pair) {
-            [$functionality, $action] = explode(':', $pair);
-            return ['functionality' => $functionality, 'action' => $action];
-        }, $pairs);
 
         app(TenantRolePermissionService::class)->syncPermissions(
             $role,

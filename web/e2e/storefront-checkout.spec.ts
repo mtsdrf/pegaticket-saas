@@ -46,7 +46,6 @@ test.describe('Checkout público da loja', () => {
         address_lng: null,
         accepted_payment_methods: ['cash', 'credit_card'],
         allow_store_pickup: false,
-        allow_table_reservations: false,
         storefront_enabled: true,
       },
     })

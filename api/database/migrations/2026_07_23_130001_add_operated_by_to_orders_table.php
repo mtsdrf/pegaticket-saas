@@ -6,11 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Operador identificado por PIN (roadmap A4, item 15) que efetivamente
- * bateu a venda no PDV — distinto de `created_by` (sempre o usuário do JWT
- * da sessão, tipicamente o caixa "dono" do terminal) e de
- * `cash_sessions.opened_by` (quem abriu o caixa). Nullable: só é setado
- * quando a venda de PDV informa um `operator_uuid` resolvido via
- * /pdv/operator-session; pedido comum (não-PDV) fica null.
+ * registrou a venda interna da época — distinto de `created_by` (sempre o
+ * usuário do JWT da sessão) e de `cash_sessions.opened_by` (quem abriu o
+ * caixa naquele fluxo legado). Nullable: só era setado quando aquele fluxo
+ * operacional informava um operador resolvido; pedido comum permanece null.
  */
 return new class extends Migration {
     public function up(): void

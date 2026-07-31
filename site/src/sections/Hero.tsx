@@ -30,7 +30,7 @@ export function Hero() {
       >
         <Box>
           <Chip
-            label="Loja online, pedidos, estoque, PDV e cashback em um só sistema"
+            label="Loja online, pedidos, estoque, clientes e cashback em um só sistema"
             sx={{
               mb: 2.5,
               fontWeight: 600,

@@ -35,7 +35,7 @@ export function PlanCard({ plan, period }: PlanCardProps) {
     >
       {plan.highlighted ? (
         <Chip
-          label="Mais escolhido"
+          label="Plano atual"
           size="small"
           sx={{
             position: 'absolute',
@@ -88,7 +88,7 @@ export function PlanCard({ plan, period }: PlanCardProps) {
         href={APP_URL}
         onClick={() => trackEvent({ name: 'plan_select', plan: plan.slug, period })}
       >
-        Assinar {plan.name}
+        Assinar agora
       </Button>
     </Box>
   )

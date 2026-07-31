@@ -106,8 +106,8 @@ class ProductService
             $query->where('products.name', 'like', '%' . $filters['name'] . '%');
         }
 
-        // Código de barras: match exato (o leitor do PDV bipa o código
-        // completo e espera casar exatamente um produto), não LIKE.
+        // Código de barras usa match exato: leitura por scanner deve apontar
+        // exatamente um produto, sem LIKE.
         if (!empty($filters['barcode'])) {
             $query->where('products.barcode', $filters['barcode']);
         }
@@ -180,8 +180,8 @@ class ProductService
             $query->where('products.name', 'like', '%' . $filters['name'] . '%');
         }
 
-        // Código de barras: match exato (o leitor do PDV bipa o código
-        // completo e espera casar exatamente um produto), não LIKE.
+        // Código de barras usa match exato: leitura por scanner deve apontar
+        // exatamente um produto, sem LIKE.
         if (!empty($filters['barcode'])) {
             $query->where('products.barcode', $filters['barcode']);
         }

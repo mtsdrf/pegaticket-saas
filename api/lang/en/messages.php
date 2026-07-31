@@ -1075,27 +1075,6 @@ return [
         'sent' => 'Message sent successfully.',
     ],
 
-    'pdv' => [
-        'session_list' => 'Cash sessions.',
-        'session_current' => 'Current cash session.',
-        'offline_snapshot_ready' => 'PDV offline snapshot updated successfully.',
-        'session_opened' => 'Cash register opened successfully.',
-        'session_closed' => 'Cash register closed successfully.',
-        'movement_registered' => 'Cash movement registered.',
-        'sale_completed' => 'Sale registered successfully.',
-        'session_already_open' => 'There is already an open cash session for this register.',
-        'session_already_closed' => 'This cash session is already closed.',
-        'no_open_session' => 'No open cash session. Open the register before selling.',
-        'payment_mismatch' => 'The sum of payment methods does not match the sale total.',
-    ],
-
-    'operator_pin' => [
-        'pin_set' => 'PIN saved successfully.',
-        'pin_in_use' => 'This PIN is already in use by another operator in this company.',
-        'invalid_pin' => 'Invalid PIN.',
-        'resolved' => 'Operator identified.',
-    ],
-
     'support_ticket' => [
         'list' => 'Support tickets.',
         'created' => 'Ticket opened successfully.',

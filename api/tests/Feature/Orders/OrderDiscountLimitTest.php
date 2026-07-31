@@ -15,7 +15,8 @@ use Tests\TestCase;
  * Roadmap A1.5 — limite percentual de desconto por perfil. Único ponto de
  * entrada real de "desconto manual" mapeado no código: override de
  * items[].unit_price abaixo do preço resolvido, em OrderService::create()
- * (staff/pdv) e OrderService::updateItems() (edição de pedido já criado).
+ * (fluxo interno atual, incluindo origem legada normalizada) e
+ * OrderService::updateItems() (edição de pedido já criado).
  * Ver architecture-decisions.md pra investigação completa (coupon-based
  * discount do storefront não passa por aqui — é ator FinalCustomer, sem
  * TenantRole).

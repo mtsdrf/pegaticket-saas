@@ -180,7 +180,7 @@ class DemoTenantSeeder extends Seeder
 
     private function createTenant(User $owner): Tenant
     {
-        $plan = Plan::where('slug', 'diamante')->firstOrFail();
+        $plan = Plan::where('slug', 'pegaticket')->firstOrFail();
 
         $dto = CreateTenantDTO::fromArray([
             'name' => self::TENANT_NAME,

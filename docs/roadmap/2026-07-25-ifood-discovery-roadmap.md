@@ -25,7 +25,7 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 
 ### O que já existe e pode ser reaproveitado
 
-- `orders.origin` já existe e hoje suporta canais internos (`staff`, `storefront`, `pdv`, `counter`).
+- `orders.origin` já existe e hoje suporta canais internos (`staff`, `storefront`, `counter`).
 - domínio de pedidos, itens, pagamento, entrega, cancelamento e operação já existe.
 - existe fila, jobs, auditoria e padrões de service/repository/DTO.
 - existe gestão de `API keys` e `webhook subscriptions` para integrações externas genéricas.
@@ -523,4 +523,3 @@ A V1 iFood só pode ser tratada como pronta quando houver:
 Até lá, qualquer discurso deve ser:
 
 > integração iFood em implantação controlada / em homologação, e não pronta em produção ampla.
-

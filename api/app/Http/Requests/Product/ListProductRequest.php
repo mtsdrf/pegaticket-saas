@@ -24,7 +24,7 @@ class ListProductRequest extends FormRequest
             'q' => ['nullable', 'string', 'max:255'],
 
             'name' => ['nullable', 'string', 'max:255'],
-            // Busca exata por código de barras (leitor do PDV bipa e casa 1 SKU).
+            // Busca exata por código de barras para leitura por scanner.
             'barcode' => ['nullable', 'string', 'max:255'],
             'product_type_uuid' => ['nullable', 'uuid'],
             'product_category_uuid' => ['nullable', 'uuid'],

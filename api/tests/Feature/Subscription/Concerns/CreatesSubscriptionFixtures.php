@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 
 trait CreatesSubscriptionFixtures
 {
-    protected function createPlan(string $slug = 'prata'): Plan
+    protected function createPlan(string $slug = 'pegaticket'): Plan
     {
         return Plan::create([
             'uuid' => (string) Str::uuid(),

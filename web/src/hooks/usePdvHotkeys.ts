@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 
 /**
- * Atalhos de teclado do PDV (tela balcão teclado-first). `keydown` global,
- * sem lib nova. Atalhos:
+ * Atalhos de teclado para fluxo operacional keyboard-first. `keydown`
+ * global, sem lib nova. Atalhos:
  * - `F2`  → foca o campo de busca (funciona mesmo com foco num input).
  * - `F4`  → abre o modal de finalização de venda.
  * - `Delete` / `Backspace` → remove o item selecionado do carrinho, MAS só

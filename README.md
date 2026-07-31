@@ -13,8 +13,8 @@
 
 [![App](https://img.shields.io/badge/App-SaaS%20multiempresa-0F3D5E?style=for-the-badge)](web/)
 [![Experiência](https://img.shields.io/badge/Experiência-mobile--first-1B4965?style=for-the-badge)](#sobre)
-[![Planos](https://img.shields.io/badge/Planos-Prata%20%C2%B7%20Ouro%20%C2%B7%20Diamante-2C7A7B?style=for-the-badge)](#funcionalidades)
-[![Operação](https://img.shields.io/badge/Operação-PDV%20%C2%B7%20Balcão%20%C2%B7%20Loja%20online-CF7A00?style=for-the-badge)](#funcionalidades)
+[![Plano](https://img.shields.io/badge/Plano-%C3%BAnico%20completo-2C7A7B?style=for-the-badge)](#funcionalidades)
+[![Operação](https://img.shields.io/badge/Operação-Loja%20online%20%C2%B7%20Pedidos%20%C2%B7%20Estoque-CF7A00?style=for-the-badge)](#funcionalidades)
 
 [![Backend](https://img.shields.io/badge/Backend-Laravel%2013-8B1E3F?style=for-the-badge&logo=laravel&logoColor=white)](api/)
 [![Frontend](https://img.shields.io/badge/Frontend-React%2019-0E7490?style=for-the-badge&logo=react&logoColor=white)](web/)
@@ -29,7 +29,7 @@
 
 ## Sobre
 
-**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: pedidos, clientes, produtos, estoque, financeiro, loja online, PDV, balcão e visão analítica, tudo numa experiência clara, direta e mobile-first.
+**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: pedidos, clientes, produtos, estoque, financeiro, loja online e visão analítica, tudo numa experiência clara, direta e mobile-first.
 
 Cada empresa opera isolada dentro do SaaS, com:
 
@@ -86,10 +86,9 @@ O **Portal do cliente final** e a **Loja online** vivem dentro de `web/`, sob ro
 
 - **Operação comercial** — pedidos internos, pedidos da loja, clientes, produtos, categorias, estoque, expedição e histórico completo.
 - **Loja online** — catálogo público, checkout, acompanhamento do pedido, cashback, favoritos e portal do cliente final.
-- **PDV e Balcão** — venda rápida, operador por PIN, comandas, mesas, reservas, fila de espera e operação offline controlada.
 - **Financeiro e analytics** — conciliação, relatórios, indicadores, recebíveis e visão gerencial por canal, cliente, produto e local.
 - **Assinatura e planos** — contratação, troca de plano, histórico de cobrança, Pix para faturas elegíveis, cancelamento, renovação e regras de consumidor.
-- **Multiempresa** — isolamento por empresa, planos `Prata`, `Ouro` e `Diamante`, permissões e overrides por funcionalidade.
+- **Multiempresa** — isolamento por empresa, plano único `PegaTicket`, permissões e overrides por funcionalidade.
 - **Contador externo** — acesso dedicado com TOTP, empresas aprovadas, relatórios, dados fiscais e canal de pendências.
 - **Integrações** — Mercado Pago, webhooks assinados, chaves de API, operação de marketplace e base pronta para novas integrações.
 - **Auditoria** — registro de mutações relevantes com trilha clara de responsável, horário e contexto.

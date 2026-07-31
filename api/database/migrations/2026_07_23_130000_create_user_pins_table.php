@@ -5,12 +5,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * PIN individual por operador (roadmap A4, item 15) — login rápido de um
- * funcionário DENTRO de uma sessão de staff já autenticada via JWT, só para
- * identificar quem operou uma venda de PDV/Balcão (auditoria de operador em
- * terminal compartilhado). NÃO é autenticação primária — não substitui o
- * JWT nem cria uma 4ª identidade (ver security-standards.md sobre as 3
- * identidades JWT existentes).
+ * PIN individual por operador — login rápido de um funcionário DENTRO de uma
+ * sessão de staff já autenticada via JWT, só para identificar quem operou
+ * uma venda em terminal compartilhado. NÃO é autenticação primária — não
+ * substitui o JWT nem cria uma 4ª identidade (ver security-standards.md
+ * sobre as 3 identidades JWT existentes).
  *
  * Tabela própria (não coluna em `users`) porque o mesmo usuário pode operar
  * em tenants diferentes com PINs diferentes — users é global, o PIN é

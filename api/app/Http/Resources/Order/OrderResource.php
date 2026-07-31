@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Order;
 
+use App\Models\Order\Order;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -31,7 +32,7 @@ class OrderResource extends JsonResource
             'needs_change' => $this->needs_change,
             'change_for_amount' => $this->change_for_amount !== null ? (float) $this->change_for_amount : null,
             'status' => $this->status,
-            'origin' => $this->origin,
+            'origin' => Order::normalizeOrigin($this->origin),
             'fulfillment_type' => $this->fulfillment_type,
             'is_out_for_delivery' => $this->is_out_for_delivery,
             'out_for_delivery_at' => $this->out_for_delivery_at,

@@ -19,9 +19,8 @@ class ClientResource extends JsonResource
             'notes' => $this->notes,
             'is_trusted' => $this->is_trusted,
             'is_active' => $this->is_active,
-            // endereco pode ser null: cliente "Consumidor Final" avulso do PDV
-            // (venda de balcão sem cadastro) não tem endereço — ver
-            // architecture-decisions.md.
+            // Endereço pode ser null: clientes operacionais avulsos, usados em
+            // fluxos rápidos sem cadastro completo, podem não ter endereço.
             'endereco' => $this->endereco ? [
                 'uuid' => $this->endereco->uuid,
                 'logradouro' => $this->endereco->logradouro,

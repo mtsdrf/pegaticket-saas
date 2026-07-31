@@ -103,7 +103,7 @@ export interface ProductFilters {
   /** Busca genérica OR-contains (name, product_type_name, product_category_name) — usada pela caixa "Buscar em todos os campos". */
   q?: string
   name?: string
-  /** Match EXATO de código de barras (usado pelo PDV com leitor de código). */
+  /** Match exato de código de barras para leitura por scanner. */
   barcode?: string
   product_type_uuid?: string
   product_category_uuid?: string

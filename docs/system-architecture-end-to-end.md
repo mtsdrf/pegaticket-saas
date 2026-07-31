@@ -37,7 +37,7 @@ O **PegaTicket** é um SaaS multiempresa orientado a operação comercial, com f
 - assinatura, faturamento e integração com Mercado Pago;
 - módulo fiscal em fluxo interno/manual;
 - módulo do contador;
-- PDV e balcão;
+- operações de caixa, preparo e atendimento herdadas da fase anterior;
 - webhooks e integrações externas;
 - trilha de auditoria e governança de acesso por plano.
 
@@ -202,8 +202,8 @@ Principais áreas já implementadas:
 - configurações da empresa;
 - fiscal;
 - rotas;
-- PDV;
-- balcão;
+- operações de caixa;
+- preparo e atendimento;
 - suporte.
 
 ### 6.2 Loja pública
@@ -339,13 +339,7 @@ Existem dois níveis diferentes:
 
 ### 8.5 Planos
 
-O sistema já possui monetização por plano, com base atual em:
-
-- Prata
-- Ouro
-- Diamante
-
-O gate comercial já está conectado às funcionalidades do backend.
+O sistema já possui monetização por plano com **um plano ativo único, PegaTicket**, e o gate comercial continua conectado às funcionalidades do backend.
 
 ## 9. Domínios e módulos do sistema
 
@@ -503,7 +497,7 @@ Módulos:
 - relatórios do contador;
 - TOTP e auth segregada.
 
-### 9.10 PDV e balcão
+### 9.10 Operações de caixa e preparo herdadas
 
 Módulos:
 
@@ -511,7 +505,6 @@ Módulos:
 - sessão de caixa;
 - movimentações de caixa;
 - PIN de operador;
-- PDV;
 - estações;
 - mesas;
 - comandas;
@@ -638,7 +631,7 @@ Marketplace:
 - `marketplace_catalog_syncs`
 - `marketplace_catalog_sync_items`
 
-PDV e balcão:
+Operações de caixa e preparo herdadas:
 
 - `cash_registers`
 - `cash_sessions`

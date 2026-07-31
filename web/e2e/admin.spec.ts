@@ -59,7 +59,7 @@ test.describe('Administração global', () => {
         {
           uuid: 'tenant-admin-1',
           name: 'Empresa Alpha',
-          plan_name: 'Diamante',
+          plan_name: 'PegaTicket',
           trial_ends_at: '2026-08-15',
           is_active: true,
           created_at: '2026-07-28T12:00:00Z',
@@ -94,7 +94,7 @@ test.describe('Administração global', () => {
     await expect(page.getByText('Gerencie as empresas da plataforma.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Nova empresa' })).toBeVisible()
     await expect(page.getByText('Empresa Alpha')).toBeVisible()
-    await expect(page.getByText('Diamante')).toBeVisible()
+    await expect(page.getByText('PegaTicket')).toBeVisible()
   })
 
   test('abre os detalhes da auditoria administrativa', async ({ page }) => {

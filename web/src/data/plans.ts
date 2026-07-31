@@ -7,44 +7,21 @@
  * este arquivo e o preço de fato cobrado.
  */
 export interface PlanSalesInfo {
-  slug: 'prata' | 'ouro' | 'diamante'
+  slug: 'pegaticket'
   name: string
   featureHighlights: string[]
 }
 
 export const PLAN_SALES_INFO: PlanSalesInfo[] = [
   {
-    slug: 'prata',
-    name: 'Prata',
+    slug: 'pegaticket',
+    name: 'PegaTicket',
     featureHighlights: [
-      'Loja online com cardápio/catálogo digital',
-      'Gestão de pedidos da loja',
-      'Cadastro de produtos e categorias',
-      'Pedidos internos e dashboard operacional',
-      'Usuários, papéis e permissões',
-      'Configurações da empresa e redes sociais',
-    ],
-  },
-  {
-    slug: 'ouro',
-    name: 'Ouro',
-    featureHighlights: [
-      'Tudo do plano Prata',
-      'Disponibilidade e reserva de estoque no fluxo de pedidos',
-      'Campanhas e relacionamento',
-      'Analytics avançado',
-      'Planejamento de rotas de entrega',
-    ],
-  },
-  {
-    slug: 'diamante',
-    name: 'Diamante',
-    featureHighlights: [
-      'Tudo do plano Ouro',
-      'Integrações operacionais e visão omnichannel',
-      'Assinatura self-service',
-      'Acesso dedicado do contador',
-      'Regras fiscais aplicadas aos pedidos',
+      'Pedidos internos e fila da loja online',
+      'Clientes, produtos, categorias e tipos de item',
+      'Estoque, integracoes e planejamento de rotas',
+      'Analytics, financeiro e dashboard operacional',
+      'Fiscal, contador, suporte e assinatura',
     ],
   },
 ]

@@ -6,7 +6,7 @@ test.describe('Fiscal', () => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['tax-rules:read', 'tax-rules:create', 'tax-rules:update', 'tax-rules:delete', 'dashboard:read'],
-      tenantFunctionalities: ['fiscal', 'dashboard'],
+      tenantFunctionalities: ['tax-rules', 'dashboard'],
     })
 
     let rules = [
@@ -25,12 +25,12 @@ test.describe('Fiscal', () => {
     let profiles = [
       {
         uuid: 'fiscal-profile-1',
-        name: 'Venda balcão NFC-e',
+        name: 'Venda interna NFC-e',
         operation_nature: 'sale',
         document_type: 'nfce',
         default_cfop: '5102',
-        scope: { order_origin: ['counter'], fulfillment_type: ['pickup'], destination_type: ['consumer_final'] },
-        description: 'Perfil base para operação de balcão.',
+        scope: { order_origin: ['staff'], fulfillment_type: ['pickup'], destination_type: ['consumer_final'] },
+        description: 'Perfil base para operação interna.',
         is_active: true,
       },
     ]
@@ -109,18 +109,18 @@ test.describe('Fiscal', () => {
     await expect(page.getByText('Prontidão fiscal da empresa')).toBeVisible()
     await expect(page.getByText('67% dos pré-requisitos fiscais concluídos.')).toBeVisible()
     await expect(page.getByText('Produtos fiscais')).toBeVisible()
-    await expect(page.getByText('Venda balcão NFC-e')).toBeVisible()
+    await expect(page.getByText('Venda interna NFC-e')).toBeVisible()
     await expect(page.getByText('CFOP 5102')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Editar perfil Venda balcão NFC-e' }).click()
+    await page.getByRole('button', { name: 'Editar perfil Venda interna NFC-e' }).click()
     await expect(page).toHaveURL(/\/configuracoes\/perfis-fiscais\/fiscal-profile-1\/editar$/)
-    await expect(page.getByLabel('Nome do perfil')).toHaveValue('Venda balcão NFC-e')
+    await expect(page.getByLabel('Nome do perfil')).toHaveValue('Venda interna NFC-e')
     await expect(page.getByLabel('CFOP base')).toHaveValue('5102')
 
     await page.goto('/configuracoes/perfis-fiscais')
-    await page.getByRole('button', { name: 'Excluir perfil Venda balcão NFC-e' }).click()
+    await page.getByRole('button', { name: 'Excluir perfil Venda interna NFC-e' }).click()
     await expect(page.getByRole('dialog', { name: 'Excluir perfil fiscal' })).toBeVisible()
     await page.getByRole('button', { name: 'Excluir' }).click()
-    await expect(page.getByText('Venda balcão NFC-e')).toHaveCount(0)
+    await expect(page.getByText('Venda interna NFC-e')).toHaveCount(0)
   })
 })

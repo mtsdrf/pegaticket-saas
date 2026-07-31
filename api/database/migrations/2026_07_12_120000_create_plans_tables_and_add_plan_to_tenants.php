@@ -49,9 +49,7 @@ return new class extends Migration {
 
         $planIds = [];
         foreach ([
-            ['name' => 'Prata', 'slug' => 'prata', 'description' => 'Plano base com operação completa da empresa.', 'sort_order' => 10],
-            ['name' => 'Ouro', 'slug' => 'ouro', 'description' => 'Plano com operação completa e acesso aos relatórios.', 'sort_order' => 20],
-            ['name' => 'Diamante', 'slug' => 'diamante', 'description' => 'Plano avançado preparado para receber as funcionalidades premium do produto.', 'sort_order' => 30],
+            ['name' => 'PegaTicket', 'slug' => 'pegaticket', 'description' => 'Plano unico com operacao completa da empresa.', 'sort_order' => 10],
         ] as $plan) {
             $existingId = DB::table('plans')->where('slug', $plan['slug'])->value('id');
             if ($existingId) {
@@ -76,7 +74,7 @@ return new class extends Migration {
             ->pluck('id', 'slug');
 
         $planFunctionalities = [
-            'prata' => [
+            'pegaticket' => [
                 'users',
                 'tenant_roles',
                 'tenant_users',
@@ -88,40 +86,6 @@ return new class extends Migration {
                 'enderecos',
                 'clients',
                 'products',
-                'orders',
-                'reports',
-            ],
-            'ouro' => [
-                'users',
-                'tenant_roles',
-                'tenant_users',
-                'estados',
-                'cidades',
-                'bairros',
-                'product_categories',
-                'product_types',
-                'enderecos',
-                'clients',
-                'products',
-                'stock_locations',
-                'stock',
-                'orders',
-                'reports',
-            ],
-            'diamante' => [
-                'users',
-                'tenant_roles',
-                'tenant_users',
-                'estados',
-                'cidades',
-                'bairros',
-                'product_categories',
-                'product_types',
-                'enderecos',
-                'clients',
-                'products',
-                'stock_locations',
-                'stock',
                 'orders',
                 'reports',
             ],
@@ -159,11 +123,11 @@ return new class extends Migration {
             }
         }
 
-        if (isset($planIds['prata'])) {
+        if (isset($planIds['pegaticket'])) {
             DB::table('tenants')
                 ->whereNull('plan_id')
                 ->update([
-                    'plan_id' => $planIds['prata'],
+                    'plan_id' => $planIds['pegaticket'],
                     'updated_at' => $now,
                 ]);
         }

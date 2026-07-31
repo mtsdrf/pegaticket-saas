@@ -14,7 +14,7 @@ export const SEGMENTS: SegmentInfo[] = [
   {
     key: 'varejo',
     title: 'Varejo',
-    description: 'Loja online integrada ao PDV, com o mesmo catálogo e estoque na venda física e digital.',
+    description: 'Loja online integrada ao mesmo catálogo, estoque e operação de pedidos da empresa.',
   },
   {
     key: 'laticinios',
@@ -29,11 +29,11 @@ export const SEGMENTS: SegmentInfo[] = [
   {
     key: 'bares',
     title: 'Bares',
-    description: 'Módulo Balcão com comandas por mesa e comunicação direta com o bar.',
+    description: 'Operação centralizada de pedidos, estoque e campanhas de fidelização para atendimento recorrente.',
   },
   {
     key: 'casas-noturnas',
     title: 'Casas noturnas',
-    description: 'Comandas, PDV e controle de estoque para operação de alto volume em poucas horas.',
+    description: 'Controle de estoque, relatórios e gestão operacional para picos intensos de venda em poucas horas.',
   },
 ]

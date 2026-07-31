@@ -93,7 +93,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -132,7 +132,7 @@ class SubscriptionEndpointTest extends TestCase
     {
         Http::fake();
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -161,7 +161,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -193,7 +193,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -225,11 +225,11 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $defaultPlan = $this->createPlan('prata');
+        $defaultPlan = $this->createPlan('pegaticket');
         $this->createPlanPrice($defaultPlan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($defaultPlan->id);
 
-        $chosenPlan = $this->createPlan('diamante');
+        $chosenPlan = $this->createPlan('plano-premium');
         $this->createPlanPrice($chosenPlan, 'monthly', 299.90, 0);
         $this->allowPlanSubscription($chosenPlan->id);
 
@@ -266,7 +266,7 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function store_rejects_an_inactive_plan_id(): void
     {
-        $defaultPlan = $this->createPlan('prata');
+        $defaultPlan = $this->createPlan('pegaticket');
         $this->createPlanPrice($defaultPlan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($defaultPlan->id);
         $this->tenant->plan_id = $defaultPlan->id;
@@ -293,7 +293,7 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function store_rejects_a_plan_id_that_does_not_exist(): void
     {
-        $defaultPlan = $this->createPlan('prata');
+        $defaultPlan = $this->createPlan('pegaticket');
         $this->createPlanPrice($defaultPlan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($defaultPlan->id);
         $this->tenant->plan_id = $defaultPlan->id;
@@ -312,7 +312,7 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function store_rejects_when_the_tenant_already_has_a_subscription(): void
     {
-        $plan = $this->createPlan('ouro');
+        $plan = $this->createPlan('plano-plus');
         $price = $this->createPlanPrice($plan, 'monthly', 149.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -345,11 +345,11 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $oldPlan = $this->createPlan('prata');
+        $oldPlan = $this->createPlan('pegaticket');
         $oldPrice = $this->createPlanPrice($oldPlan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($oldPlan->id);
 
-        $newPlan = $this->createPlan('diamante');
+        $newPlan = $this->createPlan('plano-premium');
         $this->createPlanPrice($newPlan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($newPlan->id);
 
@@ -731,7 +731,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $plan = $this->createPlan('prata');
+        $plan = $this->createPlan('pegaticket');
         $price = $this->createPlanPrice($plan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($plan->id);
         $this->tenant->plan_id = $plan->id;
@@ -791,7 +791,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 201),
         ]);
 
-        $plan = $this->createPlan('prata');
+        $plan = $this->createPlan('pegaticket');
         $price = $this->createPlanPrice($plan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($plan->id);
         $this->tenant->plan_id = $plan->id;
@@ -830,7 +830,7 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function rejects_pix_charge_for_a_paid_subscription_invoice(): void
     {
-        $plan = $this->createPlan('prata');
+        $plan = $this->createPlan('pegaticket');
         $price = $this->createPlanPrice($plan, 'monthly', 99.90, 0);
         $this->allowPlanSubscription($plan->id);
         $this->tenant->plan_id = $plan->id;
@@ -942,13 +942,13 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function plan_pricing_returns_prices_for_a_different_plan_when_plan_id_is_given(): void
     {
-        $defaultPlan = $this->createPlan('prata');
+        $defaultPlan = $this->createPlan('pegaticket');
         $this->createPlanPrice($defaultPlan, 'monthly', 99.90, 0);
         $this->tenant->fill(['plan_id' => $defaultPlan->id]);
         $this->tenant->save();
         $this->allowPlanSubscription($defaultPlan->id);
 
-        $otherPlan = $this->createPlan('diamante');
+        $otherPlan = $this->createPlan('plano-premium');
         $this->createPlanPrice($otherPlan, 'monthly', 299.90, 0);
 
         $response = $this->withHeaders($this->auth())
@@ -962,7 +962,7 @@ class SubscriptionEndpointTest extends TestCase
     #[Test]
     public function plan_pricing_returns_not_found_for_an_inactive_plan_id(): void
     {
-        $defaultPlan = $this->createPlan('prata');
+        $defaultPlan = $this->createPlan('pegaticket');
         $this->createPlanPrice($defaultPlan, 'monthly', 99.90, 0);
         $this->tenant->fill(['plan_id' => $defaultPlan->id]);
         $this->tenant->save();
@@ -1231,7 +1231,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 200),
         ]);
 
-        $oldPlan = $this->createPlan('ouro2');
+        $oldPlan = $this->createPlan('plano-orbita');
         $oldPrice = $this->createPlanPrice($oldPlan, 'monthly', 149.90, 0);
         $this->allowPlanSubscription($oldPlan->id);
 
@@ -1247,7 +1247,7 @@ class SubscriptionEndpointTest extends TestCase
             'preapproval_id' => 'preapproval_old_2',
         ]);
 
-        $newPlan = $this->createPlan('diamante2');
+        $newPlan = $this->createPlan('plano-constelacao');
         $this->createPlanPrice($newPlan, 'monthly', 299.90, 0);
 
         $this->withHeaders($this->auth())
@@ -1398,7 +1398,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 400),
         ]);
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 
@@ -1442,7 +1442,7 @@ class SubscriptionEndpointTest extends TestCase
             ], 400),
         ]);
 
-        $plan = $this->createPlan('diamante');
+        $plan = $this->createPlan('plano-premium');
         $this->createPlanPrice($plan, 'monthly', 199.90, 0);
         $this->allowPlanSubscription($plan->id);
 

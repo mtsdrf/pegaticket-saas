@@ -4,21 +4,18 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 
 ---
 
-## 1. Empresa (Tenant) e planos comerciais
+## 1. Empresa (Tenant) e plano comercial
 
 - **Cadastro da empresa**: nome, slug (identificador único), logo (upload direto, guardado no banco — não depende de disco), status ativo/inativo, período de teste (trial).
 - **Dados fiscais do emitente**: CNPJ, Inscrição Estadual, Inscrição Municipal, CNAE, regime tributário (Simples Nacional/Lucro Presumido/Lucro Real), ambiente fiscal (homologação/produção — nunca começa em produção por padrão, pra não emitir nota real por engano), código IBGE do município.
-- **3 planos comerciais**, cada um libera um conjunto de funcionalidades (nunca aparece no menu o que o plano não inclui):
-  - **Prata**: loja online, pedidos, clientes, catálogo de produtos, relatórios básicos, configurações, redes sociais.
-  - **Ouro**: tudo do Prata + controle de estoque, PDV (frente de caixa), cashback/fidelidade, analytics avançado, montagem de rota de entrega.
-  - **Diamante**: tudo do Ouro + Balcão (mesas/comandas, restaurante e bar), gestão da própria assinatura, acesso de contador externo, regras fiscais.
-- **Configurações operacionais da empresa** (`tenant_settings`): forma(s) de pagamento aceitas, chave Pix de recebimento, bloquear ou não pedido sem estoque disponível, valor mínimo de pedido, tempo estimado de preparo, envio de link de rastreio por WhatsApp, taxa de serviço (percentual e se é obrigatória) — usada no Balcão.
+- **Plano comercial único (`PegaTicket`)**, com todas as funcionalidades liberadas por padrão na operação atual.
+- **Configurações operacionais da empresa** (`tenant_settings`): forma(s) de pagamento aceitas, chave Pix de recebimento, bloquear ou não pedido sem estoque disponível, valor mínimo de pedido, tempo estimado de preparo, envio de link de rastreio por WhatsApp, taxa de serviço (percentual e se é obrigatória).
 
 ## 2. Usuários e controle de acesso
 
 - **Usuário (`User`)**: cadastro único de login (e-mail/senha), pode ter acesso a mais de 1 empresa ao mesmo tempo.
 - **Vínculo empresa-usuário (`TenantUser`)**: liga um usuário a uma empresa através de um **perfil (Role)** daquela empresa especificamente — o mesmo usuário pode ser dono numa empresa e funcionário em outra.
-- **Perfis por empresa (`TenantRole`)**: cada empresa pode criar quantos perfis quiser (ex.: "Vendedor", "Caixa", "Gerente"), além do perfil "Proprietário" (criado automaticamente, sempre com acesso total ao que o plano permite).
+- **Perfis por empresa (`TenantRole`)**: cada empresa pode criar quantos perfis quiser (ex.: "Vendedor", "Caixa", "Gerente"), além do perfil "Proprietário" (criado automaticamente, sempre com acesso total ao que o produto libera).
 - **Permissão granular**: cada perfil tem, por funcionalidade (ex.: "Pedidos"), quais ações pode fazer (ver/criar/editar/excluir/aprovar/entregar/etc.) — controlado por tela dedicada, sem precisar mexer em código.
 - **Convite de usuário**: é possível convidar alguém por e-mail pra entrar numa empresa com um perfil específico; a pessoa aceita o convite e já entra vinculada.
 - **Troca de empresa ativa**: usuário com acesso a mais de uma empresa troca de contexto sem precisar deslogar — o token de acesso é reemitido pra empresa escolhida.
@@ -46,7 +43,7 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Preço de atacado**: quantidade mínima pra liberar um preço reduzido.
 - **Promoção pontual**: preço promocional com data de início/fim, sem precisar mudar o preço "normal" do produto.
 
-## 6. Estoque *(plano Ouro+)*
+## 6. Estoque
 
 - **Local de estoque**: cada empresa pode ter mais de um depósito/filial; um é sempre o padrão.
 - **Saldo por produto e local**: quantidade disponível, com reserva automática quando entra num pedido (evita vender o mesmo item duas vezes antes de confirmar).
@@ -55,7 +52,7 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 
 ## 7. Pedidos
 
-- **Criação de pedido**: cliente, itens (produto + quantidade, preço travado no momento da venda), origem (equipe/loja online/PDV/balcão).
+- **Criação de pedido**: cliente, itens (produto + quantidade, preço travado no momento da venda), origem (equipe/loja online).
 - **Status do pedido**: confirmado, cancelado (com motivo), e os estágios de entrega (a caminho, entregue).
 - **Pagamento do pedido**: marcação de pago/parcial, valor pago, data do pagamento.
 - **Cupom de desconto**: código aplicável no checkout, com regras (percentual/valor fixo/frete grátis, valor mínimo, limite de uso total e por cliente, validade).
@@ -82,30 +79,14 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Extrato de cashback**: crédito ganho, resgatado, e o que ainda está pendente de liberação.
 - **Perfil**: dados pessoais do cliente final.
 
-## 10. Cashback / fidelidade *(plano Ouro+)*
+## 10. Cashback / fidelidade
 
-- **Configuração por empresa**: percentual de crédito por compra, valor máximo de crédito por pedido, dias de carência antes do crédito ficar disponível pra uso, percentual máximo do pedido que pode ser pago com cashback acumulado, nome customizável do programa (ex.: "MaskCash").
+- **Configuração por empresa**: percentual de crédito por compra, valor máximo de crédito por pedido, dias de carência antes do crédito ficar disponível pra uso, percentual máximo do pedido que pode ser pago com cashback acumulado, nome customizável do programa.
 - **Crédito automático**: gerado a partir de pedidos confirmados/pagos.
 - **Resgate**: aplicado como desconto num pedido futuro, respeitando o limite percentual configurado.
 - **Processamento automático**: liberação do crédito após o período de carência roda periodicamente, sem intervenção manual.
 
-## 11. PDV — Frente de caixa *(plano Ouro+)*
-
-- **Sessão de caixa**: abertura com valor inicial em dinheiro, movimentos de sangria/suprimento durante o dia, fechamento com conferência do valor declarado vs. o esperado pelo sistema.
-- **Venda rápida**: registro de venda direto no caixa (sem passar pelo fluxo completo de pedido), com suporte a mais de uma forma de pagamento no mesmo fechamento (ex.: parte em dinheiro, parte no cartão).
-- **Emissão de recibo**: layout de impressão/compartilhamento da venda.
-
-## 12. Balcão — Mesas e comandas *(plano Diamante)*
-
-- **Estações de preparo**: cozinha, bar, ou outras, configuráveis por empresa.
-- **Roteamento por categoria de produto**: cada categoria pode ser vinculada a uma estação — o pedido do item já sai direcionado pra cozinha ou bar automaticamente.
-- **Mesas**: mapa com status (livre/ocupada/reservada/fechando).
-- **Comanda**: aberta por mesa (ou avulsa, tipo balcão sem mesa), recebe itens ao longo do atendimento, cada item com seu próprio status de preparo (na fila → enviado à estação → preparando → pronto → entregue na mesa), incluindo cancelamento individual de item com motivo.
-- **Tela de cozinha/bar (KDS)**: painel fixo (pensado pra ficar numa tela na cozinha) com a fila de itens daquela estação, atualização automática.
-- **Fechamento de comanda**: soma os itens não cancelados, aplica taxa de serviço (se configurada), aceita divisão de pagamento em mais de uma forma, libera a mesa.
-- ⚠️ **Operação 100% offline** (funcionar sem internet e sincronizar depois) ainda não foi implementada — hoje o Balcão exige conexão ativa.
-
-## 13. Assinatura — cobrança do próprio PegaTicket *(plano Diamante)*
+## 11. Assinatura — cobrança do próprio PegaTicket
 
 - **Ciclo de cobrança**: mensal, trimestral (10% de desconto) ou anual (20% de desconto).
 - **Teste grátis**: 14 dias antes da primeira cobrança.
@@ -113,7 +94,7 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Histórico de faturas e pagamentos** da própria assinatura.
 - ⚠️ **Cobrança automática real via Pix/cartão** ainda não está conectada a nenhuma operadora de pagamento — hoje o registro de pagamento é manual/interno, pronto pra plugar uma operadora real quando decidido.
 
-## 14. Módulo do Contador *(plano Diamante)*
+## 12. Módulo do Contador
 
 - **Cadastro do escritório de contabilidade**: CNPJ, responsável, e-mail, senha própria (login separado do sistema principal).
 - **Autenticação em duas etapas (TOTP)**: obrigatória pra ativar o acesso.
@@ -121,36 +102,36 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Escopo de acesso configurável**: a empresa escolhe o que libera (ex.: só relatórios, ou relatórios + mensagens).
 - **Mensagens**: canal de comunicação entre contador e empresa dentro do próprio sistema.
 
-## 15. Fiscal *(plano Diamante)*
+## 13. Fiscal
 
 - **Cadastro fiscal do emitente** (CNPJ, regime tributário, ambiente).
 - **Regras tributárias**: cadastro de alíquotas (ex.: ICMS, ISS) por tipo de imposto, com vigência (data início/fim).
 - ⚠️ **Emissão real de nota fiscal (NF-e/NFC-e/NFS-e)** ainda não existe — depende de comunicação com a SEFAZ ou um serviço de emissão pago, ainda não contratado. O cadastro acima já deixa a base pronta pra quando isso for decidido.
 
-## 16. Relatórios e Analytics
+## 14. Relatórios e Analytics
 
 - **Dashboard**: métricas do dia a dia (pedidos entregues/pendentes, valor recebido) + gráfico de pedidos por mês.
-- **Análises avançadas** *(Ouro+)*: indicadores mais profundos de operação.
+- **Análises avançadas**: indicadores mais profundos de operação.
 - **Relatório de pedidos**: filtrável por período/status/cliente, exportável.
 - **Base de clientes**: listagem completa, exportável.
 - **Recebíveis**: o que já entrou vs. o que ainda está em aberto, por período.
 
-## 17. Rotas de entrega *(plano Ouro+)*
+## 15. Rotas de entrega
 
 - **Montagem de rota**: agrupa pedidos por região/proximidade pra organizar a saída de entrega do dia.
 
-## 18. Redes sociais
+## 16. Redes sociais
 
 - Cadastro dos links/handles da empresa (Instagram, Facebook, WhatsApp) usados na loja pública e materiais de divulgação.
 
-## 19. Segurança e conformidade
+## 17. Segurança e conformidade
 
 - **Isolamento entre empresas**: nenhuma empresa acessa dado de outra, em nenhuma tela — validado em auditoria de segurança dedicada.
 - **Limite de tentativas de login**: bloqueio temporário após tentativas malsucedidas repetidas.
 - **Dados sensíveis criptografados** onde aplicável (ex.: chave Pix, segredo de autenticação em duas etapas do contador).
 - **Log de auditoria**: histórico de quem alterou o quê, quando, em qualquer entidade relevante do sistema.
 
-## 20. Administração da plataforma (equipe interna PegaTicket)
+## 18. Administração da plataforma (equipe interna PegaTicket)
 
 Área separada, não visível pra empresas clientes:
 - Gestão de **planos comerciais** e quais funcionalidades cada um libera.

@@ -249,7 +249,7 @@ class SubscriptionController extends Controller
      * plano ATUAL do tenant (comportamento original). Com `?plan_id=`,
      * retorna o preço de QUALQUER plano ativo — usado na primeira
      * contratação, quando o proprietário ainda pode escolher outro plano
-     * (Prata/Ouro/Diamante), não só o plan_id padrão do cadastro. Mesma
+     * disponível comercialmente, não só o plan_id padrão do cadastro. Mesma
      * checagem de "tenant sem plano" já usada em store().
      */
     public function planPricing(Request $request)

@@ -5,12 +5,12 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Sessão de caixa (roadmap PDV, Fase PDV-1) — um ciclo abertura→fechamento
- * de um cash_register. opened_by/closed_by são ids de `users` (staff),
- * nullable como os demais *_by do projeto. closing_amount_expected/difference
- * só existem depois do fechamento. Regra dura: nunca duas sessões `open`
- * simultâneas pro mesmo cash_register (garantido no CashSessionService, mais
- * o índice parcial abaixo como rede de segurança onde o SGBD suportar).
+ * Sessão de caixa: um ciclo abertura→fechamento de um cash_register.
+ * opened_by/closed_by são ids de `users` (staff), nullable como os demais
+ * *_by do projeto. closing_amount_expected/difference só existem depois do
+ * fechamento. Regra dura: nunca duas sessões `open` simultâneas pro mesmo
+ * cash_register (garantido no CashSessionService, mais o índice parcial
+ * abaixo como rede de segurança onde o SGBD suportar).
  */
 return new class extends Migration {
     public function up(): void

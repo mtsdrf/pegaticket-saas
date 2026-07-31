@@ -9,95 +9,48 @@ use Illuminate\Support\Str;
 
 class InitialPlansSeeder extends Seeder
 {
+    private const ACTIVE_PLAN_SLUG = 'pegaticket';
+
     public function run(): void
     {
         $plans = [
             [
-                'name' => 'Prata',
-                'slug' => 'prata',
-                'description' => 'Plano base com a fundação operacional da plataforma.',
+                'name' => 'PegaTicket',
+                'slug' => self::ACTIVE_PLAN_SLUG,
+                'description' => 'Plano unico com todas as funcionalidades atuais liberadas.',
                 'sort_order' => 10,
                 'functionalities' => [
                     'users',
                     'tenant_roles',
                     'tenant_users',
                     'product_categories',
+                    'product_types',
                     'estados',
                     'cidades',
                     'bairros',
                     'enderecos',
                     'clients',
                     'products',
+                    'stock_locations',
+                    'stock',
                     'orders',
-                    'storefront-orders',
-                    'reports',
-                    'finance',
-                    'dashboard',
-                    'tenant_settings',
-                    'tenant-profile',
-                    'support',
-                    'subscription',
-                    // 'storefront' (loja online, cupons, promoções) saiu do
-                    // Prata em 2026-07-24 — decisão de negócio: diferencial
-                    // pago a partir do Ouro, ver product-roadmap.md.
-                ],
-            ],
-            [
-                'name' => 'Ouro',
-                'slug' => 'ouro',
-                'description' => 'Plano com operação ampliada e inteligência gerencial.',
-                'sort_order' => 20,
-                'functionalities' => [
-                    'users',
-                    'tenant_roles',
-                    'tenant_users',
-                    'product_categories',
-                    'estados',
-                    'cidades',
-                    'bairros',
-                    'enderecos',
-                    'clients',
-                    'products',
-                    'orders',
-                    'storefront-orders',
-                    'reports',
-                    'finance',
-                    'dashboard',
-                    'tenant_settings',
-                    'tenant-profile',
                     'storefront',
-                    'support',
-                    'subscription',
-                    'analytics',
-                ],
-            ],
-            [
-                'name' => 'Diamante',
-                'slug' => 'diamante',
-                'description' => 'Plano avançado com recursos premium e maior flexibilidade operacional.',
-                'sort_order' => 30,
-                'functionalities' => [
-                    'users',
-                    'tenant_roles',
-                    'tenant_users',
-                    'product_categories',
-                    'estados',
-                    'cidades',
-                    'bairros',
-                    'enderecos',
-                    'clients',
-                    'products',
-                    'orders',
-                    'storefront-orders',
                     'reports',
+                    'analytics',
+                    'routes',
+                    'api-access',
+                    'storefront-orders',
                     'finance',
                     'dashboard',
                     'tenant_settings',
                     'tenant-profile',
-                    'storefront',
+                    'accounting-access',
+                    'tax-rules',
                     'support',
-                    'analytics',
                     'subscription',
+                    // deliberately excluded: global admin/internal-only
+                    // functionalities like groups/functionalities/plans/
+                    // tenants/audit_logs/payment_admin/release_notes.
                 ],
             ],
         ];
@@ -149,9 +102,16 @@ class InitialPlansSeeder extends Seeder
             }
         }
 
-        $defaultPlanId = DB::table('plans')->where('slug', 'prata')->value('id');
+        Plan::query()
+            ->where('slug', '!=', self::ACTIVE_PLAN_SLUG)
+            ->update([
+                'is_active' => false,
+                'updated_at' => now(),
+            ]);
+
+        $defaultPlanId = DB::table('plans')->where('slug', self::ACTIVE_PLAN_SLUG)->value('id');
         if ($defaultPlanId) {
-            DB::table('tenants')->whereNull('plan_id')->update([
+            DB::table('tenants')->update([
                 'plan_id' => $defaultPlanId,
                 'updated_at' => now(),
             ]);

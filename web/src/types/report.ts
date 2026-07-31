@@ -103,7 +103,7 @@ export interface SeasonalityYearRow {
   months: SeasonalityMonthPoint[]
 }
 
-export type OrderOrigin = 'staff' | 'storefront' | 'pdv' | 'counter'
+export type OrderOrigin = 'staff' | 'storefront'
 
 export interface ChannelResultPoint {
   origin: string

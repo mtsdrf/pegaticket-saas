@@ -216,9 +216,11 @@ class ReportService
      */
     public function byChannel(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
+        $normalizedOriginSql = "CASE WHEN orders.origin = 'counter' THEN 'staff' ELSE orders.origin END";
+
         $rows = $this->ordersQuery($tenantId, $dateFrom, $dateTo)
-            ->selectRaw('orders.origin as origin, COUNT(*) as order_count, SUM(orders.total_amount) as total_amount')
-            ->groupBy('orders.origin')
+            ->selectRaw("{$normalizedOriginSql} as origin, COUNT(*) as order_count, SUM(orders.total_amount) as total_amount")
+            ->groupByRaw($normalizedOriginSql)
             ->orderByDesc('total_amount')
             ->get();
 
@@ -228,7 +230,7 @@ class ReportService
             $averageTicket = $orderCount > 0 ? $totalAmount / $orderCount : 0.0;
 
             return [
-                'origin' => (string) $row->origin,
+                'origin' => Order::normalizeOrigin((string) $row->origin),
                 'order_count' => $orderCount,
                 'total_amount' => $this->formatMoney($totalAmount),
                 'average_ticket' => $this->formatMoney($averageTicket),
@@ -1001,7 +1003,13 @@ class ReportService
         // Filtro por canal (roadmap A1.3) — drill-down do by-channel:
         // GET /reports/orders?origin=X&date_from=Y&date_to=Z.
         if (!empty($filters['origin'])) {
-            $query->where('orders.origin', $filters['origin']);
+            $normalizedOrigin = Order::normalizeOrigin((string) $filters['origin']);
+
+            if ($normalizedOrigin === 'staff') {
+                $query->whereIn('orders.origin', ['staff', 'counter']);
+            } else {
+                $query->where('orders.origin', $normalizedOrigin);
+            }
         }
 
         return $query;

@@ -5,11 +5,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Estação de preparo do módulo Balcão (roadmap Balcão, Fases 1+2) — cozinha,
- * bar, chapa etc. Cada categoria de produto pode rotear para uma estação
- * (product_categories.station_id); o KDS de cada estação faz polling da sua
- * fila de tickets. tenant-scoped, mesmo padrão de migration de coupons/
- * cash_registers.
+ * Estação de preparo do módulo presencial legado da época — cozinha, bar,
+ * chapa etc. Cada categoria de produto podia rotear para uma estação
+ * (product_categories.station_id); o KDS de cada estação fazia polling da
+ * sua fila de tickets. tenant-scoped, mesmo padrão de migration de
+ * coupons/cash_registers.
  */
 return new class extends Migration {
     public function up(): void

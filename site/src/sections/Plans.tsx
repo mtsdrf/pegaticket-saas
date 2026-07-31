@@ -24,10 +24,10 @@ export function Plans() {
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2.5, sm: 4 } }}>
         <RevealSection>
           <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
-            Planos para cada fase da operação
+            Um plano para operar sem bloqueios
           </Typography>
           <Typography sx={{ fontSize: 16, color: 'var(--pt-muted)', maxWidth: 620, mb: 3.5 }}>
-            Comece pelo plano que combina com o tamanho da sua empresa hoje e evolua conforme o negócio cresce.
+            Toda a plataforma atual fica liberada no mesmo pacote, com cobrança mensal, trimestral ou anual.
           </Typography>
         </RevealSection>
 

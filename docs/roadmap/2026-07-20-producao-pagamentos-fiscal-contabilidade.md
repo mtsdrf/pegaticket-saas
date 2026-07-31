@@ -10,7 +10,7 @@
 
 ## Sumário executivo
 
-O PegaTicket hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, pedidos, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: os planos Prata/Ouro/Diamante existem apenas como **gate de funcionalidades** — não têm preço, ciclo de cobrança, fatura nem qualquer cobrança recorrente real. O cadastro self-service coloca o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de pedido é baixa manual; não há gateway em lugar nenhum do sistema.
+O PegaTicket hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, pedidos, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: a arquitetura de planos existe como **gate de funcionalidades**, porém o modelo comercial ainda estava em consolidação na data deste levantamento. O cadastro self-service colocava o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de pedido era baixa manual; não havia gateway em produção.
 
 Consequência estratégica: **o produto não consegue faturar sozinho ainda.** As quatro grandes frentes pedidas (cobrança de planos, pagamento de pedidos, documento fiscal e módulo do contador) têm uma ordem natural de dependência forte, e tentar fazer tudo em paralelo com orçamento baixo é o principal risco do projeto.
 
@@ -200,7 +200,7 @@ Processar dinheiro (Pix e cartão) **não pode ser 100% nativo** — exige insti
 ### 3.1 O que cada documento é e para quem serve
 
 - **NF-e (modelo 55)** — nota de **mercadoria**, operações entre empresas (B2B), transporte de produto. Relevante para os tenants atacadistas/distribuidoras. Autorizada pela **SEFAZ do estado**.
-- **NFC-e (modelo 65)** — **cupom fiscal eletrônico** ao **consumidor final** no varejo/PDV. Relevante para tenants que vendem no balcão. Autorizada pela SEFAZ, exige **CSC** (Código de Segurança do Contribuinte) e gera **QR Code**. Regras variam por UF; **"cupom fiscal" não é padrão nacional único** — algumas UFs usam SAT/MFE. **[requer validação por UF]**
+- **NFC-e (modelo 65)** — **cupom fiscal eletrônico** ao **consumidor final** em operações presenciais. Autorizada pela SEFAZ, exige **CSC** (Código de Segurança do Contribuinte) e gera **QR Code**. Regras variam por UF; **"cupom fiscal" não é padrão nacional único** — algumas UFs usam SAT/MFE. **[requer validação por UF]**
 - **NFS-e** — nota de **serviço**, competência **municipal**. **Interessa diretamente à plataforma**: para emitir nota dos planos SaaS cobrados dos tenants (Seção 2), a operação da PegaTicket precisa emitir NFS-e do serviço de software. Existe agora o **padrão nacional NFS-e** (via ambiente nacional/Sefin), mas muitos municípios ainda têm padrão próprio.
 
 ### 3.2 O que a emissão exige tecnicamente (comum a NF-e/NFC-e)

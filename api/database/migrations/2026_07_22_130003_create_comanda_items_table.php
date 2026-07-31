@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Item de comanda (roadmap Balcão, Fases 1+2). unit_price é congelado no
+ * Item de comanda do fluxo presencial legado. unit_price é congelado no
  * momento de adicionar (via ProductPricingService, mesmo serviço do Order).
  * station_id é resolvido da categoria do produto no momento de adicionar e
  * congelado (não recalcula se a categoria mudar depois). prep_status é uma

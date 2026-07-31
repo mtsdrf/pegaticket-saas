@@ -295,7 +295,7 @@ const TRAINING_MODULES: TrainingModule[] = [
       {
         title: 'Criar pedido interno',
         purpose: 'Registrar a venda operacional com impacto em estoque, financeiro e histórico do cliente.',
-        when: 'Venda por atendimento interno, balcão ou equipe comercial.',
+        when: 'Venda por atendimento interno, equipe comercial ou operação assistida.',
         actor: 'Operação ou atendimento',
         route: '/pedidos/novo',
         permissionLabel: 'orders:create',
@@ -673,15 +673,19 @@ export function TrainingCenterPage() {
   }, [can])
 
   const onboardingPercent = checklist ? Math.round((checklist.completed / Math.max(checklist.total, 1)) * 100) : null
+  const accessibleFunctionalitySet = useMemo(() => new Set(accessProfile?.tenant_functionalities ?? []), [accessProfile?.tenant_functionalities])
+  const hasAdvancedBackofficeTrack =
+    accessibleFunctionalitySet.has('accounting-access') ||
+    accessibleFunctionalitySet.has('tax-rules') ||
+    accessibleFunctionalitySet.has('subscription')
 
   const recommendedTrackId = useMemo(() => {
     if (checklist && !checklist.has_product) return 'implantacao'
     if (checklist && !checklist.has_first_order) return 'operacao'
-    if (activeTenant?.plan_slug === 'diamante') return 'fiscal-contador'
+    if (hasAdvancedBackofficeTrack) return 'fiscal-contador'
     return 'financeiro'
-  }, [checklist, activeTenant?.plan_slug])
+  }, [checklist, hasAdvancedBackofficeTrack])
 
-  const accessibleFunctionalitySet = useMemo(() => new Set(accessProfile?.tenant_functionalities ?? []), [accessProfile?.tenant_functionalities])
   const [progressState, setProgressState] = useState<TrainingCenterStoredProgress>(trainingCenterEmptyProgress())
   const [selectedModuleId, setSelectedModuleId] = useState<string>(TRAINING_MODULES[0].id)
   const [selectedTrackId, setSelectedTrackId] = useState<string>(TRAINING_TRACKS[0].id)
@@ -700,12 +704,12 @@ export function TrainingCenterPage() {
 
     if (checklist?.has_product || progressState.completedModuleIds.includes('catalogo')) unlocked.add('operacao')
     if (checklist?.has_first_order || progressState.completedModuleIds.includes('pedidos')) unlocked.add('financeiro')
-    if ((activeTenant?.plan_slug === 'diamante' || accessibleFunctionalitySet.has('accounting-access')) && progressState.completedModuleIds.includes('empresa')) {
+    if (hasAdvancedBackofficeTrack && progressState.completedModuleIds.includes('empresa')) {
       unlocked.add('fiscal-contador')
     }
 
     return unlocked
-  }, [accessibleFunctionalitySet, activeTenant?.plan_slug, checklist?.has_first_order, checklist?.has_product, progressState.completedModuleIds, progressState.unlockedTrackIds])
+  }, [checklist?.has_first_order, checklist?.has_product, hasAdvancedBackofficeTrack, progressState.completedModuleIds, progressState.unlockedTrackIds])
 
   useEffect(() => {
     if (!unlockedTrackIds.has(selectedTrackId)) {

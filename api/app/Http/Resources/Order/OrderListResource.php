@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Order;
 
+use App\Models\Order\Order;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderListResource extends JsonResource
@@ -19,7 +20,7 @@ class OrderListResource extends JsonResource
             'due_date' => $this->due_date,
             'cancelled_at' => $this->cancelled_at,
             'status' => $this->status,
-            'origin' => $this->origin,
+            'origin' => Order::normalizeOrigin($this->origin),
             'is_out_for_delivery' => $this->is_out_for_delivery,
             'out_for_delivery_at' => $this->out_for_delivery_at,
             'client' => $this->whenLoaded('client', fn() => [

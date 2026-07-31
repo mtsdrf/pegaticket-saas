@@ -18,10 +18,10 @@ class StoreClientRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'min:2', 'max:90'],
             // Obrigatório na criação (decisão de produto 2026-07-24): sem
-            // CPF/CNPJ, o Pix de pedido de balcão tende a ser rejeitado pelo
-            // Mercado Pago (payer.identification ausente). Não retroage sobre
-            // clientes antigos (UpdateClientRequest continua nullable) e não
-            // bloqueia a geração de Pix em si.
+            // CPF/CNPJ, pagamentos Pix com identificação do pagador tendem a
+            // ser rejeitados pelo PSP. Não retroage sobre clientes antigos
+            // (UpdateClientRequest continua nullable) e não bloqueia a geração
+            // de Pix em si.
             'cpf_cnpj' => ['required', 'string', 'max:18', 'regex:' . BrazilDocument::CPF_OR_CNPJ_INPUT_PATTERN],
             'ie' => ['nullable', 'string', 'max:30'],
             'ie_indicator' => ['nullable', Rule::in(['contribuinte', 'isento', 'nao_contribuinte'])],

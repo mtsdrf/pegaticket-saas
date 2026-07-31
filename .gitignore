@@ -27,7 +27,7 @@
 /web/*.local
 /web/.env
 
-# --- site/ (Vite/React, landing institucional maskats.com) ---
+# --- site/ (Vite/React, landing institucional PegaTicket) ---
 /site/node_modules
 /site/dist
 /site/dist-ssr

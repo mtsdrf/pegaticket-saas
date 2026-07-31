@@ -45,8 +45,6 @@ const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
 const ORIGIN_META: Record<OrderOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Pedido manual', shortLabel: 'Manual' },
   storefront: { label: 'Loja online', shortLabel: 'Loja' },
-  pdv: { label: 'Canal legado', shortLabel: 'Legado' },
-  counter: { label: 'Canal legado', shortLabel: 'Legado' },
   ifood: { label: 'iFood importado', shortLabel: 'iFood' },
 }
 

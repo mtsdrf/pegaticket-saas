@@ -270,15 +270,14 @@ class OrderPaymentService
     }
 
     /**
-     * Pagamento "instantâneo" declarado pelo operador (roadmap PDV, Fase
-     * PDV-1). Diferente de createPixChargeForOrder(): não há PSP, não há
-     * cobrança `pending` esperando webhook — a linha nasce `paid` na hora
-     * (dinheiro/Pix/cartão são todos "declarados" no PDV-1, ver
-     * architecture-decisions.md). Cria SÓ a linha em `payments` (payable=Order,
-     * provider='manual', status='paid'); NÃO mexe em `orders.is_paid` — quem
-     * chama (PdvSaleService) valida a soma de TODAS as formas contra o total e
-     * decide marcar o pedido como pago só quando bate. Sem transação/guard
-     * próprios: sempre chamado de dentro da transação da venda do PDV.
+     * Pagamento manual declarado pelo operador no fechamento do pedido.
+     * Diferente de createPixChargeForOrder(): não há PSP nem webhook, então a
+     * linha nasce `paid` imediatamente. Cria SÓ a linha em `payments`
+     * (payable=Order, provider='manual', status='paid'); NÃO mexe em
+     * `orders.is_paid` — quem chama valida a soma de TODAS as formas contra o
+     * total e decide marcar o pedido como pago só quando bate. Sem
+     * transação/guard próprios: sempre chamado de dentro da transação do
+     * fluxo operacional que fecha o pedido.
      */
     public function registerManualPayment(Order $order, string $method, float $amount): Payment
     {

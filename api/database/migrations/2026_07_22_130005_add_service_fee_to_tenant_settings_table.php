@@ -5,11 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Taxa de serviço do módulo Balcão (roadmap Balcão, decisão #5). Aplicada
- * como acréscimo no fechamento da comanda, NÃO como imposto — a parametrização
- * trabalhista/fiscal da taxa de serviço requer validação contábil do tenant
- * (mesmo aviso do roadmap, não é decisão que o sistema resolve sozinho).
- * service_fee_mandatory=true impede o garçom de recusar a taxa no fechamento.
+ * Taxa de serviço aplicada como acréscimo no fechamento da comanda, NÃO como
+ * imposto — a parametrização trabalhista/fiscal da taxa de serviço requer
+ * validação contábil do tenant. service_fee_mandatory=true impede que a
+ * operação assistida recuse a taxa no fechamento.
  */
 return new class extends Migration {
     public function up(): void

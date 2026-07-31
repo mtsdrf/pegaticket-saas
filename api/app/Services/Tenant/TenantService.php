@@ -281,13 +281,15 @@ class TenantService
         if (!$planUuid) {
             return Plan::query()
                 ->whereNull('deleted_at')
-                ->where('slug', 'prata')
+                ->where('slug', 'pegaticket')
+                ->where('is_active', true)
                 ->value('id');
         }
 
         return Plan::query()
             ->whereNull('deleted_at')
             ->where('uuid', $planUuid)
+            ->where('is_active', true)
             ->value('id');
     }
 

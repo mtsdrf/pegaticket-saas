@@ -185,7 +185,13 @@ class OrderService
         // Tela dedicada de gestão de pedidos da loja (storefront-orders,*)
         // força origin=storefront no controller, nunca lido cru do request.
         if (!empty($filters['origin'])) {
-            $query->where('orders.origin', $filters['origin']);
+            $normalizedOrigin = Order::normalizeOrigin((string) $filters['origin']);
+
+            if ($normalizedOrigin === 'staff') {
+                $query->whereIn('orders.origin', ['staff', 'counter']);
+            } else {
+                $query->where('orders.origin', $normalizedOrigin);
+            }
         }
 
         // Recorte operacional canônico da central de operação — mantém a
@@ -281,7 +287,7 @@ class OrderService
             $deliveryFeeCents = (int) round($dto->deliveryFee * 100);
             $totalCents += $deliveryFeeCents;
 
-            // Taxa de serviço (roadmap Balcão, Fases 1+2) — acréscimo somado
+            // Taxa de serviço do fluxo presencial legado — acréscimo somado
             // ao total, espelhando delivery_fee: persistida em coluna própria
             // (service_fee) para o breakdown, distinta de entrega em
             // relatórios. default 0.0 preserva os fluxos internos e da loja.

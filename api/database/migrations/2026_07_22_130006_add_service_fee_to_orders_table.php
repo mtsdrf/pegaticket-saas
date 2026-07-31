@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Acréscimo de taxa de serviço no Order materializado pelo fechamento de uma
- * comanda de balcão (roadmap Balcão, Fases 1+2). Espelha exatamente a coluna
+ * comanda de atendimento presencial da época (roadmap legado, Fases 1+2). Espelha exatamente a coluna
  * delivery_fee já existente (acréscimo somado a total_amount, persistido em
  * coluna própria para o breakdown): mantém o total do pedido correto e as
  * formas de pagamento reconciliáveis, sem poluir delivery_fee (que é receita
  * de entrega, distinta em relatórios). default 0 preserva 100% os fluxos de
- * pedido existentes (staff/pdv/storefront nunca usam taxa de serviço).
+ * pedido existentes; taxa de serviço continua opcional e contextual.
  */
 return new class extends Migration {
     public function up(): void

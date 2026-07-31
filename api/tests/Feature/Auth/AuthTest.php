@@ -157,7 +157,7 @@ class AuthTest extends TestCase
         $plansResponse = $this->getJson('/api/v1/auth/signup/plans');
         $plansResponse
             ->assertStatus(200)
-            ->assertJsonFragment(['slug' => 'prata'])
+            ->assertJsonFragment(['slug' => 'pegaticket'])
             ->assertJsonFragment(['is_trial_default' => true]);
 
         $response = $this->postJson('/api/v1/auth/signup', [

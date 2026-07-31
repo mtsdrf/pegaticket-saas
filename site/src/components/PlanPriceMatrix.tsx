@@ -5,8 +5,8 @@ import { BILLING_PERIODS, calculatePlanPrice, formatBRL, type BillingPeriod } fr
 const PERIODS: BillingPeriod[] = ['monthly', 'quarterly', 'yearly']
 
 /**
- * Simulador comparativo: mostra os 3 períodos de cobrança lado a lado para
- * os 3 planos, sem exigir troca do toggle acima — mesma fórmula única de
+ * Simulador do plano unico: mostra os 3 periodos de cobranca lado a lado,
+ * sem exigir troca do toggle acima — mesma formula unica de
  * `utils/pricing.ts` (nenhum valor recalculado ou hardcoded aqui).
  */
 export function PlanPriceMatrix() {
