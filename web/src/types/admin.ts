@@ -237,7 +237,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   clients: CRUD_ACTION_OPTIONS,
   products: CRUD_ACTION_OPTIONS,
   stock_locations: CRUD_ACTION_OPTIONS,
-  'tax-rules': CRUD_ACTION_OPTIONS,
   'api-access': CRUD_ACTION_OPTIONS,
   support: ['read', 'create'],
   dashboard: ['read'],

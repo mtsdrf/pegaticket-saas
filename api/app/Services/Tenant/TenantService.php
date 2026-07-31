@@ -235,52 +235,7 @@ class TenantService
                 $data = [
                     'name' => $dto->name,
                     'cnpj' => $this->normalizeDigits($dto->cnpj, 14),
-                    'ie' => $dto->ie,
-                    'im' => $dto->im,
-                    'cnae' => $dto->cnae,
-                    'tax_regime' => $dto->taxRegime,
-                    'fiscal_environment' => $dto->fiscalEnvironment,
-                    'ibge_city_code' => $dto->ibgeCityCode,
-                    'fiscal_provider' => $dto->fiscalProvider,
-                    'fiscal_nfe_series' => $dto->fiscalNfeSeries,
-                    'fiscal_nfce_series' => $dto->fiscalNfceSeries,
-                    'fiscal_nfse_series' => $dto->fiscalNfseSeries,
-                    'fiscal_next_nfe_number' => $dto->fiscalNextNfeNumber,
-                    'fiscal_next_nfce_number' => $dto->fiscalNextNfceNumber,
-                    'fiscal_next_nfse_number' => $dto->fiscalNextNfseNumber,
-                    'fiscal_nfce_csc_id' => $dto->fiscalNfceCscId,
                 ];
-
-                if ($dto->clearFiscalNfceCscCode) {
-                    $data['fiscal_nfce_csc_code'] = null;
-                } elseif ($dto->fiscalNfceCscCode !== null) {
-                    $data['fiscal_nfce_csc_code'] = $dto->fiscalNfceCscCode;
-                }
-
-                if ($dto->clearFiscalProviderApiToken) {
-                    $data['fiscal_provider_api_token'] = null;
-                } elseif ($dto->fiscalProviderApiToken !== null) {
-                    $data['fiscal_provider_api_token'] = $dto->fiscalProviderApiToken;
-                }
-
-                if ($dto->clearFiscalCertificateA1) {
-                    $data['fiscal_certificate_a1_data'] = null;
-                    $data['fiscal_certificate_a1_name'] = null;
-                    $data['fiscal_certificate_a1_mime'] = null;
-                    $data['fiscal_certificate_a1_password'] = null;
-                    $data['fiscal_certificate_a1_updated_at'] = null;
-                }
-
-                if ($dto->fiscalCertificateA1) {
-                    $data['fiscal_certificate_a1_data'] = file_get_contents($dto->fiscalCertificateA1->getRealPath());
-                    $data['fiscal_certificate_a1_name'] = $dto->fiscalCertificateA1->getClientOriginalName();
-                    $data['fiscal_certificate_a1_mime'] = $dto->fiscalCertificateA1->getMimeType();
-                    $data['fiscal_certificate_a1_updated_at'] = now();
-                }
-
-                if ($dto->fiscalCertificateA1Password !== null) {
-                    $data['fiscal_certificate_a1_password'] = $dto->fiscalCertificateA1Password;
-                }
 
                 $this->applyLogoUpload($data, $dto->logo, $newMedia);
 

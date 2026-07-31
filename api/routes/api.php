@@ -49,9 +49,6 @@ use App\Http\Controllers\Order\OrderTrackingController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
-use App\Http\Controllers\Fiscal\FiscalOperationProfileController;
-use App\Http\Controllers\Fiscal\FiscalReadinessController;
-use App\Http\Controllers\Fiscal\TaxRuleController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalLinkController;
 use App\Http\Controllers\Portal\PortalCouponController;
@@ -68,7 +65,7 @@ use App\Http\Controllers\Storefront\StorefrontManifestController;
 use App\Http\Controllers\Storefront\StorefrontLocationController;
 use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\ProductPromotionController;
-use App\Http\Controllers\Support\SupportTicketController;
+use App\Http\Controllers\Support\HelpRequestController;
 use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
 
 Route::prefix('v1')->group(function () {
@@ -716,37 +713,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:products,create', 'throttle:5,1,products-import-commit']);
         });
 
-        Route::prefix('tax-rules')->group(function () {
-            Route::get('/', [TaxRuleController::class, 'index'])
-                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,tax-rules-list']);
-
-            Route::post('/', [TaxRuleController::class, 'store'])
-                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,tax-rules-store']);
-
-            Route::put('/{taxRule:uuid}', [TaxRuleController::class, 'update'])
-                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,tax-rules-update']);
-
-            Route::delete('/{taxRule:uuid}', [TaxRuleController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:20,1,tax-rules-delete']);
-        });
-
-        Route::prefix('fiscal-operation-profiles')->group(function () {
-            Route::get('/', [FiscalOperationProfileController::class, 'index'])
-                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,fiscal-operation-profiles-list']);
-
-            Route::post('/', [FiscalOperationProfileController::class, 'store'])
-                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,fiscal-operation-profiles-store']);
-
-            Route::put('/{fiscalOperationProfile:uuid}', [FiscalOperationProfileController::class, 'update'])
-                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,fiscal-operation-profiles-update']);
-
-            Route::delete('/{fiscalOperationProfile:uuid}', [FiscalOperationProfileController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:20,1,fiscal-operation-profiles-delete']);
-        });
-
-        Route::get('/fiscal-readiness', [FiscalReadinessController::class, 'show'])
-            ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:60,1,fiscal-readiness-show']);
-
         // Dependência técnica do cadastro de produto: o formulário ainda
         // precisa listar tipos válidos para preencher `product_type_uuid`,
         // mas o módulo CRUD de tipos já não é mais exposto na navegação.
@@ -1044,13 +1010,16 @@ Route::prefix('v1')->group(function () {
 
         // Central de chamados nativa (roadmap A4, item 17) — reaproveita o
         // padrão de dado do módulo do contador (anexo opcional, status
-        // simples). Ver App\Services\Support\SupportTicketService.
+        // simples). Ver App\Services\Support\HelpRequestService. Entidade
+        // renomeada de SupportTicket para HelpRequest (2026-07-31): "Ticket"
+        // passou a ser reservado para o domínio central do produto (ingresso
+        // de evento), sem ambiguidade com o módulo de suporte.
         Route::prefix('support')->group(function () {
-            Route::get('/tickets', [SupportTicketController::class, 'index'])
-                ->middleware(['tenant', 'perm:support,read', 'throttle:60,1,support-tickets-list']);
+            Route::get('/help-requests', [HelpRequestController::class, 'index'])
+                ->middleware(['tenant', 'perm:support,read', 'throttle:60,1,support-help-requests-list']);
 
-            Route::post('/tickets', [SupportTicketController::class, 'store'])
-                ->middleware(['tenant', 'perm:support,create', 'throttle:20,1,support-tickets-create']);
+            Route::post('/help-requests', [HelpRequestController::class, 'store'])
+                ->middleware(['tenant', 'perm:support,create', 'throttle:20,1,support-help-requests-create']);
         });
 
     });

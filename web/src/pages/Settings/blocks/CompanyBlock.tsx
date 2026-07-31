@@ -1,18 +1,16 @@
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
 import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined'
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
-import { Alert, Box, Button, Divider, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from '@mui/material'
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { Alert, Box, Button, Divider, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { PasswordField } from '../../../components/form/PasswordField'
 import { ImageUploadField } from '../../../components/shared/ImageUploadField'
 import { ACCESS } from '../../../access/requirements'
 import { useAuth } from '../../../hooks/useAuth'
 import * as tenantProfileService from '../../../services/tenantProfileService'
-import { CARD_EQUAL_HEIGHT_SX, CLAMP_TEXT_3_SX, FORM_GRID_2_SX, FORM_GRID_3_SX, UI_RADIUS, UI_SIZE } from '../../../styles/layoutStandards'
+import { CARD_EQUAL_HEIGHT_SX, CLAMP_TEXT_3_SX, UI_RADIUS, UI_SIZE } from '../../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../../types/api'
 import type { TenantProfile } from '../../../types/tenantProfile'
 import { formatCpfCnpj, normalizeCpfCnpj } from '../../../utils/cpfCnpj'
@@ -160,27 +158,6 @@ export function CompanyBlock() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [cnpj, setCnpj] = useState('')
-  const [ie, setIe] = useState('')
-  const [im, setIm] = useState('')
-  const [cnae, setCnae] = useState('')
-  const [taxRegime, setTaxRegime] = useState<'simples_nacional' | 'lucro_presumido' | 'lucro_real' | ''>('')
-  const [fiscalEnvironment, setFiscalEnvironment] = useState<'homologacao' | 'producao' | ''>('')
-  const [ibgeCityCode, setIbgeCityCode] = useState('')
-  const [fiscalProvider, setFiscalProvider] = useState<'manual' | 'focus_nfe' | 'plugnotas' | 'nfeio' | 'sped_nfe' | ''>('')
-  const [fiscalNfeSeries, setFiscalNfeSeries] = useState('')
-  const [fiscalNfceSeries, setFiscalNfceSeries] = useState('')
-  const [fiscalNfseSeries, setFiscalNfseSeries] = useState('')
-  const [fiscalNextNfeNumber, setFiscalNextNfeNumber] = useState('')
-  const [fiscalNextNfceNumber, setFiscalNextNfceNumber] = useState('')
-  const [fiscalNextNfseNumber, setFiscalNextNfseNumber] = useState('')
-  const [fiscalNfceCscId, setFiscalNfceCscId] = useState('')
-  const [fiscalNfceCscCode, setFiscalNfceCscCode] = useState('')
-  const [fiscalProviderApiToken, setFiscalProviderApiToken] = useState('')
-  const [fiscalCertificateA1File, setFiscalCertificateA1File] = useState<File | null>(null)
-  const [fiscalCertificateA1Password, setFiscalCertificateA1Password] = useState('')
-  const [clearFiscalNfceCscCode, setClearFiscalNfceCscCode] = useState(false)
-  const [clearFiscalProviderApiToken, setClearFiscalProviderApiToken] = useState(false)
-  const [clearFiscalCertificateA1, setClearFiscalCertificateA1] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -190,7 +167,6 @@ export function CompanyBlock() {
 
   const { hasPermission } = useAuth()
   const canUpdate = hasPermission(ACCESS.tenantProfileUpdate)
-  const hasFiscalModule = hasPermission(ACCESS.taxRulesRead)
   const publicBaseUrl = typeof window !== 'undefined' ? window.location.origin : ''
   const storefrontUrl = `${publicBaseUrl}/loja/${profile?.slug ?? ''}`
 
@@ -198,27 +174,6 @@ export function CompanyBlock() {
     setProfile(data)
     setName(data.name)
     setCnpj(data.cnpj ? formatCpfCnpj(data.cnpj) : '')
-    setIe(data.ie ?? '')
-    setIm(data.im ?? '')
-    setCnae(data.cnae ?? '')
-    setTaxRegime(data.tax_regime ?? '')
-    setFiscalEnvironment(data.fiscal_environment ?? '')
-    setIbgeCityCode(data.ibge_city_code ?? '')
-    setFiscalProvider(data.fiscal_provider ?? '')
-    setFiscalNfeSeries(data.fiscal_nfe_series ?? '')
-    setFiscalNfceSeries(data.fiscal_nfce_series ?? '')
-    setFiscalNfseSeries(data.fiscal_nfse_series ?? '')
-    setFiscalNextNfeNumber(data.fiscal_next_nfe_number ? String(data.fiscal_next_nfe_number) : '')
-    setFiscalNextNfceNumber(data.fiscal_next_nfce_number ? String(data.fiscal_next_nfce_number) : '')
-    setFiscalNextNfseNumber(data.fiscal_next_nfse_number ? String(data.fiscal_next_nfse_number) : '')
-    setFiscalNfceCscId(data.fiscal_nfce_csc_id ?? '')
-    setFiscalNfceCscCode('')
-    setFiscalProviderApiToken('')
-    setFiscalCertificateA1Password('')
-    setFiscalCertificateA1File(null)
-    setClearFiscalNfceCscCode(false)
-    setClearFiscalProviderApiToken(false)
-    setClearFiscalCertificateA1(false)
   }
 
   function load() {
@@ -250,27 +205,6 @@ export function CompanyBlock() {
         name,
         logo: logoFile,
         cnpj: normalizeCpfCnpj(cnpj) || null,
-        ie: ie.trim() || null,
-        im: im.trim() || null,
-        cnae: cnae.trim() || null,
-        tax_regime: taxRegime || null,
-        fiscal_environment: fiscalEnvironment || null,
-        ibge_city_code: ibgeCityCode.trim() || null,
-        fiscal_provider: hasFiscalModule ? fiscalProvider || null : null,
-        fiscal_nfe_series: hasFiscalModule ? fiscalNfeSeries.trim() || null : null,
-        fiscal_nfce_series: hasFiscalModule ? fiscalNfceSeries.trim() || null : null,
-        fiscal_nfse_series: hasFiscalModule ? fiscalNfseSeries.trim() || null : null,
-        fiscal_next_nfe_number: hasFiscalModule && fiscalNextNfeNumber.trim() ? Number(fiscalNextNfeNumber) : null,
-        fiscal_next_nfce_number: hasFiscalModule && fiscalNextNfceNumber.trim() ? Number(fiscalNextNfceNumber) : null,
-        fiscal_next_nfse_number: hasFiscalModule && fiscalNextNfseNumber.trim() ? Number(fiscalNextNfseNumber) : null,
-        fiscal_nfce_csc_id: hasFiscalModule ? fiscalNfceCscId.trim() || null : null,
-        fiscal_nfce_csc_code: hasFiscalModule && !clearFiscalNfceCscCode ? fiscalNfceCscCode.trim() || null : null,
-        fiscal_provider_api_token: hasFiscalModule && !clearFiscalProviderApiToken ? fiscalProviderApiToken.trim() || null : null,
-        fiscal_certificate_a1: hasFiscalModule && !clearFiscalCertificateA1 ? fiscalCertificateA1File : null,
-        fiscal_certificate_a1_password: hasFiscalModule && !clearFiscalCertificateA1 ? fiscalCertificateA1Password || null : null,
-        clear_fiscal_nfce_csc_code: hasFiscalModule && clearFiscalNfceCscCode,
-        clear_fiscal_provider_api_token: hasFiscalModule && clearFiscalProviderApiToken,
-        clear_fiscal_certificate_a1: hasFiscalModule && clearFiscalCertificateA1,
       })
       syncProfile(updated)
       setLogoFile(null)
@@ -364,349 +298,17 @@ export function CompanyBlock() {
         slotProps={{ htmlInput: { maxLength: 255 } }}
       />
 
-      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
-        Cadastre aqui os dados fiscais e cadastrais da empresa para integrações contábeis e futuras integrações fiscais.
-      </Typography>
-
-      <Stack spacing={2} sx={{ mb: 2.5 }}>
-        <Box sx={FORM_GRID_2_SX}>
-          <TextField
-            label="CNPJ"
-            value={cnpj}
-            onChange={(event) => setCnpj(formatCpfCnpj(event.target.value))}
-            error={Boolean(fieldErrors.cnpj)}
-            helperText={fieldErrors.cnpj?.[0] ?? 'Aceita CNPJ numérico ou alfanumérico.'}
-            disabled={!canUpdate}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 18 } }}
-          />
-          <TextField
-            label="Inscrição Estadual"
-            value={ie}
-            onChange={(event) => setIe(event.target.value)}
-            error={Boolean(fieldErrors.ie)}
-            helperText={fieldErrors.ie?.[0] ?? 'Use ISENTO quando aplicável.'}
-            disabled={!canUpdate}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 30 } }}
-          />
-        </Box>
-
-        <Box sx={FORM_GRID_2_SX}>
-          <TextField
-            label="Inscrição Municipal"
-            value={im}
-            onChange={(event) => setIm(event.target.value)}
-            error={Boolean(fieldErrors.im)}
-            helperText={fieldErrors.im?.[0]}
-            disabled={!canUpdate}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 30 } }}
-          />
-          <TextField
-            label="CNAE"
-            value={cnae}
-            onChange={(event) => setCnae(event.target.value)}
-            error={Boolean(fieldErrors.cnae)}
-            helperText={fieldErrors.cnae?.[0]}
-            disabled={!canUpdate}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 20 } }}
-          />
-        </Box>
-
-        <Box sx={FORM_GRID_2_SX}>
-          <TextField
-            select
-            label="Regime tributário"
-            value={taxRegime}
-            onChange={(event) => setTaxRegime(event.target.value as 'simples_nacional' | 'lucro_presumido' | 'lucro_real' | '')}
-            error={Boolean(fieldErrors.tax_regime)}
-            helperText={fieldErrors.tax_regime?.[0]}
-            disabled={!canUpdate}
-            fullWidth
-          >
-            <MenuItem value="">Não informado</MenuItem>
-            <MenuItem value="simples_nacional">Simples Nacional</MenuItem>
-            <MenuItem value="lucro_presumido">Lucro Presumido</MenuItem>
-            <MenuItem value="lucro_real">Lucro Real</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            label="Ambiente fiscal"
-            value={fiscalEnvironment}
-            onChange={(event) => setFiscalEnvironment(event.target.value as 'homologacao' | 'producao' | '')}
-            error={Boolean(fieldErrors.fiscal_environment)}
-            helperText={fieldErrors.fiscal_environment?.[0] ?? 'Homologação é o padrão seguro para testes.'}
-            disabled={!canUpdate}
-            fullWidth
-          >
-            <MenuItem value="">Não informado</MenuItem>
-            <MenuItem value="homologacao">Homologação</MenuItem>
-            <MenuItem value="producao">Produção</MenuItem>
-          </TextField>
-        </Box>
-
-        <TextField
-          label="Código IBGE do município"
-          value={ibgeCityCode}
-          onChange={(event) => setIbgeCityCode(event.target.value)}
-          error={Boolean(fieldErrors.ibge_city_code)}
-          helperText={fieldErrors.ibge_city_code?.[0] ?? 'Necessário para integrações fiscais que dependem do município da empresa.'}
-          disabled={!canUpdate}
-          fullWidth
-          sx={{ maxWidth: { sm: 320 } }}
-          slotProps={{ htmlInput: { maxLength: 7 } }}
-        />
-      </Stack>
-
-      {hasFiscalModule ? (
-        <>
-          <Divider sx={{ my: 3 }} />
-
-          <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.75 }}>
-            Integração fiscal
-          </Typography>
-          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
-            Preencha somente se a sua empresa for usar emissão fiscal real. Os segredos ficam protegidos no backend e
-            nunca voltam expostos para a tela.
-          </Typography>
-
-          <Stack spacing={2} sx={{ mb: 2.5 }}>
-            <Box sx={FORM_GRID_2_SX}>
-              <TextField
-                select
-                label="Provedor fiscal"
-                value={fiscalProvider}
-                onChange={(event) => setFiscalProvider(event.target.value as 'manual' | 'focus_nfe' | 'plugnotas' | 'nfeio' | 'sped_nfe' | '')}
-                error={Boolean(fieldErrors.fiscal_provider)}
-                helperText={fieldErrors.fiscal_provider?.[0] ?? 'Selecione o provedor que a empresa vai usar na emissão real.'}
-                disabled={!canUpdate}
-                fullWidth
-              >
-                <MenuItem value="">Não informado</MenuItem>
-                <MenuItem value="manual">Manual</MenuItem>
-                <MenuItem value="focus_nfe">Focus NFe</MenuItem>
-                <MenuItem value="plugnotas">PlugNotas</MenuItem>
-                <MenuItem value="nfeio">NFe.io</MenuItem>
-                <MenuItem value="sped_nfe">Biblioteca própria (sped-nfe)</MenuItem>
-              </TextField>
-
-              <TextField
-                label="ID CSC da NFC-e"
-                value={fiscalNfceCscId}
-                onChange={(event) => setFiscalNfceCscId(event.target.value)}
-                error={Boolean(fieldErrors.fiscal_nfce_csc_id)}
-                helperText={fieldErrors.fiscal_nfce_csc_id?.[0] ?? 'Obrigatório em cenários de NFC-e conforme a UF.'}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 40 } }}
-              />
-            </Box>
-
-            <Box sx={FORM_GRID_3_SX}>
-              <TextField
-                label="Série NF-e"
-                value={fiscalNfeSeries}
-                onChange={(event) => setFiscalNfeSeries(event.target.value)}
-                error={Boolean(fieldErrors.fiscal_nfe_series)}
-                helperText={fieldErrors.fiscal_nfe_series?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 20 } }}
-              />
-              <TextField
-                label="Série NFC-e"
-                value={fiscalNfceSeries}
-                onChange={(event) => setFiscalNfceSeries(event.target.value)}
-                error={Boolean(fieldErrors.fiscal_nfce_series)}
-                helperText={fieldErrors.fiscal_nfce_series?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 20 } }}
-              />
-              <TextField
-                label="Série NFS-e"
-                value={fiscalNfseSeries}
-                onChange={(event) => setFiscalNfseSeries(event.target.value)}
-                error={Boolean(fieldErrors.fiscal_nfse_series)}
-                helperText={fieldErrors.fiscal_nfse_series?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 20 } }}
-              />
-            </Box>
-
-            <Box sx={FORM_GRID_3_SX}>
-              <TextField
-                label="Próximo número NF-e"
-                value={fiscalNextNfeNumber}
-                onChange={(event) => setFiscalNextNfeNumber(event.target.value.replace(/\D/g, ''))}
-                error={Boolean(fieldErrors.fiscal_next_nfe_number)}
-                helperText={fieldErrors.fiscal_next_nfe_number?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 9 } }}
-              />
-              <TextField
-                label="Próximo número NFC-e"
-                value={fiscalNextNfceNumber}
-                onChange={(event) => setFiscalNextNfceNumber(event.target.value.replace(/\D/g, ''))}
-                error={Boolean(fieldErrors.fiscal_next_nfce_number)}
-                helperText={fieldErrors.fiscal_next_nfce_number?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 9 } }}
-              />
-              <TextField
-                label="Próximo número NFS-e"
-                value={fiscalNextNfseNumber}
-                onChange={(event) => setFiscalNextNfseNumber(event.target.value.replace(/\D/g, ''))}
-                error={Boolean(fieldErrors.fiscal_next_nfse_number)}
-                helperText={fieldErrors.fiscal_next_nfse_number?.[0]}
-                disabled={!canUpdate}
-                fullWidth
-                slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 9 } }}
-              />
-            </Box>
-
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'flex-start' } }}>
-              <PasswordField
-                label="Código CSC da NFC-e"
-                value={fiscalNfceCscCode}
-                onChange={(event) => {
-                  setFiscalNfceCscCode(event.target.value)
-                  setClearFiscalNfceCscCode(false)
-                }}
-                error={Boolean(fieldErrors.fiscal_nfce_csc_code)}
-                helperText={
-                  fieldErrors.fiscal_nfce_csc_code?.[0]
-                  ?? (profile.has_fiscal_nfce_csc_code && !clearFiscalNfceCscCode
-                    ? 'Já existe um CSC salvo. Preencha somente se quiser substituir.'
-                    : 'Informe o código secreto do CSC quando a empresa usar NFC-e.')
-                }
-                disabled={!canUpdate || clearFiscalNfceCscCode}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 255 } }}
-              />
-              {canUpdate && profile.has_fiscal_nfce_csc_code ? (
-                <Tooltip title="Remover CSC salvo">
-                  <span>
-                    <IconButton
-                      onClick={() => {
-                        setClearFiscalNfceCscCode((current) => !current)
-                        setFiscalNfceCscCode('')
-                      }}
-                      color={clearFiscalNfceCscCode ? 'error' : 'default'}
-                      sx={{ mt: { md: 1 }, width: UI_SIZE.iconButton, height: UI_SIZE.iconButton, borderRadius: UI_RADIUS.md }}
-                    >
-                      <DeleteOutlineOutlinedIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              ) : null}
-            </Stack>
-
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'flex-start' } }}>
-              <PasswordField
-                label="Token do provedor fiscal"
-                value={fiscalProviderApiToken}
-                onChange={(event) => {
-                  setFiscalProviderApiToken(event.target.value)
-                  setClearFiscalProviderApiToken(false)
-                }}
-                error={Boolean(fieldErrors.fiscal_provider_api_token)}
-                helperText={
-                  fieldErrors.fiscal_provider_api_token?.[0]
-                  ?? (profile.has_fiscal_provider_api_token && !clearFiscalProviderApiToken
-                    ? 'Já existe um token salvo. Preencha somente se quiser substituir.'
-                    : 'Use para provedores externos como Focus NFe, PlugNotas ou NFe.io.')
-                }
-                disabled={!canUpdate || clearFiscalProviderApiToken}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 5000 } }}
-              />
-              {canUpdate && profile.has_fiscal_provider_api_token ? (
-                <Tooltip title="Remover token salvo">
-                  <span>
-                    <IconButton
-                      onClick={() => {
-                        setClearFiscalProviderApiToken((current) => !current)
-                        setFiscalProviderApiToken('')
-                      }}
-                      color={clearFiscalProviderApiToken ? 'error' : 'default'}
-                      sx={{ mt: { md: 1 }, width: UI_SIZE.iconButton, height: UI_SIZE.iconButton, borderRadius: UI_RADIUS.md }}
-                    >
-                      <DeleteOutlineOutlinedIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              ) : null}
-            </Stack>
-
-            <Stack spacing={1.25}>
-              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                Certificado A1 (.pfx ou .p12)
-              </Typography>
-              <TextField
-                type="file"
-                error={Boolean(fieldErrors.fiscal_certificate_a1)}
-                helperText={
-                  fieldErrors.fiscal_certificate_a1?.[0]
-                  ?? (profile.has_fiscal_certificate_a1 && !clearFiscalCertificateA1
-                    ? `Certificado salvo: ${profile.fiscal_certificate_a1_name ?? 'arquivo enviado'}`
-                    : 'Envie o certificado somente quando a empresa usar emissão própria com A1.')
-                }
-                disabled={!canUpdate || clearFiscalCertificateA1}
-                fullWidth
-                slotProps={{
-                  htmlInput: {
-                    accept: '.pfx,.p12',
-                    onChange: (event: ChangeEvent<HTMLInputElement>) => {
-                      setFiscalCertificateA1File(event.target.files?.[0] ?? null)
-                      setClearFiscalCertificateA1(false)
-                    },
-                  },
-                }}
-              />
-
-              <PasswordField
-                label="Senha do certificado A1"
-                value={fiscalCertificateA1Password}
-                onChange={(event) => setFiscalCertificateA1Password(event.target.value)}
-                error={Boolean(fieldErrors.fiscal_certificate_a1_password)}
-                helperText={
-                  fieldErrors.fiscal_certificate_a1_password?.[0]
-                  ?? (profile.has_fiscal_certificate_a1 && !clearFiscalCertificateA1
-                    ? 'Já existe um certificado salvo. Preencha a senha apenas se for atualizar ou trocar o arquivo.'
-                    : 'Senha usada para abrir o certificado digital, quando aplicável.')
-                }
-                disabled={!canUpdate || clearFiscalCertificateA1}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 255 } }}
-              />
-
-              {canUpdate && profile.has_fiscal_certificate_a1 ? (
-                <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-                  <Button
-                    variant={clearFiscalCertificateA1 ? 'contained' : 'outlined'}
-                    color="error"
-                    onClick={() => {
-                      setClearFiscalCertificateA1((current) => !current)
-                      setFiscalCertificateA1File(null)
-                      setFiscalCertificateA1Password('')
-                    }}
-                    sx={{ minHeight: UI_SIZE.control, borderRadius: UI_RADIUS.md }}
-                  >
-                    {clearFiscalCertificateA1 ? 'Certificado será removido' : 'Remover certificado salvo'}
-                  </Button>
-                </Stack>
-              ) : null}
-            </Stack>
-          </Stack>
-        </>
-      ) : null}
+      <TextField
+        label="CNPJ"
+        value={cnpj}
+        onChange={(event) => setCnpj(formatCpfCnpj(event.target.value))}
+        error={Boolean(fieldErrors.cnpj)}
+        helperText={fieldErrors.cnpj?.[0] ?? 'Aceita CNPJ numérico ou alfanumérico.'}
+        disabled={!canUpdate}
+        fullWidth
+        sx={{ maxWidth: { sm: 320 }, mb: 2.5 }}
+        slotProps={{ htmlInput: { maxLength: 18 } }}
+      />
 
       <ImageUploadField label="Logo da empresa" existingImageUrl={profile.logo_url} onFileSelected={setLogoFile} />
 

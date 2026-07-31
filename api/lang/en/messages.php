@@ -1075,9 +1075,9 @@ return [
         'sent' => 'Message sent successfully.',
     ],
 
-    'support_ticket' => [
-        'list' => 'Support tickets.',
-        'created' => 'Ticket opened successfully.',
+    'help_request' => [
+        'list' => 'Help requests.',
+        'created' => 'Help request opened successfully.',
     ],
 
     'station' => [

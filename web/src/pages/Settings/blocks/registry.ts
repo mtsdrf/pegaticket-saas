@@ -1,7 +1,5 @@
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
-import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
-import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
@@ -104,21 +102,5 @@ export const SETTINGS_LINKS: SettingsLinkConfig[] = [
     icon: CreditCardOutlinedIcon,
     permission: ACCESS.subscriptionRead,
     ownerBypassesAccess: true,
-  },
-  {
-    key: 'regras-tributarias',
-    to: '/configuracoes/regras-tributarias',
-    label: 'Regras tributárias',
-    description: 'Alíquotas, vigências e escopos fiscais da empresa.',
-    icon: GavelOutlinedIcon,
-    permission: ACCESS.taxRulesRead,
-  },
-  {
-    key: 'perfis-fiscais',
-    to: '/configuracoes/perfis-fiscais',
-    label: 'Perfis fiscais',
-    description: 'Prontidão fiscal e perfis operacionais da emissão.',
-    icon: AssignmentTurnedInOutlinedIcon,
-    permission: ACCESS.taxRulesRead,
   },
 ]

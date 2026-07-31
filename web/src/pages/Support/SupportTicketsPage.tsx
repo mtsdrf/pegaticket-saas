@@ -27,9 +27,9 @@ import { ACCESS } from '../../access/requirements'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
-import * as supportTicketService from '../../services/supportTicketService'
+import * as helpRequestService from '../../services/helpRequestService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
-import type { SupportTicket } from '../../types/support'
+import type { HelpRequest } from '../../types/helpRequest'
 import { formatDateTimeBR } from '../../utils/format'
 
 const MAX_ATTACHMENT_MB = 5
@@ -44,7 +44,7 @@ function LoadingSkeleton() {
   )
 }
 
-function TicketCard({ ticket }: { ticket: SupportTicket }) {
+function TicketCard({ ticket }: { ticket: HelpRequest }) {
   return (
     <Paper
       variant="outlined"
@@ -92,9 +92,9 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
 /** Central de chamados nativa (roadmap A4, item 17) — lista + abertura de chamado com diagnóstico técnico automático. */
 export function SupportTicketsPage() {
   const { can } = useAccessControl()
-  const canCreate = can(ACCESS.supportTicketsCreate)
+  const canCreate = can(ACCESS.helpRequestsCreate)
 
-  const [tickets, setTickets] = useState<SupportTicket[] | null>(null)
+  const [tickets, setTickets] = useState<HelpRequest[] | null>(null)
   const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isFormOpen, setFormOpen] = useState(false)
@@ -103,7 +103,7 @@ export function SupportTicketsPage() {
     setLoading(true)
     setError(null)
     try {
-      setTickets(await supportTicketService.listSupportTickets())
+      setTickets(await helpRequestService.listHelpRequests())
     } catch (err) {
       setError(getApiErrorMessage(err, 'Não foi possível carregar os chamados agora.'))
     } finally {
@@ -175,7 +175,7 @@ export function SupportTicketsPage() {
 
 interface NewSupportTicketDialogProps {
   onClose: () => void
-  onCreated: (ticket: SupportTicket) => void
+  onCreated: (ticket: HelpRequest) => void
 }
 
 function NewSupportTicketDialog({ onClose, onCreated }: NewSupportTicketDialogProps) {
@@ -205,7 +205,7 @@ function NewSupportTicketDialog({ onClose, onCreated }: NewSupportTicketDialogPr
     setSubmitting(true)
 
     try {
-      const ticket = await supportTicketService.createSupportTicket(
+      const ticket = await helpRequestService.createHelpRequest(
         { subject: subject.trim(), description: description.trim(), include_diagnostics: includeDiagnostics },
         attachment,
       )

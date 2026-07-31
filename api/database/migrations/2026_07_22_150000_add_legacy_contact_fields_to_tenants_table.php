@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\Schema;
  * estabelecimento "Js Queijos e Doces" (ver
  * `.claude/memory/database-analysis/09-estab4-migration-data-audit.md`,
  * decisão pendente nº 9). Todos nullable — aditiva, não quebra tenant
- * existente. Mesmo estilo de `2026_07_21_100000_add_fiscal_fields_to_tenants_table.php`.
+ * existente.
  */
 return new class extends Migration {
     public function up(): void
     {
         Schema::table('tenants', function (Blueprint $table) {
             $table->string('razao_social')->nullable()->after('name');
-            $table->string('email')->nullable()->after('ibge_city_code');
+            $table->string('email')->nullable()->after('razao_social');
             $table->string('phone')->nullable()->after('email');
             $table->string('mobile_phone')->nullable()->after('phone');
             $table->string('whatsapp')->nullable()->after('mobile_phone');

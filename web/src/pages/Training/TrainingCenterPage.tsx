@@ -104,11 +104,11 @@ const TRAINING_MODULES: TrainingModule[] = [
     connectsTo: ['usuarios', 'catalogo', 'loja', 'financeiro'],
     teaches: [
       'Como o plano limita funcionalidades',
-      'Por que endereço e dados da empresa impactam loja, fiscal e cobrança',
+      'Por que endereço e dados da empresa impactam loja e cobrança',
       'Qual é a ordem correta para colocar a empresa em operação',
     ],
     risks: [
-      'Implantar sem dados da empresa gera bloqueios em loja, entrega e fiscal',
+      'Implantar sem dados da empresa gera bloqueios em loja e entrega',
       'Trocar plano sem revisar permissões pode surpreender a operação',
     ],
     operations: [
@@ -173,14 +173,14 @@ const TRAINING_MODULES: TrainingModule[] = [
     requirement: ACCESS.productsRead,
     whoUses: 'Quem mantém os itens vendidos ou publicados na loja.',
     dependencies: ['empresa'],
-    connectsTo: ['estoque', 'pedidos', 'loja', 'delivery', 'fiscal'],
+    connectsTo: ['estoque', 'pedidos', 'loja', 'delivery'],
     teaches: [
       'Diferença entre categoria, tipo e produto',
       'Como o cadastro impacta loja, estoque, relatórios e integrações',
       'Quando usar preço promocional, atacado e opcionais',
     ],
     risks: [
-      'Produto mal cadastrado quebra estoque, fiscal, loja e integração externa',
+      'Produto mal cadastrado quebra estoque, loja e integração externa',
       'SKU inconsistente dificulta importação do iFood e conferência operacional',
     ],
     operations: [
@@ -188,13 +188,13 @@ const TRAINING_MODULES: TrainingModule[] = [
         title: 'Cadastrar produto operacional',
         purpose: 'Criar um item pronto para estoque, venda e publicação.',
         when: 'Durante implantação inicial ou expansão do catálogo.',
-        actor: 'Cadastro, comercial ou contador com acesso fiscal',
+        actor: 'Cadastro ou comercial',
         route: '/produtos/novo',
         permissionLabel: 'products:create',
         requirements: ['Categoria e tipo definidos', 'Estratégia de preço conhecida'],
         effects: ['Produto passa a aparecer em pedidos, loja, estoque e relatórios'],
-        commonErrors: ['Categoria errada', 'Preço base vazio', 'Dados fiscais ausentes quando o módulo fiscal exige'],
-        goodPractices: ['Manter SKU estável', 'Preencher dados comerciais e fiscais já no cadastro'],
+        commonErrors: ['Categoria errada', 'Preço base vazio'],
+        goodPractices: ['Manter SKU estável', 'Preencher dados comerciais já no cadastro'],
       },
     ],
   },
@@ -273,7 +273,7 @@ const TRAINING_MODULES: TrainingModule[] = [
   {
     id: 'pedidos',
     name: 'Pedidos e operação diária',
-    summary: 'Mostra como o pedido impacta estoque, financeiro, entrega, loja, fiscal e analytics.',
+    summary: 'Mostra como o pedido impacta estoque, financeiro, entrega, loja e analytics.',
     status: 'implemented',
     route: '/pedidos',
     audience: ['Operação', 'Atendimento', 'Gestão'],
@@ -281,7 +281,7 @@ const TRAINING_MODULES: TrainingModule[] = [
     requirement: ACCESS.ordersRead,
     whoUses: 'Atendimento, operação, logística, gestão e financeiro.',
     dependencies: ['clientes', 'catalogo', 'estoque'],
-    connectsTo: ['financeiro', 'fiscal', 'rotas', 'delivery', 'relatorios'],
+    connectsTo: ['financeiro', 'rotas', 'delivery', 'relatorios'],
     teaches: [
       'Fluxo completo: criar, pagar, entregar, cancelar, revisar itens',
       'Como o pedido reserva e baixa estoque',
@@ -379,41 +379,6 @@ const TRAINING_MODULES: TrainingModule[] = [
     ],
   },
   {
-    id: 'fiscal',
-    name: 'Fiscal e documento interno',
-    summary: 'Explica o fluxo fiscal já implementado hoje e deixa claro o que ainda é interno/manual.',
-    status: 'partial',
-    route: '/configuracoes/perfis-fiscais',
-    audience: ['Contador', 'Financeiro', 'Proprietário'],
-    functionality: 'tax-rules',
-    requirement: ACCESS.taxRulesRead,
-    whoUses: 'Contador, responsável fiscal e proprietário.',
-    dependencies: ['empresa', 'catalogo', 'pedidos'],
-    connectsTo: ['financeiro', 'contador'],
-    teaches: [
-      'Como preparar documento fiscal interno a partir do pedido',
-      'Quais pendências impedem o preparo',
-      'Onde o fluxo já existe e onde ainda não existe integração oficial',
-    ],
-    risks: [
-      'Assumir que o fluxo manual já equivale à emissão oficial',
-      'Preparar documento sobre cadastro fiscal incompleto',
-    ],
-    operations: [
-      {
-        title: 'Preparar documento fiscal do pedido',
-        purpose: 'Congelar um rascunho fiscal estruturado do pedido.',
-        when: 'Depois que o pedido estiver consistente para análise fiscal.',
-        actor: 'Responsável fiscal',
-        permissionLabel: 'orders:update + tax-rules:read',
-        requirements: ['Pedido válido', 'Perfil fiscal e regras mínimas definidos'],
-        effects: ['Gera snapshot fiscal interno, série e número reservados'],
-        commonErrors: ['Pendência crítica no cadastro', 'Confundir rascunho interno com emissão oficial'],
-        goodPractices: ['Usar a prévia fiscal antes da preparação definitiva'],
-      },
-    ],
-  },
-  {
     id: 'delivery',
     name: 'Delivery e integrações',
     summary: 'Mostra o status atual das integrações e como pedidos externos entram no centro operacional do PegaTicket.',
@@ -460,11 +425,11 @@ const TRAINING_MODULES: TrainingModule[] = [
     requirement: ACCESS.accountingAccessRead,
     whoUses: 'Proprietário da empresa e escritório contábil.',
     dependencies: ['empresa'],
-    connectsTo: ['fiscal', 'financeiro', 'clientes', 'catalogo'],
+    connectsTo: ['financeiro', 'clientes', 'catalogo'],
     teaches: [
       'Como aprovar o escritório de contabilidade',
       'Como a central de pendências organiza pedidos de documentação',
-      'Quais dados fiscais o contador pode complementar',
+      'Quais dados contábeis o contador pode complementar',
     ],
     risks: [
       'Aprovar acesso sem revisar escopo desejado',
@@ -479,9 +444,9 @@ const TRAINING_MODULES: TrainingModule[] = [
         route: '/configuracoes/contadores',
         permissionLabel: 'accounting-access:approve',
         requirements: ['Solicitação de acesso existente', 'Empresa correta em contexto'],
-        effects: ['Libera relatórios, módulos fiscais e central de pendências para o escritório'],
+        effects: ['Libera relatórios e central de pendências para o escritório'],
         commonErrors: ['Aprovar empresa errada', 'Não orientar o contador a usar a central de mensagens'],
-        goodPractices: ['Manter comunicação fiscal dentro da central para preservar histórico'],
+        goodPractices: ['Manter comunicação contábil dentro da central para preservar histórico'],
       },
     ],
   },
@@ -513,12 +478,12 @@ const TRAINING_TRACKS: TrainingTrack[] = [
     outcome: 'Financeiro entende os eventos do pedido e reduz retrabalho em conciliação.',
   },
   {
-    id: 'fiscal-contador',
-    title: 'Fiscal interno e relacionamento com contador',
+    id: 'contabilidade',
+    title: 'Relacionamento com o contador',
     audience: 'support',
-    description: 'Trilha para quem prepara documento interno, organiza regras fiscais e interage com o escritório.',
-    modules: ['empresa', 'catalogo', 'pedidos', 'fiscal', 'contador'],
-    outcome: 'Operação fiscal entende o que já existe, o que é manual e como trabalhar com o contador.',
+    description: 'Trilha para quem organiza a documentação contábil e interage com o escritório.',
+    modules: ['empresa', 'catalogo', 'pedidos', 'contador'],
+    outcome: 'Operação entende como aprovar e trabalhar com o escritório contábil.',
   },
 ]
 
@@ -531,7 +496,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
       'Cadastrar apenas usuários e deixar o resto para depois',
     ],
     correctIndex: 0,
-    explanation: 'Plano e dados-base da empresa afetam permissões, loja, fiscal e cobrança desde o início da implantação.',
+    explanation: 'Plano e dados-base da empresa afetam permissões, loja e cobrança desde o início da implantação.',
   },
   usuarios: {
     question: 'O que normalmente libera a operação real de um colaborador dentro da empresa?',
@@ -577,7 +542,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
       'Liberação automática do contador externo',
     ],
     correctIndex: 0,
-    explanation: 'Pedido é um agregado central: ele conversa com estoque, financeiro, cliente e depois pode conversar com fiscal e analytics.',
+    explanation: 'Pedido é um agregado central: ele conversa com estoque, financeiro, cliente e depois pode conversar com analytics.',
   },
   loja: {
     question: 'Qual combinação é mais importante antes de divulgar a loja online?',
@@ -598,16 +563,6 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
     ],
     correctIndex: 0,
     explanation: 'A conciliação existe para ligar o evento financeiro ao pedido e separar erro de operação de erro de integração.',
-  },
-  fiscal: {
-    question: 'No estado atual do produto, o preparo fiscal do pedido representa:',
-    options: [
-      'Sempre emissão oficial concluída',
-      'Rascunho fiscal interno estruturado, ainda não equivalendo por padrão à emissão oficial',
-      'Somente um relatório sem valor operacional',
-    ],
-    correctIndex: 1,
-    explanation: 'Hoje o fluxo já é útil e estruturado, mas a documentação viva precisa deixar claro quando ele ainda é interno/manual.',
   },
   delivery: {
     question: 'Quando um pedido do iFood falha na materialização, qual reação está mais alinhada à operação do PegaTicket?',
@@ -676,13 +631,12 @@ export function TrainingCenterPage() {
   const accessibleFunctionalitySet = useMemo(() => new Set(accessProfile?.tenant_functionalities ?? []), [accessProfile?.tenant_functionalities])
   const hasAdvancedBackofficeTrack =
     accessibleFunctionalitySet.has('accounting-access') ||
-    accessibleFunctionalitySet.has('tax-rules') ||
     accessibleFunctionalitySet.has('subscription')
 
   const recommendedTrackId = useMemo(() => {
     if (checklist && !checklist.has_product) return 'implantacao'
     if (checklist && !checklist.has_first_order) return 'operacao'
-    if (hasAdvancedBackofficeTrack) return 'fiscal-contador'
+    if (hasAdvancedBackofficeTrack) return 'contabilidade'
     return 'financeiro'
   }, [checklist, hasAdvancedBackofficeTrack])
 
@@ -705,7 +659,7 @@ export function TrainingCenterPage() {
     if (checklist?.has_product || progressState.completedModuleIds.includes('catalogo')) unlocked.add('operacao')
     if (checklist?.has_first_order || progressState.completedModuleIds.includes('pedidos')) unlocked.add('financeiro')
     if (hasAdvancedBackofficeTrack && progressState.completedModuleIds.includes('empresa')) {
-      unlocked.add('fiscal-contador')
+      unlocked.add('contabilidade')
     }
 
     return unlocked
@@ -1660,7 +1614,6 @@ export function TrainingCenterPage() {
                       color: 'default' as const,
                       items: TRAINING_MODULES.filter((module) => module.status === 'planned').map((module) => module.name).concat([
                         'Integrações homologadas além do iFood',
-                        'Emissão fiscal oficial em provider governamental',
                       ]),
                     },
                   ].map((column) => (

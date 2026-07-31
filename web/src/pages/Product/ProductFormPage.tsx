@@ -10,7 +10,6 @@ import {
   FormControlLabel,
   IconButton,
   InputAdornment,
-  MenuItem,
   Stack,
   Switch,
   TextField,
@@ -36,11 +35,6 @@ interface ProductFormState {
   sku: string
   barcode: string
   brand: string
-  ncm: string
-  cest: string
-  origin: string
-  default_cfop: string
-  csosn_cst: string
   unit: string
   description: string
   is_available: boolean
@@ -109,11 +103,6 @@ const EMPTY_FORM: ProductFormState = {
   sku: '',
   barcode: '',
   brand: '',
-  ncm: '',
-  cest: '',
-  origin: '',
-  default_cfop: '',
-  csosn_cst: '',
   unit: '',
   description: '',
   is_available: true,
@@ -177,11 +166,6 @@ export function ProductFormPage() {
             sku: record.sku ?? '',
             barcode: record.barcode ?? '',
             brand: record.brand ?? '',
-            ncm: record.ncm ?? '',
-            cest: record.cest ?? '',
-            origin: record.origin ?? '',
-            default_cfop: record.default_cfop ?? '',
-            csosn_cst: record.csosn_cst ?? '',
             unit: record.unit ?? '',
             description: record.description ?? '',
             is_available: record.is_available,
@@ -287,11 +271,6 @@ export function ProductFormPage() {
       sku: form.sku.trim() || undefined,
       barcode: form.barcode.trim() || undefined,
       brand: form.brand.trim() || undefined,
-      ncm: form.ncm.trim() || undefined,
-      cest: form.cest.trim() || undefined,
-      origin: form.origin || undefined,
-      default_cfop: form.default_cfop.trim() || undefined,
-      csosn_cst: form.csosn_cst.trim() || undefined,
       unit: form.unit.trim() || undefined,
       description: form.description.trim() || undefined,
       is_available: form.is_available,
@@ -642,77 +621,6 @@ export function ProductFormPage() {
               >
                 <AddCircleOutlineOutlinedIcon />
               </IconButton>
-            </Box>
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-
-      <Accordion
-        variant="outlined"
-        sx={{ mt: 2, ...SOFT_PANEL_SX, '&::before': { display: 'none' } }}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>Fiscal</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-              Preencha os dados fiscais do produto para preparar a empresa para regras tributárias e emissão futura.
-            </Typography>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-              <TextField
-                label="NCM"
-                value={form.ncm}
-                onChange={(event) => updateField('ncm', event.target.value.replace(/\D/g, '').slice(0, 8))}
-                error={Boolean(fieldErrors.ncm)}
-                helperText={fieldErrors.ncm?.[0] ?? '8 dígitos.'}
-                inputMode="numeric"
-                slotProps={{ htmlInput: { maxLength: 8 } }}
-              />
-              <TextField
-                label="CEST"
-                value={form.cest}
-                onChange={(event) => updateField('cest', event.target.value.slice(0, 10))}
-                error={Boolean(fieldErrors.cest)}
-                helperText={fieldErrors.cest?.[0] ?? 'Opcional.'}
-                slotProps={{ htmlInput: { maxLength: 10 } }}
-              />
-              <TextField
-                select
-                label="Origem da mercadoria"
-                value={form.origin}
-                onChange={(event) => updateField('origin', event.target.value)}
-                error={Boolean(fieldErrors.origin)}
-                helperText={fieldErrors.origin?.[0] ?? 'Código fiscal de origem do item.'}
-              >
-                <MenuItem value="">Não definido</MenuItem>
-                <MenuItem value="0">0 - Nacional</MenuItem>
-                <MenuItem value="1">1 - Estrangeira importação direta</MenuItem>
-                <MenuItem value="2">2 - Estrangeira adquirida no mercado interno</MenuItem>
-                <MenuItem value="3">3 - Nacional com conteúdo de importação acima de 40%</MenuItem>
-                <MenuItem value="4">4 - Nacional produzida conforme PPB</MenuItem>
-                <MenuItem value="5">5 - Nacional com conteúdo de importação até 40%</MenuItem>
-                <MenuItem value="6">6 - Estrangeira importação direta sem similar nacional</MenuItem>
-                <MenuItem value="7">7 - Estrangeira mercado interno sem similar nacional</MenuItem>
-                <MenuItem value="8">8 - Nacional com conteúdo de importação acima de 70%</MenuItem>
-              </TextField>
-              <TextField
-                label="CFOP padrão"
-                value={form.default_cfop}
-                onChange={(event) => updateField('default_cfop', event.target.value.slice(0, 10))}
-                error={Boolean(fieldErrors.default_cfop)}
-                helperText={fieldErrors.default_cfop?.[0] ?? 'Ex.: 5102'}
-                slotProps={{ htmlInput: { maxLength: 10 } }}
-              />
-              <TextField
-                label="CSOSN / CST"
-                value={form.csosn_cst}
-                onChange={(event) => updateField('csosn_cst', event.target.value.slice(0, 10))}
-                error={Boolean(fieldErrors.csosn_cst)}
-                helperText={fieldErrors.csosn_cst?.[0] ?? 'O significado depende do regime tributário da empresa.'}
-                slotProps={{ htmlInput: { maxLength: 10 } }}
-              />
             </Box>
           </Stack>
         </AccordionDetails>

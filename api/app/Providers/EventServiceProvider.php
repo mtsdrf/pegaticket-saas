@@ -368,8 +368,8 @@ use App\Listeners\Portal\WritePortalAuditLog;
 | Assinatura / cobrança de planos (roadmap 1B)
 |--------------------------------------------------------------------------
 */
-use App\Events\Support\SupportTicketCreated;
-use App\Listeners\Support\AuditSupportTicketCreated;
+use App\Events\Support\HelpRequestCreated;
+use App\Listeners\Support\AuditHelpRequestCreated;
 use App\Events\Subscription\SubscriptionCreated;
 use App\Events\Subscription\SubscriptionPlanChanged;
 use App\Events\Subscription\SubscriptionCanceled;
@@ -663,7 +663,7 @@ class EventServiceProvider extends ServiceProvider
         | Central de chamados (roadmap A4, item 17)
         |--------------------------------------------------------------------------
         */
-        SupportTicketCreated::class => [AuditSupportTicketCreated::class],
+        HelpRequestCreated::class => [AuditHelpRequestCreated::class],
 
     ];
 }

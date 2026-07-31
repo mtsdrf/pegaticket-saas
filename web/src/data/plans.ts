@@ -21,7 +21,7 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
       'Clientes, produtos, categorias e tipos de item',
       'Estoque, integracoes e planejamento de rotas',
       'Analytics, financeiro e dashboard operacional',
-      'Fiscal, contador, suporte e assinatura',
+      'Contador, suporte e assinatura',
     ],
   },
 ]

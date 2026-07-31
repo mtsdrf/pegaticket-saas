@@ -49,7 +49,7 @@ use App\Repositories\Contracts\{
     PaymentRepositoryInterface,
     ReleaseNoteRepositoryInterface,
     CartEventRepositoryInterface,
-    SupportTicketRepositoryInterface,
+    HelpRequestRepositoryInterface,
     TenantFeatureOverrideRepositoryInterface,
     IdempotencyRepositoryInterface,
     RefundRepositoryInterface,
@@ -95,7 +95,7 @@ use App\Repositories\Eloquent\{
     PaymentRepository,
     ReleaseNoteRepository,
     CartEventRepository,
-    SupportTicketRepository,
+    HelpRequestRepository,
     TenantFeatureOverrideRepository,
     IdempotencyRepository,
     RefundRepository,
@@ -440,8 +440,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Central de chamados (roadmap A4, item 17)
         $this->app->bind(
-            SupportTicketRepositoryInterface::class,
-            SupportTicketRepository::class
+            HelpRequestRepositoryInterface::class,
+            HelpRequestRepository::class
         );
 
         // Feature flag por tenant individual (roadmap A5, item 19)

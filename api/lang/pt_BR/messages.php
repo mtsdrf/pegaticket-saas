@@ -1082,7 +1082,7 @@ return [
         'sent' => 'Mensagem enviada com sucesso.',
     ],
 
-    'support_ticket' => [
+    'help_request' => [
         'list' => 'Chamados de suporte.',
         'created' => 'Chamado aberto com sucesso.',
     ],

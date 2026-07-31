@@ -74,17 +74,13 @@ export const ACCESS = {
   /** "Minha assinatura" — tela sempre acessível (backend nunca a bloqueia por assinatura suspensa). */
   subscriptionRead: tenant('subscription', 'read'),
   subscriptionUpdate: tenant('subscription', 'update'),
-  taxRulesRead: tenant('tax-rules', 'read'),
-  taxRulesCreate: tenant('tax-rules', 'create'),
-  taxRulesUpdate: tenant('tax-rules', 'update'),
-  taxRulesDelete: tenant('tax-rules', 'delete'),
   tenantProfileRead: tenant('tenant-profile', 'read'),
   tenantProfileUpdate: tenant('tenant-profile', 'update'),
   /** Exportar dados (roadmap A1.2) — ZIP com CSVs de clients/products/orders do tenant. */
   tenantProfileExport: tenant('tenant-profile', 'export'),
   /** Central de chamados nativa (roadmap A4, item 17) — functionality `support`, reaproveita actions `read`/`create` já existentes. */
-  supportTicketsRead: tenant('support', 'read'),
-  supportTicketsCreate: tenant('support', 'create'),
+  helpRequestsRead: tenant('support', 'read'),
+  helpRequestsCreate: tenant('support', 'create'),
   /** Módulo do contador (lado do tenant) — functionality slug com hífen no backend (`accounting-access`). */
   accountingAccessRead: tenant('accounting-access', 'read'),
   accountingAccessCreate: tenant('accounting-access', 'create'),

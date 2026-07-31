@@ -30,11 +30,6 @@ export interface Product {
   sku: string | null
   barcode: string | null
   brand: string | null
-  ncm: string | null
-  cest: string | null
-  origin: string | null
-  default_cfop: string | null
-  csosn_cst: string | null
   unit: string | null
   price: number
   description: string | null
@@ -66,11 +61,6 @@ export interface ProductPayload {
   sku?: string
   barcode?: string
   brand?: string
-  ncm?: string
-  cest?: string
-  origin?: string
-  default_cfop?: string
-  csosn_cst?: string
   unit?: string
   is_lot_controlled?: boolean
   is_expiry_controlled?: boolean

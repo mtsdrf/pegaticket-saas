@@ -148,7 +148,7 @@ const NAV_ITEMS: NavItem[] = [
     to: '/suporte',
     label: 'Central de chamados',
     icon: SupportAgentOutlinedIcon,
-    access: ACCESS.supportTicketsRead,
+    access: ACCESS.helpRequestsRead,
   },
 ]
 

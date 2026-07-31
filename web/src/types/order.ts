@@ -59,32 +59,6 @@ export interface OrderInstallment {
   paid_at: string | null
 }
 
-export interface OrderFiscalDocument {
-  uuid: string
-  document_type: 'nfce' | 'nfe' | 'nfse' | string
-  series: string | null
-  document_number: number | null
-  status: 'draft' | 'provider_submitted' | 'pending' | 'authorized' | 'rejected' | 'canceled' | string
-  provider: string
-  provider_document_id: string | null
-  access_key: string | null
-  pdf_path: string | null
-  submitted_at: string | null
-  provider_status_checked_at: string | null
-  authorized_at: string | null
-  rejected_at: string | null
-  canceled_at: string | null
-  rejection_reason: string | null
-  payload_snapshot_summary: {
-    generated_at: string | null
-    order_code: string | null
-    operation_profile_name: string | null
-    items_count: number
-    issues_count: number
-  } | null
-  created_at: string | null
-}
-
 /**
  * Delivery Fase 1: todo pedido staff é sempre `status: 'confirmed'`/`origin: 'staff'` — só a loja (`origin: 'storefront'`) nasce `pending_approval`.
  * `cancellation_requested` (roadmap A4) é transitório — só pedido `origin: 'storefront'` chega nele, via solicitação do cliente final no Portal; volta pro status anterior ao aprovar/rejeitar.
@@ -128,7 +102,6 @@ export interface Order {
   /** "Saiu para entrega" (tela dedicada de gestão de pedidos da loja) — etapa opcional entre aprovado e entregue. */
   is_out_for_delivery: boolean
   out_for_delivery_at: string | null
-  fiscal_document?: OrderFiscalDocument | null
   client?: OrderClientRef
   stock_location?: OrderStockLocationRef | null
   items?: OrderItem[]

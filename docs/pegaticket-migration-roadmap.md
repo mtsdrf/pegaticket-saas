@@ -1,0 +1,154 @@
+# Roadmap de migração Maskats → PegaTicket
+
+Status: reauditado em 2026-07-31 contra o estado real do código (o documento anterior — que só descrevia o plano de 2026-07-30 — estava desatualizado; várias fases já tinham progresso, uma teve regressão). **Pivot pra plataforma de ingressos reconfirmado em 2026-07-31** depois de um desvio (ver seção 6).
+Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`, `database/seeders/FunctionalitiesSeeder.php`/`InitialPlansSeeder.php`, `routes/api.php`, `.claude/memory/architecture-decisions.md`, cruzado com `especificacao-plataforma-ingressos.md` (raiz).
+
+---
+
+## 0. Confirmação de modelo de negócio (2026-07-30, reconfirmado 2026-07-31)
+
+PegaTicket **mantém a estrutura de SaaS multi-tenant do Maskats**: cada tenant é um clube/organizador, com plano próprio, permissões próprias, módulos habilitados por contratação, operação isolada. Não é uma reescrita da camada de acesso — é a mesma fundação, só trocando o domínio de negócio (mercadoria/entrega → eventos/ingressos). `Plan`/`Functionality`/`plan_functionalities`/gate de plano e `Subscription` permanecem como estão na arquitetura.
+
+**Decisão nova de 2026-07-31**: reaproveitar a arquitetura do Maskats é aceitável, mas **manter nomes de entidade do domínio antigo não é** — `Product`, `Client`, `ProductCategory` etc. no código de uma plataforma de ingressos é a "gambiarra" que o usuário explicitamente pediu pra eliminar. Toda entidade reaproveitada precisa ser renomeada pro vocabulário do domínio de ingressos antes de a migração ser considerada concluída (ver seção 4A).
+
+## 1. O que NÃO muda (fundação comum, fora do escopo da spec — nomes genéricos de infraestrutura, não de domínio)
+
+- Multi-tenancy (`tenant`/`tenant_id()`), auth JWT, `Group`/`GroupPermission`/`Functionality`+`Action`, `perm:` middleware.
+- `BaseModel` (UUID + soft delete + auditoria automática de `created_by`/`updated_by`/`deleted_by`).
+- Padrão Request→Controller→Service→Repository→Resource, DTOs, Events+Listeners de auditoria (`AuditLog`).
+- `Legal/LegalDocumentController` + `ReleaseNoteController` (LGPD, termos versionados).
+- `Location/*` (Estado/Cidade/Bairro/Endereço) — genérico, útil pra endereço de clube/local de evento.
+- `Support/SupportTicketController` — **atenção**: "Ticket" aqui é chamado de suporte (help desk), não ingresso — risco real de colisão de nome com o domínio novo, ver seção 4A.
+- `Workflow/WorkflowTransitionLogController` (log de transição de status genérico).
+- `Onboarding/OnboardingController` (adaptar conteúdo do checklist, manter mecanismo).
+- `Plan`/`Functionality`/gate de plano — mecanismo mantido, conteúdo dos planos redesenhado pra ingressos.
+
+## 2. Mapeamento módulo a módulo (referência histórica da decisão original — ver seção 3 pro status real de execução)
+
+Legenda: **MANTER** · **ADAPTAR** · **REMOVER** · **NOVO**.
+
+### 2.1 Pagamento e integrações financeiras
+| Módulo | Ação | Observação |
+|---|---|---|
+| `Payment/MercadoPagoPaymentProvider` + contrato de provider | ADAPTAR | Trocar/adicionar `PagBankPaymentProvider` no mesmo contrato. Manter `ManualPaymentProvider`. |
+| `payment_idempotency_keys` + `IdempotencyRepository` | MANTER | Resolve requisitos críticos #7/#8/#24 da spec. |
+| `Webhook/*` (dispatch de pagamento) | MANTER | Seção 5.11 da spec quase pronta. |
+| `Payment/PaymentIssueController` + `PaymentReconciliationService` | MANTER | |
+| `Subscription/SubscriptionController` + `SubscriptionStateMachine` | MANTER | Clube→PegaTicket = assinatura (Mercado Pago, mantido); comprador→clube = venda de ingresso (PagBank, novo). Duas correntes financeiras distintas. |
+| `Finance/ReconciliationController` | ADAPTAR | "Pedido de mercadoria" → "pedido de ingresso". |
+| `ApiKeyController`/`WebhookSubscriptionController` (3º) | REMOVER | Fora do MVP. |
+
+### 2.2 Cupons e promoções
+| Módulo | Ação |
+|---|---|
+| `Storefront/Coupon` + `CouponRedemption` | MANTER — cobre seção 5.17 quase 1:1. |
+| `Storefront/ProductPromotionController` | ADAPTAR — promoção por produto → por tipo de ingresso/lote. |
+| `Storefront/ReactivationRuleController` | REMOVER — CRM de varejo. |
+
+### 2.3 Carrinho, reserva e checkout
+| Módulo | Ação |
+|---|---|
+| `Storefront/CartEventController` | ADAPTAR — hoje só tracking; spec pede `inventory_holds` real, é **NOVO**. |
+| `Balcao/TableReservationService`/`TableWaitlistService` | ADAPTAR (extrair padrão) — esqueleto do `InventoryHoldService`. Resto do Balcão some. |
+| `Storefront/StorefrontCheckoutService/DTO/Controller` | ADAPTAR — reaproveitar forma, reescrever conteúdo pra seção 5.10. |
+| `StoreAddress`/`StoreBusinessHours`/`StoreDeliveryFee` | REMOVER — entrega física, sem equivalente. |
+| `StorefrontTableReservationController` | REMOVER/RENOMEAR — reserva de mesa de restaurante, não confundir com hold de assento novo. |
+| `StorefrontManifestController` (PWA) | MANTER. |
+
+### 2.4 Catálogo (Produto → Evento/Ingresso)
+| Módulo | Ação |
+|---|---|
+| `Product/ProductController` + `ProductImageController` | ADAPTAR — vira base de `Event`/`TicketType`. |
+| `Product/ProductCategoryController` | ADAPTAR — vira `EventCategory`. |
+| `ProductCategoryPrice` (preço por categoria B2B) | REMOVER. |
+| `ProductTypeController` | REMOVER. |
+| `ProductImportController` | REMOVER. |
+| `Stock/*` | REMOVER — estoque físico não se aplica a ingresso. |
+
+### 2.5 Módulos 100% fora de escopo
+`Accounting/*`, `Fiscal/*` ("primeira versão não emitirá nota fiscal"), `Marketplace/*` (iFood), `Route/RouteCandidateController`, `Pdv/*`, `Balcao/{Comanda,Station,Table}Controller`+KDS, `Client/*`+`ClientIdeal/*`, `ReceivableInteractionController`, `PortalCashbackController`, `PortalAddressController`, `SocialMedia/*`, `Order/OrderFiscalDocumentController`+`OrderFiscalPreviewController`+`OrderPrepViewController`.
+
+### 2.6 Portal do comprador final (`FinalCustomer`)
+`FinalCustomer`/`FinalCustomerOtp`/`FinalCustomerTenantLink` MANTÉM — é o "comprador" da spec. `PortalAuthController`/`PortalLinkController`/`PushSubscriptionController` MANTÉM. `PortalCouponController`/`PortalFavoriteController` ADAPTA. `PortalOrdersPage`/`OrderTrackingPage` ADAPTA → "Meus ingressos".
+
+### 2.7 Relatórios
+`AnalyticsController`/`AnalyticsPage` MANTÉM o motor, ADAPTA os agregados (ocupação, funil, check-in). `ReportController` MANTÉM.
+
+### 2.8 O que é 100% NOVO
+Editor visual de mapa (setores/mesas/assentos/camarotes), motor de lotes com virada automática, `InventoryHoldService` real, emissão de ingresso com QR Code + `TicketIssuanceService` + `CheckinService`, PWA de portaria, `ExternalRefundService`, estacionamento como item com estoque independente.
+
+---
+
+## 3. Status real de execução por fase (reauditado 2026-07-31)
+
+| Fase | Status | Observação |
+|---|---|---|
+| **Fase 1** — SocialMedia | ✅ Concluída | |
+| **Fase 2** — Fiscal/Accounting/Marketplace/Route/ApiKey | ⚠️ Parcial, com regressão | Accounting/Marketplace/Route/ApiKey removidos. **Fiscal foi recriado em 2026-07-31** (migrations novas `2026_07_31_*`) por trabalho de outra sessão/momento que não conhecia a decisão de remoção — precisa remover de novo. |
+| **Fase 3** — PDV/Balcão | ⚠️ Parcial | Controllers/rotas já saíram. `app/Models/Balcao`, `app/Services/Balcao`, `app/Models/Pdv`, `app/Services/Pdv` ficaram **órfãos no disco** (sem controller/rota apontando pra eles) — dead code a limpar, não decisão nova. |
+| **Fase 4** — CRM B2B / estoque físico | ⚠️ Parcial | `ClientController`/categorias/dias-ideais removidos. **`Client` model continua vivo de propósito** — usado por `Order`/`Product`/`StorefrontCheckoutService`/`Onboarding` como comprador; não é lixo, é candidato a virar a entidade de comprador do domínio novo (ver seção 4A). `Stock/*` controllers saíram, `app/Models/Stock`+`app/Services/Stock` ficaram órfãos. |
+| **Fase 5** — Storefront (poda de loja física) | ✅ Concluída | `StoreAddress`/`BusinessHours`/`DeliveryFee`/`ReactivationRule`/`StorefrontTableReservation`/`PortalAddress`/`PortalCashback` removidos. |
+| **Fase 6** — Seeders/rotas/planos | ⚠️ Parcial | `FunctionalitiesSeeder`/`InitialPlansSeeder` ainda citam slugs órfãos (`routes`, `api-access`, `accounting-access`, `tax-rules`, `stock`, `stock_locations` sem controller behind). **Achado não previsto**: o plano de 3 tiers (Prata/Ouro/Diamante) foi simplificado pra um único plano `pegaticket` com tudo liberado — decisão razoável pra fase pré-lançamento, mas não estava neste roadmap; precisa ser formalizada aqui ou revertida conscientemente. |
+| **Fase 7** — Rebrand visual | ⚠️ Só cosmético | `CLAUDE.md` e skills (`pegaticket-visual-identity.md` etc.) passaram por find-and-replace de nome, mas o **conteúdo** ainda descreve o SaaS de comércio genérico — zero menção a evento/ingresso/assento. Não reflete a spec real. `brand-guidelines.md`/`design-system.md` ainda não revisados. |
+| **Fase 7B (NOVA)** — Renomeação de entidades pro domínio | ❌ Não iniciada | Ver seção 4A — pedido explícito do usuário em 2026-07-31, adicionado como fase formal. |
+| **Seção 2.8** — Construção do domínio novo | ❌ Não iniciada | Nenhum código de Event/Session/Venue/Seat/TicketType/Hold/Ticket/Checkin existe ainda. |
+
+### Trabalho recente fora do roadmap (não é regressão, mas não avança a migração)
+~6h de features de catálogo/comércio em 2026-07-31 (observação por item no pedido, promoção percentual, selos de card `new`/`best_selling`/`low_stock`, grupo de opção "ingrediente removível") — domínio 100% comércio/delivery de comida. Tecnicamente inofensivo pra base (`Product`/`Storefront` continuam sendo a base de `TicketType`/loja no plano), mas não é trabalho de migração. Mantido por ora; será re-avaliado quando `Product` virar `TicketType` na Fase 7B/construção.
+
+---
+
+## 4. Ordem de execução recomendada a partir de agora
+
+1. **Fiscal — remover de novo** (mesmo escopo da Fase 2 original).
+2. **Limpar dead code órfão**: `app/Models/Balcao`, `app/Services/Balcao`, `app/Models/Pdv`, `app/Services/Pdv`, `app/Models/Stock`, `app/Services/Stock` (+ repositories/migrations associadas, sem controller/rota).
+3. **Arrumar seeders**: remover slugs órfãos de `FunctionalitiesSeeder`/`InitialPlansSeeder` (`routes`, `api-access`, `accounting-access`, `tax-rules`, `stock`, `stock_locations`); formalizar (ou reverter) a decisão de plano único.
+4. **Fase 7B — Renomeação de entidades** (ver seção 4A) — feita **junto com** o início da construção do domínio novo (seção 2.8), não antes: renomear `Product`→algo só faz sentido depois de decidir o desenho final de `TicketType`/`Event`/add-ons.
+5. **Fase 7 de verdade**: reescrever `brand-guidelines.md`/`design-system.md` pro domínio de ingressos.
+6. **Construção do domínio novo** (seção 2.8) — projeto próprio, precisa de planejamento dedicado (schema, sprints da seção 18 da spec).
+
+## 4A. Renomeação de entidades para o domínio PegaTicket (pedido do usuário, 2026-07-31)
+
+**Princípio**: nenhuma entidade de domínio reaproveitada do Maskats deve manter nome do domínio antigo. Reaproveitar arquitetura/padrão é aceitável; reaproveitar nome não é. Isso vale para Models, tabelas, DTOs, Requests, Resources, Services, Repositories, rotas, e os equivalentes no frontend (types, services, nomes de página/componente).
+
+**Isso não é um find-and-replace mecânico** — cada renomeação abaixo é uma decisão de modelagem de domínio, não só de rótulo, porque a cardinalidade/semântica pode mudar (ex.: `Product` hoje cobre item de comércio genérico; no domínio de ingresso pode precisar virar mais de uma entidade — `TicketType` vs. `EventProduct`/add-on). Por isso a Fase 7B roda junto com a construção do domínio novo (item 4 acima), não isolada.
+
+### Candidatos a renomear (mapeamento inicial, a confirmar por entidade antes de executar)
+
+| Nome atual (Maskats) | Candidato PegaTicket | Observação / decisão pendente |
+|---|---|---|
+| `Product` | `TicketType` (ingresso) **ou** split em `TicketType` + `EventProduct` (adicional/estacionamento) | Depende de decidir se add-ons e ingressos continuam na mesma tabela ou viram entidades separadas — decisão de modelagem, não só nome. |
+| `ProductCategory` | `EventCategory` | Já estava planejado assim na seção 2.4. |
+| `ProductImage` | `TicketTypeImage`/`EventImage` | Acompanha a decisão de `Product`. |
+| `Client` (model ainda vivo, usado como comprador em `Order`) | Absorver em `FinalCustomer` **ou** renomear pra `Buyer`/`Comprador` se precisar continuar como entidade separada | Hoje há redundância conceitual entre `Client` (comprador interno de `Order`) e `FinalCustomer` (comprador da loja pública) — precisa decisão de qual é a fonte única de verdade do comprador de ingresso antes de renomear. |
+| `Order` | Provavelmente mantém — "Pedido" é termo legítimo também no domínio de ingressos (spec usa "Pedido" explicitamente, seção 5.12). | Confirmar se mantém ou se especializa em algo como `TicketOrder`. |
+| `OrderItem` | Mantém ou vira polimórfico (`TicketOrderItem` cobrindo ingresso/assento/estacionamento/adicional) | Depende do desenho do checkout novo (seção 5.10 da spec). |
+| `Storefront*` (Controller/Service/pages) | Provavelmente mantém — "loja pública" é conceito válido também pra loja de eventos do clube. | A confirmar se o usuário quer renomear mesmo assim por consistência de marca. |
+| `SupportTicketController`/`SupportTicket` model | **Risco de colisão de nome** com o novo domínio de "Ticket" (ingresso) | Precisa de nome inequívoco antes de o domínio de ingresso existir — sugestão: `SupportRequest`/`HelpTicket` para o suporte, deixando "Ticket" livre pro domínio de ingresso. Marcar como prioridade alta na Fase 7B por ser fonte de ambiguidade real no código (`Ticket` já usado, mas pra outra coisa). |
+| `Balcao`/`TableReservation`/`TableWaitlist` (o que sobreviver como esqueleto do hold) | `SeatHold`/`InventoryHold` (spec seção 5.7/5.9) | Já estava planejado como ADAPTAR — a renomeação acontece nesse momento, não antes. |
+| `CartEvent` | Absorvido pelo novo `Cart`/`InventoryHold` (seção 5.9 da spec: `carts`, `cart_items`, `inventory_holds`) | |
+
+### Como executar (quando chegar a vez, item 4 da seção 4 acima)
+1. Por entidade: confirmar o nome final com o usuário antes de tocar código (não assumir 1:1).
+2. Renomear em conjunto: Model, tabela (migration nova, não `ALTER TABLE RENAME` direto sem avaliar dado existente — banco está zerado então é seguro), DTOs, Requests, Resources, Services, Repositories (interface+Eloquent), rotas em `routes/api.php`, Events/Listeners de auditoria, testes.
+3. Espelhar no frontend: types, services, nomes de página/componente, rotas React, labels em português na UI (isso já deveria estar em português nas telas, então o rename de UI-facing label pode já estar ok — confirmar).
+4. Rodar `composer test`/`npm run build` a cada entidade renomeada, não só no final — renomeação em lote sem checkpoint intermediário é onde bug se esconde.
+
+---
+
+## 5. Riscos e decisões pendentes
+
+- ~~Banco de produção com dado real?~~ Confirmado 2026-07-30: base zerada, sem risco de dado real.
+- ~~Plano único vs. multi-tier~~ **Decidido 2026-07-31: mantém plano único `pegaticket`** por ora (fase pré-lançamento, sem tenants reais pra diferenciar tier). Registrado, não reverter sem novo pedido explícito.
+- ~~`Client` vs. `FinalCustomer`~~ **Decidido 2026-07-31: `FinalCustomer` absorve tudo.** `Client` é descontinuado; `Order` e tudo que hoje referencia `Client` passa a referenciar `FinalCustomer` diretamente.
+- ~~`Product`→`TicketType`~~ **Decidido 2026-07-31: split em `TicketType` (ingresso, com setor/mesa/assento/lote) + `EventProduct` (adicional/estacionamento, sem lugar marcado).**
+- ~~Colisão de nome "Ticket" com suporte~~ **Decidido 2026-07-31: `SupportTicketController`/`SupportTicket` → `HelpRequestController`/`HelpRequest`.** "Ticket" fica livre pro domínio de ingresso.
+- Trabalho recente de comércio (promoção %, badges, notes por item) — mantido por ora, reavaliado durante o split `Product`→`TicketType`/`EventProduct`.
+
+## 6. Execução autônoma (2026-07-31, a partir daqui)
+
+Usuário autorizou execução completa e contínua ("inicie toda reestruturação e só pare quando tudo estiver finalizado"). Ordem de execução real, registrada conforme progride — ver commits/relatórios de agente pra detalhe por etapa:
+
+1. Limpeza (Fiscal de novo, dead code órfão de Balcão/Pdv/Stock, seeders).
+2. Renomeação de entidades (FinalCustomer absorve Client, SupportTicket→HelpRequest, Product split TicketType+EventProduct, ProductCategory→EventCategory).
+3. Construção do domínio novo (Event/Session/Venue/Seat/Batch/Hold/Ticket/Checkin) — escopo desta rodada: fundação backend (models/migrations/services/controllers básicos) + CRUD administrativo mínimo no frontend. Funcionalidades de UX avançada (editor visual de mapa drag-and-drop, PWA de portaria, checkout completo do comprador, integração PagBank real) **não cabem numa única rodada contínua** — serão sinalizadas como pendência explícita ao final, não fabricadas como "concluídas".
