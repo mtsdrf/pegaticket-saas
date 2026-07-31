@@ -2,7 +2,6 @@ import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
@@ -21,7 +20,6 @@ const CompanyBlock = lazy(() => import('./CompanyBlock').then((m) => ({ default:
 const OperationsBlock = lazy(() => import('./OperationsBlock').then((m) => ({ default: m.OperationsBlock })))
 const ScheduleAddressBlock = lazy(() => import('./ScheduleAddressBlock').then((m) => ({ default: m.ScheduleAddressBlock })))
 const PaymentBlock = lazy(() => import('./PaymentBlock').then((m) => ({ default: m.PaymentBlock })))
-const CashbackBlock = lazy(() => import('./CashbackBlock').then((m) => ({ default: m.CashbackBlock })))
 const RetentionBlock = lazy(() => import('./RetentionBlock').then((m) => ({ default: m.RetentionBlock })))
 const DataPrivacyBlock = lazy(() => import('./DataPrivacyBlock').then((m) => ({ default: m.DataPrivacyBlock })))
 
@@ -92,15 +90,6 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     icon: PaymentsOutlinedIcon,
     permission: ACCESS.tenantSettingsRead,
     Component: PaymentBlock,
-  },
-  {
-    key: 'cashback',
-    path: 'cashback',
-    label: 'Cashback e Fidelidade',
-    description: 'Programa de cashback da loja online.',
-    icon: SavingsOutlinedIcon,
-    permission: ACCESS.tenantSettingsRead,
-    Component: CashbackBlock,
   },
   {
     key: 'retencao',

@@ -1,11 +1,9 @@
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import RestaurantMenuOutlinedIcon from '@mui/icons-material/RestaurantMenuOutlined'
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined'
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import {
@@ -19,11 +17,10 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
-import { getCashbackBalance } from '../../services/cashbackService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import type { StorefrontTenant } from '../../types/storefront'
 import { OtpLoginDialog } from './OtpLoginDialog'
@@ -103,25 +100,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
   const [otpOpen, setOtpOpen] = useState(false)
-  const [cashbackName, setCashbackName] = useState<string | null>(null)
-
   const base = `/loja/${slug}`
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setCashbackName(null)
-      return
-    }
-    let cancelled = false
-    getCashbackBalance(slug)
-      .then((balance) => {
-        if (!cancelled) setCashbackName(balance.program_name)
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [isAuthenticated, slug])
 
   function handleAccountClick(event: React.MouseEvent<HTMLElement>) {
     if (!isAuthenticated) {
@@ -136,24 +115,17 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
     navigate(path)
   }
 
-  const cashbackLabel = `Extrato de ${cashbackName ?? 'cashback'}`
   const storefrontEnabled = tenant?.storefront_enabled !== false
-  const reservationsEnabled = tenant?.allow_table_reservations ?? false
-
   const menuItems = [
     { key: 'perfil', label: 'Meus dados', icon: <PersonOutlineOutlinedIcon fontSize="small" />, path: '/portal/perfil' },
     { key: 'pedidos', label: 'Meus pedidos', icon: <ReceiptLongOutlinedIcon fontSize="small" />, path: '/portal/pedidos' },
-    { key: 'enderecos', label: 'Meus endereços', icon: <LocationOnOutlinedIcon fontSize="small" />, path: '/portal/enderecos' },
     { key: 'vouchers', label: 'Meus vouchers', icon: <ConfirmationNumberOutlinedIcon fontSize="small" />, path: '/portal/vouchers' },
-    { key: 'cashback', label: cashbackLabel, icon: <SavingsOutlinedIcon fontSize="small" />, path: '/portal/cashback' },
     { key: 'favoritos', label: 'Favoritos', icon: <FavoriteBorderOutlinedIcon fontSize="small" />, path: '/portal/favoritos' },
   ]
 
   const isCardapio = pathname === base || pathname === `${base}/`
   const isPerfil = pathname === `${base}/perfil`
   const isCarrinho = pathname === `${base}/carrinho` || pathname === `${base}/checkout`
-  const isReservas = pathname === `/reservas/${slug}`
-
   return (
     <>
       <Box
@@ -200,13 +172,6 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
               badge={totalQuantity}
               ariaLabel={totalQuantity > 0 ? `Carrinho, ${totalQuantity} itens` : 'Carrinho'}
               onClick={() => navigate(`${base}/carrinho`)}
-            />
-          ) : reservationsEnabled ? (
-            <NavButton
-              icon={<ConfirmationNumberOutlinedIcon />}
-              label="Reservas"
-              active={isReservas}
-              onClick={() => navigate(`/reservas/${slug}`)}
             />
           ) : null}
           <NavButton

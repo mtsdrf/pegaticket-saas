@@ -16,7 +16,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import { Avatar, Box, Button, Chip, Paper, Skeleton, Stack, Typography } from '@mui/material'
 import type { ReactElement } from 'react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { EmptyState } from '../../components/layout/EmptyState'
 import { StoreLocationMap } from '../../components/storefront/StoreLocationMap'
 import * as storefrontService from '../../services/storefrontService'
@@ -241,7 +241,6 @@ function ContactSection({ tenant }: { tenant: StorefrontTenant }) {
 
 /** "Perfil da loja" (rota pública `/loja/:slug/perfil`) — endereço + mapa, horários e formas de pagamento. */
 export function StorefrontProfilePage() {
-  const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
   const [tenant, setTenant] = useState<StorefrontTenant | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -292,19 +291,6 @@ export function StorefrontProfilePage() {
         {!isLoading && !error && tenant && (
           <Stack spacing={2}>
             <StoreHeader tenant={tenant} />
-            {tenant.allow_table_reservations && slug ? (
-              <Paper elevation={0} sx={{ ...SECTION_SX, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                <Box>
-                  <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Quer reservar sua mesa?</Typography>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
-                    Envie a reserva online e chegue com a mesa já separada para o seu grupo.
-                  </Typography>
-                </Box>
-                <Button variant="contained" onClick={() => navigate(`/reservas/${slug}`)}>
-                  Reservar mesa
-                </Button>
-              </Paper>
-            ) : null}
             <ContactSection tenant={tenant} />
             <LocationSection tenant={tenant} />
             <BusinessHoursSection tenant={tenant} />

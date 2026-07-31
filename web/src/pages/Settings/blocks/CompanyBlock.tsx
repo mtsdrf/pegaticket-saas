@@ -1,7 +1,6 @@
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
-import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined'
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
@@ -194,7 +193,6 @@ export function CompanyBlock() {
   const hasFiscalModule = hasPermission(ACCESS.taxRulesRead)
   const publicBaseUrl = typeof window !== 'undefined' ? window.location.origin : ''
   const storefrontUrl = `${publicBaseUrl}/loja/${profile?.slug ?? ''}`
-  const reservationUrl = `${publicBaseUrl}/reservas/${profile?.slug ?? ''}`
 
   function syncProfile(data: TenantProfile) {
     setProfile(data)
@@ -349,13 +347,6 @@ export function CompanyBlock() {
             url={storefrontUrl}
             onCopy={handleCopyLink}
             qrCodeFileName={`qr-code-loja-${profile?.slug ?? 'maskats'}`}
-          />
-          <PublicLinkCard
-            icon={<EventSeatOutlinedIcon fontSize="small" />}
-            title="Reservas"
-            description="Compartilhe este link para receber reservas online mesmo quando a operação não usar delivery."
-            url={reservationUrl}
-            onCopy={handleCopyLink}
           />
         </Stack>
       </Stack>

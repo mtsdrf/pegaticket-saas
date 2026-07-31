@@ -110,7 +110,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Inventory2OutlinedIcon,
     children: [
       { to: '/produtos/categorias', label: 'Categorias de produto', access: ACCESS.productCategoriesRead },
-      { to: '/produtos/tipos', label: 'Tipos de produto', access: ACCESS.productTypesRead },
       { to: '/produtos', label: 'Produtos', exact: true, access: ACCESS.productsRead },
     ],
   },

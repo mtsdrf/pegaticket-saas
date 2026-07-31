@@ -1,10 +1,8 @@
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined'
 import { Box, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
@@ -97,26 +95,10 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
           />
           <Tab
             component={RouterLink}
-            to="/portal/enderecos"
-            value="/portal/enderecos"
-            label="Endereços"
-            icon={<LocationOnOutlinedIcon fontSize="small" />}
-            iconPosition="start"
-          />
-          <Tab
-            component={RouterLink}
             to="/portal/vouchers"
             value="/portal/vouchers"
             label="Vouchers"
             icon={<ConfirmationNumberOutlinedIcon fontSize="small" />}
-            iconPosition="start"
-          />
-          <Tab
-            component={RouterLink}
-            to="/portal/cashback"
-            value="/portal/cashback"
-            label="Cashback"
-            icon={<SavingsOutlinedIcon fontSize="small" />}
             iconPosition="start"
           />
           <Tab

@@ -40,20 +40,11 @@ const PortalOrdersPage = lazy(() =>
 const PortalFavoritesPage = lazy(() =>
   import('../pages/Portal/PortalFavoritesPage').then((m) => ({ default: m.PortalFavoritesPage })),
 )
-const PortalCashbackPage = lazy(() =>
-  import('../pages/Portal/PortalCashbackPage').then((m) => ({ default: m.PortalCashbackPage })),
-)
-const PortalAddressesPage = lazy(() =>
-  import('../pages/Portal/PortalAddressesPage').then((m) => ({ default: m.PortalAddressesPage })),
-)
 const PortalVouchersPage = lazy(() =>
   import('../pages/Portal/PortalVouchersPage').then((m) => ({ default: m.PortalVouchersPage })),
 )
 const PortalProfilePage = lazy(() =>
   import('../pages/Portal/PortalProfilePage').then((m) => ({ default: m.PortalProfilePage })),
-)
-const PrepOrderPage = lazy(() =>
-  import('../pages/Storefront/PrepOrderPage').then((m) => ({ default: m.PrepOrderPage })),
 )
 const StorefrontCatalogPage = lazy(() =>
   import('../pages/Storefront/StorefrontCatalogPage').then((m) => ({ default: m.StorefrontCatalogPage })),
@@ -67,10 +58,6 @@ const StorefrontCartPage = lazy(() =>
 const StorefrontCheckoutPage = lazy(() =>
   import('../pages/Storefront/StorefrontCheckoutPage').then((m) => ({ default: m.StorefrontCheckoutPage })),
 )
-const StorefrontReservationPage = lazy(() =>
-  import('../pages/Storefront/StorefrontReservationPage').then((m) => ({ default: m.StorefrontReservationPage })),
-)
-
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ClientListPage = lazy(() => import('../pages/Client/ClientListPage').then((m) => ({ default: m.ClientListPage })))
 const ClientFormPage = lazy(() => import('../pages/Client/ClientFormPage').then((m) => ({ default: m.ClientFormPage })))
@@ -202,12 +189,6 @@ const ProductCategoryListPage = lazy(() =>
 const ProductCategoryFormPage = lazy(() =>
   import('../pages/ProductCategory/ProductCategoryFormPage').then((m) => ({ default: m.ProductCategoryFormPage })),
 )
-const ProductTypeListPage = lazy(() =>
-  import('../pages/ProductType/ProductTypeListPage').then((m) => ({ default: m.ProductTypeListPage })),
-)
-const ProductTypeFormPage = lazy(() =>
-  import('../pages/ProductType/ProductTypeFormPage').then((m) => ({ default: m.ProductTypeFormPage })),
-)
 const AuditLogListPage = lazy(() =>
   import('../pages/Admin/AuditLogListPage').then((m) => ({ default: m.AuditLogListPage })),
 )
@@ -271,10 +252,6 @@ export function AppRoutes() {
         {/* Documentos legais — 100% públicos (lidos antes do cadastro, sem sessão). */}
         <Route path="/termos" element={<LegalDocumentPage type="terms" />} />
         <Route path="/privacidade" element={<LegalDocumentPage type="privacy" />} />
-        {/* Tela pública de preparo do pedido (roadmap Loja) — 100% pública,
-            fora de qualquer guard/provider, protegida só pelo token temporário
-            na query string (mesmo espírito de /rastreio/:uuid). */}
-        <Route path="/preparo/:orderUuid" element={<PrepOrderPage />} />
         <Route path="/convite/:token" element={<AcceptInvitePage />} />
         <Route path="/confirmar-email/:token" element={<ConfirmEmailPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
@@ -287,9 +264,7 @@ export function AppRoutes() {
           <Route element={<PortalProtectedRoute />}>
             <Route path="/portal/pedidos" element={<PortalOrdersPage />} />
             <Route path="/portal/favoritos" element={<PortalFavoritesPage />} />
-            <Route path="/portal/enderecos" element={<PortalAddressesPage />} />
             <Route path="/portal/vouchers" element={<PortalVouchersPage />} />
-            <Route path="/portal/cashback" element={<PortalCashbackPage />} />
             <Route path="/portal/perfil" element={<PortalProfilePage />} />
           </Route>
         </Route>
@@ -301,12 +276,9 @@ export function AppRoutes() {
         <Route path="/loja/:slug" element={<StorefrontLayout />}>
           <Route index element={<StorefrontCatalogPage />} />
           <Route path="perfil" element={<StorefrontProfilePage />} />
-          <Route path="reservas" element={<StorefrontReservationPage />} />
           <Route path="carrinho" element={<StorefrontCartPage />} />
           <Route path="checkout" element={<StorefrontCheckoutPage />} />
         </Route>
-
-        <Route path="/reservas/:slug" element={<StorefrontReservationPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
@@ -351,9 +323,6 @@ export function AppRoutes() {
             <Route path="/produtos/categorias" element={<PermissionRoute requirement={ACCESS.productCategoriesRead}><ProductCategoryListPage /></PermissionRoute>} />
             <Route path="/produtos/categorias/nova" element={<PermissionRoute requirement={ACCESS.productCategoriesCreate}><ProductCategoryFormPage /></PermissionRoute>} />
             <Route path="/produtos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.productCategoriesUpdate}><ProductCategoryFormPage /></PermissionRoute>} />
-            <Route path="/produtos/tipos" element={<PermissionRoute requirement={ACCESS.productTypesRead}><ProductTypeListPage /></PermissionRoute>} />
-            <Route path="/produtos/tipos/novo" element={<PermissionRoute requirement={ACCESS.productTypesCreate}><ProductTypeFormPage /></PermissionRoute>} />
-            <Route path="/produtos/tipos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.productTypesUpdate}><ProductTypeFormPage /></PermissionRoute>} />
 
             <Route path="/estoque/locais" element={<PermissionRoute requirement={ACCESS.stockLocationsRead}><StockLocationListPage /></PermissionRoute>} />
             <Route path="/estoque/locais/novo" element={<PermissionRoute requirement={ACCESS.stockLocationsCreate}><StockLocationFormPage /></PermissionRoute>} />

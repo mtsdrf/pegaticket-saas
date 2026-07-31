@@ -35,7 +35,6 @@ use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Client\ClientCategoryController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductCategoryPriceController;
-use App\Http\Controllers\Product\ProductTypeController;
 use App\Http\Controllers\Location\EstadoController;
 use App\Http\Controllers\Location\CidadeController;
 use App\Http\Controllers\Location\BairroController;
@@ -54,7 +53,6 @@ use App\Http\Controllers\Stock\StockMovementController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Order\OrderInstallmentController;
 use App\Http\Controllers\Order\OrderTrackingController;
-use App\Http\Controllers\Order\OrderPrepViewController;
 use App\Http\Controllers\Pdv\CashSessionController;
 use App\Http\Controllers\Pdv\PdvOfflineSnapshotController;
 use App\Http\Controllers\Pdv\PdvSaleController;
@@ -71,8 +69,6 @@ use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalLinkController;
-use App\Http\Controllers\Portal\PortalCashbackController;
-use App\Http\Controllers\Portal\PortalAddressController;
 use App\Http\Controllers\Portal\PortalCouponController;
 use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Portal\PortalFavoriteController;
@@ -85,7 +81,6 @@ use App\Http\Controllers\Storefront\CartEventController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
 use App\Http\Controllers\Storefront\StorefrontLocationController;
-use App\Http\Controllers\Storefront\StorefrontTableReservationController;
 use App\Http\Controllers\Storefront\StoreBusinessHoursController;
 use App\Http\Controllers\Storefront\StoreAddressController;
 use App\Http\Controllers\Storefront\StoreDeliveryFeeController;
@@ -159,8 +154,6 @@ Route::prefix('v1')->group(function () {
     // (OrderPrepLink) via ?token=. 404 genérico pra token errado/expirado/
     // de outro pedido/pedido inexistente (nunca revela existência). Ver
     // App\Http\Controllers\Order\OrderPrepViewController.
-    Route::get('/storefront-orders/{uuid}/prep', [OrderPrepViewController::class, 'show'])
-        ->middleware('throttle:20,1,storefront-order-prep-view');
 
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
     // arquivo estático em /storage/*, sem passar por middleware nenhum;
@@ -225,14 +218,6 @@ Route::prefix('v1')->group(function () {
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
 
-    Route::get('/reservas/{slug}', [StorefrontTableReservationController::class, 'show'])
-        ->middleware('throttle:60,1,public-table-reservation-show');
-
-    Route::post('/reservas/{slug}', [StorefrontTableReservationController::class, 'storePublic'])
-        ->middleware('throttle:30,1,public-table-reservation-store');
-
-    Route::post('/loja/{slug}/reservas', [StorefrontTableReservationController::class, 'store'])
-        ->middleware('throttle:30,1,storefront-table-reservation');
 
     // Estado/Cidade/Bairro para a cascata de endereço do checkout da loja —
     // descoberto durante o frontend (2026-07-16) que EstadoController/
@@ -323,18 +308,6 @@ Route::prefix('v1')->group(function () {
         // Saldo de cashback (roadmap Delivery, Fase 5) — reaproveitado
         // também pelo checkout da loja (mesmo guard customer.jwt), ver
         // PortalCashbackController.
-        Route::get('/cashback', [PortalCashbackController::class, 'index'])
-            ->middleware('throttle:60,1,portal-cashback-balance');
-
-        // "Meus endereços" (roadmap Loja) — edita o Client.endereco de cada
-        // loja onde o cliente tem vínculo confirmado. Guard de posse por
-        // client_uuid (404 se não pertencer ao cliente autenticado).
-        Route::get('/addresses', [PortalAddressController::class, 'index'])
-            ->middleware('throttle:60,1,portal-addresses-list');
-
-        Route::put('/addresses/{client_uuid}', [PortalAddressController::class, 'update'])
-            ->middleware('throttle:30,1,portal-addresses-update');
-
         // "Meus vouchers" = histórico de cupons já usados (read-only).
         Route::get('/coupon-redemptions', [PortalCouponController::class, 'index'])
             ->middleware('throttle:60,1,portal-coupon-redemptions-list');
@@ -605,20 +578,6 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{productCategory}', [ProductCategoryController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:product_categories,delete', 'throttle:10,1,product-categories-delete']);
-        });
-
-        Route::prefix('product-types')->group(function () {
-            Route::get('/', [ProductTypeController::class, 'index'])
-                ->middleware(['tenant', 'perm:product_types,read', 'throttle:100,1,product-types-list']);
-
-            Route::post('/', [ProductTypeController::class, 'store'])
-                ->middleware(['tenant', 'perm:product_types,create', 'throttle:30,1,product-types-create']);
-
-            Route::put('/{productType}', [ProductTypeController::class, 'update'])
-                ->middleware(['tenant', 'perm:product_types,update', 'throttle:30,1,product-types-update']);
-
-            Route::delete('/{productType}', [ProductTypeController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:product_types,delete', 'throttle:10,1,product-types-delete']);
         });
 
         // Global (sem middleware tenant): Estado/Cidade/Bairro são compartilhados entre tenants.

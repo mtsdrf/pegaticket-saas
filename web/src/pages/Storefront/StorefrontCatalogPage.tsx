@@ -418,7 +418,7 @@ export function StorefrontCatalogPage() {
                   Esta empresa está usando esta página como canal de contato
                 </Typography>
                 <Typography sx={{ color: 'var(--mk-muted)' }}>
-                  O catálogo de produtos e o checkout estão desativados no momento. Aqui você encontra os dados de contato, endereço e, quando disponível, o link para reservas.
+                  O catálogo de produtos e o checkout estão desativados no momento. Aqui você encontra os dados de contato e localização da empresa.
                 </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   {tenant.whatsapp ? (
@@ -434,11 +434,6 @@ export function StorefrontCatalogPage() {
                   {tenant.email ? (
                     <Button variant="outlined" startIcon={<EmailOutlinedIcon fontSize="small" />} href={`mailto:${tenant.email}`} sx={{ minHeight: UI_SIZE.control, borderRadius: UI_RADIUS.md }}>
                       Enviar e-mail
-                    </Button>
-                  ) : null}
-                  {tenant.allow_table_reservations && slug ? (
-                    <Button variant="outlined" onClick={() => navigate(`/reservas/${slug}`)} sx={{ minHeight: UI_SIZE.control, borderRadius: UI_RADIUS.md }}>
-                      Fazer reserva
                     </Button>
                   ) : null}
                 </Stack>
@@ -528,32 +523,6 @@ export function StorefrontCatalogPage() {
             {isLoadingProducts && <CatalogSkeleton />}
           </>
         )}
-
-        {tenant?.allow_table_reservations && slug ? (
-          <Paper
-            elevation={0}
-            sx={{
-              ...ELEVATED_SURFACE_SX,
-              p: 1.5,
-              mb: 2,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 1.5,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Box>
-              <Typography sx={{ fontWeight: 700 }}>Vai consumir no salão?</Typography>
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
-                Reserve sua mesa online e chegue com atendimento mais rápido.
-              </Typography>
-            </Box>
-            <Button variant="contained" onClick={() => navigate(`/reservas/${slug}`)}>
-              Reservar mesa
-            </Button>
-          </Paper>
-        ) : null}
 
         {tenant?.storefront_enabled !== false && !isLoadingProducts && !productsError && products.length === 0 && (
           <EmptyState
