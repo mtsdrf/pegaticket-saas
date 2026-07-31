@@ -150,7 +150,7 @@ const TRAINING_MODULES: TrainingModule[] = [
     operations: [
       {
         title: 'Vincular usuário à empresa',
-        purpose: 'Permitir que a pessoa opere a empresa ativa no Maskats.',
+        purpose: 'Permitir que a pessoa opere a empresa ativa no PegaTicket.',
         when: 'Ao montar equipe inicial ou incluir um novo colaborador.',
         actor: 'Proprietário ou administrador',
         route: '/admin/tenant-users',
@@ -416,7 +416,7 @@ const TRAINING_MODULES: TrainingModule[] = [
   {
     id: 'delivery',
     name: 'Delivery e integrações',
-    summary: 'Mostra o status atual das integrações e como pedidos externos entram no centro operacional do Maskats.',
+    summary: 'Mostra o status atual das integrações e como pedidos externos entram no centro operacional do PegaTicket.',
     status: 'partial',
     route: '/configuracoes/integracoes',
     audience: ['Operação digital', 'Proprietário', 'Implantação'],
@@ -541,7 +541,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
       'Apenas estar no grupo global administrators',
     ],
     correctIndex: 1,
-    explanation: 'No Maskats, login não basta: a operação tenant-scoped depende do vínculo com a empresa e do perfil correto.',
+    explanation: 'No PegaTicket, login não basta: a operação tenant-scoped depende do vínculo com a empresa e do perfil correto.',
   },
   catalogo: {
     question: 'Qual prática ajuda mais o catálogo a funcionar bem em estoque, pedido e integração externa?',
@@ -567,7 +567,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
       'Porque só servem para marketing depois da venda',
     ],
     correctIndex: 0,
-    explanation: 'No Maskats, o contexto do cliente afeta cobrança, logística, rastreio e a qualidade da operação desde o começo do pedido.',
+    explanation: 'No PegaTicket, o contexto do cliente afeta cobrança, logística, rastreio e a qualidade da operação desde o começo do pedido.',
   },
   pedidos: {
     question: 'Ao criar um pedido interno, qual impacto costuma acontecer de forma imediata?',
@@ -610,7 +610,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
     explanation: 'Hoje o fluxo já é útil e estruturado, mas a documentação viva precisa deixar claro quando ele ainda é interno/manual.',
   },
   delivery: {
-    question: 'Quando um pedido do iFood falha na materialização, qual reação está mais alinhada à operação do Maskats?',
+    question: 'Quando um pedido do iFood falha na materialização, qual reação está mais alinhada à operação do PegaTicket?',
     options: [
       'Ignorar e esperar que resolva sozinho',
       'Acompanhar a fila operacional, reprocessar evento e revisar matching/catálogo',
@@ -638,12 +638,12 @@ function statusVisual(status: ModuleStatus) {
 }
 
 function trackAudienceVisual(audience: TrackAudience) {
-  if (audience === 'owner') return { label: 'Proprietário', tone: 'var(--mk-primary)' }
-  if (audience === 'operations') return { label: 'Operação', tone: 'var(--mk-accent)' }
-  if (audience === 'finance') return { label: 'Financeiro', tone: 'var(--mk-secondary)' }
-  if (audience === 'catalog') return { label: 'Catálogo', tone: 'var(--mk-info)' }
-  if (audience === 'delivery') return { label: 'Delivery', tone: 'var(--mk-warning)' }
-  return { label: 'Suporte', tone: 'var(--mk-text)' }
+  if (audience === 'owner') return { label: 'Proprietário', tone: 'var(--pt-primary)' }
+  if (audience === 'operations') return { label: 'Operação', tone: 'var(--pt-accent)' }
+  if (audience === 'finance') return { label: 'Financeiro', tone: 'var(--pt-secondary)' }
+  if (audience === 'catalog') return { label: 'Catálogo', tone: 'var(--pt-info)' }
+  if (audience === 'delivery') return { label: 'Delivery', tone: 'var(--pt-warning)' }
+  return { label: 'Suporte', tone: 'var(--pt-text)' }
 }
 
 function initials(name: string | null | undefined) {
@@ -805,15 +805,15 @@ export function TrainingCenterPage() {
         maxWidth: 1480,
         position: 'relative',
         pb: 2,
-        '@keyframes mk-training-float': {
+        '@keyframes pt-training-float': {
           '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
           '50%': { transform: 'translate3d(0, -14px, 0)' },
         },
-        '@keyframes mk-training-glow': {
+        '@keyframes pt-training-glow': {
           '0%, 100%': { opacity: 0.28, transform: 'scale(1)' },
           '50%': { opacity: 0.5, transform: 'scale(1.08)' },
         },
-        '@keyframes mk-training-shimmer': {
+        '@keyframes pt-training-shimmer': {
           '0%': { transform: 'translateX(-35%)' },
           '100%': { transform: 'translateX(135%)' },
         },
@@ -842,9 +842,9 @@ export function TrainingCenterPage() {
             width: { xs: 220, md: 320 },
             height: { xs: 220, md: 320 },
             borderRadius: '50%',
-            background: 'color-mix(in srgb, var(--mk-accent) 18%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-accent) 18%, transparent)',
             filter: 'blur(60px)',
-            animation: 'mk-training-glow 16s ease-in-out infinite',
+            animation: 'pt-training-glow 16s ease-in-out infinite',
           }}
         />
         <Box
@@ -855,16 +855,16 @@ export function TrainingCenterPage() {
             width: { xs: 180, md: 260 },
             height: { xs: 180, md: 260 },
             borderRadius: '50%',
-            background: 'color-mix(in srgb, var(--mk-primary) 14%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-primary) 14%, transparent)',
             filter: 'blur(56px)',
-            animation: 'mk-training-float 18s ease-in-out infinite',
+            animation: 'pt-training-float 18s ease-in-out infinite',
           }}
         />
       </Box>
 
       <PageHeader
         title="Central de Treinamento"
-        subtitle="Aprenda o Maskats com uma jornada visual mais guiada, por contexto real de empresa, operação e módulos acessíveis."
+        subtitle="Aprenda o PegaTicket com uma jornada visual mais guiada, por contexto real de empresa, operação e módulos acessíveis."
         accent
       />
 
@@ -876,8 +876,8 @@ export function TrainingCenterPage() {
           color: '#F8FAFC',
           border: 'none',
           background:
-            'linear-gradient(138deg, color-mix(in srgb, var(--mk-primary) 94%, #ffffff 6%) 0%, color-mix(in srgb, var(--mk-secondary) 78%, #08101d 22%) 56%, color-mix(in srgb, var(--mk-accent) 38%, #08101d 62%) 100%)',
-          boxShadow: 'var(--mk-shadow-md)',
+            'linear-gradient(138deg, color-mix(in srgb, var(--pt-primary) 94%, #ffffff 6%) 0%, color-mix(in srgb, var(--pt-secondary) 78%, #08101d 22%) 56%, color-mix(in srgb, var(--pt-accent) 38%, #08101d 62%) 100%)',
+          boxShadow: 'var(--pt-shadow-md)',
         }}
       >
         <Box
@@ -903,7 +903,7 @@ export function TrainingCenterPage() {
             borderRadius: '50%',
             background: 'color-mix(in srgb, #FFFFFF 15%, transparent)',
             filter: 'blur(30px)',
-            animation: 'mk-training-float 15s ease-in-out infinite',
+            animation: 'pt-training-float 15s ease-in-out infinite',
           }}
         />
         <CardContent sx={{ position: 'relative', p: { xs: 2, md: 3 } }}>
@@ -976,7 +976,7 @@ export function TrainingCenterPage() {
                       bgcolor: 'rgba(255,255,255,0.09)',
                       border: '1px solid rgba(255,255,255,0.12)',
                       backdropFilter: 'blur(10px)',
-                      animation: `mk-training-float ${12 + index * 2}s ease-in-out infinite`,
+                      animation: `pt-training-float ${12 + index * 2}s ease-in-out infinite`,
                     }}
                   >
                     <Typography sx={{ ...clampTextSx, fontSize: 12.5, opacity: 0.78 }}>{item.label}</Typography>
@@ -1008,12 +1008,12 @@ export function TrainingCenterPage() {
                   background:
                     'linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
                   transform: 'translateX(-35%)',
-                  animation: 'mk-training-shimmer 11s linear infinite',
+                  animation: 'pt-training-shimmer 11s linear infinite',
                 }}
               />
               <Stack spacing={2} sx={{ position: 'relative' }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <PsychologyAltOutlinedIcon sx={{ color: 'var(--mk-accent)' }} />
+                  <PsychologyAltOutlinedIcon sx={{ color: 'var(--pt-accent)' }} />
                   <Typography sx={{ fontSize: 17, fontWeight: 800 }}>Cockpit da sessão</Typography>
                   <Box sx={{ flex: 1 }} />
                   <IconButton size="small" onClick={resetProgress} aria-label="Reiniciar progresso da central" sx={{ color: 'inherit' }}>
@@ -1054,7 +1054,7 @@ export function TrainingCenterPage() {
                       bgcolor: 'rgba(255,255,255,0.12)',
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 999,
-                        background: 'linear-gradient(90deg, #FFFFFF 0%, var(--mk-accent) 100%)',
+                        background: 'linear-gradient(90deg, #FFFFFF 0%, var(--pt-accent) 100%)',
                       },
                     }}
                   />
@@ -1078,10 +1078,10 @@ export function TrainingCenterPage() {
             <CardContent sx={{ p: { xs: 2, md: 2.25 } }}>
               <Stack spacing={1.5}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <SchoolOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                  <SchoolOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                   <Typography sx={{ fontSize: 17, fontWeight: 800 }}>Trilhas guiadas</Typography>
                 </Stack>
-                <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                   Uma única trilha fica em destaque por vez. As bloqueadas continuam visíveis, mas sem confundir a navegação principal.
                 </Typography>
 
@@ -1102,15 +1102,15 @@ export function TrainingCenterPage() {
                           position: 'relative',
                           overflow: 'hidden',
                           cursor: unlocked ? 'pointer' : 'not-allowed',
-                          borderRadius: 'var(--mk-radius-xl)',
-                          borderColor: selected ? 'var(--mk-primary)' : 'var(--mk-border)',
+                          borderRadius: 'var(--pt-radius-xl)',
+                          borderColor: selected ? 'var(--pt-primary)' : 'var(--pt-border)',
                           background: selected
-                            ? 'color-mix(in srgb, var(--mk-primary) 7%, var(--mk-surface))'
-                            : 'var(--mk-surface)',
+                            ? 'color-mix(in srgb, var(--pt-primary) 7%, var(--pt-surface))'
+                            : 'var(--pt-surface)',
                           opacity: unlocked ? 1 : 0.56,
                           transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
-                          boxShadow: selected ? 'var(--mk-shadow-md)' : 'none',
-                          '&:hover': unlocked ? { transform: 'translateY(-2px)', borderColor: 'var(--mk-primary)' } : undefined,
+                          boxShadow: selected ? 'var(--pt-shadow-md)' : 'none',
+                          '&:hover': unlocked ? { transform: 'translateY(-2px)', borderColor: 'var(--pt-primary)' } : undefined,
                         }}
                       >
                         <Stack spacing={1} sx={{ position: 'relative', ...clampTextSx }}>
@@ -1122,7 +1122,7 @@ export function TrainingCenterPage() {
                                 label={audience.label}
                                 sx={{
                                   height: 24,
-                                  bgcolor: `color-mix(in srgb, ${audience.tone} 10%, var(--mk-surface))`,
+                                  bgcolor: `color-mix(in srgb, ${audience.tone} 10%, var(--pt-surface))`,
                                   color: audience.tone,
                                   border: `1px solid color-mix(in srgb, ${audience.tone} 22%, transparent)`,
                                 }}
@@ -1133,7 +1133,7 @@ export function TrainingCenterPage() {
                               {recommended ? <Chip size="small" color="primary" label="Sugestão" /> : null}
                             </Stack>
                           </Stack>
-                          <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)' }}>{track.description}</Typography>
+                          <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)' }}>{track.description}</Typography>
                           <Typography sx={{ ...clampTextSx, fontSize: 12.75, fontWeight: 700 }}>{track.outcome}</Typography>
                         </Stack>
                       </Paper>
@@ -1148,22 +1148,22 @@ export function TrainingCenterPage() {
             <CardContent sx={{ p: { xs: 2, md: 2.25 } }}>
               <Stack spacing={1.5}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <TrendingUpOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                  <TrendingUpOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                   <Typography sx={{ fontSize: 17, fontWeight: 800 }}>Prontidão operacional</Typography>
                 </Stack>
 
                 <Paper variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.5 }}>
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                     <Box sx={{ position: 'relative', width: 74, height: 74, flexShrink: 0 }}>
-                      <CircularProgress variant="determinate" value={100} size={74} sx={{ color: 'var(--mk-border)', position: 'absolute', inset: 0 }} />
-                      <CircularProgress variant="determinate" value={activeTrackProgress} size={74} sx={{ color: 'var(--mk-primary)', position: 'absolute', inset: 0 }} />
+                      <CircularProgress variant="determinate" value={100} size={74} sx={{ color: 'var(--pt-border)', position: 'absolute', inset: 0 }} />
+                      <CircularProgress variant="determinate" value={activeTrackProgress} size={74} sx={{ color: 'var(--pt-primary)', position: 'absolute', inset: 0 }} />
                       <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
                         <Typography sx={{ fontWeight: 800 }}>{activeTrackProgress}%</Typography>
                       </Box>
                     </Box>
                     <Box sx={{ ...clampTextSx, flex: 1 }}>
                       <Typography sx={{ ...clampTextSx, fontSize: 14.5, fontWeight: 700 }}>Jornada ativa</Typography>
-                      <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)' }}>
+                      <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)' }}>
                         {activeTrackCompletedCount} de {trackModules.length || 0} módulos concluídos na trilha atual.
                       </Typography>
                     </Box>
@@ -1172,16 +1172,16 @@ export function TrainingCenterPage() {
 
                 <Paper variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.5 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-                    <TaskAltOutlinedIcon sx={{ color: 'var(--mk-success)' }} />
+                    <TaskAltOutlinedIcon sx={{ color: 'var(--pt-success)' }} />
                     <Typography sx={{ fontSize: 14.5, fontWeight: 700 }}>Checklist de implantação real</Typography>
                   </Stack>
 
                   {isChecklistLoading ? (
-                    <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Carregando checklist…</Typography>
+                    <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Carregando checklist…</Typography>
                   ) : checklist ? (
                     <Stack spacing={1}>
                       <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-                        <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)' }}>
+                        <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)' }}>
                           {checklist.completed} de {checklist.total} marcos concluídos
                         </Typography>
                         <Typography sx={{ fontSize: 13.25, fontWeight: 700 }}>{onboardingPercent ?? 0}%</Typography>
@@ -1196,16 +1196,16 @@ export function TrainingCenterPage() {
                       ].map(([label, done]) => (
                         <Stack key={String(label)} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           {done ? (
-                            <CheckCircleOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-success)' }} />
+                            <CheckCircleOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-success)' }} />
                           ) : (
-                            <ErrorOutlineOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-warning)' }} />
+                            <ErrorOutlineOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-warning)' }} />
                           )}
                           <Typography sx={{ ...clampTextSx, fontSize: 13.25 }}>{label}</Typography>
                         </Stack>
                       ))}
                     </Stack>
                   ) : (
-                    <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+                    <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                       O checklist aparece quando a empresa ativa já possui contexto operacional disponível.
                     </Typography>
                   )}
@@ -1222,13 +1222,13 @@ export function TrainingCenterPage() {
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
                   <Box sx={{ ...clampTextSx, flex: 1 }}>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 0.5 }}>
-                      <HubOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                      <HubOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                       <Typography sx={{ ...clampTextSx, fontSize: 18, fontWeight: 800 }}>Mapa da trilha ativa</Typography>
                       <Chip size="small" color="primary" variant="outlined" label={selectedTrack.title} />
                     </Stack>
-                    <Typography sx={{ ...clampTextSx, fontSize: 13.5, color: 'var(--mk-muted)' }}>{selectedTrack.description}</Typography>
+                    <Typography sx={{ ...clampTextSx, fontSize: 13.5, color: 'var(--pt-muted)' }}>{selectedTrack.description}</Typography>
                   </Box>
-                  <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)', maxWidth: { md: 240 } }}>
+                  <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)', maxWidth: { md: 240 } }}>
                     Toque em um módulo para trazer o conteúdo ao palco principal.
                   </Typography>
                 </Stack>
@@ -1247,7 +1247,7 @@ export function TrainingCenterPage() {
                       top: { xs: 20, md: 24 },
                       height: 1,
                       display: { xs: 'none', xl: 'block' },
-                      background: 'linear-gradient(90deg, transparent, var(--mk-border), transparent)',
+                      background: 'linear-gradient(90deg, transparent, var(--pt-border), transparent)',
                     },
                   }}
                 >
@@ -1265,17 +1265,17 @@ export function TrainingCenterPage() {
                         sx={{
                           position: 'relative',
                           p: 1.5,
-                          borderRadius: 'var(--mk-radius-xl)',
+                          borderRadius: 'var(--pt-radius-xl)',
                           cursor: 'pointer',
-                          borderColor: isSelected ? 'var(--mk-primary)' : 'var(--mk-border)',
+                          borderColor: isSelected ? 'var(--pt-primary)' : 'var(--pt-border)',
                           background: isSelected
-                            ? 'color-mix(in srgb, var(--mk-primary) 8%, var(--mk-surface))'
-                            : 'var(--mk-surface)',
+                            ? 'color-mix(in srgb, var(--pt-primary) 8%, var(--pt-surface))'
+                            : 'var(--pt-surface)',
                           transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
-                          boxShadow: isSelected ? 'var(--mk-shadow-md)' : 'none',
+                          boxShadow: isSelected ? 'var(--pt-shadow-md)' : 'none',
                           '&:hover': {
                             transform: 'translateY(-3px)',
-                            borderColor: 'var(--mk-primary)',
+                            borderColor: 'var(--pt-primary)',
                           },
                         }}
                       >
@@ -1288,10 +1288,10 @@ export function TrainingCenterPage() {
                                 borderRadius: 2.5,
                                 display: 'grid',
                                 placeItems: 'center',
-                                bgcolor: isSelected ? 'var(--mk-primary)' : 'var(--mk-surface-soft)',
-                                color: isSelected ? '#FFFFFF' : 'var(--mk-text)',
+                                bgcolor: isSelected ? 'var(--pt-primary)' : 'var(--pt-surface-soft)',
+                                color: isSelected ? '#FFFFFF' : 'var(--pt-text)',
                                 fontWeight: 800,
-                                boxShadow: isSelected ? 'var(--mk-shadow-sm)' : 'none',
+                                boxShadow: isSelected ? 'var(--pt-shadow-sm)' : 'none',
                               }}
                             >
                               {index + 1}
@@ -1303,7 +1303,7 @@ export function TrainingCenterPage() {
                             </Stack>
                           </Stack>
                           <Typography sx={{ ...clampTextSx, fontSize: 15, fontWeight: 800 }}>{module.name}</Typography>
-                          <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)' }}>{module.summary}</Typography>
+                          <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)' }}>{module.summary}</Typography>
                         </Stack>
                       </Paper>
                     )
@@ -1321,9 +1321,9 @@ export function TrainingCenterPage() {
                     position: 'relative',
                     overflow: 'hidden',
                     p: { xs: 2, md: 2.25 },
-                    borderRadius: 'var(--mk-radius-xl)',
-                    background: 'color-mix(in srgb, var(--mk-primary) 5%, var(--mk-surface))',
-                    border: '1px solid color-mix(in srgb, var(--mk-primary) 14%, var(--mk-border))',
+                    borderRadius: 'var(--pt-radius-xl)',
+                    background: 'color-mix(in srgb, var(--pt-primary) 5%, var(--pt-surface))',
+                    border: '1px solid color-mix(in srgb, var(--pt-primary) 14%, var(--pt-border))',
                   }}
                 >
                   <Stack
@@ -1341,7 +1341,7 @@ export function TrainingCenterPage() {
                           <Chip size="small" color="info" variant="outlined" label="Em andamento" />
                         ) : null}
                       </Stack>
-                      <Typography sx={{ ...clampTextSx, maxWidth: 860, fontSize: 14.5, color: 'var(--mk-muted)' }}>{selectedModule.summary}</Typography>
+                      <Typography sx={{ ...clampTextSx, maxWidth: 860, fontSize: 14.5, color: 'var(--pt-muted)' }}>{selectedModule.summary}</Typography>
                     </Box>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', xl: 'auto' }, alignSelf: { xs: 'stretch', xl: 'center' } }}>
                       <Button
@@ -1381,7 +1381,7 @@ export function TrainingCenterPage() {
                     { title: 'Conecta com', value: selectedModule.connectsTo.join(' • ') },
                   ].map((item) => (
                     <Paper key={item.title} variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.5, ...clampTextSx }}>
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{item.title}</Typography>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{item.title}</Typography>
                       <Typography sx={{ ...clampTextSx, mt: 0.5, fontSize: 14.5, fontWeight: 700 }}>{item.value}</Typography>
                     </Paper>
                   ))}
@@ -1397,7 +1397,7 @@ export function TrainingCenterPage() {
                   <Stack spacing={2}>
                     <Paper variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.75 }}>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-                        <AutoStoriesOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                        <AutoStoriesOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                         <Typography sx={{ fontSize: 16, fontWeight: 800 }}>O que este módulo ensina</Typography>
                       </Stack>
                       <Stack spacing={0.9}>
@@ -1411,7 +1411,7 @@ export function TrainingCenterPage() {
 
                     <Paper variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.75 }}>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-                        <WarningAmberOutlinedIcon sx={{ color: 'var(--mk-warning)' }} />
+                        <WarningAmberOutlinedIcon sx={{ color: 'var(--pt-warning)' }} />
                         <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Riscos e cuidados</Typography>
                       </Stack>
                       <Stack spacing={0.9}>
@@ -1429,14 +1429,14 @@ export function TrainingCenterPage() {
                     sx={{
                       p: 1.75,
                       ...ELEVATED_SURFACE_SX,
-                      background: 'color-mix(in srgb, var(--mk-accent) 6%, var(--mk-surface))',
+                      background: 'color-mix(in srgb, var(--pt-accent) 6%, var(--pt-surface))',
                     }}
                   >
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-                      <PlayCircleOutlineOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                      <PlayCircleOutlineOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                       <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Simulação orientada</Typography>
                     </Stack>
-                    <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1.5 }}>
+                    <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
                       Em vez de um bloco confuso, a operação real agora entra em cards separados por decisão, pré-requisito, risco e efeito.
                     </Typography>
 
@@ -1449,7 +1449,7 @@ export function TrainingCenterPage() {
                             p: 1.5,
                             ...ELEVATED_SURFACE_SX,
                             transition: 'transform 180ms ease, box-shadow 180ms ease',
-                            '&:hover': { transform: 'translateY(-2px)', boxShadow: 'var(--mk-shadow-sm)' },
+                            '&:hover': { transform: 'translateY(-2px)', boxShadow: 'var(--pt-shadow-sm)' },
                           }}
                         >
                           <Stack spacing={1.2}>
@@ -1462,8 +1462,8 @@ export function TrainingCenterPage() {
                                     borderRadius: 2.5,
                                     display: 'grid',
                                     placeItems: 'center',
-                                    bgcolor: 'color-mix(in srgb, var(--mk-primary) 12%, var(--mk-surface))',
-                                    color: 'var(--mk-primary)',
+                                    bgcolor: 'color-mix(in srgb, var(--pt-primary) 12%, var(--pt-surface))',
+                                    color: 'var(--pt-primary)',
                                     fontWeight: 800,
                                     flexShrink: 0,
                                   }}
@@ -1472,7 +1472,7 @@ export function TrainingCenterPage() {
                                 </Box>
                                 <Box sx={{ ...clampTextSx, flex: 1 }}>
                                   <Typography sx={{ ...clampTextSx, fontSize: 15, fontWeight: 800 }}>{operation.title}</Typography>
-                                  <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--mk-muted)' }}>{operation.purpose}</Typography>
+                                  <Typography sx={{ ...clampTextSx, fontSize: 13.25, color: 'var(--pt-muted)' }}>{operation.purpose}</Typography>
                                 </Box>
                               </Stack>
                               <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75, maxWidth: '100%' }}>
@@ -1488,11 +1488,11 @@ export function TrainingCenterPage() {
                               }}
                             >
                               <Paper variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.25 }}>
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mb: 0.5 }}>Quando usar</Typography>
+                                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 0.5 }}>Quando usar</Typography>
                                 <Typography sx={{ ...clampTextSx, fontSize: 13.5 }}>{operation.when}</Typography>
                               </Paper>
                               <Paper variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.25 }}>
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mb: 0.5 }}>Efeitos gerados</Typography>
+                                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 0.5 }}>Efeitos gerados</Typography>
                                 <Typography sx={{ ...clampTextSx, fontSize: 13.5 }}>{operation.effects.join(' • ')}</Typography>
                               </Paper>
                             </Box>
@@ -1509,7 +1509,7 @@ export function TrainingCenterPage() {
                                 { title: 'Boas práticas', items: operation.goodPractices },
                               ].map((column) => (
                                 <Paper key={column.title} variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.25 }}>
-                                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mb: 0.75 }}>{column.title}</Typography>
+                                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 0.75 }}>{column.title}</Typography>
                                   <Stack spacing={0.5}>
                                     {column.items.map((item) => (
                                       <Typography key={item} sx={{ ...clampTextSx, fontSize: 13 }}>
@@ -1549,12 +1549,12 @@ export function TrainingCenterPage() {
                       sx={{
                         p: 1.75,
                         ...ELEVATED_SURFACE_SX,
-                        background: 'color-mix(in srgb, var(--mk-primary) 4%, var(--mk-surface))',
+                        background: 'color-mix(in srgb, var(--pt-primary) 4%, var(--pt-surface))',
                       }}
                     >
                       <Stack spacing={1.25}>
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                          <QuizOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                          <QuizOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                           <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Checagem rápida de entendimento</Typography>
                           {(progressState.quizCorrectByModule[selectedModule.id] ?? 0) > 0 ? (
                             <Chip size="small" color="success" variant="outlined" label={`${progressState.quizCorrectByModule[selectedModule.id]} acerto(s)`} />
@@ -1582,17 +1582,17 @@ export function TrainingCenterPage() {
                                   cursor: 'pointer',
                                   ...ELEVATED_SURFACE_SX,
                                   borderColor: isSelected
-                                    ? 'var(--mk-primary)'
+                                    ? 'var(--pt-primary)'
                                     : answered && correct
-                                      ? 'var(--mk-success)'
-                                      : 'var(--mk-border)',
+                                      ? 'var(--pt-success)'
+                                      : 'var(--pt-border)',
                                   bgcolor: isSelected
-                                    ? 'color-mix(in srgb, var(--mk-primary) 8%, var(--mk-surface))'
+                                    ? 'color-mix(in srgb, var(--pt-primary) 8%, var(--pt-surface))'
                                     : answered && correct
-                                      ? 'color-mix(in srgb, var(--mk-success) 10%, var(--mk-surface))'
-                                      : 'var(--mk-surface)',
+                                      ? 'color-mix(in srgb, var(--pt-success) 10%, var(--pt-surface))'
+                                      : 'var(--pt-surface)',
                                   transition: 'transform 180ms ease, border-color 180ms ease',
-                                  '&:hover': { transform: 'translateY(-2px)', borderColor: 'var(--mk-primary)' },
+                                  '&:hover': { transform: 'translateY(-2px)', borderColor: 'var(--pt-primary)' },
                                 }}
                               >
                                 <Typography sx={{ ...clampTextSx, fontSize: 13.5, fontWeight: isSelected ? 700 : 500 }}>{option}</Typography>
@@ -1601,7 +1601,7 @@ export function TrainingCenterPage() {
                           })}
                         </Box>
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-                          <Typography sx={{ ...clampTextSx, fontSize: 13, color: 'var(--mk-muted)' }}>
+                          <Typography sx={{ ...clampTextSx, fontSize: 13, color: 'var(--pt-muted)' }}>
                             Acertos reforçam o progresso local e ajudam a desbloquear novas trilhas visíveis.
                           </Typography>
                           <Button
@@ -1631,7 +1631,7 @@ export function TrainingCenterPage() {
             <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
               <Stack spacing={1.5}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                  <MilitaryTechOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                  <MilitaryTechOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                   <Typography sx={{ fontSize: 18, fontWeight: 800 }}>Leitura de maturidade do produto</Typography>
                 </Stack>
 

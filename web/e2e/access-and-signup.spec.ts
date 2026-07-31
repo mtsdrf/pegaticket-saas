@@ -45,7 +45,7 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
     await page.getByRole('button', { name: 'Abrir menu da conta' }).click()
     await expect(page.getByRole('menu').locator('button').filter({ hasText: 'Empresa QA 2' }).first()).toBeVisible()
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('maskats.active_tenant_uuid')))
+      .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.active_tenant_uuid')))
       .toBe('tenant-qa-2')
   })
 
@@ -56,7 +56,7 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Operador resiliente',
-      userEmail: 'resiliente@maskats.com',
+      userEmail: 'resiliente@pegaticket.com',
       tenants: [
         {
           tenant_uuid: 'tenant-qa-1',
@@ -128,7 +128,7 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
     await page.getByRole('button', { name: 'Abrir menu da conta' }).click()
     await expect(page.getByRole('menu').locator('button').filter({ hasText: 'Empresa QA 2' }).first()).toBeVisible()
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('maskats.active_tenant_uuid')))
+      .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.active_tenant_uuid')))
       .toBe('tenant-qa-2')
   })
 
@@ -177,7 +177,7 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
       tenantPermissions: ['dashboard:read', 'tenant-profile:read'],
       tenantFunctionalities: ['dashboard', 'subscription'],
       userName: 'Nova Proprietária',
-      userEmail: 'nova@maskats.com',
+      userEmail: 'nova@pegaticket.com',
       tenants: [
         {
           tenant_uuid: 'tenant-signup-1',
@@ -196,9 +196,9 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
     await expect(page.getByRole('button', { name: 'Criar empresa e iniciar teste' })).toBeDisabled()
 
     await page.getByRole('textbox', { name: 'Nome do proprietário' }).fill('Nova Proprietária')
-    await page.getByRole('textbox', { name: 'E-mail do proprietário' }).fill('nova@maskats.com')
-    await page.getByRole('textbox', { name: 'Senha', exact: true }).fill('Maskats@2026Segura')
-    await page.getByRole('textbox', { name: 'Confirmar senha', exact: true }).fill('Maskats@2026Segura')
+    await page.getByRole('textbox', { name: 'E-mail do proprietário' }).fill('nova@pegaticket.com')
+    await page.getByRole('textbox', { name: 'Senha', exact: true }).fill('PegaTicket@2026Segura')
+    await page.getByRole('textbox', { name: 'Confirmar senha', exact: true }).fill('PegaTicket@2026Segura')
     await page.getByRole('textbox', { name: 'Nome da empresa' }).fill('Padaria Nova Era')
     await expect(page.getByRole('textbox', { name: 'Identificador da empresa' })).toHaveValue('padaria-nova-era')
 
@@ -214,7 +214,7 @@ test.describe('Acesso, empresa ativa e cadastro self-service', () => {
     await expect(page.getByRole('dialog', { name: 'Selecione a empresa' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('maskats.active_tenant_uuid')))
+      .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.active_tenant_uuid')))
       .toBe('tenant-signup-1')
     await page.getByRole('button', { name: 'Abrir menu da conta' }).click()
     await expect(page.getByRole('menu').locator('button').filter({ hasText: 'Padaria Nova Era' }).first()).toBeVisible()

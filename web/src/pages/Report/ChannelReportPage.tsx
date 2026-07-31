@@ -120,8 +120,8 @@ export function ChannelReportPage() {
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                   '&:hover': {
                     transform: { sm: 'translateY(-2px)' },
-                    boxShadow: 'var(--mk-shadow-md)',
-                    borderColor: 'var(--mk-primary)',
+                    boxShadow: 'var(--pt-shadow-md)',
+                    borderColor: 'var(--pt-primary)',
                   },
                 }}
               >
@@ -131,13 +131,13 @@ export function ChannelReportPage() {
                         width: 40,
                         height: 40,
                         ...SOFT_PANEL_SX,
-                        borderRadius: 'var(--mk-radius-md)',
+                        borderRadius: 'var(--pt-radius-md)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        background: 'color-mix(in srgb, var(--mk-primary) 14%, transparent)',
-                        color: 'var(--mk-primary)',
+                        background: 'color-mix(in srgb, var(--pt-primary) 14%, transparent)',
+                        color: 'var(--pt-primary)',
                       }}
                   >
                     <Icon fontSize="small" />
@@ -148,19 +148,19 @@ export function ChannelReportPage() {
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mt: 0.5 }}>
-                  <Typography sx={{ fontSize: 26, fontWeight: 600, color: 'var(--mk-text)' }}>
+                  <Typography sx={{ fontSize: 26, fontWeight: 600, color: 'var(--pt-text)' }}>
                     {formatCurrency(row.total_amount)}
                   </Typography>
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                     {percentage.toFixed(0)}% dos pedidos
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                     {row.order_count} {row.order_count === 1 ? 'pedido' : 'pedidos'}
                   </Typography>
-                  <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                     Ticket médio: {formatCurrency(row.average_ticket)}
                   </Typography>
                 </Box>
@@ -171,7 +171,7 @@ export function ChannelReportPage() {
       ) : (
         !loadError && (
           <EmptyState
-            icon={<InsightsOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+            icon={<InsightsOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
             title="Nenhum pedido no período"
             description="Ajuste o período ou aguarde a operação gerar pedidos para ver o resultado por canal."
           />

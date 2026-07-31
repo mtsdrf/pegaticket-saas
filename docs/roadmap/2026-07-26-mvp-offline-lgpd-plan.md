@@ -1,8 +1,8 @@
-# Maskats — Plano de fechamento do MVP para apresentação comercial
+# PegaTicket — Plano de fechamento do MVP para apresentação comercial
 
 Data de referência: **26 de julho de 2026**
 
-Este documento define o recorte exato de duas frentes consideradas obrigatórias para apresentar o Maskats como MVP para empresas:
+Este documento define o recorte exato de duas frentes consideradas obrigatórias para apresentar o PegaTicket como MVP para empresas:
 
 1. **Jurídico / LGPD operacional**
 2. **Offline real do PDV/Balcão**
@@ -33,7 +33,7 @@ Ter o produto com:
 
 - Termos de Uso e Política de Privacidade reais, não mais rascunho;
 - aceite versionado e rastreável;
-- linguagem clara sobre o papel da Maskats no tratamento de dados;
+- linguagem clara sobre o papel da PegaTicket no tratamento de dados;
 - fluxo mínimo de atendimento LGPD;
 - política operacional interna do que pode ser prometido e do que ainda não pode.
 
@@ -67,8 +67,8 @@ Hoje ainda falta:
    - manter IP já registrado no backend.
 
 3. **Posicionamento LGPD explícito no produto e na documentação comercial**
-   - Maskats como **controladora** dos dados da contratante;
-   - Maskats como **operadora** dos dados que a contratante cadastra sobre seus clientes;
+   - PegaTicket como **controladora** dos dados da contratante;
+   - PegaTicket como **operadora** dos dados que a contratante cadastra sobre seus clientes;
    - indicar canal de contato para solicitações.
 
 4. **Fluxo mínimo operacional LGPD**

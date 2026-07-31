@@ -84,7 +84,7 @@ use Illuminate\Support\Str;
  */
 class DemoPlansPresentationSeeder extends Seeder
 {
-    private const PASSWORD = 'Maskats@2026';
+    private const PASSWORD = 'PegaTicket@2026';
 
     public function run(): void
     {
@@ -118,9 +118,9 @@ class DemoPlansPresentationSeeder extends Seeder
                 'name' => 'Cafeteria Prata Demo',
                 'plan_slug' => 'prata',
                 'tier' => 'prata',
-                'owner_email' => 'dono.prata@maskats.com',
+                'owner_email' => 'dono.prata@pegaticket.com',
                 'owner_name' => 'Dono — Plano Prata',
-                'employee_email' => 'funcionario.prata@maskats.com',
+                'employee_email' => 'funcionario.prata@pegaticket.com',
                 'employee_name' => 'Funcionário — Plano Prata',
             ],
             [
@@ -128,9 +128,9 @@ class DemoPlansPresentationSeeder extends Seeder
                 'name' => 'Cafeteria Ouro Demo',
                 'plan_slug' => 'ouro',
                 'tier' => 'ouro',
-                'owner_email' => 'dono.ouro@maskats.com',
+                'owner_email' => 'dono.ouro@pegaticket.com',
                 'owner_name' => 'Dono — Plano Ouro',
-                'employee_email' => 'funcionario.ouro@maskats.com',
+                'employee_email' => 'funcionario.ouro@pegaticket.com',
                 'employee_name' => 'Funcionário — Plano Ouro',
             ],
             [
@@ -138,9 +138,9 @@ class DemoPlansPresentationSeeder extends Seeder
                 'name' => 'Restaurante Diamante Demo',
                 'plan_slug' => 'diamante',
                 'tier' => 'diamante',
-                'owner_email' => 'dono.diamante@maskats.com',
+                'owner_email' => 'dono.diamante@pegaticket.com',
                 'owner_name' => 'Dono — Plano Diamante',
-                'employee_email' => 'funcionario.diamante@maskats.com',
+                'employee_email' => 'funcionario.diamante@pegaticket.com',
                 'employee_name' => 'Funcionário — Plano Diamante',
             ],
         ];
@@ -549,7 +549,7 @@ class DemoPlansPresentationSeeder extends Seeder
         ]));
 
         $finalCustomer = FinalCustomer::firstOrCreate(
-            ['email' => 'cliente.final.' . $tenant->slug . '@maskats.com'],
+            ['email' => 'cliente.final.' . $tenant->slug . '@pegaticket.com'],
             ['uuid' => (string) Str::uuid(), 'name' => 'Cliente Final Demo']
         );
 

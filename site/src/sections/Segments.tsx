@@ -4,14 +4,14 @@ import { SEGMENTS } from '../data/segments'
 
 export function Segments() {
   return (
-    <Box component="section" id="segmentos" sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'var(--mk-surface-soft)' }}>
+    <Box component="section" id="segmentos" sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'var(--pt-surface-soft)' }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2.5, sm: 4 } }}>
         <RevealSection>
-          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
             Feito para o seu tipo de negócio
           </Typography>
-          <Typography sx={{ fontSize: 16, color: 'var(--mk-muted)', maxWidth: 620, mb: 4 }}>
-            O Maskats já é usado por operações de atacado, varejo, laticínios, distribuidoras de bebidas, bares e
+          <Typography sx={{ fontSize: 16, color: 'var(--pt-muted)', maxWidth: 620, mb: 4 }}>
+            O PegaTicket já é usado por operações de atacado, varejo, laticínios, distribuidoras de bebidas, bares e
             casas noturnas.
           </Typography>
         </RevealSection>
@@ -28,16 +28,16 @@ export function Segments() {
               <Box
                 sx={{
                   height: '100%',
-                  borderRadius: 'var(--mk-radius-lg)',
-                  border: '1px solid var(--mk-border)',
-                  backgroundColor: 'var(--mk-surface)',
+                  borderRadius: 'var(--pt-radius-lg)',
+                  border: '1px solid var(--pt-border)',
+                  backgroundColor: 'var(--pt-surface)',
                   p: 2.5,
                 }}
               >
-                <Typography sx={{ fontSize: 16.5, fontWeight: 700, color: 'var(--mk-text)', mb: 0.75 }}>
+                <Typography sx={{ fontSize: 16.5, fontWeight: 700, color: 'var(--pt-text)', mb: 0.75 }}>
                   {segment.title}
                 </Typography>
-                <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', lineHeight: 1.5 }}>
+                <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', lineHeight: 1.5 }}>
                   {segment.description}
                 </Typography>
               </Box>

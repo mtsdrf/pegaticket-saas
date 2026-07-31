@@ -1,4 +1,4 @@
-# Detalhamento de funcionalidades — Sistema Maskats
+# Detalhamento de funcionalidades — Sistema PegaTicket
 
 Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma funcionalidade ainda não está 100% pronta pra operação real (depende de integração externa), isso está marcado explicitamente — o resto está implementado e testado.
 
@@ -105,7 +105,7 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Fechamento de comanda**: soma os itens não cancelados, aplica taxa de serviço (se configurada), aceita divisão de pagamento em mais de uma forma, libera a mesa.
 - ⚠️ **Operação 100% offline** (funcionar sem internet e sincronizar depois) ainda não foi implementada — hoje o Balcão exige conexão ativa.
 
-## 13. Assinatura — cobrança do próprio Maskats *(plano Diamante)*
+## 13. Assinatura — cobrança do próprio PegaTicket *(plano Diamante)*
 
 - **Ciclo de cobrança**: mensal, trimestral (10% de desconto) ou anual (20% de desconto).
 - **Teste grátis**: 14 dias antes da primeira cobrança.
@@ -150,10 +150,10 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Dados sensíveis criptografados** onde aplicável (ex.: chave Pix, segredo de autenticação em duas etapas do contador).
 - **Log de auditoria**: histórico de quem alterou o quê, quando, em qualquer entidade relevante do sistema.
 
-## 20. Administração da plataforma (equipe interna Maskats)
+## 20. Administração da plataforma (equipe interna PegaTicket)
 
 Área separada, não visível pra empresas clientes:
 - Gestão de **planos comerciais** e quais funcionalidades cada um libera.
 - Gestão de **empresas cadastradas** na plataforma como um todo.
-- Gestão de **grupos/permissões internas** da equipe Maskats.
+- Gestão de **grupos/permissões internas** da equipe PegaTicket.
 - **Auditoria global** de todas as empresas.

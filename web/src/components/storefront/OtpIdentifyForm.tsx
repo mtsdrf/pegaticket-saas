@@ -85,7 +85,7 @@ export function OtpIdentifyForm({ onAuthenticated }: { onAuthenticated?: () => v
   return (
     <Box>
       <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 0.5 }}>Identifique-se para continuar</Typography>
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mb: 2.5 }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mb: 2.5 }}>
         {step === 'email'
           ? 'Informe seu e-mail para receber um código de confirmação.'
           : 'Digite o código de 6 dígitos que enviamos para o seu e-mail.'}
@@ -140,7 +140,7 @@ export function OtpIdentifyForm({ onAuthenticated }: { onAuthenticated?: () => v
               fullWidth
               required
             />
-            <Typography sx={{ fontSize: 12.5, color: isExpired ? 'var(--mk-danger)' : 'var(--mk-muted)', textAlign: 'center' }}>
+            <Typography sx={{ fontSize: 12.5, color: isExpired ? 'var(--pt-danger)' : 'var(--pt-muted)', textAlign: 'center' }}>
               {isExpired ? 'Código expirado' : `Código expira em ${formatCountdown(secondsLeft)}`}
             </Typography>
             <Button type="submit" variant="contained" size="large" disabled={isSubmitting || code.length !== 6}>

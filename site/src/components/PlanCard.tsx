@@ -25,10 +25,10 @@ export function PlanCard({ plan, period }: PlanCardProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 'var(--mk-radius-lg)',
-        border: plan.highlighted ? '2px solid var(--mk-primary)' : '1px solid var(--mk-border)',
-        backgroundColor: 'var(--mk-surface)',
-        boxShadow: plan.highlighted ? 'var(--mk-shadow-lg)' : 'var(--mk-shadow-sm)',
+        borderRadius: 'var(--pt-radius-lg)',
+        border: plan.highlighted ? '2px solid var(--pt-primary)' : '1px solid var(--pt-border)',
+        backgroundColor: 'var(--pt-surface)',
+        boxShadow: plan.highlighted ? 'var(--pt-shadow-lg)' : 'var(--pt-shadow-sm)',
         p: 3,
         position: 'relative',
       }}
@@ -42,40 +42,40 @@ export function PlanCard({ plan, period }: PlanCardProps) {
             top: -14,
             left: 24,
             fontWeight: 700,
-            backgroundColor: 'var(--mk-primary)',
+            backgroundColor: 'var(--pt-primary)',
             color: '#FFFFFF',
           }}
         />
       ) : null}
 
-      <Typography sx={{ fontSize: 20, fontWeight: 700, color: 'var(--mk-text)' }}>{plan.name}</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>{plan.tagline}</Typography>
+      <Typography sx={{ fontSize: 20, fontWeight: 700, color: 'var(--pt-text)' }}>{plan.name}</Typography>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>{plan.tagline}</Typography>
 
       <Stack direction="row" spacing={0.75} sx={{ mb: 0.5, alignItems: 'baseline' }}>
-        <Typography sx={{ fontSize: 32, fontWeight: 800, color: 'var(--mk-text)' }}>
+        <Typography sx={{ fontSize: 32, fontWeight: 800, color: 'var(--pt-text)' }}>
           {formatBRL(price.monthlyEquivalent)}
         </Typography>
-        <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>/mês</Typography>
+        <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>/mês</Typography>
       </Stack>
 
       {period === 'monthly' ? (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mb: 2.5 }}>Cobrado mensalmente</Typography>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 2.5 }}>Cobrado mensalmente</Typography>
       ) : (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mb: 2.5 }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 2.5 }}>
           {formatBRL(price.chargedTotal)} cobrados a cada {months} meses — economia de {formatBRL(price.savings)}{' '}
           frente ao mensal
         </Typography>
       )}
 
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2, lineHeight: 1.5 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2, lineHeight: 1.5 }}>
         {plan.audience}
       </Typography>
 
       <Stack spacing={1} sx={{ mb: 3, flexGrow: 1 }}>
         {plan.featureHighlights.map((feature) => (
           <Stack key={feature} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-            <CheckRoundedIcon sx={{ fontSize: 18, color: 'var(--mk-success)', mt: 0.2 }} />
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>{feature}</Typography>
+            <CheckRoundedIcon sx={{ fontSize: 18, color: 'var(--pt-success)', mt: 0.2 }} />
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>{feature}</Typography>
           </Stack>
         ))}
       </Stack>

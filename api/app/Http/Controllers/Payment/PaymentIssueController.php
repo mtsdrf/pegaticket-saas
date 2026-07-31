@@ -13,7 +13,7 @@ use App\Services\APIResponse;
 use App\Services\Payment\PaymentIssueService;
 
 /**
- * Visão cross-tenant EXCLUSIVA do staff interno da Maskats (`perm:
+ * Visão cross-tenant EXCLUSIVA do staff interno da PegaTicket (`perm:
  * payment_admin,*`, sem middleware `tenant` — mesmo padrão de `tenants`/
  * `plans`/`audit-logs`: perm resolvida só via `group_permissions`,
  * `tenant_role_permissions` nunca entra porque não há tenant resolvido

@@ -28,7 +28,7 @@ export function ClientRowActions({
           size="small"
           aria-label={`Ver pedidos de ${client.name}`}
           onClick={() => onViewOrders(client)}
-          sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+          sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
         >
           <ReceiptLongOutlinedIcon fontSize="small" />
         </IconButton>
@@ -39,7 +39,7 @@ export function ClientRowActions({
             size="small"
             aria-label={`Editar ${client.name}`}
             onClick={() => onEdit(client)}
-            sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+            sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
           >
             <EditOutlinedIcon fontSize="small" />
           </IconButton>
@@ -51,7 +51,7 @@ export function ClientRowActions({
             size="small"
             aria-label={`Excluir ${client.name}`}
             onClick={() => onDeleteRequest(client)}
-            sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+            sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
           >
             <DeleteOutlineIcon fontSize="small" />
           </IconButton>

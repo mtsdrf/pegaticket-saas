@@ -155,7 +155,7 @@ export function ClientAddressFields({
   if (cepFirst) {
     return (
       <Box>
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.4, mb: 1.5 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.4, mb: 1.5 }}>
           Endereço
         </Typography>
 
@@ -196,7 +196,7 @@ export function ClientAddressFields({
         spacing={1}
         sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', mb: 1.5, rowGap: 1 }}
       >
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
           Endereço
         </Typography>
         {locationButton}

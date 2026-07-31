@@ -84,7 +84,7 @@ export function SubscriptionHistoryList() {
 
   if (items.length === 0) {
     return (
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', py: 1 }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', py: 1 }}>
         Nenhuma assinatura registrada até o momento.
       </Typography>
     )
@@ -96,11 +96,11 @@ export function SubscriptionHistoryList() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Plano</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Ciclo</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Situação</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Período</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Contratada em</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Plano</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Ciclo</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Situação</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Período</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Contratada em</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

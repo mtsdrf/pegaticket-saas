@@ -6,7 +6,7 @@
 <body style="font-family: Arial, sans-serif; color: #1a1a1a;">
     <p>Olá, {{ $invite->name }}.</p>
 
-    <p>Você foi convidado(a) para fazer parte da empresa <strong>{{ $invite->tenant->name }}</strong> no Maskats.</p>
+    <p>Você foi convidado(a) para fazer parte da empresa <strong>{{ $invite->tenant->name }}</strong> no PegaTicket.</p>
 
     <p>
         <a href="{{ $inviteUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">

@@ -51,7 +51,7 @@ export function ForgotPasswordPage() {
       subheadline="Enviamos um link seguro para você redefinir sua senha."
     >
       <Paper
-        className="mk-reveal"
+        className="pt-reveal"
         elevation={0}
         sx={{
           ...ELEVATED_SURFACE_SX,
@@ -68,7 +68,7 @@ export function ForgotPasswordPage() {
         <Typography sx={{ fontSize: { xs: 20, sm: 22 }, fontWeight: 600, mb: 0.5 }}>
           Esqueci minha senha
         </Typography>
-        <Typography sx={{ fontSize: 15, color: 'var(--mk-muted)', mb: 3.5 }}>
+        <Typography sx={{ fontSize: 15, color: 'var(--pt-muted)', mb: 3.5 }}>
           Informe o e-mail da sua conta e enviaremos um link para redefinir sua senha.
         </Typography>
 

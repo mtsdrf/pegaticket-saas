@@ -28,7 +28,7 @@ export function StorefrontCartPage() {
       sx={{
         minHeight: '100dvh',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         pb: items.length > 0 ? 12 : 4,
       }}
     >
@@ -47,7 +47,7 @@ export function StorefrontCartPage() {
         {items.length === 0 ? (
           <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4 }}>
             <EmptyState
-              icon={<ShoppingCartOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+              icon={<ShoppingCartOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
               title="Seu carrinho está vazio"
               description="Volte ao catálogo e adicione produtos para continuar."
               action={
@@ -78,19 +78,19 @@ export function StorefrontCartPage() {
                       variant="rounded"
                       sx={{ ...SOFT_PANEL_SX, width: 56, height: 56, flexShrink: 0 }}
                     >
-                      <StorefrontOutlinedIcon sx={{ color: 'var(--mk-muted)' }} />
+                      <StorefrontOutlinedIcon sx={{ color: 'var(--pt-muted)' }} />
                     </Avatar>
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ fontSize: 14.5, fontWeight: 600, wordBreak: 'break-word' }}>{item.name}</Typography>
-                      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
+                      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
                       {item.configuration_label && (
-                        <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)', mt: 0.25 }}>
+                        <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', mt: 0.25 }}>
                           {item.configuration_label}
                         </Typography>
                       )}
                       {item.unit_price < item.price && (
-                        <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'var(--mk-success, #1b7a3d)' }}>
+                        <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'var(--pt-success, #1b7a3d)' }}>
                           Preço de atacado aplicado
                         </Typography>
                       )}
@@ -124,7 +124,7 @@ export function StorefrontCartPage() {
                         size="small"
                         aria-label={`Remover ${item.name} do carrinho`}
                         onClick={() => removeItem(item.id)}
-                        sx={{ minWidth: UI_SIZE.compactControl, minHeight: UI_SIZE.compactControl, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                        sx={{ minWidth: UI_SIZE.compactControl, minHeight: UI_SIZE.compactControl, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                       >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -149,7 +149,7 @@ export function StorefrontCartPage() {
 
             <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 5 }}>
               <Logo variant="mark" size={20} />
-              <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)' }}>Loja via Maskats</Typography>
+              <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>Loja via PegaTicket</Typography>
             </Stack>
           </>
         )}
@@ -164,15 +164,15 @@ export function StorefrontCartPage() {
             right: 0,
             bottom: 0,
             zIndex: (theme) => theme.zIndex.snackbar,
-            borderTop: '1px solid var(--mk-border)',
+            borderTop: '1px solid var(--pt-border)',
             background:
-              'var(--mk-surface-raised-bg)',
-            boxShadow: 'var(--mk-shadow-lg)',
+              'var(--pt-surface-raised-bg)',
+            boxShadow: 'var(--pt-shadow-lg)',
           }}
         >
           <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 640, p: 1.5 }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.25, px: 0.5 }}>
-              <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>Total</Typography>
+              <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Total</Typography>
               <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{formatCurrency(totalAmount)}</Typography>
             </Stack>
             <Button

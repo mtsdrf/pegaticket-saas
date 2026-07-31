@@ -27,7 +27,7 @@ export function Header() {
       position="sticky"
       elevation={0}
       component="header"
-      sx={{ backgroundColor: 'var(--mk-surface)', backdropFilter: 'saturate(180%) blur(6px)' }}
+      sx={{ backgroundColor: 'var(--pt-surface)', backdropFilter: 'saturate(180%) blur(6px)' }}
     >
       <Toolbar sx={{ minHeight: { xs: 60, sm: 68 }, gap: 2 }}>
         <Box component="a" href="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
@@ -47,11 +47,11 @@ export function Header() {
               component="a"
               href={link.href}
               sx={{
-                color: 'var(--mk-text)',
+                color: 'var(--pt-text)',
                 textDecoration: 'none',
                 fontWeight: 500,
                 fontSize: 14.5,
-                '&:hover': { color: 'var(--mk-primary)' },
+                '&:hover': { color: 'var(--pt-primary)' },
               }}
             >
               {link.label}

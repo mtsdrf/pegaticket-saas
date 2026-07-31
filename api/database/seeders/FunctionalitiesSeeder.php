@@ -47,7 +47,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Financeiro', 'slug' => 'finance', 'description' => 'Conciliação financeira (pagamentos, estornos e eventos de webhook)', 'is_active' => true],
             ['name' => 'Central de Chamados', 'slug' => 'support', 'description' => 'Abertura e listagem de chamados de suporte, com diagnóstico automático opcional', 'is_active' => true],
             ['name' => 'Reativação de Cliente', 'slug' => 'reactivation', 'description' => 'Régua automática de reativação: cupom + push nativo para clientes sem pedido há N dias', 'is_active' => true],
-            ['name' => 'Operação de Pagamentos', 'slug' => 'payment_admin', 'description' => 'Painel cross-tenant do staff da Maskats para pendências de pagamento/assinatura (divergências, idempotência ambígua, contestações, webhooks falhos) e reprocessamento manual', 'is_active' => true],
+            ['name' => 'Operação de Pagamentos', 'slug' => 'payment_admin', 'description' => 'Painel cross-tenant do staff da PegaTicket para pendências de pagamento/assinatura (divergências, idempotência ambígua, contestações, webhooks falhos) e reprocessamento manual', 'is_active' => true],
         ];
 
         foreach ($items as $data) {

@@ -31,7 +31,7 @@ export function ConfirmDeleteDialog({
     <Dialog open={open} onClose={isDeleting ? undefined : onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontWeight: 600 }}>{title}</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ color: 'var(--mk-text)' }}>
+        <DialogContentText sx={{ color: 'var(--pt-text)' }}>
           Tem certeza que deseja excluir <strong>{itemLabel}</strong>? Essa ação não pode ser
           desfeita.
         </DialogContentText>

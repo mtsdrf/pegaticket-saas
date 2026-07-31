@@ -26,7 +26,7 @@ class OrderInstallmentTest extends TestCase
     {
         parent::setUp();
 
-        Config::set('maskats.parcela_vencimento_dia', 10);
+        Config::set('pegaticket.parcela_vencimento_dia', 10);
 
         $this->setUpTenantScopedUser('order-installment-user@test.com');
     }

@@ -1,22 +1,22 @@
 export const STORAGE_KEYS = {
-  accessToken: 'maskats.access_token',
-  refreshToken: 'maskats.refresh_token',
-  activeTenantUuid: 'maskats.active_tenant_uuid',
-  themeModePreference: 'maskats.theme_mode',
+  accessToken: 'pegaticket.access_token',
+  refreshToken: 'pegaticket.refresh_token',
+  activeTenantUuid: 'pegaticket.active_tenant_uuid',
+  themeModePreference: 'pegaticket.theme_mode',
   /**
    * Token do portal do cliente final (`FinalCustomer`) — chave DIFERENTE da
    * sessão de staff (`accessToken`/`refreshToken` acima). As duas identidades
    * nunca podem se misturar: ver `services/portalApiClient.ts`.
    */
-  portalAccessToken: 'maskats.portal_access_token',
+  portalAccessToken: 'pegaticket.portal_access_token',
   /** `sessionStorage` (não `localStorage`) — some ao fechar a aba/navegador, pra o modal de seleção de empresa reaparecer a cada novo acesso, não a cada F5. */
-  tenantSelectionConfirmed: 'maskats.tenant_selection_confirmed',
+  tenantSelectionConfirmed: 'pegaticket.tenant_selection_confirmed',
   /** Roadmap A1.6 — `published_at` (ISO) da release note mais recente já vista pelo usuário neste navegador; usado só pra calcular o badge de "novidades" do sino no `AppLayout`. */
-  releaseNotesLastSeenAt: 'maskats.release_notes_last_seen_at',
+  releaseNotesLastSeenAt: 'pegaticket.release_notes_last_seen_at',
   /** Central de Treinamento — progresso, trilhas e respostas rápidas persistidos por usuário+empresa neste navegador. */
-  trainingCenterProgress: 'maskats.training_center_progress',
+  trainingCenterProgress: 'pegaticket.training_center_progress',
   /** Identificador local estável deste navegador/dispositivo para fluxos offline controlados. */
-  offlineDeviceId: 'maskats.offline_device_id',
+  offlineDeviceId: 'pegaticket.offline_device_id',
 } as const
 
 /**
@@ -26,5 +26,5 @@ export const STORAGE_KEYS = {
  * Usar sempre este helper em vez de montar a chave inline.
  */
 export function storefrontCartStorageKey(slug: string): string {
-  return `maskats.storefront_cart.${slug}`
+  return `pegaticket.storefront_cart.${slug}`
 }

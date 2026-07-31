@@ -86,7 +86,7 @@ export function ImageUploadField({
 
   return (
     <Box>
-      <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'var(--mk-text)', mb: 0.75 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'var(--pt-text)', mb: 0.75 }}>{label}</Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         {renderPreview ? (
@@ -97,7 +97,7 @@ export function ImageUploadField({
               width: size,
               height: size,
               ...SOFT_PANEL_SX,
-              borderRadius: shape === 'circle' ? '50%' : 'var(--mk-radius-md)',
+              borderRadius: shape === 'circle' ? '50%' : 'var(--pt-radius-md)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -108,7 +108,7 @@ export function ImageUploadField({
             {displayUrl ? (
               <Box component="img" src={displayUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <ImageOutlinedIcon sx={{ color: 'var(--mk-muted)' }} />
+              <ImageOutlinedIcon sx={{ color: 'var(--pt-muted)' }} />
             )}
           </Box>
         )}
@@ -136,7 +136,7 @@ export function ImageUploadField({
           </Stack>
 
           {showFileName && fileName && (
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mt: 0.5, wordBreak: 'break-all' }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5, wordBreak: 'break-all' }}>
               {fileName}
             </Typography>
           )}

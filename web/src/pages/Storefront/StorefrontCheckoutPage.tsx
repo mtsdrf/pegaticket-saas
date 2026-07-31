@@ -91,7 +91,7 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
       sx={{
         minHeight: '100dvh',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         px: { xs: 2, sm: 3 },
         py: { xs: 3, sm: 5 },
       }}
@@ -105,8 +105,8 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
         </Stack>
         {children}
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 4 }}>
-          <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)', textAlign: 'center' }}>
-            Checkout via Maskats — gestão clara para empresas em movimento.
+          <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
+            Checkout via PegaTicket — gestão clara para empresas em movimento.
           </Typography>
         </Stack>
       </Box>
@@ -188,14 +188,14 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
   return (
     <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 } }}>
       <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 0.5 }}>Pagar com Pix</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2.5 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2.5 }}>
         Seu pedido já foi confirmado. Escaneie o QR Code ou copie o código Pix para concluir o pagamento.
       </Typography>
 
       {status === 'loading' && (
         <Stack sx={{ alignItems: 'center', py: 4 }} spacing={1.5}>
           <CircularProgress size={28} />
-          <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Gerando cobrança Pix…</Typography>
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Gerando cobrança Pix…</Typography>
         </Stack>
       )}
 
@@ -225,7 +225,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
                 component="img"
                 src={`data:image/png;base64,${qrCodeBase64}`}
                 alt="QR Code Pix"
-                sx={{ width: 200, height: 200, borderRadius: 'var(--mk-radius-lg)' }}
+                sx={{ width: 200, height: 200, borderRadius: 'var(--pt-radius-lg)' }}
               />
             </Box>
           ) : ticketUrl ? (
@@ -257,7 +257,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
           )}
 
           {(qrCode || qrCodeBase64) && (
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
               Abra o app do seu banco, escolha pagar via Pix e escaneie o código ou cole o "Pix copia e cola". A
               confirmação acontece automaticamente assim que o pagamento for identificado.
             </Typography>
@@ -828,7 +828,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               label={
                 <Box>
                   <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Receber em casa</Typography>
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>Informe o endereço de entrega abaixo.</Typography>
+                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Informe o endereço de entrega abaixo.</Typography>
                 </Box>
               }
             />
@@ -838,7 +838,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               label={
                 <Box>
                   <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Retirar na loja</Typography>
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>Sem taxa de entrega — busque o pedido no endereço da loja.</Typography>
+                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Sem taxa de entrega — busque o pedido no endereço da loja.</Typography>
                 </Box>
               }
             />
@@ -906,13 +906,13 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         )}
 
         {fulfillmentType === 'delivery' && cepNotFoundMessage && (
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mt: -1.5, mb: 1.5 }}>{cepNotFoundMessage}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: -1.5, mb: 1.5 }}>{cepNotFoundMessage}</Typography>
         )}
 
         {fulfillmentType === 'delivery' && deliveryFeeStatus === 'loading' && (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5 }}>
             <CircularProgress size={16} />
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Calculando taxa de entrega…</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Calculando taxa de entrega…</Typography>
           </Stack>
         )}
         {fulfillmentType === 'delivery' && deliveryFeeStatus === 'not-served' && (
@@ -942,7 +942,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>Cupom de desconto</Typography>
         {couponStatus === 'applied' ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: 'var(--mk-primary)' }}>{appliedCouponCode}</Typography>
+            <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: 'var(--pt-primary)' }}>{appliedCouponCode}</Typography>
             <Button size="small" onClick={handleRemoveCoupon}>
               Remover
             </Button>
@@ -976,7 +976,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       {cashbackBalance?.enabled && cashbackBalance.available_amount > 0 && (
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}>{cashbackLabel}</Typography>
-          <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1 }}>
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
             Você tem {formatCurrency(cashbackBalance.available_amount)} em {cashbackLabel} disponível.
           </Typography>
           <FormControlLabel
@@ -1060,24 +1060,24 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
                 </Typography>
               </Stack>
               {item.notes && (
-                <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)', mt: 0.25 }}>Obs: {item.notes}</Typography>
+                <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>Obs: {item.notes}</Typography>
               )}
             </Box>
           ))}
         </Stack>
-        <Stack spacing={0.75} sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--mk-border)' }}>
+        <Stack spacing={0.75} sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--pt-border)' }}>
           <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Subtotal</Typography>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Subtotal</Typography>
             <Typography sx={{ fontSize: 13.5 }}>{formatCurrency(totalAmount)}</Typography>
           </Stack>
           {fulfillmentType === 'pickup' ? (
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Taxa de entrega</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-primary)' }}>Retirada — sem taxa</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Taxa de entrega</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>Retirada — sem taxa</Typography>
             </Stack>
           ) : (
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Taxa de entrega</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Taxa de entrega</Typography>
               <Typography sx={{ fontSize: 13.5 }}>
                 {deliveryFeeStatus === 'available' && deliveryFee !== null ? formatCurrency(deliveryFee) : '—'}
               </Typography>
@@ -1085,14 +1085,14 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           )}
           {couponStatus === 'applied' && appliedDiscount > 0 && (
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Desconto</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-primary)' }}>-{formatCurrency(appliedDiscount)}</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Desconto</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>-{formatCurrency(appliedDiscount)}</Typography>
             </Stack>
           )}
           {cashbackRedeemAmount > 0 && (
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>{cashbackLabel} usado</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-primary)' }}>-{formatCurrency(cashbackRedeemAmount)}</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{cashbackLabel} usado</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>-{formatCurrency(cashbackRedeemAmount)}</Typography>
             </Stack>
           )}
           <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 0.5 }}>
@@ -1144,7 +1144,7 @@ export function StorefrontCheckoutPage() {
       <PageShell slug={slug}>
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4, textAlign: 'center' }}>
           <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 1 }}>Seu carrinho está vazio</Typography>
-          <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mb: 2.5 }}>
+          <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mb: 2.5 }}>
             Volte ao catálogo e adicione produtos antes de finalizar o pedido.
           </Typography>
           <Button variant="contained" onClick={() => navigate(`/loja/${slug}`)}>

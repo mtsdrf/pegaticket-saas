@@ -80,7 +80,7 @@
                             @endif
 
                             @unless ($product->is_available)
-                                <p><span class="mk-badge mk-badge-muted">Indisponível</span></p>
+                                <p><span class="pt-badge pt-badge-muted">Indisponível</span></p>
                             @endunless
                         </td>
                     @endforeach

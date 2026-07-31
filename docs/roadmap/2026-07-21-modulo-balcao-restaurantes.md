@@ -1,4 +1,4 @@
-# Maskats — Roadmap: Módulo de Balcão para Restaurantes (mesa/comanda, cozinha, bar, offline-first)
+# PegaTicket — Roadmap: Módulo de Balcão para Restaurantes (mesa/comanda, cozinha, bar, offline-first)
 
 > Documento de arquitetura e planejamento. **Não é implementação.** Levantado em 2026-07-21 lendo o código real de `api/` e `web/`, os roadmaps anteriores (`2026-07-20-producao-pagamentos-fiscal-contabilidade.md`, `2026-07-21-checklist-implantacao-modulos-opcionais.md`) e a memória do projeto.
 >
@@ -8,7 +8,7 @@
 
 ## Sumário executivo
 
-O Maskats hoje modela `Order` como um documento **fechado e transacional**: nasce (`staff` → `confirmed`, ou `storefront` → `pending_approval`), reserva estoque, é pago e entregue. Um restaurante de mesa/balcão quebra essa premissa em dois pontos que **não têm equivalente hoje**:
+O PegaTicket hoje modela `Order` como um documento **fechado e transacional**: nasce (`staff` → `confirmed`, ou `storefront` → `pending_approval`), reserva estoque, é pago e entregue. Um restaurante de mesa/balcão quebra essa premissa em dois pontos que **não têm equivalente hoje**:
 
 1. **A comanda fica aberta por horas recebendo itens incrementalmente** — não é um pedido criado de uma vez. `Order` não tem esse ciclo de vida.
 2. **O status de preparo é por item, não por pedido** — a cerveja sai do bar enquanto o risoto ainda está na cozinha. `orders.status` é um único enum para o documento inteiro; `order_items` não tem estado de produção.
@@ -17,7 +17,7 @@ A recomendação central é **não estender `Order` com um terceiro `origin`**. 
 
 A parte offline-first é real e cara: um app de garçom PWA precisa lançar itens sem internet e sincronizar depois, e **dois garçons offline podem tocar a mesma mesa**. Isso exige fila de comandos local (IndexedDB), sincronização por Service Worker/Background Sync com fallback de polling, e uma estratégia de resolução de conflito. A recomendação é a **mais simples que funciona**: comandos append-only por mesa + serialização no servidor + last-write-wins só nos campos escalares, evitando CRDT/vector clock completo no MVP.
 
-**Ordem sugerida:** construir primeiro o núcleo **online** (mesa/comanda/KDS/fechamento), validar com um restaurante real, e só então investir no offline-first — que é onde o esforço explode. Ver Documento 2 (atualizado em 2026-07-22): decisão final é **não separar por subdomínio** — o módulo vive como `sistema.maskats.com/balcao`, rota isolada dentro do mesmo app/deploy já existente.
+**Ordem sugerida:** construir primeiro o núcleo **online** (mesa/comanda/KDS/fechamento), validar com um restaurante real, e só então investir no offline-first — que é onde o esforço explode. Ver Documento 2 (atualizado em 2026-07-22): decisão final é **não separar por subdomínio** — o módulo vive como `sistema.pegaticket.com/balcao`, rota isolada dentro do mesmo app/deploy já existente.
 
 ---
 
@@ -163,7 +163,7 @@ Ponto honesto e frequentemente ignorado: **se o garçom está offline, a cozinha
 | **KDS bar** | Tablet fixo | Online-first + fallback | Mesma engine do KDS, filtrada por estação `bar`. Reuso total de componente. |
 | **Caixa/fechamento** | Balcão | Online-first | Fecha conta, taxa de serviço, divisão, múltiplas formas de pagamento, (opcional) NFC-e. Muito próximo do PDV (Documento 2). |
 
-Todas reaproveitam os tokens `--mk-*` e o design system. O KDS é a única tela com necessidade visual nova (leitura à distância), candidata ao `ui-ux-master`.
+Todas reaproveitam os tokens `--pt-*` e o design system. O KDS é a única tela com necessidade visual nova (leitura à distância), candidata ao `ui-ux-master`.
 
 ---
 

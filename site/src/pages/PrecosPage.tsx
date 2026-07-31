@@ -34,11 +34,11 @@ export function PrecosPage() {
           <RevealSection>
             <Typography
               component="h1"
-              sx={{ fontSize: { xs: 28, md: 38 }, fontWeight: 700, color: 'var(--mk-text)', mb: 1.5 }}
+              sx={{ fontSize: { xs: 28, md: 38 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1.5 }}
             >
               Preços transparentes para cada fase da operação
             </Typography>
-            <Typography sx={{ fontSize: 16, color: 'var(--mk-muted)', maxWidth: 640, mb: 4 }}>
+            <Typography sx={{ fontSize: 16, color: 'var(--pt-muted)', maxWidth: 640, mb: 4 }}>
               Simule o valor mensal, trimestral e anual, compare o que cada plano libera e escolha sem surpresas.
               Todo plano inclui 14 dias de teste gratuito antes da primeira cobrança.
             </Typography>
@@ -66,10 +66,10 @@ export function PrecosPage() {
 
           <RevealSection>
             <Box sx={{ mb: { xs: 6, md: 8 } }}>
-              <Typography component="h2" sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+              <Typography component="h2" sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
                 Compare o custo em cada período
               </Typography>
-              <Typography sx={{ fontSize: 14.5, color: 'var(--mk-muted)', mb: 2.5, maxWidth: 640 }}>
+              <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', mb: 2.5, maxWidth: 640 }}>
                 Valor total cobrado e equivalente mensal de cada plano no mensal, trimestral e anual, lado a lado —
                 sem precisar trocar o período selecionado acima.
               </Typography>
@@ -79,17 +79,17 @@ export function PrecosPage() {
 
           <RevealSection>
             <Box>
-              <Typography component="h2" sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+              <Typography component="h2" sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
                 O que cada plano libera
               </Typography>
-              <Typography sx={{ fontSize: 14.5, color: 'var(--mk-muted)', mb: 2.5, maxWidth: 640 }}>
+              <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', mb: 2.5, maxWidth: 640 }}>
                 Comparativo completo de módulos por plano, para decidir com clareza o que sua operação precisa hoje.
               </Typography>
               <PlanModuleComparison />
             </Box>
           </RevealSection>
 
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textAlign: 'center', mt: 4 }}>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textAlign: 'center', mt: 4 }}>
             Preços em reais, cobrados por empresa. Todo plano inclui 14 dias de teste gratuito antes da primeira
             cobrança.
           </Typography>

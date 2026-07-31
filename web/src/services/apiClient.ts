@@ -5,7 +5,7 @@ import type { AuthTokens } from '../types/auth'
 import { parseBlobErrorPayload } from '../utils/blobError'
 import { notifyApiOffline, notifyApiOnline } from '../utils/connectionEvents'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.maskats.com/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com/api/v1'
 
 export const apiClient = axios.create({ baseURL })
 

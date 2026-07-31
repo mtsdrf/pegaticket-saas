@@ -22,7 +22,7 @@ export function ClientDeleteDialog({ client, isDeleting, error, onCancel, onConf
     <Dialog open={client !== null} onClose={isDeleting ? undefined : onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontWeight: 600 }}>Excluir cliente</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ color: 'var(--mk-text)' }}>
+        <DialogContentText sx={{ color: 'var(--pt-text)' }}>
           Tem certeza que deseja excluir <strong>{client?.name}</strong>? Essa ação não pode ser
           desfeita.
         </DialogContentText>

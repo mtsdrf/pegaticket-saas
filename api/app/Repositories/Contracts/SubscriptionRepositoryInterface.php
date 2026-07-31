@@ -15,7 +15,7 @@ interface SubscriptionRepositoryInterface extends BaseRepositoryInterface
     /**
      * Histórico paginado de TODAS as assinaturas do tenant ao longo do
      * tempo (sem filtro de status/atual) — usado pela tela "Empresa" do
-     * proprietário para visão completa do vínculo com o Maskats.
+     * proprietário para visão completa do vínculo com o PegaTicket.
      */
     public function paginateForTenant(int $tenantId, int $perPage = 15): LengthAwarePaginator;
 

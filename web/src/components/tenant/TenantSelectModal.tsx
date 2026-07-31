@@ -63,7 +63,7 @@ export function TenantSelectModal() {
     <Dialog open={open} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>Selecione a empresa</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" sx={{ color: 'var(--mk-muted)', mb: 2 }}>
+        <Typography variant="body2" sx={{ color: 'var(--pt-muted)', mb: 2 }}>
           Escolha qual empresa você vai acessar agora.
         </Typography>
 
@@ -79,22 +79,22 @@ export function TenantSelectModal() {
                   minHeight: 44,
                   ...SOFT_PANEL_SX,
                   '&.Mui-selected': {
-                    borderColor: 'var(--mk-primary)',
-                    background: 'var(--mk-surface-soft)',
+                    borderColor: 'var(--pt-primary)',
+                    background: 'var(--pt-surface-soft)',
                   },
                 }}
               >
                 <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', width: '100%', minWidth: 0 }}>
-                  <ApartmentOutlinedIcon sx={{ fontSize: 20, color: 'var(--mk-primary)', flexShrink: 0 }} />
+                  <ApartmentOutlinedIcon sx={{ fontSize: 20, color: 'var(--pt-primary)', flexShrink: 0 }} />
                   <Stack sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--mk-text)' }} noWrap>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--pt-text)' }} noWrap>
                       {tenant.tenant_name}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'var(--mk-muted)' }} noWrap>
+                    <Typography variant="caption" sx={{ color: 'var(--pt-muted)' }} noWrap>
                       {tenant.role}
                     </Typography>
                   </Stack>
-                  {isSelected && <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'var(--mk-success)', flexShrink: 0 }} />}
+                  {isSelected && <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'var(--pt-success)', flexShrink: 0 }} />}
                 </Stack>
               </ListItemButton>
             )

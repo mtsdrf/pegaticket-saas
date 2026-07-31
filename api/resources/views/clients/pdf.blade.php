@@ -46,11 +46,11 @@
                     <td>{{ $endereco?->cep ?: '-' }}</td>
                     <td class="categories-cell">{{ $categoriesLabel ?: '-' }}</td>
                     <td>
-                        <span class="mk-badge {{ $client->is_active ? 'mk-badge-success' : 'mk-badge-muted' }}">
+                        <span class="pt-badge {{ $client->is_active ? 'pt-badge-success' : 'pt-badge-muted' }}">
                             {{ $client->is_active ? 'Ativo' : 'Inativo' }}
                         </span>
                         @if ($client->is_trusted)
-                            <span class="mk-badge mk-badge-success">Confiável</span>
+                            <span class="pt-badge pt-badge-success">Confiável</span>
                         @endif
                     </td>
                 </tr>

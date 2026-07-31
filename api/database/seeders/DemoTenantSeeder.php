@@ -67,7 +67,7 @@ class DemoTenantSeeder extends Seeder
     private const TENANT_SLUG = 'distribuidora-show';
     private const OWNER_NAME = 'Distribuidora Show — Conta Demonstração';
     private const OWNER_EMAIL = 'teste@teste.com';
-    private const OWNER_PASSWORD = 'Maskats@2026';
+    private const OWNER_PASSWORD = 'PegaTicket@2026';
 
     /** Caminho dos assets fornecidos pelo usuário, na raiz do repo (fora de `api/`). */
     private const ASSETS_ROOT = __DIR__ . '/../../../';

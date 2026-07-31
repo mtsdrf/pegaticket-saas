@@ -49,7 +49,7 @@ return [
         'password_reset_requested' => 'If the email exists in our records, you will receive a password reset link.',
         'password_reset_success' => 'Password reset successfully.',
         'invalid_or_expired_reset_token' => 'This reset link is invalid or has expired. Please request a new password reset.',
-        'password_reset_mail_subject' => 'Password reset on Maskats',
+        'password_reset_mail_subject' => 'Password reset on PegaTicket',
     ],
 
     /*
@@ -108,7 +108,7 @@ return [
         'invalid_current_password' => 'Current password is incorrect.',
         'email_already_pending' => 'This email is already pending confirmation for another account.',
         'invalid_or_expired_token' => 'This confirmation link is invalid or has expired. Please request the email change again.',
-        'mail_subject' => 'Confirm your new email on Maskats',
+        'mail_subject' => 'Confirm your new email on PegaTicket',
     ],
 
     /*
@@ -288,7 +288,7 @@ return [
         'product_mapping_not_found' => 'No internal product was found for item ":item". Create or adjust the product SKU, barcode or name before importing.',
         'catalog_has_no_available_products' => 'There are no available products to publish right now.',
         'catalog_sync_item_failed' => 'The partner rejected this catalog item. Review the payload and try again.',
-        'catalog_limitation_simple_items_only' => 'The current catalog publishes only categories and simple items from Maskats.',
+        'catalog_limitation_simple_items_only' => 'The current catalog publishes only categories and simple items from PegaTicket.',
         'catalog_limitation_no_option_groups' => 'Add-ons, option groups, combos and pizza still depend on dedicated internal modeling before publishing to iFood.',
         'catalog_limitation_no_combos' => 'Combos and pizza still depend on additional internal modeling before publishing to iFood.',
         'no_business_hours_configured' => 'Configure at least one opening-hours shift before sending store hours to the partner.',
@@ -340,7 +340,7 @@ return [
     'tenant_user_invite' => [
         'created' => 'Invite sent successfully.',
         'accepted' => 'Invite accepted successfully. Welcome!',
-        'mail_subject' => 'You have been invited to join :tenant on Maskats',
+        'mail_subject' => 'You have been invited to join :tenant on PegaTicket',
         'email_already_registered' => 'An account with this email already exists. Ask this person to request access from a company administrator.',
         'pending_invite_exists' => 'A pending invite for this email already exists in this company.',
         'invalid_token' => 'Invalid invite.',
@@ -1074,7 +1074,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'portal' => [
-        'otp_mail_subject' => 'Your Maskats access code',
+        'otp_mail_subject' => 'Your PegaTicket access code',
         'otp_sent' => 'If the provided email has an account, an access code was sent.',
         'otp_verified' => 'Login successful.',
         'invalid_code' => 'Invalid code.',

@@ -17,7 +17,7 @@ function LoadingSkeleton() {
   return (
     <Stack spacing={1.25}>
       {[0, 1, 2].map((index) => (
-        <Skeleton key={index} variant="rounded" height={76} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
+        <Skeleton key={index} variant="rounded" height={76} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
       ))}
     </Stack>
   )
@@ -47,16 +47,16 @@ function FavoriteCard({ product, onUnfavorite }: { product: StorefrontProduct; o
         variant="rounded"
         sx={{ width: 56, height: 56, flexShrink: 0, ...SOFT_PANEL_SX }}
       >
-        <StorefrontOutlinedIcon sx={{ color: 'var(--mk-muted)' }} />
+        <StorefrontOutlinedIcon sx={{ color: 'var(--pt-muted)' }} />
       </Avatar>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14.5, fontWeight: 700, wordBreak: 'break-word' }}>{product.name}</Typography>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--mk-primary)', mt: 0.25 }}>
+        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--pt-primary)', mt: 0.25 }}>
           {formatCurrency(product.promo_price ?? product.price)}
         </Typography>
         {!product.is_available && (
-          <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)', mt: 0.25 }}>Indisponível no momento</Typography>
+          <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>Indisponível no momento</Typography>
         )}
       </Box>
 
@@ -66,7 +66,7 @@ function FavoriteCard({ product, onUnfavorite }: { product: StorefrontProduct; o
         size="small"
         sx={{ flexShrink: 0, minWidth: 44, minHeight: 44 }}
       >
-        <FavoriteIcon fontSize="small" sx={{ color: 'var(--mk-primary)' }} />
+        <FavoriteIcon fontSize="small" sx={{ color: 'var(--pt-primary)' }} />
       </IconButton>
     </Paper>
   )
@@ -76,7 +76,7 @@ function EmptyFavorites() {
   return (
     <Paper elevation={0} sx={{ p: 4, ...ELEVATED_SURFACE_SX }}>
       <EmptyState
-        icon={<FavoriteBorderOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+        icon={<FavoriteBorderOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
         title="Nenhum produto favoritado ainda"
         description="Toque no coração de um produto no catálogo de uma loja para favoritá-lo e acompanhar por aqui."
       />

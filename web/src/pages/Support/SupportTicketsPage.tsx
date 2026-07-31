@@ -38,7 +38,7 @@ function LoadingSkeleton() {
   return (
     <Stack spacing={1.5}>
       {[0, 1, 2].map((index) => (
-        <Skeleton key={index} variant="rounded" height={96} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
+        <Skeleton key={index} variant="rounded" height={96} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
       ))}
     </Stack>
   )
@@ -58,16 +58,16 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
           sx={{
             fontWeight: 600,
             flexShrink: 0,
-            bgcolor: 'color-mix(in srgb, var(--mk-primary) 14%, transparent)',
-            color: 'var(--mk-primary)',
+            bgcolor: 'color-mix(in srgb, var(--pt-primary) 14%, transparent)',
+            color: 'var(--pt-primary)',
           }}
         />
       </Stack>
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-text)', mb: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-text)', mb: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {ticket.description}
       </Typography>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
           {ticket.created_at ? formatDateTimeBR(ticket.created_at) : ''}
         </Typography>
         {ticket.attachment_url ? (
@@ -139,7 +139,7 @@ export function SupportTicketsPage() {
 
       {!isLoading && !error && tickets && tickets.length === 0 ? (
         <EmptyState
-          icon={<SupportAgentOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+          icon={<SupportAgentOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
           title="Nenhum chamado aberto ainda"
           description="Precisa de ajuda? Abra um chamado e nosso suporte responde por aqui."
           action={
@@ -286,7 +286,7 @@ function NewSupportTicketDialog({ onClose, onCreated }: NewSupportTicketDialogPr
                 </Button>
               ) : null}
               {fieldErrors.attachment ? (
-                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-danger)', mt: 0.5 }}>
+                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-danger)', mt: 0.5 }}>
                   {fieldErrors.attachment[0]}
                 </Typography>
               ) : null}

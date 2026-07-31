@@ -42,7 +42,7 @@ Conclusão:
 ### 1. Central de operação
 
 Arquivo principal:
-- [web/src/pages/Order/OrderListPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Order/OrderListPage.tsx)
+- [web/src/pages/Order/OrderListPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Order/OrderListPage.tsx)
 
 Situação atual:
 - já existe visão por filas:
@@ -64,7 +64,7 @@ Limitação atual:
 ### 2. Pedidos da loja
 
 Arquivo principal:
-- [web/src/pages/Order/StorefrontOrderManagementPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Order/StorefrontOrderManagementPage.tsx)
+- [web/src/pages/Order/StorefrontOrderManagementPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Order/StorefrontOrderManagementPage.tsx)
 
 Situação atual:
 - listagem operacional separada;
@@ -85,7 +85,7 @@ Limitação atual:
 ### 3. KDS do Balcão
 
 Arquivo principal:
-- [web/src/pages/Balcao/BalcaoKdsPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Balcao/BalcaoKdsPage.tsx)
+- [web/src/pages/Balcao/BalcaoKdsPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Balcao/BalcaoKdsPage.tsx)
 
 Situação atual:
 - já é a tela mais próxima de um kanban;
@@ -105,7 +105,7 @@ Limitação atual:
 ### 4. Comanda do Balcão
 
 Arquivo principal:
-- [web/src/pages/Balcao/BalcaoComandaPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Balcao/BalcaoComandaPage.tsx)
+- [web/src/pages/Balcao/BalcaoComandaPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Balcao/BalcaoComandaPage.tsx)
 
 Situação atual:
 - lista itens por status;
@@ -119,7 +119,7 @@ Limitação atual:
 ### 5. Marketplace / integrações
 
 Arquivo relevante:
-- [web/src/pages/Settings/IntegrationsPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/IntegrationsPage.tsx)
+- [web/src/pages/Settings/IntegrationsPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/IntegrationsPage.tsx)
 
 Situação atual:
 - há ações operacionais em cards/listas de pedidos externos.
@@ -134,7 +134,7 @@ Limitação atual:
 ### Pedidos
 
 Arquivo principal:
-- [api/app/Services/Order/OrderService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Order/OrderService.php)
+- [api/app/Services/Order/OrderService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Order/OrderService.php)
 
 O que já existe:
 - máquina de estados distribuída por métodos dedicados;
@@ -163,7 +163,7 @@ Ponto importante:
 ### Balcão / KDS
 
 Arquivo principal:
-- [api/app/Services/Balcao/ComandaItemService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Balcao/ComandaItemService.php)
+- [api/app/Services/Balcao/ComandaItemService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Balcao/ComandaItemService.php)
 
 O que já existe:
 - máquina de estados formal;
@@ -268,18 +268,18 @@ Recomendação:
 ### Fase 1
 
 1. `Central de operação`
-- [web/src/pages/Order/OrderListPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Order/OrderListPage.tsx)
+- [web/src/pages/Order/OrderListPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Order/OrderListPage.tsx)
 
 2. `KDS do Balcão`
-- [web/src/pages/Balcao/BalcaoKdsPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Balcao/BalcaoKdsPage.tsx)
+- [web/src/pages/Balcao/BalcaoKdsPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Balcao/BalcaoKdsPage.tsx)
 
 ### Fase 2
 
 3. `Pedidos da loja`
-- [web/src/pages/Order/StorefrontOrderManagementPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Order/StorefrontOrderManagementPage.tsx)
+- [web/src/pages/Order/StorefrontOrderManagementPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Order/StorefrontOrderManagementPage.tsx)
 
 4. `Comanda do Balcão`
-- [web/src/pages/Balcao/BalcaoComandaPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Balcao/BalcaoComandaPage.tsx)
+- [web/src/pages/Balcao/BalcaoComandaPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Balcao/BalcaoComandaPage.tsx)
 
 ### Fase 3
 

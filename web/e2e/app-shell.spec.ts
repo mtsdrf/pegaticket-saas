@@ -9,7 +9,7 @@ test.describe('Shell autenticado', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Operador QA',
-      userEmail: 'operador.qa@maskats.com',
+      userEmail: 'operador.qa@pegaticket.com',
     })
 
     await page.goto('/')
@@ -22,7 +22,7 @@ test.describe('Shell autenticado', () => {
 
     await page.getByRole('button', { name: 'Abrir menu da conta' }).click()
     await expect(page.getByText('Operador QA')).toBeVisible()
-    await expect(page.getByText('operador.qa@maskats.com')).toBeVisible()
+    await expect(page.getByText('operador.qa@pegaticket.com')).toBeVisible()
     await page.getByRole('menuitem', { name: 'Sair' }).click()
 
     await expect(page).toHaveURL(/\/login$/)
@@ -75,7 +75,7 @@ test.describe('Shell autenticado', () => {
       tenantPermissions: ['tenant-profile:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Dono QA',
-      userEmail: 'dono.qa@maskats.com',
+      userEmail: 'dono.qa@pegaticket.com',
     })
 
     await page.goto('/configuracoes')
@@ -90,7 +90,7 @@ test.describe('Shell autenticado', () => {
       tenantPermissions: ['tenant-profile:read', 'dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Operador QA',
-      userEmail: 'operador.qa@maskats.com',
+      userEmail: 'operador.qa@pegaticket.com',
     })
 
     await page.goto('/configuracoes')
@@ -110,7 +110,7 @@ test.describe('Shell autenticado', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard', 'clients'],
       userName: 'Operador Restrito',
-      userEmail: 'restrito.qa@maskats.com',
+      userEmail: 'restrito.qa@pegaticket.com',
     })
 
     await page.goto('/clientes')

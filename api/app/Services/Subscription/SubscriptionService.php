@@ -236,7 +236,7 @@ class SubscriptionService
      * architecture-decisions.md: a doc oficial já consultada não confirma
      * que `PUT /preapproval/{id}` aceite atualizar `auto_recurring.
      * transaction_amount`/`reason` para trocar de plano (só documenta troca
-     * de cartão/pausa/cancelamento); por segurança, o Maskats NUNCA envia
+     * de cartão/pausa/cancelamento); por segurança, o PegaTicket NUNCA envia
      * um campo de payload não confirmado pela documentação. A troca é
      * sempre CRIAR o novo Preapproval primeiro e só então CANCELAR o antigo
      * (nesta ordem, nunca o inverso): se a criação do novo falhar, a

@@ -173,7 +173,7 @@ class Order extends BaseModel
     /**
      * Cobranças de pagamento do pedido (roadmap 2A) — recebimento do tenant
      * (cliente final → tenant), via a mesma tabela polimórfica `payments`
-     * usada pela cobrança de assinatura da Maskats.
+     * usada pela cobrança de assinatura da PegaTicket.
      */
     public function payments()
     {

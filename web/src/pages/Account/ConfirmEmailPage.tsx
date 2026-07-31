@@ -23,7 +23,7 @@ function BrandPanel() {
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--mk-primary) 0%, color-mix(in srgb, var(--mk-primary) 65%, black) 55%, color-mix(in srgb, var(--mk-accent) 45%, black) 100%)',
+          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
       }}
     >
       <Box
@@ -36,12 +36,12 @@ function BrandPanel() {
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--mk-accent) 55%, transparent)',
-          '@keyframes mk-float-a': {
+          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          '@keyframes pt-float-a': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(-24px, 28px)' },
           },
-          animation: 'mk-float-a 14s ease-in-out infinite',
+          animation: 'pt-float-a 14s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -56,11 +56,11 @@ function BrandPanel() {
           left: -80,
           filter: 'blur(80px)',
           background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
-          '@keyframes mk-float-b': {
+          '@keyframes pt-float-b': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(20px, -18px)' },
           },
-          animation: 'mk-float-b 16s ease-in-out infinite',
+          animation: 'pt-float-b 16s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -88,7 +88,7 @@ function BrandPanel() {
             letterSpacing: '-0.01em',
           }}
         >
-          Maskats
+          PegaTicket
         </Typography>
       </Box>
 
@@ -102,7 +102,7 @@ function BrandPanel() {
       </Box>
 
       <Typography sx={{ position: 'relative', fontSize: 13, color: 'color-mix(in srgb, #FFFFFF 55%, transparent)' }}>
-        © {new Date().getFullYear()} Maskats. Todos os direitos reservados.
+        © {new Date().getFullYear()} PegaTicket. Todos os direitos reservados.
       </Typography>
     </Box>
   )
@@ -157,8 +157,8 @@ export function ConfirmEmailPage() {
           justifyContent: 'center',
           p: { xs: 2, sm: 3 },
           background: {
-            xs: 'linear-gradient(160deg, var(--mk-bg) 0%, var(--mk-surface-soft) 45%, color-mix(in srgb, var(--mk-primary) 16%, var(--mk-bg)) 100%)',
-            md: 'var(--mk-bg)',
+            xs: 'linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 16%, var(--pt-bg)) 100%)',
+            md: 'var(--pt-bg)',
           },
         }}
       >
@@ -180,15 +180,15 @@ export function ConfirmEmailPage() {
           {state === 'confirming' && (
             <Stack spacing={2} sx={{ alignItems: 'center', py: 2 }}>
               <CircularProgress size={36} />
-              <Typography sx={{ fontSize: 15, color: 'var(--mk-muted)' }}>Confirmando seu e-mail…</Typography>
+              <Typography sx={{ fontSize: 15, color: 'var(--pt-muted)' }}>Confirmando seu e-mail…</Typography>
             </Stack>
           )}
 
           {state === 'success' && (
             <Stack spacing={2} sx={{ alignItems: 'center' }}>
-              <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'var(--mk-success)' }} />
+              <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'var(--pt-success)' }} />
               <Typography sx={{ fontSize: 20, fontWeight: 600 }}>E-mail confirmado!</Typography>
-              <Typography sx={{ fontSize: 14.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)' }}>
                 Seu e-mail de acesso foi atualizado. Faça login novamente para continuar.
               </Typography>
               <Button component={RouterLink} to="/login" variant="contained" size="large" fullWidth sx={{ mt: 1 }}>
@@ -199,7 +199,7 @@ export function ConfirmEmailPage() {
 
           {state === 'error' && (
             <Stack spacing={2} sx={{ alignItems: 'center' }}>
-              <ErrorOutlineIcon sx={{ fontSize: 48, color: 'var(--mk-danger)' }} />
+              <ErrorOutlineIcon sx={{ fontSize: 48, color: 'var(--pt-danger)' }} />
               <Typography sx={{ fontSize: 20, fontWeight: 600 }}>Não foi possível confirmar</Typography>
               <Alert severity="error" variant="outlined" role="alert" sx={{ width: '100%', textAlign: 'left' }}>
                 {errorMessage}

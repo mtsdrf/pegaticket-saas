@@ -246,7 +246,7 @@ export async function mockAuthenticatedApiBootstrap(page: Page, options: ShellMo
     body: {
       uuid: 'user-qa-1',
       name: options.userName ?? 'Usuário QA',
-      email: options.userEmail ?? 'qa@maskats.com',
+      email: options.userEmail ?? 'qa@pegaticket.com',
       phone: '11999998888',
       avatar_url: null,
       pending_email: null,
@@ -387,14 +387,14 @@ export async function mockAuthenticatedShell(page: Page, options: ShellMockOptio
 
   await page.addInitScript(
     ({ tenantUuid, tenantSelectionConfirmed, accessToken, refreshToken }) => {
-      localStorage.setItem('maskats.access_token', accessToken)
-      localStorage.setItem('maskats.refresh_token', refreshToken)
-      localStorage.setItem('maskats.active_tenant_uuid', tenantUuid)
+      localStorage.setItem('pegaticket.access_token', accessToken)
+      localStorage.setItem('pegaticket.refresh_token', refreshToken)
+      localStorage.setItem('pegaticket.active_tenant_uuid', tenantUuid)
 
       if (tenantSelectionConfirmed) {
-        sessionStorage.setItem('maskats.tenant_selection_confirmed', '1')
+        sessionStorage.setItem('pegaticket.tenant_selection_confirmed', '1')
       } else {
-        sessionStorage.removeItem('maskats.tenant_selection_confirmed')
+        sessionStorage.removeItem('pegaticket.tenant_selection_confirmed')
       }
     },
     {
@@ -415,7 +415,7 @@ export async function mockAccountingShell(page: Page, options: AccountingShellMo
       cnpj: '12345678000190',
       company_name: 'Contabilidade QA',
       responsible_name: 'Maria QA',
-      email: 'contador.qa@maskats.com',
+      email: 'contador.qa@pegaticket.com',
       totp_enabled: true,
       totp_enabled_at: '2026-07-28T10:00:00Z',
       created_at: '2026-07-01T10:00:00Z',

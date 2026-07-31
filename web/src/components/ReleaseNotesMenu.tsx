@@ -103,11 +103,11 @@ export function ReleaseNotesMenu() {
           )}
 
           {!isLoading && loadError && (
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>{loadError}</Typography>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{loadError}</Typography>
           )}
 
           {!isLoading && !loadError && notes && notes.length === 0 && (
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Nenhuma novidade publicada até o momento.
             </Typography>
           )}
@@ -117,7 +117,7 @@ export function ReleaseNotesMenu() {
               {notes.map((note) => (
                 <Box key={note.uuid}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5, flexWrap: 'wrap' }}>
-                    <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--mk-text)' }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--pt-text)' }}>
                       {note.title}
                     </Typography>
                     {note.version && (
@@ -128,11 +128,11 @@ export function ReleaseNotesMenu() {
                       />
                     )}
                   </Stack>
-                  <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', whiteSpace: 'pre-line' }}>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', whiteSpace: 'pre-line' }}>
                     {note.body}
                   </Typography>
                   {note.published_at && (
-                    <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)', mt: 0.5 }}>
+                    <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', mt: 0.5 }}>
                       {formatDateBR(note.published_at)}
                     </Typography>
                   )}

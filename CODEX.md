@@ -1,4 +1,4 @@
-# Maskats — Codex Context
+# PegaTicket — Codex Context
 
 ## Objetivo deste arquivo
 
@@ -18,7 +18,7 @@ Ele foi consolidado a partir de:
 Monorepo com git único na raiz:
 
 ```txt
-maskats-saas/
+pegaticket-saas/
   api/   Laravel 13 API
   web/   React 19 + Vite + TypeScript
 ```
@@ -138,7 +138,7 @@ Branch atual: `main`
 fa052ce Back finalizado
 2ac0e55 Ajustes
 0a1ee2b Cruds
-1970453 Initial commit: Maskats SaaS (api + web)
+1970453 Initial commit: PegaTicket SaaS (api + web)
 ```
 
 ## Onde o Claude provavelmente parou

@@ -19,7 +19,7 @@ import type { ColDef, GridApi, GridReadyEvent, IDatasource, IGetRowsParams } fro
 import { AG_GRID_LOCALE_BR } from '@ag-grid-community/locale'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getApiErrorMessage } from '../../types/api'
-import { maskatsGridTheme } from '../../utils/agGridTheme'
+import { pegaticketGridTheme } from '../../utils/agGridTheme'
 import { buildBackendFilters, buildCsvContent, buildExportTable, downloadTextFile } from '../../utils/gridExport'
 import { ServerGridBooleanFilter } from './ServerGridBooleanFilter'
 import { ServerGridEmptyOverlay, type ServerGridEmptyStateConfig } from './ServerGridEmptyOverlay'
@@ -51,7 +51,7 @@ function toColDef<T>(column: ServerGridColumn<T>): ColDef {
       if (!params.data) {
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <Skeleton variant="rounded" height={14} sx={{ width: '70%', borderRadius: 'var(--mk-radius-sm)' }} />
+            <Skeleton variant="rounded" height={14} sx={{ width: '70%', borderRadius: 'var(--pt-radius-sm)' }} />
           </Box>
         )
       }
@@ -441,7 +441,7 @@ export function ServerDataGrid<T extends object>({
               }}
             >
               <AgGridReact
-                theme={maskatsGridTheme}
+                theme={pegaticketGridTheme}
                 // Locale oficial pt-BR do próprio ag-Grid (`@ag-grid-community/locale`,
                 // mesma versão 36.0.0 do core) — cobre menu de filtro, paginação,
                 // aria-labels etc. Não existe fallback manual porque a tradução

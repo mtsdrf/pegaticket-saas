@@ -1,4 +1,4 @@
-# Catálogo Mestre de Testes do Maskats
+# Catálogo Mestre de Testes do PegaTicket
 
 Data: 2026-07-28  
 Objetivo: listar os cenários obrigatórios de teste do sistema inteiro com rastreabilidade por módulo, camada e criticidade.

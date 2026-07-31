@@ -13,7 +13,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 /** Dispensa o banner só pela sessão atual — reaparece se o app não for instalado numa próxima visita. */
-const DISMISSED_KEY_BASE = 'maskats.install_prompt_dismissed'
+const DISMISSED_KEY_BASE = 'pegaticket.install_prompt_dismissed'
 
 function isStandaloneDisplay(): boolean {
   if (window.matchMedia('(display-mode: standalone)').matches) return true
@@ -35,7 +35,7 @@ function isIosSafari(): boolean {
 }
 
 export interface InstallPromptProps {
-  /** Default: "Instalar o Maskats" — a loja passa "Instalar a loja da {tenant}". */
+  /** Default: "Instalar o PegaTicket" — a loja passa "Instalar a loja da {tenant}". */
   title?: string
   /** Default: copy genérica do app staff — a loja passa um texto próprio. */
   description?: string
@@ -50,7 +50,7 @@ export interface InstallPromptProps {
 }
 
 export function InstallPrompt({
-  title = 'Instalar o Maskats',
+  title = 'Instalar o PegaTicket',
   description = 'Acesse mais rápido, direto da tela inicial do aparelho.',
   iosDescription = 'Toque em Compartilhar e depois em "Adicionar à Tela de Início".',
   dismissKeySuffix,
@@ -127,7 +127,7 @@ export function InstallPrompt({
         m: { xs: 1, sm: 1.5 },
         p: 1.25,
         ...ELEVATED_SURFACE_SX,
-        boxShadow: 'var(--mk-shadow-md)',
+        boxShadow: 'var(--pt-shadow-md)',
       }}
     >
       <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
@@ -139,7 +139,7 @@ export function InstallPrompt({
             width: 36,
             height: 36,
             ...SOFT_PANEL_SX,
-            color: 'var(--mk-primary)',
+            color: 'var(--pt-primary)',
             flexShrink: 0,
           }}
         >
@@ -147,8 +147,8 @@ export function InstallPrompt({
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14.5, fontWeight: 700, color: 'var(--mk-text)' }}>{title}</Typography>
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+          <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14.5, fontWeight: 700, color: 'var(--pt-text)' }}>{title}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
             {deferredPrompt ? description : iosDescription}
           </Typography>
         </Box>
@@ -163,7 +163,7 @@ export function InstallPrompt({
             Instalar
           </Button>
         ) : (
-          <IosShareOutlinedIcon fontSize="small" sx={{ color: 'var(--mk-muted)', flexShrink: 0 }} />
+          <IosShareOutlinedIcon fontSize="small" sx={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
         )}
 
         <IconButton

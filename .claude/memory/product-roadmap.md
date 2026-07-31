@@ -1,11 +1,11 @@
 ---
 name: product-roadmap
-description: Estado real do produto Maskats por frente (não plano futuro) — reescrito 2026-07-24 a partir de auditoria verificada em código, substituindo o roadmap de 2026-07-12 que ficou gravemente desatualizado.
+description: Estado real do produto PegaTicket por frente (não plano futuro) — reescrito 2026-07-24 a partir de auditoria verificada em código, substituindo o roadmap de 2026-07-12 que ficou gravemente desatualizado.
 metadata:
   type: project
 ---
 
-# Maskats — Estado real do produto (reescrito 2026-07-24)
+# PegaTicket — Estado real do produto (reescrito 2026-07-24)
 
 O documento anterior (levantado 2026-07-12) descrevia um plano de "CRM+analytics para distribuidoras" e ficou obsoleto rápido: 141 dos 163 commits do repositório aconteceram DEPOIS dele. O produto real hoje é uma **plataforma multi-produto**: CRM/pedidos B2B + e-commerce B2C (loja pública) + PDV/restaurante (Balcão) + gateway de pagamento/assinatura real + fundação fiscal (não ativada) + plataforma de integração (API pública + marketplace iFood). Este arquivo descreve o que EXISTE, verificado em código (migrations/controllers/rotas/telas), não um plano — decisão registrada em [[architecture-decisions]] de sempre verificar contra o código antes de confiar num relato anterior (inclusive este).
 

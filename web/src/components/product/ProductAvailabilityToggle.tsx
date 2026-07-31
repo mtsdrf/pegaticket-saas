@@ -65,7 +65,7 @@ export function ProductAvailabilityToggle({ product, onToggled }: ProductAvailab
       >
         <Box sx={{ p: 2, maxWidth: 260 }}>
           <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>Bloquear produto?</Typography>
-          <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 1.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
             "{product.name}" deixa de aparecer na venda e na loja online até ser desbloqueado.
           </Typography>
           {error ? (

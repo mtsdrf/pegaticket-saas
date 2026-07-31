@@ -61,8 +61,8 @@ export function OrderStatusAction({
           height: 'auto',
           minHeight: 44,
           fontWeight: 600,
-          bgcolor: 'color-mix(in srgb, var(--mk-success) 14%, transparent)',
-          color: 'var(--mk-success)',
+          bgcolor: 'color-mix(in srgb, var(--pt-success) 14%, transparent)',
+          color: 'var(--pt-success)',
           '& .MuiChip-icon': { color: 'inherit' },
         }}
       />
@@ -73,7 +73,7 @@ export function OrderStatusAction({
         startIcon={isProcessing ? <CircularProgress size={14} /> : <UndoOutlinedIcon fontSize="small" />}
         disabled={isProcessing}
         onClick={onUndo}
-        sx={{ flex: 1, minWidth: 0, minHeight: 44, color: 'var(--mk-muted)' }}
+        sx={{ flex: 1, minWidth: 0, minHeight: 44, color: 'var(--pt-muted)' }}
       >
         Desfazer
       </Button>

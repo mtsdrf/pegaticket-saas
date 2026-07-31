@@ -32,7 +32,7 @@ function makePrivacyRequest(overrides: Partial<{
     requested_by_user: {
       uuid: 'user-qa-1',
       name: 'Usuário QA',
-      email: 'qa@maskats.com',
+      email: 'qa@pegaticket.com',
     },
   }
 }
@@ -119,8 +119,8 @@ test.describe('Dados e privacidade', () => {
 
     await page.goto('/configuracoes/dados-privacidade')
 
-    await expect(page.getByText('Este espaço reúne o mínimo operacional de privacidade do Maskats para a sua empresa')).toBeVisible()
-    await expect(page.getByText('A Maskats atua como controladora')).toBeVisible()
+    await expect(page.getByText('Este espaço reúne o mínimo operacional de privacidade do PegaTicket para a sua empresa')).toBeVisible()
+    await expect(page.getByText('A PegaTicket atua como controladora')).toBeVisible()
     await expect(page.getByText('Checklist operacional antes de ativar a empresa')).toBeVisible()
     await expect(page.getByText('Anonimização ampla e automação completa de requisições de titulares ainda não são self-service no produto.')).toBeVisible()
     await expect(page.getByText('Versão 1.3')).toBeVisible()

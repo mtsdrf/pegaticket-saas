@@ -108,7 +108,7 @@ export function PlanListPage() {
                 gridApiRef.current = api
               }}
               emptyState={{
-                icon: <WorkspacePremiumOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <WorkspacePremiumOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum plano cadastrado',
                 description: 'Cadastre planos para controlar quais funcionalidades cada empresa pode usar.',
                 action: can(ACCESS.adminPlansCreate) ? (

@@ -9,7 +9,7 @@ import {
 } from 'chart.js'
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { maskatsTokens } from '../../theme'
+import { pegaticketTokens } from '../../theme'
 import type { SalesGroupBy, SalesSummaryBucket } from '../../types/analytics'
 import { formatCurrency, formatMonthLabel } from '../../utils/format'
 
@@ -32,7 +32,7 @@ interface SalesSummaryChartProps {
  */
 export function SalesSummaryChart({ buckets, groupBy }: SalesSummaryChartProps) {
   const { palette } = useTheme()
-  const tokens = maskatsTokens[palette.mode]
+  const tokens = pegaticketTokens[palette.mode]
 
   const chartData = useMemo(
     () => ({

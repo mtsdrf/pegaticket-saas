@@ -28,7 +28,7 @@ export function SettingsIndexPage() {
           justifyContent: 'center',
           minHeight: 320,
           textAlign: 'center',
-          color: 'var(--mk-muted)',
+          color: 'var(--pt-muted)',
         }}
       >
         <TuneOutlinedIcon sx={{ fontSize: 40, mb: 1.5, opacity: 0.6 }} />
@@ -39,11 +39,11 @@ export function SettingsIndexPage() {
 
   return (
     <Box sx={{ maxWidth: 900 }}>
-      <PageHeader title="Configurações" subtitle="Ajustes gerais da sua empresa no Maskats." />
+      <PageHeader title="Configurações" subtitle="Ajustes gerais da sua empresa no PegaTicket." />
 
       {blocks.length === 0 && links.length === 0 ? (
         <EmptyState
-          icon={<TuneOutlinedIcon sx={{ fontSize: 36, color: 'var(--mk-muted)' }} />}
+          icon={<TuneOutlinedIcon sx={{ fontSize: 36, color: 'var(--pt-muted)' }} />}
           title="Nenhum ajuste disponível"
           description="Seu usuário não tem permissão para ver nenhum item de configuração ainda."
         />
@@ -60,7 +60,7 @@ export function SettingsIndexPage() {
               ...ELEVATED_SURFACE_SX,
             }}
           >
-            <ListItemIcon sx={{ color: 'var(--mk-primary)', minWidth: 44 }}>
+            <ListItemIcon sx={{ color: 'var(--pt-primary)', minWidth: 44 }}>
               <block.icon />
             </ListItemIcon>
             <ListItemText
@@ -68,10 +68,10 @@ export function SettingsIndexPage() {
               secondary={block.description}
               slotProps={{
                 primary: { sx: { fontSize: 15, fontWeight: 600 } },
-                secondary: { sx: { fontSize: 13, color: 'var(--mk-muted)' } },
+                secondary: { sx: { fontSize: 13, color: 'var(--pt-muted)' } },
               }}
             />
-            <ChevronRightIcon sx={{ color: 'var(--mk-muted)' }} />
+            <ChevronRightIcon sx={{ color: 'var(--pt-muted)' }} />
           </ListItemButton>
         ))}
 
@@ -86,7 +86,7 @@ export function SettingsIndexPage() {
               ...ELEVATED_SURFACE_SX,
             }}
           >
-            <ListItemIcon sx={{ color: 'var(--mk-primary)', minWidth: 44 }}>
+            <ListItemIcon sx={{ color: 'var(--pt-primary)', minWidth: 44 }}>
               <link.icon />
             </ListItemIcon>
             <ListItemText
@@ -94,10 +94,10 @@ export function SettingsIndexPage() {
               secondary={link.description}
               slotProps={{
                 primary: { sx: { fontSize: 15, fontWeight: 600 } },
-                secondary: { sx: { fontSize: 13, color: 'var(--mk-muted)' } },
+                secondary: { sx: { fontSize: 13, color: 'var(--pt-muted)' } },
               }}
             />
-            <ChevronRightIcon sx={{ color: 'var(--mk-muted)' }} />
+            <ChevronRightIcon sx={{ color: 'var(--pt-muted)' }} />
           </ListItemButton>
         ))}
       </List>

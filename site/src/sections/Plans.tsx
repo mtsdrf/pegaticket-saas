@@ -23,10 +23,10 @@ export function Plans() {
     <Box component="section" id="planos" sx={{ py: { xs: 6, md: 10 } }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2.5, sm: 4 } }}>
         <RevealSection>
-          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
             Planos para cada fase da operação
           </Typography>
-          <Typography sx={{ fontSize: 16, color: 'var(--mk-muted)', maxWidth: 620, mb: 3.5 }}>
+          <Typography sx={{ fontSize: 16, color: 'var(--pt-muted)', maxWidth: 620, mb: 3.5 }}>
             Comece pelo plano que combina com o tamanho da sua empresa hoje e evolua conforme o negócio cresce.
           </Typography>
         </RevealSection>
@@ -50,7 +50,7 @@ export function Plans() {
           ))}
         </Box>
 
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textAlign: 'center', mt: 3 }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textAlign: 'center', mt: 3 }}>
           Preços em reais, cobrados por empresa. Todo plano inclui 14 dias de teste gratuito antes da primeira cobrança.
         </Typography>
 

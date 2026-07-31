@@ -35,7 +35,7 @@ class ReverseGeocodeService
 
         $address = Cache::remember($cacheKey, now()->addDays(self::CACHE_TTL_DAYS), function () use ($roundedLat, $roundedLng) {
             $response = Http::withHeaders([
-                'User-Agent' => 'Maskats SaaS (contato@maskats.com.br)',
+                'User-Agent' => 'PegaTicket SaaS (contato@pegaticket.com.br)',
             ])
                 ->timeout(10)
                 ->get('https://nominatim.openstreetmap.org/reverse', [

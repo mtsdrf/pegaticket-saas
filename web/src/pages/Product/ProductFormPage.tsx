@@ -462,7 +462,7 @@ export function ProductFormPage() {
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Estruture os grupos de escolha do produto para delivery e futuros marketplaces. Cada grupo pode ter mínimo/máximo de seleção e vários complementos com preço próprio.
             </Typography>
 
@@ -656,7 +656,7 @@ export function ProductFormPage() {
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Preencha os dados fiscais do produto para preparar a empresa para regras tributárias e emissão futura.
             </Typography>
 

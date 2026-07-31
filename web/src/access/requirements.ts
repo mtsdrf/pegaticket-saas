@@ -158,7 +158,7 @@ export const ACCESS = {
   adminTenantsUpdate: global('tenants', 'update'),
   adminTenantsDelete: global('tenants', 'delete'),
   adminAuditLogsRead: global('audit_logs', 'read'),
-  /** Painel de pendências de pagamento/assinatura (roadmap 2026-07-24) — cross-tenant, exclusivo do staff interno da Maskats; functionality própria `payment_admin`, separada de `finance` (tenant-facing). */
+  /** Painel de pendências de pagamento/assinatura (roadmap 2026-07-24) — cross-tenant, exclusivo do staff interno da PegaTicket; functionality própria `payment_admin`, separada de `finance` (tenant-facing). */
   adminPaymentIssuesRead: global('payment_admin', 'read'),
   adminPaymentIssuesUpdate: global('payment_admin', 'update'),
 } as const

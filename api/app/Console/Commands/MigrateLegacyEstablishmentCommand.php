@@ -19,7 +19,7 @@ use RuntimeException;
 
 /**
  * Migração de dados REAIS de produção: estabelecimento_id=4 ("Js Queijos e
- * Doces") do legado (`backup_prod_maskats.sql`) para um Tenant NOVO no
+ * Doces") do legado (`backup_prod_pegaticket.sql`) para um Tenant NOVO no
  * schema atual. Baseado em
  * `.claude/memory/database-analysis/09-estab4-migration-data-audit.md` e nas
  * decisões de negócio já fechadas com o usuário (ver prompt original —
@@ -143,7 +143,7 @@ class MigrateLegacyEstablishmentCommand extends Command
 
         $this->line('Conexão efetiva desta execução: "' . config('database.default') . '" -> ' . $this->describeConnectionTarget(config('database.default')));
 
-        $dumpPath = $this->option('dump') ?: base_path('../backup_prod_maskats.sql');
+        $dumpPath = $this->option('dump') ?: base_path('../backup_prod_pegaticket.sql');
 
         if (!is_file($dumpPath)) {
             $this->error("Dump não encontrado: {$dumpPath}");

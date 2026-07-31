@@ -1,6 +1,6 @@
 ---
-name: maskats-visual-identity
-description: Identidade visual oficial da Maskats — quando criar ou alterar qualquer tela, componente ou texto visível ao usuário em web/.
+name: pegaticket-visual-identity
+description: Identidade visual oficial da PegaTicket — quando criar ou alterar qualquer tela, componente ou texto visível ao usuário em web/.
 ---
 
 ## Quando usar
@@ -9,7 +9,7 @@ Toda vez que uma tarefa envolver: criar tela nova, redesenhar tela existente, cr
 
 ## Identidade oficial
 
-- **Nome**: Maskats (nunca alterar).
+- **Nome**: PegaTicket (nunca alterar).
 - **Tagline**: "Gestão clara para empresas em movimento."
 - **Conceito**: SaaS de gestão comercial (pedidos, clientes, produtos, indicadores) — claro, moderno, produtivo, inteligente.
 - Detalhamento completo: `.claude/memory/brand-guidelines.md`.
@@ -20,7 +20,7 @@ Moderno, limpo, profissional, elegante, levemente premium, funcional, acessível
 
 ## Paleta
 
-Ver `.claude/memory/design-system.md` para a paleta completa (light/dark) e `.claude/skills/maskats-theme-system.md` para os tokens CSS. Nunca hardcodar hex — sempre `var(--mk-*)`.
+Ver `.claude/memory/design-system.md` para a paleta completa (light/dark) e `.claude/skills/pegaticket-theme-system.md` para os tokens CSS. Nunca hardcodar hex — sempre `var(--pt-*)`.
 
 ## Logo
 
@@ -28,7 +28,7 @@ Símbolo: `M` geométrico com movimento sutil (sugere avanço/organização/cres
 
 ## Regras de interface
 
-- Um CTA primário por tela/contexto (botão `--mk-primary`), nunca múltiplos botões grandes competindo.
+- Um CTA primário por tela/contexto (botão `--pt-primary`), nunca múltiplos botões grandes competindo.
 - Card como unidade visual padrão para agrupar conteúdo (métricas, formulários, listas).
 - Sidebar com estado ativo sempre evidente (não só uma sutileza).
 - Todo estado (loading, vazio, erro, sucesso) tem tratamento visual próprio — nunca tela em branco ou mensagem técnica crua.
@@ -44,7 +44,7 @@ Tom de voz: claro, objetivo, confiante, humano, profissional, sem jargão nem cl
 
 ## Login
 
-Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (não imagem financeira genérica). Card moderno centrado, logo visível, headline "Bem-vindo ao Maskats", subheadline oficial, botão "Entrar no painel", link secundário "Atualizar sistema".
+Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (não imagem financeira genérica). Card moderno centrado, logo visível, headline "Bem-vindo ao PegaTicket", subheadline oficial, botão "Entrar no painel", link secundário "Atualizar sistema".
 
 ## Dashboard
 
@@ -53,8 +53,8 @@ Separar sempre: cabeçalho da página → ações rápidas → métricas → gr�
 ## Checklist
 
 ```txt
-- Paleta oficial (tokens --mk-*), nada hardcoded.
-- Tom de voz Maskats nos textos.
+- Paleta oficial (tokens --pt-*), nada hardcoded.
+- Tom de voz PegaTicket nos textos.
 - Logo correta para o contexto (horizontal/compacta/favicon).
 - Tema claro e escuro revisados.
 - Estados (loading/vazio/erro/sucesso) tratados.

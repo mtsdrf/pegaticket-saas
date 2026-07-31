@@ -59,15 +59,15 @@ export function BillingPeriodOptionCards({ periods, value, onChange }: BillingPe
               width: '100%',
               minHeight: 44,
               p: 2,
-              border: selected ? '2px solid var(--mk-primary)' : '1px solid var(--mk-border)',
+              border: selected ? '2px solid var(--pt-primary)' : '1px solid var(--pt-border)',
               ...ELEVATED_SURFACE_SX,
               background: selected
-                ? 'color-mix(in srgb, var(--mk-primary) 6%, var(--mk-surface))'
+                ? 'color-mix(in srgb, var(--pt-primary) 6%, var(--pt-surface))'
                 : ELEVATED_SURFACE_SX.background,
-              boxShadow: selected ? 'var(--mk-shadow-md)' : 'var(--mk-shadow-sm)',
+              boxShadow: selected ? 'var(--pt-shadow-md)' : 'var(--pt-shadow-sm)',
               position: 'relative',
               transition: 'border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease',
-              '&:focus-visible': { outline: 'var(--mk-focus-ring)', outlineOffset: 2 },
+              '&:focus-visible': { outline: 'var(--pt-focus-ring)', outlineOffset: 2 },
             }}
           >
             {isBestDiscount && (
@@ -81,7 +81,7 @@ export function BillingPeriodOptionCards({ periods, value, onChange }: BillingPe
                   height: 22,
                   fontSize: 11,
                   fontWeight: 700,
-                  backgroundColor: 'var(--mk-accent)',
+                  backgroundColor: 'var(--pt-accent)',
                   color: '#FFFFFF',
                 }}
               />
@@ -90,11 +90,11 @@ export function BillingPeriodOptionCards({ periods, value, onChange }: BillingPe
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
               <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                 {selected ? (
-                  <CheckCircleRoundedIcon sx={{ fontSize: 20, color: 'var(--mk-primary)' }} />
+                  <CheckCircleRoundedIcon sx={{ fontSize: 20, color: 'var(--pt-primary)' }} />
                 ) : (
-                  <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 20, color: 'var(--mk-muted)' }} />
+                  <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 20, color: 'var(--pt-muted)' }} />
                 )}
-                <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: 'var(--mk-text)' }}>
+                <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: 'var(--pt-text)' }}>
                   {BILLING_PERIOD_LABELS[period]}
                 </Typography>
               </Stack>
@@ -106,24 +106,24 @@ export function BillingPeriodOptionCards({ periods, value, onChange }: BillingPe
                     height: 22,
                     fontSize: 11.5,
                     fontWeight: 700,
-                    backgroundColor: 'color-mix(in srgb, var(--mk-success) 16%, transparent)',
-                    color: 'var(--mk-success)',
+                    backgroundColor: 'color-mix(in srgb, var(--pt-success) 16%, transparent)',
+                    color: 'var(--pt-success)',
                   }}
                 />
               )}
             </Stack>
 
             <Stack direction="row" spacing={0.5} sx={{ alignItems: 'baseline', mb: 0.25 }}>
-              <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--mk-text)' }}>
+              <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--pt-text)' }}>
                 {formatCurrency(item.monthly_equivalent)}
               </Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>/mês</Typography>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>/mês</Typography>
             </Stack>
 
             {period === 'monthly' ? (
-              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>Cobrado mensalmente</Typography>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Cobrado mensalmente</Typography>
             ) : (
-              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
                 {formatCurrency(item.total_amount)} a cada {months} meses
                 {discountPercent > 0 &&
                   ` · economia de ${formatCurrency(Number(item.list_amount) - Number(item.total_amount))}`}

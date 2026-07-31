@@ -1,8 +1,8 @@
 # Database Analysis — Business Rules
 
-Regras marcadas em 3 níveis de confiança: **Confirmado pelo código-fonte** (lido em `/home/mtsdrf/workspace/maskats/backend/app/` e `routes/api.php` — o mais confiável, é o comportamento real), **Confirmado pelo banco** (constraint/coluna do `dump_base.sql`) e **Inferência** (dedução sem prova direta).
+Regras marcadas em 3 níveis de confiança: **Confirmado pelo código-fonte** (lido em `/home/mtsdrf/workspace/pegaticket/backend/app/` e `routes/api.php` — o mais confiável, é o comportamento real), **Confirmado pelo banco** (constraint/coluna do `dump_base.sql`) e **Inferência** (dedução sem prova direta).
 
-> Atualizado em 2026-07-06 após acesso ao código-fonte completo do legado (`/home/mtsdrf/workspace/maskats/`, Laravel 8 + React 17, mesmo repo do `dump_base.sql` — confirmado pelo usuário). Isso resolveu a maior parte das dúvidas que estavam em [[07-implementation-roadmap]] como inferência.
+> Atualizado em 2026-07-06 após acesso ao código-fonte completo do legado (`/home/mtsdrf/workspace/pegaticket/`, Laravel 8 + React 17, mesmo repo do `dump_base.sql` — confirmado pelo usuário). Isso resolveu a maior parte das dúvidas que estavam em [[07-implementation-roadmap]] como inferência.
 
 ## Confirmado pelo código-fonte
 

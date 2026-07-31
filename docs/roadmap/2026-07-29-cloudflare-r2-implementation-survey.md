@@ -1,12 +1,12 @@
-# Levantamento para adoção de Cloudflare R2 no Maskats
+# Levantamento para adoção de Cloudflare R2 no PegaTicket
 
 Data: 2026-07-29  
 Status: levantamento técnico, sem implementação ainda  
-Objetivo: mapear o que precisa mudar no Maskats para adotar Cloudflare R2 de forma segura, gradual e compatível com a arquitetura atual.
+Objetivo: mapear o que precisa mudar no PegaTicket para adotar Cloudflare R2 de forma segura, gradual e compatível com a arquitetura atual.
 
 ## Resumo executivo
 
-Hoje o Maskats usa **duas estratégias diferentes de armazenamento**:
+Hoje o PegaTicket usa **duas estratégias diferentes de armazenamento**:
 
 - **BLOB no banco** para avatar de usuário, logo da empresa e imagem de produto
 - **`Storage::disk('public')` local** para anexos de suporte e mensagens do contador
@@ -30,21 +30,21 @@ Ativos atualmente salvos em colunas binárias:
 
 Evidências:
 
-- [api/database/migrations/2026_07_15_140000_add_avatar_data_to_users_table.php](/home/mtsdrf/workspace/maskats-saas/api/database/migrations/2026_07_15_140000_add_avatar_data_to_users_table.php)
-- [api/database/migrations/2026_07_15_140001_add_image_data_to_products_table.php](/home/mtsdrf/workspace/maskats-saas/api/database/migrations/2026_07_15_140001_add_image_data_to_products_table.php)
-- [api/database/migrations/2026_07_15_140002_add_logo_data_to_tenants_table.php](/home/mtsdrf/workspace/maskats-saas/api/database/migrations/2026_07_15_140002_add_logo_data_to_tenants_table.php)
+- [api/database/migrations/2026_07_15_140000_add_avatar_data_to_users_table.php](/home/mtsdrf/workspace/pegaticket-saas/api/database/migrations/2026_07_15_140000_add_avatar_data_to_users_table.php)
+- [api/database/migrations/2026_07_15_140001_add_image_data_to_products_table.php](/home/mtsdrf/workspace/pegaticket-saas/api/database/migrations/2026_07_15_140001_add_image_data_to_products_table.php)
+- [api/database/migrations/2026_07_15_140002_add_logo_data_to_tenants_table.php](/home/mtsdrf/workspace/pegaticket-saas/api/database/migrations/2026_07_15_140002_add_logo_data_to_tenants_table.php)
 
 Serviço atual:
 
-- [api/app/Http/Controllers/User/UserAvatarController.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Controllers/User/UserAvatarController.php)
-- [api/app/Http/Controllers/Product/ProductImageController.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Controllers/Product/ProductImageController.php)
-- [api/app/Http/Controllers/Tenant/TenantLogoController.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Controllers/Tenant/TenantLogoController.php)
+- [api/app/Http/Controllers/User/UserAvatarController.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Controllers/User/UserAvatarController.php)
+- [api/app/Http/Controllers/Product/ProductImageController.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Controllers/Product/ProductImageController.php)
+- [api/app/Http/Controllers/Tenant/TenantLogoController.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Controllers/Tenant/TenantLogoController.php)
 
 As URLs são montadas por resources e servidas pela API:
 
-- [api/app/Http/Resources/Auth/ProfileResource.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Resources/Auth/ProfileResource.php)
-- [api/app/Http/Resources/Product/ProductResource.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Resources/Product/ProductResource.php)
-- [api/app/Http/Resources/Tenant/TenantResource.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Resources/Tenant/TenantResource.php)
+- [api/app/Http/Resources/Auth/ProfileResource.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Resources/Auth/ProfileResource.php)
+- [api/app/Http/Resources/Product/ProductResource.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Resources/Product/ProductResource.php)
+- [api/app/Http/Resources/Tenant/TenantResource.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Resources/Tenant/TenantResource.php)
 
 ### 2. Anexos já usam `Storage`, mas ainda local
 
@@ -55,9 +55,9 @@ Casos atuais:
 
 Evidências:
 
-- [api/app/Services/Accounting/AccountingMessageService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Accounting/AccountingMessageService.php)
-- [api/app/Services/Support/SupportTicketService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Support/SupportTicketService.php)
-- [api/config/filesystems.php](/home/mtsdrf/workspace/maskats-saas/api/config/filesystems.php)
+- [api/app/Services/Accounting/AccountingMessageService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Accounting/AccountingMessageService.php)
+- [api/app/Services/Support/SupportTicketService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Support/SupportTicketService.php)
+- [api/config/filesystems.php](/home/mtsdrf/workspace/pegaticket-saas/api/config/filesystems.php)
 
 Hoje o disk `public` é local e aponta para `public/storage`, por uma decisão feita para contornar a limitação de `symlink()` da Hostinger.
 
@@ -70,7 +70,7 @@ O tenant também armazena:
 
 Evidência:
 
-- [api/app/Models/Tenant/Tenant.php](/home/mtsdrf/workspace/maskats-saas/api/app/Models/Tenant/Tenant.php)
+- [api/app/Models/Tenant/Tenant.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Models/Tenant/Tenant.php)
 
 Esses arquivos são **sigilosos e críticos**. Neste momento, o caminho mais seguro é **não migrar o certificado A1 para R2 no primeiro ciclo**.
 
@@ -127,7 +127,7 @@ Com base na documentação oficial da Cloudflare em 2026-07-29:
 - uploads diretos do browser exigem **CORS configurado no bucket** [Cloudflare R2 Configure CORS](https://developers.cloudflare.com/r2/buckets/cors/)
 - para gerar credenciais S3 do R2, é preciso criar token específico do R2; a própria doc informa que é necessário ter R2 contratado para gerar o token [Cloudflare R2 Authentication](https://developers.cloudflare.com/r2/api/tokens/)
 
-## Recomendação arquitetural para o Maskats
+## Recomendação arquitetural para o PegaTicket
 
 ## Estratégia recomendada
 
@@ -144,7 +144,7 @@ Mover para R2 com custom domain público:
 
 Forma recomendada:
 
-- bucket público com domínio próprio, por exemplo `media.maskats.com`
+- bucket público com domínio próprio, por exemplo `media.pegaticket.com`
 - leitura direta por URL pública
 - escrita controlada pelo backend no primeiro ciclo
 - cache agressivo em CDN/browser para reduzir leitura desnecessária no storage
@@ -512,7 +512,7 @@ Isso costuma ser viável, mas precisa de validação prática com:
 
 ## Decisão recomendada
 
-A recomendação mais segura para o Maskats hoje é:
+A recomendação mais segura para o PegaTicket hoje é:
 
 1. **adotar Cloudflare R2 em modo híbrido**
 2. **começar por mídia pública e anexos não críticos**

@@ -206,7 +206,7 @@ test.describe('Carrinho público da loja', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const raw = localStorage.getItem('maskats.storefront_cart.loja-a')
+          const raw = localStorage.getItem('pegaticket.storefront_cart.loja-a')
           if (!raw) return 0
           return JSON.parse(raw).length
         }),
@@ -220,8 +220,8 @@ test.describe('Carrinho público da loja', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const lojaA = localStorage.getItem('maskats.storefront_cart.loja-a')
-          const lojaB = localStorage.getItem('maskats.storefront_cart.loja-b')
+          const lojaA = localStorage.getItem('pegaticket.storefront_cart.loja-a')
+          const lojaB = localStorage.getItem('pegaticket.storefront_cart.loja-b')
           return {
             lojaA: lojaA ? JSON.parse(lojaA).length : 0,
             lojaB: lojaB ? JSON.parse(lojaB).length : 0,
@@ -246,8 +246,8 @@ test.describe('Carrinho público da loja', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const lojaA = localStorage.getItem('maskats.storefront_cart.loja-a')
-          const lojaB = localStorage.getItem('maskats.storefront_cart.loja-b')
+          const lojaA = localStorage.getItem('pegaticket.storefront_cart.loja-a')
+          const lojaB = localStorage.getItem('pegaticket.storefront_cart.loja-b')
           return {
             lojaA: lojaA ? JSON.parse(lojaA)[0]?.name ?? null : null,
             lojaB: lojaB ? JSON.parse(lojaB)[0]?.name ?? null : null,

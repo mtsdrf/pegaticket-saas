@@ -36,7 +36,7 @@ export function PageHeader({ title, subtitle, breadcrumbs, backLink, action, acc
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumbs
           separator={<ChevronRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ mb: 1.25, fontSize: 13.5, color: 'var(--mk-muted)' }}
+          sx={{ mb: 1.25, fontSize: 13.5, color: 'var(--pt-muted)' }}
         >
           {breadcrumbs.map((crumb, index) =>
             crumb.to && index < breadcrumbs.length - 1 ? (
@@ -44,12 +44,12 @@ export function PageHeader({ title, subtitle, breadcrumbs, backLink, action, acc
                 key={crumb.label}
                 component={RouterLink}
                 to={crumb.to}
-                sx={{ color: 'var(--mk-muted)', textDecoration: 'none', '&:hover': { color: 'var(--mk-primary)' } }}
+                sx={{ color: 'var(--pt-muted)', textDecoration: 'none', '&:hover': { color: 'var(--pt-primary)' } }}
               >
                 {crumb.label}
               </Box>
             ) : (
-              <Typography key={crumb.label} sx={{ fontSize: 13.5, color: 'var(--mk-text)', fontWeight: 500 }}>
+              <Typography key={crumb.label} sx={{ fontSize: 13.5, color: 'var(--pt-text)', fontWeight: 500 }}>
                 {crumb.label}
               </Typography>
             ),
@@ -68,10 +68,10 @@ export function PageHeader({ title, subtitle, breadcrumbs, backLink, action, acc
               ml: -1,
               minHeight: UI_SIZE.compactControl,
               borderRadius: UI_RADIUS.md,
-              color: 'var(--mk-muted)',
+              color: 'var(--pt-muted)',
               '&:hover': {
-                backgroundColor: 'color-mix(in srgb, var(--mk-primary) 8%, transparent)',
-                color: 'var(--mk-primary)',
+                backgroundColor: 'color-mix(in srgb, var(--pt-primary) 8%, transparent)',
+                color: 'var(--pt-primary)',
               },
             }}
           >
@@ -103,7 +103,7 @@ export function PageHeader({ title, subtitle, breadcrumbs, backLink, action, acc
           {subtitle && (
             <Typography
               variant="body1"
-              sx={{ color: 'var(--mk-muted)', fontSize: { xs: 14.5, sm: 15.5 }, maxWidth: 760 }}
+              sx={{ color: 'var(--pt-muted)', fontSize: { xs: 14.5, sm: 15.5 }, maxWidth: 760 }}
             >
               {subtitle}
             </Typography>
@@ -116,8 +116,8 @@ export function PageHeader({ title, subtitle, breadcrumbs, backLink, action, acc
                 width: 72,
                 height: 4,
                 borderRadius: 999,
-                boxShadow: '0 10px 22px color-mix(in srgb, var(--mk-primary) 24%, transparent)',
-                background: 'linear-gradient(90deg, var(--mk-primary) 0%, var(--mk-secondary) 52%, var(--mk-accent) 100%)',
+                boxShadow: '0 10px 22px color-mix(in srgb, var(--pt-primary) 24%, transparent)',
+                background: 'linear-gradient(90deg, var(--pt-primary) 0%, var(--pt-secondary) 52%, var(--pt-accent) 100%)',
               }}
             />
           )}

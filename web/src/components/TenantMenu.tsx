@@ -121,7 +121,7 @@ export function TenantMenu({ variant = 'header', onSelectComplete }: TenantMenuP
     <>
       <Typography
         variant="caption"
-        sx={{ display: 'block', mb: 0.75, color: 'var(--mk-muted)', fontWeight: 700, letterSpacing: 0.3 }}
+        sx={{ display: 'block', mb: 0.75, color: 'var(--pt-muted)', fontWeight: 700, letterSpacing: 0.3 }}
       >
         Empresa ativa
       </Typography>
@@ -140,16 +140,16 @@ export function TenantMenu({ variant = 'header', onSelectComplete }: TenantMenuP
           ...SOFT_PANEL_SX,
           borderRadius: '16px',
           textTransform: 'none',
-          background: 'var(--mk-surface-soft)',
+          background: 'var(--pt-surface-soft)',
         }}
       >
         <Stack direction="row" spacing={1.1} sx={{ minWidth: 0, alignItems: 'flex-start', flex: 1 }}>
-          <ApartmentOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-primary)', mt: 0.15 }} />
+          <ApartmentOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-primary)', mt: 0.15 }} />
           <Box sx={{ minWidth: 0, textAlign: 'left' }}>
             <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, mb: 0.35, flexWrap: 'wrap' }}>
               <Typography
                 variant="body2"
-                sx={{ fontWeight: 700, color: 'var(--mk-text)', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                sx={{ fontWeight: 700, color: 'var(--pt-text)', overflow: 'hidden', textOverflow: 'ellipsis' }}
               >
                 {activeTenant ? activeTenant.tenant_name : 'Selecionar empresa'}
               </Typography>
@@ -159,7 +159,7 @@ export function TenantMenu({ variant = 'header', onSelectComplete }: TenantMenuP
               variant="caption"
               sx={{
                 display: 'block',
-                color: 'var(--mk-muted)',
+                color: 'var(--pt-muted)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -200,7 +200,7 @@ export function TenantMenu({ variant = 'header', onSelectComplete }: TenantMenuP
               mt: 1,
               ...ELEVATED_SURFACE_SX,
               borderRadius: '18px',
-              background: 'var(--mk-surface)',
+              background: 'var(--pt-surface)',
             },
           },
         }}
@@ -215,7 +215,7 @@ export function TenantMenu({ variant = 'header', onSelectComplete }: TenantMenuP
           >
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
               {tenant.tenant_uuid === activeTenantUuid ? (
-                <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'var(--mk-success)' }} />
+                <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'var(--pt-success)' }} />
               ) : (
                 <Box sx={{ width: 16 }} />
               )}

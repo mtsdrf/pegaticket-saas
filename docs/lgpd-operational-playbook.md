@@ -1,10 +1,10 @@
-# Playbook operacional de privacidade e LGPD do Maskats
+# Playbook operacional de privacidade e LGPD do PegaTicket
 
 Data de referência: **26 de julho de 2026**
 
-Este documento organiza a operação mínima de privacidade do Maskats para o MVP comercial. Ele não substitui revisão jurídica formal, mas define o que o time pode executar e comunicar com segurança no estado atual do produto.
+Este documento organiza a operação mínima de privacidade do PegaTicket para o MVP comercial. Ele não substitui revisão jurídica formal, mas define o que o time pode executar e comunicar com segurança no estado atual do produto.
 
-## 1. Papel da Maskats no tratamento de dados
+## 1. Papel da PegaTicket no tratamento de dados
 
 - **Controladora** dos dados do relacionamento comercial com a própria empresa contratante e seus usuários de acesso.
 - **Operadora** dos dados pessoais que a empresa contratante cadastra e trata dentro do sistema sobre clientes, contatos, destinatários, equipe, pedidos e rotinas operacionais.
@@ -71,7 +71,7 @@ Fluxo:
 - o cadastro registra aceite versionado;
 - a empresa consegue exportar os dados principais do próprio ambiente;
 - existe processo operacional para tratamento de solicitações de privacidade;
-- a Maskats diferencia o papel de controladora e operadora.
+- a PegaTicket diferencia o papel de controladora e operadora.
 
 ## 7. O que o time comercial não deve prometer
 

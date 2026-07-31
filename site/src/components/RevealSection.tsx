@@ -14,7 +14,7 @@ export function RevealSection({ id, children, className }: RevealSectionProps) {
     <div
       id={id}
       ref={ref}
-      className={['mk-section-fade', visible ? 'mk-section-fade-visible' : '', className].filter(Boolean).join(' ')}
+      className={['pt-section-fade', visible ? 'pt-section-fade-visible' : '', className].filter(Boolean).join(' ')}
     >
       {children}
     </div>

@@ -88,9 +88,9 @@ export function ChangeCardDialog({ open, onClose, onSuccess }: ChangeCardDialogP
       <DialogTitle sx={{ fontWeight: 600 }}>Trocar cartão da assinatura</DialogTitle>
       <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <DialogContent>
-          <DialogContentText sx={{ color: 'var(--mk-text)', mb: 2 }}>
+          <DialogContentText sx={{ color: 'var(--pt-text)', mb: 2 }}>
             Este cartão passa a ser usado nas próximas cobranças automáticas da assinatura. O número e o CVV são
-            enviados direto ao Mercado Pago pelo navegador — o Maskats nunca tem acesso a esses dados.
+            enviados direto ao Mercado Pago pelo navegador — o PegaTicket nunca tem acesso a esses dados.
           </DialogContentText>
 
           <Stack spacing={2}>

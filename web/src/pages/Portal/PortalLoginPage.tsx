@@ -126,7 +126,7 @@ export function PortalLoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         px: { xs: 2, sm: 3 },
         py: { xs: 3, sm: 5 },
       }}
@@ -144,9 +144,9 @@ export function PortalLoginPage() {
           }}
         >
           <Typography sx={{ fontSize: { xs: 19, sm: 21 }, fontWeight: 600, mb: 0.5 }}>
-            Minha conta Maskats
+            Minha conta PegaTicket
           </Typography>
-          <Typography sx={{ fontSize: 14.5, color: 'var(--mk-muted)', mb: 3 }}>
+          <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', mb: 3 }}>
             {step === 'email'
               ? 'Entre com seu e-mail para ver os pedidos de todas as lojas que você confirmar que são suas.'
               : 'Digite o código de 6 dígitos que enviamos para o seu e-mail.'}
@@ -213,7 +213,7 @@ export function PortalLoginPage() {
                   required
                 />
 
-                <Typography sx={{ fontSize: 12.5, color: isExpired ? 'var(--mk-danger)' : 'var(--mk-muted)', textAlign: 'center' }}>
+                <Typography sx={{ fontSize: 12.5, color: isExpired ? 'var(--pt-danger)' : 'var(--pt-muted)', textAlign: 'center' }}>
                   {isExpired ? 'Código expirado' : `Código expira em ${formatCountdown(secondsLeft)}`}
                 </Typography>
 
@@ -245,8 +245,8 @@ export function PortalLoginPage() {
           )}
         </Paper>
 
-        <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)', textAlign: 'center', mt: 3 }}>
-          Maskats — gestão clara para empresas em movimento.
+        <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', textAlign: 'center', mt: 3 }}>
+          PegaTicket — gestão clara para empresas em movimento.
         </Typography>
       </Box>
     </Box>

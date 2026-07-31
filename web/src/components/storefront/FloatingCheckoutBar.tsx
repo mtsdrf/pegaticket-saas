@@ -31,9 +31,9 @@ export function FloatingCheckoutBar({ slug }: { slug: string }) {
         bottom: `calc(${STOREFRONT_BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
         zIndex: (theme) => theme.zIndex.appBar + 1,
         borderRadius: 0,
-        borderTop: '1px solid var(--mk-border)',
-        background: 'var(--mk-surface-raised-bg)',
-        boxShadow: 'var(--mk-shadow-lg)',
+        borderTop: '1px solid var(--pt-border)',
+        background: 'var(--pt-surface-raised-bg)',
+        boxShadow: 'var(--pt-shadow-lg)',
       }}
     >
       <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 960, p: 1.5 }}>

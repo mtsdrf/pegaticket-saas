@@ -30,22 +30,22 @@ const STAGE_META: Record<OrderOperationStage, { label: string; caption: string; 
   approval: {
     label: 'Aprovação',
     caption: 'Pedidos aguardando aceite da loja.',
-    accent: 'var(--mk-warning)',
+    accent: 'var(--pt-warning)',
   },
   production: {
     label: 'Produção',
     caption: 'Pedidos confirmados que ainda estão em preparo.',
-    accent: 'var(--mk-primary)',
+    accent: 'var(--pt-primary)',
   },
   dispatch: {
     label: 'Expedição',
     caption: 'Pedidos que já saíram para entrega.',
-    accent: 'var(--mk-info)',
+    accent: 'var(--pt-info)',
   },
   financial_pending: {
     label: 'Financeiro pendente',
     caption: 'Pedidos entregues aguardando baixa de pagamento.',
-    accent: 'var(--mk-danger)',
+    accent: 'var(--pt-danger)',
   },
 }
 
@@ -246,7 +246,7 @@ export function StorefrontOrderManagementPage() {
                 size="small"
                 aria-label={`Gerenciar pedido do cliente ${`${row.client?.name ?? ''} ${row.client?.last_name ?? ''}`.trim()}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
                 <VisibilityOutlinedIcon fontSize="small" />
               </IconButton>
@@ -256,7 +256,7 @@ export function StorefrontOrderManagementPage() {
                 size="small"
                 aria-label={`Ver histórico operacional do pedido ${row.codigo}`}
                 onClick={() => setSelectedTimelineOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
                 <HistoryOutlinedIcon fontSize="small" />
               </IconButton>
@@ -488,7 +488,7 @@ export function StorefrontOrderManagementPage() {
             emptyMessage="Arraste para esta coluna quando a transição for permitida."
           >
             {groupedBoardOrders[stage].length === 0 ? (
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Nenhum pedido nesta etapa agora.</Typography>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta etapa agora.</Typography>
             ) : (
               groupedBoardOrders[stage].map((order) => (
                 <Box
@@ -499,8 +499,8 @@ export function StorefrontOrderManagementPage() {
                   sx={{
                     p: 1.25,
                     borderRadius: '16px',
-                    border: '1px solid var(--mk-border)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-surface) 94%, white)',
+                    border: '1px solid var(--pt-border)',
+                    bgcolor: 'color-mix(in srgb, var(--pt-surface) 94%, white)',
                     opacity: draggedOrderUuid === order.uuid ? 0.46 : 1,
                     cursor: 'grab',
                     transition: 'opacity 140ms ease',
@@ -510,7 +510,7 @@ export function StorefrontOrderManagementPage() {
                     <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
                       <Box sx={{ minWidth: 0 }}>
                         <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{order.codigo}</Typography>
-                        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }} noWrap>
+                        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }} noWrap>
                           {order.client
                             ? `${order.client.name} ${order.client.last_name ?? ''}`.trim()
                             : 'Cliente não identificado'}
@@ -521,8 +521,8 @@ export function StorefrontOrderManagementPage() {
                       ) : null}
                     </Stack>
                     <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 0.75, alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{formatCurrency(order.total_amount)}</Typography>
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{formatDateTimeBR(order.created_at)}</Typography>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{formatCurrency(order.total_amount)}</Typography>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{formatDateTimeBR(order.created_at)}</Typography>
                     </Stack>
                     <Stack direction="row" spacing={1}>
                       <Button size="small" variant="text" onClick={() => setSelectedOrderUuid(order.uuid)} sx={{ px: 0 }}>
@@ -544,8 +544,8 @@ export function StorefrontOrderManagementPage() {
             sx={{
               p: 1.35,
               borderRadius: '16px',
-              border: '1px solid var(--mk-border)',
-              bgcolor: 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+              border: '1px solid var(--pt-border)',
+              bgcolor: 'color-mix(in srgb, var(--pt-surface) 96%, white)',
             }}
           >
             <Stack spacing={1}>
@@ -573,7 +573,7 @@ export function StorefrontOrderManagementPage() {
                   />
                 ))}
               </Stack>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Esse foco atua no board da loja e pode ser aberto diretamente pela URL.
               </Typography>
             </Stack>
@@ -581,7 +581,7 @@ export function StorefrontOrderManagementPage() {
           <WorkflowActionDropZone
             title="Cancelar / recusar"
             description="Use esta área para recusar pedidos em aprovação ou cancelar pedidos que já estão em operação. O motivo é obrigatório."
-            accent="var(--mk-danger)"
+            accent="var(--pt-danger)"
             icon={<CancelOutlinedIcon fontSize="small" />}
             isActiveDrop={activeDropTarget === 'cancel'}
             isDisabled={!draggedBoardOrder || !resolveBoardAction(draggedBoardOrder, 'cancel')}
@@ -592,7 +592,7 @@ export function StorefrontOrderManagementPage() {
           <WorkflowActionDropZone
             title="Concluir pedido"
             description="Solte aqui os pedidos entregues para registrar a baixa do pagamento e encerrar a fila."
-            accent="var(--mk-success)"
+            accent="var(--pt-success)"
             icon={<PaymentsOutlinedIcon fontSize="small" />}
             isActiveDrop={activeDropTarget === 'complete'}
             isDisabled={!draggedBoardOrder || !resolveBoardAction(draggedBoardOrder, 'complete')}
@@ -604,13 +604,13 @@ export function StorefrontOrderManagementPage() {
             sx={{
               p: 1.35,
               borderRadius: '16px',
-              border: '1px solid var(--mk-border)',
-              bgcolor: 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+              border: '1px solid var(--pt-border)',
+              bgcolor: 'color-mix(in srgb, var(--pt-surface) 96%, white)',
             }}
           >
             <Stack spacing={0.8}>
               <Typography sx={{ fontSize: 14, fontWeight: 800 }}>Board da loja</Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Arraste os pedidos entre as etapas para acelerar a operação. O modal continua disponível quando você precisar
                 revisar itens, endereço, QR de preparo e detalhes do pedido.
               </Typography>
@@ -673,12 +673,12 @@ export function StorefrontOrderManagementPage() {
               emptyState={
                 onlyCancellationRequested
                   ? {
-                      icon: <CancelOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                      icon: <CancelOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                       title: 'Nenhum cancelamento pendente no momento',
                       description: 'Solicitações de cancelamento feitas pelos clientes aparecerão aqui.',
                     }
                   : {
-                      icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                      icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                       title: 'Nenhum pedido pendente de ação no momento',
                       description: 'Pedidos concluídos, recusados ou cancelados não aparecem aqui.',
                     }

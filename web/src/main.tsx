@@ -11,7 +11,7 @@ import { App } from './app/App'
 // sessionStorage evita loop infinito se o problema for outro (deploy quebrado de
 // verdade), tentando o reload automático só uma vez por aba.
 window.addEventListener('vite:preloadError', () => {
-  const key = 'mk-chunk-reload-attempted'
+  const key = 'pt-chunk-reload-attempted'
   if (sessionStorage.getItem(key)) return
   sessionStorage.setItem(key, '1')
   window.location.reload()
@@ -52,4 +52,4 @@ createRoot(document.getElementById('root')!).render(
 // Bootstrap chegou até aqui sem `vite:preloadError` — libera o guard pra que
 // um deploy novo mais tarde na mesma aba (sessão longa) também ganhe sua
 // própria tentativa de auto-reload, em vez de ficar bloqueado pela primeira.
-window.setTimeout(() => sessionStorage.removeItem('mk-chunk-reload-attempted'), 5000)
+window.setTimeout(() => sessionStorage.removeItem('pt-chunk-reload-attempted'), 5000)

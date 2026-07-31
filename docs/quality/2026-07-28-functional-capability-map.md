@@ -1,11 +1,11 @@
-# Mapa Mestre de Funcionalidades do Maskats
+# Mapa Mestre de Funcionalidades do PegaTicket
 
 Data: 2026-07-28  
 Base de verdade: `api/routes/api.php`, `web/src/routes/AppRoutes.tsx`, `docs/frontend-screen-map.md`, `api/tests`, `web/e2e`, `.claude/memory/project-summary.md`
 
 ## Objetivo
 
-Consolidar o inventário funcional real do Maskats por módulo, perfil, telas, APIs e evidência de cobertura, para servir como fonte única de verdade para QA, rollout, homologação e futuras expansões de automação.
+Consolidar o inventário funcional real do PegaTicket por módulo, perfil, telas, APIs e evidência de cobertura, para servir como fonte única de verdade para QA, rollout, homologação e futuras expansões de automação.
 
 ## Resumo executivo
 

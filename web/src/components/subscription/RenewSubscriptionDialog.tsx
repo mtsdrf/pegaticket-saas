@@ -14,7 +14,7 @@ export function RenewSubscriptionDialog({ open, isSubmitting, error, onCancel, o
     <Dialog open={open} onClose={isSubmitting ? undefined : onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontWeight: 600 }}>Renovar assinatura</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ color: 'var(--mk-text)' }}>
+        <DialogContentText sx={{ color: 'var(--pt-text)' }}>
           O cancelamento agendado será desfeito e a assinatura volta a renovar normalmente ao fim do ciclo atual,
           com cobrança automática mantida.
         </DialogContentText>

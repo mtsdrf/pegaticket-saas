@@ -139,8 +139,8 @@ export function ConnectionStatusBanner() {
           py: 1.1,
           border: '1px solid',
           borderColor: isOffline
-            ? 'color-mix(in srgb, var(--mk-warning) 45%, var(--mk-border))'
-            : 'color-mix(in srgb, var(--mk-success) 36%, var(--mk-border))',
+            ? 'color-mix(in srgb, var(--pt-warning) 45%, var(--pt-border))'
+            : 'color-mix(in srgb, var(--pt-success) 36%, var(--pt-border))',
           background: isOffline
             ? 'linear-gradient(180deg, color-mix(in srgb, #FFF2CC 92%, white) 0%, color-mix(in srgb, #FFE7A3 90%, white) 100%)'
             : 'linear-gradient(180deg, color-mix(in srgb, #EAF8EE 96%, white) 0%, color-mix(in srgb, #D6F2DF 94%, white) 100%)',

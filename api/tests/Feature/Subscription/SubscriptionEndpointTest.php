@@ -723,7 +723,7 @@ class SubscriptionEndpointTest extends TestCase
                     'payments' => [[
                         'status' => 'pending',
                         'payment_method' => [
-                            'qr_code' => '000201pixmaskats',
+                            'qr_code' => '000201pixpegaticket',
                             'ticket_url' => 'https://www.mercadopago.com.br/payments/pix/1',
                         ],
                     ]],
@@ -760,7 +760,7 @@ class SubscriptionEndpointTest extends TestCase
             ->assertStatus(201)
             ->assertJsonPath('data.method', 'pix')
             ->assertJsonPath('data.status', 'pending')
-            ->assertJsonPath('data.metadata.qr_code', '000201pixmaskats');
+            ->assertJsonPath('data.metadata.qr_code', '000201pixpegaticket');
 
         $paymentUuid = $response->json('data.uuid');
 
@@ -784,7 +784,7 @@ class SubscriptionEndpointTest extends TestCase
                     'payments' => [[
                         'status' => 'pending',
                         'payment_method' => [
-                            'qr_code' => '000201pixmaskats-repeat',
+                            'qr_code' => '000201pixpegaticket-repeat',
                         ],
                     ]],
                 ],

@@ -8,7 +8,7 @@ export function FinalCta() {
       component="section"
       sx={{
         py: { xs: 7, md: 10 },
-        backgroundColor: 'var(--mk-primary)',
+        backgroundColor: 'var(--pt-primary)',
       }}
     >
       <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 2.5, sm: 4 }, textAlign: 'center' }}>
@@ -25,7 +25,7 @@ export function FinalCta() {
           onClick={() => trackEvent({ name: 'hero_cta_click', target: 'primary' })}
           sx={{
             backgroundColor: '#FFFFFF',
-            color: 'var(--mk-primary)',
+            color: 'var(--pt-primary)',
             px: 4,
             '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
           }}

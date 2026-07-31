@@ -403,7 +403,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Painel de pendências de pagamento/assinatura (roadmap 2026-07-24)
-        // — visão cross-tenant EXCLUSIVA do staff interno da Maskats, mesmo
+        // — visão cross-tenant EXCLUSIVA do staff interno da PegaTicket, mesmo
         // padrão de `tenants`/`plans`/`audit-logs`: sem middleware `tenant`
         // (perm resolvida só por `group_permissions`, nunca por
         // `tenant_role_permissions` — não há tenant resolvido aqui).

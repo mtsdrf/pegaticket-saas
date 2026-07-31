@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Escopo por tenant: `payments` é polimórfico (payable_type=Order|Invoice).
  * Conciliação do tenant enxerga só pagamentos de PEDIDO (cliente final →
- * tenant), nunca fatura de assinatura (Maskats → tenant, sem tenant_id
+ * tenant), nunca fatura de assinatura (PegaTicket → tenant, sem tenant_id
  * direto em `payments`) — por isso o filtro é sempre
  * `payable_type=Order::class` + `orders.tenant_id`.
  *

@@ -49,7 +49,7 @@ function loadSdkScript(): Promise<void> {
  * Carrega o MP.js v2 sob demanda (só quando o diálogo de troca de cartão
  * abre) e devolve uma instância pronta de `MercadoPago`. A tokenização
  * (`createCardToken`) acontece inteiramente no navegador, direto contra a
- * API do Mercado Pago — nenhum dado de cartão cru chega ao backend Maskats,
+ * API do Mercado Pago — nenhum dado de cartão cru chega ao backend PegaTicket,
  * só o token resultante (mesmo padrão já usado no checkout Pix/pedido, ver
  * `.claude/memory/architecture-decisions.md`).
  */

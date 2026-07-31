@@ -371,7 +371,7 @@ export function OrderFormPage() {
 
                 {hasDiscountInfo && (
                   <Typography
-                    sx={{ fontSize: 13, mt: 0.5, color: discount > 0 ? 'var(--mk-success)' : 'var(--mk-warning)' }}
+                    sx={{ fontSize: 13, mt: 0.5, color: discount > 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}
                   >
                     {discount > 0
                       ? `Desconto neste item: ${formatCurrency(discount)}`
@@ -385,7 +385,7 @@ export function OrderFormPage() {
                       {item.selectedOptions.length > 0 ? 'Editar opcionais' : 'Selecionar opcionais'}
                     </Button>
                     {item.selectedOptions.length > 0 && (
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                         {item.selectedOptions
                           .map((option) => `${option.group_name}: ${option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
                           .join(' • ')}
@@ -449,7 +449,7 @@ export function OrderFormPage() {
               label="Pago"
             />
             {isInstallment && (
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                 Pedido parcelado não pode nascer pago — use "Pagar parcela" depois de criado.
               </Typography>
             )}
@@ -474,12 +474,12 @@ export function OrderFormPage() {
           <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Resumo</Typography>
           <Stack spacing={0.75}>
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ color: 'var(--mk-muted)' }}>Total sem desconto</Typography>
+              <Typography sx={{ color: 'var(--pt-muted)' }}>Total sem desconto</Typography>
               <Typography>{formatCurrency(summary.totalTable)}</Typography>
             </Stack>
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ color: 'var(--mk-muted)' }}>{summary.discount >= 0 ? 'Desconto' : 'Acréscimo'}</Typography>
-              <Typography sx={{ color: summary.discount >= 0 ? 'var(--mk-success)' : 'var(--mk-warning)' }}>
+              <Typography sx={{ color: 'var(--pt-muted)' }}>{summary.discount >= 0 ? 'Desconto' : 'Acréscimo'}</Typography>
+              <Typography sx={{ color: summary.discount >= 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}>
                 {formatCurrency(Math.abs(summary.discount))}
               </Typography>
             </Stack>
@@ -492,11 +492,11 @@ export function OrderFormPage() {
             {markAsPaid && !isInstallment && (
               <>
                 <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: 'var(--mk-muted)' }}>Valor pago</Typography>
+                  <Typography sx={{ color: 'var(--pt-muted)' }}>Valor pago</Typography>
                   <Typography>{formatCurrency(Number.isFinite(paidAmountNumber) ? paidAmountNumber : 0)}</Typography>
                 </Stack>
                 <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: 'var(--mk-muted)' }}>{pendingOrChange > 0 ? 'Pendente' : pendingOrChange < 0 ? 'Troco' : 'Quitado'}</Typography>
+                  <Typography sx={{ color: 'var(--pt-muted)' }}>{pendingOrChange > 0 ? 'Pendente' : pendingOrChange < 0 ? 'Troco' : 'Quitado'}</Typography>
                   <Typography>{pendingOrChange === 0 ? '—' : formatCurrency(Math.abs(pendingOrChange))}</Typography>
                 </Stack>
               </>

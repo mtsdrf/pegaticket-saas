@@ -34,15 +34,15 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_TONE: Record<string, { bg: string; color: string }> = {
-  pending: { bg: 'color-mix(in srgb, var(--mk-warning) 14%, transparent)', color: 'var(--mk-warning)' },
-  paid: { bg: 'color-mix(in srgb, var(--mk-success) 14%, transparent)', color: 'var(--mk-success)' },
-  failed: { bg: 'color-mix(in srgb, var(--mk-danger) 14%, transparent)', color: 'var(--mk-danger)' },
-  refunded: { bg: 'color-mix(in srgb, var(--mk-info) 14%, transparent)', color: 'var(--mk-info)' },
-  divergent: { bg: 'color-mix(in srgb, var(--mk-danger) 14%, transparent)', color: 'var(--mk-danger)' },
+  pending: { bg: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)', color: 'var(--pt-warning)' },
+  paid: { bg: 'color-mix(in srgb, var(--pt-success) 14%, transparent)', color: 'var(--pt-success)' },
+  failed: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', color: 'var(--pt-danger)' },
+  refunded: { bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)', color: 'var(--pt-info)' },
+  divergent: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', color: 'var(--pt-danger)' },
 }
 
 function StatusChip({ status }: { status: string }) {
-  const tone = STATUS_TONE[status] ?? { bg: 'var(--mk-surface-soft)', color: 'var(--mk-muted)' }
+  const tone = STATUS_TONE[status] ?? { bg: 'var(--pt-surface-soft)', color: 'var(--pt-muted)' }
   return (
     <Chip
       size="small"
@@ -164,14 +164,14 @@ export function ReconciliationPage() {
                 label={`${row.refunds.length} estorno${row.refunds.length === 1 ? '' : 's'}`}
                 sx={{
                   fontWeight: 600,
-                  bgcolor: 'color-mix(in srgb, var(--mk-info) 14%, transparent)',
-                  color: 'var(--mk-info)',
+                  bgcolor: 'color-mix(in srgb, var(--pt-info) 14%, transparent)',
+                  color: 'var(--pt-info)',
                   '& .MuiChip-icon': { color: 'inherit' },
                 }}
               />
             </Tooltip>
           ) : (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>—</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>—</Typography>
           ),
         exportValue: (row) => (row.refunds.length > 0 ? row.refunds.length : 0),
       },
@@ -186,7 +186,7 @@ export function ReconciliationPage() {
             <Chip
               size="small"
               label="Confirmado"
-              sx={{ fontWeight: 600, bgcolor: 'color-mix(in srgb, var(--mk-success) 14%, transparent)', color: 'var(--mk-success)' }}
+              sx={{ fontWeight: 600, bgcolor: 'color-mix(in srgb, var(--pt-success) 14%, transparent)', color: 'var(--pt-success)' }}
             />
           ) : (
             <Chip
@@ -195,8 +195,8 @@ export function ReconciliationPage() {
               label="Sem confirmação de webhook"
               sx={{
                 fontWeight: 600,
-                bgcolor: 'color-mix(in srgb, var(--mk-warning) 14%, transparent)',
-                color: 'var(--mk-warning)',
+                bgcolor: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)',
+                color: 'var(--pt-warning)',
                 '& .MuiChip-icon': { color: 'inherit' },
               }}
             />
@@ -306,7 +306,7 @@ export function ReconciliationPage() {
               rowIdField="uuid"
               exportFileName="conciliacao-financeira"
               emptyState={{
-                icon: <AccountBalanceOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <AccountBalanceOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum pagamento no período',
                 description: 'Ajuste o período ou os filtros para ver os pagamentos conciliados.',
               }}

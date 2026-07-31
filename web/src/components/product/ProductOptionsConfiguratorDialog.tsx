@@ -145,14 +145,14 @@ export function ProductOptionsConfiguratorDialog({
                 sx={{ p: 1.5, ...SOFT_PANEL_SX }}
               >
                 <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 1.25 }}>
-                  {isRemovalGroup && <RemoveCircleOutlineIcon sx={{ fontSize: 18, color: 'var(--mk-muted)' }} />}
+                  {isRemovalGroup && <RemoveCircleOutlineIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />}
                   <Stack spacing={0.5}>
                     <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{group.name}</Typography>
                     {group.description && (
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{group.description}</Typography>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{group.description}</Typography>
                     )}
                     {!isRemovalGroup && (
-                      <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>
+                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
                         Escolha de {group.min_select} até {group.max_select}. Selecionados: {selectedCount}
                       </Typography>
                     )}
@@ -181,7 +181,7 @@ export function ProductOptionsConfiguratorDialog({
                           <Box sx={{ minWidth: 0 }}>
                             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Remover {option.name}</Typography>
                             {option.description && (
-                              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>{option.description}</Typography>
+                              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{option.description}</Typography>
                             )}
                           </Box>
                         </Stack>
@@ -198,9 +198,9 @@ export function ProductOptionsConfiguratorDialog({
                         <Box sx={{ minWidth: 0, flex: 1 }}>
                           <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{option.name}</Typography>
                           {option.description && (
-                            <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>{option.description}</Typography>
+                            <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{option.description}</Typography>
                           )}
-                          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-primary)', fontWeight: 700 }}>
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-primary)', fontWeight: 700 }}>
                             + {formatCurrency(option.price)}
                           </Typography>
                         </Box>
@@ -231,7 +231,7 @@ export function ProductOptionsConfiguratorDialog({
           })}
 
           {validationMessage && (
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-danger)' }}>{validationMessage}</Typography>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-danger)' }}>{validationMessage}</Typography>
           )}
         </Stack>
       </DialogContent>

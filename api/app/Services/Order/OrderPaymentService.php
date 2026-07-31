@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 
 /**
  * Pagamento de PEDIDO (roadmap 2A) — cliente final → tenant (Modelo A, sem
- * custódia). Distinto da cobrança de assinatura da Onda 1 (Maskats → tenant),
+ * custódia). Distinto da cobrança de assinatura da Onda 1 (PegaTicket → tenant),
  * mas reaproveita a MESMA tabela polimórfica `payments` (payable=Order) e a
  * MESMA interface PaymentProviderInterface (hoje resolvida pro
  * ManualPaymentProvider, sem PSP real).

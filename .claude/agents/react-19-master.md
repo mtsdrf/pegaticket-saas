@@ -64,7 +64,7 @@ Trabalhe considerando:
 * **Material UI (MUI)** — biblioteca de estilização/componentes oficial do projeto (ver "Biblioteca de componentes (MUI)" abaixo).
 * **ag-Grid Community (free)** — toda tabela/grid de dados (listagem densa, paginação, ordenação, filtro).
 * **Chart.js** (via `react-chartjs-2`) — todo gráfico.
-* Design system Maskats (`.claude/memory/design-system.md`) aplicado através do tema MUI, não em paralelo a ele.
+* Design system PegaTicket (`.claude/memory/design-system.md`) aplicado através do tema MUI, não em paralelo a ele.
 * Responsividade.
 * Acessibilidade.
 * Performance.
@@ -351,26 +351,26 @@ Não criar interface bonita que exclui usuários.
 
 Material UI é a biblioteca de estilização/componentes oficial do projeto a partir de 2026-07-05 (ver `.claude/memory/architecture-decisions.md`).
 
-* Tema MUI (`createTheme` + `ThemeProvider`) é a fonte única de verdade de cor/tipografia/espaçamento — construído a partir da paleta oficial já definida em `.claude/memory/design-system.md` (`--mk-*`), nunca com as cores padrão do Material Design ("azul/roxo genérico do MUI").
+* Tema MUI (`createTheme` + `ThemeProvider`) é a fonte única de verdade de cor/tipografia/espaçamento — construído a partir da paleta oficial já definida em `.claude/memory/design-system.md` (`--pt-*`), nunca com as cores padrão do Material Design ("azul/roxo genérico do MUI").
 * Componentes de interface (botão, input, card, modal, tabs, menu, avatar etc.) usam o componente MUI correspondente (`Button`, `TextField`, `Card`, `Dialog`, `Tabs`, `Menu`, `Avatar`...), não HTML cru estilizado à mão.
 * Estilização pontual via prop `sx` ou `styled()` do MUI — evitar CSS solto em arquivo `.css` para o que o MUI já resolve.
 * CSS puro ainda é aceitável para o que o MUI não cobre (ex.: gradiente de fundo da tela de login, blobs decorativos) — não forçar tudo dentro do MUI.
 * Dark mode via `theme.palette.mode` + os valores dark já definidos em `design-system.md`, não reinventar.
-* Ícones: `@mui/icons-material` como padrão; ícone customizado (ex.: logo Maskats) continua como SVG próprio.
+* Ícones: `@mui/icons-material` como padrão; ícone customizado (ex.: logo PegaTicket) continua como SVG próprio.
 
-**Nota de transição:** Login/Dashboard e os primitivos `components/ui/Button.tsx`/`Input.tsx`/`Card.tsx` foram construídos antes desta decisão (CSS com tokens `--mk-*` direto, sem MUI). Não migrar automaticamente — migrar quando a tela for tocada de qualquer forma, ou em uma tarefa dedicada quando o usuário pedir. Toda tela **nova** já nasce em MUI.
+**Nota de transição:** Login/Dashboard e os primitivos `components/ui/Button.tsx`/`Input.tsx`/`Card.tsx` foram construídos antes desta decisão (CSS com tokens `--pt-*` direto, sem MUI). Não migrar automaticamente — migrar quando a tela for tocada de qualquer forma, ou em uma tarefa dedicada quando o usuário pedir. Toda tela **nova** já nasce em MUI.
 
 ## Tabelas e grids (ag-Grid)
 
 * Qualquer listagem com paginação, ordenação, filtro ou muitas colunas usa **ag-Grid Community** (free), não `<table>` manual nem `Table` do MUI para casos densos.
-* Estilizar o grid com o tema Maskats (cores/tipografia via CSS vars do ag-Grid ou classe de tema customizada), não deixar no visual padrão do ag-Grid.
+* Estilizar o grid com o tema PegaTicket (cores/tipografia via CSS vars do ag-Grid ou classe de tema customizada), não deixar no visual padrão do ag-Grid.
 * Paginação, ordenação e filtro client-side para volumes pequenos; server-side (via `api/` paginado) quando o volume crescer — não carregar tudo de uma vez sem necessidade.
 * Estado vazio, loading e erro tratados fora/ao redor do grid (o grid não deve aparecer "quebrado" sem dado).
 
 ## Gráficos (Chart.js)
 
 * Todo gráfico usa **Chart.js** via `react-chartjs-2`.
-* Cores do gráfico vêm da paleta Maskats (`--mk-primary`, `--mk-accent`, `--mk-success` etc.), nunca cor default da lib.
+* Cores do gráfico vêm da paleta PegaTicket (`--pt-primary`, `--pt-accent`, `--pt-success` etc.), nunca cor default da lib.
 * Todo gráfico tem título/contexto (ver `.claude/memory/design-system.md` → Dashboard: "gráfico sem contexto" é problema listado).
 * Gráfico dentro de um `Card` (MUI), nunca solto na página.
 * Responsivo por padrão (`maintainAspectRatio` ajustado para não vazar em mobile — lembrar que o uso é majoritariamente mobile, ver `.claude/memory/design-system.md` → Responsividade).
@@ -379,7 +379,7 @@ Material UI é a biblioteca de estilização/componentes oficial do projeto a pa
 
 Boas práticas para o CSS que não passa pelo MUI (layout de página, gradiente, elementos decorativos):
 
-* Tokens de espaçamento e cor (`--mk-*`) sempre que possível, mesmo fora de componente MUI.
+* Tokens de espaçamento e cor (`--pt-*`) sempre que possível, mesmo fora de componente MUI.
 * Evitar estilos inline excessivos.
 * Evitar duplicação.
 * Evitar CSS global descontrolado.
@@ -521,7 +521,7 @@ Checklist:
 - Renderizações desnecessárias evitadas.
 - Código sem duplicação relevante.
 - Padrão do projeto mantido.
-- Tema MUI usado (cores Maskats, não default do Material).
+- Tema MUI usado (cores PegaTicket, não default do Material).
 - Tabela/grid usa ag-Grid quando aplicável.
 - Gráfico usa Chart.js com cores/contexto corretos.
 - Nova lib (se houver) justificada e registrada na memória.

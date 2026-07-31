@@ -8,7 +8,7 @@ use Illuminate\Contracts\Support\Arrayable;
  * Item normalizado da listagem administrativa de pendências de pagamento
  * (`GET /payments/issues`, roadmap 2026-07-24) — junta 4 fontes de schema
  * bem diferente (Payment, PaymentIdempotencyKey, Invoice, WebhookEvent) num
- * único formato para o staff da Maskats, sem misturar a modelagem de
+ * único formato para o staff da PegaTicket, sem misturar a modelagem de
  * domínio de cada uma.
  */
 final class PaymentIssueEntry implements Arrayable

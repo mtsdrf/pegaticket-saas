@@ -104,7 +104,7 @@ export function PaymentBlock() {
         </Alert>
       )}
 
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
         Exibidas no perfil público da loja online para o cliente saber como pode pagar.
       </Typography>
       <FormGroup>
@@ -126,7 +126,7 @@ export function PaymentBlock() {
         ))}
       </FormGroup>
 
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 3, mb: 1 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 3, mb: 1 }}>
         Cadastre aqui os dados que a sua empresa precisa informar para integrar o recebimento fora da plataforma.
       </Typography>
 

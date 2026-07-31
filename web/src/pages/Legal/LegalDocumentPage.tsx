@@ -55,7 +55,7 @@ export function LegalDocumentPage({ type }: LegalDocumentPageProps) {
       component="main"
       sx={{
         minHeight: '100dvh',
-        bgcolor: 'var(--mk-bg)',
+        bgcolor: 'var(--pt-bg)',
         px: { xs: 2, sm: 3 },
         py: { xs: 3, sm: 5 },
       }}
@@ -85,7 +85,7 @@ export function LegalDocumentPage({ type }: LegalDocumentPageProps) {
           </Typography>
 
           {document && (
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 3 }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 3 }}>
               Versão {document.version}
               {document.published_at
                 ? ` · publicada em ${new Date(document.published_at).toLocaleDateString('pt-BR')}`
@@ -118,7 +118,7 @@ export function LegalDocumentPage({ type }: LegalDocumentPageProps) {
               sx={{
                 fontSize: 14.5,
                 lineHeight: 1.7,
-                color: 'var(--mk-text)',
+                color: 'var(--pt-text)',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}

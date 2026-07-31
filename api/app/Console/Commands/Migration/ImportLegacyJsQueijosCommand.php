@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 /**
  * ETL de uso único: importa os dados reais de "Js Queijos e Doces" (legado,
- * base `maskats_legacy_staging`, `estabelecimento_id` fixo abaixo) para o
+ * base `pegaticket_legacy_staging`, `estabelecimento_id` fixo abaixo) para o
  * Tenant EXISTENTE "MF software" (id fixo abaixo, já criado manualmente,
  * confirmado vazio antes da primeira execução). Diferente de
  * `MigrateJsQueijosEDocesCommand` (que cria um tenant novo do zero e migra

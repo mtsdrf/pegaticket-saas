@@ -1,9 +1,9 @@
 /**
- * `site/` é um projeto/origem separado de `web/` (domínio raiz maskats.com,
+ * `site/` é um projeto/origem separado de `web/` (domínio raiz pegaticket.com,
  * sem autenticação) — chave própria para não colidir com
- * `maskats.theme_mode` do app principal (ver CLAUDE.md, decisão de criar
+ * `pegaticket.theme_mode` do app principal (ver CLAUDE.md, decisão de criar
  * `site/` como landing institucional).
  */
 export const STORAGE_KEYS = {
-  themeModePreference: 'maskats.site.theme_mode',
+  themeModePreference: 'pegaticket.site.theme_mode',
 } as const

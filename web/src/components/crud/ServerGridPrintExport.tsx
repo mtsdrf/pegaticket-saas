@@ -9,14 +9,14 @@ interface ServerGridPrintExportProps {
 
 /**
  * Tabela "invisível" na tela, renderizada via portal direto em `document.body`
- * e só exibida pela folha `@media print` de `index.css` (`.mk-print-export`)
+ * e só exibida pela folha `@media print` de `index.css` (`.pt-print-export`)
  * — o resto da UI some da impressão. `window.print()` é chamado por quem
  * monta este componente; o usuário escolhe "Salvar como PDF" no diálogo
  * nativo do navegador, sem lib nova.
  */
 export function ServerGridPrintExport({ title, generatedAt, headers, rows }: ServerGridPrintExportProps) {
   return createPortal(
-    <div className="mk-print-export">
+    <div className="pt-print-export">
       <h1>{title}</h1>
       <p>Exportado em {generatedAt}</p>
       <table>

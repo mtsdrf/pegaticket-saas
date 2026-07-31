@@ -92,7 +92,7 @@ interface PaymentProviderInterface
 
     /**
      * Cancela a assinatura recorrente automática no PSP (usada no
-     * cancelamento imediato/fim-de-ciclo do lado Maskats, para não deixar
+     * cancelamento imediato/fim-de-ciclo do lado PegaTicket, para não deixar
      * o PSP cobrando uma assinatura já encerrada aqui).
      *
      * @return array<string, mixed>

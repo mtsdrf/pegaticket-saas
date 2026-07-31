@@ -90,7 +90,7 @@ export function EnderecoListPage() {
                   size="small"
                   aria-label={`Editar ${row.logradouro}`}
                   onClick={() => handleEdit(row)}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
                 >
                   <EditOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -105,7 +105,7 @@ export function EnderecoListPage() {
                     setDeleteError(null)
                     setDeleteTarget(row)
                   }}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                 >
                   <DeleteOutlineIcon fontSize="small" />
                 </IconButton>
@@ -142,7 +142,7 @@ export function EnderecoListPage() {
                 gridApiRef.current = api
               }}
               emptyState={{
-                icon: <HomeOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <HomeOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum endereço cadastrado ainda',
                 description: 'Cadastre endereços pra vincular a clientes e pedidos.',
                 action: can(ACCESS.enderecosCreate) ? (

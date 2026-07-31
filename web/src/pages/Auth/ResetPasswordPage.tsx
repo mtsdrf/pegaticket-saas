@@ -64,10 +64,10 @@ export function ResetPasswordPage() {
   return (
     <AuthPageShell
       headline="Defina sua nova senha"
-      subheadline="Escolha uma senha forte para proteger o acesso ao Maskats."
+      subheadline="Escolha uma senha forte para proteger o acesso ao PegaTicket."
     >
       <Paper
-        className="mk-reveal"
+        className="pt-reveal"
         elevation={0}
         sx={{
           ...ELEVATED_SURFACE_SX,
@@ -84,7 +84,7 @@ export function ResetPasswordPage() {
         <Typography sx={{ fontSize: { xs: 20, sm: 22 }, fontWeight: 600, mb: 0.5 }}>
           Redefinir senha
         </Typography>
-        <Typography sx={{ fontSize: 15, color: 'var(--mk-muted)', mb: 3.5 }}>
+        <Typography sx={{ fontSize: 15, color: 'var(--pt-muted)', mb: 3.5 }}>
           Crie uma nova senha de acesso para sua conta.
         </Typography>
 

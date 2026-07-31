@@ -1,4 +1,4 @@
-# Maskats — Roadmap Estratégico: Produção, Pagamentos, Fiscal e Contabilidade
+# PegaTicket — Roadmap Estratégico: Produção, Pagamentos, Fiscal e Contabilidade
 
 > Documento de arquitetura e planejamento. **Não é implementação.** Levantado em 2026-07-20 a partir da leitura do código real de `api/` e `web/`, dos arquivos de memória do projeto e do `CLAUDE.md`.
 >
@@ -10,16 +10,16 @@
 
 ## Sumário executivo
 
-O Maskats hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, pedidos, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: os planos Prata/Ouro/Diamante existem apenas como **gate de funcionalidades** — não têm preço, ciclo de cobrança, fatura nem qualquer cobrança recorrente real. O cadastro self-service coloca o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de pedido é baixa manual; não há gateway em lugar nenhum do sistema.
+O PegaTicket hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, pedidos, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: os planos Prata/Ouro/Diamante existem apenas como **gate de funcionalidades** — não têm preço, ciclo de cobrança, fatura nem qualquer cobrança recorrente real. O cadastro self-service coloca o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de pedido é baixa manual; não há gateway em lugar nenhum do sistema.
 
 Consequência estratégica: **o produto não consegue faturar sozinho ainda.** As quatro grandes frentes pedidas (cobrança de planos, pagamento de pedidos, documento fiscal e módulo do contador) têm uma ordem natural de dependência forte, e tentar fazer tudo em paralelo com orçamento baixo é o principal risco do projeto.
 
 Recomendação de sequência macro (detalhada no roadmap final):
 
 1. **Endurecimento de produção** (segurança, observabilidade, LGPD, backup/DR) — bloqueante para cobrar qualquer centavo de cliente real. Esforço **M**.
-2. **Cobrança de planos via Pix** (a Maskats cobrando os tenants) — menor superfície regulatória, Pix tem custo quase zero. Habilita o negócio a existir. Esforço **M/G**.
+2. **Cobrança de planos via Pix** (a PegaTicket cobrando os tenants) — menor superfície regulatória, Pix tem custo quase zero. Habilita o negócio a existir. Esforço **M/G**.
 3. **Pagamento de pedidos via Pix** (cliente final pagando o tenant) — reaproveita a infra de Pix do item 2, mas exige decisão de arquitetura de recebimento (conta por tenant vs. marketplace). Esforço **G**.
-4. **Documento fiscal (NF-e/NFC-e/NFS-e)** — a área mais complexa, arriscada e cara em esforço de todo o roadmap. NFS-e (para a própria Maskats emitir nota dos planos) primeiro; NF-e/NFC-e dos tenants depois. Esforço **GG**.
+4. **Documento fiscal (NF-e/NFC-e/NFS-e)** — a área mais complexa, arriscada e cara em esforço de todo o roadmap. NFS-e (para a própria PegaTicket emitir nota dos planos) primeiro; NF-e/NFC-e dos tenants depois. Esforço **GG**.
 5. **Módulo do contador** — depende de dados fiscais e financeiros existirem para ter o que entregar. Esforço **G**.
 
 Cartão de crédito e emissão fiscal são os dois pontos onde **não existe caminho 100% nativo legal**: cartão exige um PSP regulado; NF-e/NFC-e/NFS-e exigem comunicação homologada com SEFAZ/prefeitura via certificado digital. Em ambos, o documento indica a opção mais barata (idealmente sem mensalidade fixa, custo por transação/emissão) e justifica por que não dá para contornar.
@@ -91,15 +91,15 @@ Checklist crítico e realista. Classificação: **P0** = bloqueia cobrar cliente
 ### 1.5 Conformidade legal e LGPD (P0)
 
 - **Termos de Uso + Política de Privacidade: ausentes. P0 para vender.** Um SaaS que trata dados de clientes finais dos tenants precisa disso. Redação **[requer validação jurídica]**, mas o produto precisa: (a) exibir e registrar aceite no signup (com data/hora/IP), (b) versionar os termos.
-- **Papéis LGPD**: a Maskats é **operadora** dos dados que o tenant cadastra sobre os clientes finais dele (o tenant é o controlador), e **controladora** dos dados de cadastro do próprio tenant/usuário. Essa distinção precisa estar no contrato e na política. **[requer validação jurídica]**
-- **DPA / Contrato de tratamento** entre Maskats e tenant: recomendável. **[requer validação jurídica]**
+- **Papéis LGPD**: a PegaTicket é **operadora** dos dados que o tenant cadastra sobre os clientes finais dele (o tenant é o controlador), e **controladora** dos dados de cadastro do próprio tenant/usuário. Essa distinção precisa estar no contrato e na política. **[requer validação jurídica]**
+- **DPA / Contrato de tratamento** entre PegaTicket e tenant: recomendável. **[requer validação jurídica]**
 - **Direitos do titular**: já existe base técnica (dado por tenant, soft delete, auditoria). Falta o *processo* (canal para solicitação de acesso/exclusão/portabilidade) e a política de retenção (ver 1.6).
 - **Encarregado (DPO)**: indicar um contato. Pode ser o próprio dono no início.
 
 ### 1.6 Retenção e backup/DR (P0)
 
-- **Backup automático: verificar.** Existe `backup_prod_maskats.sql` na raiz (23MB) — indica que backup é **manual**. Isto é **P0**. Mínimo viável barato: cron `mysqldump` diário + `gzip` + cópia para storage fora do servidor (a própria Hostinger oferece backup, mas **não confie só no backup do provedor** — leve uma cópia para outro lugar, ex.: bucket barato ou até Google Drive via rclone). Definir **RPO** (perda máxima aceitável, ex.: 24h) e **RTO** (tempo de restauração, ex.: 4h) e **testar restauração** pelo menos uma vez.
-- **Cuidado LGPD**: `backup_prod_maskats.sql` versionado/deixado na raiz do repo é **risco de vazamento de dado pessoal** — garantir que está no `.gitignore` e removido de qualquer histórico público. **[verificar]**
+- **Backup automático: verificar.** Existe `backup_prod_pegaticket.sql` na raiz (23MB) — indica que backup é **manual**. Isto é **P0**. Mínimo viável barato: cron `mysqldump` diário + `gzip` + cópia para storage fora do servidor (a própria Hostinger oferece backup, mas **não confie só no backup do provedor** — leve uma cópia para outro lugar, ex.: bucket barato ou até Google Drive via rclone). Definir **RPO** (perda máxima aceitável, ex.: 24h) e **RTO** (tempo de restauração, ex.: 4h) e **testar restauração** pelo menos uma vez.
+- **Cuidado LGPD**: `backup_prod_pegaticket.sql` versionado/deixado na raiz do repo é **risco de vazamento de dado pessoal** — garantir que está no `.gitignore` e removido de qualquer histórico público. **[verificar]**
 - **Política de retenção por categoria**: dados fiscais têm prazo legal de guarda (em regra 5 anos, podendo variar) **[requer validação contábil/jurídica]**; não podem ser apagados por um pedido genérico de exclusão LGPD. Documentar.
 
 ### 1.7 Deploy, documentação operacional e suporte (P1/P2)
@@ -118,7 +118,7 @@ Checklist crítico e realista. Classificação: **P0** = bloqueia cobrar cliente
 
 ---
 
-## Seção 2 — Cobrança dos PLANOS de assinatura (Maskats cobra os tenants)
+## Seção 2 — Cobrança dos PLANOS de assinatura (PegaTicket cobra os tenants)
 
 ### 2.1 O que existe e o que falta
 
@@ -201,7 +201,7 @@ Processar dinheiro (Pix e cartão) **não pode ser 100% nativo** — exige insti
 
 - **NF-e (modelo 55)** — nota de **mercadoria**, operações entre empresas (B2B), transporte de produto. Relevante para os tenants atacadistas/distribuidoras. Autorizada pela **SEFAZ do estado**.
 - **NFC-e (modelo 65)** — **cupom fiscal eletrônico** ao **consumidor final** no varejo/PDV. Relevante para tenants que vendem no balcão. Autorizada pela SEFAZ, exige **CSC** (Código de Segurança do Contribuinte) e gera **QR Code**. Regras variam por UF; **"cupom fiscal" não é padrão nacional único** — algumas UFs usam SAT/MFE. **[requer validação por UF]**
-- **NFS-e** — nota de **serviço**, competência **municipal**. **Interessa diretamente à própria Maskats**: para emitir nota dos planos SaaS cobrados dos tenants (Seção 2), a Maskats precisa emitir NFS-e do serviço de software. Existe agora o **padrão nacional NFS-e** (via ambiente nacional/Sefin), mas muitos municípios ainda têm padrão próprio.
+- **NFS-e** — nota de **serviço**, competência **municipal**. **Interessa diretamente à própria PegaTicket**: para emitir nota dos planos SaaS cobrados dos tenants (Seção 2), a PegaTicket precisa emitir NFS-e do serviço de software. Existe agora o **padrão nacional NFS-e** (via ambiente nacional/Sefin), mas muitos municípios ainda têm padrão próprio.
 
 ### 3.2 O que a emissão exige tecnicamente (comum a NF-e/NFC-e)
 
@@ -219,12 +219,12 @@ Três caminhos, sob o filtro de orçamento baixo:
 3. **100% do zero (montar SOAP/XML na mão)** — **não recomendado**. Reinventa o que a `sped-nfe` já resolve, com risco altíssimo. Descartar.
 
 **Recomendação pragmática (orçamento baixo + risco controlado):**
-- **NFS-e da própria Maskats (planos):** começar com a **API do padrão nacional NFS-e** se o município da Maskats já aderiu; se não, avaliar `sped-nfse` ou um serviço barato só para essa emissão de baixo volume. Volume baixo (uma nota por fatura de plano) → o custo por nota de um serviço pago é **irrelevante** aqui, e economiza MUITO esforço. **Recomendo serviço pago barato por nota para a NFS-e dos planos.**
+- **NFS-e da própria PegaTicket (planos):** começar com a **API do padrão nacional NFS-e** se o município da PegaTicket já aderiu; se não, avaliar `sped-nfse` ou um serviço barato só para essa emissão de baixo volume. Volume baixo (uma nota por fatura de plano) → o custo por nota de um serviço pago é **irrelevante** aqui, e economiza MUITO esforço. **Recomendo serviço pago barato por nota para a NFS-e dos planos.**
 - **NF-e/NFC-e dos tenants:** aqui o volume pode crescer e justificar o open-source `sped-nfe`. **Mas** dado o risco e a complexidade estadual, a decisão honesta é: **começar com uma API de emissão paga por nota** (Focus NFe / PlugNotas / NFe.io têm faixas por volume) para lançar rápido e validar demanda, e **só migrar para `sped-nfe` nativo quando o volume de notas justificar economicamente** o esforço de manutenção. Construir a **camada de abstração `FiscalProvider`** (adapter) desde o dia 1 para poder trocar serviço→nativo sem reescrever o domínio.
 
 ### 3.4 Motor tributário e cadastros (nativo, obrigatório em qualquer caminho)
 
-Independente de quem "transmite" a nota, o Maskats precisa **calcular e parametrizar** o tributo — isso é nativo:
+Independente de quem "transmite" a nota, o PegaTicket precisa **calcular e parametrizar** o tributo — isso é nativo:
 - Cadastro fiscal do **tenant**: CNPJ, IE, IM, CNAEs, **regime tributário/CRT** (Simples Nacional / Lucro Presumido / Real), endereço + código IBGE, séries, ambiente (homologação/produção), CSC (NFC-e).
 - Cadastro fiscal do **produto**: **NCM**, CEST, origem, unidade tributável, GTIN, CFOP padrão, CSOSN/CST.
 - Cadastro do **cliente**: CPF/CNPJ, IE, indicador de IE, consumidor final, contribuinte.
@@ -241,19 +241,19 @@ Independente de quem "transmite" a nota, o Maskats precisa **calcular e parametr
 
 ## Seção 4 — Pagamento de PEDIDOS direto para as empresas (cliente final → tenant)
 
-Diferente da Seção 2 (Maskats cobra o tenant). Aqui o **cliente final paga o pedido do tenant** via Pix/cartão, com confirmação automática. A infra técnica de Pix/webhook/idempotência é **a mesma** da Seção 2 — reaproveitar a camada de abstração de pagamento. O que muda, e é **a decisão de arquitetura mais importante**, é **quem recebe o dinheiro**.
+Diferente da Seção 2 (PegaTicket cobra o tenant). Aqui o **cliente final paga o pedido do tenant** via Pix/cartão, com confirmação automática. A infra técnica de Pix/webhook/idempotência é **a mesma** da Seção 2 — reaproveitar a camada de abstração de pagamento. O que muda, e é **a decisão de arquitetura mais importante**, é **quem recebe o dinheiro**.
 
 ### 4.1 Decisão de arquitetura: onde o dinheiro cai
 
-**Modelo A — Pagamento direto (recomendado para orçamento baixo):** cada tenant conecta a **própria conta** num PSP (ou informa a própria chave Pix), e o dinheiro do pedido cai **direto na conta do tenant**. A Maskats **não** toca no dinheiro de terceiros.
-- **Prós:** **menor responsabilidade e risco regulatório** (a Maskats não custodia recurso de terceiro), sem necessidade de virar/parecer instituição de pagamento, mais barato. **Alinhado ao orçamento e à lei.**
+**Modelo A — Pagamento direto (recomendado para orçamento baixo):** cada tenant conecta a **própria conta** num PSP (ou informa a própria chave Pix), e o dinheiro do pedido cai **direto na conta do tenant**. A PegaTicket **não** toca no dinheiro de terceiros.
+- **Prós:** **menor responsabilidade e risco regulatório** (a PegaTicket não custodia recurso de terceiro), sem necessidade de virar/parecer instituição de pagamento, mais barato. **Alinhado ao orçamento e à lei.**
 - **Contras:** cada tenant precisa configurar credencial própria; conciliação e experiência menos padronizadas.
 
-**Modelo B — Marketplace / split de pagamento:** a Maskats intermedeia via um PSP que faz **split** (divide e repassa automaticamente ao tenant, retendo comissão da Maskats).
+**Modelo B — Marketplace / split de pagamento:** a PegaTicket intermedeia via um PSP que faz **split** (divide e repassa automaticamente ao tenant, retendo comissão da PegaTicket).
 - **Prós:** experiência padronizada, comissão automática, gestão centralizada.
 - **Contras:** **maior dependência do PSP, mais custo, mais obrigações (KYC dos tenants, risco de chargeback, regras de repasse)** e potencial implicação regulatória. **[requer validação jurídica/regulatória]**
 
-**Diretriz:** para **orçamento baixo e risco baixo**, **Modelo A (pagamento direto)**, ou o recurso de **subconta/split oferecido por PSP autorizado** (ex.: Mercado Pago, Asaas e Pagar.me têm split nativo) **sem a Maskats manter saldo sacável de terceiros**. **Nunca** manter carteira/saldo interno sacável ou custodiar recursos de clientes sem estrutura jurídica e autorização do BACEN — isso configuraria arranjo de pagamento regulado. Regra inegociável.
+**Diretriz:** para **orçamento baixo e risco baixo**, **Modelo A (pagamento direto)**, ou o recurso de **subconta/split oferecido por PSP autorizado** (ex.: Mercado Pago, Asaas e Pagar.me têm split nativo) **sem a PegaTicket manter saldo sacável de terceiros**. **Nunca** manter carteira/saldo interno sacável ou custodiar recursos de clientes sem estrutura jurídica e autorização do BACEN — isso configuraria arranjo de pagamento regulado. Regra inegociável.
 
 ### 4.2 Preferência por Pix (custo quase zero)
 
@@ -270,11 +270,11 @@ Pagamento duplicado, Pix após expiração, Pix com valor divergente, cartão ne
 
 ## Seção 5 — Módulo do Contador / Escritório de Contabilidade
 
-Módulo **novo e autônomo** (o dono comparou ao "módulo de loja": um subsistema dentro do Maskats), onde o contador/escritório **solicita acesso** aos dados do tenant pelo próprio sistema (fluxo de convite/aprovação, **não** acesso irrestrito automático) e passa a fazer a gestão contábil sem o tenant enviar planilhas manualmente.
+Módulo **novo e autônomo** (o dono comparou ao "módulo de loja": um subsistema dentro do PegaTicket), onde o contador/escritório **solicita acesso** aos dados do tenant pelo próprio sistema (fluxo de convite/aprovação, **não** acesso irrestrito automático) e passa a fazer a gestão contábil sem o tenant enviar planilhas manualmente.
 
 ### 5.1 Encaixe no modelo multi-tenant atual
 
-O modelo de acesso do Maskats **já suporta a fundação disso** sem reinventar:
+O modelo de acesso do PegaTicket **já suporta a fundação disso** sem reinventar:
 - Um **escritório de contabilidade** é uma entidade nova (`accounting_offices`) que **atende N tenants** (relação N:N via `accounting_office_tenant` com **status de autorização** `pending`/`approved`/`revoked` e **escopos** concedidos).
 - Um contador é um `User`; o acesso dele a um tenant se dá por um vínculo análogo ao `TenantUser`, mas **originado de uma solicitação aprovada pelo tenant** e com **escopos granulares próprios** (ler fiscal, ler financeiro, exportar, etc.).
 - Reaproveita `ResolveTenant` (o contador "entra" no tenant autorizado como faz um usuário ao trocar de empresa), `AuditLog` (toda consulta/exportação do contador **deve** ser auditada — requisito de segurança reforçado) e o gate de permissão.
@@ -345,7 +345,7 @@ Esforço: **P** = dias · **M** = 1–2 semanas · **G** = 3+ semanas · **GG** 
 
 ### FASE D — Fiscal — **GG (a mais arriscada)** · **[validação contábil/fiscal contínua]**
 - **D0 (nativo, pré-requisito):** cadastro fiscal de tenant/produto/cliente + motor tributário parametrizado e **versionado por vigência** (pronto para CBS/IBS/IS da Reforma). Camada de abstração `FiscalProvider` (adapter).
-- **D1 — NFS-e dos planos da Maskats (M/G):** emitir nota de serviço das faturas de plano. Volume baixo → **serviço pago barato por nota** ou padrão nacional NFS-e se o município aderiu. Liga `invoices.fiscal_document_id`. **Depende da Fase B.**
+- **D1 — NFS-e dos planos da PegaTicket (M/G):** emitir nota de serviço das faturas de plano. Volume baixo → **serviço pago barato por nota** ou padrão nacional NFS-e se o município aderiu. Liga `invoices.fiscal_document_id`. **Depende da Fase B.**
 - **D2 — NF-e/NFC-e dos tenants (GG):** começar com **API de emissão paga por nota** (Focus NFe/PlugNotas/NFe.io) para lançar rápido; migrar para `sped-nfe` **nativo** só quando volume justificar. Certificado A1, contingência, eventos (cancelamento/CC-e/inutilização), DANFE, armazenamento imutável de XML, catálogo de rejeições. **[risco de infra: validar suporte da Hostinger a `.pfx`/soap/openssl; possivelmente exige sair de shared hosting].**
 
 ### FASE E — Módulo do contador — **G**

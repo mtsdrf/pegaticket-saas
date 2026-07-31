@@ -50,7 +50,7 @@ function PublicLinkCard({
       sx={{
         p: { xs: 1.75, sm: 2 },
         borderRadius: UI_RADIUS.lg,
-        background: 'color-mix(in srgb, var(--mk-surface) 82%, var(--mk-primary) 4%)',
+        background: 'color-mix(in srgb, var(--pt-surface) 82%, var(--pt-primary) 4%)',
         ...CARD_EQUAL_HEIGHT_SX,
       }}
     >
@@ -63,8 +63,8 @@ function PublicLinkCard({
               borderRadius: UI_RADIUS.md,
               display: 'grid',
               placeItems: 'center',
-              background: 'color-mix(in srgb, var(--mk-primary) 14%, transparent)',
-              color: 'var(--mk-primary)',
+              background: 'color-mix(in srgb, var(--pt-primary) 14%, transparent)',
+              color: 'var(--pt-primary)',
               flexShrink: 0,
             }}
           >
@@ -72,7 +72,7 @@ function PublicLinkCard({
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontWeight: 700 }}>{title}</Typography>
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', ...CLAMP_TEXT_3_SX }}>{description}</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', ...CLAMP_TEXT_3_SX }}>{description}</Typography>
           </Box>
         </Stack>
 
@@ -109,8 +109,8 @@ function PublicLinkCard({
             <Divider sx={{ my: 0.5 }} />
             <Stack spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <QrCode2OutlinedIcon fontSize="small" sx={{ color: 'var(--mk-muted)' }} />
-                <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+                <QrCode2OutlinedIcon fontSize="small" sx={{ color: 'var(--pt-muted)' }} />
+                <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                   Compartilhe este QR Code para clientes acessarem sua loja online direto pelo celular.
                 </Typography>
               </Stack>
@@ -346,7 +346,7 @@ export function CompanyBlock() {
             description="Use este endereço para divulgar o catálogo e receber pedidos pela vitrine pública."
             url={storefrontUrl}
             onCopy={handleCopyLink}
-            qrCodeFileName={`qr-code-loja-${profile?.slug ?? 'maskats'}`}
+            qrCodeFileName={`qr-code-loja-${profile?.slug ?? 'pegaticket'}`}
           />
         </Stack>
       </Stack>
@@ -364,7 +364,7 @@ export function CompanyBlock() {
         slotProps={{ htmlInput: { maxLength: 255 } }}
       />
 
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1.5 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
         Cadastre aqui os dados fiscais e cadastrais da empresa para integrações contábeis e futuras integrações fiscais.
       </Typography>
 
@@ -468,7 +468,7 @@ export function CompanyBlock() {
           <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.75 }}>
             Integração fiscal
           </Typography>
-          <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
             Preencha somente se a sua empresa for usar emissão fiscal real. Os segredos ficam protegidos no backend e
             nunca voltam expostos para a tela.
           </Typography>

@@ -130,7 +130,7 @@ Rotas seguem o padrão já estabelecido em `.claude/memory/api-patterns.md` (`/a
   ```
 - Indicadores/gráficos exatos: ver [[04-modules-map]] → "Relatórios e Indicadores" e [[06-business-rules]].
 - **Todo filtro deve usar Query Builder com binding** — o legado tem SQL injection real nesses endpoints (concatenação de string), não replicar de forma alguma.
-- PDF: `barryvdh/laravel-dompdf` (mesmo pacote do legado) funciona em Laravel 13 — reaproveitável como dependência, não como código (as views Blade seriam recriadas do zero seguindo o design system Maskats).
+- PDF: `barryvdh/laravel-dompdf` (mesmo pacote do legado) funciona em Laravel 13 — reaproveitável como dependência, não como código (as views Blade seriam recriadas do zero seguindo o design system PegaTicket).
 - Permissões prováveis: `relatorios.read`, `relatorios.exportar-pdf`.
 - Prioridade: **Alta** — o `DashboardPage.tsx` atual já tem um placeholder esperando exatamente os indicadores confirmados aqui.
 

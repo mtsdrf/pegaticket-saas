@@ -97,48 +97,48 @@ const STAGE_META: Record<OrderOperationStage, { label: string; caption: string; 
   approval: {
     label: 'Aprovação',
     caption: 'Pedidos aguardando aceite antes de entrar no fluxo operacional.',
-    accent: 'var(--mk-warning)',
+    accent: 'var(--pt-warning)',
   },
   production: {
     label: 'Produção',
     caption: 'Pedidos confirmados que ainda precisam ser preparados ou separados.',
-    accent: 'var(--mk-primary)',
+    accent: 'var(--pt-primary)',
   },
   dispatch: {
     label: 'Expedição',
     caption: 'Pedidos já despachados e ainda não concluídos.',
-    accent: 'var(--mk-info)',
+    accent: 'var(--pt-info)',
   },
   financial_pending: {
     label: 'Financeiro pendente',
     caption: 'Pedidos entregues com cobrança ainda em aberto.',
-    accent: 'var(--mk-danger)',
+    accent: 'var(--pt-danger)',
   },
 }
 
 const PRIORITY_META: Record<OperationPriority, { label: string; accent: string; bg: string; sortWeight: number }> = {
   normal: {
     label: 'Dentro do ritmo',
-    accent: 'var(--mk-success)',
-    bg: 'color-mix(in srgb, var(--mk-success) 12%, transparent)',
+    accent: 'var(--pt-success)',
+    bg: 'color-mix(in srgb, var(--pt-success) 12%, transparent)',
     sortWeight: 0,
   },
   attention: {
     label: 'Pedir atenção',
-    accent: 'var(--mk-info)',
-    bg: 'color-mix(in srgb, var(--mk-info) 12%, transparent)',
+    accent: 'var(--pt-info)',
+    bg: 'color-mix(in srgb, var(--pt-info) 12%, transparent)',
     sortWeight: 1,
   },
   urgent: {
     label: 'Prioridade alta',
-    accent: 'var(--mk-warning)',
-    bg: 'color-mix(in srgb, var(--mk-warning) 14%, transparent)',
+    accent: 'var(--pt-warning)',
+    bg: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)',
     sortWeight: 2,
   },
   critical: {
     label: 'Ação imediata',
-    accent: 'var(--mk-danger)',
-    bg: 'color-mix(in srgb, var(--mk-danger) 14%, transparent)',
+    accent: 'var(--pt-danger)',
+    bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)',
     sortWeight: 3,
   },
 }
@@ -217,7 +217,7 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
     return {
       label: 'Atendimento da loja',
       caption: 'Confirma e libera pedidos recebidos do canal online.',
-      accent: 'var(--mk-warning)',
+      accent: 'var(--pt-warning)',
       to: '/pedidos-loja',
     }
   }
@@ -225,20 +225,20 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
     return {
       label: 'Operação interna',
       caption: 'Produz, separa e prepara o pedido para sair.',
-      accent: 'var(--mk-primary)',
+      accent: 'var(--pt-primary)',
     }
   }
   if (owner === 'delivery') {
     return {
       label: 'Entrega e rotas',
       caption: 'Organiza deslocamento, rota e confirmação de entrega.',
-      accent: 'var(--mk-info)',
+      accent: 'var(--pt-info)',
     }
   }
   return {
     label: 'Financeiro',
     caption: 'Finaliza recebimento e baixa pendências de cobrança.',
-    accent: 'var(--mk-danger)',
+    accent: 'var(--pt-danger)',
     to: '/financeiro/conciliacao',
   }
 }
@@ -273,7 +273,7 @@ function OrderStatusBadge({ order }: { order: Order }) {
         <Box sx={{ display: 'inline-flex', alignItems: 'center', '& svg': { fontSize: 16 } }}>{derived.icon}</Box>
         <Box sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{derived.label}</Box>
       </Box>
-      <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)', lineHeight: 1.25 }}>
+      <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', lineHeight: 1.25 }}>
         {derived.caption}
       </Typography>
     </Stack>
@@ -301,7 +301,7 @@ function OperationMetricCard({
   label,
   value,
   caption,
-  accent = 'var(--mk-primary)',
+  accent = 'var(--pt-primary)',
   action,
 }: {
   label: string
@@ -315,17 +315,17 @@ function OperationMetricCard({
       sx={{
         p: 2,
         borderRadius: '20px',
-        border: '1px solid var(--mk-border)',
-        background: 'var(--mk-surface)',
+        border: '1px solid var(--pt-border)',
+        background: 'var(--pt-surface)',
         minHeight: 150,
       }}
     >
       <Stack spacing={1.1} sx={{ height: '100%' }}>
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.35 }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.35 }}>
           {label}
         </Typography>
         <Typography sx={{ fontSize: 28, lineHeight: 1, fontWeight: 800, color: accent }}>{value}</Typography>
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', flex: 1 }}>{caption}</Typography>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', flex: 1 }}>{caption}</Typography>
         {action}
       </Stack>
     </Box>
@@ -370,9 +370,9 @@ function QueueOrderCard({
       sx={{
         p: 1.25,
         borderRadius: '16px',
-        border: `1px solid ${priority === 'normal' ? 'var(--mk-border)' : priorityMeta.bg}`,
-        bgcolor: 'color-mix(in srgb, var(--mk-surface) 94%, white)',
-        boxShadow: priority === 'critical' ? '0 0 0 1px color-mix(in srgb, var(--mk-danger) 14%, transparent)' : 'none',
+        border: `1px solid ${priority === 'normal' ? 'var(--pt-border)' : priorityMeta.bg}`,
+        bgcolor: 'color-mix(in srgb, var(--pt-surface) 94%, white)',
+        boxShadow: priority === 'critical' ? '0 0 0 1px color-mix(in srgb, var(--pt-danger) 14%, transparent)' : 'none',
         opacity: isDragging ? 0.46 : 1,
         cursor: draggable ? 'grab' : 'default',
         transition: 'opacity 140ms ease, transform 140ms ease',
@@ -382,7 +382,7 @@ function QueueOrderCard({
         <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{order.codigo}</Typography>
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }} noWrap>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }} noWrap>
               {order.client?.name ?? 'Cliente não identificado'}
             </Typography>
           </Box>
@@ -391,8 +391,8 @@ function QueueOrderCard({
             label={ORIGIN_META[order.origin]?.shortLabel ?? order.origin}
             sx={{
               fontWeight: 700,
-              color: 'var(--mk-primary)',
-              bgcolor: 'color-mix(in srgb, var(--mk-primary) 12%, transparent)',
+              color: 'var(--pt-primary)',
+              bgcolor: 'color-mix(in srgb, var(--pt-primary) 12%, transparent)',
               flexShrink: 0,
             }}
           />
@@ -419,11 +419,11 @@ function QueueOrderCard({
               bgcolor: priorityMeta.bg,
             }}
           />
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{formatCurrency(order.total_amount)}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{formatCurrency(order.total_amount)}</Typography>
           <Typography sx={{ fontSize: 12.5, color: priorityMeta.accent, fontWeight: 700 }}>
             {formatElapsedLabel(ageInMinutes)}
           </Typography>
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{formatDateTimeBR(order.created_at)}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{formatDateTimeBR(order.created_at)}</Typography>
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
@@ -457,7 +457,7 @@ function QueueOrderCard({
 }
 
 /**
- * Primeira versão da central operacional multi-origem do Maskats. A rota
+ * Primeira versão da central operacional multi-origem do PegaTicket. A rota
  * permanece `/pedidos`, mas a experiência deixa de ser "só pedidos manuais"
  * e passa a reunir o pedido canônico do sistema por origem (`staff`,
  * `storefront`, `pdv`, `counter`, `ifood`), mantendo `/pedidos-loja` e
@@ -1083,8 +1083,8 @@ export function OrderListPage() {
                   label={meta?.shortLabel ?? row.origin}
                   sx={{
                     fontWeight: 700,
-                    color: 'var(--mk-primary)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-primary) 12%, transparent)',
+                    color: 'var(--pt-primary)',
+                    bgcolor: 'color-mix(in srgb, var(--pt-primary) 12%, transparent)',
                   }}
                 />
               )
@@ -1103,7 +1103,7 @@ export function OrderListPage() {
               const stage = deriveOperationStage(row)
               if (!stage) {
                 return (
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                     Concluído / fora da fila
                   </Typography>
                 )
@@ -1208,7 +1208,7 @@ export function OrderListPage() {
                 size="small"
                 aria-label={`Abrir pedido do cliente ${row.client?.name ?? ''}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
                 <VisibilityOutlinedIcon fontSize="small" />
               </IconButton>
@@ -1218,7 +1218,7 @@ export function OrderListPage() {
                 size="small"
                 aria-label={`Ver histórico operacional do pedido ${row.codigo}`}
                 onClick={() => setSelectedTimelineOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
                 <HistoryOutlinedIcon fontSize="small" />
               </IconButton>
@@ -1248,7 +1248,7 @@ export function OrderListPage() {
           label="Aguardando aprovação"
           value={snapshot.storefrontPendingApproval === null ? '—' : String(snapshot.storefrontPendingApproval)}
           caption="Pedidos da loja pública esperando aceite da empresa."
-          accent="var(--mk-warning)"
+          accent="var(--pt-warning)"
           action={
             canReadStorefrontQueue ? (
               <Button component={RouterLink} to="/pedidos-loja" size="small" variant="text">
@@ -1318,7 +1318,7 @@ export function OrderListPage() {
           label="Ação imediata"
           value={String(queuePrioritySummary.critical)}
           caption="Pedidos nas filas superiores que já passaram do limite mais crítico do recorte."
-          accent="var(--mk-danger)"
+          accent="var(--pt-danger)"
           action={
             <Button
               size="small"
@@ -1336,7 +1336,7 @@ export function OrderListPage() {
           label="Prioridade alta"
           value={String(queuePrioritySummary.urgent)}
           caption="Pedidos que ainda não estouraram, mas já merecem entrar no foco da operação."
-          accent="var(--mk-warning)"
+          accent="var(--pt-warning)"
         />
       </Box>
 
@@ -1350,15 +1350,15 @@ export function OrderListPage() {
         sx={{
           p: 1.5,
           borderRadius: '18px',
-          border: '1px solid var(--mk-border)',
-          bgcolor: 'color-mix(in srgb, var(--mk-surface) 92%, white)',
+          border: '1px solid var(--pt-border)',
+          bgcolor: 'color-mix(in srgb, var(--pt-surface) 92%, white)',
         }}
       >
         <Stack spacing={1.2}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
             <Box>
               <Typography sx={{ fontSize: 14, fontWeight: 800 }}>Coordenação da operação</Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Quem entra em ação em cada etapa e quais módulos especializados destravam o próximo passo.
               </Typography>
             </Box>
@@ -1382,8 +1382,8 @@ export function OrderListPage() {
                   sx={{
                     p: 1.25,
                     borderRadius: '16px',
-                    border: '1px solid var(--mk-border)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+                    border: '1px solid var(--pt-border)',
+                    bgcolor: 'color-mix(in srgb, var(--pt-surface) 96%, white)',
                   }}
                 >
                   <Stack spacing={0.75}>
@@ -1395,13 +1395,13 @@ export function OrderListPage() {
                         sx={{ fontWeight: 700, color: meta.accent, bgcolor: `color-mix(in srgb, ${meta.accent} 12%, transparent)` }}
                       />
                     </Stack>
-                    <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{extra}</Typography>
+                    <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{extra}</Typography>
                     {meta.to ? (
                       <Button component={RouterLink} to={meta.to} size="small" variant="text" sx={{ alignSelf: 'flex-start', px: 0 }}>
                         Abrir módulo
                       </Button>
                     ) : (
-                      <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>Atue diretamente pelos pedidos desta fila.</Typography>
+                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Atue diretamente pelos pedidos desta fila.</Typography>
                     )}
                   </Stack>
                 </Box>
@@ -1444,7 +1444,7 @@ export function OrderListPage() {
           emptyMessage="Arraste para cá apenas se o card puder voltar para esta etapa."
         >
           {queuePreview.approval.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
           ) : (
             queuePreview.approval.map((order) => (
               <QueueOrderCard
@@ -1482,7 +1482,7 @@ export function OrderListPage() {
           emptyMessage="Use esta coluna para pedidos aprovados que ainda estão sendo preparados."
         >
           {queuePreview.production.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
           ) : (
             queuePreview.production.map((order) => (
               <QueueOrderCard
@@ -1520,7 +1520,7 @@ export function OrderListPage() {
           emptyMessage="Arraste para cá quando o pedido sair para entrega."
         >
           {queuePreview.dispatch.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
           ) : (
             queuePreview.dispatch.map((order) => (
               <QueueOrderCard
@@ -1565,7 +1565,7 @@ export function OrderListPage() {
           emptyMessage="Arraste para cá quando o pedido já estiver entregue e faltar só a baixa financeira."
         >
           {queuePreview.financial_pending.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
           ) : (
             queuePreview.financial_pending.map((order) => (
               <QueueOrderCard
@@ -1589,7 +1589,7 @@ export function OrderListPage() {
           <WorkflowActionDropZone
             title="Cancelar / recusar"
             description="Use esta área para recusar pedidos em aprovação ou cancelar pedidos já em operação. O motivo é obrigatório."
-            accent="var(--mk-danger)"
+            accent="var(--pt-danger)"
             icon={<CancelOutlinedIcon fontSize="small" />}
             isActiveDrop={activeOrderDropTarget === 'cancel'}
             isDisabled={!draggedPreviewOrder || !resolveOrderBoardAction(draggedPreviewOrder, 'cancel')}
@@ -1600,7 +1600,7 @@ export function OrderListPage() {
           <WorkflowActionDropZone
             title="Concluir / baixar"
             description="Solte aqui os pedidos da fila financeira para marcar pagamento e concluir o fluxo operacional."
-            accent="var(--mk-success)"
+            accent="var(--pt-success)"
             icon={<PaymentsOutlinedIcon fontSize="small" />}
             isActiveDrop={activeOrderDropTarget === 'complete'}
             isDisabled={!draggedPreviewOrder || !resolveOrderBoardAction(draggedPreviewOrder, 'complete')}
@@ -1612,17 +1612,17 @@ export function OrderListPage() {
             sx={{
               p: 1.35,
               borderRadius: '16px',
-              border: '1px solid var(--mk-border)',
-              bgcolor: 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+              border: '1px solid var(--pt-border)',
+              bgcolor: 'color-mix(in srgb, var(--pt-surface) 96%, white)',
             }}
           >
             <Stack spacing={0.75}>
               <Typography sx={{ fontSize: 14, fontWeight: 800 }}>Como usar o board</Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Arraste o card para a coluna seguinte para avançar, para a coluna anterior quando houver retorno permitido e
                 para as zonas laterais quando quiser concluir ou cancelar.
               </Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Todo movimento fica registrado com usuário, horário e, quando necessário, motivo do cancelamento.
               </Typography>
             </Stack>
@@ -1634,8 +1634,8 @@ export function OrderListPage() {
         sx={{
           p: 1.5,
           borderRadius: '18px',
-          border: '1px solid var(--mk-border)',
-          bgcolor: 'color-mix(in srgb, var(--mk-surface) 92%, white)',
+          border: '1px solid var(--pt-border)',
+          bgcolor: 'color-mix(in srgb, var(--pt-surface) 92%, white)',
         }}
       >
         <Stack spacing={1.25}>
@@ -1645,7 +1645,7 @@ export function OrderListPage() {
             sx={{ alignItems: { xs: 'stretch', md: 'center' }, justifyContent: 'space-between' }}
           >
             <Stack direction="row" spacing={0.9} sx={{ alignItems: 'center' }}>
-              <FilterAltOutlinedIcon sx={{ color: 'var(--mk-muted)', fontSize: 19 }} />
+              <FilterAltOutlinedIcon sx={{ color: 'var(--pt-muted)', fontSize: 19 }} />
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>Recorte operacional</Typography>
             </Stack>
             <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75 }}>
@@ -1808,7 +1808,7 @@ export function OrderListPage() {
               gridApiRef.current = api
             }}
             emptyState={{
-              icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+              icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
               title: 'Nenhum pedido manual encontrado',
               description: 'Assim que a equipe criar pedidos manualmente, eles aparecerão aqui.',
               action: can(ACCESS.ordersCreate) ? (
@@ -1864,7 +1864,7 @@ export function OrderListPage() {
                   gridApiRef.current = api
                 }}
                 emptyState={{
-                  icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                  icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                   title: activeOnly ? 'Nenhum pedido em andamento neste recorte' : 'Nenhum pedido encontrado',
                   description: activeOnly
                     ? 'Quando houver novos pedidos para operar, eles aparecerão aqui independente do canal de entrada.'

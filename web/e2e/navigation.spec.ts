@@ -25,7 +25,7 @@ test.describe('Navegação e responsividade', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Operador Mobile',
-      userEmail: 'mobile.qa@maskats.com',
+      userEmail: 'mobile.qa@pegaticket.com',
     })
 
     await page.goto('/')
@@ -40,6 +40,6 @@ test.describe('Navegação e responsividade', () => {
 
     await page.getByRole('button', { name: 'Abrir menu da conta' }).click()
     await expect(page.getByText('Operador Mobile')).toBeVisible()
-    await expect(page.getByText('mobile.qa@maskats.com')).toBeVisible()
+    await expect(page.getByText('mobile.qa@pegaticket.com')).toBeVisible()
   })
 })

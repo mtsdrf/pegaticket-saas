@@ -1,4 +1,4 @@
-# Roadmap de migração Maskats → PegaTicket
+# Roadmap de migração para o contexto PegaTicket
 
 Status: mapeamento e decisões de negócio confirmados em 2026-07-30 — nenhuma remoção foi executada ainda no código.
 Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`, `database/seeders/FunctionalitiesSeeder.php`, `routes/api.php`, cruzado com `especificacao-plataforma-ingressos.md` (raiz) e `.claude/memory/product-roadmap.md`.
@@ -7,7 +7,7 @@ Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`
 
 ## 0. Confirmação de modelo de negócio (2026-07-30)
 
-PegaTicket **mantém a estrutura de SaaS multi-tenant do Maskats**: cada tenant é um clube/organizador, com plano próprio, permissões próprias, módulos habilitados por contratação, operação isolada. Não é uma reescrita da camada de acesso — é a mesma fundação, só trocando o domínio de negócio (mercadoria/entrega → eventos/ingressos). Isso confirma que `Plan`/`Functionality`/`plan_functionalities`/gate de plano (seção 1) e `Subscription` (seção 2.1) permanecem como estão na arquitetura, só o **conteúdo** dos planos (o que cada tier libera) muda pra refletir features de ingresso em vez de PDV/cashback/delivery.
+PegaTicket **mantém a estrutura de SaaS multi-tenant herdada da fase anterior do produto**: cada tenant é um clube/organizador, com plano próprio, permissões próprias, módulos habilitados por contratação, operação isolada. Não é uma reescrita da camada de acesso — é a mesma fundação, só trocando o domínio de negócio (mercadoria/entrega → eventos/ingressos). Isso confirma que `Plan`/`Functionality`/`plan_functionalities`/gate de plano (seção 1) e `Subscription` (seção 2.1) permanecem como estão na arquitetura, só o **conteúdo** dos planos (o que cada tier libera) muda pra refletir features de ingresso em vez de PDV/cashback/delivery.
 
 ## 1. O que NÃO muda (fundação comum, fora do escopo da spec)
 
@@ -74,7 +74,7 @@ Legenda: **MANTER** (usar como está) · **ADAPTAR** (aproveitar arquitetura/pad
 | Módulo | Motivo |
 |---|---|
 | `Accounting/*` (portal do contador inteiro) | Não existe na spec de ingressos. |
-| `Fiscal/*` (`FiscalOperationProfileController`, `TaxRuleController`, `FiscalReadinessController`) | Spec explícita: "primeira versão não emitirá nota fiscal" (já estava pausado no Maskats). |
+| `Fiscal/*` (`FiscalOperationProfileController`, `TaxRuleController`, `FiscalReadinessController`) | Spec explícita: "primeira versão não emitirá nota fiscal" (módulo já estava pausado antes da virada de contexto). |
 | `Marketplace/*` (iFood) | Delivery de comida, sem equivalente. |
 | `Route/RouteCandidateController` (roteirização Leaflet/OSRM) | Logística de entrega, sem equivalente. |
 | `Pdv/*` (CashSession, OperatorPin, PdvSale, offline snapshot) | Caixa de PDV físico de varejo. "Venda interna"/"cortesia" da spec (5.18) é um domínio bem mais simples, não precisa reaproveitar o PDV inteiro. |
@@ -83,7 +83,7 @@ Legenda: **MANTER** (usar como está) · **ADAPTAR** (aproveitar arquitetura/pad
 | `Report/ReceivableInteractionController` (cobrança B2B) | Recebíveis/promessa de pagamento de venda a prazo B2B. |
 | `Portal/PortalCashbackController`, `Settings/blocks/CashbackBlock` | Decidido 2026-07-30: remover. Não está em nenhuma fase da spec (MVP, Fase 2 ou Fase 3) — cashback é recompra de produto físico, não compra pontual de ingresso. |
 | `Portal/PortalAddressController` | Endereço de entrega — sem equivalente (ingresso não é entregue fisicamente por padrão). |
-| `SocialMedia/*` (frontend) | Já é funcionalidade fantasma no Maskats — zero controller/rota real, é só tela morta. Remoção é limpeza pura, sem perda funcional. |
+| `SocialMedia/*` (frontend) | Já era funcionalidade fantasma antes da migração de domínio — zero controller/rota real, é só tela morta. Remoção é limpeza pura, sem perda funcional. |
 | `Order/OrderFiscalDocumentController`, `OrderFiscalPreviewController`, `OrderPrepViewController` | Nota fiscal (ver Fiscal acima) e preparo de cozinha (KDS). |
 
 ### 2.6 Portal do comprador final (`FinalCustomer`)
@@ -120,7 +120,7 @@ A ordem importa porque `plan_functionalities`/seeders/rotas referenciam as funct
 
 ### Fase 0 — Preparação (sem apagar nada ainda)
 1. ~~Confirmar decisões de negócio~~ **Concluído 2026-07-30** — todas as decisões da seção 2 e 5 resolvidas (ver histórico acima).
-2. Criar branch de trabalho só pra remoção (`git checkout -b chore/remove-maskats-domain`), sem misturar com feature nova. **Próximo passo — ainda não executado.**
+2. Criar branch de trabalho só pra remoção (`git checkout -b chore/remove-legacy-domain`), sem misturar com feature nova. **Próximo passo — ainda não executado.**
 
 ### Fase 1 — Frontend morto/isolado (menor risco, zero dependência de backend)
 1. `web/src/pages/SocialMedia/*` (feature fantasma, zero controller real).
@@ -155,11 +155,11 @@ Sem dependência de checkout/pagamento, mais fácil de isolar.
 2. Rodar `grep` por referências órfãs (imports mortos, rotas apontando pra controller removido, permission slugs sem controller).
 3. `composer test` e `npm run build` como critério de "faxina completa" antes de começar a construir o domínio novo.
 
-### Fase 7 — Renomeação/rebrand (Maskats → PegaTicket)
+### Fase 7 — Consolidação do rebrand para o contexto PegaTicket
 Só depois da faxina de domínio (fase 1–6), pra não misturar "apagar módulo" com "trocar nome" no mesmo diff:
 1. `CLAUDE.md`, `README.md`, `web/public/logo.png`, `brand-guidelines.md`, `design-system.md`.
-2. Renomear skills `maskats-visual-identity.md` → `pegaticket-visual-identity.md`, `maskats-theme-system.md` → equivalente.
-3. Paleta/tema (`--mk-*` tokens) — decidido 2026-07-30: renomear para `--pt-*` (find/replace mecânico em CSS/tema, sem tokens da marca antiga sobrevivendo no código).
+2. Consolidar as skills visuais no namespace `pegaticket-*`, removendo aliases e nomes herdados do contexto anterior.
+3. Paleta/tema (`--pt-*` tokens) — decidido 2026-07-30: consolidar `--pt-*` em CSS/tema, sem tokens de branding anterior sobrevivendo no código.
 
 ## 4. O que fica pra depois da faxina (não é remoção, é construção)
 
@@ -167,6 +167,6 @@ Ver seção 2.8 — só começa depois que a Fase 6 estiver com `test`/`build` v
 
 ## 5. Riscos a validar antes de começar a apagar
 
-- ~~Banco de produção real com tenants ativos usando Maskats hoje?~~ **Confirmado 2026-07-30: base zerada, sem nenhuma tabela populada.** Sem risco de dado real — remoção de tabela/migration pode ser feita direto (`dropIfExists`, deletar/recriar migrations), sem necessidade de plano de backup/rollback.
+- ~~Banco de produção real com tenants ativos vindos da fase anterior do produto?~~ **Confirmado 2026-07-30: base zerada, sem nenhuma tabela populada.** Sem risco de dado real — remoção de tabela/migration pode ser feita direto (`dropIfExists`, deletar/recriar migrations), sem necessidade de plano de backup/rollback.
 - Módulos com dependência cruzada não óbvia (ex.: `Order` referenciado por `Report/AnalyticsController`, por `Workflow`, por `Pdv` — remover Pdv sem checar `Order` pode quebrar teste que assume presença dos dois).
 - Seeders de permissão são idempotentes (delete+reinsert por plano) — rodar depois de cada fase, não só no final, pra pegar erro cedo.

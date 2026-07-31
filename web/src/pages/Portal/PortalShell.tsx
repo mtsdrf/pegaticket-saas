@@ -36,7 +36,7 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
         flexDirection: 'column',
         alignItems: 'center',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         px: { xs: 2, sm: 3 },
         py: { xs: 3, sm: 5 },
       }}
@@ -45,7 +45,7 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
           <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
             <Logo variant="mark" size={34} />
-            <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Meu Maskats</Typography>
+            <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Meu PegaTicket</Typography>
           </Stack>
           <IconButton onClick={logout} aria-label="Sair da conta" size="small">
             <LogoutOutlinedIcon fontSize="small" />
@@ -72,7 +72,7 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
               minWidth: 0,
             },
             '& .Mui-selected': {
-              bgcolor: 'var(--mk-primary)',
+              bgcolor: 'var(--pt-primary)',
               color: '#FFFFFF !important',
             },
           }}
@@ -113,7 +113,7 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
 
         <Typography sx={{ fontSize: { xs: 19, sm: 21 }, fontWeight: 700, mb: 0.5 }}>{title}</Typography>
         {subtitle && (
-          <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mb: 2.5 }}>{subtitle}</Typography>
+          <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mb: 2.5 }}>{subtitle}</Typography>
         )}
 
         <Box sx={{ mt: subtitle ? 0 : 2.5 }}>{children}</Box>

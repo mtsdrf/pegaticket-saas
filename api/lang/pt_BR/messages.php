@@ -50,7 +50,7 @@ return [
         'password_reset_requested' => 'Se o e-mail existir em nossa base, você receberá um link de redefinição.',
         'password_reset_success' => 'Senha redefinida com sucesso.',
         'invalid_or_expired_reset_token' => 'Este link de redefinição é inválido ou expirou. Solicite a redefinição de senha novamente.',
-        'password_reset_mail_subject' => 'Redefinição de senha no Maskats',
+        'password_reset_mail_subject' => 'Redefinição de senha no PegaTicket',
     ],
 
     /*
@@ -109,7 +109,7 @@ return [
         'invalid_current_password' => 'Senha atual incorreta.',
         'email_already_pending' => 'Este e-mail já está aguardando confirmação de outra conta.',
         'invalid_or_expired_token' => 'Este link de confirmação é inválido ou expirou. Solicite a troca de e-mail novamente.',
-        'mail_subject' => 'Confirme seu novo e-mail no Maskats',
+        'mail_subject' => 'Confirme seu novo e-mail no PegaTicket',
     ],
 
     /*
@@ -295,7 +295,7 @@ return [
         'product_mapping_not_found' => 'Nenhum produto interno foi encontrado para o item ":item". Cadastre ou ajuste o SKU, código de barras ou nome do produto antes de importar.',
         'catalog_has_no_available_products' => 'Não há produtos disponíveis para publicar no catálogo agora.',
         'catalog_sync_item_failed' => 'O iFood recusou este item do catálogo. Revise o payload e tente novamente.',
-        'catalog_limitation_simple_items_only' => 'O catálogo atual publica somente categorias e itens simples do Maskats.',
+        'catalog_limitation_simple_items_only' => 'O catálogo atual publica somente categorias e itens simples do PegaTicket.',
         'catalog_limitation_no_option_groups' => 'Complementos, grupos de opcionais, combos e pizza ainda dependem de modelagem interna própria antes da publicação no iFood.',
         'catalog_limitation_no_combos' => 'Combos e pizza ainda dependem de modelagem interna adicional antes da publicação no iFood.',
         'no_business_hours_configured' => 'Configure ao menos um turno de funcionamento da loja antes de enviar os horários para o iFood.',
@@ -347,7 +347,7 @@ return [
     'tenant_user_invite' => [
         'created' => 'Convite enviado com sucesso.',
         'accepted' => 'Convite aceito com sucesso. Bem-vindo(a)!',
-        'mail_subject' => 'Você foi convidado para a empresa :tenant no Maskats',
+        'mail_subject' => 'Você foi convidado para a empresa :tenant no PegaTicket',
         'email_already_registered' => 'Já existe uma conta com este e-mail. Peça para essa pessoa solicitar vínculo a um administrador da empresa.',
         'pending_invite_exists' => 'Já existe um convite pendente para este e-mail nesta empresa.',
         'invalid_token' => 'Convite inválido.',
@@ -1081,7 +1081,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'portal' => [
-        'otp_mail_subject' => 'Seu código de acesso Maskats',
+        'otp_mail_subject' => 'Seu código de acesso PegaTicket',
         'otp_sent' => 'Se o e-mail informado tiver uma conta, um código de acesso foi enviado.',
         'otp_verified' => 'Login realizado com sucesso.',
         'invalid_code' => 'Código inválido.',

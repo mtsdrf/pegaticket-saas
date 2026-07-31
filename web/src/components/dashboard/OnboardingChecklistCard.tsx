@@ -16,12 +16,12 @@ export function OnboardingChecklistCard({ checklist, onDismiss }: OnboardingChec
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{
         p: { xs: 2.25, sm: 3 },
         ...ELEVATED_SURFACE_SX,
-        borderColor: 'color-mix(in srgb, var(--mk-primary) 24%, var(--mk-border))',
-        background: 'color-mix(in srgb, var(--mk-primary) 6%, var(--mk-surface))',
+        borderColor: 'color-mix(in srgb, var(--pt-primary) 24%, var(--pt-border))',
+        background: 'color-mix(in srgb, var(--pt-primary) 6%, var(--pt-surface))',
         position: 'relative',
       }}
     >
@@ -44,18 +44,18 @@ export function OnboardingChecklistCard({ checklist, onDismiss }: OnboardingChec
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: 'color-mix(in srgb, var(--mk-primary) 16%, transparent)',
-              color: 'var(--mk-primary)',
+              bgcolor: 'color-mix(in srgb, var(--pt-primary) 16%, transparent)',
+              color: 'var(--pt-primary)',
               flexShrink: 0,
             }}
           >
             <RocketLaunchOutlinedIcon />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 16.5, fontWeight: 700, color: 'var(--mk-text)', mb: 0.25 }}>
+            <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 16.5, fontWeight: 700, color: 'var(--pt-text)', mb: 0.25 }}>
               Vamos configurar sua empresa
             </Typography>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Complete estes passos para colocar a operação no ar. {checklist.completed} de {checklist.total}
               concluídos.
             </Typography>
@@ -68,8 +68,8 @@ export function OnboardingChecklistCard({ checklist, onDismiss }: OnboardingChec
           sx={{
             height: 6,
             borderRadius: 3,
-            bgcolor: 'var(--mk-surface-soft)',
-            '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: 'var(--mk-primary)' },
+            bgcolor: 'var(--pt-surface-soft)',
+            '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: 'var(--pt-primary)' },
           }}
         />
 
@@ -89,14 +89,14 @@ export function OnboardingChecklistCard({ checklist, onDismiss }: OnboardingChec
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                   {done ? (
-                    <CheckCircleIcon sx={{ fontSize: 20, color: 'var(--mk-success, #2e7d32)', flexShrink: 0 }} />
+                    <CheckCircleIcon sx={{ fontSize: 20, color: 'var(--pt-success, #2e7d32)', flexShrink: 0 }} />
                   ) : (
-                    <CircleOutlinedIcon sx={{ fontSize: 20, color: 'var(--mk-muted)', flexShrink: 0 }} />
+                    <CircleOutlinedIcon sx={{ fontSize: 20, color: 'var(--pt-muted)', flexShrink: 0 }} />
                   )}
                   <Typography
                     sx={{
                       fontSize: 14,
-                      color: done ? 'var(--mk-muted)' : 'var(--mk-text)',
+                      color: done ? 'var(--pt-muted)' : 'var(--pt-text)',
                       textDecoration: done ? 'line-through' : 'none',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -113,7 +113,7 @@ export function OnboardingChecklistCard({ checklist, onDismiss }: OnboardingChec
                     sx={{
                       fontSize: 13,
                       fontWeight: 600,
-                      color: 'var(--mk-primary)',
+                      color: 'var(--pt-primary)',
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
                       textDecoration: 'none',

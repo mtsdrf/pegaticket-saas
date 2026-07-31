@@ -28,7 +28,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Funciona para o meu tipo de negócio?',
     answer:
-      'O Maskats atende atacadistas, varejistas, laticínios e distribuidoras de bebidas nos planos Prata e Ouro; bares e casas noturnas com atendimento em mesas/comandas usam o módulo Balcão, disponível no plano Diamante.',
+      'O PegaTicket atende atacadistas, varejistas, laticínios e distribuidoras de bebidas nos planos Prata e Ouro; bares e casas noturnas com atendimento em mesas/comandas usam o módulo Balcão, disponível no plano Diamante.',
   },
   {
     question: 'Posso ter mais de uma unidade/filial?',

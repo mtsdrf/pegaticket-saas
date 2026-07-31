@@ -25,8 +25,8 @@ import type { AnalyticsTabProps } from './types'
 const PER_PAGE = 15
 
 const TYPE_CONFIG: Record<OverdueType, { label: string; token: string }> = {
-  pagamento: { label: 'Pagamento', token: 'var(--mk-warning)' },
-  entrega: { label: 'Entrega', token: 'var(--mk-info)' },
+  pagamento: { label: 'Pagamento', token: 'var(--pt-warning)' },
+  entrega: { label: 'Entrega', token: 'var(--pt-info)' },
 }
 
 function OverdueTypeChip({ type }: { type: OverdueType }) {
@@ -76,14 +76,14 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
     >
       <Box sx={{ mb: 2 }}>
-        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>
+        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>
           Pedidos em atraso
         </Typography>
-        <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
           Pagamentos vencidos e entregas atrasadas no período — um pedido atrasado nos dois aparece uma vez por tipo.
         </Typography>
       </Box>
@@ -104,10 +104,10 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
             justifyContent: 'center',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
             Nenhum atraso encontrado
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
@@ -117,15 +117,15 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
       ) : (
         <>
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 560, '& td, & th': { borderColor: 'var(--mk-border)' } }}>
+            <Table size="small" sx={{ minWidth: 560, '& td, & th': { borderColor: 'var(--pt-border)' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Cliente</TableCell>
-                  <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Tipo</TableCell>
-                  <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+                  <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Cliente</TableCell>
+                  <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Tipo</TableCell>
+                  <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                     Valor em aberto
                   </TableCell>
-                  <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+                  <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                     Dias em atraso
                   </TableCell>
                 </TableRow>
@@ -133,9 +133,9 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
               <TableBody>
                 {rows.map((row, index) => (
                   <TableRow key={`${row.order_uuid}-${row.type ?? index}`} hover>
-                    <TableCell sx={{ color: 'var(--mk-text)', fontWeight: 500 }}>{row.client_name}</TableCell>
+                    <TableCell sx={{ color: 'var(--pt-text)', fontWeight: 500 }}>{row.client_name}</TableCell>
                     <TableCell>{row.type ? <OverdueTypeChip type={row.type} /> : '—'}</TableCell>
-                    <TableCell align="right" sx={{ color: 'var(--mk-text)', fontVariantNumeric: 'tabular-nums' }}>
+                    <TableCell align="right" sx={{ color: 'var(--pt-text)', fontVariantNumeric: 'tabular-nums' }}>
                       {formatCurrency(row.amount)}
                     </TableCell>
                     <TableCell
@@ -143,7 +143,7 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
                       sx={{
                         fontWeight: 600,
                         fontVariantNumeric: 'tabular-nums',
-                        color: row.days_overdue > 30 ? 'var(--mk-danger)' : 'var(--mk-text)',
+                        color: row.days_overdue > 30 ? 'var(--pt-danger)' : 'var(--pt-text)',
                       }}
                     >
                       {row.days_overdue} dia{row.days_overdue === 1 ? '' : 's'}

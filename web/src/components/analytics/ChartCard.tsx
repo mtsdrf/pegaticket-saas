@@ -30,20 +30,20 @@ export function ChartCard({
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5, flexWrap: 'wrap' }}>
         <Box>
-          <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>{title}</Typography>
-          <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>{subtitle}</Typography>
+          <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>{title}</Typography>
+          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{subtitle}</Typography>
         </Box>
         {headerAction}
       </Box>
 
       <Box sx={{ mt: 2 }}>
         {isLoading ? (
-          <Skeleton variant="rounded" height={minHeight} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+          <Skeleton variant="rounded" height={minHeight} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
         ) : isEmpty ? (
           <Box
             sx={{
@@ -54,11 +54,11 @@ export function ChartCard({
               justifyContent: 'center',
               textAlign: 'center',
               gap: 0.5,
-              color: 'var(--mk-muted)',
+              color: 'var(--pt-muted)',
               px: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
+            <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
             <Typography sx={{ fontSize: 13.5 }}>{emptyDescription}</Typography>
           </Box>
         ) : (

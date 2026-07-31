@@ -40,7 +40,7 @@ function StatusBanner({ order }: { order: OrderTracking }) {
         <Typography sx={{ fontWeight: 700, fontSize: { xs: 16, sm: 17 }, color: colors.fg, lineHeight: 1.3 }}>
           {status.label}
         </Typography>
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.5 }}>{status.caption}</Typography>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5 }}>{status.caption}</Typography>
       </Box>
     </Paper>
   )
@@ -49,10 +49,10 @@ function StatusBanner({ order }: { order: OrderTracking }) {
 function LoadingSkeleton() {
   return (
     <Stack spacing={2}>
-      <Skeleton variant="rounded" height={72} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
-      <Skeleton variant="rounded" height={40} sx={{ borderRadius: 'var(--mk-radius-md)', width: '60%' }} />
-      <Skeleton variant="rounded" height={140} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
-      <Skeleton variant="rounded" height={64} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
+      <Skeleton variant="rounded" height={72} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
+      <Skeleton variant="rounded" height={40} sx={{ borderRadius: 'var(--pt-radius-md)', width: '60%' }} />
+      <Skeleton variant="rounded" height={140} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
+      <Skeleton variant="rounded" height={64} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
     </Stack>
   )
 }
@@ -67,9 +67,9 @@ function NotFoundState({ message }: { message: string }) {
         ...ELEVATED_SURFACE_SX,
       }}
     >
-      <SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)', mb: 1.5 }} />
+      <SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
       <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 0.75 }}>Pedido não encontrado</Typography>
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>{message}</Typography>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>{message}</Typography>
     </Paper>
   )
 }
@@ -77,7 +77,7 @@ function NotFoundState({ message }: { message: string }) {
 function ItemsList({ items }: { items: OrderTracking['items'] }) {
   if (items.length === 0) {
     return (
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>Nenhum item registrado neste pedido.</Typography>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Nenhum item registrado neste pedido.</Typography>
     )
   }
 
@@ -95,7 +95,7 @@ function ItemsList({ items }: { items: OrderTracking['items'] }) {
             {item.product_name}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, gap: 1 }}>
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
               {formatItemQuantity(item.quantity, item.unit)} × {formatCurrency(item.unit_price)}
             </Typography>
             <Typography sx={{ fontSize: 14, fontWeight: 600, flexShrink: 0 }}>
@@ -125,7 +125,7 @@ function InstallmentsList({ installments }: { installments: OrderTracking['insta
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Parcela {installment.installment_number}</Typography>
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
               Vence em {formatDateBR(installment.due_date)}
             </Typography>
           </Box>
@@ -139,9 +139,9 @@ function InstallmentsList({ installments }: { installments: OrderTracking['insta
                 height: 22,
                 fontSize: 11.5,
                 bgcolor: installment.is_paid
-                  ? 'color-mix(in srgb, var(--mk-success) 14%, transparent)'
-                  : 'color-mix(in srgb, var(--mk-muted) 14%, transparent)',
-                color: installment.is_paid ? 'var(--mk-success)' : 'var(--mk-muted)',
+                  ? 'color-mix(in srgb, var(--pt-success) 14%, transparent)'
+                  : 'color-mix(in srgb, var(--pt-muted) 14%, transparent)',
+                color: installment.is_paid ? 'var(--pt-success)' : 'var(--pt-muted)',
               }}
             />
           </Stack>
@@ -201,13 +201,13 @@ function LinkOrdersSection({ orderUuid }: { orderUuid: string }) {
           height: 20,
           fontSize: 10.5,
           mb: 1,
-          bgcolor: 'color-mix(in srgb, var(--mk-primary) 16%, transparent)',
-          color: 'var(--mk-primary)',
+          bgcolor: 'color-mix(in srgb, var(--pt-primary) 16%, transparent)',
+          color: 'var(--pt-primary)',
         }}
       />
       <Typography sx={{ fontSize: 14.5, fontWeight: 700, mb: 0.5 }}>Ver todos os meus pedidos</Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 1.5 }}>
-        Opcional: crie ou entre na sua conta Maskats e acompanhe, num só lugar, os pedidos de todas as lojas que
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
+        Opcional: crie ou entre na sua conta PegaTicket e acompanhe, num só lugar, os pedidos de todas as lojas que
         você confirmar que são suas.
       </Typography>
 
@@ -270,7 +270,7 @@ function OrderRatingSection({ orderUuid }: { orderUuid: string }) {
   if (alreadyRated) {
     return (
       <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-        <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>Você já avaliou este pedido anteriormente.</Typography>
+        <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Você já avaliou este pedido anteriormente.</Typography>
       </Paper>
     )
   }
@@ -281,7 +281,7 @@ function OrderRatingSection({ orderUuid }: { orderUuid: string }) {
         <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.75 }}>Obrigado pela sua avaliação!</Typography>
         <Rating value={submitted.rating} readOnly size="small" />
         {submitted.comment && (
-          <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.75, wordBreak: 'break-word' }}>
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.75, wordBreak: 'break-word' }}>
             "{submitted.comment}"
           </Typography>
         )}
@@ -292,7 +292,7 @@ function OrderRatingSection({ orderUuid }: { orderUuid: string }) {
   return (
     <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
       <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Avalie seu pedido</Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 1.5 }}>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
         Conte pra gente como foi sua experiência com esta loja.
       </Typography>
 
@@ -393,7 +393,7 @@ export function OrderTrackingPage() {
         flexDirection: 'column',
         alignItems: 'center',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         px: { xs: 2, sm: 3 },
         py: { xs: 3, sm: 5 },
       }}
@@ -403,7 +403,7 @@ export function OrderTrackingPage() {
           <Logo variant="mark" size={38} />
           {order?.tenant_name && (
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)', lineHeight: 1.2 }}>Pedido de</Typography>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', lineHeight: 1.2 }}>Pedido de</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, wordBreak: 'break-word' }}>
                 {order.tenant_name}
               </Typography>
@@ -426,7 +426,7 @@ export function OrderTrackingPage() {
                 ...ELEVATED_SURFACE_SX,
               }}
             >
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Cliente</Typography>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Cliente</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>
                 {order.client_name}
               </Typography>
@@ -434,7 +434,7 @@ export function OrderTrackingPage() {
               {order.expected_delivery_date && (
                 <>
                   <Divider sx={{ my: 1.25 }} />
-                  <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Entrega prevista</Typography>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Entrega prevista</Typography>
                   <Typography sx={{ fontSize: 15, fontWeight: 600 }}>
                     {formatDateBR(order.expected_delivery_date)}
                   </Typography>
@@ -476,8 +476,8 @@ export function OrderTrackingPage() {
 
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 4, mb: 1 }}>
           <Logo variant="mark" size={20} />
-          <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)' }}>
-            Rastreio via Maskats — gestão clara para empresas em movimento.
+          <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>
+            Rastreio via PegaTicket — gestão clara para empresas em movimento.
           </Typography>
         </Stack>
       </Box>

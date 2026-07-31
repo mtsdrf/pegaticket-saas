@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 /**
  * PWA instalável por tenant (roadmap Delivery, Fase 1). Simplificação
  * assumida: sem ícone em múltiplos tamanhos/maskable, sem cor de tema por
- * tenant (reaproveita a paleta Maskats) — logos não quadrados podem ficar
+ * tenant (reaproveita a paleta PegaTicket) — logos não quadrados podem ficar
  * com aparência ruim ao instalar, aceitável para esta fase. JSON cru
  * (NÃO envelopado em APIResponse::success()) — isso é um manifest, não uma
  * resposta de API.

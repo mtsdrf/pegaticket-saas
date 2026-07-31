@@ -1,6 +1,6 @@
 # Mapa Definitivo de Telas do Frontend
 
-Baseado nas rotas reais de [web/src/routes/AppRoutes.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/routes/AppRoutes.tsx) e nos blocos dinâmicos de [web/src/pages/Settings/blocks/registry.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/blocks/registry.tsx).
+Baseado nas rotas reais de [web/src/routes/AppRoutes.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/routes/AppRoutes.tsx) e nos blocos dinâmicos de [web/src/pages/Settings/blocks/registry.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/blocks/registry.tsx).
 
 ## Resumo
 

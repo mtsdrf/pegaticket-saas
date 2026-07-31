@@ -25,7 +25,7 @@ export function ServerGridLoadingOverlay() {
                 key={cellIndex}
                 variant="rounded"
                 height={14}
-                sx={{ width, borderRadius: 'var(--mk-radius-sm)' }}
+                sx={{ width, borderRadius: 'var(--pt-radius-sm)' }}
               />
             ))}
           </Stack>

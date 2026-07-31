@@ -125,7 +125,7 @@ export function AuditLogListPage() {
               rowIdField="uuid"
               exportFileName="auditoria"
               emptyState={{
-                icon: <HistoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <HistoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum registro de auditoria',
                 description: 'Ainda não há alterações registradas no sistema.',
               }}
@@ -140,7 +140,7 @@ export function AuditLogListPage() {
           {detailTarget && (
             <Stack spacing={2}>
               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-                <Typography variant="body2" sx={{ color: 'var(--mk-muted)' }}>
+                <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
                   {formatDateTimeBR(detailTarget.created_at)} · {detailTarget.user_name ?? 'Sistema'} ·{' '}
                   {EVENT_LABELS_PT[detailTarget.event] ?? detailTarget.event} · {shortAuditableType(detailTarget.auditable_type)}
                 </Typography>

@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { STORAGE_KEYS } from '../constants/storage'
 import { ApiRequestError, type ApiError } from '../types/api'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.maskats.com/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com/api/v1'
 
 /**
  * Instância axios DEDICADA ao portal do cliente final (`FinalCustomer`) —

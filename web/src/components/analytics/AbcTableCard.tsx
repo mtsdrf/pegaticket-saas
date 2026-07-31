@@ -29,9 +29,9 @@ function AbcClassChip({ curveClass }: { curveClass: AbcClass }) {
         minWidth: 32,
         fontSize: 11.5,
         fontWeight: 700,
-        color: `color-mix(in srgb, var(--mk-primary) ${mix}%, var(--mk-muted))`,
-        bgcolor: `color-mix(in srgb, var(--mk-primary) ${mix * 0.14}%, transparent)`,
-        border: `1px solid color-mix(in srgb, var(--mk-primary) ${mix * 0.35}%, transparent)`,
+        color: `color-mix(in srgb, var(--pt-primary) ${mix}%, var(--pt-muted))`,
+        bgcolor: `color-mix(in srgb, var(--pt-primary) ${mix * 0.14}%, transparent)`,
+        border: `1px solid color-mix(in srgb, var(--pt-primary) ${mix * 0.35}%, transparent)`,
       }}
     />
   )
@@ -51,16 +51,16 @@ export function AbcTableCard({ title, subtitle, items, isLoading, emptyTitle, em
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
     >
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>{title}</Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>{subtitle}</Typography>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>{title}</Typography>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>{subtitle}</Typography>
 
       {isLoading ? (
         <Stack spacing={1}>
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} variant="rounded" height={38} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+            <Skeleton key={index} variant="rounded" height={38} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
           ))}
         </Stack>
       ) : !items || items.length === 0 ? (
@@ -73,10 +73,10 @@ export function AbcTableCard({ title, subtitle, items, isLoading, emptyTitle, em
             justifyContent: 'center',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
           <Typography sx={{ fontSize: 13.5 }}>{emptyDescription}</Typography>
         </Box>
       ) : (
@@ -88,21 +88,21 @@ export function AbcTableCard({ title, subtitle, items, isLoading, emptyTitle, em
             stickyHeader
             sx={{
               minWidth: 520,
-              '& td, & th': { borderColor: 'var(--mk-border)' },
-              '& th': { bgcolor: 'var(--mk-surface)' },
+              '& td, & th': { borderColor: 'var(--pt-border)' },
+              '& th': { bgcolor: 'var(--pt-surface)' },
             }}
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Nome</TableCell>
-                <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Classe</TableCell>
-                <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+                <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Nome</TableCell>
+                <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Classe</TableCell>
+                <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                   Receita
                 </TableCell>
-                <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+                <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                   Participação
                 </TableCell>
-                <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+                <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                   Acumulado
                 </TableCell>
               </TableRow>
@@ -110,17 +110,17 @@ export function AbcTableCard({ title, subtitle, items, isLoading, emptyTitle, em
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={`${item.name}-${index}`} hover>
-                  <TableCell sx={{ color: 'var(--mk-text)', fontWeight: 500 }}>{item.name}</TableCell>
+                  <TableCell sx={{ color: 'var(--pt-text)', fontWeight: 500 }}>{item.name}</TableCell>
                   <TableCell>
                     <AbcClassChip curveClass={item.curve_class} />
                   </TableCell>
-                  <TableCell align="right" sx={{ color: 'var(--mk-text)', fontVariantNumeric: 'tabular-nums' }}>
+                  <TableCell align="right" sx={{ color: 'var(--pt-text)', fontVariantNumeric: 'tabular-nums' }}>
                     {formatCurrency(item.revenue)}
                   </TableCell>
-                  <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                  <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontVariantNumeric: 'tabular-nums' }}>
                     {formatPercentage(item.participation_percentage)}
                   </TableCell>
-                  <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                  <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontVariantNumeric: 'tabular-nums' }}>
                     {formatPercentage(item.cumulative_percentage)}
                   </TableCell>
                 </TableRow>

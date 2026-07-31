@@ -3,21 +3,21 @@
 Guia completo pra deixar `.github/workflows/deploy.yml` funcionando de ponta a ponta. Assume: instalação **nova**, banco de produção **vazio** (primeira vez subindo esse ambiente de verdade).
 
 **Estrutura real do servidor (confirmada 2026-07-17)**:
-- API: subdomínio `api.maskats.com`, arquivos em `/home/u452434908/domains/maskats.com/public_html/api`, document root do subdomínio = `.../public_html/api/public` (confirmado apontando certo, com `/public` no fim).
-- Web: subdomínio `sistema.maskats.com`, arquivos em `/home/u452434908/domains/maskats.com/public_html/web`.
+- API: subdomínio `api.pegaticket.com`, arquivos em `/home/u452434908/domains/pegaticket.com/public_html/api`, document root do subdomínio = `.../public_html/api/public` (confirmado apontando certo, com `/public` no fim).
+- Web: subdomínio `sistema.pegaticket.com`, arquivos em `/home/u452434908/domains/pegaticket.com/public_html/web`.
 
 ## Fase 1 — Pastas e subdomínios no hPanel
 
 1. Via SSH (ou File Manager), criar as duas pastas base:
    ```bash
-   mkdir -p /home/u452434908/domains/maskats.com/public_html/api/public
-   mkdir -p /home/u452434908/domains/maskats.com/public_html/web
+   mkdir -p /home/u452434908/domains/pegaticket.com/public_html/api/public
+   mkdir -p /home/u452434908/domains/pegaticket.com/public_html/web
    ```
    (o `api/public` precisa existir já pra você conseguir apontar o document root pra ele no passo 2 — fica vazio até o primeiro deploy popular).
 
 2. No hPanel → **Domínios** → **Subdomínios**, criar dois:
-   - `api.maskats.com` — **Document Root**: `/home/u452434908/domains/maskats.com/public_html/api/public`
-   - `sistema.maskats.com` — **Document Root**: `/home/u452434908/domains/maskats.com/public_html/web`
+   - `api.pegaticket.com` — **Document Root**: `/home/u452434908/domains/pegaticket.com/public_html/api/public`
+   - `sistema.pegaticket.com` — **Document Root**: `/home/u452434908/domains/pegaticket.com/public_html/web`
 
    ⚠️ **Crítico**: o document root da API tem que ser `api/public`, nunca `api/` sozinho — senão `.env`, `vendor/` e o código-fonte do Laravel ficam acessíveis publicamente pela internet.
 
@@ -26,21 +26,21 @@ Guia completo pra deixar `.github/workflows/deploy.yml` funcionando de ponta a p
 No **seu computador** (não no servidor):
 
 ```bash
-ssh-keygen -t ed25519 -C "deploy-maskats-github-actions" -f ~/.ssh/deploy_maskats -N ""
+ssh-keygen -t ed25519 -C "deploy-pegaticket-github-actions" -f ~/.ssh/deploy_pegaticket -N ""
 ```
 (`-N ""` = sem senha na chave — obrigatório, o GitHub Actions não tem como digitar senha interativamente).
 
-Isso gera dois arquivos: `~/.ssh/deploy_maskats` (privada — **nunca compartilhar, nunca colar no chat comigo**) e `~/.ssh/deploy_maskats.pub` (pública).
+Isso gera dois arquivos: `~/.ssh/deploy_pegaticket` (privada — **nunca compartilhar, nunca colar no chat comigo**) e `~/.ssh/deploy_pegaticket.pub` (pública).
 
 Copiar a chave pública pro servidor:
 ```bash
-ssh-copy-id -i ~/.ssh/deploy_maskats.pub -p <PORTA_SSH> <usuario_ssh>@<host_ssh>
+ssh-copy-id -i ~/.ssh/deploy_pegaticket.pub -p <PORTA_SSH> <usuario_ssh>@<host_ssh>
 ```
-Se `ssh-copy-id` não estiver disponível, alternativa manual: abrir `~/.ssh/deploy_maskats.pub`, copiar o conteúdo (uma linha só, começa com `ssh-ed25519`), colar no servidor no fim de `~/.ssh/authorized_keys` (criar o arquivo/pasta se não existir, `chmod 700 ~/.ssh` e `chmod 600 ~/.ssh/authorized_keys`).
+Se `ssh-copy-id` não estiver disponível, alternativa manual: abrir `~/.ssh/deploy_pegaticket.pub`, copiar o conteúdo (uma linha só, começa com `ssh-ed25519`), colar no servidor no fim de `~/.ssh/authorized_keys` (criar o arquivo/pasta se não existir, `chmod 700 ~/.ssh` e `chmod 600 ~/.ssh/authorized_keys`).
 
 Testar:
 ```bash
-ssh -i ~/.ssh/deploy_maskats -p <PORTA_SSH> <usuario_ssh>@<host_ssh> "echo conectou"
+ssh -i ~/.ssh/deploy_pegaticket -p <PORTA_SSH> <usuario_ssh>@<host_ssh> "echo conectou"
 ```
 Só avance se aparecer `conectou` sem pedir senha.
 
@@ -65,13 +65,13 @@ No repositório → **Settings** → **Secrets and variables** → **Actions** �
 
 | Nome exato | Valor |
 |---|---|
-| `DEPLOY_SSH_PRIVATE_KEY` | `cat ~/.ssh/deploy_maskats` — cole o conteúdo INTEIRO, incluindo as linhas `-----BEGIN...-----`/`-----END...-----` |
+| `DEPLOY_SSH_PRIVATE_KEY` | `cat ~/.ssh/deploy_pegaticket` — cole o conteúdo INTEIRO, incluindo as linhas `-----BEGIN...-----`/`-----END...-----` |
 | `DEPLOY_SSH_HOST` | Host SSH (hPanel → Acesso SSH) |
 | `DEPLOY_SSH_PORT` | Porta SSH (hPanel → Acesso SSH, geralmente não é a 22 na Hostinger) |
 | `DEPLOY_SSH_USER` | Usuário SSH (hPanel → Acesso SSH) |
-| `DEPLOY_API_PATH` | `/home/u452434908/domains/maskats.com/public_html/api` |
-| `DEPLOY_WEB_PATH` | `/home/u452434908/domains/maskats.com/public_html/web` |
-| `VITE_API_BASE_URL` | `https://api.maskats.com/api/v1` |
+| `DEPLOY_API_PATH` | `/home/u452434908/domains/pegaticket.com/public_html/api` |
+| `DEPLOY_WEB_PATH` | `/home/u452434908/domains/pegaticket.com/public_html/web` |
+| `VITE_API_BASE_URL` | `https://api.pegaticket.com/api/v1` |
 | `VITE_VAPID_PUBLIC_KEY` | O `PUBLIC` gerado na Fase 3 |
 
 ## Fase 5 — Primeiro deploy (parcial, esperado falhar no último passo)
@@ -84,22 +84,22 @@ Isso builda e envia `api/` e `web/dist/` pro servidor via rsync — mas o **últ
 
 Via SSH no servidor:
 ```bash
-cd /home/u452434908/domains/maskats.com/public_html/api
+cd /home/u452434908/domains/pegaticket.com/public_html/api
 cp .env.example .env
 nano .env   # ou vi/editor de sua preferência
 ```
 
 Preencher no `.env`:
 ```env
-APP_NAME=Maskats
+APP_NAME=PegaTicket
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://api.maskats.com
+APP_URL=https://api.pegaticket.com
 
 APP_LOCALE=pt_BR
 APP_FALLBACK_LOCALE=pt_BR
 
-CORS_ALLOWED_ORIGINS=https://sistema.maskats.com
+CORS_ALLOWED_ORIGINS=https://sistema.pegaticket.com
 
 DB_CONNECTION=mysql
 DB_HOST=...
@@ -114,7 +114,7 @@ QUEUE_CONNECTION=database
 
 VAPID_PUBLIC_KEY=<o PUBLIC da Fase 3>
 VAPID_PRIVATE_KEY=<o PRIVATE da Fase 3>
-VAPID_SUBJECT=mailto:contato@maskats.com
+VAPID_SUBJECT=mailto:contato@pegaticket.com
 ```
 (`MAIL_*` também, se for usar e-mail real — ver `api/.env.example` completo.)
 
@@ -142,10 +142,10 @@ Disparar o workflow de novo (Actions → Run workflow, ou só dar um push em `ma
 ## Fase 8 — Validar
 
 Checklist completo já existe em `docs/hostinger-shared-deploy.md` ("Checklist de validação pós-publicação") — resumo:
-- `curl -I https://api.maskats.com/up` → 200
-- `curl -I https://api.maskats.com/api/v1/auth/signup/plans` → 200
-- `curl -I https://api.maskats.com/.env` → deve dar 404 (confirma que o document root está mesmo em `public/`, não expondo o `.env`)
-- Abrir `https://sistema.maskats.com` no navegador, validar login, sem erro de CORS no console
-- `curl -I https://sistema.maskats.com` → 200 (confirma que o `.htaccess` com `Header set` não deu 500 nesse domínio — ver achado documentado em `architecture-decisions.md` sobre o mesmo tipo de diretiva ter quebrado o subdomínio da API antes)
+- `curl -I https://api.pegaticket.com/up` → 200
+- `curl -I https://api.pegaticket.com/api/v1/auth/signup/plans` → 200
+- `curl -I https://api.pegaticket.com/.env` → deve dar 404 (confirma que o document root está mesmo em `public/`, não expondo o `.env`)
+- Abrir `https://sistema.pegaticket.com` no navegador, validar login, sem erro de CORS no console
+- `curl -I https://sistema.pegaticket.com` → 200 (confirma que o `.htaccess` com `Header set` não deu 500 nesse domínio — ver achado documentado em `architecture-decisions.md` sobre o mesmo tipo de diretiva ter quebrado o subdomínio da API antes)
 
 Dali em diante, todo push em `main` builda e publica sozinho.

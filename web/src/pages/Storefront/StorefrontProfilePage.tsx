@@ -45,7 +45,7 @@ const SECTION_SX = {
 function SectionTitle({ icon, children }: { icon: ReactElement; children: string }) {
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
-      <Box sx={{ color: 'var(--mk-primary)', display: 'flex' }}>{icon}</Box>
+      <Box sx={{ color: 'var(--pt-primary)', display: 'flex' }}>{icon}</Box>
       <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{children}</Typography>
     </Stack>
   )
@@ -54,9 +54,9 @@ function SectionTitle({ icon, children }: { icon: ReactElement; children: string
 function ProfileSkeleton() {
   return (
     <Stack spacing={2}>
-      <Skeleton variant="rounded" height={72} sx={{ borderRadius: 'var(--mk-radius-lg)' }} />
-      <Skeleton variant="rounded" height={340} sx={{ borderRadius: 'var(--mk-radius-lg)' }} />
-      <Skeleton variant="rounded" height={220} sx={{ borderRadius: 'var(--mk-radius-lg)' }} />
+      <Skeleton variant="rounded" height={72} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
+      <Skeleton variant="rounded" height={340} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
+      <Skeleton variant="rounded" height={220} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
     </Stack>
   )
 }
@@ -71,7 +71,7 @@ function StoreHeader({ tenant }: { tenant: StorefrontTenant }) {
         variant="rounded"
         sx={{ ...SOFT_PANEL_SX, width: 52, height: 52 }}
       >
-        <StorefrontOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+        <StorefrontOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
       </Avatar>
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontSize: { xs: 19, sm: 22 }, fontWeight: 700, wordBreak: 'break-word', lineHeight: 1.2 }}>
@@ -84,7 +84,7 @@ function StoreHeader({ tenant }: { tenant: StorefrontTenant }) {
             sx={{
               fontWeight: 700,
               fontSize: 12,
-              color: isOpen ? 'var(--mk-success, #1b7a3d)' : 'var(--mk-warning, #a15c00)',
+              color: isOpen ? 'var(--pt-success, #1b7a3d)' : 'var(--pt-warning, #a15c00)',
               bgcolor: isOpen
                 ? 'color-mix(in srgb, #1b7a3d 14%, transparent)'
                 : 'color-mix(in srgb, #a15c00 14%, transparent)',
@@ -92,11 +92,11 @@ function StoreHeader({ tenant }: { tenant: StorefrontTenant }) {
           />
           {tenant.ratings_count > 0 && tenant.average_rating !== null && (
             <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
-              <StarIcon sx={{ fontSize: 15, color: 'var(--mk-warning, #a15c00)' }} />
+              <StarIcon sx={{ fontSize: 15, color: 'var(--pt-warning, #a15c00)' }} />
               <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
                 {tenant.average_rating.toFixed(1).replace('.', ',')}
               </Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>({tenant.ratings_count})</Typography>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>({tenant.ratings_count})</Typography>
             </Stack>
           )}
         </Stack>
@@ -119,11 +119,11 @@ function LocationSection({ tenant }: { tenant: StorefrontTenant }) {
       )}
 
       {tenant.address ? (
-        <Typography sx={{ fontSize: 14, color: 'var(--mk-text)', wordBreak: 'break-word' }}>
+        <Typography sx={{ fontSize: 14, color: 'var(--pt-text)', wordBreak: 'break-word' }}>
           {tenant.address}
         </Typography>
       ) : (
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
           Esta loja ainda não informou o endereço.
         </Typography>
       )}
@@ -137,7 +137,7 @@ function BusinessHoursSection({ tenant }: { tenant: StorefrontTenant }) {
   return (
     <Paper elevation={0} sx={SECTION_SX}>
       <SectionTitle icon={<ScheduleOutlinedIcon fontSize="small" />}>Horário de funcionamento</SectionTitle>
-      <Stack divider={<Box sx={{ borderBottom: '1px solid var(--mk-border)' }} />}>
+      <Stack divider={<Box sx={{ borderBottom: '1px solid var(--pt-border)' }} />}>
         {WEEKDAY_ORDER.map((day) => {
           const shifts = tenant.business_hours.filter((entry) => entry.day_of_week === day)
           const line = formatBusinessHoursLine(shifts)
@@ -148,10 +148,10 @@ function BusinessHoursSection({ tenant }: { tenant: StorefrontTenant }) {
               direction="row"
               sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1.5, py: 1 }}
             >
-              <Typography sx={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: 'var(--mk-text)' }}>
+              <Typography sx={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: 'var(--pt-text)' }}>
                 {WEEKDAY_LABELS[day]}
                 {isToday && (
-                  <Box component="span" sx={{ fontSize: 11.5, color: 'var(--mk-primary)', ml: 0.75, fontWeight: 700 }}>
+                  <Box component="span" sx={{ fontSize: 11.5, color: 'var(--pt-primary)', ml: 0.75, fontWeight: 700 }}>
                     hoje
                   </Box>
                 )}
@@ -160,7 +160,7 @@ function BusinessHoursSection({ tenant }: { tenant: StorefrontTenant }) {
                 sx={{
                   fontSize: 13.5,
                   fontWeight: isToday ? 600 : 500,
-                  color: line === 'Fechado' ? 'var(--mk-muted)' : 'var(--mk-text)',
+                  color: line === 'Fechado' ? 'var(--pt-muted)' : 'var(--pt-text)',
                   textAlign: 'right',
                 }}
               >
@@ -191,13 +191,13 @@ function PaymentMethodsSection({ tenant }: { tenant: StorefrontTenant }) {
                 fontWeight: 600,
                 fontSize: 13,
                 ...SOFT_PANEL_SX,
-                '& .MuiChip-icon': { color: 'var(--mk-primary)' },
+                '& .MuiChip-icon': { color: 'var(--pt-primary)' },
               }}
             />
           ))}
         </Stack>
       ) : (
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
           Esta loja ainda não informou as formas de pagamento aceitas.
         </Typography>
       )}
@@ -231,7 +231,7 @@ function ContactSection({ tenant }: { tenant: StorefrontTenant }) {
           ))}
         </Stack>
       ) : (
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
           Esta empresa ainda não informou canais de contato públicos.
         </Typography>
       )}
@@ -273,7 +273,7 @@ export function StorefrontProfilePage() {
       sx={{
         minHeight: '100dvh',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         pb: 4,
       }}
     >
@@ -282,7 +282,7 @@ export function StorefrontProfilePage() {
 
         {!isLoading && error && (
           <EmptyState
-            icon={<SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+            icon={<SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
             title="Loja indisponível"
             description={error}
           />

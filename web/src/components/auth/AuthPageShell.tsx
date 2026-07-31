@@ -31,8 +31,8 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
           justifyContent: 'center',
           p: { xs: 2, sm: 3, lg: 4 },
           background: {
-            xs: 'var(--mk-page-background-soft)',
-            md: 'var(--mk-page-background-desktop)',
+            xs: 'var(--pt-page-background-soft)',
+            md: 'var(--pt-page-background-desktop)',
           },
         }}
       >
@@ -47,7 +47,7 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
             left: '-5rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--mk-primary) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-primary) 35%, transparent)',
           }}
         />
         <Box
@@ -61,7 +61,7 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
             right: '-3rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--mk-accent) 30%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-accent) 30%, transparent)',
           }}
         />
         <Box
@@ -70,7 +70,7 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
             position: 'absolute',
             inset: 0,
             opacity: 0.4,
-            backgroundImage: 'var(--mk-decorative-overlay)',
+            backgroundImage: 'var(--pt-decorative-overlay)',
           }}
         />
 

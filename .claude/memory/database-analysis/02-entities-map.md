@@ -43,7 +43,7 @@ Observações: 1 usuário pertence a exatamente 1 estabelecimento (`estabelecime
 Descrição: cliente do estabelecimento. Tipo: Entidade principal.
 FKs: `estabelecimento_id`, `endereco_id` (belongsTo `endereco`), `dia_ideal_id`/`periodo_ideal_id` (nullable, belongsTo).
 Campos próprios: `numero`, `complemento` (ficam no **cliente**, não no `endereco` — permite vários clientes compartilharem o mesmo logradouro com números diferentes), `telefone_principal`/`telefone_secundario`, `observacao`, `confianca` (tinyint, default 1 — provável rating/flag de confiança para venda a prazo).
-Observações: `dia_ideal`/`periodo_ideal` + `confianca` + módulo de parcelas em `pedido` sugerem fortemente um negócio de **venda porta-a-porta com crediário** (compatível com o nome "Maskats" ~ "mascate" = vendedor ambulante/porta-a-porta). *Inferência de alta confiança, não confirmada.*
+Observações: `dia_ideal`/`periodo_ideal` + `confianca` + módulo de parcelas em `pedido` sugerem fortemente um negócio de **venda porta-a-porta com crediário** (compatível com o nome "PegaTicket" ~ "mascate" = vendedor ambulante/porta-a-porta). *Inferência de alta confiança, não confirmada.*
 
 ### `produto`
 Descrição: item do catálogo. Tipo: Entidade principal.

@@ -65,7 +65,7 @@ function LoadingSkeleton() {
   return (
     <Stack spacing={1.5}>
       {[0, 1, 2].map((index) => (
-        <Skeleton key={index} variant="rounded" height={84} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
+        <Skeleton key={index} variant="rounded" height={84} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
       ))}
     </Stack>
   )
@@ -81,9 +81,9 @@ function EmptyState() {
         ...ELEVATED_SURFACE_SX,
       }}
     >
-      <Inventory2OutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)', mb: 1.5 }} />
+      <Inventory2OutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
       <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 0.75 }}>Você ainda não tem pedidos vinculados</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
         Abra o link de rastreio de um pedido e toque em "Ver todos os meus pedidos" para vinculá-lo à sua conta.
       </Typography>
     </Paper>
@@ -122,7 +122,7 @@ function OrderCard({
           textDecoration: 'none',
           color: 'inherit',
           transition: 'background-color 0.15s ease',
-          '&:hover': { background: 'var(--mk-surface-soft)' },
+          '&:hover': { background: 'var(--pt-surface-soft)' },
         }}
       >
         <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -147,11 +147,11 @@ function OrderCard({
             >
               {status.label}
             </Box>
-            <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>{formatDateFromDateTimeBR(order.created_at)}</Typography>
+            <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{formatDateFromDateTimeBR(order.created_at)}</Typography>
           </Stack>
         </Box>
 
-        <ChevronRightIcon sx={{ color: 'var(--mk-muted)', flexShrink: 0 }} />
+        <ChevronRightIcon sx={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
       </Stack>
 
       <Divider />
@@ -326,7 +326,7 @@ function ReorderDialog({ order, onClose }: { order: PortalOrderSummary | null; o
         {isLoading && (
           <Stack spacing={1}>
             {[0, 1, 2].map((index) => (
-              <Skeleton key={index} variant="rounded" height={48} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+              <Skeleton key={index} variant="rounded" height={48} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
             ))}
           </Stack>
         )}
@@ -348,7 +348,7 @@ function ReorderDialog({ order, onClose }: { order: PortalOrderSummary | null; o
             )}
 
             {availableItems.length === 0 ? (
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                 Nenhum item deste pedido está disponível no momento.
               </Typography>
             ) : (

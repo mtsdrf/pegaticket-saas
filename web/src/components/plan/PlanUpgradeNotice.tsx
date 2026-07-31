@@ -19,7 +19,7 @@ export function PlanUpgradeNotice({ featureLabel, action }: PlanUpgradeNoticePro
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{
         p: { xs: 3, sm: 5 },
         ...ELEVATED_SURFACE_SX,
@@ -38,18 +38,18 @@ export function PlanUpgradeNotice({ featureLabel, action }: PlanUpgradeNoticePro
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'color-mix(in srgb, var(--mk-accent) 14%, transparent)',
-          color: 'var(--mk-accent)',
+          bgcolor: 'color-mix(in srgb, var(--pt-accent) 14%, transparent)',
+          color: 'var(--pt-accent)',
         }}
       >
         <WorkspacePremiumOutlinedIcon sx={{ fontSize: 32 }} />
       </Box>
 
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: { xs: 17, sm: 19 }, color: 'var(--mk-text)' }}>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: { xs: 17, sm: 19 }, color: 'var(--pt-text)' }}>
         Este recurso não está incluído no seu plano
       </Typography>
 
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', maxWidth: 480 }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', maxWidth: 480 }}>
         {featureLabel
           ? `O plano atual da sua empresa não libera ${featureLabel}. `
           : 'O plano atual da sua empresa não libera esta funcionalidade. '}

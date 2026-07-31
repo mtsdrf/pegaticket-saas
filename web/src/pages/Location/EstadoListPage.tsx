@@ -79,7 +79,7 @@ export function EstadoListPage() {
                   size="small"
                   aria-label={`Editar ${row.name}`}
                   onClick={() => handleEdit(row)}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
                 >
                   <EditOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -94,7 +94,7 @@ export function EstadoListPage() {
                     setDeleteError(null)
                     setDeleteTarget(row)
                   }}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                 >
                   <DeleteOutlineIcon fontSize="small" />
                 </IconButton>
@@ -131,7 +131,7 @@ export function EstadoListPage() {
                 gridApiRef.current = api
               }}
               emptyState={{
-                icon: <MapOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <MapOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum estado cadastrado ainda',
                 description: 'Cadastre estados para usar nos endereços de clientes.',
                 action: can(ACCESS.estadosCreate) ? (

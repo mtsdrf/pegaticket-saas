@@ -1,6 +1,6 @@
-# Maskats — Gap Analysis: dores de mercado (delivery/PDV/ERP) × produto real
+# PegaTicket — Gap Analysis: dores de mercado (delivery/PDV/ERP) × produto real
 
-> Cruza a pesquisa de mercado do dono (20 categorias de dor, reclamações públicas/reviews/guias do setor) com o estado **real e verificado** do Maskats em 2026-07-22. Fonte factual: `docs/apresentacao/detalhamento-funcionalidades.md`, `.claude/memory/architecture-decisions.md` (Ondas 1/2 do roadmap nativo, PDV Fase 1, Balcão Fases 1+2, auditoria de segurança 2026-07-22) e os 3 roadmaps de 2026-07-20/21. Nenhuma funcionalidade citada como "já existe" foi inferida pelo nome — só o que está confirmado implementado e testado.
+> Cruza a pesquisa de mercado do dono (20 categorias de dor, reclamações públicas/reviews/guias do setor) com o estado **real e verificado** do PegaTicket em 2026-07-22. Fonte factual: `docs/apresentacao/detalhamento-funcionalidades.md`, `.claude/memory/architecture-decisions.md` (Ondas 1/2 do roadmap nativo, PDV Fase 1, Balcão Fases 1+2, auditoria de segurança 2026-07-22) e os 3 roadmaps de 2026-07-20/21. Nenhuma funcionalidade citada como "já existe" foi inferida pelo nome — só o que está confirmado implementado e testado.
 >
 > Convenção de esforço: **P** = dias · **M** = 1–2 semanas · **G** = 3+ semanas · **GG** = mês(es)/orçamento real. Itens que dependem de contratação paga ou decisão de investimento (PSP, operadora fiscal, servidor dedicado, app nativo) estão marcados **[decisão do dono]** — não foram decididos aqui, só apresentados com trade-off.
 
@@ -61,7 +61,7 @@
 
 ## 5. Módulos não conversam de verdade
 
-**Já resolve:** este é hoje um dos pontos **mais fortes** do Maskats — venda baixa estoque de fato (reserva automática + movimentação com histórico, não "some" registro); cancelamento de pedido pago **não** apaga pagamento, gera `Refund` corretamente (Onda 2A, testado); fechamento de caixa do PDV concilia sangria+suprimento+venda por forma de pagamento com teste dedicado (`PdvTest`, split soma bate/não bate); fechamento de comanda do Balcão idem.
+**Já resolve:** este é hoje um dos pontos **mais fortes** do PegaTicket — venda baixa estoque de fato (reserva automática + movimentação com histórico, não "some" registro); cancelamento de pedido pago **não** apaga pagamento, gera `Refund` corretamente (Onda 2A, testado); fechamento de caixa do PDV concilia sangria+suprimento+venda por forma de pagamento com teste dedicado (`PdvTest`, split soma bate/não bate); fechamento de comanda do Balcão idem.
 
 **Falta:** o motor de cálculo automático de imposto sobre pedido ainda não existe (`tax_rules` é só cadastro versionado, sem aplicação automática no pedido); CMV real por produto (ver item 6).
 
@@ -162,7 +162,7 @@
 
 **Recomendação:**
 - **Este é o maior risco de todo o roadmap** (confirmado nos 3 documentos de roadmap) — não subestimar nem prometer prazo curto no discurso de venda.
-- **Caminho recomendado quando o dono decidir investir:** começar pela NFS-e da própria Maskats (baixo volume, justifica serviço pago por nota) antes de NF-e/NFC-e dos tenants (alto volume, mais barato migrar para biblioteca nativa `sped-nfe` só quando o volume justificar).
+- **Caminho recomendado quando o dono decidir investir:** começar pela NFS-e da própria PegaTicket (baixo volume, justifica serviço pago por nota) antes de NF-e/NFC-e dos tenants (alto volume, mais barato migrar para biblioteca nativa `sped-nfe` só quando o volume justificar).
 - **[decisão do dono]** contratar serviço de emissão pago (Focus NFe/PlugNotas/NFe.io) vs. biblioteca nativa — trade-off é custo por nota/mensalidade vs. risco técnico de rodar SOAP/certificado A1 em hospedagem compartilhada (Hostinger pode não suportar bem `.pfx`/openssl — **requer validação de infra antes de decidir**).
 - Enquanto isso, o cadastro fiscal já pronto **é** discurso de venda válido: "sua empresa já está com o cadastro fiscal pronto, a emissão liga quando você decidir o app fiscal" — sem prometer emissão real hoje.
 
@@ -234,7 +234,7 @@
 
 **Já resolve:** exportação CSV/PDF já existe em várias listagens (clientes, pedidos); backup automatizado nativo (`backup:database`, mysqldump+gzip, retenção configurável) já implementado — reduz o medo de "perder tudo", ainda que não resolva "portar para outro sistema".
 
-**Falta:** backup sob demanda pelo próprio tenant (hoje o backup é operado pela Maskats, não auto-serviço do cliente); exportação completa/portátil de todos os dados do tenant (hoje é exportação parcial por tela, não um "exportar tudo" único); cópia do backup fora do servidor principal (confirmado como pendência real — hoje só fica no próprio storage).
+**Falta:** backup sob demanda pelo próprio tenant (hoje o backup é operado pela PegaTicket, não auto-serviço do cliente); exportação completa/portátil de todos os dados do tenant (hoje é exportação parcial por tela, não um "exportar tudo" único); cópia do backup fora do servidor principal (confirmado como pendência real — hoje só fica no próprio storage).
 
 **Recomendação:**
 - **Baixo esforço (M):** botão "exportar meus dados" que gera um pacote (CSV por entidade) sob demanda para o próprio tenant — reduz diretamente o medo relatado no mercado, sem exigir arquitetura nova (mesma lógica de exportação já usada em Clientes/Pedidos, generalizada).
@@ -254,7 +254,7 @@
 
 ---
 
-## Ranking final combinado (dor de mercado × esforço real no Maskats)
+## Ranking final combinado (dor de mercado × esforço real no PegaTicket)
 
 ### Ataque rápido (semanas, baixo esforço, já reaproveita dado/infra existente)
 1. **Endpoint `/health` + Sentry free tier + UptimeRobot** (item 1/2) — visibilidade de erro em produção, hoje inexistente.
@@ -293,7 +293,7 @@
 
 ## Discurso de venda (ancorado só no que já existe hoje)
 
-1. "No Maskats, quando você vende, o estoque baixa de verdade, o caixa fecha batendo e o cancelamento nunca some com um pagamento — cada movimentação fica registrada e auditada, sempre com motivo."
+1. "No PegaTicket, quando você vende, o estoque baixa de verdade, o caixa fecha batendo e o cancelamento nunca some com um pagamento — cada movimentação fica registrada e auditada, sempre com motivo."
 2. "Cada funcionário só vê e faz o que o seu perfil permite — configurável por tela, sem depender de mexer em código — e toda ação fica no histórico, com data, hora e responsável."
 3. "Seu preço, seu ciclo de cobrança e sua política de cancelamento são transparentes desde o primeiro dia: sem multa, com 7 dias de arrependimento e sem cobrança escondida depois que você já assinou."
 4. "Sua empresa já sai com o cadastro fiscal pronto — CNPJ, regime tributário, produtos com NCM/CFOP — para quando decidir ligar a emissão de nota, sem recomeçar do zero."

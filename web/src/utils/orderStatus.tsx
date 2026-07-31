@@ -28,10 +28,10 @@ export interface StatusInfo {
 }
 
 export const STATUS_TONE_COLORS: Record<StatusTone, { fg: string; bg: string }> = {
-  success: { fg: 'var(--mk-success)', bg: 'color-mix(in srgb, var(--mk-success) 14%, transparent)' },
-  warning: { fg: 'var(--mk-warning)', bg: 'color-mix(in srgb, var(--mk-warning) 16%, transparent)' },
-  info: { fg: 'var(--mk-info)', bg: 'color-mix(in srgb, var(--mk-info) 14%, transparent)' },
-  neutral: { fg: 'var(--mk-muted)', bg: 'color-mix(in srgb, var(--mk-muted) 14%, transparent)' },
+  success: { fg: 'var(--pt-success)', bg: 'color-mix(in srgb, var(--pt-success) 14%, transparent)' },
+  warning: { fg: 'var(--pt-warning)', bg: 'color-mix(in srgb, var(--pt-warning) 16%, transparent)' },
+  info: { fg: 'var(--pt-info)', bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)' },
+  neutral: { fg: 'var(--pt-muted)', bg: 'color-mix(in srgb, var(--pt-muted) 14%, transparent)' },
 }
 
 /**

@@ -39,14 +39,14 @@ class StorefrontCatalogTest extends TestCase
     #[Test]
     public function show_returns_tenant_info_when_plan_allows_storefront(): void
     {
-        $tenant = $this->createTenantWithStorefrontPlan(true, ['name' => 'Padaria Maskats']);
+        $tenant = $this->createTenantWithStorefrontPlan(true, ['name' => 'Padaria PegaTicket']);
 
         $response = $this->getJson('/api/v1/loja/' . $tenant->slug);
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.slug', $tenant->slug)
-            ->assertJsonPath('data.name', 'Padaria Maskats')
+            ->assertJsonPath('data.name', 'Padaria PegaTicket')
             ->assertJsonPath('data.logo_url', null);
     }
 

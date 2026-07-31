@@ -38,7 +38,7 @@ use Illuminate\Http\Request;
  * subscription_authorized_payment, a order é sempre reconsultada via
  * `GET /v1/orders/{id}` e o efeito decidido a partir do status real
  * retornado (getPayment()/reconcileOrderPayment). O ramo de ASSINATURA
- * (Maskats → tenant, Preapproval — roadmap Fase B item 1) é dirigido pelo
+ * (PegaTicket → tenant, Preapproval — roadmap Fase B item 1) é dirigido pelo
  * campo `type` da notificação (`subscription_authorized_payment` — cobrança
  * de ciclo aprovada/rejeitada), porque a cobrança recorrente do Preapproval
  * não passa por um Payment local pré-criado como no fluxo de pedido; o

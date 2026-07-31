@@ -12,7 +12,7 @@ interface StoredCartSession {
 }
 
 function sessionStorageKey(slug: string): string {
-  return `maskats.storefront_cart_session.${slug}`
+  return `pegaticket.storefront_cart_session.${slug}`
 }
 
 function generateSessionId(): string {

@@ -177,7 +177,7 @@ export function StorefrontOrderActionDialog({
                 {order?.client?.name ?? 'Pedido'}
               </Typography>
               {order && (
-                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                   {order.codigo} • {formatDateTimeBR(order.created_at)}
                 </Typography>
               )}
@@ -229,7 +229,7 @@ export function StorefrontOrderActionDialog({
                       <Typography sx={{ fontSize: 13.5, fontWeight: 600, wordBreak: 'break-word' }}>
                         {formatItemQuantity(item.quantity, item.product.unit)} × {item.product.name}
                       </Typography>
-                      <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
+                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
                     </Box>
                     <Typography sx={{ fontSize: 13.5, fontWeight: 600, flexShrink: 0 }}>{formatCurrency(item.line_total)}</Typography>
                   </Stack>
@@ -241,7 +241,7 @@ export function StorefrontOrderActionDialog({
               <Stack spacing={0.5}>
                 {order.client?.phone_primary && (
                   <Typography sx={{ fontSize: 13 }}>
-                    <Box component="span" sx={{ color: 'var(--mk-muted)' }}>
+                    <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Telefone:{' '}
                     </Box>
                     {order.client.phone_primary}
@@ -249,7 +249,7 @@ export function StorefrontOrderActionDialog({
                 )}
                 {address && (
                   <Typography sx={{ fontSize: 13, wordBreak: 'break-word' }}>
-                    <Box component="span" sx={{ color: 'var(--mk-muted)' }}>
+                    <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Endereço:{' '}
                     </Box>
                     {address}
@@ -257,7 +257,7 @@ export function StorefrontOrderActionDialog({
                 )}
                 {order.coupon_code && (
                   <Typography sx={{ fontSize: 13 }}>
-                    <Box component="span" sx={{ color: 'var(--mk-muted)' }}>
+                    <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Cupom:{' '}
                     </Box>
                     {order.coupon_code}
@@ -370,11 +370,11 @@ export function StorefrontOrderActionDialog({
                 <QRCodeSVG value={qrUrl} size={200} />
               </Box>
             )}
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textAlign: 'center' }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
               Aponte a câmera do celular para abrir a preparação do pedido — sem precisar de login.
             </Typography>
             {qrExpiresAt && (
-              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>Válido até {formatDateTimeBR(qrExpiresAt)}</Typography>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Válido até {formatDateTimeBR(qrExpiresAt)}</Typography>
             )}
           </Stack>
         </DialogContent>

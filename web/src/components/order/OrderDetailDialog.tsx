@@ -464,7 +464,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                           {item.product.name} • {formatItemQuantity(item.quantity, item.product.unit)} • {formatCurrency(item.line_total)}
                         </Typography>
                         {(item.options?.length ?? 0) > 0 && (
-                          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                             {(item.options ?? [])
                               .map((option) => `${option.product_option.group_name ?? 'Opções'}: ${option.product_option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
                               .join(' • ')}
@@ -566,7 +566,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                                 aria-label="Remover item"
                                 disabled={itemDrafts.length === 1}
                                 onClick={() => removeItemDraftRow(row.id)}
-                                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                                sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
                               </IconButton>
@@ -579,7 +579,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                                 {row.selectedOptions.length > 0 ? `Editar opcionais de ${row.product.name}` : `Selecionar opcionais de ${row.product.name}`}
                               </Button>
                               {row.selectedOptions.length > 0 && (
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mt: 0.5 }}>
+                                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5 }}>
                                   {row.selectedOptions
                                     .map((option) => `${option.group_name}: ${option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
                                     .join(' • ')}
@@ -648,7 +648,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: Math.abs(installmentsSum - selectedOrder.total_amount) > 0.005 ? 'var(--mk-warning)' : 'var(--mk-muted)',
+                        color: Math.abs(installmentsSum - selectedOrder.total_amount) > 0.005 ? 'var(--pt-warning)' : 'var(--pt-muted)',
                       }}
                     >
                       Parcelas somam {formatCurrency(installmentsSum)} de {formatCurrency(selectedOrder.total_amount)}
@@ -661,7 +661,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                           Parcela {installment.installment_number} • {formatCurrency(installment.amount)} • vence {formatDateBR(installment.due_date)}
                         </Typography>
                         {installment.is_paid ? (
-                          <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-success)' }}>Paga</Typography>
+                          <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-success)' }}>Paga</Typography>
                         ) : (
                           <Button
                             size="small"
@@ -777,13 +777,13 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
             {installmentEditorError && <Alert severity="error">{installmentEditorError}</Alert>}
 
             {paidInstallmentsSum > 0 && (
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                 Parcelas já pagas (não editáveis): {formatCurrency(paidInstallmentsSum)}
               </Typography>
             )}
 
             {installmentDrafts.length === 0 && (
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                 Nenhuma parcela pendente. Adicione uma abaixo.
               </Typography>
             )}
@@ -828,7 +828,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                     <IconButton
                       aria-label={`Remover parcela ${row.installment_number || index + 1}`}
                       onClick={() => removeDraftRow(index)}
-                      sx={{ minWidth: 44, minHeight: 44, alignSelf: 'flex-start', color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                      sx={{ minWidth: 44, minHeight: 44, alignSelf: 'flex-start', color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -841,7 +841,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
               Adicionar parcela
             </Button>
 
-            <Typography sx={{ fontSize: 13, fontWeight: 600, color: installmentEditorMismatch ? 'var(--mk-warning)' : 'var(--mk-success)' }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: installmentEditorMismatch ? 'var(--pt-warning)' : 'var(--pt-success)' }}>
               Total: {formatCurrency(installmentEditorTotal)} de {formatCurrency(selectedOrder?.total_amount ?? 0)}
               {installmentEditorMismatch && ' — a soma precisa bater exatamente com o total do pedido antes de salvar.'}
             </Typography>

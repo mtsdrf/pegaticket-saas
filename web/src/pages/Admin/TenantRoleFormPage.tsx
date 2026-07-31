@@ -160,7 +160,7 @@ export function TenantRoleFormPage() {
             }}
           />
           {!selected.orders?.length && discountLimitPercent.trim() && (
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-warning)', mt: 0.5 }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-warning)', mt: 0.5 }}>
               Este perfil não tem nenhuma permissão de "Pedidos" marcada abaixo — o limite só tem efeito se o
               perfil puder criar/editar pedidos.
             </Typography>

@@ -100,7 +100,7 @@ export function CrudListPage({
         sx={{
           ...SECTION_CARD_PADDING_SX,
           ...ELEVATED_SURFACE_SX,
-          background: 'var(--mk-surface-raised-bg)',
+          background: 'var(--pt-surface-raised-bg)',
         }}
       >
         {error && (

@@ -1,11 +1,11 @@
 # Auditoria Global de QA e Certificação para Produção
 
 Data: 2026-07-28  
-Escopo: monorepo `maskats-saas` (`api/` Laravel + `web/` React/Vite)
+Escopo: monorepo `pegaticket-saas` (`api/` Laravel + `web/` React/Vite)
 
 ## Objetivo
 
-Consolidar uma passagem global de QA com base na skill `testing.md`, mapear a cobertura atual, levantar cenários de certificação e definir o que ainda falta para considerar o Maskats pronto para produção com risco controlado.
+Consolidar uma passagem global de QA com base na skill `testing.md`, mapear a cobertura atual, levantar cenários de certificação e definir o que ainda falta para considerar o PegaTicket pronto para produção com risco controlado.
 
 ## Metodologia usada
 
@@ -66,7 +66,7 @@ Consolidar uma passagem global de QA com base na skill `testing.md`, mapear a co
 
 ## Resumo executivo
 
-O Maskats está em um estado bom de maturidade no backend e em um estado intermediário para avançado no frontend. A API possui cobertura automatizada extensa para regras críticas, multiempresa, permissões, assinatura, balcão, PDV, portal, fiscal parcial, marketplace e relatórios. O frontend saiu do estágio de validação apenas manual e agora já possui uma base E2E real em Playwright, incluindo shell, responsividade, governança de assinatura, pedidos manuais e smoke pós-deploy reaproveitável para URL publicada.
+O PegaTicket está em um estado bom de maturidade no backend e em um estado intermediário para avançado no frontend. A API possui cobertura automatizada extensa para regras críticas, multiempresa, permissões, assinatura, balcão, PDV, portal, fiscal parcial, marketplace e relatórios. O frontend saiu do estágio de validação apenas manual e agora já possui uma base E2E real em Playwright, incluindo shell, responsividade, governança de assinatura, pedidos manuais e smoke pós-deploy reaproveitável para URL publicada.
 
 Conclusão objetiva desta auditoria:
 

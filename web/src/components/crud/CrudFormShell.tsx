@@ -103,7 +103,7 @@ export function CrudFormShell({
                     flex: { xs: 1, sm: '0 0 auto' },
                     minHeight: UI_SIZE.control,
                     ...SOFT_PANEL_SX,
-                    color: 'var(--mk-text)',
+                    color: 'var(--pt-text)',
                     borderRadius: UI_RADIUS.md,
                   }}
                 >

@@ -1,7 +1,7 @@
 import axios, { type AxiosError } from 'axios'
 import { ApiRequestError, type ApiError } from '../types/api'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.maskats.com/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com/api/v1'
 
 /**
  * Instância axios 100% anônima — sem interceptor de auth/refresh/redirect

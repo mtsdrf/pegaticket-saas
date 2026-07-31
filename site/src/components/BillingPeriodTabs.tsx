@@ -22,9 +22,9 @@ export function BillingPeriodTabs({ period, onChange }: BillingPeriodTabsProps) 
       sx={{
         minHeight: 40,
         maxWidth: '100%',
-        border: '1px solid var(--mk-border)',
-        borderRadius: 'var(--mk-radius-md)',
-        backgroundColor: 'var(--mk-surface)',
+        border: '1px solid var(--pt-border)',
+        borderRadius: 'var(--pt-radius-md)',
+        backgroundColor: 'var(--pt-surface)',
         p: 0.5,
         '& .MuiTabs-indicator': { display: 'none' },
         '& .MuiTabs-flexContainer': { gap: 0.25 },
@@ -45,8 +45,8 @@ export function BillingPeriodTabs({ period, onChange }: BillingPeriodTabsProps) 
             px: { xs: 1.25, sm: 2 },
             fontSize: { xs: 12.5, sm: 14 },
             whiteSpace: 'nowrap',
-            borderRadius: 'var(--mk-radius-sm)',
-            '&.Mui-selected': { backgroundColor: 'var(--mk-primary)', color: '#FFFFFF' },
+            borderRadius: 'var(--pt-radius-sm)',
+            '&.Mui-selected': { backgroundColor: 'var(--pt-primary)', color: '#FFFFFF' },
           }}
         />
       ))}

@@ -72,7 +72,7 @@ export function GroupListPage() {
       <CrudListPage title="Grupos" subtitle="Organize permissões sistêmicas por grupos." createLabel="Novo grupo" canCreate={can(ACCESS.adminGroupsCreate)} onCreate={() => navigate('/admin/grupos/novo')} error={null} onRetry={() => undefined} isLoading={isLoading} isEmpty={false}>
         <Box sx={{ overflowX: 'auto' }}>
           <Box sx={{ minWidth: 720 }}>
-            <ServerDataGrid columns={columns} fetchPage={fetchPage} rowIdField="uuid" onGridReady={(api) => { gridApiRef.current = api }} emptyState={{ icon: <GroupOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />, title: 'Nenhum grupo cadastrado', description: 'Crie grupos para agrupar permissões sistêmicas.', action: can(ACCESS.adminGroupsCreate) ? <Button variant="contained" onClick={() => navigate('/admin/grupos/novo')}>Cadastrar primeiro grupo</Button> : undefined }} />
+            <ServerDataGrid columns={columns} fetchPage={fetchPage} rowIdField="uuid" onGridReady={(api) => { gridApiRef.current = api }} emptyState={{ icon: <GroupOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />, title: 'Nenhum grupo cadastrado', description: 'Crie grupos para agrupar permissões sistêmicas.', action: can(ACCESS.adminGroupsCreate) ? <Button variant="contained" onClick={() => navigate('/admin/grupos/novo')}>Cadastrar primeiro grupo</Button> : undefined }} />
           </Box>
         </Box>
       </CrudListPage>

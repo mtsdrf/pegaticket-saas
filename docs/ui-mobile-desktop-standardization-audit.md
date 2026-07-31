@@ -4,7 +4,7 @@ Data: 29 de julho de 2026
 
 ## Objetivo
 
-Definir um padrão visual único para o Maskats, cobrindo:
+Definir um padrão visual único para o PegaTicket, cobrindo:
 
 - tamanho de botões
 - tamanho e comportamento de inputs
@@ -21,32 +21,32 @@ Este documento é a base para a padronização visual do sistema inteiro.
 
 ### Agentes e referências internas consultadas
 
-- [.claude/agents/ui-ux-master.md](/home/mtsdrf/workspace/maskats-saas/.claude/agents/ui-ux-master.md)
-- [.claude/agents/frontend-react.md](/home/mtsdrf/workspace/maskats-saas/.claude/agents/frontend-react.md)
-- [.claude/memory/design-system.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/design-system.md)
-- [.claude/memory/ui-redesign-plan.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/ui-redesign-plan.md)
-- [.claude/memory/brand-guidelines.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/brand-guidelines.md)
-- [.claude/skills/maskats-theme-system.md](/home/mtsdrf/workspace/maskats-saas/.claude/skills/maskats-theme-system.md)
-- [.claude/skills/mui.md](/home/mtsdrf/workspace/maskats-saas/.claude/skills/mui.md)
-- [.claude/skills/react-frontend.md](/home/mtsdrf/workspace/maskats-saas/.claude/skills/react-frontend.md)
+- [.claude/agents/ui-ux-master.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/agents/ui-ux-master.md)
+- [.claude/agents/frontend-react.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/agents/frontend-react.md)
+- [.claude/memory/design-system.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/design-system.md)
+- [.claude/memory/ui-redesign-plan.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/ui-redesign-plan.md)
+- [.claude/memory/brand-guidelines.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/brand-guidelines.md)
+- [.claude/skills/pegaticket-theme-system.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/skills/pegaticket-theme-system.md)
+- [.claude/skills/mui.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/skills/mui.md)
+- [.claude/skills/react-frontend.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/skills/react-frontend.md)
 
 ### Base técnica inspecionada
 
 - tema e tokens:
-  - [web/src/theme/index.ts](/home/mtsdrf/workspace/maskats-saas/web/src/theme/index.ts)
-  - [web/src/index.css](/home/mtsdrf/workspace/maskats-saas/web/src/index.css)
-  - [web/src/styles/surfaces.ts](/home/mtsdrf/workspace/maskats-saas/web/src/styles/surfaces.ts)
-  - [web/src/styles/formFieldStyles.ts](/home/mtsdrf/workspace/maskats-saas/web/src/styles/formFieldStyles.ts)
+  - [web/src/theme/index.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/theme/index.ts)
+  - [web/src/index.css](/home/mtsdrf/workspace/pegaticket-saas/web/src/index.css)
+  - [web/src/styles/surfaces.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/styles/surfaces.ts)
+  - [web/src/styles/formFieldStyles.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/styles/formFieldStyles.ts)
 - shells e layouts:
-  - [web/src/layouts/AppLayout.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/layouts/AppLayout.tsx)
-  - [web/src/components/layout/PageHeader.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/layout/PageHeader.tsx)
-  - [web/src/components/crud/CrudListPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudListPage.tsx)
-  - [web/src/components/crud/CrudFormShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudFormShell.tsx)
-  - [web/src/components/crud/ServerDataGrid.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/ServerDataGrid.tsx)
-  - [web/src/pages/Settings/SettingsHubLayout.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/SettingsHubLayout.tsx)
-  - [web/src/components/auth/AuthPageShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/auth/AuthPageShell.tsx)
-  - [web/src/pages/Portal/PortalShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Portal/PortalShell.tsx)
-  - [web/src/pages/Accounting/AccountingShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Accounting/AccountingShell.tsx)
+  - [web/src/layouts/AppLayout.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/layouts/AppLayout.tsx)
+  - [web/src/components/layout/PageHeader.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/layout/PageHeader.tsx)
+  - [web/src/components/crud/CrudListPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudListPage.tsx)
+  - [web/src/components/crud/CrudFormShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudFormShell.tsx)
+  - [web/src/components/crud/ServerDataGrid.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/ServerDataGrid.tsx)
+  - [web/src/pages/Settings/SettingsHubLayout.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/SettingsHubLayout.tsx)
+  - [web/src/components/auth/AuthPageShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/auth/AuthPageShell.tsx)
+  - [web/src/pages/Portal/PortalShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Portal/PortalShell.tsx)
+  - [web/src/pages/Accounting/AccountingShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Accounting/AccountingShell.tsx)
 
 ## Inventário do sistema
 
@@ -75,8 +75,8 @@ Hoje o sistema já tem alguns padrões reais, mas ainda não totalmente consolid
 
 Base principal:
 
-- [CrudListPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudListPage.tsx)
-- [ServerDataGrid.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/ServerDataGrid.tsx)
+- [CrudListPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudListPage.tsx)
+- [ServerDataGrid.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/ServerDataGrid.tsx)
 
 Uso típico:
 
@@ -93,7 +93,7 @@ Uso típico:
 
 Base principal:
 
-- [CrudFormShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudFormShell.tsx)
+- [CrudFormShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudFormShell.tsx)
 
 Uso típico:
 
@@ -106,21 +106,21 @@ Uso típico:
 
 Base principal:
 
-- [SettingsHubLayout.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/SettingsHubLayout.tsx)
-- [SettingsIndexPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/SettingsIndexPage.tsx)
+- [SettingsHubLayout.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/SettingsHubLayout.tsx)
+- [SettingsIndexPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/SettingsIndexPage.tsx)
 
 ### 4. Autenticação pública em duas colunas
 
 Base principal:
 
-- [AuthPageShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/auth/AuthPageShell.tsx)
+- [AuthPageShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/auth/AuthPageShell.tsx)
 
 ### 5. Shells mobile-first de portal e contador
 
 Base principal:
 
-- [PortalShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Portal/PortalShell.tsx)
-- [AccountingShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Accounting/AccountingShell.tsx)
+- [PortalShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Portal/PortalShell.tsx)
+- [AccountingShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Accounting/AccountingShell.tsx)
 
 ### 6. Operação densa
 
@@ -138,7 +138,7 @@ Telas com comportamento mais livre e maior risco de divergência:
 
 ### O que já está bem encaminhado
 
-- existe um sistema de tokens `--mk-*`
+- existe um sistema de tokens `--pt-*`
 - a maioria dos inputs já converge para altura mínima `44px`
 - `CrudFormShell` e `CrudListPage` já ajudam a padronizar grande parte das telas
 - o `PageHeader` já centraliza título, subtítulo, breadcrumb e ação primária
@@ -150,11 +150,11 @@ Telas com comportamento mais livre e maior risco de divergência:
 
 Há conflito entre várias fontes:
 
-- [design-system.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/design-system.md) fala em uma escala de radius
-- [index.css](/home/mtsdrf/workspace/maskats-saas/web/src/index.css) hoje fixa `--mk-radius-sm/md/lg/xl` todos em `15px`
-- [theme/index.ts](/home/mtsdrf/workspace/maskats-saas/web/src/theme/index.ts) usa `shape.borderRadius = 12`
+- [design-system.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/design-system.md) fala em uma escala de radius
+- [index.css](/home/mtsdrf/workspace/pegaticket-saas/web/src/index.css) hoje fixa `--pt-radius-sm/md/lg/xl` todos em `15px`
+- [theme/index.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/theme/index.ts) usa `shape.borderRadius = 12`
 - `MuiCard` usa `20px`
-- [surfaces.ts](/home/mtsdrf/workspace/maskats-saas/web/src/styles/surfaces.ts) usa `16px`
+- [surfaces.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/styles/surfaces.ts) usa `16px`
 
 Resultado:
 
@@ -291,10 +291,10 @@ Regra:
 
 Padronizar uma única escala:
 
-- `--mk-radius-sm`: `8px`
-- `--mk-radius-md`: `12px`
-- `--mk-radius-lg`: `16px`
-- `--mk-radius-xl`: `20px`
+- `--pt-radius-sm`: `8px`
+- `--pt-radius-md`: `12px`
+- `--pt-radius-lg`: `16px`
+- `--pt-radius-xl`: `20px`
 
 Aplicação:
 
@@ -349,7 +349,7 @@ Resultado esperado:
 
 Base:
 
-- [PageHeader.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/layout/PageHeader.tsx)
+- [PageHeader.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/layout/PageHeader.tsx)
 
 Padrão:
 
@@ -368,7 +368,7 @@ Escala:
 
 Base:
 
-- [CrudListPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudListPage.tsx)
+- [CrudListPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudListPage.tsx)
 
 Padrão:
 
@@ -388,7 +388,7 @@ Escala:
 
 Base:
 
-- [CrudFormShell.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/components/crud/CrudFormShell.tsx)
+- [CrudFormShell.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/components/crud/CrudFormShell.tsx)
 
 Padrão:
 

@@ -9,7 +9,7 @@ import {
 } from 'chart.js'
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { maskatsTokens } from '../../theme'
+import { pegaticketTokens } from '../../theme'
 import type { OrdersByMonthPoint } from '../../types/report'
 import { formatMonthLabel } from '../../utils/format'
 
@@ -22,7 +22,7 @@ interface OrdersByMonthChartProps {
 
 export function OrdersByMonthChart({ data, isLoading }: OrdersByMonthChartProps) {
   const { palette } = useTheme()
-  const tokens = maskatsTokens[palette.mode]
+  const tokens = pegaticketTokens[palette.mode]
 
   const chartData = useMemo(() => {
     const points = data ?? []
@@ -44,7 +44,7 @@ export function OrdersByMonthChart({ data, isLoading }: OrdersByMonthChartProps)
   }, [data, tokens])
 
   if (isLoading) {
-    return <Skeleton variant="rounded" height={260} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+    return <Skeleton variant="rounded" height={260} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
   }
 
   if (!data || data.length === 0) {
@@ -57,12 +57,12 @@ export function OrdersByMonthChart({ data, isLoading }: OrdersByMonthChartProps)
           alignItems: 'center',
           justifyContent: 'center',
           gap: 0.5,
-          color: 'var(--mk-muted)',
+          color: 'var(--pt-muted)',
           textAlign: 'center',
           px: 2,
         }}
       >
-        <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>
+        <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
           Nenhum pedido neste período ainda
         </Typography>
         <Typography sx={{ fontSize: 13.5 }}>

@@ -21,7 +21,7 @@ curl -o actions-runner-linux-x64.tar.gz -L \
 
 tar xzf ./actions-runner-linux-x64.tar.gz
 
-./config.sh --url https://github.com/mtsdrf/maskats-saas --token <TOKEN_DA_TELA>
+./config.sh --url https://github.com/mtsdrf/pegaticket-saas --token <TOKEN_DA_TELA>
 ```
 
 Durante o `config.sh`, aceitar os valores padrão é suficiente (nome do runner, labels, pasta de trabalho) — não precisa customizar nada pra este uso.

@@ -30,7 +30,7 @@ class OrderDiscountLimitTest extends TestCase
     {
         parent::setUp();
 
-        Config::set('maskats.parcela_vencimento_dia', 10);
+        Config::set('pegaticket.parcela_vencimento_dia', 10);
 
         $this->setUpTenantScopedUser('discount-limit-user@test.com');
         $this->grantPermission('orders', 'create');

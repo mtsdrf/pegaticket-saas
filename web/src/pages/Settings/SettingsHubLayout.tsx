@@ -47,7 +47,7 @@ export function SettingsHubLayout() {
           width: 280,
           flexShrink: 0,
           ...ELEVATED_SURFACE_SX,
-            background: 'var(--mk-surface-raised-bg)',
+            background: 'var(--pt-surface-raised-bg)',
           overflow: 'hidden',
           position: 'sticky',
           top: 88,
@@ -60,7 +60,7 @@ export function SettingsHubLayout() {
             const active = isRailItemActive(to, location.pathname)
             return (
               <ListItemButton key={block.key} component={RouterLink} to={to} selected={active} sx={{ minHeight: UI_SIZE.navItem, borderRadius: UI_RADIUS.md, mx: 0.75, mb: 0.5 }}>
-                <ListItemIcon sx={{ color: active ? undefined : 'var(--mk-muted)', minWidth: 40 }}>
+                <ListItemIcon sx={{ color: active ? undefined : 'var(--pt-muted)', minWidth: 40 }}>
                   <block.icon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
@@ -74,7 +74,7 @@ export function SettingsHubLayout() {
             const active = isRailItemActive(link.to, location.pathname)
             return (
               <ListItemButton key={link.key} component={RouterLink} to={link.to} selected={active} sx={{ minHeight: UI_SIZE.navItem, borderRadius: UI_RADIUS.md, mx: 0.75, mb: 0.5 }}>
-                <ListItemIcon sx={{ color: active ? undefined : 'var(--mk-muted)', minWidth: 40 }}>
+                <ListItemIcon sx={{ color: active ? undefined : 'var(--pt-muted)', minWidth: 40 }}>
                   <link.icon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText

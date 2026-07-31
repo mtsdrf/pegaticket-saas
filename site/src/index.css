@@ -1,29 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700&display=swap');
 
 :root {
-  --mk-bg: #F6F8FB;
-  --mk-surface: #FFFFFF;
-  --mk-surface-soft: #EEF3F8;
-  --mk-primary: #0F3D5E;
-  --mk-primary-hover: #0B314C;
-  --mk-secondary: #2563EB;
-  --mk-accent: #22C7A9;
-  --mk-text: #102033;
-  --mk-muted: #64748B;
-  --mk-border: #D8E0EA;
-  --mk-success: #16A34A;
-  --mk-warning: #F59E0B;
-  --mk-danger: #DC2626;
-  --mk-info: #0284C7;
+  --pt-bg: #F6F8FB;
+  --pt-surface: #FFFFFF;
+  --pt-surface-soft: #EEF3F8;
+  --pt-primary: #0F3D5E;
+  --pt-primary-hover: #0B314C;
+  --pt-secondary: #2563EB;
+  --pt-accent: #22C7A9;
+  --pt-text: #102033;
+  --pt-muted: #64748B;
+  --pt-border: #D8E0EA;
+  --pt-success: #16A34A;
+  --pt-warning: #F59E0B;
+  --pt-danger: #DC2626;
+  --pt-info: #0284C7;
 
-  --mk-radius-sm: 6px;
-  --mk-radius-md: 10px;
-  --mk-radius-lg: 16px;
-  --mk-radius-xl: 24px;
-  --mk-shadow-sm: 0 1px 2px rgba(15, 61, 94, 0.06);
-  --mk-shadow-md: 0 4px 12px rgba(15, 61, 94, 0.10);
-  --mk-shadow-lg: 0 12px 32px rgba(15, 61, 94, 0.14);
-  --mk-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --pt-radius-sm: 6px;
+  --pt-radius-md: 10px;
+  --pt-radius-lg: 16px;
+  --pt-radius-xl: 24px;
+  --pt-shadow-sm: 0 1px 2px rgba(15, 61, 94, 0.06);
+  --pt-shadow-md: 0 4px 12px rgba(15, 61, 94, 0.10);
+  --pt-shadow-lg: 0 12px 32px rgba(15, 61, 94, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
 
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -35,67 +35,67 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --mk-bg: #07111F;
-    --mk-surface: #0D1B2E;
-    --mk-surface-soft: #13243A;
-    --mk-primary: #38BDF8;
-    --mk-primary-hover: #7DD3FC;
-    --mk-secondary: #60A5FA;
-    --mk-accent: #2DD4BF;
-    --mk-text: #F8FAFC;
-    --mk-muted: #94A3B8;
-    --mk-border: #24364D;
-    --mk-success: #22C55E;
-    --mk-warning: #FBBF24;
-    --mk-danger: #F87171;
-    --mk-info: #38BDF8;
-    --mk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
-    --mk-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-    --mk-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-    --mk-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.45);
+    --pt-bg: #07111F;
+    --pt-surface: #0D1B2E;
+    --pt-surface-soft: #13243A;
+    --pt-primary: #38BDF8;
+    --pt-primary-hover: #7DD3FC;
+    --pt-secondary: #60A5FA;
+    --pt-accent: #2DD4BF;
+    --pt-text: #F8FAFC;
+    --pt-muted: #94A3B8;
+    --pt-border: #24364D;
+    --pt-success: #22C55E;
+    --pt-warning: #FBBF24;
+    --pt-danger: #F87171;
+    --pt-info: #38BDF8;
+    --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --pt-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.45);
   }
 }
 
 :root[data-theme='dark'] {
-  --mk-bg: #07111F;
-  --mk-surface: #0D1B2E;
-  --mk-surface-soft: #13243A;
-  --mk-primary: #38BDF8;
-  --mk-primary-hover: #7DD3FC;
-  --mk-secondary: #60A5FA;
-  --mk-accent: #2DD4BF;
-  --mk-text: #F8FAFC;
-  --mk-muted: #94A3B8;
-  --mk-border: #24364D;
-  --mk-success: #22C55E;
-  --mk-warning: #FBBF24;
-  --mk-danger: #F87171;
-  --mk-info: #38BDF8;
-  --mk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
-  --mk-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --mk-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --mk-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.45);
+  --pt-bg: #07111F;
+  --pt-surface: #0D1B2E;
+  --pt-surface-soft: #13243A;
+  --pt-primary: #38BDF8;
+  --pt-primary-hover: #7DD3FC;
+  --pt-secondary: #60A5FA;
+  --pt-accent: #2DD4BF;
+  --pt-text: #F8FAFC;
+  --pt-muted: #94A3B8;
+  --pt-border: #24364D;
+  --pt-success: #22C55E;
+  --pt-warning: #FBBF24;
+  --pt-danger: #F87171;
+  --pt-info: #38BDF8;
+  --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --pt-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.45);
 }
 
 :root[data-theme='light'] {
-  --mk-bg: #F6F8FB;
-  --mk-surface: #FFFFFF;
-  --mk-surface-soft: #EEF3F8;
-  --mk-primary: #0F3D5E;
-  --mk-primary-hover: #0B314C;
-  --mk-secondary: #2563EB;
-  --mk-accent: #22C7A9;
-  --mk-text: #102033;
-  --mk-muted: #64748B;
-  --mk-border: #D8E0EA;
-  --mk-success: #16A34A;
-  --mk-warning: #F59E0B;
-  --mk-danger: #DC2626;
-  --mk-info: #0284C7;
-  --mk-shadow-sm: 0 1px 2px rgba(15, 61, 94, 0.06);
-  --mk-shadow-md: 0 4px 12px rgba(15, 61, 94, 0.10);
-  --mk-shadow-lg: 0 12px 32px rgba(15, 61, 94, 0.14);
-  --mk-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --pt-bg: #F6F8FB;
+  --pt-surface: #FFFFFF;
+  --pt-surface-soft: #EEF3F8;
+  --pt-primary: #0F3D5E;
+  --pt-primary-hover: #0B314C;
+  --pt-secondary: #2563EB;
+  --pt-accent: #22C7A9;
+  --pt-text: #102033;
+  --pt-muted: #64748B;
+  --pt-border: #D8E0EA;
+  --pt-success: #16A34A;
+  --pt-warning: #F59E0B;
+  --pt-danger: #DC2626;
+  --pt-info: #0284C7;
+  --pt-shadow-sm: 0 1px 2px rgba(15, 61, 94, 0.06);
+  --pt-shadow-md: 0 4px 12px rgba(15, 61, 94, 0.10);
+  --pt-shadow-lg: 0 12px 32px rgba(15, 61, 94, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
 }
 
 * {
@@ -105,8 +105,8 @@
 body {
   margin: 0;
   min-height: 100svh;
-  background: var(--mk-bg);
-  color: var(--mk-text);
+  background: var(--pt-bg);
+  color: var(--pt-text);
 }
 
 h1,
@@ -116,7 +116,7 @@ h3 {
   margin: 0;
 }
 
-.mk-wordmark {
+.pt-wordmark {
   font-family: 'Manrope', 'Inter', system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -128,7 +128,7 @@ h3 {
  * componente (ver MetricCard/QuickActionCard). Um único momento
  * orquestrado no carregamento, não animação decorativa solta.
  */
-@keyframes mk-reveal {
+@keyframes pt-reveal {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -139,12 +139,12 @@ h3 {
   }
 }
 
-.mk-reveal {
-  animation: mk-reveal 0.35s ease-out both;
+.pt-reveal {
+  animation: pt-reveal 0.35s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mk-reveal {
+  .pt-reveal {
     animation: none;
   }
 }
@@ -156,7 +156,7 @@ h3 {
  * (roadmap 2.6). Sem lib nova: o usuário escolhe "Salvar como PDF" no
  * diálogo nativo do navegador.
  */
-.mk-print-export {
+.pt-print-export {
   display: none;
 }
 
@@ -165,76 +165,76 @@ h3 {
     display: none !important;
   }
 
-  .mk-print-export {
+  .pt-print-export {
     display: block !important;
     padding: 24px;
     color: #111;
   }
 
-  .mk-print-export h1 {
+  .pt-print-export h1 {
     font-size: 18px;
     margin-bottom: 4px;
   }
 
-  .mk-print-export p {
+  .pt-print-export p {
     font-size: 12px;
     color: #444;
     margin: 0 0 16px;
   }
 
-  .mk-print-export table {
+  .pt-print-export table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
   }
 
-  .mk-print-export th,
-  .mk-print-export td {
+  .pt-print-export th,
+  .pt-print-export td {
     border: 1px solid #ccc;
     padding: 6px 8px;
     text-align: left;
   }
 
-  .mk-print-export th {
+  .pt-print-export th {
     background: #f0f0f0;
   }
 }
 
 /*
- * site/ (landing institucional maskats.com) — utilitários próprios, além
+ * site/ (landing institucional pegaticket.com) — utilitários próprios, além
  * dos tokens/keyframes copiados de web/src/index.css acima (fonte única de
- * paleta/marca, ver CLAUDE.md "Identidade visual oficial da Maskats").
+ * paleta/marca, ver CLAUDE.md "Identidade visual oficial da PegaTicket").
  */
-.mk-skip-link {
+.pt-skip-link {
   position: absolute;
   left: -9999px;
   top: 0;
   z-index: 1000;
   padding: 12px 20px;
-  background: var(--mk-primary);
+  background: var(--pt-primary);
   color: #FFFFFF;
-  border-radius: 0 0 var(--mk-radius-md) 0;
+  border-radius: 0 0 var(--pt-radius-md) 0;
   font-weight: 600;
   text-decoration: none;
 }
 
-.mk-skip-link:focus {
+.pt-skip-link:focus {
   left: 0;
 }
 
-.mk-section-fade {
+.pt-section-fade {
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
-.mk-section-fade.mk-section-fade-visible {
+.pt-section-fade.pt-section-fade-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mk-section-fade {
+  .pt-section-fade {
     opacity: 1;
     transform: none;
     transition: none;

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "maskats/api",
+    "name": "pegaticket/api",
     "type": "project",
-    "description": "Maskats API — backend Laravel do SaaS multi-tenant Maskats.",
+    "description": "PegaTicket API — backend Laravel do SaaS multi-tenant PegaTicket.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

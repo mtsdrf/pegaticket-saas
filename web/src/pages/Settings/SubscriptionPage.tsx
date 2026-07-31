@@ -93,8 +93,8 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
       direction={{ xs: 'column', sm: 'row' }}
       sx={{ py: 1.2, gap: { xs: 0.25, sm: 2 }, alignItems: { sm: 'center' } }}
     >
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', minWidth: { sm: 220 } }}>{label}</Typography>
-      <Box sx={{ fontSize: 14.5, fontWeight: 500, color: 'var(--mk-text)' }}>{children}</Box>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', minWidth: { sm: 220 } }}>{label}</Typography>
+      <Box sx={{ fontSize: 14.5, fontWeight: 500, color: 'var(--pt-text)' }}>{children}</Box>
     </Stack>
   )
 }
@@ -129,17 +129,17 @@ function SummaryCard({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'color-mix(in srgb, var(--mk-primary) 12%, white)',
-            color: 'var(--mk-primary)',
+            background: 'color-mix(in srgb, var(--pt-primary) 12%, white)',
+            color: 'var(--pt-primary)',
           }}
         >
           {icon}
         </Box>
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
           {label}
         </Typography>
         <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 18.5, fontWeight: 700 }}>{value}</Typography>
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>{caption}</Typography>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{caption}</Typography>
       </Stack>
     </Paper>
   )
@@ -261,7 +261,7 @@ export function SubscriptionPage() {
     }
 
     if (canChangeCard) {
-      items.push('Trocar o cartão usado na cobrança automática recorrente diretamente pelo Maskats.')
+      items.push('Trocar o cartão usado na cobrança automática recorrente diretamente pelo PegaTicket.')
     }
 
     if (canChangePlan) {
@@ -418,18 +418,18 @@ export function SubscriptionPage() {
           p: { xs: 2.5, sm: 3 },
           ...ELEVATED_SURFACE_SX,
           mb: 2.5,
-          background: 'color-mix(in srgb, var(--mk-primary) 6%, var(--mk-surface))',
+          background: 'color-mix(in srgb, var(--pt-primary) 6%, var(--pt-surface))',
         }}
       >
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
           <Box>
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
               Empresa ativa
             </Typography>
             <Typography sx={{ fontSize: { xs: 22, sm: 28 }, fontWeight: 800, mt: 0.5 }}>
               {activeTenant?.tenant_name ?? 'Empresa'}
             </Typography>
-            <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mt: 0.75, maxWidth: 620 }}>
+            <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mt: 0.75, maxWidth: 620 }}>
               Acompanhe tudo o que impacta contratação, vigência, renovação e cobrança da empresa, sem precisar
               navegar por telas dispersas.
             </Typography>
@@ -477,9 +477,9 @@ export function SubscriptionPage() {
           >
             <Stack spacing={2}>
               <Box sx={{ textAlign: 'center' }}>
-                <ReceiptLongOutlinedIcon sx={{ fontSize: 44, color: 'var(--mk-muted)', mb: 1 }} />
+                <ReceiptLongOutlinedIcon sx={{ fontSize: 44, color: 'var(--pt-muted)', mb: 1 }} />
                 <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 0.5 }}>Nenhuma assinatura ativa</Typography>
-                <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', maxWidth: 620, mx: 'auto' }}>
+                <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', maxWidth: 620, mx: 'auto' }}>
                   Sua empresa ainda não possui uma assinatura registrada. Escolha o plano e o período de cobrança
                   para iniciar a contratação e concluir a autorização no Mercado Pago.
                 </Typography>
@@ -507,7 +507,7 @@ export function SubscriptionPage() {
                     <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>
                       {selectedPlan ? `Plano ${selectedPlan.plan.name}` : 'Iniciar contratação'}
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mt: 0.25 }}>
+                    <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mt: 0.25 }}>
                       {selectedPlan
                         ? 'Escolha o período de cobrança. O valor mostrado já é o preço final por mês em cada período.'
                         : 'Escolha o plano que sua empresa vai contratar para ver o preço real de cada período.'}
@@ -562,14 +562,14 @@ export function SubscriptionPage() {
                           ...SOFT_PANEL_SX,
                         }}
                       >
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+                        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
                           O que está incluído no plano {selectedPlanSalesInfo.name}
                         </Typography>
                         <Stack spacing={0.75}>
                           {selectedPlanSalesInfo.featureHighlights.map((feature) => (
                             <Stack key={feature} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-                              <CheckRoundedIcon sx={{ fontSize: 17, color: 'var(--mk-success)', mt: 0.2 }} />
-                              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>{feature}</Typography>
+                              <CheckRoundedIcon sx={{ fontSize: 17, color: 'var(--pt-success)', mt: 0.2 }} />
+                              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>{feature}</Typography>
                             </Stack>
                           ))}
                         </Stack>
@@ -586,9 +586,9 @@ export function SubscriptionPage() {
                       <Button variant="contained" disabled={createSubmitting || !acceptedTerms} onClick={() => void handleCreateSubscription()}>
                         {createSubmitting ? 'Iniciando…' : 'Iniciar assinatura'}
                       </Button>
-                      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', alignSelf: 'center' }}>
+                      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', alignSelf: 'center' }}>
                         Se o plano escolhido for pago, você confirma o cartão da cobrança automática na etapa
-                        seguinte, direto pelo Maskats.
+                        seguinte, direto pelo PegaTicket.
                       </Typography>
                     </Stack>
                   </>
@@ -602,12 +602,12 @@ export function SubscriptionPage() {
             sx={{ p: { xs: 2.5, sm: 3 }, ...ELEVATED_SURFACE_SX }}
           >
             <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.75 }}>O que você poderá gerenciar aqui</Typography>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1.5 }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
               Este menu foi pensado para centralizar decisões de plano e cobrança sem misturar com a operação diária.
             </Typography>
             <Stack spacing={1.1}>
               {capabilityItems.map((item) => (
-                <Typography key={item} sx={{ fontSize: 14.2, color: 'var(--mk-text)' }}>
+                <Typography key={item} sx={{ fontSize: 14.2, color: 'var(--pt-text)' }}>
                   • {item}
                 </Typography>
               ))}
@@ -674,7 +674,7 @@ export function SubscriptionPage() {
               <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 1.5, mb: 1 }}>
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: 16 }}>Visão contratual</Typography>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.5 }}>
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5 }}>
                     Tudo o que impacta datas, vigência, renovação e elegibilidade de arrependimento.
                   </Typography>
                 </Box>
@@ -702,8 +702,8 @@ export function SubscriptionPage() {
               sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Pagamento e faturas</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
-                Planos pagos pedem o cartão da cobrança recorrente direto pelo Maskats na contratação. Depois disso,
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
+                Planos pagos pedem o cartão da cobrança recorrente direto pelo PegaTicket na contratação. Depois disso,
                 o sistema acompanha por aqui as faturas emitidas e o resultado dos pagamentos recorrentes.
               </Typography>
 
@@ -715,7 +715,7 @@ export function SubscriptionPage() {
               sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Histórico de assinaturas</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
                 Todas as assinaturas contratadas pela empresa ao longo do tempo, não só a atual.
               </Typography>
 
@@ -727,7 +727,7 @@ export function SubscriptionPage() {
               sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Reembolsos</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
                 Pedidos cancelados com pagamento já feito, arrependimento dentro do prazo e contestações de cobrança
                 aparecem juntos aqui.
               </Typography>
@@ -740,7 +740,7 @@ export function SubscriptionPage() {
               sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Ações da assinatura</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
                 Este bloco concentra as ações críticas do contrato e da cobrança. Recursos administrativos da empresa,
                 como logo e dados cadastrais, continuam em Configurações.
               </Typography>
@@ -803,7 +803,7 @@ export function SubscriptionPage() {
                 sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
               >
                 <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Contratar novo plano</Typography>
-                <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
                   Esta assinatura já foi encerrada. Escolha um novo plano para reativar a empresa com uma nova contratação.
                 </Typography>
 
@@ -824,7 +824,7 @@ export function SubscriptionPage() {
                     <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>
                       {selectedPlan ? `Plano ${selectedPlan.plan.name}` : 'Escolher plano para nova contratação'}
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mt: 0.25 }}>
+                    <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mt: 0.25 }}>
                       {selectedPlan
                         ? 'Escolha o período de cobrança. O valor mostrado já é o preço final por mês em cada período.'
                         : 'Selecione o plano que a empresa vai contratar novamente.'}
@@ -879,14 +879,14 @@ export function SubscriptionPage() {
                           ...SOFT_PANEL_SX,
                         }}
                       >
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--mk-text)', mb: 1 }}>
+                        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--pt-text)', mb: 1 }}>
                           O que está incluído no plano {selectedPlanSalesInfo.name}
                         </Typography>
                         <Stack spacing={0.75}>
                           {selectedPlanSalesInfo.featureHighlights.map((feature) => (
                             <Stack key={feature} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-                              <CheckRoundedIcon sx={{ fontSize: 17, color: 'var(--mk-success)', mt: 0.2 }} />
-                              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>{feature}</Typography>
+                              <CheckRoundedIcon sx={{ fontSize: 17, color: 'var(--pt-success)', mt: 0.2 }} />
+                              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>{feature}</Typography>
                             </Stack>
                           ))}
                         </Stack>
@@ -903,9 +903,9 @@ export function SubscriptionPage() {
                       <Button variant="contained" disabled={createSubmitting || !acceptedTerms} onClick={() => void handleCreateSubscription()}>
                         {createSubmitting ? 'Iniciando…' : 'Contratar novo plano'}
                       </Button>
-                      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', alignSelf: 'center' }}>
+                      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', alignSelf: 'center' }}>
                         Se o plano escolhido for pago, você confirma o cartão da cobrança automática na etapa
-                        seguinte, direto pelo Maskats.
+                        seguinte, direto pelo PegaTicket.
                       </Typography>
                     </Stack>
                   </>
@@ -918,7 +918,7 @@ export function SubscriptionPage() {
               sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.75 }}>Mapa completo deste menu</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1.5 }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
                 Tudo abaixo já está centralizado ou contextualizado dentro desta área.
               </Typography>
               <Stack spacing={1.1}>

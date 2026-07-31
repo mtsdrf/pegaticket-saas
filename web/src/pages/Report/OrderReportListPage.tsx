@@ -143,7 +143,7 @@ export function OrderReportListPage() {
               onDelete={clearDrillDown}
               sx={{
                 ...SOFT_PANEL_SX,
-                color: 'var(--mk-text)',
+                color: 'var(--pt-text)',
               }}
             />
           )}
@@ -214,7 +214,7 @@ export function OrderReportListPage() {
             exportFileName="relatorio-pedidos"
             onFiltersChange={(next) => setFilters(next as OrderReportFilters)}
             emptyState={{
-              icon: <AssessmentOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+              icon: <AssessmentOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
               title: 'Nenhum pedido para o relatório',
               description: 'Os dados aparecerão aqui conforme os pedidos forem registrados.',
             }}

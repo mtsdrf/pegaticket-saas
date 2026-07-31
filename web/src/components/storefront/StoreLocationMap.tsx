@@ -11,8 +11,8 @@ import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
  * quebrados pelo Vite). Sem rota, sem interação de arrastar/scroll.
  */
 const STORE_ICON = L.divIcon({
-  className: 'mk-store-marker',
-  html: `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--mk-primary);box-shadow:0 2px 6px rgba(0,0,0,0.35);border:2px solid #fff;"><span style="width:9px;height:9px;border-radius:50%;background:#fff;"></span></span>`,
+  className: 'pt-store-marker',
+  html: `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pt-primary);box-shadow:0 2px 6px rgba(0,0,0,0.35);border:2px solid #fff;"><span style="width:9px;height:9px;border-radius:50%;background:#fff;"></span></span>`,
   iconSize: [32, 32],
   iconAnchor: [16, 30],
 })

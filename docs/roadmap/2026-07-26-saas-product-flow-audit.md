@@ -1,10 +1,10 @@
-# Maskats — Auditoria completa do fluxo SaaS
+# PegaTicket — Auditoria completa do fluxo SaaS
 
 Data da auditoria: 26 de julho de 2026
 
 ## 1. Objetivo
 
-Este documento registra a auditoria funcional e arquitetural do fluxo atual do Maskats antes de qualquer nova alteração de produto.
+Este documento registra a auditoria funcional e arquitetural do fluxo atual do PegaTicket antes de qualquer nova alteração de produto.
 
 A auditoria foi feita lendo:
 
@@ -383,7 +383,7 @@ Estado observado:
 
 Conclusão:
 
-- esta é hoje uma das maiores lacunas de produto do Maskats
+- esta é hoje uma das maiores lacunas de produto do PegaTicket
 - o sistema já vende, cobra, lista, aprova, sincroniza e rastreia
 - mas ainda não organiza toda a execução física do pedido em uma esteira simples
 
@@ -454,7 +454,7 @@ Conclusão:
 
 ### 5.1 Principal problema de produto
 
-O Maskats já tem muitos recursos, mas o fluxo principal de operação ainda está distribuído demais.
+O PegaTicket já tem muitos recursos, mas o fluxo principal de operação ainda está distribuído demais.
 
 Hoje o sistema tem pelo menos cinco trilhas paralelas de pedido:
 
@@ -513,7 +513,7 @@ Leitura de referência:
 
 Comparação honesta:
 
-- o Maskats já tem fundações técnicas mais profundas em várias áreas:
+- o PegaTicket já tem fundações técnicas mais profundas em várias áreas:
   - RBAC híbrido
   - LGPD operacional
   - fiscal interno/manual
@@ -526,12 +526,12 @@ Comparação honesta:
 
 Conclusão comparativa:
 
-- o Maskats não precisa copiar interface ou linguagem do Anota AI
+- o PegaTicket não precisa copiar interface ou linguagem do Anota AI
 - mas precisa aprender com a clareza deles no fluxo de operação central
 - o problema a resolver não é “faltam módulos”
 - o problema é “os módulos ainda não se apresentam como um sistema operacional único da empresa”
 
-## 7. Proposta original e mais simples para o Maskats
+## 7. Proposta original e mais simples para o PegaTicket
 
 ### 7.1 Princípio central
 
@@ -860,7 +860,7 @@ Gaps mais prováveis:
 
 ## 14. Conclusão executiva
 
-O Maskats já não é um protótipo. Ele tem profundidade real em:
+O PegaTicket já não é um protótipo. Ele tem profundidade real em:
 
 - multi-tenancy
 - RBAC

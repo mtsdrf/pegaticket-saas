@@ -31,7 +31,7 @@ export function RankingListCard({
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{
         p: { xs: 2, sm: 3 },
         ...ELEVATED_SURFACE_SX,
@@ -47,13 +47,13 @@ export function RankingListCard({
         flexDirection: 'column',
       }}
     >
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25, flexShrink: 0 }}>{title}</Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2, flexShrink: 0 }}>{subtitle}</Typography>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25, flexShrink: 0 }}>{title}</Typography>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2, flexShrink: 0 }}>{subtitle}</Typography>
 
       {isLoading ? (
         <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} variant="rounded" height={42} sx={{ borderRadius: 'var(--mk-radius-md)', flexShrink: 0 }} />
+            <Skeleton key={index} variant="rounded" height={42} sx={{ borderRadius: 'var(--pt-radius-md)', flexShrink: 0 }} />
           ))}
         </Stack>
       ) : !items || items.length === 0 ? (
@@ -67,10 +67,10 @@ export function RankingListCard({
             flexDirection: 'column',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>{emptyTitle}</Typography>
           <Typography sx={{ fontSize: 13.5 }}>{emptyDescription}</Typography>
         </Box>
       ) : (
@@ -101,14 +101,14 @@ export function RankingListCard({
               >
                 <Box sx={{ minWidth: 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-                    <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--mk-text)' }}>{item.title}</Typography>
+                    <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--pt-text)' }}>{item.title}</Typography>
                     {item.badge ?? null}
                   </Box>
                   {item.meta ? (
-                    <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{item.meta}</Typography>
+                    <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{item.meta}</Typography>
                   ) : null}
                 </Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--mk-text)', flexShrink: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--pt-text)', flexShrink: 0 }}>
                   {item.value}
                 </Typography>
               </Box>

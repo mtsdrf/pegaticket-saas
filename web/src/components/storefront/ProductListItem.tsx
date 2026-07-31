@@ -38,7 +38,7 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
         gap: 1.5,
         opacity: product.is_available ? 1 : 0.6,
         transition: 'box-shadow 0.15s ease',
-        '&:hover': { boxShadow: 'var(--mk-shadow-md)' },
+        '&:hover': { boxShadow: 'var(--pt-shadow-md)' },
       }}
     >
       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -52,7 +52,7 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
           <Typography
             sx={{
               fontSize: 12.5,
-              color: 'var(--mk-muted)',
+              color: 'var(--pt-muted)',
               mt: 0.25,
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -69,35 +69,35 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
         <Stack spacing={0.5} sx={{ mt: 1, alignItems: 'center', textAlign: 'center' }}>
           {product.promo_price !== null ? (
             <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)', textDecoration: 'line-through' }}>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', textDecoration: 'line-through' }}>
                 {formatCurrency(product.price)}
               </Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'var(--mk-primary)' }}>
+              <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'var(--pt-primary)' }}>
                 {formatCurrency(product.promo_price)}
               </Typography>
               {discountLabel && (
                 <Chip
                   label={discountLabel}
                   size="small"
-                  sx={{ height: 18, fontSize: 10, fontWeight: 700, color: '#FFFFFF', bgcolor: 'var(--mk-danger)' }}
+                  sx={{ height: 18, fontSize: 10, fontWeight: 700, color: '#FFFFFF', bgcolor: 'var(--pt-danger)' }}
                 />
               )}
             </Stack>
           ) : (
-            <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'var(--mk-primary)' }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'var(--pt-primary)' }}>
               {formatCurrency(product.price)}
             </Typography>
           )}
 
           {showWholesaleNote && (
-            <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'var(--mk-success, #1b7a3d)', lineHeight: 1.25 }}>
+            <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'var(--pt-success, #1b7a3d)', lineHeight: 1.25 }}>
               A partir de {String(product.wholesale_min_quantity).replace('.', ',')} un.:{' '}
               {formatCurrency(product.wholesale_price!)} cada
             </Typography>
           )}
 
           {!product.is_available ? (
-            <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: 'var(--pt-muted)' }}>
               Indisponível no momento
             </Typography>
           ) : hasOptions ? (
@@ -112,7 +112,7 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
                 Escolher opcionais
               </Button>
               {quantity > 0 && (
-                <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>
                   {quantity} item(ns) deste produto no carrinho
                 </Typography>
               )}
@@ -162,7 +162,7 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          borderRadius: 'var(--mk-radius-md)',
+          borderRadius: 'var(--pt-radius-md)',
         }}
       >
         {product.image_url ? (
@@ -173,7 +173,7 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <StorefrontOutlinedIcon sx={{ fontSize: 30, color: 'var(--mk-muted)' }} />
+          <StorefrontOutlinedIcon sx={{ fontSize: 30, color: 'var(--pt-muted)' }} />
         )}
 
         <IconButton
@@ -189,14 +189,14 @@ export function ProductListItem({ product, onToggleFavorite, onConfigureOptions 
             right: 0,
             width: 40,
             height: 40,
-            bgcolor: 'color-mix(in srgb, var(--mk-surface) 85%, transparent)',
-            '&:hover': { background: 'var(--mk-surface)' },
+            bgcolor: 'color-mix(in srgb, var(--pt-surface) 85%, transparent)',
+            '&:hover': { background: 'var(--pt-surface)' },
           }}
         >
           {product.is_favorited ? (
-            <FavoriteIcon sx={{ fontSize: 17, color: 'var(--mk-primary)' }} />
+            <FavoriteIcon sx={{ fontSize: 17, color: 'var(--pt-primary)' }} />
           ) : (
-            <FavoriteBorderOutlinedIcon sx={{ fontSize: 17, color: 'var(--mk-muted)' }} />
+            <FavoriteBorderOutlinedIcon sx={{ fontSize: 17, color: 'var(--pt-muted)' }} />
           )}
         </IconButton>
       </Box>

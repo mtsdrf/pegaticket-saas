@@ -58,7 +58,7 @@ export function OfflineSyncActivityPanel({
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
             {title}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'var(--mk-muted)' }}>
+          <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
             {description}
           </Typography>
         </Box>
@@ -74,7 +74,7 @@ export function OfflineSyncActivityPanel({
         </Stack>
 
         {entries.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'var(--mk-muted)' }}>
+          <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
             {emptyMessage}
           </Typography>
         ) : (
@@ -94,7 +94,7 @@ export function OfflineSyncActivityPanel({
                       {entry.title}
                     </Typography>
                     {entry.subtitle ? (
-                      <Typography variant="caption" sx={{ display: 'block', color: 'var(--mk-muted)' }}>
+                      <Typography variant="caption" sx={{ display: 'block', color: 'var(--pt-muted)' }}>
                         {entry.subtitle}
                       </Typography>
                     ) : null}
@@ -104,7 +104,7 @@ export function OfflineSyncActivityPanel({
                       </Typography>
                     ) : null}
                     {entry.meta ? (
-                      <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'var(--mk-muted)' }}>
+                      <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'var(--pt-muted)' }}>
                         {entry.meta}
                       </Typography>
                     ) : null}

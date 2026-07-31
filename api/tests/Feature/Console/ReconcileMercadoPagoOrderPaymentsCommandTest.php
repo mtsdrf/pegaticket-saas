@@ -24,7 +24,7 @@ class ReconcileMercadoPagoOrderPaymentsCommandTest extends TestCase
     {
         parent::setUp();
 
-        Config::set('maskats.parcela_vencimento_dia', 10);
+        Config::set('pegaticket.parcela_vencimento_dia', 10);
         Config::set('services.payments.provider', 'mercadopago');
         Config::set('services.mercadopago.access_token', 'TEST-fake-token');
 

@@ -45,7 +45,7 @@ export function TenantFeatureOverrideMatrix({
   return (
     <Box>
       <Typography sx={{ fontWeight: 700, mb: 0.5 }}>{title}</Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 1.5 }}>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
         Sem override, a funcionalidade segue o que o plano da empresa libera. Use "Forçar ativado/desativado" para
         exceções individuais.
       </Typography>
@@ -64,7 +64,7 @@ export function TenantFeatureOverrideMatrix({
           >
             <Box>
               <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700 }}>{functionality.name}</Typography>
-              <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>{functionality.slug}</Typography>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{functionality.slug}</Typography>
             </Box>
             <TextField
               select

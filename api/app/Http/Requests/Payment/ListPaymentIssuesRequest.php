@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Filtros da listagem administrativa cross-tenant de pendências de
- * pagamento (`GET /payments/issues`, staff interno da Maskats).
+ * pagamento (`GET /payments/issues`, staff interno da PegaTicket).
  */
 class ListPaymentIssuesRequest extends FormRequest
 {

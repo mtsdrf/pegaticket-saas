@@ -15,12 +15,12 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
     return (
       <Paper
         variant="outlined"
-        className="mk-reveal"
+        className="pt-reveal"
         sx={{ p: { xs: 2, sm: 3 }, ...ELEVATED_SURFACE_SX }}
       >
         <Skeleton variant="text" width={180} height={28} />
         <Skeleton variant="text" width={280} height={22} sx={{ mb: 2 }} />
-        <Skeleton variant="rounded" height={280} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+        <Skeleton variant="rounded" height={280} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
       </Paper>
     )
   }
@@ -29,13 +29,13 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
     return (
       <Paper
         variant="outlined"
-        className="mk-reveal"
+        className="pt-reveal"
         sx={{ p: { xs: 2, sm: 3 }, ...ELEVATED_SURFACE_SX }}
       >
-        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>
+        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>
           Sazonalidade
         </Typography>
-        <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
           Histórico mensal de pedidos e faturamento por ano.
         </Typography>
         <Box
@@ -47,10 +47,10 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
             flexDirection: 'column',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
             Sem histórico suficiente ainda
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
@@ -68,13 +68,13 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{ p: { xs: 2, sm: 3 }, ...ELEVATED_SURFACE_SX }}
     >
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>
         Sazonalidade
       </Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
         Histórico mensal de pedidos e faturamento por ano.
       </Typography>
 
@@ -90,7 +90,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
           >
             <Box />
             {MONTH_LABELS.map((label) => (
-              <Typography key={label} sx={{ fontSize: 12, fontWeight: 700, color: 'var(--mk-muted)', textAlign: 'center' }}>
+              <Typography key={label} sx={{ fontSize: 12, fontWeight: 700, color: 'var(--pt-muted)', textAlign: 'center' }}>
                 {label}
               </Typography>
             ))}
@@ -105,7 +105,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
                     display: 'flex',
                     alignItems: 'center',
                     fontWeight: 700,
-                    color: 'var(--mk-text)',
+                    color: 'var(--pt-text)',
                     fontSize: 13,
                   }}
                 >
@@ -122,23 +122,23 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
                         minHeight: 68,
                         minWidth: 0,
                         p: { xs: 0.5, sm: 1 },
-                        borderRadius: 'var(--mk-radius-md)',
-                        border: '1px solid var(--mk-border)',
+                        borderRadius: 'var(--pt-radius-md)',
+                        border: '1px solid var(--pt-border)',
                         backgroundColor:
                           month.count > 0
-                            ? `color-mix(in srgb, var(--mk-accent) ${18 + intensity * 28}%, var(--mk-surface-soft))`
-                            : 'var(--mk-surface-soft)',
+                            ? `color-mix(in srgb, var(--pt-accent) ${18 + intensity * 28}%, var(--pt-surface-soft))`
+                            : 'var(--pt-surface-soft)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         overflow: 'hidden',
                       }}
                     >
-                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--mk-text)' }}>{month.count}</Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--pt-text)' }}>{month.count}</Typography>
                       <Typography
                         sx={{
                           fontSize: 11,
-                          color: 'var(--mk-muted)',
+                          color: 'var(--pt-muted)',
                           lineHeight: 1.2,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',

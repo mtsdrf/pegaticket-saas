@@ -195,7 +195,7 @@ function NavGroupItem({
         }}
         aria-expanded={isOpen}
       >
-        <ListItemIcon sx={{ color: hasActiveChild ? undefined : 'var(--mk-muted)', minWidth: 40 }}>
+        <ListItemIcon sx={{ color: hasActiveChild ? undefined : 'var(--pt-muted)', minWidth: 40 }}>
           <Icon fontSize="small" />
         </ListItemIcon>
         <ListItemText
@@ -205,7 +205,7 @@ function NavGroupItem({
         <ExpandMoreIcon
           fontSize="small"
           sx={{
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s',
           }}
@@ -296,7 +296,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               borderRadius: UI_RADIUS.lg,
             }}
           >
-            <ListItemIcon sx={{ color: isActive ? undefined : 'var(--mk-muted)', minWidth: 40 }}>
+            <ListItemIcon sx={{ color: isActive ? undefined : 'var(--pt-muted)', minWidth: 40 }}>
               <Icon fontSize="small" />
             </ListItemIcon>
             <ListItemText
@@ -348,7 +348,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         minHeight: 0,
         flex: 1,
         flexDirection: 'column',
-        background: 'var(--mk-sidebar-background)',
+        background: 'var(--pt-sidebar-background)',
       }}
     >
       <Box sx={{ minHeight: 0, flex: 1, overflowY: 'auto' }}>
@@ -374,8 +374,8 @@ export function AppLayout() {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backdropFilter: 'blur(18px)',
-          background: 'color-mix(in srgb, var(--mk-surface) 84%, transparent)',
-          borderBottom: '1px solid color-mix(in srgb, var(--mk-border) 88%, white)',
+          background: 'color-mix(in srgb, var(--pt-surface) 84%, transparent)',
+          borderBottom: '1px solid color-mix(in srgb, var(--pt-border) 88%, white)',
           boxShadow: '0 10px 28px rgba(10, 33, 62, 0.08)',
         }}
       >
@@ -389,7 +389,7 @@ export function AppLayout() {
               width: UI_SIZE.iconButton,
               height: UI_SIZE.iconButton,
               borderRadius: UI_RADIUS.lg,
-              backgroundColor: 'color-mix(in srgb, var(--mk-surface) 90%, white)',
+              backgroundColor: 'color-mix(in srgb, var(--pt-surface) 90%, white)',
             }}
           >
             <MenuIcon />
@@ -421,7 +421,7 @@ export function AppLayout() {
                   width: UI_SIZE.controlLarge,
                   height: UI_SIZE.controlLarge,
                   borderRadius: UI_RADIUS.lg,
-                  backgroundColor: 'color-mix(in srgb, var(--mk-surface) 90%, white)',
+                  backgroundColor: 'color-mix(in srgb, var(--pt-surface) 90%, white)',
                 }}
               >
                 <SearchOutlinedIcon />
@@ -444,8 +444,8 @@ export function AppLayout() {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
             display: 'flex',
-            borderRight: '1px solid color-mix(in srgb, var(--mk-border) 88%, white)',
-            backgroundColor: 'var(--mk-surface)',
+            borderRight: '1px solid color-mix(in srgb, var(--pt-border) 88%, white)',
+            backgroundColor: 'var(--pt-surface)',
           },
         }}
       >
@@ -464,8 +464,8 @@ export function AppLayout() {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
             display: 'flex',
-            borderRight: '1px solid color-mix(in srgb, var(--mk-border) 88%, white)',
-            backgroundColor: 'var(--mk-surface)',
+            borderRight: '1px solid color-mix(in srgb, var(--pt-border) 88%, white)',
+            backgroundColor: 'var(--pt-surface)',
           },
         }}
       >

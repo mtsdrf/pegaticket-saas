@@ -20,12 +20,12 @@ const CARD_SX = {
 export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCardProps) {
   if (isLoading) {
     return (
-      <Paper variant="outlined" className="mk-reveal" sx={CARD_SX}>
+      <Paper variant="outlined" className="pt-reveal" sx={CARD_SX}>
         <Skeleton variant="text" width={200} height={28} sx={{ flexShrink: 0 }} />
         <Skeleton variant="text" width={260} height={22} sx={{ mb: 2, flexShrink: 0 }} />
         <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} variant="rounded" height={54} sx={{ borderRadius: 'var(--mk-radius-md)', flexShrink: 0 }} />
+            <Skeleton key={index} variant="rounded" height={54} sx={{ borderRadius: 'var(--pt-radius-md)', flexShrink: 0 }} />
           ))}
         </Stack>
       </Paper>
@@ -34,11 +34,11 @@ export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCar
 
   if (!buckets || buckets.every((bucket) => bucket.count === 0)) {
     return (
-      <Paper variant="outlined" className="mk-reveal" sx={CARD_SX}>
-        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25, flexShrink: 0 }}>
+      <Paper variant="outlined" className="pt-reveal" sx={CARD_SX}>
+        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25, flexShrink: 0 }}>
           Aging de recebíveis
         </Typography>
-        <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2, flexShrink: 0 }}>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2, flexShrink: 0 }}>
           Distribuição financeira entre valores a vencer e vencidos.
         </Typography>
         <Box
@@ -51,10 +51,10 @@ export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCar
             flexDirection: 'column',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
             Nenhum recebível em aberto agora
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
@@ -66,11 +66,11 @@ export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCar
   }
 
   return (
-    <Paper variant="outlined" className="mk-reveal" sx={CARD_SX}>
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25, flexShrink: 0 }}>
+    <Paper variant="outlined" className="pt-reveal" sx={CARD_SX}>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25, flexShrink: 0 }}>
         Aging de recebíveis
       </Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2, flexShrink: 0 }}>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2, flexShrink: 0 }}>
         Distribuição financeira entre valores a vencer e vencidos.
       </Typography>
 
@@ -89,16 +89,16 @@ export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCar
                 background:
                   bucket.bucket === 'current'
                     ? SOFT_PANEL_SX.background
-                    : 'color-mix(in srgb, var(--mk-warning) 8%, var(--mk-surface-soft))',
+                    : 'color-mix(in srgb, var(--pt-warning) 8%, var(--pt-surface-soft))',
               }}
             >
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--mk-text)' }}>{bucket.label}</Typography>
-                <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: 'var(--pt-text)' }}>{bucket.label}</Typography>
+                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                   {bucket.count} título{bucket.count === 1 ? '' : 's'}
                 </Typography>
               </Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--mk-text)', flexShrink: 0 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--pt-text)', flexShrink: 0 }}>
                 {formatCurrency(bucket.amount)}
               </Typography>
             </Box>

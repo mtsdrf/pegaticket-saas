@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // `site.webmanifest` já existe em `public/` com a identidade visual oficial
-      // (nome/ícones/cores da Maskats) e já é linkado manualmente em `index.html`.
+      // (nome/ícones/cores da PegaTicket) e já é linkado manualmente em `index.html`.
       // `manifest: false` faz o plugin cuidar só do Service Worker (geração +
       // registro) sem gerar/injetar um segundo manifest — evita duplicar
       // `<link rel="manifest">` e mantém o arquivo existente como única fonte.

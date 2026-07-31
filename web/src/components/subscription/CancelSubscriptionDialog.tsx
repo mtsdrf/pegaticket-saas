@@ -41,7 +41,7 @@ export function CancelSubscriptionDialog({
     <Dialog open={open} onClose={isSubmitting ? undefined : onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontWeight: 600 }}>Cancelar assinatura</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ color: 'var(--mk-text)', mb: 2 }}>
+        <DialogContentText sx={{ color: 'var(--pt-text)', mb: 2 }}>
           Escolha quando o cancelamento deve valer. Esta ação encerra o acesso pago da empresa.
         </DialogContentText>
 

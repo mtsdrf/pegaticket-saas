@@ -45,11 +45,11 @@ export function WorkflowBoardColumn({
         display: 'flex',
         flexDirection: 'column',
         gap: 1.25,
-        border: isActiveDrop ? `1px solid ${accent}` : '1px solid var(--mk-border)',
+        border: isActiveDrop ? `1px solid ${accent}` : '1px solid var(--pt-border)',
         boxShadow: isActiveDrop ? `0 0 0 1px ${accent}` : ELEVATED_SURFACE_SX.boxShadow,
         bgcolor: isActiveDrop
-          ? `color-mix(in srgb, ${accent} 10%, var(--mk-surface))`
-          : 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+          ? `color-mix(in srgb, ${accent} 10%, var(--pt-surface))`
+          : 'color-mix(in srgb, var(--pt-surface) 96%, white)',
         transition: 'border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease',
       }}
     >
@@ -57,7 +57,7 @@ export function WorkflowBoardColumn({
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 15, fontWeight: 800, color: accent }}>{title}</Typography>
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{caption}</Typography>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{caption}</Typography>
           </Box>
           <Chip
             size="small"
@@ -89,11 +89,11 @@ export function WorkflowBoardColumn({
         sx={{
           ...SOFT_PANEL_SX,
           mt: 'auto',
-          border: isActiveDrop ? `1px dashed ${accent}` : '1px dashed color-mix(in srgb, var(--mk-border) 92%, transparent)',
+          border: isActiveDrop ? `1px dashed ${accent}` : '1px dashed color-mix(in srgb, var(--pt-border) 92%, transparent)',
           px: 1.1,
           py: 1,
           textAlign: 'center',
-          color: isActiveDrop ? accent : 'var(--mk-muted)',
+          color: isActiveDrop ? accent : 'var(--pt-muted)',
           fontSize: 12.5,
           fontWeight: isActiveDrop ? 700 : 500,
         }}

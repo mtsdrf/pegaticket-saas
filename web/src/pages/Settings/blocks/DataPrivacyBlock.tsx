@@ -189,8 +189,8 @@ export function DataPrivacyBlock() {
 
   return (
     <Stack spacing={2}>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
-        Este espaço reúne o mínimo operacional de privacidade do Maskats para a sua empresa: documentos públicos,
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
+        Este espaço reúne o mínimo operacional de privacidade do PegaTicket para a sua empresa: documentos públicos,
         orientação de atendimento e exportação dos principais dados do ambiente.
       </Typography>
 
@@ -198,19 +198,19 @@ export function DataPrivacyBlock() {
         <Paper sx={{ ...ELEVATED_SURFACE_SX, p: 2.25 }}>
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <PrivacyTipOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+              <PrivacyTipOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                 Papel da plataforma
               </Typography>
             </Stack>
 
             <Alert severity="info" variant="outlined">
-              A Maskats atua como <strong>controladora</strong> dos dados da conta e dos usuários de acesso da sua
+              A PegaTicket atua como <strong>controladora</strong> dos dados da conta e dos usuários de acesso da sua
               empresa, e como <strong>operadora</strong> dos dados que a sua empresa cadastra no sistema sobre clientes,
               pedidos e rotinas operacionais.
             </Alert>
 
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Solicitações de acesso, correção ou exclusão devem ser tratadas primeiro pelos canais oficiais da sua
               empresa. Quando houver retenção legal, fiscal, contábil, contratual ou necessidade de auditoria, a
               remoção pode não ser imediata.
@@ -221,7 +221,7 @@ export function DataPrivacyBlock() {
         <Paper sx={{ ...ELEVATED_SURFACE_SX, p: 2.25 }}>
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <GavelOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+              <GavelOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                 Documentos públicos
               </Typography>
@@ -253,17 +253,17 @@ export function DataPrivacyBlock() {
 
       <Box sx={{ ...FORM_GRID_3_SX, gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, minmax(0, 1fr))' } }}>
         <InfoCard
-          icon={<TaskAltOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />}
+          icon={<TaskAltOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
           title="Atendimento mínimo"
           body="Valide quem está solicitando, registre o escopo do pedido e responda sempre pelos canais oficiais da operação."
         />
         <InfoCard
-          icon={<DownloadOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />}
+          icon={<DownloadOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
           title="Exportação já disponível"
           body="Os principais dados da empresa podem ser exportados em pacote único. Use essa base como primeiro passo em pedidos de acesso."
         />
         <InfoCard
-          icon={<PrivacyTipOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />}
+          icon={<PrivacyTipOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
           title="Limites atuais"
           body="Anonimização ampla e automação completa de requisições de titulares ainda não são self-service no produto."
         />
@@ -284,8 +284,8 @@ export function DataPrivacyBlock() {
               'Tratar qualquer solicitação fora do fluxo atual como atendimento assistido.',
             ].map((item) => (
               <Stack key={item} direction="row" spacing={1.25} sx={{ alignItems: 'flex-start' }}>
-                <TaskAltOutlinedIcon sx={{ color: 'var(--mk-success)', fontSize: 18, mt: '2px' }} />
-                <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>{item}</Typography>
+                <TaskAltOutlinedIcon sx={{ color: 'var(--pt-success)', fontSize: 18, mt: '2px' }} />
+                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>{item}</Typography>
               </Stack>
             ))}
           </Stack>
@@ -306,13 +306,13 @@ export function DataPrivacyBlock() {
           <Paper sx={{ ...ELEVATED_SURFACE_SX, p: 2.25 }}>
             <Stack spacing={1.5}>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <PlaylistAddCheckCircleOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                <PlaylistAddCheckCircleOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                   Registrar solicitação de privacidade
                 </Typography>
               </Stack>
 
-              <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                 Use este registro quando a empresa, um usuário interno ou um titular final solicitar acesso, correção, exclusão,
                 anonimização ou oposição. Isso cria um histórico operacional mínimo dentro do sistema.
               </Typography>
@@ -407,7 +407,7 @@ export function DataPrivacyBlock() {
           <Paper sx={{ ...ELEVATED_SURFACE_SX, p: 2.25 }}>
             <Stack spacing={1.5}>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <PlaylistAddCheckCircleOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+                <PlaylistAddCheckCircleOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                   Registrar solicitação de privacidade
                 </Typography>
@@ -423,13 +423,13 @@ export function DataPrivacyBlock() {
         <Paper sx={{ ...ELEVATED_SURFACE_SX, p: 2.25 }}>
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <PrivacyTipOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+              <PrivacyTipOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                 Solicitações recentes
               </Typography>
             </Stack>
 
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Este quadro ajuda a empresa a acompanhar o que já foi recebido, o que ainda está em análise e o que já foi concluído no fluxo assistido.
             </Typography>
 
@@ -451,13 +451,13 @@ export function DataPrivacyBlock() {
                   <Paper
                     key={request.uuid}
                     variant="outlined"
-                    sx={{ p: 1.5, borderColor: 'var(--mk-border)', background: 'var(--mk-surface)' }}
+                    sx={{ p: 1.5, borderColor: 'var(--pt-border)', background: 'var(--pt-surface)' }}
                   >
                     <Stack spacing={1.1}>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' } }}>
                         <Box sx={{ minWidth: 0 }}>
                           <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{request.subject}</Typography>
-                          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                             {request.requester_name}
                             {request.requester_email ? ` · ${request.requester_email}` : ''}
                           </Typography>
@@ -469,11 +469,11 @@ export function DataPrivacyBlock() {
                         />
                       </Stack>
 
-                      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>
+                      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>
                         {request.description}
                       </Typography>
 
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                         {PRIVACY_REQUEST_TYPE_LABELS[request.request_type]} · {PRIVACY_REQUEST_ROLE_LABELS[request.requester_role]}
                         {request.channel ? ` · ${PRIVACY_REQUEST_CHANNEL_LABELS[request.channel]}` : ''}
                         {request.requested_at ? ` · registrado em ${new Date(request.requested_at).toLocaleString('pt-BR')}` : ''}
@@ -540,7 +540,7 @@ export function DataPrivacyBlock() {
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
               Exportar dados da empresa
             </Typography>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               Baixe um pacote único (.zip) com clientes, produtos e pedidos da sua empresa em CSV. Limite de 3
               exportações por hora.
             </Typography>
@@ -605,14 +605,14 @@ function DocumentLinkCard({ title, path, version, publishedAt }: DocumentLinkCar
       variant="outlined"
       sx={{
         p: 1.5,
-        borderColor: 'var(--mk-border)',
-        background: 'var(--mk-surface)',
+        borderColor: 'var(--pt-border)',
+        background: 'var(--pt-surface)',
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Box sx={{ minWidth: 0 }}>
           <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{title}</Typography>
-          <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
             {version ? `Versão ${version}` : 'Documento não disponível'}
             {publishedAt ? ` · publicado em ${new Date(publishedAt).toLocaleDateString('pt-BR')}` : ''}
           </Typography>
@@ -650,7 +650,7 @@ function InfoCard({ icon, title, body }: InfoCardProps) {
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
           {title}
         </Typography>
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
           {body}
         </Typography>
       </Stack>

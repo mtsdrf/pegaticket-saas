@@ -1,1 +1,1 @@
-<footer class="mk-pdf-footer">Maskats — Gestão clara para empresas em movimento.</footer>
+<footer class="pt-pdf-footer">PegaTicket — Gestão clara para empresas em movimento.</footer>

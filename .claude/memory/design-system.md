@@ -1,19 +1,19 @@
 ---
 name: design-system
-description: Design system oficial da Maskats — paleta, tokens, tipografia e regras visuais para toda interface do produto.
+description: Design system oficial da PegaTicket — paleta, tokens, tipografia e regras visuais para toda interface do produto.
 metadata:
   type: project
 ---
 
-# Maskats — Design System
+# PegaTicket — Design System
 
 ## Objetivo
 
-Definir os padrões visuais oficiais da Maskats para manter consistência entre login, dashboard, componentes, tema claro e tema escuro. Este arquivo é a referência de destino (target state) — ver [[ui-redesign-plan]] para o diagnóstico do estado atual e o plano de migração.
+Definir os padrões visuais oficiais da PegaTicket para manter consistência entre login, dashboard, componentes, tema claro e tema escuro. Este arquivo é a referência de destino (target state) — ver [[ui-redesign-plan]] para o diagnóstico do estado atual e o plano de migração.
 
 ## Estilo visual
 
-O visual da Maskats deve ser:
+O visual da PegaTicket deve ser:
 
 - Moderno.
 - Limpo.
@@ -28,7 +28,7 @@ O visual da Maskats deve ser:
 
 Inspiração de qualidade (não copiar): Linear, Vercel, Stripe, Notion, Figma, Apple.
 
-> **Mobile-first é requisito de produto, não polish.** O uso majoritário do Maskats é no celular (confirmado pelo usuário em 2026-07-05) — toda tela é projetada primeiro para mobile e só depois enriquecida para tablet/desktop, nunca o inverso. Ver detalhamento em "Layout" e "Responsividade" abaixo, e [[ui-redesign-plan]] para como isso afeta Navbar/Sidebar/Dashboard (ainda pendentes).
+> **Mobile-first é requisito de produto, não polish.** O uso majoritário do PegaTicket é no celular (confirmado pelo usuário em 2026-07-05) — toda tela é projetada primeiro para mobile e só depois enriquecida para tablet/desktop, nunca o inverso. Ver detalhamento em "Layout" e "Responsividade" abaixo, e [[ui-redesign-plan]] para como isso afeta Navbar/Sidebar/Dashboard (ainda pendentes).
 
 ## Paleta oficial
 
@@ -72,34 +72,34 @@ Info:            #38BDF8
 
 ## Tokens CSS recomendados
 
-Ver detalhamento completo (valores, aplicação, persistência de tema) em `.claude/skills/maskats-theme-system.md`. Lista de tokens obrigatórios:
+Ver detalhamento completo (valores, aplicação, persistência de tema) em `.claude/skills/pegaticket-theme-system.md`. Lista de tokens obrigatórios:
 
 ```txt
---mk-bg
---mk-surface
---mk-surface-soft
---mk-primary
---mk-primary-hover
---mk-secondary
---mk-accent
---mk-text
---mk-muted
---mk-border
---mk-success
---mk-warning
---mk-danger
---mk-info
---mk-radius-sm
---mk-radius-md
---mk-radius-lg
---mk-radius-xl
---mk-shadow-sm
---mk-shadow-md
---mk-shadow-lg
---mk-focus-ring
+--pt-bg
+--pt-surface
+--pt-surface-soft
+--pt-primary
+--pt-primary-hover
+--pt-secondary
+--pt-accent
+--pt-text
+--pt-muted
+--pt-border
+--pt-success
+--pt-warning
+--pt-danger
+--pt-info
+--pt-radius-sm
+--pt-radius-md
+--pt-radius-lg
+--pt-radius-xl
+--pt-shadow-sm
+--pt-shadow-md
+--pt-shadow-lg
+--pt-focus-ring
 ```
 
-Nunca hardcodar hex de cor em componente — sempre `var(--mk-*)`.
+Nunca hardcodar hex de cor em componente — sempre `var(--pt-*)`.
 
 ## Tipografia
 
@@ -109,13 +109,13 @@ Nunca hardcodar hex de cor em componente — sempre `var(--mk-*)`.
 ## Hierarquia tipográfica
 
 ```txt
-H1 (título de página):      28–32px, semibold, --mk-text
-H2 (título de seção/card):  20–22px, semibold, --mk-text
-H3 (subtítulo/label grande): 16–18px, medium, --mk-text
-Body (texto padrão):         14–15px, regular, --mk-text
-Small (texto secundário):    13px, regular, --mk-muted
-Label (campo de formulário): 13px, medium, --mk-text
-Métrica/número grande:       32–40px, semibold, --mk-text
+H1 (título de página):      28–32px, semibold, --pt-text
+H2 (título de seção/card):  20–22px, semibold, --pt-text
+H3 (subtítulo/label grande): 16–18px, medium, --pt-text
+Body (texto padrão):         14–15px, regular, --pt-text
+Small (texto secundário):    13px, regular, --pt-muted
+Label (campo de formulário): 13px, medium, --pt-text
+Métrica/número grande:       32–40px, semibold, --pt-text
 ```
 
 Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: `regular` (texto), `medium` (labels/ênfase leve), `semibold` (títulos/CTAs) — nunca `bold` puro nem múltiplos pesos concorrendo no mesmo bloco.
@@ -133,26 +133,26 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 ## Botões
 
-- **Primary**: fundo `--mk-primary`, texto claro, hover `--mk-primary-hover`. Ação principal da tela, no máximo uma por contexto.
-- **Secondary**: fundo `--mk-surface-soft` ou borda `--mk-border`, texto `--mk-text`. Ações alternativas.
+- **Primary**: fundo `--pt-primary`, texto claro, hover `--pt-primary-hover`. Ação principal da tela, no máximo uma por contexto.
+- **Secondary**: fundo `--pt-surface-soft` ou borda `--pt-border`, texto `--pt-text`. Ações alternativas.
 - **Ghost/texto**: sem fundo, usado para ações terciárias (ex.: "Atualizar sistema").
-- **Danger**: fundo/texto `--mk-danger`, só para ações destrutivas com confirmação.
-- Estados obrigatórios: default, hover, focus (`--mk-focus-ring`), disabled, loading (spinner + texto mantido ou "…").
+- **Danger**: fundo/texto `--pt-danger`, só para ações destrutivas com confirmação.
+- Estados obrigatórios: default, hover, focus (`--pt-focus-ring`), disabled, loading (spinner + texto mantido ou "…").
 - Nunca botão azul chapado gigante disputando atenção com tudo na tela — um CTA primário por vez.
 
 ## Inputs
 
-- Fundo `--mk-surface`, borda `--mk-border`, texto `--mk-text`, placeholder `--mk-muted`.
-- Focus: borda `--mk-primary` + `--mk-focus-ring`.
-- Erro: borda `--mk-danger` + mensagem curta abaixo do campo, cor `--mk-danger`.
+- Fundo `--pt-surface`, borda `--pt-border`, texto `--pt-text`, placeholder `--pt-muted`.
+- Focus: borda `--pt-primary` + `--pt-focus-ring`.
+- Erro: borda `--pt-danger` + mensagem curta abaixo do campo, cor `--pt-danger`.
 - Disabled: opacidade reduzida, cursor `not-allowed`.
 - Label sempre visível acima do campo (nunca só placeholder como label).
 
 ## Cards
 
-- Fundo `--mk-surface` (ou `--mk-surface-soft` para cards de destaque secundário), borda `--mk-border`, `--mk-radius-lg`, `--mk-shadow-sm`.
+- Fundo `--pt-surface` (ou `--pt-surface-soft` para cards de destaque secundário), borda `--pt-border`, `--pt-radius-lg`, `--pt-shadow-sm`.
 - Padding interno confortável (16–24px), título com hierarquia clara (H2/H3), conteúdo com respiro.
-- Card de métrica: número grande + label pequeno + (opcional) indicador de tendência usando `--mk-success`/`--mk-danger` — nunca cor decorativa solta.
+- Card de métrica: número grande + label pequeno + (opcional) indicador de tendência usando `--pt-success`/`--pt-danger` — nunca cor decorativa solta.
 
 ### Regra obrigatória: foto de produto/entidade em card tem tamanho fixo
 
@@ -164,20 +164,20 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 ## Sidebar
 
-- Fundo `--mk-surface` (ou tom levemente distinto de `--mk-bg`), borda direita `--mk-border`.
-- Item ativo com destaque claro: fundo `--mk-surface-soft` + texto/ícone `--mk-primary`, nunca só uma mudança sutil demais para notar.
+- Fundo `--pt-surface` (ou tom levemente distinto de `--pt-bg`), borda direita `--pt-border`.
+- Item ativo com destaque claro: fundo `--pt-surface-soft` + texto/ícone `--pt-primary`, nunca só uma mudança sutil demais para notar.
 - Ícones com propósito (não decorativos), rótulos sempre visíveis em desktop; colapsa para ícones-apenas ou drawer em mobile/tablet.
 
 ## Navbar
 
 - Leve, sem excesso de elementos: logo/wordmark compacto, ação de contexto (ex.: tenant ativo), avatar/menu do usuário.
-- Fundo `--mk-surface`, borda inferior `--mk-border`, sem sombra pesada.
+- Fundo `--pt-surface`, borda inferior `--pt-border`, sem sombra pesada.
 
 ## Login
 
-- Fundo com gradiente sofisticado usando a paleta oficial (ex.: `--mk-bg` → `--mk-primary` em baixa opacidade), elementos abstratos sutis de movimento — nunca imagem financeira genérica de banco de imagens.
-- Card de login centrado, `--mk-surface`, `--mk-radius-lg`, `--mk-shadow-md`.
-- Logo Maskats visível acima do formulário.
+- Fundo com gradiente sofisticado usando a paleta oficial (ex.: `--pt-bg` → `--pt-primary` em baixa opacidade), elementos abstratos sutis de movimento — nunca imagem financeira genérica de banco de imagens.
+- Card de login centrado, `--pt-surface`, `--pt-radius-lg`, `--pt-shadow-md`.
+- Logo PegaTicket visível acima do formulário.
 - Textos oficiais: ver [[brand-guidelines]] → "Exemplos de texto → Login".
 
 ## Dashboard
@@ -188,8 +188,8 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 ## Acessibilidade
 
-- Contraste mínimo AA em texto sobre `--mk-bg`/`--mk-surface` em ambos os temas.
-- Foco visível (`--mk-focus-ring`) em todo elemento interativo.
+- Contraste mínimo AA em texto sobre `--pt-bg`/`--pt-surface` em ambos os temas.
+- Foco visível (`--pt-focus-ring`) em todo elemento interativo.
 - Labels reais em todo input, `aria-*` quando necessário, navegação por teclado funcional.
 - Nunca comunicar estado só por cor (ex.: erro também tem ícone/texto, não só borda vermelha).
 
@@ -225,11 +225,11 @@ A partir de 2026-07-05, **Material UI (MUI)** é a biblioteca de componentes/est
 
 ## Alternância de tema (claro/escuro/sistema)
 
-Desde 2026-07-09: `ThemeModeProvider` (`contexts/ThemeModeProvider.tsx`) é a fonte única do modo de tema — resolve `light`/`dark`/`system` (preferência salva em `localStorage['maskats.theme_mode']`, default `system` = `prefers-color-scheme`) e escreve o atributo `data-theme` no `<html>`. É crítico que `buildMaskatsTheme` (paleta MUI) e os tokens CSS `--mk-*` concordem sobre o modo — antes dessa mudança o MUI lia só `prefers-color-scheme` direto (sem estado, sem toggle, sem persistência); agora os dois leem do mesmo lugar. Toggle visível no `AppBar` (`components/ThemeModeToggle.tsx`, menu com Claro/Escuro/Sistema). Qualquer novo ponto de entrada da aplicação (ex.: uma segunda árvore de rotas) precisa estar dentro do `ThemeModeProvider`, nunca ler `prefers-color-scheme` isoladamente de novo.
+Desde 2026-07-09: `ThemeModeProvider` (`contexts/ThemeModeProvider.tsx`) é a fonte única do modo de tema — resolve `light`/`dark`/`system` (preferência salva em `localStorage['pegaticket.theme_mode']`, default `system` = `prefers-color-scheme`) e escreve o atributo `data-theme` no `<html>`. É crítico que `buildPegaTicketTheme` (paleta MUI) e os tokens CSS `--pt-*` concordem sobre o modo — antes dessa mudança o MUI lia só `prefers-color-scheme` direto (sem estado, sem toggle, sem persistência); agora os dois leem do mesmo lugar. Toggle visível no `AppBar` (`components/ThemeModeToggle.tsx`, menu com Claro/Escuro/Sistema). Qualquer novo ponto de entrada da aplicação (ex.: uma segunda árvore de rotas) precisa estar dentro do `ThemeModeProvider`, nunca ler `prefers-color-scheme` isoladamente de novo.
 
 ## Regras de consistência
 
-- Nenhuma cor fora da paleta oficial (`--mk-*` / tema MUI derivado dela) em componente novo.
+- Nenhuma cor fora da paleta oficial (`--pt-*` / tema MUI derivado dela) em componente novo.
 - Mesmo conjunto de radius/shadow em todos os cards do sistema (não inventar variação por tela).
 - Tema claro e escuro sempre revisados juntos antes de considerar uma tela pronta.
 - Qualquer decisão visual nova relevante é registrada aqui, de forma curta, não deixada apenas no código.
@@ -238,16 +238,16 @@ Desde 2026-07-09: `ThemeModeProvider` (`contexts/ThemeModeProvider.tsx`) é a fo
 
 - O ícone de usuário do header (`UserMenu.tsx`) é o lugar único com: avatar+nome+e-mail, empresa ativa+plano (`TenantMenu` variant `menu`), tema (`ThemeModeSwitch`, grupo ícone-switch-ícone centralizado), "Meus dados" e "Sair" — nessa ordem. A sidebar (`AppLayout.tsx` → `SidebarContent`) ficou só com navegação, sem duplicar empresa/tema no rodapé.
 - `PlanChip` do plano **Diamante** trocou de dourado/âmbar pra **rubi/ametista** (pra diferenciar melhor do plano Ouro, que ficou com o dourado): `color #7A1152`, borda `color-mix(in srgb, #9F1D6B 45%, white)`, fundo `linear-gradient(135deg, color-mix(in srgb, #F6D5E6 65%, white), color-mix(in srgb, #9F1D6B 30%, white))` — mesmo estilo de gradiente dos outros planos, só a cor base muda. Ver `components/TenantMenu.tsx`.
-- Avatar do usuário (`components/UserAvatar.tsx`): foto (`avatar_url`) quando existe, senão iniciais (`utils/initials.ts`) sobre `--mk-primary`; fallback de ícone genérico só quando nome ainda não carregou.
+- Avatar do usuário (`components/UserAvatar.tsx`): foto (`avatar_url`) quando existe, senão iniciais (`utils/initials.ts`) sobre `--pt-primary`; fallback de ícone genérico só quando nome ainda não carregou.
 - Dados de perfil (nome/e-mail/avatar/`pending_email`) não vêm do `AccessProfile` (só permissões) — vêm de `GET /auth/profile`, compartilhados entre `UserMenu` e `MyAccountPage` via `UserProfileContext`/`useUserProfile` (irmão do `AuthContext`, também instanciado em `app/App.tsx`) pra que editar nome/foto em "Meus dados" reflita no header sem reload.
 
 ## Exceção mobile-first: módulo PDV (2026-07-22)
 
-O PDV (`web/src/pages/Pdv/*`, rota `/pdv`) é a **primeira tela desktop/teclado-first** do projeto — exceção CONSCIENTE à prioridade mobile-first geral do Maskats. Ela é desenhada para um balcão fixo com teclado + leitor de código de barras, não para o celular:
+O PDV (`web/src/pages/Pdv/*`, rota `/pdv`) é a **primeira tela desktop/teclado-first** do projeto — exceção CONSCIENTE à prioridade mobile-first geral do PegaTicket. Ela é desenhada para um balcão fixo com teclado + leitor de código de barras, não para o celular:
 
 - **Prioridade de layout invertida**: layout denso, campo de busca sempre focado, atalhos de teclado (`F2` foca busca, `F4` finaliza venda, `Delete`/`Backspace` remove item selecionado — ver `hooks/usePdvHotkeys.ts` e nota no `PdvSalePage`). Fluxo pensado para operar sem mouse.
 - **Continua responsivo, não abandonado**: usa grid `1fr 360px` que colapsa para coluna única em telas menores; a exceção é de PRIORIDADE de design, não abandono de responsividade. Não trava nem estoura em mobile.
-- **Tokens `--mk-*` normais**: só o layout/interação muda de prioridade — cores, radius, shadow, tema claro/escuro seguem exatamente o design system (nada de hex hardcoded).
+- **Tokens `--pt-*` normais**: só o layout/interação muda de prioridade — cores, radius, shadow, tema claro/escuro seguem exatamente o design system (nada de hex hardcoded).
 - **Recibo (`PdvReceiptPrintView`)**: cupom não-fiscal estreito (80mm), `@media print` oculta AppBar/sidebar (`body * { visibility: hidden }` + `#pdv-receipt` visível) e imprime só o cupom via `window.print()`.
 
 Regra: se surgir outra tela de operação de balcão (ex.: Balcão/garçom), pode seguir esta mesma exceção; qualquer OUTRO tipo de tela continua mobile-first por padrão.
@@ -257,7 +257,7 @@ Regra: se surgir outra tela de operação de balcão (ex.: Balcão/garçom), pod
 O módulo Balcão (`web/src/pages/Balcao/*`) tem DOIS perfis de tela distintos, cada um com sua diretriz:
 
 - **App do garçom (`BalcaoTablesPage` `/balcao/mesas`, `BalcaoComandaPage` `/balcao/comandas/:uuid`)**: MOBILE-FIRST de verdade — é operado no celular/tablet do garçom andando pelo salão. Grid de mesas com `repeat(auto-fill, minmax(150px, 1fr))` (auto-fill, não auto-fit — regra do [[feedback_card_grid_layout]], sem item órfão esticado), cards com alvo de toque ≥96px, cor por status via token (`TABLE_STATUS_META`/`PREP_STATUS_META` em `constants/balcao.ts`, nunca hex). O fechamento (`CloseComandaModal`) reaproveita o padrão de split de pagamento do PDV, somando taxa de serviço (aceitar/recusar) e divisão em N partes.
-- **KDS (`BalcaoKdsPage` `/balcao/kds`)**: EXCEÇÃO DE DESIGN CONSCIENTE — tela FIXA de cozinha/bar, leitura à DISTÂNCIA. Não é mobile-first nem desktop-denso: é um painel montado numa TV/tablet parado. Diretrizes próprias: fonte grande (produto em 22px, coluna/tempo em 18-20px), alto contraste, botão único GRANDE de avançar status por ticket (`py: 1.25`, 16px), colunas por status (`sent_to_station`/`preparing`/`ready`) lado a lado no desktop e empilhadas em mobile. Polling via `setInterval` no MESMO intervalo do resto do projeto (`POLL_INTERVAL_MS = 30000`, igual `StorefrontOrderManagementPage`). Tempo de espera em vermelho (`--mk-danger`) a partir de 15min. Estação selecionável no topo OU fixada via query param `?station=uuid` (para deixar o painel travado numa estação).
+- **KDS (`BalcaoKdsPage` `/balcao/kds`)**: EXCEÇÃO DE DESIGN CONSCIENTE — tela FIXA de cozinha/bar, leitura à DISTÂNCIA. Não é mobile-first nem desktop-denso: é um painel montado numa TV/tablet parado. Diretrizes próprias: fonte grande (produto em 22px, coluna/tempo em 18-20px), alto contraste, botão único GRANDE de avançar status por ticket (`py: 1.25`, 16px), colunas por status (`sent_to_station`/`preparing`/`ready`) lado a lado no desktop e empilhadas em mobile. Polling via `setInterval` no MESMO intervalo do resto do projeto (`POLL_INTERVAL_MS = 30000`, igual `StorefrontOrderManagementPage`). Tempo de espera em vermelho (`--pt-danger`) a partir de 15min. Estação selecionável no topo OU fixada via query param `?station=uuid` (para deixar o painel travado numa estação).
 
 Regra: telas de acompanhamento passivo montadas em display fixo (tipo KDS/painel de senha) seguem o perfil "tela-fixa" (fonte grande, alto contraste, sem depender de toque preciso); telas operadas na mão do funcionário seguem mobile-first normal.
 
@@ -269,6 +269,6 @@ Regra confirmada durante o trabalho: **nem todo arquivo do inventário tinha cor
 
 ## Remoção de gradientes em cards e botões (2026-07-30)
 
-Decisão explícita do usuário: gradiente linear/radial não é mais usado em **cards e botões** do produto — fundo sólido (`var(--mk-*)`/`color-mix`) no lugar. Escopo confirmado como restrito a componentes de interface (cards `Paper`/`Card`, chips, botões de seleção); telas de marca/hero (login, signup, convite, confirmação de e-mail — `AuthBrandPanel` e cópias inline em `LoginPage`/`SignupPage`/`ConfirmEmailPage`/`AcceptInvitePage`), o hero do `TrainingCenterPage`, banners (`ConnectionStatusBanner`), linhas decorativas (`PageHeader` underline, divisores) e o conteúdo gerado de story para redes sociais (`StoryCanvas`/`StorySingleBody`) **mantêm gradiente** — não fazem parte do escopo "cards ou botões".
+Decisão explícita do usuário: gradiente linear/radial não é mais usado em **cards e botões** do produto — fundo sólido (`var(--pt-*)`/`color-mix`) no lugar. Escopo confirmado como restrito a componentes de interface (cards `Paper`/`Card`, chips, botões de seleção); telas de marca/hero (login, signup, convite, confirmação de e-mail — `AuthBrandPanel` e cópias inline em `LoginPage`/`SignupPage`/`ConfirmEmailPage`/`AcceptInvitePage`), o hero do `TrainingCenterPage`, banners (`ConnectionStatusBanner`), linhas decorativas (`PageHeader` underline, divisores) e o conteúdo gerado de story para redes sociais (`StoryCanvas`/`StorySingleBody`) **mantêm gradiente** — não fazem parte do escopo "cards ou botões".
 
-Tokens `--mk-surface-raised-bg`/`--mk-surface-soft-bg` (usados por praticamente todo card elevado: `MetricCard`, `QuickActionCard`, `CrudListPage`, `UserMenu`, `SettingsHubLayout`) achatados pra `var(--mk-surface)`/`var(--mk-surface-soft)` puro em `index.css` — cobre a maioria dos cards do produto num único ponto. `--mk-page-background*`/`--mk-sidebar-background`/`--mk-decorative-overlay` (fundo de página/sidebar, não é card) permanecem com gradiente. Qualquer card/botão novo que usar gradiente de fundo deve ser convertido pra `color-mix(in srgb, TOKEN X%, var(--mk-surface))` sólido (ou o token direto), seguindo o mesmo padrão aplicado em `TenantMenu` (PlanChip/botão/menu), `OnboardingChecklistCard`, `DashboardPage`, `OrderListPage`, `ReceivablesAgingCard`, `RouteResultStopCard`, `BillingPeriodOptionCards`, `SubscriptionPage` e os cards de trilha/módulo/quiz do `TrainingCenterPage` (inclui remoção do efeito de shimmer/sweep animado, que também usava gradiente).
+Tokens `--pt-surface-raised-bg`/`--pt-surface-soft-bg` (usados por praticamente todo card elevado: `MetricCard`, `QuickActionCard`, `CrudListPage`, `UserMenu`, `SettingsHubLayout`) achatados pra `var(--pt-surface)`/`var(--pt-surface-soft)` puro em `index.css` — cobre a maioria dos cards do produto num único ponto. `--pt-page-background*`/`--pt-sidebar-background`/`--pt-decorative-overlay` (fundo de página/sidebar, não é card) permanecem com gradiente. Qualquer card/botão novo que usar gradiente de fundo deve ser convertido pra `color-mix(in srgb, TOKEN X%, var(--pt-surface))` sólido (ou o token direto), seguindo o mesmo padrão aplicado em `TenantMenu` (PlanChip/botão/menu), `OnboardingChecklistCard`, `DashboardPage`, `OrderListPage`, `ReceivablesAgingCard`, `RouteResultStopCard`, `BillingPeriodOptionCards`, `SubscriptionPage` e os cards de trilha/módulo/quiz do `TrainingCenterPage` (inclui remoção do efeito de shimmer/sweep animado, que também usava gradiente).

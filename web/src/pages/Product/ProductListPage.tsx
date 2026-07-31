@@ -98,7 +98,7 @@ export function ProductListPage() {
             src={row.image_url ?? undefined}
             sx={{ width: 32, height: 32, ...SOFT_PANEL_SX }}
           >
-            <Inventory2OutlinedIcon fontSize="small" sx={{ color: 'var(--mk-muted)' }} />
+            <Inventory2OutlinedIcon fontSize="small" sx={{ color: 'var(--pt-muted)' }} />
           </Avatar>
         ),
       },
@@ -152,7 +152,7 @@ export function ProductListPage() {
                   size="small"
                   aria-label={`Editar ${row.name}`}
                   onClick={() => handleEdit(row)}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
                 >
                   <EditOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -167,7 +167,7 @@ export function ProductListPage() {
                     setDeleteError(null)
                     setDeleteTarget(row)
                   }}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                 >
                   <DeleteOutlineIcon fontSize="small" />
                 </IconButton>
@@ -250,7 +250,7 @@ export function ProductListPage() {
                 gridApiRef.current = api
               }}
               emptyState={{
-                icon: <Inventory2OutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <Inventory2OutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum produto cadastrado ainda',
                 description: 'Comece cadastrando o primeiro produto do catálogo.',
                 action: can(ACCESS.productsCreate) ? (

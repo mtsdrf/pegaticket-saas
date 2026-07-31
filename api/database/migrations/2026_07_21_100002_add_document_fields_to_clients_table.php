@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * StoreClientRequest/ClientService/ClientResource, independente de emissão
  * de nota fiscal (que o PegaTicket não emite na v1). Recriado a partir da
  * migration fiscal original (`add_fiscal_fields_to_clients_table`) removida
- * na Fase 2 da migração Maskats -> PegaTicket.
+ * na Fase 2 da migração PegaTicket -> PegaTicket.
  */
 return new class extends Migration {
     public function up(): void

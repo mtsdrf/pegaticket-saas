@@ -107,7 +107,7 @@ export function GroupFormPage() {
             {users.map((user) => <MenuItem key={user.uuid} value={user.uuid}>{user.name}</MenuItem>)}
           </Select>
         </FormControl>
-        <Typography variant="caption" sx={{ color: 'var(--mk-muted)' }}>
+        <Typography variant="caption" sx={{ color: 'var(--pt-muted)' }}>
           Permissões de grupo ainda não têm leitura dedicada na API; por segurança, esta tela gerencia apenas os dados básicos e os usuários vinculados.
         </Typography>
         <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Grupo ativo" />

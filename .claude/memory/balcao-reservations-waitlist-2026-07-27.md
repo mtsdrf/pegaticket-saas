@@ -20,17 +20,17 @@ metadata:
 
 ## Backend
 - Migrations:
-  - [api/database/migrations/2026_07_27_090000_create_table_reservations_table.php](/home/mtsdrf/workspace/maskats-saas/api/database/migrations/2026_07_27_090000_create_table_reservations_table.php)
-  - [api/database/migrations/2026_07_27_090100_create_table_waitlists_table.php](/home/mtsdrf/workspace/maskats-saas/api/database/migrations/2026_07_27_090100_create_table_waitlists_table.php)
+  - [api/database/migrations/2026_07_27_090000_create_table_reservations_table.php](/home/mtsdrf/workspace/pegaticket-saas/api/database/migrations/2026_07_27_090000_create_table_reservations_table.php)
+  - [api/database/migrations/2026_07_27_090100_create_table_waitlists_table.php](/home/mtsdrf/workspace/pegaticket-saas/api/database/migrations/2026_07_27_090100_create_table_waitlists_table.php)
 - Models:
-  - [api/app/Models/Balcao/TableReservation.php](/home/mtsdrf/workspace/maskats-saas/api/app/Models/Balcao/TableReservation.php)
-  - [api/app/Models/Balcao/TableWaitlist.php](/home/mtsdrf/workspace/maskats-saas/api/app/Models/Balcao/TableWaitlist.php)
+  - [api/app/Models/Balcao/TableReservation.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Models/Balcao/TableReservation.php)
+  - [api/app/Models/Balcao/TableWaitlist.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Models/Balcao/TableWaitlist.php)
 - Services:
-  - [api/app/Services/Balcao/TableAvailabilityService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Balcao/TableAvailabilityService.php)
-  - [api/app/Services/Balcao/TableReservationService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Balcao/TableReservationService.php)
-  - [api/app/Services/Balcao/TableWaitlistService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Balcao/TableWaitlistService.php)
+  - [api/app/Services/Balcao/TableAvailabilityService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Balcao/TableAvailabilityService.php)
+  - [api/app/Services/Balcao/TableReservationService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Balcao/TableReservationService.php)
+  - [api/app/Services/Balcao/TableWaitlistService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Balcao/TableWaitlistService.php)
 - Controllers/Requests/Resources novos no namespace `Balcao` e `Storefront`.
-- Ajuste em [api/app/Services/Balcao/ComandaService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Balcao/ComandaService.php): comanda pode ocupar mesa `reserved`.
+- Ajuste em [api/app/Services/Balcao/ComandaService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Balcao/ComandaService.php): comanda pode ocupar mesa `reserved`.
 
 ## Rotas novas
 - Staff/tenant:
@@ -43,18 +43,18 @@ metadata:
 
 ## Frontend
 - Tipos e service contracts adicionados em:
-  - [web/src/types/balcao.ts](/home/mtsdrf/workspace/maskats-saas/web/src/types/balcao.ts)
-  - [web/src/services/balcaoService.ts](/home/mtsdrf/workspace/maskats-saas/web/src/services/balcaoService.ts)
-  - [web/src/types/storefront.ts](/home/mtsdrf/workspace/maskats-saas/web/src/types/storefront.ts)
-  - [web/src/services/storefrontService.ts](/home/mtsdrf/workspace/maskats-saas/web/src/services/storefrontService.ts)
+  - [web/src/types/balcao.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/types/balcao.ts)
+  - [web/src/services/balcaoService.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/services/balcaoService.ts)
+  - [web/src/types/storefront.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/types/storefront.ts)
+  - [web/src/services/storefrontService.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/services/storefrontService.ts)
 - Tela operacional consolidada:
-  - [web/src/pages/Balcao/BalcaoTablesPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Balcao/BalcaoTablesPage.tsx)
+  - [web/src/pages/Balcao/BalcaoTablesPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Balcao/BalcaoTablesPage.tsx)
 - Nova rota pública:
-  - [web/src/pages/Storefront/StorefrontReservationPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Storefront/StorefrontReservationPage.tsx)
-  - [web/src/pages/Settings/blocks/CompanyBlock.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Settings/blocks/CompanyBlock.tsx) passou a expor cards para compartilhar os links públicos de `Loja online` e `Reservas`
+  - [web/src/pages/Storefront/StorefrontReservationPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Storefront/StorefrontReservationPage.tsx)
+  - [web/src/pages/Settings/blocks/CompanyBlock.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Settings/blocks/CompanyBlock.tsx) passou a expor cards para compartilhar os links públicos de `Loja online` e `Reservas`
 - CTAs públicas adicionadas em:
-  - [web/src/pages/Storefront/StorefrontCatalogPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Storefront/StorefrontCatalogPage.tsx)
-  - [web/src/pages/Storefront/StorefrontProfilePage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Storefront/StorefrontProfilePage.tsx)
+  - [web/src/pages/Storefront/StorefrontCatalogPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Storefront/StorefrontCatalogPage.tsx)
+  - [web/src/pages/Storefront/StorefrontProfilePage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Storefront/StorefrontProfilePage.tsx)
 
 ## Permissões
 - Novos gates reutilizam a functionality já existente `balcao`:

@@ -14,17 +14,17 @@ export function PlanPriceMatrix() {
     <Box
       sx={{
         overflowX: 'auto',
-        borderRadius: 'var(--mk-radius-lg)',
-        border: '1px solid var(--mk-border)',
-        backgroundColor: 'var(--mk-surface)',
+        borderRadius: 'var(--pt-radius-lg)',
+        border: '1px solid var(--pt-border)',
+        backgroundColor: 'var(--pt-surface)',
       }}
     >
       <Table sx={{ minWidth: 620 }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 700, color: 'var(--mk-text)' }}>Plano</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: 'var(--pt-text)' }}>Plano</TableCell>
             {PERIODS.map((periodKey) => (
-              <TableCell key={periodKey} align="right" sx={{ fontWeight: 700, color: 'var(--mk-text)' }}>
+              <TableCell key={periodKey} align="right" sx={{ fontWeight: 700, color: 'var(--pt-text)' }}>
                 {BILLING_PERIODS[periodKey].label}
               </TableCell>
             ))}
@@ -33,15 +33,15 @@ export function PlanPriceMatrix() {
         <TableBody>
           {PLANS.map((plan) => (
             <TableRow key={plan.slug}>
-              <TableCell sx={{ fontWeight: 600, color: 'var(--mk-text)' }}>{plan.name}</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'var(--pt-text)' }}>{plan.name}</TableCell>
               {PERIODS.map((periodKey) => {
                 const price = calculatePlanPrice(plan.monthlyBase, periodKey)
                 return (
                   <TableCell key={periodKey} align="right">
-                    <Typography sx={{ fontSize: 14, fontWeight: 600, color: 'var(--mk-text)' }}>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600, color: 'var(--pt-text)' }}>
                       {formatBRL(price.chargedTotal)}
                     </Typography>
-                    <Typography sx={{ fontSize: 12, color: 'var(--mk-muted)' }}>
+                    <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
                       {formatBRL(price.monthlyEquivalent)}/mês
                       {periodKey !== 'monthly' ? ` · economia de ${formatBRL(price.savings)}` : ''}
                     </Typography>

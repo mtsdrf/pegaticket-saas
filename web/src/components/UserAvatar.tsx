@@ -9,7 +9,7 @@ interface UserAvatarProps {
   sx?: SxProps<Theme>
 }
 
-/** Foto do usuário quando existe, senão iniciais sobre `--mk-primary` — usado no header e em "Meus dados". */
+/** Foto do usuário quando existe, senão iniciais sobre `--pt-primary` — usado no header e em "Meus dados". */
 export function UserAvatar({ name, avatarUrl, size = 40, sx }: UserAvatarProps) {
   const initials = getInitials(name)
 
@@ -22,7 +22,7 @@ export function UserAvatar({ name, avatarUrl, size = 40, sx }: UserAvatarProps) 
         height: size,
         fontSize: size * 0.4,
         fontWeight: 700,
-        bgcolor: 'var(--mk-primary)',
+        bgcolor: 'var(--pt-primary)',
         color: '#FFFFFF',
         ...sx,
       }}

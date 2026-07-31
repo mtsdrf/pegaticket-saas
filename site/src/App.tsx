@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from 'react'
 import { ThemeFab } from './components/ThemeFab'
 import { ThemeModeProvider } from './contexts/ThemeModeProvider'
 import { useThemeMode } from './hooks/useThemeMode'
-import { buildMaskatsTheme } from './theme'
+import { buildPegaTicketTheme } from './theme'
 
 interface AppProps {
   children: ReactNode
@@ -12,12 +12,12 @@ interface AppProps {
 
 function ThemedApp({ children }: AppProps) {
   const { resolvedMode } = useThemeMode()
-  const theme = useMemo(() => buildMaskatsTheme(resolvedMode), [resolvedMode])
+  const theme = useMemo(() => buildPegaTicketTheme(resolvedMode), [resolvedMode])
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <a href="#conteudo" className="mk-skip-link">
+      <a href="#conteudo" className="pt-skip-link">
         Pular para o conteúdo
       </a>
       {children}

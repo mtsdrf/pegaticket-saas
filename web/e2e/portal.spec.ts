@@ -105,7 +105,7 @@ test.describe('Portal do cliente final', () => {
 
     await page.goto('/portal/entrar')
 
-    await expect(page.getByText('Minha conta Maskats')).toBeVisible()
+    await expect(page.getByText('Minha conta PegaTicket')).toBeVisible()
     await page.getByRole('textbox', { name: 'E-mail' }).fill('maria@cliente.com')
     await page.getByRole('button', { name: 'Receber código por e-mail' }).click()
 
@@ -123,6 +123,6 @@ test.describe('Portal do cliente final', () => {
     await page.getByRole('button', { name: 'Sair da conta' }).click()
 
     await expect(page).toHaveURL(/\/portal\/entrar$/)
-    await expect(page.getByText('Minha conta Maskats')).toBeVisible()
+    await expect(page.getByText('Minha conta PegaTicket')).toBeVisible()
   })
 })

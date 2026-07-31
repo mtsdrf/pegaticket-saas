@@ -10,7 +10,7 @@ test.describe('Central de treinamento', () => {
       tenantPermissions: ['dashboard:read', 'products:read', 'products:create', 'clients:read', 'orders:read', 'stock:read'],
       tenantFunctionalities: ['dashboard', 'products', 'clients', 'orders', 'stock', 'subscription'],
       userName: 'Treinamento QA',
-      userEmail: 'training@maskats.com',
+      userEmail: 'training@pegaticket.com',
       tenants: [
         {
           tenant_uuid: 'tenant-training-1',
@@ -100,7 +100,7 @@ test.describe('Central de treinamento', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const key = 'maskats.training_center_progress.user-qa-1.tenant-training-1'
+          const key = 'pegaticket.training_center_progress.user-qa-1.tenant-training-1'
           return localStorage.getItem(key)
         }),
       )
@@ -112,7 +112,7 @@ test.describe('Central de treinamento', () => {
     await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible()
     await expect(page.getByText('Produto Escola')).toBeVisible()
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('maskats.active_tenant_uuid')))
+      .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.active_tenant_uuid')))
       .toBe('tenant-training-1')
 
     await page.goto('/treinamentos')

@@ -11,7 +11,7 @@ import {
 } from 'chart.js'
 import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
-import { maskatsTokens } from '../../theme'
+import { pegaticketTokens } from '../../theme'
 import type { SalesHistoryYear } from '../../types/analytics'
 import { formatCurrency } from '../../utils/format'
 
@@ -31,7 +31,7 @@ interface SeasonalityLinesChartProps {
  */
 export function SeasonalityLinesChart({ rows }: SeasonalityLinesChartProps) {
   const { palette } = useTheme()
-  const tokens = maskatsTokens[palette.mode]
+  const tokens = pegaticketTokens[palette.mode]
 
   const years = useMemo(
     () => [...rows].sort((a, b) => b.year - a.year).slice(0, MAX_YEARS),

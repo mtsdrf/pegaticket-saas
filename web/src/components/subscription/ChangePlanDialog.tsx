@@ -176,7 +176,7 @@ export function ChangePlanDialog({ open, currentPlanName, onClose, onSuccess }: 
 
       <DialogContent>
         {!selectedPlan && (
-          <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 2 }}>
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
             Plano atual: <strong>{currentPlanName}</strong>. Escolha o novo plano para ver o preço real de cada
             período antes de confirmar.
           </Typography>
@@ -203,10 +203,10 @@ export function ChangePlanDialog({ open, currentPlanName, onClose, onSuccess }: 
 
         {selectedPlan && needsCard && (
           <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-text)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-text)' }}>
               O plano <strong>{selectedPlan.plan.name}</strong> é pago. Informe o cartão que será usado nas
               cobranças automáticas da assinatura. O número e o CVV são enviados direto ao Mercado Pago pelo
-              navegador — o Maskats nunca tem acesso a esses dados.
+              navegador — o PegaTicket nunca tem acesso a esses dados.
             </Typography>
 
             <CardTokenFields form={cardForm} onChange={updateCardField} disabled={isSubmitting} />

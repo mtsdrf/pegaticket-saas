@@ -1,11 +1,11 @@
-# Maskats — Arquitetura Completa de Ponta a Ponta
+# PegaTicket — Arquitetura Completa de Ponta a Ponta
 
 Data de referência: **25 de julho de 2026**  
 Base desta documentação: **código-fonte atual do monorepo + configuração ativa do backend + banco de dados ativo**.
 
 ## 1. Objetivo deste documento
 
-Este documento consolida a visão arquitetural real do Maskats no estado atual, cobrindo:
+Este documento consolida a visão arquitetural real do PegaTicket no estado atual, cobrindo:
 
 - produto e posicionamento do sistema;
 - topologia do monorepo;
@@ -23,7 +23,7 @@ Este material descreve prioritariamente o **estado atual real**. Onde existir ev
 
 ## 2. Resumo executivo
 
-O **Maskats** é um SaaS multiempresa orientado a operação comercial, com foco mobile-first, que já cobre uma base ampla de capacidades:
+O **PegaTicket** é um SaaS multiempresa orientado a operação comercial, com foco mobile-first, que já cobre uma base ampla de capacidades:
 
 - administração da plataforma;
 - gestão de empresas;
@@ -58,7 +58,7 @@ Em 25/07/2026, o repositório representa um sistema já bastante amplo, com:
 Estrutura principal:
 
 ```text
-maskats-saas/
+pegaticket-saas/
 ├── api/     Backend Laravel 13
 ├── web/     Aplicação autenticada React 19
 ├── site/    Landing institucional pública
@@ -550,7 +550,7 @@ Módulos:
 
 Estado observado via `php artisan db:show`:
 
-- banco: `u452434908_maskats_saas`
+- banco: `u452434908_pegaticket_saas`
 - engine: MariaDB 11.8.8
 - conexão: `mysql`
 - tabelas: **104**
@@ -1002,7 +1002,7 @@ Isso é viável, mas exige manter:
 
 ## 19. Conclusão arquitetural
 
-O Maskats, no estado atual, já é um **SaaS operacional de alta amplitude funcional**, com uma base arquitetural suficientemente madura para continuar crescendo sem recomeçar.
+O PegaTicket, no estado atual, já é um **SaaS operacional de alta amplitude funcional**, com uma base arquitetural suficientemente madura para continuar crescendo sem recomeçar.
 
 Os pilares mais fortes hoje são:
 
@@ -1024,13 +1024,13 @@ Os maiores cuidados para a próxima etapa não são “inventar arquitetura nova
 
 Para aprofundamento técnico, consultar em conjunto:
 
-- [README.md](/home/mtsdrf/workspace/maskats-saas/README.md)
-- [CLAUDE.md](/home/mtsdrf/workspace/maskats-saas/CLAUDE.md)
-- [.claude/memory/project-summary.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/project-summary.md)
-- [.claude/memory/architecture-decisions.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/architecture-decisions.md)
-- [.claude/memory/access-model.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/access-model.md)
-- [.claude/memory/security-standards.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/security-standards.md)
-- [.claude/memory/api-patterns.md](/home/mtsdrf/workspace/maskats-saas/.claude/memory/api-patterns.md)
-- [docs/first-rollout-playbook.md](/home/mtsdrf/workspace/maskats-saas/docs/first-rollout-playbook.md)
-- [docs/self-service-tenant-onboarding.md](/home/mtsdrf/workspace/maskats-saas/docs/self-service-tenant-onboarding.md)
-- [docs/hostinger-shared-deploy.md](/home/mtsdrf/workspace/maskats-saas/docs/hostinger-shared-deploy.md)
+- [README.md](/home/mtsdrf/workspace/pegaticket-saas/README.md)
+- [CLAUDE.md](/home/mtsdrf/workspace/pegaticket-saas/CLAUDE.md)
+- [.claude/memory/project-summary.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/project-summary.md)
+- [.claude/memory/architecture-decisions.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/architecture-decisions.md)
+- [.claude/memory/access-model.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/access-model.md)
+- [.claude/memory/security-standards.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/security-standards.md)
+- [.claude/memory/api-patterns.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/memory/api-patterns.md)
+- [docs/first-rollout-playbook.md](/home/mtsdrf/workspace/pegaticket-saas/docs/first-rollout-playbook.md)
+- [docs/self-service-tenant-onboarding.md](/home/mtsdrf/workspace/pegaticket-saas/docs/self-service-tenant-onboarding.md)
+- [docs/hostinger-shared-deploy.md](/home/mtsdrf/workspace/pegaticket-saas/docs/hostinger-shared-deploy.md)

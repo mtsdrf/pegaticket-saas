@@ -33,11 +33,11 @@ export function WorkflowActionDropZone({
       sx={{
         ...SOFT_PANEL_SX,
         p: 1.5,
-        border: `1px dashed ${isActiveDrop ? accent : 'var(--mk-border)'}`,
+        border: `1px dashed ${isActiveDrop ? accent : 'var(--pt-border)'}`,
         bgcolor: isActiveDrop
-          ? `color-mix(in srgb, ${accent} 10%, var(--mk-surface))`
-          : 'color-mix(in srgb, var(--mk-surface) 94%, white)',
-        color: isDisabled ? 'var(--mk-muted)' : accent,
+          ? `color-mix(in srgb, ${accent} 10%, var(--pt-surface))`
+          : 'color-mix(in srgb, var(--pt-surface) 94%, white)',
+        color: isDisabled ? 'var(--pt-muted)' : accent,
         opacity: isDisabled ? 0.58 : 1,
         transition: 'border-color 140ms ease, background-color 140ms ease, opacity 140ms ease',
         minHeight: 122,
@@ -48,7 +48,7 @@ export function WorkflowActionDropZone({
           {icon ? <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</Box> : null}
           <Typography sx={{ fontSize: 14, fontWeight: 800 }}>{title}</Typography>
         </Stack>
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{description}</Typography>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{description}</Typography>
         <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
           {isActiveDrop ? 'Solte aqui para executar a ação.' : 'Arraste um card compatível para esta área.'}
         </Typography>

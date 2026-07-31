@@ -6,10 +6,10 @@ import { CARD_EQUAL_HEIGHT_SX, CLAMP_TEXT_2_SX, UI_RADIUS, UI_SIZE } from '../..
 type MetricTone = 'primary' | 'warning' | 'accent' | 'info'
 
 const TONE_COLOR: Record<MetricTone, string> = {
-  primary: 'var(--mk-primary)',
-  warning: 'var(--mk-warning)',
-  accent: 'var(--mk-accent)',
-  info: 'var(--mk-info)',
+  primary: 'var(--pt-primary)',
+  warning: 'var(--pt-warning)',
+  accent: 'var(--pt-accent)',
+  info: 'var(--pt-info)',
 }
 
 interface MetricCardProps {
@@ -28,11 +28,11 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{
         p: { xs: 2.25, sm: 2.75 },
         ...ELEVATED_SURFACE_SX,
-        background: 'var(--mk-surface-raised-bg)',
+        background: 'var(--pt-surface-raised-bg)',
         ...CARD_EQUAL_HEIGHT_SX,
         minHeight: UI_SIZE.metricCard,
         display: 'flex',
@@ -55,7 +55,7 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          background: `color-mix(in srgb, ${color} 14%, var(--mk-surface))`,
+          background: `color-mix(in srgb, ${color} 14%, var(--pt-surface))`,
           color,
         }}
       >
@@ -65,7 +65,7 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
       <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', flex: 1 }}>
         <Typography
           variant="body2"
-          sx={{ color: 'var(--mk-muted)', fontSize: 13, fontWeight: 500, mb: 0.25, ...CLAMP_TEXT_2_SX }}
+          sx={{ color: 'var(--pt-muted)', fontSize: 13, fontWeight: 500, mb: 0.25, ...CLAMP_TEXT_2_SX }}
         >
           {label}
         </Typography>
@@ -79,7 +79,7 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
                 fontFamily: '"Sora", "Inter", sans-serif',
                 fontSize: { xs: 26, sm: 32 },
                 fontWeight: 700,
-                color: 'var(--mk-text)',
+                color: 'var(--pt-text)',
                 lineHeight: 1.15,
                 fontVariantNumeric: 'tabular-nums',
                 // valores monetários usam NBSP (Intl pt-BR) e viram um token
@@ -90,7 +90,7 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
               {value}
             </Typography>
             {caption ? (
-              <Typography sx={{ mt: 0.5, fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ mt: 0.5, fontSize: 12.5, color: 'var(--pt-muted)' }}>
               {caption}
             </Typography>
             ) : null}

@@ -48,7 +48,7 @@ function NavButton({
   onClick: (event: React.MouseEvent<HTMLElement>) => void
   ariaLabel?: string
 }) {
-  const color = active ? 'var(--mk-primary)' : 'var(--mk-muted)'
+  const color = active ? 'var(--pt-primary)' : 'var(--pt-muted)'
 
   return (
     <ButtonBase
@@ -67,7 +67,7 @@ function NavButton({
         gap: 0.4,
         color,
         ...SOFT_PANEL_SX,
-        borderRadius: 'var(--mk-radius-md)',
+        borderRadius: 'var(--pt-radius-md)',
         borderColor: 'transparent',
         background: 'transparent',
         transition: 'color 0.15s ease',
@@ -137,9 +137,9 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
           right: 0,
           bottom: 0,
           zIndex: (theme) => theme.zIndex.appBar,
-          bgcolor: 'color-mix(in srgb, var(--mk-surface) 94%, transparent)',
+          bgcolor: 'color-mix(in srgb, var(--pt-surface) 94%, transparent)',
           backdropFilter: 'blur(8px)',
-          borderTop: '1px solid var(--mk-border)',
+          borderTop: '1px solid var(--pt-border)',
           pb: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
@@ -195,7 +195,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
         {customer?.email && (
           <Box sx={{ px: 2, py: 1 }}>
             {customer.name && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{customer.name}</Typography>}
-            <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', wordBreak: 'break-word' }}>
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', wordBreak: 'break-word' }}>
               {customer.email}
             </Typography>
           </Box>
@@ -213,10 +213,10 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
             setMenuAnchor(null)
             logout()
           }}
-          sx={{ minHeight: 44, color: 'var(--mk-danger)' }}
+          sx={{ minHeight: 44, color: 'var(--pt-danger)' }}
         >
           <ListItemIcon>
-            <LogoutOutlinedIcon fontSize="small" sx={{ color: 'var(--mk-danger)' }} />
+            <LogoutOutlinedIcon fontSize="small" sx={{ color: 'var(--pt-danger)' }} />
           </ListItemIcon>
           <ListItemText slotProps={{ primary: { sx: { fontSize: 14 } } }}>Sair</ListItemText>
         </MenuItem>

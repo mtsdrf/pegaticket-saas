@@ -31,7 +31,7 @@ export function FeatureMatrix({ title, functionalities, selected, onToggle }: Fe
               label={
                 <Box>
                   <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700 }}>{functionality.name}</Typography>
-                  <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>{functionality.slug}</Typography>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{functionality.slug}</Typography>
                 </Box>
               }
               sx={{ alignItems: 'flex-start', m: 0 }}

@@ -44,7 +44,7 @@ export function AgeVerificationGate({ slug, children }: { slug: string; children
         px: 2,
         py: 4,
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
       }}
     >
       <Paper
@@ -58,16 +58,16 @@ export function AgeVerificationGate({ slug, children }: { slug: string; children
           maxWidth: 440,
           width: '100%',
           textAlign: 'center',
-          boxShadow: 'var(--mk-shadow-md)',
+          boxShadow: 'var(--pt-shadow-md)',
         }}
       >
         {status === 'blocked' ? (
           <>
-            <BlockOutlinedIcon sx={{ fontSize: 42, color: 'var(--mk-danger)', mb: 1.5 }} />
+            <BlockOutlinedIcon sx={{ fontSize: 42, color: 'var(--pt-danger)', mb: 1.5 }} />
             <Typography id="age-gate-title" sx={{ fontWeight: 700, fontSize: 19, mb: 1 }}>
               Acesso não permitido
             </Typography>
-            <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', lineHeight: 1.6 }}>
+            <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', lineHeight: 1.6 }}>
               Este site é destinado exclusivamente a maiores de 18 (dezoito) anos, conforme o Estatuto da Criança e
               do Adolescente (Lei nº 8.069/1990) e as normas do CONAR aplicáveis à publicidade e venda de produtos
               restritos a maiores de idade. Não é possível continuar a navegação.
@@ -75,18 +75,18 @@ export function AgeVerificationGate({ slug, children }: { slug: string; children
             <Button
               variant="outlined"
               onClick={() => window.history.back()}
-              sx={{ mt: 3, minHeight: 44, borderColor: 'var(--mk-border)', color: 'var(--mk-muted)' }}
+              sx={{ mt: 3, minHeight: 44, borderColor: 'var(--pt-border)', color: 'var(--pt-muted)' }}
             >
               Voltar
             </Button>
           </>
         ) : (
           <>
-            <GppMaybeOutlinedIcon sx={{ fontSize: 42, color: 'var(--mk-primary)', mb: 1.5 }} />
+            <GppMaybeOutlinedIcon sx={{ fontSize: 42, color: 'var(--pt-primary)', mb: 1.5 }} />
             <Typography id="age-gate-title" sx={{ fontWeight: 700, fontSize: 19, mb: 1 }}>
               Confirmação de idade
             </Typography>
-            <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', lineHeight: 1.6, mb: 3 }}>
+            <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', lineHeight: 1.6, mb: 3 }}>
               Este site pode conter produtos e conteúdos destinados exclusivamente a maiores de 18 (dezoito) anos, em
               conformidade com o Estatuto da Criança e do Adolescente (Lei nº 8.069/1990) e as normas do CONAR para
               publicidade e venda de produtos restritos a maiores de idade. Ao confirmar, você declara, sob as penas
@@ -96,11 +96,11 @@ export function AgeVerificationGate({ slug, children }: { slug: string; children
               <Button
                 variant="contained"
                 onClick={handleConfirm}
-                sx={{ minHeight: 44, fontWeight: 600, bgcolor: 'var(--mk-primary)', '&:hover': { bgcolor: 'var(--mk-primary-hover)' } }}
+                sx={{ minHeight: 44, fontWeight: 600, bgcolor: 'var(--pt-primary)', '&:hover': { bgcolor: 'var(--pt-primary-hover)' } }}
               >
                 Sim, tenho 18 anos ou mais
               </Button>
-              <Button variant="text" onClick={() => setStatus('blocked')} sx={{ minHeight: 44, color: 'var(--mk-muted)' }}>
+              <Button variant="text" onClick={() => setStatus('blocked')} sx={{ minHeight: 44, color: 'var(--pt-muted)' }}>
                 Não tenho 18 anos
               </Button>
             </Stack>

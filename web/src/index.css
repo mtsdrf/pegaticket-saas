@@ -1,37 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 :root {
-  --mk-bg: #F8F8FA;
-  --mk-surface: #FFFFFF;
-  --mk-surface-soft: #EEF3F8;
-  --mk-primary: #005BDA;
-  --mk-primary-hover: #004EC0;
-  --mk-primary-soft: #E9F2FF;
-  --mk-secondary: #0A6BFF;
-  --mk-accent: #003F9A;
-  --mk-text: #10213E;
-  --mk-muted: #64748B;
-  --mk-border: #D8E0EA;
-  --mk-success: #16A34A;
-  --mk-warning: #F59E0B;
-  --mk-danger: #DC2626;
-  --mk-info: #0284C7;
+  --pt-bg: #F8F8FA;
+  --pt-surface: #FFFFFF;
+  --pt-surface-soft: #EEF3F8;
+  --pt-primary: #005BDA;
+  --pt-primary-hover: #004EC0;
+  --pt-primary-soft: #E9F2FF;
+  --pt-secondary: #0A6BFF;
+  --pt-accent: #003F9A;
+  --pt-text: #10213E;
+  --pt-muted: #64748B;
+  --pt-border: #D8E0EA;
+  --pt-success: #16A34A;
+  --pt-warning: #F59E0B;
+  --pt-danger: #DC2626;
+  --pt-info: #0284C7;
 
-  --mk-radius-sm: 8px;
-  --mk-radius-md: 12px;
-  --mk-radius-lg: 15px;
-  --mk-radius-xl: 15px;
-  --mk-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
-  --mk-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
-  --mk-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
-  --mk-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
-  --mk-surface-raised-bg: var(--mk-surface);
-  --mk-surface-soft-bg: var(--mk-surface-soft);
-  --mk-page-background: linear-gradient(160deg, var(--mk-bg) 0%, var(--mk-surface-soft) 45%, color-mix(in srgb, var(--mk-primary) 12%, var(--mk-bg)) 100%);
-  --mk-page-background-soft: linear-gradient(155deg, var(--mk-bg) 0%, color-mix(in srgb, var(--mk-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--mk-primary) 12%, var(--mk-bg)) 100%);
-  --mk-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--mk-bg) 88%, white) 0%, var(--mk-bg) 100%);
-  --mk-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--mk-surface) 96%, white) 0%, color-mix(in srgb, var(--mk-surface-soft) 72%, white) 100%);
-  --mk-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--mk-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--mk-primary) 8%, transparent), transparent 24%);
+  --pt-radius-sm: 8px;
+  --pt-radius-md: 12px;
+  --pt-radius-lg: 15px;
+  --pt-radius-xl: 15px;
+  --pt-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
+  --pt-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
+  --pt-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
+  --pt-surface-raised-bg: var(--pt-surface);
+  --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
+  --pt-page-background-soft: linear-gradient(155deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
+  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 88%, white) 0%, var(--pt-bg) 100%);
+  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 72%, white) 100%);
+  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 8%, transparent), transparent 24%);
 
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -43,91 +43,91 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --mk-bg: #07111F;
-    --mk-surface: #0D1B2E;
-    --mk-surface-soft: #13243A;
-    --mk-primary: #0A6BFF;
-    --mk-primary-hover: #3B82FF;
-    --mk-primary-soft: #12325F;
-    --mk-secondary: #005BDA;
-    --mk-accent: #38BDF8;
-    --mk-text: #F8FAFC;
-    --mk-muted: #94A3B8;
-    --mk-border: #24364D;
-    --mk-success: #22C55E;
-    --mk-warning: #FBBF24;
-    --mk-danger: #F87171;
-    --mk-info: #38BDF8;
-    --mk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
-    --mk-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-    --mk-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-    --mk-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
-    --mk-surface-raised-bg: var(--mk-surface);
-    --mk-surface-soft-bg: var(--mk-surface-soft);
-    --mk-page-background: var(--mk-bg);
-    --mk-page-background-soft: var(--mk-bg);
-    --mk-page-background-desktop: var(--mk-bg);
-    --mk-sidebar-background: var(--mk-surface);
-    --mk-decorative-overlay: none;
+    --pt-bg: #07111F;
+    --pt-surface: #0D1B2E;
+    --pt-surface-soft: #13243A;
+    --pt-primary: #0A6BFF;
+    --pt-primary-hover: #3B82FF;
+    --pt-primary-soft: #12325F;
+    --pt-secondary: #005BDA;
+    --pt-accent: #38BDF8;
+    --pt-text: #F8FAFC;
+    --pt-muted: #94A3B8;
+    --pt-border: #24364D;
+    --pt-success: #22C55E;
+    --pt-warning: #FBBF24;
+    --pt-danger: #F87171;
+    --pt-info: #38BDF8;
+    --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
+    --pt-surface-raised-bg: var(--pt-surface);
+    --pt-surface-soft-bg: var(--pt-surface-soft);
+    --pt-page-background: var(--pt-bg);
+    --pt-page-background-soft: var(--pt-bg);
+    --pt-page-background-desktop: var(--pt-bg);
+    --pt-sidebar-background: var(--pt-surface);
+    --pt-decorative-overlay: none;
   }
 }
 
 :root[data-theme='dark'] {
-  --mk-bg: #07111F;
-  --mk-surface: #0D1B2E;
-  --mk-surface-soft: #13243A;
-  --mk-primary: #0A6BFF;
-  --mk-primary-hover: #3B82FF;
-  --mk-primary-soft: #12325F;
-  --mk-secondary: #005BDA;
-  --mk-accent: #38BDF8;
-  --mk-text: #F8FAFC;
-  --mk-muted: #94A3B8;
-  --mk-border: #24364D;
-  --mk-success: #22C55E;
-  --mk-warning: #FBBF24;
-  --mk-danger: #F87171;
-  --mk-info: #38BDF8;
-  --mk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
-  --mk-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --mk-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --mk-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
-  --mk-surface-raised-bg: var(--mk-surface);
-  --mk-surface-soft-bg: var(--mk-surface-soft);
-  --mk-page-background: var(--mk-bg);
-  --mk-page-background-soft: var(--mk-bg);
-  --mk-page-background-desktop: var(--mk-bg);
-  --mk-sidebar-background: var(--mk-surface);
-  --mk-decorative-overlay: none;
+  --pt-bg: #07111F;
+  --pt-surface: #0D1B2E;
+  --pt-surface-soft: #13243A;
+  --pt-primary: #0A6BFF;
+  --pt-primary-hover: #3B82FF;
+  --pt-primary-soft: #12325F;
+  --pt-secondary: #005BDA;
+  --pt-accent: #38BDF8;
+  --pt-text: #F8FAFC;
+  --pt-muted: #94A3B8;
+  --pt-border: #24364D;
+  --pt-success: #22C55E;
+  --pt-warning: #FBBF24;
+  --pt-danger: #F87171;
+  --pt-info: #38BDF8;
+  --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
+  --pt-surface-raised-bg: var(--pt-surface);
+  --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-page-background: var(--pt-bg);
+  --pt-page-background-soft: var(--pt-bg);
+  --pt-page-background-desktop: var(--pt-bg);
+  --pt-sidebar-background: var(--pt-surface);
+  --pt-decorative-overlay: none;
 }
 
 :root[data-theme='light'] {
-  --mk-bg: #F8F8FA;
-  --mk-surface: #FFFFFF;
-  --mk-surface-soft: #EEF3F8;
-  --mk-primary: #005BDA;
-  --mk-primary-hover: #004EC0;
-  --mk-primary-soft: #E9F2FF;
-  --mk-secondary: #0A6BFF;
-  --mk-accent: #003F9A;
-  --mk-text: #10213E;
-  --mk-muted: #64748B;
-  --mk-border: #D8E0EA;
-  --mk-success: #16A34A;
-  --mk-warning: #F59E0B;
-  --mk-danger: #DC2626;
-  --mk-info: #0284C7;
-  --mk-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
-  --mk-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
-  --mk-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
-  --mk-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
-  --mk-surface-raised-bg: var(--mk-surface);
-  --mk-surface-soft-bg: var(--mk-surface-soft);
-  --mk-page-background: linear-gradient(160deg, var(--mk-bg) 0%, var(--mk-surface-soft) 45%, color-mix(in srgb, var(--mk-primary) 12%, var(--mk-bg)) 100%);
-  --mk-page-background-soft: linear-gradient(155deg, var(--mk-bg) 0%, color-mix(in srgb, var(--mk-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--mk-primary) 12%, var(--mk-bg)) 100%);
-  --mk-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--mk-bg) 88%, white) 0%, var(--mk-bg) 100%);
-  --mk-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--mk-surface) 96%, white) 0%, color-mix(in srgb, var(--mk-surface-soft) 72%, white) 100%);
-  --mk-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--mk-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--mk-primary) 8%, transparent), transparent 24%);
+  --pt-bg: #F8F8FA;
+  --pt-surface: #FFFFFF;
+  --pt-surface-soft: #EEF3F8;
+  --pt-primary: #005BDA;
+  --pt-primary-hover: #004EC0;
+  --pt-primary-soft: #E9F2FF;
+  --pt-secondary: #0A6BFF;
+  --pt-accent: #003F9A;
+  --pt-text: #10213E;
+  --pt-muted: #64748B;
+  --pt-border: #D8E0EA;
+  --pt-success: #16A34A;
+  --pt-warning: #F59E0B;
+  --pt-danger: #DC2626;
+  --pt-info: #0284C7;
+  --pt-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
+  --pt-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
+  --pt-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
+  --pt-surface-raised-bg: var(--pt-surface);
+  --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
+  --pt-page-background-soft: linear-gradient(155deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
+  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 88%, white) 0%, var(--pt-bg) 100%);
+  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 72%, white) 100%);
+  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 8%, transparent), transparent 24%);
 }
 
 * {
@@ -137,8 +137,8 @@
 body {
   margin: 0;
   min-height: 100svh;
-  background: var(--mk-bg);
-  color: var(--mk-text);
+  background: var(--pt-bg);
+  color: var(--pt-text);
 }
 
 h1,
@@ -149,7 +149,7 @@ h3 {
   margin: 0;
 }
 
-.mk-wordmark {
+.pt-wordmark {
   font-family: 'Sora', 'Inter', system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -161,7 +161,7 @@ h3 {
  * componente (ver MetricCard/QuickActionCard). Um único momento
  * orquestrado no carregamento, não animação decorativa solta.
  */
-@keyframes mk-reveal {
+@keyframes pt-reveal {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -172,12 +172,12 @@ h3 {
   }
 }
 
-.mk-reveal {
-  animation: mk-reveal 0.35s ease-out both;
+.pt-reveal {
+  animation: pt-reveal 0.35s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mk-reveal {
+  .pt-reveal {
     animation: none;
   }
 }
@@ -189,7 +189,7 @@ h3 {
  * (roadmap 2.6). Sem lib nova: o usuário escolhe "Salvar como PDF" no
  * diálogo nativo do navegador.
  */
-.mk-print-export {
+.pt-print-export {
   display: none;
 }
 
@@ -198,37 +198,37 @@ h3 {
     display: none !important;
   }
 
-  .mk-print-export {
+  .pt-print-export {
     display: block !important;
     padding: 24px;
     color: #111;
   }
 
-  .mk-print-export h1 {
+  .pt-print-export h1 {
     font-size: 18px;
     margin-bottom: 4px;
   }
 
-  .mk-print-export p {
+  .pt-print-export p {
     font-size: 12px;
     color: #444;
     margin: 0 0 16px;
   }
 
-  .mk-print-export table {
+  .pt-print-export table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
   }
 
-  .mk-print-export th,
-  .mk-print-export td {
+  .pt-print-export th,
+  .pt-print-export td {
     border: 1px solid #ccc;
     padding: 6px 8px;
     text-align: left;
   }
 
-  .mk-print-export th {
+  .pt-print-export th {
     background: #f0f0f0;
   }
 }

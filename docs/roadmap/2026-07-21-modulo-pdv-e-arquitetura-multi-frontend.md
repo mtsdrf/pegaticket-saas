@@ -1,6 +1,6 @@
-# Maskats — Roadmap: Módulo PDV completo + Arquitetura por URL (path-based, um único domínio)
+# PegaTicket — Roadmap: Módulo PDV completo + Arquitetura por URL (path-based, um único domínio)
 
-> Documento de arquitetura e planejamento. **Não é implementação.** Levantado em 2026-07-21, **atualizado em 2026-07-22** após decisão do dono: em vez de subdomínios (`pdv.maskats.com`, `balcao.maskats.com`...), os módulos vivem por **caminho de URL sob o mesmo domínio**: `sistema.maskats.com/pdv`, `/loja`, `/balcao`, `/contador`. PDV e a organização por URL estão no mesmo documento porque **uma decisão afeta a outra**.
+> Documento de arquitetura e planejamento. **Não é implementação.** Levantado em 2026-07-21, **atualizado em 2026-07-22** após decisão do dono: em vez de subdomínios (`pdv.pegaticket.com`, `balcao.pegaticket.com`...), os módulos vivem por **caminho de URL sob o mesmo domínio**: `sistema.pegaticket.com/pdv`, `/loja`, `/balcao`, `/contador`. PDV e a organização por URL estão no mesmo documento porque **uma decisão afeta a outra**.
 >
 > Restrição-guia: **orçamento baixo**, uma pessoa desenvolvendo por vez, hospedagem compartilhada (Hostinger), um único pipeline de CI. Pontos que dependem de teste real de hardware/navegador estão marcados **[requer validação técnica]**.
 
@@ -8,9 +8,9 @@
 
 ## Sumário executivo
 
-**Parte A (PDV):** o Maskats já tem quase tudo o que um PDV precisa — produtos com `barcode`/`sku`/`unit`, estoque, clientes, e o `PaymentProviderInterface` (com `createPixChargeForOrder`) já scaffoldado. O que **falta** e não existe hoje é: (1) **caixa** — abertura/fechamento, sangria, suprimento, conferência (conceito zero no sistema atual); (2) **múltiplas formas de pagamento no mesmo fechamento** (hoje `orders.is_paid`/`paid_amount` é escalar — um pagamento só); (3) UX de venda rápida (busca por barcode, atalhos de teclado); (4) integração com hardware (leitor, balança, impressora térmica) via APIs nativas do navegador. PDV é **por natureza um ponto físico único**, então o offline dele é **muito mais simples** que o do balcão (um caixa, não N garçons móveis).
+**Parte A (PDV):** o PegaTicket já tem quase tudo o que um PDV precisa — produtos com `barcode`/`sku`/`unit`, estoque, clientes, e o `PaymentProviderInterface` (com `createPixChargeForOrder`) já scaffoldado. O que **falta** e não existe hoje é: (1) **caixa** — abertura/fechamento, sangria, suprimento, conferência (conceito zero no sistema atual); (2) **múltiplas formas de pagamento no mesmo fechamento** (hoje `orders.is_paid`/`paid_amount` é escalar — um pagamento só); (3) UX de venda rápida (busca por barcode, atalhos de teclado); (4) integração com hardware (leitor, balança, impressora térmica) via APIs nativas do navegador. PDV é **por natureza um ponto físico único**, então o offline dele é **muito mais simples** que o do balcão (um caixa, não N garçons móveis).
 
-**Parte B (arquitetura por URL):** decisão do dono (2026-07-22): `sistema.maskats.com/pdv`, `/loja`, `/balcao`, `/contador` — **um único domínio, caminhos separados**, não subdomínios. Isso muda a recomendação de arquitetura pra melhor: **elimina de vez o problema de autenticação entre origens** que dominava a versão anterior deste documento. Mesmo domínio = mesma origem = `localStorage` já é compartilhado nativamente pelo browser, sem precisar migrar nada de token/cookie.
+**Parte B (arquitetura por URL):** decisão do dono (2026-07-22): `sistema.pegaticket.com/pdv`, `/loja`, `/balcao`, `/contador` — **um único domínio, caminhos separados**, não subdomínios. Isso muda a recomendação de arquitetura pra melhor: **elimina de vez o problema de autenticação entre origens** que dominava a versão anterior deste documento. Mesmo domínio = mesma origem = `localStorage` já é compartilhado nativamente pelo browser, sem precisar migrar nada de token/cookie.
 
 Recomendação revisada, mais simples que a anterior: **não criar monorepo de apps Vite separados agora.** Cada módulo (`/pdv`, `/balcao`) entra como uma **nova árvore de rotas isolada dentro do `web/` atual** — exatamente o padrão já usado e validado nesta mesma sessão para `/portal/*` (cliente final) e `/contador/*` (contador): pasta própria em `web/src/pages/{Modulo}/`, layout/contexto próprio quando fizer sentido, lazy-loaded via `React.lazy` (o projeto já faz isso, o build já gera chunks separados por vendor/rota), tudo dentro do **mesmo** `npm run build` e do **mesmo** deploy que já existe hoje. Zero infraestrutura nova.
 
@@ -99,11 +99,11 @@ Esforço: **P**/**M**/**G**/**GG**.
 
 # Parte B — Arquitetura por URL (path-based, um único domínio) — DECISÃO FINAL (2026-07-22)
 
-Decisão do dono: **não subdomínios.** `sistema.maskats.com/pdv`, `/loja`, `/balcao`, `/contador` — tudo sob o **mesmo domínio**, na **mesma API única**, com o dono vendo **tudo num painel central**. Esta seção substitui a análise anterior de subdomínios (mantida no histórico do arquivo via git, não repetida aqui).
+Decisão do dono: **não subdomínios.** `sistema.pegaticket.com/pdv`, `/loja`, `/balcao`, `/contador` — tudo sob o **mesmo domínio**, na **mesma API única**, com o dono vendo **tudo num painel central**. Esta seção substitui a análise anterior de subdomínios (mantida no histórico do arquivo via git, não repetida aqui).
 
 ## B.1 Um único app Vite, rotas isoladas por módulo (não monorepo de apps)
 
-**Por que isso é mais simples que a versão anterior deste documento:** o problema que mais pesava na análise de subdomínios era autenticação entre origens diferentes (`localStorage` isolado por origem). **Com path-based routing sob um único domínio, esse problema não existe** — `sistema.maskats.com/pdv` e `sistema.maskats.com/balcao` são a **mesma origem**, então o `localStorage` já é compartilhado nativamente pelo browser. Login único, sem migrar nada de auth.
+**Por que isso é mais simples que a versão anterior deste documento:** o problema que mais pesava na análise de subdomínios era autenticação entre origens diferentes (`localStorage` isolado por origem). **Com path-based routing sob um único domínio, esse problema não existe** — `sistema.pegaticket.com/pdv` e `sistema.pegaticket.com/balcao` são a **mesma origem**, então o `localStorage` já é compartilhado nativamente pelo browser. Login único, sem migrar nada de auth.
 
 **Recomendação: continuar com um único app `web/` (não criar `web/apps/*`, não introduzir npm workspaces).** Cada módulo novo entra como mais uma **árvore de rotas isolada**, exatamente o padrão **já construído e validado duas vezes nesta mesma sessão**:
 - `/portal/*` (Portal do cliente final) — `PortalAuthContext`/`portalApiClient.ts`/`PortalProtectedRoute`/`PortalShell.tsx`, provider isolado só naquela subárvore de `AppRoutes.tsx`.
@@ -126,7 +126,7 @@ web/src/pages/
 
 ## B.2 Compartilhamento de código
 
-Como tudo roda no **mesmo bundle/app**, o compartilhamento já é automático — não existe o problema de "manter 4 pacotes sincronizados" que a versão anterior deste documento levantava. `apiClient.ts`, tipos de `types/api.ts`, tokens `--mk-*` e tema já são únicos por natureza (é um só projeto). Continua valendo a disciplina normal do projeto: componentes muito específicos de um módulo (tela de caixa do PDV, KDS do Balcão) ficam na pasta do módulo, sem forçar reuso prematuro com o resto do painel.
+Como tudo roda no **mesmo bundle/app**, o compartilhamento já é automático — não existe o problema de "manter 4 pacotes sincronizados" que a versão anterior deste documento levantava. `apiClient.ts`, tipos de `types/api.ts`, tokens `--pt-*` e tema já são únicos por natureza (é um só projeto). Continua valendo a disciplina normal do projeto: componentes muito específicos de um módulo (tela de caixa do PDV, KDS do Balcão) ficam na pasta do módulo, sem forçar reuso prematuro com o resto do painel.
 
 ## B.3 Autenticação — problema eliminado pela decisão de URL
 
@@ -155,7 +155,7 @@ Não há nada a decidir aqui: mesma origem = mesmo `localStorage` = sessão de s
 2. PDV **cria a infra de caixa** (`cash_sessions`, sangria/suprimento) e o `order_payments` (múltiplas formas) que o **Balcão vai herdar** no fechamento. Construir essa fundação no módulo mais simples reduz risco.
 3. Validar caixa + pagamento no PDV dá confiança antes de enfrentar o offline-first do Balcão (o maior risco dos dois documentos).
 
-**Arquitetura por URL, decidida e mais simples que o plano anterior.** `/pdv`, `/balcao`, `/loja`, `/contador` sob `sistema.maskats.com`, todos no mesmo app `web/`, mesmo deploy, mesma origem — sem migração de auth, sem monorepo de apps, sem configuração de subdomínio/vhost. Isso remove do caminho crítico o item que era o maior risco/custo da versão anterior deste documento (autenticação entre origens).
+**Arquitetura por URL, decidida e mais simples que o plano anterior.** `/pdv`, `/balcao`, `/loja`, `/contador` sob `sistema.pegaticket.com`, todos no mesmo app `web/`, mesmo deploy, mesma origem — sem migração de auth, sem monorepo de apps, sem configuração de subdomínio/vhost. Isso remove do caminho crítico o item que era o maior risco/custo da versão anterior deste documento (autenticação entre origens).
 
 ```
 Sequência sugerida:

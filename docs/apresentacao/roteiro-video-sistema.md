@@ -1,16 +1,16 @@
-# Roteiro do vídeo — Apresentação do sistema Maskats
+# Roteiro do vídeo — Apresentação do sistema PegaTicket
 
 Roteiro passo a passo pra gravar um vídeo mostrando o sistema inteiro, usando as 3 empresas de demonstração já criadas (uma por plano), pra também deixar clara a diferença entre Prata/Ouro/Diamante durante a gravação.
 
 ## 0. Preparação antes de gravar
 
-**Credenciais das empresas demo** (senha igual pra todas: `Maskats@2026`):
+**Credenciais das empresas demo** (senha igual pra todas: `PegaTicket@2026`):
 
 | Empresa | Plano | Dono | Funcionário |
 |---|---|---|---|
-| Cafeteria Prata Demo | Prata | dono.prata@maskats.com | funcionario.prata@maskats.com |
-| Cafeteria Ouro Demo | Ouro | dono.ouro@maskats.com | funcionario.ouro@maskats.com |
-| Restaurante Diamante Demo | Diamante | dono.diamante@maskats.com | funcionario.diamante@maskats.com |
+| Cafeteria Prata Demo | Prata | dono.prata@pegaticket.com | funcionario.prata@pegaticket.com |
+| Cafeteria Ouro Demo | Ouro | dono.ouro@pegaticket.com | funcionario.ouro@pegaticket.com |
+| Restaurante Diamante Demo | Diamante | dono.diamante@pegaticket.com | funcionario.diamante@pegaticket.com |
 
 **Antes de ligar a gravação:**
 - Navegador em 100% de zoom, sem extensões visíveis na barra, aba anônima/perfil limpo (evita favoritos/histórico pessoal aparecendo).
@@ -23,9 +23,9 @@ Roteiro passo a passo pra gravar um vídeo mostrando o sistema inteiro, usando a
 ## 1. Abertura — Login e identidade visual
 
 1. Acesse a tela de login do sistema.
-2. Aponte a headline **"Bem-vindo ao Maskats"** e a tagline **"Gestão clara para empresas em movimento."**
+2. Aponte a headline **"Bem-vindo ao PegaTicket"** e a tagline **"Gestão clara para empresas em movimento."**
 3. Clique no ícone de sol/lua (canto inferior direito) — mostre a transição entre tema claro e escuro. Isso existe em toda tela do sistema (login, loja, portal do cliente, área do contador), não só aqui.
-4. Faça login com `dono.prata@maskats.com`.
+4. Faça login com `dono.prata@pegaticket.com`.
 
 **O que explicar:** o sistema é multi-empresa — um mesmo usuário pode ter acesso a mais de uma empresa, e o que cada tela mostra depende do plano contratado.
 
@@ -127,7 +127,7 @@ Ainda logado como visitante (sem conta), acesse a URL da loja da empresa (`/loja
 
 ## 11. Plano Ouro — o que muda
 
-Login com `dono.ouro@maskats.com`. Aponte que o menu lateral cresceu: agora aparecem **Estoque**, **PDV**, **Montar rota** e a seção de **Análises** ganha mais profundidade.
+Login com `dono.ouro@pegaticket.com`. Aponte que o menu lateral cresceu: agora aparecem **Estoque**, **PDV**, **Montar rota** e a seção de **Análises** ganha mais profundidade.
 
 ### Estoque
 Menu lateral → **Estoque** (grupo).
@@ -152,7 +152,7 @@ Menu lateral → **Montar rota** (`/rotas`) — monta o roteiro de entrega do di
 
 ## 12. Plano Diamante — o que muda
 
-Login com `dono.diamante@maskats.com`. Aponte que o menu ganhou mais 3 itens: **Balcão**, **Minha assinatura** e **Acesso de contadores**, além de campos fiscais nas Configurações.
+Login com `dono.diamante@pegaticket.com`. Aponte que o menu ganhou mais 3 itens: **Balcão**, **Minha assinatura** e **Acesso de contadores**, além de campos fiscais nas Configurações.
 
 ### Balcão (mesas/comandas — operação tipo restaurante/bar)
 Menu lateral → **Balcão** (grupo).
@@ -161,7 +161,7 @@ Menu lateral → **Balcão** (grupo).
 3. Feche uma comanda de exemplo, mostrando a divisão de pagamento e a taxa de serviço (se configurada).
 
 ### Minha assinatura
-Menu lateral → **Minha assinatura** (`/configuracoes/assinatura`) — onde o próprio dono da empresa gerencia a cobrança do Maskats: plano atual, período de cobrança (mensal/trimestral/anual), próxima fatura, cancelamento.
+Menu lateral → **Minha assinatura** (`/configuracoes/assinatura`) — onde o próprio dono da empresa gerencia a cobrança do PegaTicket: plano atual, período de cobrança (mensal/trimestral/anual), próxima fatura, cancelamento.
 
 ### Acesso de contadores
 Menu lateral → **Acesso de contadores** (`/configuracoes/contadores`) — onde a empresa aprova o acesso de um escritório de contabilidade externo aos próprios relatórios financeiros (mostrado do outro lado na Seção 13).
@@ -182,7 +182,7 @@ Acesse `/contador/entrar` (é uma área separada, login próprio — o contador 
 
 ## 14. Diferença de acesso — dono vs. funcionário
 
-Faça logout e entre com `funcionario.diamante@maskats.com`.
+Faça logout e entre com `funcionario.diamante@pegaticket.com`.
 
 Mostre lado a lado (ou compare de memória com o que apareceu logado como dono) que o menu lateral do funcionário é bem mais enxuto — só o que a função dele precisa no dia a dia (pedidos, clientes, produtos), sem acesso a configurações, assinatura, usuários ou dados financeiros sensíveis.
 

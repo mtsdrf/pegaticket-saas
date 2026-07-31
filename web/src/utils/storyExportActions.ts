@@ -1,4 +1,4 @@
-const STORY_FILENAME = 'story-maskats.png'
+const STORY_FILENAME = 'story-pegaticket.png'
 
 /** Download via link `<a download>` a partir do blob — sempre disponível, mesmo sem suporte a Web Share. */
 export function downloadStoryBlob(blob: Blob, filename = STORY_FILENAME): void {
@@ -29,5 +29,5 @@ export function canShareStoryFile(): boolean {
  */
 export async function shareStoryBlob(blob: Blob, filename = STORY_FILENAME): Promise<void> {
   const file = new File([blob], filename, { type: 'image/png' })
-  await navigator.share({ files: [file], title: 'Maskats' })
+  await navigator.share({ files: [file], title: 'PegaTicket' })
 }

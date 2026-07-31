@@ -72,7 +72,7 @@ function OperationHealthStageCard({
 }) {
   const hasCritical = stage.critical > 0
   const hasAttention = stage.attention > 0
-  const accent = hasCritical ? 'var(--mk-danger)' : hasAttention ? 'var(--mk-warning)' : 'var(--mk-primary)'
+  const accent = hasCritical ? 'var(--pt-danger)' : hasAttention ? 'var(--pt-warning)' : 'var(--pt-primary)'
   const subtitle =
     stage.total === 0
       ? 'Nenhum item nesta etapa.'
@@ -81,22 +81,22 @@ function OperationHealthStageCard({
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{
         p: { xs: 2, sm: 2.25 },
         ...ELEVATED_SURFACE_SX,
         animationDelay: `${index * 70}ms`,
-        borderColor: `color-mix(in srgb, ${accent} 26%, var(--mk-border))`,
-        background: `color-mix(in srgb, ${accent} 6%, var(--mk-surface))`,
+        borderColor: `color-mix(in srgb, ${accent} 26%, var(--pt-border))`,
+        background: `color-mix(in srgb, ${accent} 6%, var(--pt-surface))`,
       }}
     >
       <Stack spacing={1.25}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
               {stage.label}
             </Typography>
-            <Typography sx={{ fontSize: 28, lineHeight: 1.1, fontWeight: 700, color: 'var(--mk-text)', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography sx={{ fontSize: 28, lineHeight: 1.1, fontWeight: 700, color: 'var(--pt-text)', fontVariantNumeric: 'tabular-nums' }}>
               {stage.total}
             </Typography>
           </Box>
@@ -120,7 +120,7 @@ function OperationHealthStageCard({
           </Box>
         </Box>
 
-        <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
           {subtitle}
         </Typography>
 
@@ -192,7 +192,7 @@ export function DashboardPage() {
       <Stack spacing={1.5}>
         <Box>
           <Typography
-            sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', mb: 1.25, textTransform: 'uppercase', letterSpacing: 0.4 }}
+            sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', mb: 1.25, textTransform: 'uppercase', letterSpacing: 0.4 }}
           >
             Ações rápidas
           </Typography>
@@ -229,7 +229,7 @@ export function DashboardPage() {
         ) : !canViewStats ? (
           <Paper
             variant="outlined"
-            className="mk-reveal"
+            className="pt-reveal"
             sx={{
               p: { xs: 2.25, sm: 3 },
               ...ELEVATED_SURFACE_SX,
@@ -246,17 +246,17 @@ export function DashboardPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--mk-muted)',
+                color: 'var(--pt-muted)',
                 flexShrink: 0,
               }}
             >
               <LockOutlinedIcon />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: 'var(--mk-text)', mb: 0.5 }}>
+              <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: 'var(--pt-text)', mb: 0.5 }}>
                 Você não tem acesso aos números da operação
               </Typography>
-              <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>
                 Peça ao proprietário da empresa para liberar a permissão "Visão Geral" no seu perfil de acesso.
               </Typography>
             </Box>
@@ -266,12 +266,12 @@ export function DashboardPage() {
         {isFirstOrderEmptyState && (
           <Paper
             variant="outlined"
-            className="mk-reveal"
+            className="pt-reveal"
             sx={{
               p: { xs: 2.25, sm: 3 },
               ...ELEVATED_SURFACE_SX,
-              borderColor: 'color-mix(in srgb, var(--mk-accent) 24%, var(--mk-border))',
-              background: 'color-mix(in srgb, var(--mk-accent) 7%, var(--mk-surface))',
+              borderColor: 'color-mix(in srgb, var(--pt-accent) 24%, var(--pt-border))',
+              background: 'color-mix(in srgb, var(--pt-accent) 7%, var(--pt-surface))',
             }}
           >
             <Stack spacing={2}>
@@ -284,18 +284,18 @@ export function DashboardPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'color-mix(in srgb, var(--mk-accent) 16%, transparent)',
-                    color: 'var(--mk-accent)',
+                    background: 'color-mix(in srgb, var(--pt-accent) 16%, transparent)',
+                    color: 'var(--pt-accent)',
                     flexShrink: 0,
                   }}
                 >
                   <ShoppingCartCheckoutOutlinedIcon />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'var(--mk-text)', mb: 0.5 }}>
+                  <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'var(--pt-text)', mb: 0.5 }}>
                     Seu painel começa a ganhar vida com o primeiro pedido
                   </Typography>
-                  <Typography sx={{ fontSize: 14.5, color: 'var(--mk-muted)', maxWidth: 760 }}>
+                  <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', maxWidth: 760 }}>
                     Ainda não há pedidos cadastrados nesta empresa. Assim que você lançar o primeiro pedido, os
                     indicadores, gráficos, rankings e previsões financeiras começam a ser preenchidos automaticamente.
                   </Typography>
@@ -376,7 +376,7 @@ export function DashboardPage() {
 
         <Paper
           variant="outlined"
-          className="mk-reveal"
+          className="pt-reveal"
           sx={{
             p: { xs: 2, sm: 3 },
             ...ELEVATED_SURFACE_SX,
@@ -387,12 +387,12 @@ export function DashboardPage() {
             <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-                  <InsightsOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-muted)' }} />
-                  <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--mk-text)' }}>
+                  <InsightsOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
+                  <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
                     Saúde da operação
                   </Typography>
                 </Box>
-                <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                   Filas internas que precisam de acompanhamento agora.
                 </Typography>
               </Box>
@@ -404,8 +404,8 @@ export function DashboardPage() {
                       px: 1.5,
                       py: 1,
                       borderRadius: UI_RADIUS.pill,
-                      background: 'color-mix(in srgb, var(--mk-warning) 14%, transparent)',
-                      color: 'var(--mk-warning)',
+                      background: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)',
+                      color: 'var(--pt-warning)',
                     }}
                   >
                     <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
@@ -417,8 +417,8 @@ export function DashboardPage() {
                       px: 1.5,
                       py: 1,
                       borderRadius: UI_RADIUS.pill,
-                      background: 'color-mix(in srgb, var(--mk-danger) 14%, transparent)',
-                      color: 'var(--mk-danger)',
+                      background: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)',
+                      color: 'var(--pt-danger)',
                     }}
                   >
                     <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
@@ -460,7 +460,7 @@ export function DashboardPage() {
                     <Paper key={index} variant="outlined" sx={{ p: 2.25, ...ELEVATED_SURFACE_SX }}>
                       <Stack spacing={1.25}>
                         <CircularProgress size={22} sx={{ alignSelf: 'flex-start' }} />
-                        <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>Carregando etapa...</Typography>
+                        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Carregando etapa...</Typography>
                       </Stack>
                     </Paper>
                   ))
@@ -483,19 +483,19 @@ export function DashboardPage() {
             >
               <Paper
                 variant="outlined"
-                className="mk-reveal"
+                className="pt-reveal"
                 sx={{ p: { xs: 2, sm: 2.25 }, ...ELEVATED_SURFACE_SX }}
               >
                 <Stack spacing={1.25}>
                   <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
                       Loja online
                     </Typography>
-                    <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--mk-text)' }}>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
                       {operationHealth ? operationHealth.internal.approval.total : 0} pedido(s) aguardando aprovação
                     </Typography>
                   </Box>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                     Acompanhe os pedidos recebidos pela loja que ainda dependem de aprovação manual.
                   </Typography>
                   {canOpenStorefrontQueue ? (
@@ -519,7 +519,7 @@ export function DashboardPage() {
 
         <Paper
           variant="outlined"
-          className="mk-reveal"
+          className="pt-reveal"
           sx={{
             p: { xs: 2, sm: 3 },
             ...ELEVATED_SURFACE_SX,
@@ -527,12 +527,12 @@ export function DashboardPage() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-            <AddBusinessOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-muted)' }} />
-            <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--mk-text)' }}>
+            <AddBusinessOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
+            <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
               Pedidos por mês
             </Typography>
           </Box>
-          <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>
+          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
             Volume de pedidos criados em cada mês.
           </Typography>
 
@@ -719,19 +719,19 @@ export function DashboardPage() {
         >
           <Paper
             variant="outlined"
-            className="mk-reveal"
+            className="pt-reveal"
             sx={{
               p: { xs: 2, sm: 3 },
               ...ELEVATED_SURFACE_SX,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-              <PaidOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-muted)' }} />
-              <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--mk-text)' }}>
+              <PaidOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
+              <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
                 Projeção de recebimentos
               </Typography>
             </Box>
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
               Valores em aberto agrupados por mês de vencimento.
             </Typography>
 

@@ -80,7 +80,7 @@ export function ProductsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
               meta: `${formatQuantity(item.quantity_on_hand)} em estoque`,
               badge: item.cost_is_estimated ? (
                 <Tooltip title="Valor estimado pelo preço de venda, sem custo de compra cadastrado.">
-                  <Box component="span" sx={{ color: 'var(--mk-warning)', fontWeight: 700, cursor: 'help' }} aria-label="valor estimado">
+                  <Box component="span" sx={{ color: 'var(--pt-warning)', fontWeight: 700, cursor: 'help' }} aria-label="valor estimado">
                     *
                   </Box>
                 </Tooltip>

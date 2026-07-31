@@ -4,8 +4,8 @@ Data de referência: **25 de julho de 2026**
 
 Este documento inicia oficialmente a frente de integração com o **iFood**, usando como base:
 
-- o agente [delivery-integration-specialist.md](/home/mtsdrf/workspace/maskats-saas/.claude/agents/delivery-integration-specialist.md);
-- o estado real atual do projeto Maskats;
+- o agente [delivery-integration-specialist.md](/home/mtsdrf/workspace/pegaticket-saas/.claude/agents/delivery-integration-specialist.md);
+- o estado real atual do projeto PegaTicket;
 - a documentação oficial pública do iFood Developer localizada em `developer.ifood.com.br`;
 - e os pontos que ainda dependem de **portal autenticado, credenciais homologadas e contrato**.
 
@@ -21,7 +21,7 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 
 ---
 
-## 1. Estado atual do Maskats
+## 1. Estado atual do PegaTicket
 
 ### O que já existe e pode ser reaproveitado
 
@@ -45,7 +45,7 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 - nenhuma conciliação de pedido externo;
 - nenhum fluxo de homologação operacional de marketplace.
 
-Conclusão: o Maskats tem **fundação boa**, mas a integração iFood começa praticamente do zero na camada de marketplace.
+Conclusão: o PegaTicket tem **fundação boa**, mas a integração iFood começa praticamente do zero na camada de marketplace.
 
 ---
 
@@ -80,7 +80,7 @@ Os itens abaixo foram confirmados a partir das páginas públicas do portal ofic
 
 ### Inferências seguras a partir desses fatos
 
-- a integração do iFood no Maskats deve nascer com suporte estrutural para:
+- a integração do iFood no PegaTicket deve nascer com suporte estrutural para:
   - recebimento de eventos;
   - consulta de detalhes do pedido;
   - execução de ações no pedido;
@@ -96,7 +96,7 @@ Essas inferências são derivadas da organização do portal oficial e não de c
 Os itens abaixo **não devem ser inventados** nesta etapa:
 
 - endpoint final exato de autenticação;
-- tipo de autenticação efetivamente habilitado para a aplicação da Maskats;
+- tipo de autenticação efetivamente habilitado para a aplicação da PegaTicket;
 - detalhes de escopos/liberações por app;
 - formato exato da assinatura do webhook;
 - headers obrigatórios do webhook;
@@ -105,7 +105,7 @@ Os itens abaixo **não devem ser inventados** nesta etapa:
 - contrato completo dos eventos por versão;
 - rate limits exatos;
 - timeout e SLA recomendados;
-- critérios formais de homologação exigidos para a aplicação da Maskats;
+- critérios formais de homologação exigidos para a aplicação da PegaTicket;
 - recursos de catálogo efetivamente liberados;
 - recursos de disponibilidade/presença efetivamente liberados;
 - recursos logísticos efetivamente liberados;
@@ -118,7 +118,7 @@ Regra ativa para esta frente:
 
 ---
 
-## 4. Estratégia recomendada para o iFood no Maskats
+## 4. Estratégia recomendada para o iFood no PegaTicket
 
 ### Abordagem de rollout
 
@@ -133,7 +133,7 @@ Regra ativa para esta frente:
    - importar pedido do iFood;
    - comparar com fluxo interno;
    - medir duplicidade, atraso e consistência;
-   - ainda sem aceitar/rejeitar pelo Maskats.
+   - ainda sem aceitar/rejeitar pelo PegaTicket.
 
 3. **Pilot controlado**
    - 1 tenant;
@@ -210,7 +210,7 @@ O provider do iFood deve expor capacidades, por exemplo:
 - suporta logística?
 - suporta conciliação?
 
-Assim o Maskats não acopla o fluxo inteiro a uma suposição fixa.
+Assim o PegaTicket não acopla o fluxo inteiro a uma suposição fixa.
 
 ---
 
@@ -323,7 +323,7 @@ Critério de saída:
 ## Fase 2 — Credenciamento e vínculo de merchant
 
 Objetivo:
-- conectar a conta/aplicação da Maskats ao iFood de forma segura.
+- conectar a conta/aplicação da PegaTicket ao iFood de forma segura.
 
 Entregas:
 - fluxo de autenticação suportado pelo iFood confirmado no portal;
@@ -335,7 +335,7 @@ Entregas:
 - primeira tela da Central de Integrações.
 
 Critério de saída:
-- 1 merchant do iFood vinculado a 1 tenant da Maskats em homologação.
+- 1 merchant do iFood vinculado a 1 tenant da PegaTicket em homologação.
 
 ## Fase 3 — Eventos de entrada
 
@@ -357,7 +357,7 @@ Critério de saída:
 ## Fase 4 — Normalização de pedido
 
 Objetivo:
-- converter pedido do iFood no pedido canônico do Maskats.
+- converter pedido do iFood no pedido canônico do PegaTicket.
 
 Entregas:
 - DTO externo do iFood;
@@ -372,7 +372,7 @@ Critério de saída:
 ## Fase 5 — Ações no pedido
 
 Objetivo:
-- permitir operação de aceite/rejeição e evolução de status via Maskats.
+- permitir operação de aceite/rejeição e evolução de status via PegaTicket.
 
 Entregas:
 - aceitar pedido;
@@ -390,7 +390,7 @@ Critério de saída:
 ## Fase 6 — Catálogo
 
 Objetivo:
-- publicar catálogo da Maskats no iFood com rastreabilidade.
+- publicar catálogo da PegaTicket no iFood com rastreabilidade.
 
 Entregas:
 - mappings de categoria/produto/complemento;
@@ -496,7 +496,7 @@ Critério de saída:
 
 Estas decisões precisam ser fechadas antes da implementação real do adapter iFood:
 
-1. a aplicação da Maskats já está cadastrada no portal do iFood?
+1. a aplicação da PegaTicket já está cadastrada no portal do iFood?
 2. já existem credenciais de homologação?
 3. já existe merchant/loja de teste disponível?
 4. o fluxo oficial para a aplicação será webhook, polling ou ambos?

@@ -66,7 +66,7 @@ class OrderOperationStageFilterTest extends TestCase
         $this->user = User::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
             'name' => 'Operador Teste',
-            'email' => 'operacao-' . uniqid() . '@maskats.test',
+            'email' => 'operacao-' . uniqid() . '@pegaticket.test',
             'password' => Hash::make('password123'),
             'is_active' => true,
         ]);

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Recebimento de pagamento de pedido pelo tenant (roadmap 2A, Modelo A — sem
- * custódia, o dinheiro nunca passa pela Maskats). `payment_receiving_method`
+ * custódia, o dinheiro nunca passa pela PegaTicket). `payment_receiving_method`
  * = manual (conciliação manual, default) | pix_key (chave Pix própria do
  * tenant). `payment_pix_key` é criptografada em repouso (cast `encrypted` do
  * Eloquent, nativo) — por isso `text`: o ciphertext é bem maior que a chave

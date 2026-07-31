@@ -39,18 +39,18 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
   return (
     <Paper
       variant="outlined"
-      className="mk-reveal"
+      className="pt-reveal"
       sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}
     >
-      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--mk-text)', mb: 0.25 }}>
+      <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>
         Movimento por dia e hora
       </Typography>
-      <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', mb: 2 }}>
+      <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
         Concentração de pedidos por dia da semana e hora do dia.
       </Typography>
 
       {isLoading ? (
-        <Skeleton variant="rounded" height={260} sx={{ borderRadius: 'var(--mk-radius-md)' }} />
+        <Skeleton variant="rounded" height={260} sx={{ borderRadius: 'var(--pt-radius-md)' }} />
       ) : !hasData ? (
         <Box
           sx={{
@@ -61,10 +61,10 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
             flexDirection: 'column',
             textAlign: 'center',
             gap: 0.5,
-            color: 'var(--mk-muted)',
+            color: 'var(--pt-muted)',
           }}
         >
-          <Typography sx={{ fontWeight: 600, color: 'var(--mk-text)', fontSize: 14.5 }}>
+          <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
             Sem pedidos suficientes ainda
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
@@ -80,7 +80,7 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
               {HOURS.map((hour) => (
                 <Typography
                   key={hour}
-                  sx={{ fontSize: 9.5, color: 'var(--mk-muted)', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
+                  sx={{ fontSize: 9.5, color: 'var(--pt-muted)', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
                 >
                   {hour % 2 === 0 ? hour : ''}
                 </Typography>
@@ -92,7 +92,7 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
                 key={DAY_LABELS[dayIndex]}
                 sx={{ display: 'grid', gridTemplateColumns: '40px repeat(24, 1fr)', gap: 0.5, mb: 0.5, alignItems: 'center' }}
               >
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'var(--pt-muted)' }}>
                   {DAY_LABELS[dayIndex]}
                 </Typography>
                 {row.map((cell, hour) => {
@@ -107,12 +107,12 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
                         sx={{
                           aspectRatio: '1 / 1',
                           minWidth: 0,
-                          borderRadius: 'var(--mk-radius-sm)',
-                          border: '1px solid var(--mk-border)',
+                          borderRadius: 'var(--pt-radius-sm)',
+                          border: '1px solid var(--pt-border)',
                           backgroundColor:
                             cell.count > 0
-                              ? `color-mix(in srgb, var(--mk-primary) ${14 + intensity * 66}%, var(--mk-surface-soft))`
-                              : 'var(--mk-surface-soft)',
+                              ? `color-mix(in srgb, var(--pt-primary) ${14 + intensity * 66}%, var(--pt-surface-soft))`
+                              : 'var(--pt-surface-soft)',
                         }}
                       />
                     </Tooltip>

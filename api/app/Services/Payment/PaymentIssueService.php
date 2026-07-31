@@ -15,7 +15,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 /**
- * Visão cross-tenant, exclusiva do staff interno da Maskats, das pendências
+ * Visão cross-tenant, exclusiva do staff interno da PegaTicket, das pendências
  * de pagamento/assinatura que hoje só eram descobertas lendo log ou
  * esperando os comandos agendados rodarem (roadmap 2026-07-24). Junta 4
  * fontes com schema diferente (Payment divergente, idempotência ambígua,

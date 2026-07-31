@@ -56,7 +56,7 @@ class GeocodeEnderecoJob implements ShouldQueue
 
         $result = Cache::remember($cacheKey, now()->addDays(30), function () use ($query) {
             $response = Http::withHeaders([
-                'User-Agent' => 'Maskats SaaS (contato@maskats.com.br)',
+                'User-Agent' => 'PegaTicket SaaS (contato@pegaticket.com.br)',
             ])
                 ->timeout(10)
                 ->get('https://nominatim.openstreetmap.org/search', [

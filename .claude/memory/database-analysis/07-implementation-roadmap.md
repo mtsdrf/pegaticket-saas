@@ -1,6 +1,6 @@
 # Database Analysis — Implementation Roadmap
 
-Plano em fases para levar o que foi descoberto em `dump_base.sql` + código-fonte real do legado (`/home/mtsdrf/workspace/maskats/`, Laravel 8 + React 17 — ver [[01-schema-overview]] a [[06-business-rules]]) para o backend Laravel (`api/`) + frontend React (`web/`) já existentes. **Atualização 2026-07-09: Fases 1 a 7 (todo o backend) concluídas — ver [[architecture-decisions]] para o detalhe de cada módulo. O que resta é frontend (`web/`) e a Fase 8 (migração de dados).**
+Plano em fases para levar o que foi descoberto em `dump_base.sql` + código-fonte real do legado (`/home/mtsdrf/workspace/pegaticket/`, Laravel 8 + React 17 — ver [[01-schema-overview]] a [[06-business-rules]]) para o backend Laravel (`api/`) + frontend React (`web/`) já existentes. **Atualização 2026-07-09: Fases 1 a 7 (todo o backend) concluídas — ver [[architecture-decisions]] para o detalhe de cada módulo. O que resta é frontend (`web/`) e a Fase 8 (migração de dados).**
 
 > 2026-07-06: acesso ao código-fonte completo do legado resolveu a maioria das dúvidas de negócio que antes eram só inferência de schema. Restam poucas decisões arquiteturais genuínas (ver seção de dúvidas, reduzida).
 
@@ -70,7 +70,7 @@ Pedido explícito do usuário: módulo de estoque completo (estrutura) antes do 
 - Formulários e componentes em **MUI** (já instalado). Legado usava Bootstrap 4/Formik/Yup/react-select/react-date-picker/react-text-mask — **não reaproveitável como código** (stack totalmente diferente), mas a lista de campos por formulário (já mapeada em [[05-crud-plan]]) é reaproveitável como especificação.
 - Gráficos de indicador (Fase 5) em **Chart.js** — mesma lib do legado (`react-chartjs-2`), só a versão muda (legado v3, novo v5) e a integração é refeita com API/tema novos.
 - Legado usa Redux + `react-query` para estado/cache — o projeto novo já resolve isso com Context (`AuthContext`) + services simples; **reavaliar se `react-query`/TanStack Query vale a pena adicionar** quando as listagens ficarem mais complexas (cache de lista, invalidação) — não decidido ainda, não instalar sem necessidade real.
-- Seguir identidade visual Maskats (`.claude/memory/design-system.md`, `.claude/memory/brand-guidelines.md`) e mobile-first (`.claude/memory/maskats_mobile_first.md` / restrição registrada em `project-summary.md`) — o legado era desktop-first (Bootstrap admin padrão), **não replicar o layout visual antigo**, só a funcionalidade.
+- Seguir identidade visual PegaTicket (`.claude/memory/design-system.md`, `.claude/memory/brand-guidelines.md`) e mobile-first (`.claude/memory/pegaticket_mobile_first.md` / restrição registrada em `project-summary.md`) — o legado era desktop-first (Bootstrap admin padrão), **não replicar o layout visual antigo**, só a funcionalidade.
 
 ## Dúvidas para validação — todas resolvidas em 2026-07-08
 

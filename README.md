@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="web/public/logo.png" alt="Maskats" width="220" />
+<img src="web/public/logo.png" alt="PegaTicket" width="220" />
 
 <br/>
 <br/>
 
-<strong>Maskats</strong><br/>
+<strong>PegaTicket</strong><br/>
 <sub>Gestão clara para empresas em movimento.</sub>
 
 <br/>
@@ -29,7 +29,7 @@
 
 ## Sobre
 
-**Maskats** é uma plataforma de gestão comercial multiempresa pensada para operação real: pedidos, clientes, produtos, estoque, financeiro, loja online, PDV, balcão e visão analítica, tudo numa experiência clara, direta e mobile-first.
+**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: pedidos, clientes, produtos, estoque, financeiro, loja online, PDV, balcão e visão analítica, tudo numa experiência clara, direta e mobile-first.
 
 Cada empresa opera isolada dentro do SaaS, com:
 
@@ -61,10 +61,10 @@ O foco do produto é servir desde negócios que precisam apenas vender online at
 Monorepo com projetos irmãos na raiz — cada um é uma aplicação própria, com seu próprio `package.json`/`composer.json`, publicada em um domínio/subdomínio separado da mesma origem:
 
 ```
-maskats-saas/
+pegaticket-saas/
 ├── api/     Backend Laravel 13 — API REST versionada (v1), fonte única de verdade
-├── web/     App autenticado (React 19 + Vite) — sistema.maskats.com
-├── site/    Landing institucional pública, sem autenticação — site.maskats.com
+├── web/     App autenticado (React 19 + Vite) — sistema.pegaticket.com
+├── site/    Landing institucional pública, sem autenticação — site.pegaticket.com
 └── app/     App mobile/nativo — reservado para o futuro, ainda não iniciado
 ```
 
@@ -178,4 +178,4 @@ Decisões de arquitetura, padrões de código, regras de banco e histórico de a
 
 ## Licença
 
-Software proprietário. Todos os direitos reservados © Maskats.
+Software proprietário. Todos os direitos reservados © PegaTicket.

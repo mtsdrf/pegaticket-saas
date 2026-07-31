@@ -126,7 +126,7 @@ export function OperationsBlock() {
         control={<Switch checked={storefrontEnabled} onChange={(event) => setStorefrontEnabled(event.target.checked)} />}
         label="Ativar loja online"
       />
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando desligado, a página pública da empresa continua mostrando endereço, horários, contatos e reservas, mas o catálogo de produtos e o checkout deixam de aparecer.
       </Typography>
 
@@ -135,7 +135,7 @@ export function OperationsBlock() {
         label="Enviar link de rastreio na mensagem do WhatsApp"
         sx={{ mt: 2.5 }}
       />
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando ativado, as mensagens de WhatsApp enviadas para o cliente (na criação do pedido e no resumo enviado
         sob demanda) incluem um link para acompanhar o status da entrega.
       </Typography>
@@ -147,7 +147,7 @@ export function OperationsBlock() {
         label="Bloquear pedido quando não há estoque suficiente"
         sx={{ mt: 2.5 }}
       />
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando ativado, um pedido não pode ser criado se algum item não tiver estoque suficiente reservado — vale
         hoje principalmente para pedidos feitos pela loja pública.
       </Typography>
@@ -180,7 +180,7 @@ export function OperationsBlock() {
       </Stack>
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Retirada na loja</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
         Permite que o cliente escolha retirar o pedido no endereço da sua loja em vez de receber em casa.
       </Typography>
       <FormControlLabel
@@ -188,14 +188,14 @@ export function OperationsBlock() {
         label="Permitir retirada na loja"
       />
       {allowStorePickup && (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
           Cadastre o endereço da sua loja no bloco "Horário e Endereço" — sem endereço, o cliente não consegue
           escolher a retirada.
         </Typography>
       )}
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Entrega</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
         Permite que o cliente escolha receber o pedido no endereço dele em vez de retirar na loja.
       </Typography>
       <FormControlLabel
@@ -204,7 +204,7 @@ export function OperationsBlock() {
       />
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Layout do catálogo</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)', mb: 1 }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
         Escolha como os produtos aparecem para o cliente na loja online.
       </Typography>
       <RadioGroup
@@ -217,7 +217,7 @@ export function OperationsBlock() {
           label={
             <Stack spacing={0}>
               <Typography sx={{ fontWeight: 600 }}>Lista compacta</Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Lista com imagem à direita — mostra mais produtos por tela.
               </Typography>
             </Stack>
@@ -230,7 +230,7 @@ export function OperationsBlock() {
           label={
             <Stack spacing={0}>
               <Typography sx={{ fontWeight: 600 }}>Cards com foto grande</Typography>
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                 Grade de cards com foto em destaque — visual mais atrativo.
               </Typography>
             </Stack>

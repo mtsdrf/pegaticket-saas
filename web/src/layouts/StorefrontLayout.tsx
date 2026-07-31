@@ -63,7 +63,7 @@ function StorefrontChrome({ slug, tenant }: { slug: string; tenant: StorefrontTe
 }
 
 const DEFAULT_MANIFEST_HREF = '/site.webmanifest'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.maskats.com/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com/api/v1'
 
 /**
  * Layout público da loja (Delivery Fase 1) — irmão de `PortalLayout` em
@@ -74,7 +74,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.maskats.c
  *
  * PWA por tenant: troca o `<link rel="manifest">` do `<head>` pro endpoint
  * dinâmico da loja (`StorefrontManifestController`) enquanto esta rota está
- * montada, e reverte pro manifest genérico do Maskats (`/site.webmanifest`)
+ * montada, e reverte pro manifest genérico do PegaTicket (`/site.webmanifest`)
  * no unmount — nunca deixa o manifest "vazado" pras rotas de staff.
  */
 export function StorefrontLayout() {

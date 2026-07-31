@@ -125,7 +125,7 @@ export function ProductImportDialog({ open, onClose, onImported }: ProductImport
       <DialogContent dividers>
         {step === 'upload' && (
           <Stack spacing={2.5} sx={{ py: 1 }}>
-            <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>
               Envie um arquivo CSV com as colunas <strong>nome, categoria, tipo, preco, descricao, sku,
               disponivel</strong> (nome, tipo e preco são obrigatórios). Se o tipo informado já existir, a
               categoria da linha é ignorada; se não existir, a categoria é obrigatória e será criada
@@ -171,11 +171,11 @@ export function ProductImportDialog({ open, onClose, onImported }: ProductImport
               {isLoading ? (
                 <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
                   <CircularProgress size={28} />
-                  <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>Lendo arquivo…</Typography>
+                  <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Lendo arquivo…</Typography>
                 </Stack>
               ) : (
                 <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-                  <UploadFileOutlinedIcon sx={{ fontSize: 36, color: 'var(--mk-muted)' }} />
+                  <UploadFileOutlinedIcon sx={{ fontSize: 36, color: 'var(--pt-muted)' }} />
                   <Button
                     variant="contained"
                     onClick={() => fileInputRef.current?.click()}
@@ -240,7 +240,7 @@ export function ProductImportDialog({ open, onClose, onImported }: ProductImport
                         key={row.line}
                         sx={
                           row.status === 'error'
-                            ? { bgcolor: 'color-mix(in srgb, var(--mk-danger) 8%, transparent)' }
+                            ? { bgcolor: 'color-mix(in srgb, var(--pt-danger) 8%, transparent)' }
                             : undefined
                         }
                       >
@@ -265,7 +265,7 @@ export function ProductImportDialog({ open, onClose, onImported }: ProductImport
                           ) : (
                             <Stack spacing={0.25}>
                               {row.errors.map((message, index) => (
-                                <Typography key={index} sx={{ fontSize: 12.5, color: 'var(--mk-danger)' }}>
+                                <Typography key={index} sx={{ fontSize: 12.5, color: 'var(--pt-danger)' }}>
                                   {message}
                                 </Typography>
                               ))}
@@ -284,13 +284,13 @@ export function ProductImportDialog({ open, onClose, onImported }: ProductImport
         {step === 'result' && result && (
           <Stack spacing={2} sx={{ py: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <CheckCircleOutlineIcon sx={{ color: 'var(--mk-success, #2e7d32)', fontSize: 32 }} />
+              <CheckCircleOutlineIcon sx={{ color: 'var(--pt-success, #2e7d32)', fontSize: 32 }} />
               <Box>
-                <Typography sx={{ fontSize: 16, fontWeight: 600, color: 'var(--mk-text)' }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 600, color: 'var(--pt-text)' }}>
                   {result.created_count} produto{result.created_count === 1 ? '' : 's'} importado
                   {result.created_count === 1 ? '' : 's'} com sucesso
                 </Typography>
-                <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
                   {result.categories_created_count} categoria{result.categories_created_count === 1 ? '' : 's'} nova
                   {result.categories_created_count === 1 ? '' : 's'} e {result.types_created_count} tipo
                   {result.types_created_count === 1 ? '' : 's'} novo{result.types_created_count === 1 ? '' : 's'}

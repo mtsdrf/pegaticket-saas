@@ -22,7 +22,7 @@ test.describe('Autenticação web', () => {
     })
 
     await page.goto('/login')
-    await page.getByRole('textbox', { name: 'E-mail' }).fill('falha@maskats.com')
+    await page.getByRole('textbox', { name: 'E-mail' }).fill('falha@pegaticket.com')
     await page.locator('input[name="password"]').fill('senha-invalida')
     await page.getByRole('button', { name: 'Entrar no painel' }).click()
 

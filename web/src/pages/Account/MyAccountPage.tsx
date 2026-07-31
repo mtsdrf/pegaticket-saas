@@ -22,11 +22,11 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) 
   return (
     <Box sx={{ mb: 2.5 }}>
       <Typography
-        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 18, sm: 20 }, fontWeight: 700, color: 'var(--mk-text)' }}
+        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 18, sm: 20 }, fontWeight: 700, color: 'var(--pt-text)' }}
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', mt: 0.25 }}>{subtitle}</Typography>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mt: 0.25 }}>{subtitle}</Typography>
     </Box>
   )
 }
@@ -166,10 +166,10 @@ function EmailSection() {
 
   return (
     <Paper variant="outlined" sx={SECTION_SX}>
-      <SectionTitle title="E-mail" subtitle="E-mail usado para entrar no Maskats." />
+      <SectionTitle title="E-mail" subtitle="E-mail usado para entrar no PegaTicket." />
 
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: profile.pending_email ? 1.5 : 2.5 }}>
-        <Typography sx={{ fontSize: 14.5, color: 'var(--mk-text)' }}>{profile.email}</Typography>
+        <Typography sx={{ fontSize: 14.5, color: 'var(--pt-text)' }}>{profile.email}</Typography>
       </Stack>
 
       {profile.pending_email && (
@@ -185,7 +185,7 @@ function EmailSection() {
 
       <Divider sx={{ mb: 2.5 }} />
 
-      <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'var(--mk-text)', mb: 1.5 }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'var(--pt-text)', mb: 1.5 }}>
         Trocar e-mail de acesso
       </Typography>
 
@@ -342,7 +342,7 @@ export function MyAccountPage() {
 
   return (
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: { xs: '100%', sm: 900, lg: 1100 } }}>
-      <PageHeader title="Meus dados" subtitle="Gerencie suas informações de acesso ao Maskats." />
+      <PageHeader title="Meus dados" subtitle="Gerencie suas informações de acesso ao PegaTicket." />
 
       {error && !profile && (
         <Alert

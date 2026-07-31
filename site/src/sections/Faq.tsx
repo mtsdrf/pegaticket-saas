@@ -18,10 +18,10 @@ export function Faq() {
   }
 
   return (
-    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'var(--mk-surface-soft)' }}>
+    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'var(--pt-surface-soft)' }}>
       <Box sx={{ maxWidth: 800, mx: 'auto', px: { xs: 2.5, sm: 4 } }}>
         <RevealSection>
-          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--mk-text)', mb: 3.5 }}>
+          <Typography component="h2" sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 700, color: 'var(--pt-text)', mb: 3.5 }}>
             Perguntas frequentes
           </Typography>
         </RevealSection>
@@ -33,9 +33,9 @@ export function Faq() {
             onChange={handleChange(item.question)}
             disableGutters
             sx={{
-              backgroundColor: 'var(--mk-surface)',
-              border: '1px solid var(--mk-border)',
-              borderRadius: 'var(--mk-radius-md) !important',
+              backgroundColor: 'var(--pt-surface)',
+              border: '1px solid var(--pt-border)',
+              borderRadius: 'var(--pt-radius-md) !important',
               mb: 1.25,
               boxShadow: 'none',
               '&::before': { display: 'none' },
@@ -46,10 +46,10 @@ export function Faq() {
               aria-controls={`faq-panel-${item.question}`}
               id={`faq-header-${item.question}`}
             >
-              <Typography sx={{ fontSize: 15, fontWeight: 600, color: 'var(--mk-text)' }}>{item.question}</Typography>
+              <Typography sx={{ fontSize: 15, fontWeight: 600, color: 'var(--pt-text)' }}>{item.question}</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', lineHeight: 1.6 }}>{item.answer}</Typography>
+              <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', lineHeight: 1.6 }}>{item.answer}</Typography>
             </AccordionDetails>
           </Accordion>
         ))}

@@ -11,7 +11,7 @@ interface CardTokenFieldsProps {
  * Campos de número/nome/validade/CVV/documento reaproveitados em todo fluxo
  * que precisa tokenizar cartão via MP.js (troca de cartão, contratação e
  * troca de plano) — o número e o CVV nunca saem do navegador crus, só o
- * token resultante (`createCardToken`) chega ao backend Maskats.
+ * token resultante (`createCardToken`) chega ao backend PegaTicket.
  */
 export function CardTokenFields({ form, onChange, disabled = false }: CardTokenFieldsProps) {
   return (

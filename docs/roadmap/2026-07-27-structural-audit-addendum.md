@@ -1,4 +1,4 @@
-# Maskats — Adendo de auditoria estrutural
+# PegaTicket — Adendo de auditoria estrutural
 
 Data: 27 de julho de 2026
 
@@ -29,20 +29,20 @@ Este adendo descreve o **estado observado na auditoria** e serviu de base para a
 Os seguintes pontos deste adendo já foram atacados em código na rodada imediatamente posterior:
 
 - owner-only de assinatura no backend:
-  - middleware [api/app/Http/Middleware/EnsureTenantOwner.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Middleware/EnsureTenantOwner.php)
-  - rotas `/api/v1/subscription*` protegidas por `tenant.owner` em [api/routes/api.php](/home/mtsdrf/workspace/maskats-saas/api/routes/api.php)
+  - middleware [api/app/Http/Middleware/EnsureTenantOwner.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/EnsureTenantOwner.php)
+  - rotas `/api/v1/subscription*` protegidas por `tenant.owner` em [api/routes/api.php](/home/mtsdrf/workspace/pegaticket-saas/api/routes/api.php)
 - endurecimento das rotas de PIN/sessão do PDV:
   - `pdv/operator-pin` e `pdv/operator-session` agora exigem `perm:pdv,read`
 - criação unificada de usuário da empresa:
   - backend aceita `user_uuid` ou `user { name, email, password }` em uma única operação
-  - frontend passou a expor esse fluxo em [web/src/pages/Admin/TenantUserFormPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Admin/TenantUserFormPage.tsx)
+  - frontend passou a expor esse fluxo em [web/src/pages/Admin/TenantUserFormPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Admin/TenantUserFormPage.tsx)
 - resiliência do `AuthContext`:
   - falha transitória de perfil/empresas não limpa mais estado válido por engano
 - checklist de implantação:
   - dispensa persistida por `tenant_user`
   - passos modulados por plano/funcionalidade
 - contexto de tenant no checkout público:
-  - encapsulado em [api/app/Services/Tenant/TenantExecutionContext.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Tenant/TenantExecutionContext.php)
+  - encapsulado em [api/app/Services/Tenant/TenantExecutionContext.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Tenant/TenantExecutionContext.php)
 
 Validação da implementação:
 
@@ -51,7 +51,7 @@ Validação da implementação:
 
 ## 2. Resumo executivo
 
-O Maskats está com a fundação geral madura, mas esta segunda auditoria encontrou um conjunto pequeno e importante de problemas estruturais que hoje representam mais risco do que bugs visuais isolados.
+O PegaTicket está com a fundação geral madura, mas esta segunda auditoria encontrou um conjunto pequeno e importante de problemas estruturais que hoje representam mais risco do que bugs visuais isolados.
 
 Os pontos mais críticos são:
 
@@ -67,9 +67,9 @@ Os pontos mais críticos são:
 
 Estado observado:
 
-- as rotas de assinatura exigem apenas `tenant + perm:subscription,*` em [api/routes/api.php](/home/mtsdrf/workspace/maskats-saas/api/routes/api.php:1499)
-- o `SubscriptionController` opera direto sobre `app('tenant_id')`, sem verificar se o ator é o proprietário em [api/app/Http/Controllers/Subscription/SubscriptionController.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Controllers/Subscription/SubscriptionController.php:66)
-- o `SubscriptionService` implementa regras transacionais e de estado, mas não faz validação de papel do ator em [api/app/Services/Subscription/SubscriptionService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Subscription/SubscriptionService.php:39)
+- as rotas de assinatura exigem apenas `tenant + perm:subscription,*` em [api/routes/api.php](/home/mtsdrf/workspace/pegaticket-saas/api/routes/api.php:1499)
+- o `SubscriptionController` opera direto sobre `app('tenant_id')`, sem verificar se o ator é o proprietário em [api/app/Http/Controllers/Subscription/SubscriptionController.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Controllers/Subscription/SubscriptionController.php:66)
+- o `SubscriptionService` implementa regras transacionais e de estado, mas não faz validação de papel do ator em [api/app/Services/Subscription/SubscriptionService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Subscription/SubscriptionService.php:39)
 
 Risco:
 
@@ -91,11 +91,11 @@ Estado observado:
   - autorização funcional;
   - gate de plano;
   - bloqueio por assinatura suspensa/cancelada
-- isso está explícito em [api/app/Http/Middleware/CheckPermission.php](/home/mtsdrf/workspace/maskats-saas/api/app/Http/Middleware/CheckPermission.php:15)
+- isso está explícito em [api/app/Http/Middleware/CheckPermission.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/CheckPermission.php:15)
 - mas há rotas com apenas `tenant`:
-  - checklist: [api/routes/api.php](/home/mtsdrf/workspace/maskats-saas/api/routes/api.php:834)
-  - `pdv/operator-pin`: [api/routes/api.php](/home/mtsdrf/workspace/maskats-saas/api/routes/api.php:1300)
-  - `pdv/operator-session`: [api/routes/api.php](/home/mtsdrf/workspace/maskats-saas/api/routes/api.php:1303)
+  - checklist: [api/routes/api.php](/home/mtsdrf/workspace/pegaticket-saas/api/routes/api.php:834)
+  - `pdv/operator-pin`: [api/routes/api.php](/home/mtsdrf/workspace/pegaticket-saas/api/routes/api.php:1300)
+  - `pdv/operator-session`: [api/routes/api.php](/home/mtsdrf/workspace/pegaticket-saas/api/routes/api.php:1303)
 
 Risco:
 
@@ -115,9 +115,9 @@ Correção recomendada:
 
 Estado observado:
 
-- `UserService::create()` cria um `User` global e, no modo tenant-scoped, só o coloca no grupo `clients`, sem vinculá-lo automaticamente à empresa em [api/app/Services/User/UserService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/User/UserService.php:102)
-- o vínculo real com a empresa acontece depois, em outro fluxo, via `TenantUserFormPage` em [web/src/pages/Admin/TenantUserFormPage.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/pages/Admin/TenantUserFormPage.tsx:30)
-- o próprio `UserService::paginate()` já mascara isso ao listar só usuários vinculados ao tenant quando não é administrador, em [api/app/Services/User/UserService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/User/UserService.php:68)
+- `UserService::create()` cria um `User` global e, no modo tenant-scoped, só o coloca no grupo `clients`, sem vinculá-lo automaticamente à empresa em [api/app/Services/User/UserService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/User/UserService.php:102)
+- o vínculo real com a empresa acontece depois, em outro fluxo, via `TenantUserFormPage` em [web/src/pages/Admin/TenantUserFormPage.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/pages/Admin/TenantUserFormPage.tsx:30)
+- o próprio `UserService::paginate()` já mascara isso ao listar só usuários vinculados ao tenant quando não é administrador, em [api/app/Services/User/UserService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/User/UserService.php:68)
 
 Risco:
 
@@ -139,8 +139,8 @@ Correção recomendada:
 
 Estado observado:
 
-- `loadAccessProfile()` zera `accessProfile` em qualquer erro em [web/src/contexts/AuthContext.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/contexts/AuthContext.tsx:21)
-- `loadTenants()` também limpa a lista em qualquer falha em [web/src/contexts/AuthContext.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/contexts/AuthContext.tsx:45)
+- `loadAccessProfile()` zera `accessProfile` em qualquer erro em [web/src/contexts/AuthContext.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/contexts/AuthContext.tsx:21)
+- `loadTenants()` também limpa a lista em qualquer falha em [web/src/contexts/AuthContext.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/contexts/AuthContext.tsx:45)
 - isso não distingue:
   - token inválido;
   - timeout;
@@ -164,7 +164,7 @@ Correção recomendada:
 
 Estado observado:
 
-- o checkout público injeta `app('tenant_id')` manualmente antes de chamar serviços internos em [api/app/Services/Storefront/StorefrontCheckoutService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Storefront/StorefrontCheckoutService.php:58)
+- o checkout público injeta `app('tenant_id')` manualmente antes de chamar serviços internos em [api/app/Services/Storefront/StorefrontCheckoutService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Storefront/StorefrontCheckoutService.php:58)
 - o próprio comentário admite que vários serviços internos dependem desse binding de container;
 - o restante do sistema normalmente obtém esse contexto pelo middleware `ResolveTenant`.
 
@@ -184,8 +184,8 @@ Correção recomendada:
 
 Estado observado:
 
-- a dispensa do checklist ainda vive em `localStorage` em [web/src/utils/onboardingChecklistStorage.ts](/home/mtsdrf/workspace/maskats-saas/web/src/utils/onboardingChecklistStorage.ts:1)
-- o hook engole qualquer erro e simplesmente oculta o card em [web/src/hooks/useOnboardingChecklist.ts](/home/mtsdrf/workspace/maskats-saas/web/src/hooks/useOnboardingChecklist.ts:29)
+- a dispensa do checklist ainda vive em `localStorage` em [web/src/utils/onboardingChecklistStorage.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/utils/onboardingChecklistStorage.ts:1)
+- o hook engole qualquer erro e simplesmente oculta o card em [web/src/hooks/useOnboardingChecklist.ts](/home/mtsdrf/workspace/pegaticket-saas/web/src/hooks/useOnboardingChecklist.ts:29)
 
 Risco:
 
@@ -209,7 +209,7 @@ Estado observado:
   - endereço da loja
   - configuração de storefront
   - primeiro pedido
-- implementação em [api/app/Services/Onboarding/OnboardingService.php](/home/mtsdrf/workspace/maskats-saas/api/app/Services/Onboarding/OnboardingService.php:21)
+- implementação em [api/app/Services/Onboarding/OnboardingService.php](/home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Onboarding/OnboardingService.php:21)
 
 Risco:
 
@@ -227,8 +227,8 @@ Correção recomendada:
 
 Estado observado:
 
-- o menu lateral já filtra itens por `can(...)` em [web/src/layouts/AppLayout.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/layouts/AppLayout.tsx:262)
-- as rotas principais usam `PermissionRoute` em [web/src/routes/AppRoutes.tsx](/home/mtsdrf/workspace/maskats-saas/web/src/routes/AppRoutes.tsx:376)
+- o menu lateral já filtra itens por `can(...)` em [web/src/layouts/AppLayout.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/layouts/AppLayout.tsx:262)
+- as rotas principais usam `PermissionRoute` em [web/src/routes/AppRoutes.tsx](/home/mtsdrf/workspace/pegaticket-saas/web/src/routes/AppRoutes.tsx:376)
 - porém a proteção continua distribuída entre:
   - ocultação de navegação;
   - redirecionamento por rota;
@@ -280,7 +280,7 @@ Os testes automatizados do projeto já cobrem muita coisa, mas esta rodada deixo
 
 ## 6. Conclusão
 
-O Maskats não está com problema de arquitetura “quebrada”; o cenário observado é mais sutil:
+O PegaTicket não está com problema de arquitetura “quebrada”; o cenário observado é mais sutil:
 
 - a base é ampla e funcional;
 - os módulos conversam razoavelmente bem;

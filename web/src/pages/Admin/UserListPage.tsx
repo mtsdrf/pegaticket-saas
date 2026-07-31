@@ -116,7 +116,7 @@ export function UserListPage() {
               rowIdField="uuid"
               onGridReady={(api) => { gridApiRef.current = api }}
               emptyState={{
-                icon: <PersonOutlineOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <PersonOutlineOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum usuário cadastrado',
                 description: 'Cadastre usuários para liberar acesso ao sistema.',
                 action: can(ACCESS.adminUsersCreate) ? <Button variant="contained" onClick={() => navigate('/admin/usuarios/novo')}>Cadastrar primeiro usuário</Button> : undefined,

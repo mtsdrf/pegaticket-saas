@@ -156,7 +156,7 @@ class TenantRoleService
 
     /**
      * O perfil "owner" só pode ser editado (nome/slug/is_active) por um
-     * administrador da plataforma Maskats (grupo global 'administrators').
+     * administrador da plataforma PegaTicket (grupo global 'administrators').
      * Qualquer usuário do grupo 'clients' — inclusive o próprio dono da
      * empresa autenticado na própria tenant, que tecnicamente possui
      * tenant_roles:update — fica bloqueado, para impedir enfraquecimento

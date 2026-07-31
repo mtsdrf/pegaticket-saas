@@ -51,7 +51,7 @@ export function WorkflowReasonDialog({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>{description}</Typography>
+          <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>{description}</Typography>
           <TextField
             autoFocus
             label={reasonLabel}

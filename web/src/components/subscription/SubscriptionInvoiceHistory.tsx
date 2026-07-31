@@ -98,7 +98,7 @@ export function SubscriptionInvoiceHistory() {
 
   if (invoices.length === 0) {
     return (
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', py: 1 }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', py: 1 }}>
         Nenhuma fatura emitida até o momento.
       </Typography>
     )
@@ -136,13 +136,13 @@ export function SubscriptionInvoiceHistory() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Competência</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Vencimento</TableCell>
-              <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Competência</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Vencimento</TableCell>
+              <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                 Valor
               </TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Ação</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Status</TableCell>
+              <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Ação</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -161,8 +161,8 @@ export function SubscriptionInvoiceHistory() {
                         label={INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status}
                         sx={{
                           fontWeight: 600,
-                          bgcolor: 'color-mix(in srgb, var(--mk-warning) 16%, transparent)',
-                          color: 'var(--mk-warning)',
+                          bgcolor: 'color-mix(in srgb, var(--pt-warning) 16%, transparent)',
+                          color: 'var(--pt-warning)',
                         }}
                       />
                     ) : (

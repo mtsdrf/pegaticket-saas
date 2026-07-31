@@ -6,7 +6,7 @@ use Carbon\Carbon;
 
 /**
  * Calcula o vencimento de uma parcela (ou do pedido não parcelado):
- * dia configurado (`config('maskats.parcela_vencimento_dia')`) no mês
+ * dia configurado (`config('pegaticket.parcela_vencimento_dia')`) no mês
  * seguinte ao mês de referência informado.
  *
  * Se o dia configurado não existir no mês seguinte (ex.: configurar 31
@@ -21,7 +21,7 @@ class ParcelaVencimentoCalculator
 {
     public function calculateDueDate(Carbon $referenceMonth): Carbon
     {
-        $day = (int) config('maskats.parcela_vencimento_dia');
+        $day = (int) config('pegaticket.parcela_vencimento_dia');
 
         $targetMonth = $referenceMonth->copy()->startOfMonth()->addMonthNoOverflow();
 

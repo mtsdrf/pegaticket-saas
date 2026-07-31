@@ -11,7 +11,7 @@ test.describe('Administração global', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Admin QA',
-      userEmail: 'admin.qa@maskats.com',
+      userEmail: 'admin.qa@pegaticket.com',
     })
 
     await mockPaginatedApiRoute(page, {
@@ -20,7 +20,7 @@ test.describe('Administração global', () => {
         {
           uuid: 'admin-user-1',
           name: 'Administrador Master',
-          email: 'master@maskats.com',
+          email: 'master@pegaticket.com',
           is_active: true,
           created_at: '2026-07-28T12:00:00Z',
           groups: [],
@@ -79,7 +79,7 @@ test.describe('Administração global', () => {
     await expect(page.getByText('Gerencie os usuários do sistema e seus grupos.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Novo usuário' })).toBeVisible()
     await expect(page.getByText('Administrador Master')).toBeVisible()
-    await expect(page.getByText('master@maskats.com')).toBeVisible()
+    await expect(page.getByText('master@pegaticket.com')).toBeVisible()
 
     await page.goto('/admin/grupos')
 
@@ -104,7 +104,7 @@ test.describe('Administração global', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Audit QA',
-      userEmail: 'audit.qa@maskats.com',
+      userEmail: 'audit.qa@pegaticket.com',
     })
 
     await mockPaginatedApiRoute(page, {
@@ -156,7 +156,7 @@ test.describe('Administração global', () => {
       tenantPermissions: ['dashboard:read'],
       tenantFunctionalities: ['dashboard'],
       userName: 'Finance Admin',
-      userEmail: 'finance.admin@maskats.com',
+      userEmail: 'finance.admin@pegaticket.com',
     })
 
     let currentTypeFilter = ''

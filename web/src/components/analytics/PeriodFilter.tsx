@@ -100,7 +100,7 @@ export function PeriodFilter({ from, to, onChange, disabled, disabledHint, defau
             size="small"
             sx={{
               ...SOFT_PANEL_SX,
-              color: 'var(--mk-muted)',
+              color: 'var(--pt-muted)',
               alignSelf: { xs: 'flex-start', sm: 'center' },
             }}
           />

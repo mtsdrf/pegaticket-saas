@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 /**
  * Painel administrativo de pendências de pagamento (roadmap 2026-07-24):
  * `payment_idempotency_keys` precisa de um identificador público estável
- * para a listagem/reprocessamento manual do staff da Maskats, mesmo
+ * para a listagem/reprocessamento manual do staff da PegaTicket, mesmo
  * critério já usado em `webhook_deliveries` (tabela técnica, sem
  * created_by/soft delete, mas com `uuid` público). Backfill primeiro,
  * unique depois — evita erro de constraint em ambiente com linhas

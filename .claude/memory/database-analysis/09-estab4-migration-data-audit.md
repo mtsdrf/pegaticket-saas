@@ -1,8 +1,8 @@
 # Auditoria de dados — migração do estabelecimento id=4 (Js Queijos e Doces)
 
-Passo 1 (análise pura, sem script/plano de migração) do fluxo `database-reverse-engineer`. Fonte: `backup_prod_maskats.sql` (raiz do repo, 23MB, mysqldump COM dados reais — diferente de `dump_base.sql` usado em [[01-schema-overview]]/[[07-implementation-roadmap]], que era só estrutura). Analisado em 2026-07-22 via parsing Python dos `INSERT INTO` (sem subir MySQL), nunca contra `DB_HOST` do projeto.
+Passo 1 (análise pura, sem script/plano de migração) do fluxo `database-reverse-engineer`. Fonte: `backup_prod_pegaticket.sql` (raiz do repo, 23MB, mysqldump COM dados reais — diferente de `dump_base.sql` usado em [[01-schema-overview]]/[[07-implementation-roadmap]], que era só estrutura). Analisado em 2026-07-22 via parsing Python dos `INSERT INTO` (sem subir MySQL), nunca contra `DB_HOST` do projeto.
 
-**Alvo único de migração**: `estabelecimento.id = 4`, uuid `5f90a014-a13a-41d8-bd20-f90f11a3e1ba`, nome "Js Queijos e Doces". Único estabelecimento a migrar — os outros 3 (`id=1` admin Maskats, `id=2` teste, `id=3` outro cliente real) ficam de fora.
+**Alvo único de migração**: `estabelecimento.id = 4`, uuid `5f90a014-a13a-41d8-bd20-f90f11a3e1ba`, nome "Js Queijos e Doces". Único estabelecimento a migrar — os outros 3 (`id=1` admin PegaTicket, `id=2` teste, `id=3` outro cliente real) ficam de fora.
 
 Este arquivo complementa (não substitui) [[01-schema-overview]]–[[07-implementation-roadmap]], que documentam a estrutura geral das 20 tabelas sem dados. Aqui o foco é: volume real por tabela escopado ao estabelecimento 4, integridade referencial nos dados de fato, e mapeamento campo-a-campo contra o schema atual (`api/database/migrations`).
 
@@ -235,7 +235,7 @@ Ambas as tabelas do legado estão **vazias no dump inteiro** (0 linhas, apesar d
 | `usuario.password` | `users.password` | **algoritmo de hash do legado desconhecido** (não inspecionado aqui, fora de escopo desta análise estrutural) — se não for bcrypt compatível com o `Hash::check` do Laravel, migração de senha não pode ser 1:1; provavelmente exige reset de senha forçado para os usuários do estab 4 |
 | `usuario.nome` | `users.name` | bate |
 | `usuario.ativo` | `users.is_active` | bate |
-| `usuario.tipo_id` → `tipo_usuario` (só 2 linhas globais: "Administrador Maskats", "Administrador") | `tenant_users.tenant_role_id` → `tenant_roles` (por tenant, com slug/permissões via `GroupPermission`) | **modelo bem diferente**: legado tem 1 tabela de tipo global e simples; atual tem role por tenant + sistema de permissão via Group/Functionality/Action. Não há mapeamento direto — role do(s) usuário(s) do estab 4 no sistema novo precisa ser definida do zero (decisão do usuário, provavelmente "Administrador" do tenant) |
+| `usuario.tipo_id` → `tipo_usuario` (só 2 linhas globais: "Administrador PegaTicket", "Administrador") | `tenant_users.tenant_role_id` → `tenant_roles` (por tenant, com slug/permissões via `GroupPermission`) | **modelo bem diferente**: legado tem 1 tabela de tipo global e simples; atual tem role por tenant + sistema de permissão via Group/Functionality/Action. Não há mapeamento direto — role do(s) usuário(s) do estab 4 no sistema novo precisa ser definida do zero (decisão do usuário, provavelmente "Administrador" do tenant) |
 | `usuario.estabelecimento_id` (1 usuário pertence a exatamente 1 estabelecimento) | `tenant_users` (N:N entre `users` e `tenants`) | modelo novo é mais flexível (1 usuário pode ter acesso a vários tenants) — pros 2 usuários do estab 4, migração é simples (1 linha em `tenant_users` cada), mas é uma mudança de modelo, não mapeamento direto de coluna |
 
 ### `endereco`/`bairro`/`cidade`/`estado`/`dia_ideal`/`periodo_ideal` → equivalentes atuais

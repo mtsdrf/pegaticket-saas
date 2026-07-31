@@ -145,7 +145,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         $idempotency = $this->acquireIdempotency((int) $subscription->tenant_id, $operation);
 
         $payload = [
-            'reason' => 'Assinatura Maskats — ' . ($subscription->plan?->name ?? $subscription->billing_period),
+            'reason' => 'Assinatura PegaTicket — ' . ($subscription->plan?->name ?? $subscription->billing_period),
             'external_reference' => $subscription->uuid,
             'payer_email' => $payerEmail,
             'back_url' => rtrim((string) config('app.frontend_url', config('app.url')), '/') . '/subscription',
@@ -724,7 +724,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
     }
 
     /**
-     * Resolve o `payer` de uma cobrança de FATURA (Maskats → tenant — Pix/
+     * Resolve o `payer` de uma cobrança de FATURA (PegaTicket → tenant — Pix/
      * cartão avulso de fatura, ainda sem caller real). Mesma regra de
      * createPreapproval: o payer é sempre o PROPRIETÁRIO do tenant (User),
      * nunca o e-mail de contato do estabelecimento (tenants.email) nem o

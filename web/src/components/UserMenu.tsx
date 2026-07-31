@@ -40,13 +40,13 @@ function MenuHeader() {
       <UserAvatar name={profile.name} avatarUrl={profile.avatar_url} size={44} />
       <Box sx={{ minWidth: 0 }}>
         <Typography
-          sx={{ fontWeight: 700, fontSize: 15, color: 'var(--mk-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          sx={{ fontWeight: 700, fontSize: 15, color: 'var(--pt-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
           {profile.name}
         </Typography>
         <Typography
           variant="caption"
-          sx={{ display: 'block', color: 'var(--mk-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          sx={{ display: 'block', color: 'var(--pt-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
           {profile.email}
         </Typography>
@@ -79,7 +79,7 @@ export function UserMenu() {
             ...SOFT_PANEL_SX,
             borderRadius: '16px',
             borderColor: 'transparent',
-            background: 'var(--mk-surface-raised-bg)',
+            background: 'var(--pt-surface-raised-bg)',
           }}
         >
           <UserAvatar name={profile?.name ?? ''} avatarUrl={profile?.avatar_url} size={42} />
@@ -100,7 +100,7 @@ export function UserMenu() {
               mt: 1,
               ...ELEVATED_SURFACE_SX,
               borderRadius: '20px',
-                background: 'var(--mk-surface-raised-bg)',
+                background: 'var(--pt-surface-raised-bg)',
             },
           },
         }}

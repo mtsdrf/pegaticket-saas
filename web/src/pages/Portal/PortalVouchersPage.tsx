@@ -12,7 +12,7 @@ function LoadingSkeleton() {
   return (
     <Stack spacing={1.25}>
       {[0, 1, 2].map((index) => (
-        <Skeleton key={index} variant="rounded" height={76} sx={{ borderRadius: 'var(--mk-radius-xl)' }} />
+        <Skeleton key={index} variant="rounded" height={76} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
       ))}
     </Stack>
   )
@@ -24,9 +24,9 @@ function EmptyState() {
       elevation={0}
       sx={{ p: 4, textAlign: 'center', ...ELEVATED_SURFACE_SX }}
     >
-      <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)', mb: 1.5 }} />
+      <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
       <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 0.75 }}>Nenhum voucher utilizado ainda</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
         Os cupons que você usar nas lojas aparecem aqui, com a data de uso.
       </Typography>
     </Paper>
@@ -45,12 +45,12 @@ function VoucherCard({ voucher }: { voucher: PortalCouponRedemption }) {
             {voucher.coupon_code ?? 'Cupom'}
           </Typography>
           {voucher.tenant_name && (
-            <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)', wordBreak: 'break-word' }}>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', wordBreak: 'break-word' }}>
               {voucher.tenant_name}
             </Typography>
           )}
         </Box>
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', flexShrink: 0, textAlign: 'right' }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', flexShrink: 0, textAlign: 'right' }}>
           {formatDateTimeBR(voucher.redeemed_at)}
         </Typography>
       </Stack>

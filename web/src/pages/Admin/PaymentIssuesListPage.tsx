@@ -48,7 +48,7 @@ const TYPE_LABELS: Record<PaymentIssueType, string> = {
 
 /**
  * Painel de pendências de pagamento/assinatura (roadmap 2026-07-24) —
- * cross-tenant, exclusivo do staff interno da Maskats. Segue a mesma
+ * cross-tenant, exclusivo do staff interno da PegaTicket. Segue a mesma
  * convenção visual de `AuditLogListPage`/`ReconciliationPage`: filtro no
  * toolbar (backend só aceita `type`, sem filtro/ordenação por coluna, ver
  * `ListPaymentIssuesRequest`), `ServerDataGrid` para listagem, e ação de
@@ -135,7 +135,7 @@ export function PaymentIssuesListPage() {
         width: 150,
         sortable: false,
         filterType: 'none',
-        cellRenderer: (row) => <Chip size="small" label={row.status} sx={{ fontWeight: 600, color: 'var(--mk-text)', ...SOFT_PANEL_SX }} />,
+        cellRenderer: (row) => <Chip size="small" label={row.status} sx={{ fontWeight: 600, color: 'var(--pt-text)', ...SOFT_PANEL_SX }} />,
         exportValue: (row) => row.status,
       },
       {
@@ -214,7 +214,7 @@ export function PaymentIssuesListPage() {
               exportFileName="pendencias-pagamento"
               onGridReady={(api) => { gridApiRef.current = api }}
               emptyState={{
-                icon: <ReportProblemOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <ReportProblemOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhuma pendência encontrada',
                 description: 'Não há itens travados de pagamento ou assinatura no momento.',
               }}
@@ -226,7 +226,7 @@ export function PaymentIssuesListPage() {
       <Dialog open={reprocessTarget !== null} onClose={isReprocessing ? undefined : () => setReprocessTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Reprocessar pendência</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: 'var(--mk-text)' }}>
+          <DialogContentText sx={{ color: 'var(--pt-text)' }}>
             Tem certeza que deseja reprocessar esta pendência
             {reprocessTarget?.tenant ? (
               <>

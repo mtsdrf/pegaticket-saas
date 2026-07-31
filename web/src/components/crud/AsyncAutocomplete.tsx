@@ -27,7 +27,7 @@ interface AsyncAutocompleteProps<T> {
  * Primeiro `Autocomplete` do projeto — busca assíncrona debounced contra um
  * endpoint paginado/filtrável (`name` contains, mesmo padrão dos grids) em
  * vez de carregar até 100 registros de uma vez com `<Select>` (isso escondia
- * clientes/produtos além do teto). Segue os tokens `--mk-*` automaticamente
+ * clientes/produtos além do teto). Segue os tokens `--pt-*` automaticamente
  * via os overrides já existentes em `theme/index.ts` pro `TextField`
  * (`OutlinedInput`/`InputLabel`), sem precisar de CSS próprio.
  */

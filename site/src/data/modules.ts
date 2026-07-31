@@ -83,7 +83,7 @@ export const MODULES: ModuleInfo[] = [
     key: 'subscription',
     icon: RouteRoundedIcon,
     title: 'Assinatura self-service',
-    description: 'Gestão da própria assinatura Maskats: plano, ciclo, faturas e cancelamento.',
+    description: 'Gestão da própria assinatura PegaTicket: plano, ciclo, faturas e cancelamento.',
   },
   {
     key: 'accounting-access',

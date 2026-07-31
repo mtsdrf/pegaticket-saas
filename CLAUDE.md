@@ -1,12 +1,12 @@
-# Maskats — CLAUDE.md
+# PegaTicket — CLAUDE.md
 
 ## Resumo
-Maskats é um SaaS multi-tenant, monorepo com projetos irmãos na raiz (pasta do repositório permanece `maskats-saas/` por estabilidade de path/git, mas o nome final do produto é **Maskats**):
+PegaTicket é um SaaS multi-tenant, monorepo com projetos irmãos na raiz (pasta do repositório permanece `pegaticket-saas/` por estabilidade de path/git, mas o nome final do produto é **PegaTicket**):
 ```
-maskats-saas/
+pegaticket-saas/
   api/    Backend Laravel 13 (existente)
   web/    Frontend React web (existente, criado 2026-07-05)
-  site/   Landing pública/institucional para o domínio raiz maskats.com (existente, criado 2026-07-22) — sem autenticação, projeto Vite separado; diferente do app autenticado (web/) e do Portal do cliente final (/portal/* dentro de web/)
+  site/   Landing pública/institucional para o domínio raiz pegaticket.com (existente, criado 2026-07-22) — sem autenticação, projeto Vite separado; diferente do app autenticado (web/) e do Portal do cliente final (/portal/* dentro de web/)
   app/    App mobile/nativo (futuro, ainda não iniciar)
 ```
 
@@ -67,7 +67,7 @@ npm run lint    # oxlint
 
 ## Como o Claude deve trabalhar aqui
 0. Tarefa de backend → agir como `.claude/agents/laravel-php-master.md`. Tarefa de frontend → agir como `.claude/agents/react-19-master.md`. São os dois agentes técnicos principais do projeto (ver "Agentes especialistas obrigatórios" abaixo).
-1. Antes de alterar algo, ler `.claude/memory/project-summary.md`, `architecture-decisions.md`, `coding-standards.md`, `database-rules.md`, `api-patterns.md`. **Todo caminho `.claude/...` neste arquivo é relativo à raiz do projeto (`/home/mtsdrf/workspace/maskats-saas/`)** — em comandos de shell/briefs de agente, usar o caminho absoluto ou garantir que o cwd está na raiz antes de ler, nunca assumir que o cwd é a raiz por padrão. Tarefas de backend costumam fazer `cd api/` no meio da execução (não existe `api/.claude/`), e um `cat .claude/memory/x.md` depois disso falha silenciosamente com "arquivo inexistente" — já aconteceu (2026-07-09), sem perda de conteúdo, só leitura no lugar errado.
+1. Antes de alterar algo, ler `.claude/memory/project-summary.md`, `architecture-decisions.md`, `coding-standards.md`, `database-rules.md`, `api-patterns.md`. **Todo caminho `.claude/...` neste arquivo é relativo à raiz do projeto (`/home/mtsdrf/workspace/pegaticket-saas/`)** — em comandos de shell/briefs de agente, usar o caminho absoluto ou garantir que o cwd está na raiz antes de ler, nunca assumir que o cwd é a raiz por padrão. Tarefas de backend costumam fazer `cd api/` no meio da execução (não existe `api/.claude/`), e um `cat .claude/memory/x.md` depois disso falha silenciosamente com "arquivo inexistente" — já aconteceu (2026-07-09), sem perda de conteúdo, só leitura no lugar errado.
 2. Seguir o fluxo Request→Controller→Service→Repository→Resource já estabelecido. Não pular camadas.
 3. Toda mutação de domínio dispara Event + Listener de auditoria, seguindo o padrão existente em `Group`/`User`/`Tenant`.
 4. Não reescrever arquivos inteiros — editar apenas o trecho necessário.
@@ -81,7 +81,7 @@ npm run lint    # oxlint
 - Respostas curtas e diretas.
 
 ## Aviso de infraestrutura
-Repositório git único na raiz de `maskats-saas/` (monorepo `api/`+`web/`), criado em 2026-07-08, remoto `git@github.com:mtsdrf/maskats-saas.git`. `api/` e `web/` **não** têm `.git` próprio (histórico anterior desta nota estava desatualizado). O diretório pai `/home/mtsdrf/workspace` tem um `.git` separado e acidental (sem commits, com centenas de arquivos de OUTROS projetos — `1Razzy`, `allugai`, `chronos-pomodoro`, `fundamentos-react`, incluindo `node_modules/` — já staged). Não é o repositório deste projeto — não commitar nada ali sem confirmar com o usuário antes.
+Repositório git único na raiz de `pegaticket-saas/` (monorepo `api/`+`web/`), criado em 2026-07-08, remoto `git@github.com:mtsdrf/pegaticket-saas.git`. `api/` e `web/` **não** têm `.git` próprio (histórico anterior desta nota estava desatualizado). O diretório pai `/home/mtsdrf/workspace` tem um `.git` separado e acidental (sem commits, com centenas de arquivos de OUTROS projetos — `1Razzy`, `allugai`, `chronos-pomodoro`, `fundamentos-react`, incluindo `node_modules/` — já staged). Não é o repositório deste projeto — não commitar nada ali sem confirmar com o usuário antes.
 
 ## Agentes especialistas obrigatórios
 
@@ -403,7 +403,7 @@ Nenhuma alteração relevante deve ser considerada finalizada sem:
 - Padrão do projeto preservado.
 ```
 
-## Identidade visual oficial da Maskats
+## Identidade visual oficial da PegaTicket
 
 ### Arquivos obrigatórios de referência
 
@@ -411,8 +411,8 @@ Nenhuma alteração relevante deve ser considerada finalizada sem:
 .claude/memory/brand-guidelines.md
 .claude/memory/design-system.md
 .claude/memory/ui-redesign-plan.md
-.claude/skills/maskats-visual-identity.md
-.claude/skills/maskats-theme-system.md
+.claude/skills/pegaticket-visual-identity.md
+.claude/skills/pegaticket-theme-system.md
 .claude/skills/html-to-react-rebrand.md
 .claude/agents/ui-ux-master.md
 ```
@@ -421,12 +421,12 @@ Ler nessa ordem antes de qualquer trabalho visual: `brand-guidelines.md` (o que 
 
 ### Direção de marca
 
-Nome **Maskats** (fixo, não alterar). Tagline: "Gestão clara para empresas em movimento." Conceito: SaaS de gestão comercial — claro, moderno, produtivo, inteligente, levemente premium. Símbolo de marca: `M` geométrico com movimento sutil; nunca seta literal, gráfico de barras/financeiro ou ícone genérico de analytics.
+Nome **PegaTicket** (fixo, não alterar). Tagline: "Gestão clara para empresas em movimento." Conceito: SaaS de gestão comercial — claro, moderno, produtivo, inteligente, levemente premium. Símbolo de marca: `M` geométrico com movimento sutil; nunca seta literal, gráfico de barras/financeiro ou ícone genérico de analytics.
 
 ### Regras visuais obrigatórias
 
-- **Mobile-first é prioridade máxima**: o Maskats é usado majoritariamente no celular (confirmado pelo usuário em 2026-07-05). Toda tela é desenhada primeiro para mobile (base do CSS) e enriquecida via `min-width` para tablet/desktop — nunca o inverso. Alvo de toque ≥44px; nenhuma ação crítica depende só de `:hover`.
-- Toda cor vem de tokens `--mk-*` (ver `maskats-theme-system.md`) — nunca hex hardcoded em componente.
+- **Mobile-first é prioridade máxima**: o PegaTicket é usado majoritariamente no celular (confirmado pelo usuário em 2026-07-05). Toda tela é desenhada primeiro para mobile (base do CSS) e enriquecida via `min-width` para tablet/desktop — nunca o inverso. Alvo de toque ≥44px; nenhuma ação crítica depende só de `:hover`.
+- Toda cor vem de tokens `--pt-*` (ver `pegaticket-theme-system.md`) — nunca hex hardcoded em componente.
 - Paleta oficial light/dark é a única permitida (`design-system.md`).
 - Tipografia: Inter na interface; Manrope/Geist/Inter SemiBold na marca.
 - Um CTA primário por tela; cards como unidade padrão; sidebar com estado ativo sempre evidente (e vira drawer/bottom-nav em mobile, não só "colapsa").
@@ -434,7 +434,7 @@ Nome **Maskats** (fixo, não alterar). Tagline: "Gestão clara para empresas em 
 
 ### Regras para login
 
-Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (nunca imagem financeira genérica). Card moderno, logo Maskats visível. Textos oficiais: headline "Bem-vindo ao Maskats", subheadline "Gestão clara para empresas em movimento.", botão "Entrar no painel", link secundário "Atualizar sistema".
+Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (nunca imagem financeira genérica). Card moderno, logo PegaTicket visível. Textos oficiais: headline "Bem-vindo ao PegaTicket", subheadline "Gestão clara para empresas em movimento.", botão "Entrar no painel", link secundário "Atualizar sistema".
 
 ### Regras para dashboard
 
@@ -442,7 +442,7 @@ Separar sempre cabeçalho da página → ações rápidas → métricas → grá
 
 ### Regras de tema
 
-Tokens `--mk-*` em `:root` (claro) e `[data-theme='dark']` (escuro), com fallback por `prefers-color-scheme` quando não houver preferência salva. Preferência manual do usuário persiste em `localStorage`. Nunca inverter cor sem ajustar contraste/sombra — ver `maskats-theme-system.md`.
+Tokens `--pt-*` em `:root` (claro) e `[data-theme='dark']` (escuro), com fallback por `prefers-color-scheme` quando não houver preferência salva. Preferência manual do usuário persiste em `localStorage`. Nunca inverter cor sem ajustar contraste/sombra — ver `pegaticket-theme-system.md`.
 
 ### Regra de segurança
 

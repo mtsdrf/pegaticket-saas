@@ -1,14 +1,14 @@
-# Maskats — Brand Guidelines
+# PegaTicket — Brand Guidelines
 
 ## Nome da marca
 
-Maskats
+PegaTicket
 
 O nome deve ser mantido em todas as aplicações.
 
 ## Conceito da marca
 
-Maskats é um sistema SaaS de gestão comercial criado para organizar pedidos, clientes, produtos e indicadores de forma clara, moderna e eficiente.
+PegaTicket é um sistema SaaS de gestão comercial criado para organizar pedidos, clientes, produtos e indicadores de forma clara, moderna e eficiente.
 
 A marca deve transmitir:
 
@@ -24,7 +24,7 @@ A marca deve transmitir:
 
 ## Posicionamento
 
-Para empresas que precisam controlar pedidos, clientes, produtos e resultados, Maskats é uma plataforma de gestão comercial que centraliza a operação em uma experiência clara, visual e inteligente.
+Para empresas que precisam controlar pedidos, clientes, produtos e resultados, PegaTicket é uma plataforma de gestão comercial que centraliza a operação em uma experiência clara, visual e inteligente.
 
 ## Tagline oficial
 
@@ -32,7 +32,7 @@ Gestão clara para empresas em movimento.
 
 ## Personalidade da marca
 
-A Maskats é:
+A PegaTicket é:
 
 - Moderna.
 - Confiável.
@@ -44,7 +44,7 @@ A Maskats é:
 - Profissional.
 - Levemente premium.
 
-A Maskats não é:
+A PegaTicket não é:
 
 - Genérica.
 - Infantil.
@@ -84,7 +84,7 @@ regra anterior que proibia seta literal e gráfico de barras/financeiro no símb
 consciente do usuário ao fornecer o asset, não um esquecimento. Não reverter para SVG
 geométrico sem seta/barras sem confirmar de novo com o usuário.
 
-O símbolo da Maskats deve ser um `M` geométrico com movimento sutil para frente.
+O símbolo da PegaTicket deve ser um `M` geométrico com movimento sutil para frente.
 
 Ele deve funcionar como:
 
@@ -112,7 +112,7 @@ Não usar:
 
 ## Wordmark
 
-O texto `Maskats` deve usar uma fonte sans-serif moderna, com peso médio ou semibold.
+O texto `PegaTicket` deve usar uma fonte sans-serif moderna, com peso médio ou semibold.
 
 Fontes recomendadas:
 
@@ -126,7 +126,7 @@ O wordmark deve ter aparência limpa, tecnológica e confiável.
 
 A identidade deve prever:
 
-- Logo horizontal: símbolo + Maskats.
+- Logo horizontal: símbolo + PegaTicket.
 - Logo compacta: apenas símbolo.
 - Favicon: símbolo simplificado.
 - Versão light mode.
@@ -137,7 +137,7 @@ A identidade deve prever:
 
 ## Tom de voz
 
-A Maskats fala de forma:
+A PegaTicket fala de forma:
 
 - Clara.
 - Objetiva.
@@ -155,7 +155,7 @@ A marca não vive só na logo — vive em cada tela. Aplicar de forma consistent
 - Tom de voz humano e direto em toda mensagem visível ao usuário (sucesso, erro, vazio, loading).
 - Nunca usar mensagem técnica crua ("Error 500", stack trace) — sempre traduzir para linguagem clara.
 - Estado vazio nunca é "tela quebrada": sempre explica o que fazer a seguir (ex.: "Nenhum pedido ainda. Crie o primeiro pedido para começar.").
-- Cor de destaque (`--mk-accent`) reservada para elementos que indicam progresso/positivo (ex.: métrica em alta, ação concluída) — não usar como cor decorativa aleatória.
+- Cor de destaque (`--pt-accent`) reservada para elementos que indicam progresso/positivo (ex.: métrica em alta, ação concluída) — não usar como cor decorativa aleatória.
 - Loading nunca é só um spinner solto: usar skeleton ou mensagem curta que mantenha o usuário orientado.
 - Toda tela nova deve parecer parte do mesmo produto que o login — mesma paleta, mesma tipografia, mesmo tom.
 
@@ -166,7 +166,7 @@ A marca não vive só na logo — vive em cada tela. Aplicar de forma consistent
 Título:
 
 ```txt
-Bem-vindo ao Maskats
+Bem-vindo ao PegaTicket
 ```
 
 Subheadline:

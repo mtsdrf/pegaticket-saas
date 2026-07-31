@@ -35,18 +35,18 @@ const darkTokens = {
 }
 
 /**
- * Fonte única da paleta Maskats por modo — reaproveitada pelo tema MUI
- * abaixo e por qualquer superfície que não possa ler var(--mk-*)
+ * Fonte única da paleta PegaTicket por modo — reaproveitada pelo tema MUI
+ * abaixo e por qualquer superfície que não possa ler var(--pt-*)
  * diretamente (ex.: canvas do Chart.js).
  */
-export const maskatsTokens = { light: lightTokens, dark: darkTokens }
+export const pegaticketTokens = { light: lightTokens, dark: darkTokens }
 
 /**
- * Tema MUI construído a partir da paleta oficial da Maskats
+ * Tema MUI construído a partir da paleta oficial da PegaTicket
  * (.claude/memory/design-system.md) — nunca as cores default do Material.
  */
-export function buildMaskatsTheme(mode: PaletteMode) {
-  const tokens = maskatsTokens[mode]
+export function buildPegaTicketTheme(mode: PaletteMode) {
+  const tokens = pegaticketTokens[mode]
 
   return createTheme({
     palette: {
@@ -88,7 +88,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
           root: {
             borderRadius: 14,
             borderColor: tokens.border,
-            boxShadow: 'var(--mk-shadow-sm)',
+            boxShadow: 'var(--pt-shadow-sm)',
           },
         },
       },
@@ -107,7 +107,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
               borderColor: tokens.primary,
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 10%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 10%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -120,7 +120,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&:hover': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 12%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 12%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -153,7 +153,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
           paper: {
             borderRadius: 12,
             border: `1px solid ${tokens.border}`,
-            boxShadow: 'var(--mk-shadow-md)',
+            boxShadow: 'var(--pt-shadow-md)',
           },
         },
       },
@@ -167,7 +167,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&.Mui-selected': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 16%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 16%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -178,7 +178,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
           paper: {
             borderRadius: 16,
             border: `1px solid ${tokens.border}`,
-            boxShadow: 'var(--mk-shadow-lg)',
+            boxShadow: 'var(--pt-shadow-lg)',
           },
         },
       },
@@ -213,7 +213,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&:hover': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 12%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 12%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -226,7 +226,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&:hover': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 12%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 12%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -245,7 +245,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
           paper: {
             borderRadius: 12,
             border: `1px solid ${tokens.border}`,
-            boxShadow: 'var(--mk-shadow-md)',
+            boxShadow: 'var(--pt-shadow-md)',
           },
           option: {
             borderRadius: 8,
@@ -253,7 +253,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&.Mui-focused': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 16%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 16%, transparent)'
                   : tokens.surfaceSoft,
             },
           },
@@ -291,7 +291,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             backgroundColor: tokens.surface,
             color: tokens.text,
             borderBottom: `1px solid ${tokens.border}`,
-            boxShadow: 'var(--mk-shadow-md)',
+            boxShadow: 'var(--pt-shadow-md)',
           },
         },
       },
@@ -312,7 +312,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
             '&.Mui-selected': {
               backgroundColor:
                 mode === 'dark'
-                  ? 'color-mix(in srgb, var(--mk-primary) 16%, transparent)'
+                  ? 'color-mix(in srgb, var(--pt-primary) 16%, transparent)'
                   : tokens.surfaceSoft,
               borderLeftColor: tokens.primary,
               color: tokens.primary,
@@ -320,7 +320,7 @@ export function buildMaskatsTheme(mode: PaletteMode) {
               '&:hover': {
                 backgroundColor:
                   mode === 'dark'
-                    ? 'color-mix(in srgb, var(--mk-primary) 22%, transparent)'
+                    ? 'color-mix(in srgb, var(--pt-primary) 22%, transparent)'
                     : tokens.surfaceSoft,
               },
             },

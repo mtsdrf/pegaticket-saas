@@ -87,7 +87,7 @@ export function WorkflowTimelineDialog({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>
+          <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>
             Histórico de movimentações de {subjectLabel}, com usuário, horário e motivo quando informado.
           </Typography>
 
@@ -117,31 +117,31 @@ export function WorkflowTimelineDialog({
                   sx={{
                     p: 1.5,
                     borderRadius: '16px',
-                    border: '1px solid var(--mk-border)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-surface) 96%, white)',
+                    border: '1px solid var(--pt-border)',
+                    bgcolor: 'color-mix(in srgb, var(--pt-surface) 96%, white)',
                   }}
                 >
                   <Stack spacing={0.85}>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                       <Stack direction="row" spacing={0.8} sx={{ alignItems: 'center', minWidth: 0 }}>
-                        <HistoryOutlinedIcon sx={{ fontSize: 18, color: 'var(--mk-primary)' }} />
+                        <HistoryOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-primary)' }} />
                         <Typography sx={{ fontSize: 13.5, fontWeight: 800 }}>
                           {transitionLabel(item, stageLabel)}
                         </Typography>
                       </Stack>
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', flexShrink: 0 }}>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', flexShrink: 0 }}>
                         {item.moved_at ? formatDateTimeBR(item.moved_at) : 'Horário não informado'}
                       </Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
                       <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center' }}>
-                        <PersonOutlineOutlinedIcon sx={{ fontSize: 16, color: 'var(--mk-muted)' }} />
-                        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                        <PersonOutlineOutlinedIcon sx={{ fontSize: 16, color: 'var(--pt-muted)' }} />
+                        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                           {item.user?.name?.trim() || 'Sistema'}
                         </Typography>
                       </Stack>
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                         {transitionTypeLabel(item.transition_type)}
                       </Typography>
                     </Stack>
@@ -152,12 +152,12 @@ export function WorkflowTimelineDialog({
                           px: 1.1,
                           py: 0.9,
                           borderRadius: '12px',
-                          bgcolor: 'color-mix(in srgb, var(--mk-warning) 10%, var(--mk-surface))',
-                          border: '1px solid color-mix(in srgb, var(--mk-warning) 18%, transparent)',
+                          bgcolor: 'color-mix(in srgb, var(--pt-warning) 10%, var(--pt-surface))',
+                          border: '1px solid color-mix(in srgb, var(--pt-warning) 18%, transparent)',
                         }}
                       >
-                        <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--mk-warning)' }}>Motivo informado</Typography>
-                        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-text)' }}>{item.reason}</Typography>
+                        <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--pt-warning)' }}>Motivo informado</Typography>
+                        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-text)' }}>{item.reason}</Typography>
                       </Box>
                     ) : null}
                   </Stack>

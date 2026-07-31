@@ -145,7 +145,7 @@ export function TenantUserFormPage() {
             />
             {createNewUser && (
               <Stack spacing={2}>
-                <Typography variant="body2" sx={{ color: 'var(--mk-muted)' }}>
+                <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
                   O sistema criará o usuário e já fará o vínculo com a empresa e o perfil selecionado.
                 </Typography>
                 <TextField

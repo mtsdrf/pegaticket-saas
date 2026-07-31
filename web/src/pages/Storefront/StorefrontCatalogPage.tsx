@@ -64,12 +64,12 @@ function StoreStatusBadge({ tenant }: { tenant: StorefrontTenant }) {
         sx={{
           fontWeight: 700,
           fontSize: 12,
-          color: isOpen ? 'var(--mk-success, #1b7a3d)' : 'var(--mk-warning, #a15c00)',
+          color: isOpen ? 'var(--pt-success, #1b7a3d)' : 'var(--pt-warning, #a15c00)',
           bgcolor: isOpen ? 'color-mix(in srgb, #1b7a3d 14%, transparent)' : 'color-mix(in srgb, #a15c00 14%, transparent)',
         }}
       />
       {tenant.estimated_preparation_minutes !== null && (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
           ~{tenant.estimated_preparation_minutes} min
         </Typography>
       )}
@@ -91,7 +91,7 @@ function CatalogSkeleton() {
   return (
     <Stack spacing={1.5}>
       {Array.from({ length: 6 }).map((_, index) => (
-        <Skeleton key={index} variant="rounded" height={104} sx={{ borderRadius: 'var(--mk-radius-lg)' }} />
+        <Skeleton key={index} variant="rounded" height={104} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
       ))}
     </Stack>
   )
@@ -123,7 +123,7 @@ function BestSellersRail({
   return (
     <Box sx={{ mb: 3 }}>
       <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 1.25 }}>
-        <TrendingUpOutlinedIcon sx={{ fontSize: 20, color: 'var(--mk-primary)' }} />
+        <TrendingUpOutlinedIcon sx={{ fontSize: 20, color: 'var(--pt-primary)' }} />
         <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Mais vendidos</Typography>
       </Stack>
       <Stack
@@ -346,9 +346,9 @@ export function StorefrontCatalogPage() {
     return (
       <Box sx={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2 }}>
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4, textAlign: 'center', maxWidth: 420 }}>
-          <SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)', mb: 1.5 }} />
+          <SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
           <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 0.75 }}>Loja não encontrada</Typography>
-          <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)' }}>{tenantError}</Typography>
+          <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>{tenantError}</Typography>
         </Paper>
       </Box>
     )
@@ -360,7 +360,7 @@ export function StorefrontCatalogPage() {
       sx={{
         minHeight: '100dvh',
         background:
-          'var(--mk-page-background)',
+          'var(--pt-page-background)',
         pb:
           totalQuantity > 0
             ? `calc(${STOREFRONT_BOTTOM_NAV_HEIGHT}px + ${FLOATING_CHECKOUT_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`
@@ -377,7 +377,7 @@ export function StorefrontCatalogPage() {
               variant="rounded"
               sx={{ ...SOFT_PANEL_SX, width: 48, height: 48 }}
             >
-              <StorefrontOutlinedIcon sx={{ color: 'var(--mk-primary)' }} />
+              <StorefrontOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />
             </Avatar>
           )}
           <Box sx={{ minWidth: 0 }}>
@@ -396,16 +396,16 @@ export function StorefrontCatalogPage() {
                 {!tenant.storefront_enabled && <Chip size="small" label="Loja online desativada" variant="outlined" />}
                 {tenant.ratings_count > 0 && tenant.average_rating !== null && (
                   <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
-                    <StarIcon sx={{ fontSize: 15, color: 'var(--mk-warning, #a15c00)' }} />
+                    <StarIcon sx={{ fontSize: 15, color: 'var(--pt-warning, #a15c00)' }} />
                     <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
                       {tenant.average_rating.toFixed(1).replace('.', ',')}
                     </Typography>
-                    <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>({tenant.ratings_count})</Typography>
+                    <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>({tenant.ratings_count})</Typography>
                   </Stack>
                 )}
               </Stack>
             ) : (
-              <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>Cardápio digital</Typography>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Cardápio digital</Typography>
             )}
           </Box>
         </Stack>
@@ -417,7 +417,7 @@ export function StorefrontCatalogPage() {
                 <Typography sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 700 }}>
                   Esta empresa está usando esta página como canal de contato
                 </Typography>
-                <Typography sx={{ color: 'var(--mk-muted)' }}>
+                <Typography sx={{ color: 'var(--pt-muted)' }}>
                   O catálogo de produtos e o checkout estão desativados no momento. Aqui você encontra os dados de contato e localização da empresa.
                 </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
@@ -443,12 +443,12 @@ export function StorefrontCatalogPage() {
             <Paper sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2, sm: 3 } }}>
               <Stack spacing={1}>
                 <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Contato e localização</Typography>
-                <Typography sx={{ color: 'var(--mk-text)' }}>{tenant.address ?? 'Endereço ainda não informado.'}</Typography>
+                <Typography sx={{ color: 'var(--pt-text)' }}>{tenant.address ?? 'Endereço ainda não informado.'}</Typography>
                 <Stack spacing={0.5}>
-                  {tenant.phone ? <Typography sx={{ color: 'var(--mk-muted)' }}>Telefone: {tenant.phone}</Typography> : null}
-                  {tenant.mobile_phone ? <Typography sx={{ color: 'var(--mk-muted)' }}>Celular: {tenant.mobile_phone}</Typography> : null}
-                  {tenant.whatsapp ? <Typography sx={{ color: 'var(--mk-muted)' }}>WhatsApp: {tenant.whatsapp}</Typography> : null}
-                  {tenant.email ? <Typography sx={{ color: 'var(--mk-muted)' }}>E-mail: {tenant.email}</Typography> : null}
+                  {tenant.phone ? <Typography sx={{ color: 'var(--pt-muted)' }}>Telefone: {tenant.phone}</Typography> : null}
+                  {tenant.mobile_phone ? <Typography sx={{ color: 'var(--pt-muted)' }}>Celular: {tenant.mobile_phone}</Typography> : null}
+                  {tenant.whatsapp ? <Typography sx={{ color: 'var(--pt-muted)' }}>WhatsApp: {tenant.whatsapp}</Typography> : null}
+                  {tenant.email ? <Typography sx={{ color: 'var(--pt-muted)' }}>E-mail: {tenant.email}</Typography> : null}
                 </Stack>
                 <Button variant="text" onClick={() => navigate(`${slug ? `/loja/${slug}/perfil` : '/'}`)} sx={{ alignSelf: 'flex-start', px: 0 }}>
                   Ver endereço, horários e detalhes completos
@@ -469,7 +469,7 @@ export function StorefrontCatalogPage() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: 'var(--mk-muted)' }} />
+                      <SearchIcon fontSize="small" sx={{ color: 'var(--pt-muted)' }} />
                     </InputAdornment>
                   ),
                 },
@@ -526,7 +526,7 @@ export function StorefrontCatalogPage() {
 
         {tenant?.storefront_enabled !== false && !isLoadingProducts && !productsError && products.length === 0 && (
           <EmptyState
-            icon={<SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />}
+            icon={<SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
             title="Nenhum produto encontrado"
             description={
               debouncedSearch
@@ -578,7 +578,7 @@ export function StorefrontCatalogPage() {
 
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 5 }}>
           <Logo variant="mark" size={20} />
-          <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)' }}>Loja via Maskats</Typography>
+          <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>Loja via PegaTicket</Typography>
         </Stack>
       </Box>
 

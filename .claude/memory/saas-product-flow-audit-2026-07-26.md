@@ -1,13 +1,13 @@
 ---
 name: saas-product-flow-audit-2026-07-26
-description: Auditoria completa do fluxo SaaS do Maskats realizada em 26 de julho de 2026.
+description: Auditoria completa do fluxo SaaS do PegaTicket realizada em 26 de julho de 2026.
 metadata:
   type: project
 ---
 
 # Auditoria do fluxo SaaS em 2026-07-26
 
-- Foi executada uma auditoria completa do fluxo SaaS do Maskats sem alteração de código, usando o agente `product-flow-orchestrator` como referência metodológica.
+- Foi executada uma auditoria completa do fluxo SaaS do PegaTicket sem alteração de código, usando o agente `product-flow-orchestrator` como referência metodológica.
 - O mapeamento percorreu:
   - agentes disponíveis em `.claude/agents/`
   - documentação em `docs/`
@@ -43,7 +43,7 @@ metadata:
     - pedido do iFood
   - todas convergem parcialmente para `Order`, mas a experiência operacional ainda não converge para uma esteira única
 - Comparação funcional com a referência pública do Anota AI:
-  - o Maskats já possui fundações técnicas mais profundas em várias áreas
+  - o PegaTicket já possui fundações técnicas mais profundas em várias áreas
   - o concorrente parece mais simples na narrativa operacional
   - a lição prática não é copiar UI, e sim unificar a experiência do pedido ponta a ponta
 - Proposta arquitetural e de produto registrada:
@@ -81,4 +81,4 @@ metadata:
   - `security-specialist`: revisão de permissão por transição
   - `qa-testing-master`: estratégia de testes ponta a ponta
   - `ui-ux-master`: simplificação da jornada principal
-- O documento-base da auditoria foi salvo em [docs/roadmap/2026-07-26-saas-product-flow-audit.md](/home/mtsdrf/workspace/maskats-saas/docs/roadmap/2026-07-26-saas-product-flow-audit.md).
+- O documento-base da auditoria foi salvo em [docs/roadmap/2026-07-26-saas-product-flow-audit.md](/home/mtsdrf/workspace/pegaticket-saas/docs/roadmap/2026-07-26-saas-product-flow-audit.md).

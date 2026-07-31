@@ -27,7 +27,7 @@ function BrandPanel() {
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--mk-primary) 0%, color-mix(in srgb, var(--mk-primary) 65%, black) 55%, color-mix(in srgb, var(--mk-accent) 45%, black) 100%)',
+          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
       }}
     >
       <Box
@@ -40,12 +40,12 @@ function BrandPanel() {
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--mk-accent) 55%, transparent)',
-          '@keyframes mk-float-a': {
+          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          '@keyframes pt-float-a': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(-24px, 28px)' },
           },
-          animation: 'mk-float-a 14s ease-in-out infinite',
+          animation: 'pt-float-a 14s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -60,11 +60,11 @@ function BrandPanel() {
           left: -80,
           filter: 'blur(80px)',
           background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
-          '@keyframes mk-float-b': {
+          '@keyframes pt-float-b': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(20px, -18px)' },
           },
-          animation: 'mk-float-b 16s ease-in-out infinite',
+          animation: 'pt-float-b 16s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -92,13 +92,13 @@ function BrandPanel() {
             letterSpacing: '-0.01em',
           }}
         >
-          Maskats
+          PegaTicket
         </Typography>
       </Box>
 
       <Box sx={{ position: 'relative', maxWidth: 400 }}>
         <Typography sx={{ fontSize: 30, fontWeight: 600, lineHeight: 1.25, mb: 1.5 }}>
-          Você foi convidado para o Maskats.
+          Você foi convidado para o PegaTicket.
         </Typography>
         <Typography sx={{ fontSize: 15, color: 'color-mix(in srgb, #FFFFFF 78%, transparent)', mb: 3 }}>
           Defina sua senha de acesso e comece a acompanhar a operação da empresa.
@@ -113,7 +113,7 @@ function BrandPanel() {
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  bgcolor: 'var(--mk-accent)',
+                  bgcolor: 'var(--pt-accent)',
                   flexShrink: 0,
                 }}
               />
@@ -126,7 +126,7 @@ function BrandPanel() {
       </Box>
 
       <Typography sx={{ position: 'relative', fontSize: 13, color: 'color-mix(in srgb, #FFFFFF 55%, transparent)' }}>
-        © {new Date().getFullYear()} Maskats. Todos os direitos reservados.
+        © {new Date().getFullYear()} PegaTicket. Todos os direitos reservados.
       </Typography>
     </Box>
   )
@@ -197,8 +197,8 @@ export function AcceptInvitePage() {
           justifyContent: 'center',
           p: { xs: 2, sm: 3 },
           background: {
-            xs: 'linear-gradient(160deg, var(--mk-bg) 0%, var(--mk-surface-soft) 45%, color-mix(in srgb, var(--mk-primary) 16%, var(--mk-bg)) 100%)',
-            md: 'var(--mk-bg)',
+            xs: 'linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 16%, var(--pt-bg)) 100%)',
+            md: 'var(--pt-bg)',
           },
         }}
       >
@@ -213,7 +213,7 @@ export function AcceptInvitePage() {
             left: '-5rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--mk-primary) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-primary) 35%, transparent)',
           }}
         />
         <Box
@@ -227,12 +227,12 @@ export function AcceptInvitePage() {
             right: '-3rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--mk-accent) 30%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-accent) 30%, transparent)',
           }}
         />
 
         <Paper
-          className="mk-reveal"
+          className="pt-reveal"
           elevation={0}
           sx={{
             ...ELEVATED_SURFACE_SX,
@@ -249,7 +249,7 @@ export function AcceptInvitePage() {
           <Typography sx={{ fontSize: { xs: 20, sm: 22 }, fontWeight: 600, mb: 0.5 }}>
             Definir senha de acesso
           </Typography>
-          <Typography sx={{ fontSize: 15, color: 'var(--mk-muted)', mb: 3.5 }}>
+          <Typography sx={{ fontSize: 15, color: 'var(--pt-muted)', mb: 3.5 }}>
             Crie uma senha para ativar seu acesso ao painel da empresa.
           </Typography>
 

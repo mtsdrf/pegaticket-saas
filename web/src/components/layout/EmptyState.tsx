@@ -31,18 +31,18 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'color-mix(in srgb, var(--mk-primary) 12%, var(--mk-surface))',
-          color: 'var(--mk-primary)',
+          background: 'color-mix(in srgb, var(--pt-primary) 12%, var(--pt-surface))',
+          color: 'var(--pt-primary)',
         }}
       >
         {icon}
       </Box>
       <Typography
-        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 19, sm: 21 }, fontWeight: 700, color: 'var(--mk-text)' }}
+        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 19, sm: 21 }, fontWeight: 700, color: 'var(--pt-text)' }}
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--mk-muted)', maxWidth: 420 }}>
+      <Typography sx={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--pt-muted)', maxWidth: 420 }}>
         {description}
       </Typography>
       {action}

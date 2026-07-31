@@ -63,7 +63,7 @@ export function SubscriptionInvoicePixDialog({
       <DialogContent dividers>
         <Stack spacing={2}>
           {helperText && (
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
               {helperText}
             </Typography>
           )}

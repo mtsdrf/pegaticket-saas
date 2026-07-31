@@ -73,7 +73,7 @@ return [
             'driver' => 'mysql',
             'host' => env('LEGACY_DB_HOST', '127.0.0.1'),
             'port' => env('LEGACY_DB_PORT', '3306'),
-            'database' => env('LEGACY_DB_DATABASE', 'maskats_legacy_staging'),
+            'database' => env('LEGACY_DB_DATABASE', 'pegaticket_legacy_staging'),
             'username' => env('LEGACY_DB_USERNAME', 'root'),
             'password' => env('LEGACY_DB_PASSWORD', ''),
             'charset' => 'utf8mb4',

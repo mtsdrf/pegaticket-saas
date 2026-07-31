@@ -1,6 +1,6 @@
 ---
 name: access-model
-description: Modelo real de autorização e implicações operacionais do Maskats.
+description: Modelo real de autorização e implicações operacionais do PegaTicket.
 metadata:
   type: security
 ---

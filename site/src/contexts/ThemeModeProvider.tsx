@@ -15,8 +15,8 @@ function readStoredPreference(): ThemeModePreference {
 /**
  * Fonte única do modo de tema: resolve preferência salva (ou `system` =
  * `prefers-color-scheme`) e escreve `data-theme` no `<html>` — os tokens
- * CSS (`--mk-*`, usados direto em vários componentes fora do palette do
- * MUI) e o tema MUI (`buildMaskatsTheme`) precisam concordar sobre o
+ * CSS (`--pt-*`, usados direto em vários componentes fora do palette do
+ * MUI) e o tema MUI (`buildPegaTicketTheme`) precisam concordar sobre o
  * modo atual, então os dois leem daqui, não de `prefers-color-scheme`
  * isoladamente como antes.
  */

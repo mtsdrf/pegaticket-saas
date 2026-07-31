@@ -76,7 +76,7 @@ export function AnalyticsPage() {
             aria-label="Abas de análise"
             sx={{
               mb: 2.5,
-              borderBottom: '1px solid var(--mk-border)',
+              borderBottom: '1px solid var(--pt-border)',
               '& .MuiTab-root': { minHeight: UI_SIZE.compactControl, borderRadius: UI_RADIUS.sm, textTransform: 'none' },
             }}
           >

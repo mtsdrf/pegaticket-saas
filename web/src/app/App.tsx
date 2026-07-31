@@ -8,11 +8,11 @@ import { ThemeModeProvider } from '../contexts/ThemeModeProvider'
 import { UserProfileProvider } from '../contexts/UserProfileContext'
 import { useThemeMode } from '../hooks/useThemeMode'
 import { AppRoutes } from '../routes/AppRoutes'
-import { buildMaskatsTheme } from '../theme'
+import { buildPegaTicketTheme } from '../theme'
 
 function ThemedApp() {
   const { resolvedMode } = useThemeMode()
-  const theme = useMemo(() => buildMaskatsTheme(resolvedMode), [resolvedMode])
+  const theme = useMemo(() => buildPegaTicketTheme(resolvedMode), [resolvedMode])
 
   return (
     <ThemeProvider theme={theme}>

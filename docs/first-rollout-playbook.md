@@ -4,7 +4,7 @@ Data de referência: 2026-07-10
 
 ## Objetivo
 
-Disponibilizar o Maskats pela primeira vez com:
+Disponibilizar o PegaTicket pela primeira vez com:
 
 - um **administrador máximo da plataforma**
 - um **tenant novo** provisionado corretamente

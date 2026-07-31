@@ -2,16 +2,16 @@ import { Chip, Stack } from '@mui/material'
 import type { StorefrontProductBadge } from '../../types/storefront'
 
 const BADGE_META: Record<StorefrontProductBadge, { label: string; color: string; bg: string }> = {
-  new: { label: 'Novo', color: 'var(--mk-info)', bg: 'color-mix(in srgb, var(--mk-info) 14%, transparent)' },
+  new: { label: 'Novo', color: 'var(--pt-info)', bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)' },
   best_selling: {
     label: 'Mais vendido',
-    color: 'var(--mk-accent)',
-    bg: 'color-mix(in srgb, var(--mk-accent) 16%, transparent)',
+    color: 'var(--pt-accent)',
+    bg: 'color-mix(in srgb, var(--pt-accent) 16%, transparent)',
   },
   low_stock: {
     label: 'Últimas unidades',
-    color: 'var(--mk-warning)',
-    bg: 'color-mix(in srgb, var(--mk-warning) 16%, transparent)',
+    color: 'var(--pt-warning)',
+    bg: 'color-mix(in srgb, var(--pt-warning) 16%, transparent)',
   },
 }
 
@@ -55,7 +55,7 @@ export function ProductCardBadges({
                   color: '#FFFFFF',
                   bgcolor: `color-mix(in srgb, ${BADGE_META[badge].color} 78%, transparent)`,
                   backdropFilter: 'blur(2px)',
-                  boxShadow: 'var(--mk-shadow-sm)',
+                  boxShadow: 'var(--pt-shadow-sm)',
                 }
               : {
                   height: 20,

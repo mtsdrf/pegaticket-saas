@@ -6,19 +6,19 @@ Data de referência: 2026-07-12 (atualizado 2026-07-17: deploy automático via C
 
 ## Terceiro subdomínio: `site/` (landing institucional/vendas)
 
-Além de `api/` e `web/`, o monorepo tem um terceiro projeto irmão, `site/` (React 19 + Vite, sem autenticação) — a landing de vendas pública, publicada em **`site.maskats.com`**, separada do app principal (`sistema.maskats.com`, servido por `web/`) e do domínio raiz.
+Além de `api/` e `web/`, o monorepo tem um terceiro projeto irmão, `site/` (React 19 + Vite, sem autenticação) — a landing de vendas pública, publicada em **`site.pegaticket.com`**, separada do app principal (`sistema.pegaticket.com`, servido por `web/`) e do domínio raiz.
 
 Setup manual único (fora do repo, não versionado — mesmo padrão de `api`/`web`):
 
-1. No hPanel Hostinger, criar o subdomínio `site.maskats.com` apontando o document root para uma pasta dedicada no servidor (ex. `~/site.maskats.com/`).
+1. No hPanel Hostinger, criar o subdomínio `site.pegaticket.com` apontando o document root para uma pasta dedicada no servidor (ex. `~/site.pegaticket.com/`).
 2. Cadastrar o Secret `DEPLOY_SITE_PATH` no GitHub com esse caminho (mesmo padrão de `DEPLOY_API_PATH`/`DEPLOY_WEB_PATH`).
-3. Opcionalmente, cadastrar o Secret `VITE_APP_URL` (URL do app principal, usada no CTA da landing) — se omitido, o workflow usa o fallback `https://sistema.maskats.com`.
+3. Opcionalmente, cadastrar o Secret `VITE_APP_URL` (URL do app principal, usada no CTA da landing) — se omitido, o workflow usa o fallback `https://sistema.pegaticket.com`.
 
 Depois disso, o workflow builda `site/` (`npm ci && npm run build`) e publica `site/dist/` via `rsync` a cada deploy, sem gate de teste (não há suíte automatizada em `site/`, é conteúdo estático).
 
 ## Objetivo
 
-Publicar o Maskats em hospedagem compartilhada Hostinger para iniciar testes reais, com:
+Publicar o PegaTicket em hospedagem compartilhada Hostinger para iniciar testes reais, com:
 
 - frontend React no domínio principal
 - backend Laravel em subdomínio dedicado
@@ -51,10 +51,10 @@ No hPanel da Hostinger:
 
 ### Backend `api/.env`
 
-Usar [api/.env.example](/home/mtsdrf/workspace/maskats-saas/api/.env.example) como base e ajustar:
+Usar [api/.env.example](/home/mtsdrf/workspace/pegaticket-saas/api/.env.example) como base e ajustar:
 
 ```env
-APP_NAME=Maskats
+APP_NAME=PegaTicket
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://api.seudominio.com

@@ -23,8 +23,8 @@ function QuickActionIcon({ Icon }: { Icon: SvgIconComponent }) {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: 'color-mix(in srgb, var(--mk-primary) 14%, var(--mk-surface))',
-        color: 'var(--mk-primary)',
+        background: 'color-mix(in srgb, var(--pt-primary) 14%, var(--pt-surface))',
+        color: 'var(--pt-primary)',
       }}
     >
       <Icon fontSize="small" />
@@ -43,12 +43,12 @@ export function QuickActionCard({ icon: Icon, label, index = 0, to }: QuickActio
         component={RouterLink}
         to={to}
         variant="outlined"
-        className="mk-reveal"
+        className="pt-reveal"
         sx={{
           p: 2.1,
           ...ELEVATED_SURFACE_SX,
           ...CARD_EQUAL_HEIGHT_SX,
-          background: 'var(--mk-surface-raised-bg)',
+          background: 'var(--pt-surface-raised-bg)',
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
@@ -58,13 +58,13 @@ export function QuickActionCard({ icon: Icon, label, index = 0, to }: QuickActio
           transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
           '&:hover': {
             transform: 'translateY(-2px)',
-            borderColor: 'var(--mk-primary)',
+            borderColor: 'var(--pt-primary)',
           },
-          '&:focus-visible': { outline: '2px solid var(--mk-primary)', outlineOffset: 2 },
+          '&:focus-visible': { outline: '2px solid var(--pt-primary)', outlineOffset: 2 },
         }}
       >
         <QuickActionIcon Icon={Icon} />
-        <Typography sx={{ fontSize: 14.5, fontWeight: 600, color: 'var(--mk-text)', lineHeight: 1.35, ...CLAMP_TEXT_2_SX }}>
+        <Typography sx={{ fontSize: 14.5, fontWeight: 600, color: 'var(--pt-text)', lineHeight: 1.35, ...CLAMP_TEXT_2_SX }}>
           {label}
         </Typography>
       </Paper>
@@ -75,14 +75,14 @@ export function QuickActionCard({ icon: Icon, label, index = 0, to }: QuickActio
     <Tooltip title="Em breve" arrow>
       <Paper
         variant="outlined"
-        className="mk-reveal"
+        className="pt-reveal"
         role="button"
         aria-disabled="true"
         sx={{
           p: 2.1,
           ...ELEVATED_SURFACE_SX,
           ...CARD_EQUAL_HEIGHT_SX,
-          background: 'var(--mk-surface-raised-bg)',
+          background: 'var(--pt-surface-raised-bg)',
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
@@ -95,7 +95,7 @@ export function QuickActionCard({ icon: Icon, label, index = 0, to }: QuickActio
         }}
       >
         <QuickActionIcon Icon={Icon} />
-        <Typography sx={{ fontSize: 14.5, fontWeight: 600, color: 'var(--mk-text)', lineHeight: 1.35, ...CLAMP_TEXT_2_SX }}>
+        <Typography sx={{ fontSize: 14.5, fontWeight: 600, color: 'var(--pt-text)', lineHeight: 1.35, ...CLAMP_TEXT_2_SX }}>
           {label}
         </Typography>
       </Paper>

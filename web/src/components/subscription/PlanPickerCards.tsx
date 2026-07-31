@@ -39,26 +39,26 @@ export function PlanPickerCards({ plans, onSelect }: PlanPickerCardsProps) {
               width: '100%',
               p: 2,
               ...ELEVATED_SURFACE_SX,
-              '&:focus-visible': { outline: 'var(--mk-focus-ring)', outlineOffset: 2 },
+              '&:focus-visible': { outline: 'var(--pt-focus-ring)', outlineOffset: 2 },
             }}
           >
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
               <Box>
-                <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 15.5, color: 'var(--mk-text)' }}>
+                <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 15.5, color: 'var(--pt-text)' }}>
                   {plan.plan.name}
                 </Typography>
                 {plan.plan.description && (
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)', mt: 0.25 }}>
+                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.25 }}>
                     {plan.plan.description}
                   </Typography>
                 )}
               </Box>
               {cheapest && (
                 <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                  <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 800, fontSize: 17, color: 'var(--mk-text)' }}>
+                  <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 800, fontSize: 17, color: 'var(--pt-text)' }}>
                     {formatCurrency(cheapest.monthly_equivalent)}
                   </Typography>
-                  <Typography sx={{ fontSize: 11.5, color: 'var(--mk-muted)' }}>a partir de /mês</Typography>
+                  <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>a partir de /mês</Typography>
                 </Box>
               )}
             </Stack>
@@ -67,8 +67,8 @@ export function PlanPickerCards({ plans, onSelect }: PlanPickerCardsProps) {
               <Stack spacing={0.5} sx={{ mt: 1.25 }}>
                 {salesInfo.featureHighlights.slice(0, 4).map((feature) => (
                   <Stack key={feature} direction="row" spacing={0.75} sx={{ alignItems: 'flex-start' }}>
-                    <CheckRoundedIcon sx={{ fontSize: 15, color: 'var(--mk-success)', mt: 0.25 }} />
-                    <Typography sx={{ fontSize: 13, color: 'var(--mk-text)' }}>{feature}</Typography>
+                    <CheckRoundedIcon sx={{ fontSize: 15, color: 'var(--pt-success)', mt: 0.25 }} />
+                    <Typography sx={{ fontSize: 13, color: 'var(--pt-text)' }}>{feature}</Typography>
                   </Stack>
                 ))}
               </Stack>

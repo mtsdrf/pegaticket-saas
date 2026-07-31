@@ -77,7 +77,7 @@ export function BairroListPage() {
                   size="small"
                   aria-label={`Editar ${row.name}`}
                   onClick={() => handleEdit(row)}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
                 >
                   <EditOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -92,7 +92,7 @@ export function BairroListPage() {
                     setDeleteError(null)
                     setDeleteTarget(row)
                   }}
-                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-danger)' } }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
                 >
                   <DeleteOutlineIcon fontSize="small" />
                 </IconButton>
@@ -129,7 +129,7 @@ export function BairroListPage() {
                 gridApiRef.current = api
               }}
               emptyState={{
-                icon: <RoomOutlinedIcon sx={{ fontSize: 40, color: 'var(--mk-muted)' }} />,
+                icon: <RoomOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
                 title: 'Nenhum bairro cadastrado ainda',
                 description: 'Cadastre bairros dentro de uma cidade para usar nos endereços.',
                 action: can(ACCESS.bairrosCreate) ? (

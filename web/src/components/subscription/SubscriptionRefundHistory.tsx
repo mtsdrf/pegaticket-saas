@@ -96,7 +96,7 @@ export function SubscriptionRefundHistory() {
 
   if (refunds.length === 0) {
     return (
-      <Typography sx={{ fontSize: 14, color: 'var(--mk-muted)', py: 1 }}>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', py: 1 }}>
         Nenhum reembolso registrado até o momento.
       </Typography>
     )
@@ -108,14 +108,14 @@ export function SubscriptionRefundHistory() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Data</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Motivo</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Tipo</TableCell>
-              <TableCell align="right" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Data</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Motivo</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Tipo</TableCell>
+              <TableCell align="right" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
                 Valor
               </TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>Protocolo</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Status</TableCell>
+              <TableCell sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>Protocolo</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -136,9 +136,9 @@ export function SubscriptionRefundHistory() {
                         sx={{
                           fontWeight: 600,
                           bgcolor: isFailed
-                            ? 'color-mix(in srgb, var(--mk-danger) 16%, transparent)'
-                            : 'color-mix(in srgb, var(--mk-warning) 16%, transparent)',
-                          color: isFailed ? 'var(--mk-danger)' : 'var(--mk-warning)',
+                            ? 'color-mix(in srgb, var(--pt-danger) 16%, transparent)'
+                            : 'color-mix(in srgb, var(--pt-warning) 16%, transparent)',
+                          color: isFailed ? 'var(--pt-danger)' : 'var(--pt-warning)',
                         }}
                       />
                     ) : (

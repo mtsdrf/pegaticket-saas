@@ -112,8 +112,8 @@ export function CommandPalette({
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.25, py: 1.75, borderBottom: '1px solid var(--mk-border)' }}>
-        <SearchOutlinedIcon sx={{ color: 'var(--mk-muted)' }} fontSize="small" />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.25, py: 1.75, borderBottom: '1px solid var(--pt-border)' }}>
+        <SearchOutlinedIcon sx={{ color: 'var(--pt-muted)' }} fontSize="small" />
         <InputBase
           inputRef={inputRef}
           value={query}
@@ -129,7 +129,7 @@ export function CommandPalette({
       <List sx={{ maxHeight: '55vh', overflowY: 'auto', py: 0.5 }}>
         {results.length === 0 && (
           <Box sx={{ px: 2, py: 3, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>Nenhuma tela encontrada.</Typography>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Nenhuma tela encontrada.</Typography>
           </Box>
         )}
 
@@ -146,7 +146,7 @@ export function CommandPalette({
               secondary={item.group}
               slotProps={{
                 primary: { sx: { fontSize: 14, fontWeight: 600 } },
-                secondary: { sx: { fontSize: 12, color: 'var(--mk-muted)' } },
+                secondary: { sx: { fontSize: 12, color: 'var(--pt-muted)' } },
               }}
             />
           </ListItemButton>

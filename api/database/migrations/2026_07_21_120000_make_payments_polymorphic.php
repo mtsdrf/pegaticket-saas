@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Pagamento passa a ser polimórfico (roadmap 2A). A tabela `payments` da
- * Onda 1 ligava só a `invoices` (cobrança da Maskats pro tenant). Agora o
+ * Onda 1 ligava só a `invoices` (cobrança da PegaTicket pro tenant). Agora o
  * mesmo registro serve também para pagamento de PEDIDO (cliente final →
  * tenant, Modelo A sem custódia). Troca `invoice_id` fixo por
  * `payable_type`/`payable_id` (padrão `morphs()` do Laravel), mais idiomático

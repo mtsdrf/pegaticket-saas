@@ -35,7 +35,7 @@ interface SubscriptionCardTokenDialogProps {
  * Passo de cartão da contratação/troca de plano quando o plano escolhido é
  * pago (backend responde 422 `SUBSCRIPTION_CARD_TOKEN_REQUIRED` sem
  * `card_token`). Mesmo padrão do `ChangeCardDialog`: tokenização 100%
- * embutida via MP.js, número/CVV nunca chegam ao backend Maskats — só o
+ * embutida via MP.js, número/CVV nunca chegam ao backend PegaTicket — só o
  * token. Substitui o antigo redirecionamento a checkout do Mercado Pago.
  */
 export function SubscriptionCardTokenDialog({
@@ -97,9 +97,9 @@ export function SubscriptionCardTokenDialog({
       <DialogTitle sx={{ fontWeight: 600 }}>Cartão da assinatura</DialogTitle>
       <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <DialogContent>
-          <DialogContentText sx={{ color: 'var(--mk-text)', mb: 2 }}>
+          <DialogContentText sx={{ color: 'var(--pt-text)', mb: 2 }}>
             O plano <strong>{planName}</strong> é pago. Informe o cartão que será usado nas cobranças automáticas
-            da assinatura. O número e o CVV são enviados direto ao Mercado Pago pelo navegador — o Maskats nunca
+            da assinatura. O número e o CVV são enviados direto ao Mercado Pago pelo navegador — o PegaTicket nunca
             tem acesso a esses dados.
           </DialogContentText>
 

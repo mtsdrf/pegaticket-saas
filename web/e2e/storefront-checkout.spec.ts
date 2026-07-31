@@ -5,7 +5,7 @@ test.describe('Checkout público da loja', () => {
   test('identifica o cliente por OTP, confirma o pedido e abre o rastreio público', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem(
-        'maskats.storefront_cart.qa-loja',
+        'pegaticket.storefront_cart.qa-loja',
         JSON.stringify([
           {
             id: 'cart-item-1',
@@ -263,7 +263,7 @@ test.describe('Checkout público da loja', () => {
     await expect(page.getByText('Maria Cliente')).toBeVisible()
     await expect(page.getByText('R$ 58,00')).toBeVisible()
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('maskats.storefront_cart.qa-loja')))
+      .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.storefront_cart.qa-loja')))
       .toBe('[]')
   })
 })

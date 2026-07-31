@@ -14,18 +14,18 @@ export function ThemeModeSwitch() {
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
             Tema
           </Typography>
-          <Typography variant="caption" sx={{ color: 'var(--mk-muted)' }}>
+          <Typography variant="caption" sx={{ color: 'var(--pt-muted)' }}>
             {preference === 'system' ? 'Seguindo o sistema' : 'Preferência manual salva'}
           </Typography>
         </Box>
-        <Typography variant="caption" sx={{ color: 'var(--mk-muted)', fontWeight: 600 }}>
+        <Typography variant="caption" sx={{ color: 'var(--pt-muted)', fontWeight: 600 }}>
           {resolvedMode === 'dark' ? 'Escuro' : 'Claro'}
         </Typography>
       </Stack>
 
       <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', justifyContent: 'center' }}>
         <LightModeOutlinedIcon
-          sx={{ fontSize: 18, color: resolvedMode === 'light' ? 'var(--mk-warning)' : 'var(--mk-muted)' }}
+          sx={{ fontSize: 18, color: resolvedMode === 'light' ? 'var(--pt-warning)' : 'var(--pt-muted)' }}
         />
 
         <Switch
@@ -36,7 +36,7 @@ export function ThemeModeSwitch() {
         />
 
         <DarkModeOutlinedIcon
-          sx={{ fontSize: 18, color: resolvedMode === 'dark' ? 'var(--mk-primary)' : 'var(--mk-muted)' }}
+          sx={{ fontSize: 18, color: resolvedMode === 'dark' ? 'var(--pt-primary)' : 'var(--pt-muted)' }}
         />
       </Stack>
     </Box>

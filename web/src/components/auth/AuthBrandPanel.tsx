@@ -32,7 +32,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--mk-primary) 0%, color-mix(in srgb, var(--mk-primary) 65%, black) 55%, color-mix(in srgb, var(--mk-accent) 45%, black) 100%)',
+          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
       }}
     >
       <Box
@@ -45,12 +45,12 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--mk-accent) 55%, transparent)',
-          '@keyframes mk-float-a': {
+          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          '@keyframes pt-float-a': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(-24px, 28px)' },
           },
-          animation: 'mk-float-a 14s ease-in-out infinite',
+          animation: 'pt-float-a 14s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -65,11 +65,11 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
           left: -80,
           filter: 'blur(80px)',
           background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
-          '@keyframes mk-float-b': {
+          '@keyframes pt-float-b': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(20px, -18px)' },
           },
-          animation: 'mk-float-b 16s ease-in-out infinite',
+          animation: 'pt-float-b 16s ease-in-out infinite',
           '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
         }}
       />
@@ -97,7 +97,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
             letterSpacing: '-0.01em',
           }}
         >
-          Maskats
+          PegaTicket
         </Typography>
       </Box>
 
@@ -116,7 +116,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  bgcolor: 'var(--mk-accent)',
+                  bgcolor: 'var(--pt-accent)',
                   flexShrink: 0,
                 }}
               />
@@ -129,7 +129,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
       </Box>
 
       <Typography sx={{ position: 'relative', fontSize: 13, color: 'color-mix(in srgb, #FFFFFF 55%, transparent)' }}>
-        © {new Date().getFullYear()} Maskats. Todos os direitos reservados.
+        © {new Date().getFullYear()} PegaTicket. Todos os direitos reservados.
       </Typography>
     </Box>
   )

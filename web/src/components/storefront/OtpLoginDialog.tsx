@@ -22,7 +22,7 @@ export function OtpLoginDialog({
         onClick={onClose}
         aria-label="Fechar"
         size="small"
-        sx={{ position: 'absolute', top: 8, right: 8, color: 'var(--mk-muted)' }}
+        sx={{ position: 'absolute', top: 8, right: 8, color: 'var(--pt-muted)' }}
       >
         <CloseIcon fontSize="small" />
       </IconButton>

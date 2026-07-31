@@ -4,7 +4,7 @@ Pedido do usuário (2026-07-09): módulo completo de gerenciamento de estoque **
 
 Este documento mapeia os 300 itens em **MVP (Parte 1, implementar agora)** vs **Radar (documentado, propositalmente adiado)**, e define a arquitetura de entidades.
 
-Sem tabela do legado para reaproveitar — o sistema legado (`/home/mtsdrf/workspace/maskats/`) **não tinha nenhum controle de estoque** (só `produto.quantidade`, um campo solto sem movimentação/auditoria). Este módulo é 100% novo, sem precedente a replicar — todas as decisões abaixo são de produto/arquitetura, não engenharia reversa.
+Sem tabela do legado para reaproveitar — o sistema legado (`/home/mtsdrf/workspace/pegaticket/`) **não tinha nenhum controle de estoque** (só `produto.quantidade`, um campo solto sem movimentação/auditoria). Este módulo é 100% novo, sem precedente a replicar — todas as decisões abaixo são de produto/arquitetura, não engenharia reversa.
 
 ## Entidades (MVP — Fase 4, Parte 1)
 
