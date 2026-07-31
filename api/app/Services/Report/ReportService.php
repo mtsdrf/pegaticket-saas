@@ -207,7 +207,7 @@ class ReportService
 
     /**
      * Resultado por canal (roadmap A1.3, `orders.origin`) — agregado por
-     * origin (staff/storefront/pdv/counter), sobre a MESMA base de
+     * origin (staff/storefront e canais históricos), sobre a MESMA base de
      * ordersQuery() (pedido cancelado/soft-deletado sempre excluído, mesmo
      * filtro de período por created_at dos outros indicadores). Um bucket
      * por origin com pedido no período, ordenado por revenue desc.

@@ -27,8 +27,6 @@ const createdClient = {
     lat: null,
     lng: null,
   },
-  dia_ideal: { uuid: 'dia-segunda', name: 'Segunda-feira' },
-  periodo_ideal: { uuid: 'periodo-manha', name: 'Manhã' },
   created_at: '2026-07-28T12:00:00Z',
 }
 
@@ -69,30 +67,6 @@ async function mockClientFormDependencies(page: Parameters<typeof test>[0]['page
         is_active: true,
         cidade_uuid: 'city-sp',
         cidade_name: 'São Paulo',
-        created_at: '2026-07-28T12:00:00Z',
-      },
-    ],
-  })
-
-  await mockApiRoute(page, {
-    path: '/dias-ideais',
-    body: [
-      {
-        uuid: 'dia-segunda',
-        name: 'Segunda-feira',
-        is_active: true,
-        created_at: '2026-07-28T12:00:00Z',
-      },
-    ],
-  })
-
-  await mockApiRoute(page, {
-    path: '/periodos-ideais',
-    body: [
-      {
-        uuid: 'periodo-manha',
-        name: 'Manhã',
-        is_active: true,
         created_at: '2026-07-28T12:00:00Z',
       },
     ],
@@ -194,12 +168,6 @@ test.describe('Clientes', () => {
     await page.getByRole('textbox', { name: 'Inscrição estadual', exact: true }).fill('123456789')
     await page.getByLabel('Observação').fill('Cliente criado pela suíte E2E')
 
-    await page.getByRole('combobox', { name: 'Dia ideal' }).click()
-    await page.getByRole('option', { name: 'Segunda-feira' }).click()
-
-    await page.getByRole('combobox', { name: 'Período ideal' }).click()
-    await page.getByRole('option', { name: 'Manhã' }).click()
-
     await page.getByRole('combobox', { name: 'Estado' }).click()
     await page.getByRole('option', { name: 'São Paulo (SP)' }).click()
 
@@ -232,8 +200,6 @@ test.describe('Clientes', () => {
       notes: 'Cliente criado pela suíte E2E',
       is_trusted: true,
       is_active: true,
-      dia_ideal_uuid: 'dia-segunda',
-      periodo_ideal_uuid: 'periodo-manha',
       logradouro: 'Rua das Flores',
       numero: '123',
       complemento: 'Sala 2',

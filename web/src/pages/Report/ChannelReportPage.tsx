@@ -1,7 +1,6 @@
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
-import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { Alert, Box, Button, Paper, Skeleton, Typography } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
@@ -21,8 +20,6 @@ import { presetRange } from '../../utils/period'
 const CHANNEL_ICONS: Record<string, SvgIconComponent> = {
   staff: ReceiptLongOutlinedIcon,
   storefront: StorefrontOutlinedIcon,
-  pdv: ReceiptLongOutlinedIcon,
-  counter: TableRestaurantOutlinedIcon,
 }
 
 /**

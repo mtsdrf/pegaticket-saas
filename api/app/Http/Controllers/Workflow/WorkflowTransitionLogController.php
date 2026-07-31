@@ -25,13 +25,4 @@ class WorkflowTransitionLogController extends Controller
         );
     }
 
-    public function comandaItem(string $uuid, string $itemUuid)
-    {
-        $logs = $this->service->listComandaItemTimeline($uuid, $itemUuid);
-
-        return APIResponse::success(
-            WorkflowTransitionLogResource::collection($logs),
-            __('messages.workflow.timeline_list')
-        );
-    }
 }

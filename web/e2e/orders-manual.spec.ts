@@ -159,8 +159,6 @@ test.describe('Pedidos manuais', () => {
                 lat: null,
                 lng: null,
               },
-              dia_ideal: null,
-              periodo_ideal: null,
               created_at: '2026-07-28T12:00:00Z',
             },
           ],

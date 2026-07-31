@@ -42,7 +42,6 @@ Mapear todas as telas reais do frontend antes da propagação final do padrão v
 - `/portal/favoritos` -> `PortalFavoritesPage`
 - `/portal/enderecos` -> `PortalAddressesPage`
 - `/portal/vouchers` -> `PortalVouchersPage`
-- `/portal/cashback` -> `PortalCashbackPage`
 - `/portal/perfil` -> `PortalProfilePage`
 - `/rastreio/:uuid` -> `OrderTrackingPage`
 
@@ -191,8 +190,6 @@ Mapear todas as telas reais do frontend antes da propagação final do padrão v
 - `/configuracoes/pedidos` -> `OperationsBlock`
 - `/configuracoes/horario-endereco` -> `ScheduleAddressBlock`
 - `/configuracoes/pagamento` -> `PaymentBlock`
-- `/configuracoes/cashback` -> `CashbackBlock`
-- `/configuracoes/retencao` -> `RetentionBlock`
 - `/configuracoes/dados-privacidade` -> `DataPrivacyBlock`
 - `/configuracoes/loja-online` -> `StoreBusinessSettingsPage`
 - `/configuracoes/assinatura` -> `SubscriptionPage`

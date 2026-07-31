@@ -10,8 +10,6 @@ function makeDeliveryCandidates() {
         client_uuid: 'route-client-1',
         client_name: 'Cliente Rota Centro',
         phone_primary: '11999990001',
-        dia_ideal_name: 'Segunda',
-        periodo_ideal_name: 'Manhã',
         endereco: {
           logradouro: 'Rua A',
           numero: '100',
@@ -37,8 +35,6 @@ function makeDeliveryCandidates() {
         client_uuid: 'route-client-2',
         client_name: 'Cliente Rota Sul',
         phone_primary: '11999990002',
-        dia_ideal_name: null,
-        periodo_ideal_name: null,
         endereco: {
           logradouro: 'Rua B',
           numero: '200',
@@ -64,8 +60,6 @@ function makeDeliveryCandidates() {
         client_uuid: 'route-client-3',
         client_name: 'Cliente Sem Geocode',
         phone_primary: null,
-        dia_ideal_name: null,
-        periodo_ideal_name: null,
         endereco: {
           logradouro: 'Rua C',
           numero: '300',
@@ -100,8 +94,6 @@ function makeCollectionCandidates() {
         client_uuid: 'collection-client-1',
         client_name: 'Cliente Cobrança Norte',
         phone_primary: '11999990009',
-        dia_ideal_name: null,
-        periodo_ideal_name: 'Tarde',
         endereco: {
           logradouro: 'Rua D',
           numero: '400',

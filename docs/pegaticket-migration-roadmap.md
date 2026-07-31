@@ -1,6 +1,6 @@
 # Roadmap de migração para o contexto PegaTicket
 
-Status em 2026-07-31: limpeza parcial já executada no código, com rebrand ativo consolidado e parte dos endpoints/telas legados removidos; o roadmap funcional, porém, ainda não chegou ao marco de "base limpa para construir o domínio novo".
+Status em 2026-07-31: limpeza estrutural avançada já executada no código, com rebrand ativo consolidado, módulos legados de cashback/reativação/CRM B2B removidos do fluxo ativo e plano funcional antigo bastante reduzido; o roadmap funcional, porém, ainda não chegou ao marco de "base limpa para construir o domínio novo" porque ainda restam domínios pesados como `stock`, `pdv` e `balcao`.
 Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`, `database/seeders/FunctionalitiesSeeder.php`, `routes/api.php`, cruzado com `especificacao-plataforma-ingressos.md` (raiz) e `.claude/memory/product-roadmap.md`.
 
 ---
@@ -21,7 +21,8 @@ Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`
 
 - `PDV` ainda existe no backend (`api/app/{DTOs,Events,Exceptions,Http/Requests,Listeners,Models,Services}/Pdv`) e continua refletido em regras/UX.
 - `Stock` ainda existe no backend (`api/app/{DTOs,Events,Http/Requests,Http/Resources,Listeners,Models,Services}/Stock`) e ainda contamina relatórios, pedidos e seeders de demonstração.
-- `FunctionalitiesSeeder` e `InitialPlansSeeder` ainda estão no domínio antigo (`product_types`, `clients`, `stock`, `cashback`, `reactivation`, `pdv`, `balcao`).
+- `InitialPlansSeeder` e partes do catálogo funcional ainda seguem presos ao domínio antigo (`product_types`, `stock`, `pdv`, `balcao`), embora `cashback`, `reactivation`, `client_categories`, `dias_ideais` e `periodos_ideais` já tenham saído do fluxo ativo e do seeder principal.
+- `DemoPlansPresentationSeeder` já deixou de expor `pdv` e `balcao` na apresentação comercial, mas o código desses módulos continua vivo na aplicação.
 - Há trechos de frontend e analytics ainda orientados a varejo físico/estoque (`OrderFormPage`, `ProductsTab`, filtros/origens de pedido com `pdv`).
 
 ### Leitura objetiva da fase atual
@@ -29,12 +30,12 @@ Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`
 - `Fase 1`: essencialmente concluída.
 - `Fase 2`: em grande parte concluída, mas precisa sempre ser confirmada contra diretórios/rotas reais antes de encerrar oficialmente.
 - `Fase 3`: **não concluída**.
-- `Fase 4`: **não concluída**.
+- `Fase 4`: essencialmente concluída no código ativo, restando apenas legado histórico/documental.
 - `Fase 5`: parcialmente concluída.
 - `Fase 6`: **não concluída**.
 - `Fase 7`: branding principal concluído, mas a ordem original do roadmap ficou invertida em relação às fases funcionais.
 
-Conclusão: em 2026-07-31 o projeto está em **faxina avançada, porém ainda dentro da etapa de remoção/alinhamento**. Ainda não é o momento correto de considerar iniciada a fase de construção do domínio novo (`InventoryHoldService`, lotes, emissão/check-in etc.).
+Conclusão: em 2026-07-31 o projeto está em **faxina avançada, quase fechando a etapa de remoção/alinhamento**. A próxima frente natural é encerrar os domínios físicos remanescentes (`stock`, `pdv`, `balcao`) antes de considerar oficialmente iniciada a construção do domínio novo (`InventoryHoldService`, lotes, emissão/check-in etc.).
 
 ## 0. Confirmação de modelo de negócio (2026-07-30)
 
@@ -172,9 +173,9 @@ Sem dependência de checkout/pagamento, mais fácil de isolar.
 4. Remover functionalities `pdv`, `balcao`.
 
 ### Fase 4 — CRM B2B e estoque físico
-1. Remover `Client/*`, `ClientIdeal/*` (Dia/Período ideal), `ProductCategoryPrice` (atacado), `ProductType`, `Stock/*`.
-2. Remover páginas correspondentes.
-3. Remover functionalities `clients`, `client_categories`, `dias_ideais`, `periodos_ideais`, `stock`, `stock_locations`, `product_types`.
+1. `ClientIdeal/*` (Dia/Período ideal), `ProductCategoryPrice` (atacado) e `client_categories` já foram removidos/alinhados do fluxo ativo em 2026-07-31.
+2. `Client/*` permanece apenas no que ainda sustenta o cadastro básico usado pela operação atual; não carrega mais preferências legadas nem categorias.
+3. O bloco ainda aberto desta fase passou a ser concentrado em `ProductType` e, principalmente, `Stock/*`.
 
 ### Fase 5 — Storefront: podar o que é de loja física
 1. Remover `StoreAddressController`, `StoreBusinessHoursController`, `StoreDeliveryFeeController`, `ReactivationRuleController`, `StorefrontTableReservationController`, `PortalAddressController`, `PortalCashbackController`.

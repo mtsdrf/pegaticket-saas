@@ -34,7 +34,6 @@ export interface StorefrontTenant {
   allow_store_pickup: boolean
   /** Par de `allow_store_pickup` — `true` só quando o tenant habilitou `allow_delivery`; a UI de checkout só oferece a opção "receber em casa" quando este campo vem `true`. */
   allow_delivery: boolean
-  allow_table_reservations: boolean
   storefront_enabled: boolean
   /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — `grid` (cards com foto grande) ou `list` (padrão, lista compacta com imagem à direita). */
   catalog_layout: StorefrontCatalogLayout

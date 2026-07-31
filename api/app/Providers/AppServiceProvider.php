@@ -47,13 +47,8 @@ use App\Repositories\Contracts\{
     PlanPriceRepositoryInterface,
     InvoiceRepositoryInterface,
     PaymentRepositoryInterface,
-    CashSessionRepositoryInterface,
-    StationRepositoryInterface,
-    TableRepositoryInterface,
-    ComandaRepositoryInterface,
     ReleaseNoteRepositoryInterface,
     CartEventRepositoryInterface,
-    UserPinRepositoryInterface,
     SupportTicketRepositoryInterface,
     TenantFeatureOverrideRepositoryInterface,
     IdempotencyRepositoryInterface,
@@ -98,13 +93,8 @@ use App\Repositories\Eloquent\{
     PlanPriceRepository,
     InvoiceRepository,
     PaymentRepository,
-    CashSessionRepository,
-    StationRepository,
-    TableRepository,
-    ComandaRepository,
     ReleaseNoteRepository,
     CartEventRepository,
-    UserPinRepository,
     SupportTicketRepository,
     TenantFeatureOverrideRepository,
     IdempotencyRepository,
@@ -448,24 +438,6 @@ class AppServiceProvider extends ServiceProvider
             };
         });
 
-        // Caixa/PDV (roadmap PDV, Fase PDV-1)
-        $this->app->bind(
-            CashSessionRepositoryInterface::class,
-            CashSessionRepository::class
-        );
-
-        // Balcão (roadmap Balcão, Fases 1+2)
-        $this->app->bind(
-            StationRepositoryInterface::class,
-            StationRepository::class
-        );
-
-        // PIN de operador (roadmap A4, item 15)
-        $this->app->bind(
-            UserPinRepositoryInterface::class,
-            UserPinRepository::class
-        );
-
         // Central de chamados (roadmap A4, item 17)
         $this->app->bind(
             SupportTicketRepositoryInterface::class,
@@ -489,14 +461,5 @@ class AppServiceProvider extends ServiceProvider
             RefundRepository::class
         );
 
-        $this->app->bind(
-            TableRepositoryInterface::class,
-            TableRepository::class
-        );
-
-        $this->app->bind(
-            ComandaRepositoryInterface::class,
-            ComandaRepository::class
-        );
     }
 }

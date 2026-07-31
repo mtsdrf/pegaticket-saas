@@ -263,8 +263,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   ],
   orders: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
   'storefront-orders': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
-  pdv: ['read', 'open', 'close', 'movement', 'sell'],
-  balcao: ['read', 'create', 'update', 'delete', 'open', 'close', 'add_item', 'prep'],
 }
 
 export function getTenantRoleActionOptions(functionalitySlug: string): readonly string[] {

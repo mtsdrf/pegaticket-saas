@@ -465,32 +465,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Dia ideal
-    |--------------------------------------------------------------------------
-    */
-    'dia_ideal' => [
-        'list' => 'Lista de dias ideais.',
-        'created' => 'Dia ideal criado com sucesso.',
-        'updated' => 'Dia ideal atualizado com sucesso.',
-        'deleted' => 'Dia ideal removido com sucesso.',
-        'name_exists' => 'Já existe um dia ideal com este nome nesta empresa.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Período ideal
-    |--------------------------------------------------------------------------
-    */
-    'periodo_ideal' => [
-        'list' => 'Lista de períodos ideais.',
-        'created' => 'Período ideal criado com sucesso.',
-        'updated' => 'Período ideal atualizado com sucesso.',
-        'deleted' => 'Período ideal removido com sucesso.',
-        'name_exists' => 'Já existe um período ideal com este nome nesta empresa.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Cliente
     |--------------------------------------------------------------------------
     */
@@ -500,9 +474,6 @@ return [
         'created' => 'Cliente criado com sucesso.',
         'updated' => 'Cliente atualizado com sucesso.',
         'deleted' => 'Cliente removido com sucesso.',
-        'categories_synced' => 'Categorias do cliente sincronizadas com sucesso.',
-        'invalid_dia_ideal' => 'Dia ideal inválido para esta empresa.',
-        'invalid_periodo_ideal' => 'Período ideal inválido para esta empresa.',
         'cpf_cnpj_required' => 'Informe o CPF ou CNPJ do cliente. Esse dado é necessário para gerar cobranças por Pix corretamente.',
         'cpf_cnpj_invalid' => 'O CPF ou CNPJ informado é inválido. CPF deve ter 11 números; CNPJ pode ser numérico ou alfanumérico, com 14 caracteres.',
     ],
@@ -552,24 +523,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Preço de produto por categoria de cliente
-    |--------------------------------------------------------------------------
-    */
-    'product_category_price' => [
-        'list' => 'Lista de preços por categoria de cliente.',
-        'synced' => 'Preços por categoria de cliente sincronizados com sucesso.',
-        'duplicate_category_in_payload' => 'A mesma categoria de cliente foi enviada mais de uma vez no payload.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Local de estoque
     |--------------------------------------------------------------------------
     */
     'tenant_settings' => [
         'show' => 'Configurações da empresa.',
         'updated' => 'Configurações da empresa atualizadas com sucesso.',
-        'cashback_percentage_required' => 'Informe o percentual de cashback. Ele é obrigatório quando o cashback está ativado, senão nenhum crédito é dado ao cliente.',
         'no_fulfillment_method_enabled' => 'A loja precisa aceitar pelo menos uma forma de entrega: retirada no local ou entrega.',
     ],
 
@@ -851,15 +810,6 @@ return [
         'provider_ready' => 'O provider fiscal ":provider" já possui a configuração mínima esperada para a próxima etapa da emissão.',
     ],
 
-    'cashback' => [
-        'balance_shown' => 'Saldo de cashback exibido.',
-    ],
-
-    'reactivation_rule' => [
-        'show' => 'Régua de reativação exibida.',
-        'updated' => 'Régua de reativação atualizada com sucesso.',
-    ],
-
     'tenant_feature_override' => [
         'list' => 'Lista de liberações/bloqueios da empresa.',
         'synced' => 'Liberações/bloqueios da empresa sincronizados com sucesso.',
@@ -907,7 +857,6 @@ return [
         'overdue_orders' => 'Pedidos em atraso obtidos com sucesso.',
         'abc_analysis' => 'Análise ABC obtida com sucesso.',
         'margin_summary' => 'Resumo de margem obtido com sucesso.',
-        'cashback_liability' => 'Passivo de cashback obtido com sucesso.',
         'coupon_roi' => 'Comparação de ticket por cupom obtida com sucesso.',
         'revenue_concentration' => 'Concentração de faturamento obtida com sucesso.',
         'delivery_otif' => 'OTIF de entrega obtido com sucesso.',
@@ -961,10 +910,6 @@ return [
         'order_delivered_body' => 'Seu pedido foi entregue!',
         'order_out_for_delivery_title' => 'Pedido saiu para entrega',
         'order_out_for_delivery_body' => 'Seu pedido saiu para entrega!',
-        'cashback_credited_title' => 'Você ganhou cashback',
-        'cashback_credited_body' => 'Você ganhou R$ :amount em cashback nesta compra!',
-        'reactivation_title' => 'Sentimos sua falta!',
-        'reactivation_body' => 'Use o cupom :code e volte a fazer pedidos com desconto.',
     ],
 
     /*

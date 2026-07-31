@@ -46,14 +46,6 @@ export const ACCESS = {
   ordersCreate: tenant('orders', 'create'),
   /** Reaproveitada pelo backend em várias ações (edição de itens/parcelas, aprovar/recusar fila da loja) — ver `.claude/memory/api-patterns.md`. */
   ordersUpdate: tenant('orders', 'update'),
-  /** Balcão (Fases 1+2) — functionality `balcao`. `read` libera as telas (mesas/comanda/KDS); ações granulares gate por botão. */
-  balcaoRead: tenant('balcao', 'read'),
-  balcaoCreate: tenant('balcao', 'create'),
-  balcaoUpdate: tenant('balcao', 'update'),
-  balcaoOpen: tenant('balcao', 'open'),
-  balcaoAddItem: tenant('balcao', 'add_item'),
-  balcaoPrep: tenant('balcao', 'prep'),
-  balcaoClose: tenant('balcao', 'close'),
   /** Tela dedicada de gestão de pedidos da loja (/pedidos-loja) — permissão própria, independente de orders,*. */
   storefrontOrdersRead: tenant('storefront-orders', 'read'),
   storefrontOrdersApprove: tenant('storefront-orders', 'approve'),

@@ -16,7 +16,6 @@ use App\Services\Storefront\StorefrontCatalogService;
 use App\Services\Storefront\StorefrontCheckoutService;
 use App\Services\Storefront\StoreBusinessHoursService;
 use App\Services\Storefront\StoreDeliveryFeeService;
-use App\Services\Balcao\TableReservationService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Http\Request;
 
@@ -30,7 +29,6 @@ class StorefrontController extends Controller
         private StorefrontCheckoutService $checkoutService,
         private CouponService $couponService,
         private OrderRatingService $ratingService,
-        private TableReservationService $tableReservationService,
     ) {
     }
 
@@ -52,7 +50,6 @@ class StorefrontController extends Controller
                 $ratingSummary['ratings_count'],
                 $settings->accepted_payment_methods ?? [],
                 (bool) $settings->allow_store_pickup,
-                $this->tableReservationService->publicReservationsEnabled($tenant->id),
                 (bool) $settings->storefront_enabled,
                 $settings->catalog_layout ?? 'list',
                 (bool) ($settings->allow_delivery ?? true),

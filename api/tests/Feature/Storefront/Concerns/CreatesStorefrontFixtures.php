@@ -65,23 +65,6 @@ trait CreatesStorefrontFixtures
         ]);
     }
 
-    protected function balcaoFunctionalityId(): int
-    {
-        $existing = DB::table('functionalities')->where('slug', 'balcao')->value('id');
-
-        if ($existing) {
-            return $existing;
-        }
-
-        return DB::table('functionalities')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Balcão',
-            'slug' => 'balcao',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
     protected function createTenantWithStorefrontPlan(bool $allowsStorefront, array $overrides = []): Tenant
     {
         $plan = Plan::create([
@@ -110,16 +93,5 @@ trait CreatesStorefrontFixtures
             'is_active' => true,
             'trial_ends_at' => now()->addDays(30),
         ], $overrides));
-    }
-
-    protected function grantBalcaoFunctionality(Tenant $tenant): void
-    {
-        DB::table('plan_functionalities')->insert([
-            'uuid' => (string) Str::uuid(),
-            'plan_id' => $tenant->plan_id,
-            'functionality_id' => $this->balcaoFunctionalityId(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 }

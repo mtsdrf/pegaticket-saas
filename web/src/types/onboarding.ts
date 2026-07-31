@@ -13,8 +13,6 @@ export interface OnboardingChecklist {
   has_first_order: boolean
   has_store_address?: boolean
   storefront_configured?: boolean
-  has_pdv_register?: boolean
-  has_balcao_tables?: boolean
   steps: OnboardingChecklistStep[]
   is_dismissed: boolean
   dismissed_at: string | null

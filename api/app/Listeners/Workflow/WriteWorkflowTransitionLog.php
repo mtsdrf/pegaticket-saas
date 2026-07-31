@@ -2,9 +2,6 @@
 
 namespace App\Listeners\Workflow;
 
-use App\Events\Balcao\ComandaItemCancelled;
-use App\Events\Balcao\ComandaItemPrepStatusUpdated;
-use App\Events\Balcao\ComandaItemSentToStation;
 use App\Events\Order\OrderApproved;
 use App\Events\Order\OrderCancelled;
 use App\Events\Order\OrderCreated;
@@ -12,7 +9,6 @@ use App\Events\Order\OrderDelivered;
 use App\Events\Order\OrderOutForDelivery;
 use App\Events\Order\OrderRejected;
 use App\Events\Order\OrderUndispatched;
-use App\Models\Balcao\ComandaItem;
 use App\Models\Order\Order;
 use App\Services\Workflow\WorkflowTransitionLogger;
 
@@ -33,9 +29,6 @@ class WriteWorkflowTransitionLog
             $event instanceof OrderUndispatched => $this->handleOrderUndispatched($event),
             $event instanceof OrderDelivered => $this->handleOrderDelivered($event),
             $event instanceof OrderCancelled => $this->handleOrderCancelled($event),
-            $event instanceof ComandaItemSentToStation => $this->handleComandaItemSentToStation($event),
-            $event instanceof ComandaItemPrepStatusUpdated => $this->handleComandaItemPrepStatusUpdated($event),
-            $event instanceof ComandaItemCancelled => $this->handleComandaItemCancelled($event),
             default => null,
         };
     }
@@ -161,69 +154,6 @@ class WriteWorkflowTransitionLog
             transitionType: 'cancel',
             reason: $event->cancellationReason,
             actorId: $event->actorId,
-        );
-    }
-
-    private function handleComandaItemSentToStation(ComandaItemSentToStation $event): void
-    {
-        $item = ComandaItem::query()->find($event->itemId);
-
-        if ($item === null) {
-            return;
-        }
-
-        $this->logger->recordComandaItemTransition(
-            item: $item,
-            fromStage: ComandaItem::STATUS_QUEUED,
-            toStage: ComandaItem::STATUS_SENT_TO_STATION,
-            transitionType: 'move',
-            reason: null,
-            actorId: $event->actorId,
-            meta: [
-                'comanda_uuid' => $event->comandaUuid,
-                'station_uuid' => $event->stationUuid,
-            ],
-        );
-    }
-
-    private function handleComandaItemPrepStatusUpdated(ComandaItemPrepStatusUpdated $event): void
-    {
-        $item = ComandaItem::query()->find($event->itemId);
-
-        if ($item === null) {
-            return;
-        }
-
-        $this->logger->recordComandaItemTransition(
-            item: $item,
-            fromStage: $event->fromStatus,
-            toStage: $event->toStatus,
-            transitionType: 'move',
-            actorId: $event->actorId,
-            meta: [
-                'comanda_uuid' => $event->comandaUuid,
-            ],
-        );
-    }
-
-    private function handleComandaItemCancelled(ComandaItemCancelled $event): void
-    {
-        $item = ComandaItem::query()->find($event->itemId);
-
-        if ($item === null) {
-            return;
-        }
-
-        $this->logger->recordComandaItemTransition(
-            item: $item,
-            fromStage: $event->fromStatus,
-            toStage: ComandaItem::STATUS_CANCELLED,
-            transitionType: 'cancel',
-            reason: $event->reason,
-            actorId: $event->actorId,
-            meta: [
-                'comanda_uuid' => $event->comandaUuid,
-            ],
         );
     }
 }

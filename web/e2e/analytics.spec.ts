@@ -55,23 +55,6 @@ test.describe('Análises', () => {
       })
     })
 
-    await page.route('**/api/v1/reports/analytics/cashback-liability*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: {
-            outstanding_balance: '128.30',
-            redeemed_total: '512.40',
-            redemption_rate_percentage: 79.97,
-          },
-          meta: {},
-        }),
-      })
-    })
-
     await page.route('**/api/v1/reports/analytics/revenue-concentration*', async (route) => {
       await route.fulfill({
         status: 200,

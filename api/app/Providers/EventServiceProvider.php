@@ -368,44 +368,8 @@ use App\Listeners\Portal\WritePortalAuditLog;
 | Assinatura / cobrança de planos (roadmap 1B)
 |--------------------------------------------------------------------------
 */
-use App\Events\Pdv\CashSessionOpened;
-use App\Events\Pdv\CashSessionClosed;
-use App\Events\Pdv\CashMovementRegistered;
-use App\Events\Pdv\PdvSaleCompleted;
-use App\Listeners\Pdv\AuditCashSessionOpened;
-use App\Listeners\Pdv\AuditCashSessionClosed;
-use App\Listeners\Pdv\AuditCashMovementRegistered;
-use App\Listeners\Pdv\AuditPdvSaleCompleted;
-use App\Events\Pdv\OperatorPinSet;
-use App\Events\Pdv\OperatorSessionResolved;
-use App\Listeners\Pdv\AuditOperatorPinSet;
-use App\Listeners\Pdv\AuditOperatorSessionResolved;
 use App\Events\Support\SupportTicketCreated;
 use App\Listeners\Support\AuditSupportTicketCreated;
-use App\Events\Balcao\StationCreated;
-use App\Events\Balcao\StationUpdated;
-use App\Events\Balcao\StationDeleted;
-use App\Events\Balcao\TableCreated;
-use App\Events\Balcao\TableUpdated;
-use App\Events\Balcao\TableDeleted;
-use App\Events\Balcao\ComandaOpened;
-use App\Events\Balcao\ComandaClosed;
-use App\Events\Balcao\ComandaItemAdded;
-use App\Events\Balcao\ComandaItemSentToStation;
-use App\Events\Balcao\ComandaItemPrepStatusUpdated;
-use App\Events\Balcao\ComandaItemCancelled;
-use App\Listeners\Balcao\AuditStationCreated;
-use App\Listeners\Balcao\AuditStationUpdated;
-use App\Listeners\Balcao\AuditStationDeleted;
-use App\Listeners\Balcao\AuditTableCreated;
-use App\Listeners\Balcao\AuditTableUpdated;
-use App\Listeners\Balcao\AuditTableDeleted;
-use App\Listeners\Balcao\AuditComandaOpened;
-use App\Listeners\Balcao\AuditComandaClosed;
-use App\Listeners\Balcao\AuditComandaItemAdded;
-use App\Listeners\Balcao\AuditComandaItemSentToStation;
-use App\Listeners\Balcao\AuditComandaItemPrepStatusUpdated;
-use App\Listeners\Balcao\AuditComandaItemCancelled;
 use App\Events\Subscription\SubscriptionCreated;
 use App\Events\Subscription\SubscriptionPlanChanged;
 use App\Events\Subscription\SubscriptionCanceled;
@@ -696,39 +660,10 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | PDV (roadmap PDV, Fase PDV-1) — caixa + venda de balcão
-        |--------------------------------------------------------------------------
-        */
-        CashSessionOpened::class => [AuditCashSessionOpened::class],
-        CashSessionClosed::class => [AuditCashSessionClosed::class],
-        CashMovementRegistered::class => [AuditCashMovementRegistered::class],
-        PdvSaleCompleted::class => [AuditPdvSaleCompleted::class],
-        OperatorPinSet::class => [AuditOperatorPinSet::class],
-        OperatorSessionResolved::class => [AuditOperatorSessionResolved::class],
-
-        /*
-        |--------------------------------------------------------------------------
         | Central de chamados (roadmap A4, item 17)
         |--------------------------------------------------------------------------
         */
         SupportTicketCreated::class => [AuditSupportTicketCreated::class],
 
-        /*
-        |--------------------------------------------------------------------------
-        | Balcão (roadmap Balcão, Fases 1+2) — mesa/comanda/estação + fechamento
-        |--------------------------------------------------------------------------
-        */
-        StationCreated::class => [AuditStationCreated::class],
-        StationUpdated::class => [AuditStationUpdated::class],
-        StationDeleted::class => [AuditStationDeleted::class],
-        TableCreated::class => [AuditTableCreated::class],
-        TableUpdated::class => [AuditTableUpdated::class],
-        TableDeleted::class => [AuditTableDeleted::class],
-        ComandaOpened::class => [AuditComandaOpened::class],
-        ComandaClosed::class => [AuditComandaClosed::class],
-        ComandaItemAdded::class => [AuditComandaItemAdded::class],
-        ComandaItemSentToStation::class => [AuditComandaItemSentToStation::class, WriteWorkflowTransitionLog::class],
-        ComandaItemPrepStatusUpdated::class => [AuditComandaItemPrepStatusUpdated::class, WriteWorkflowTransitionLog::class],
-        ComandaItemCancelled::class => [AuditComandaItemCancelled::class, WriteWorkflowTransitionLog::class],
     ];
 }

@@ -42,16 +42,14 @@ class ActionsSeeder extends Seeder
             // Ação do acesso do contador (accounting-access,revoke). 'read'/
             // 'create'/'approve' já existem acima e são reaproveitados.
             ['key' => 'revoke', 'name' => 'Revogar'],
-            // Ações da venda interna assistida (pdv,{action}). 'read' já
-            // existe acima (listar sessões / sessão atual).
+            // Ações históricas reaproveitadas em permissões legadas de
+            // operação interna. 'read' já existe acima.
             ['key' => 'open', 'name' => 'Abrir operação'],
             ['key' => 'close', 'name' => 'Fechar operação'],
             ['key' => 'movement', 'name' => 'Movimentar caixa'],
             ['key' => 'sell', 'name' => 'Vender internamente'],
-            // Ações da operação assistida (balcao,{action}).
-            // 'read'/'create'/'update'/'delete' (CRUD de mesas/estações) e
-            // 'open'/'close' (abrir/fechar comanda) já existem acima e são
-            // reaproveitados.
+            // Ações históricas de operação assistida mantidas só para
+            // compatibilidade de permissões antigas.
             ['key' => 'add_item', 'name' => 'Adicionar item à comanda'],
             ['key' => 'prep', 'name' => 'Atualizar preparo do item'],
             // Ação de exportação de dados (tenant-profile,export) — roadmap A1.2.

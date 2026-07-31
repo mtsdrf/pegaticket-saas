@@ -458,32 +458,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Dia ideal
-    |--------------------------------------------------------------------------
-    */
-    'dia_ideal' => [
-        'list' => 'Dias ideais list.',
-        'created' => 'Dia ideal created successfully.',
-        'updated' => 'Dia ideal updated successfully.',
-        'deleted' => 'Dia ideal deleted successfully.',
-        'name_exists' => 'Já existe um dia ideal com este nome nesta empresa.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Periodo ideal
-    |--------------------------------------------------------------------------
-    */
-    'periodo_ideal' => [
-        'list' => 'Periodos ideais list.',
-        'created' => 'Periodo ideal created successfully.',
-        'updated' => 'Periodo ideal updated successfully.',
-        'deleted' => 'Periodo ideal deleted successfully.',
-        'name_exists' => 'Já existe um período ideal com este nome nesta empresa.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Client
     |--------------------------------------------------------------------------
     */
@@ -493,9 +467,6 @@ return [
         'created' => 'Client created successfully.',
         'updated' => 'Client updated successfully.',
         'deleted' => 'Client deleted successfully.',
-        'categories_synced' => 'Client categories synced successfully.',
-        'invalid_dia_ideal' => 'Dia ideal inválido para esta empresa.',
-        'invalid_periodo_ideal' => 'Período ideal inválido para esta empresa.',
         'cpf_cnpj_required' => 'Please provide the client\'s CPF or CNPJ. This is required to issue Pix charges correctly.',
         'cpf_cnpj_invalid' => 'The CPF or CNPJ provided is invalid. CPF must contain 11 digits; CNPJ may be numeric or alphanumeric, with 14 characters.',
     ],
@@ -545,24 +516,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Product Category Price
-    |--------------------------------------------------------------------------
-    */
-    'product_category_price' => [
-        'list' => 'Product category price list.',
-        'synced' => 'Product category prices synced successfully.',
-        'duplicate_category_in_payload' => 'The same client category was sent more than once in the payload.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Stock Location
     |--------------------------------------------------------------------------
     */
     'tenant_settings' => [
         'show' => 'Company settings.',
         'updated' => 'Company settings updated successfully.',
-        'cashback_percentage_required' => 'Please provide the cashback percentage. It is required when cashback is enabled, otherwise no credit is given to the client.',
         'no_fulfillment_method_enabled' => 'The store must accept at least one fulfillment method: in-store pickup or delivery.',
     ],
 
@@ -844,15 +803,6 @@ return [
         'provider_ready' => 'The fiscal provider ":provider" already has the minimum configuration expected for the next issuance step.',
     ],
 
-    'cashback' => [
-        'balance_shown' => 'Cashback balance shown.',
-    ],
-
-    'reactivation_rule' => [
-        'show' => 'Reactivation rule shown.',
-        'updated' => 'Reactivation rule updated successfully.',
-    ],
-
     'tenant_feature_override' => [
         'list' => 'List of tenant feature overrides.',
         'synced' => 'Tenant feature overrides synced successfully.',
@@ -900,7 +850,6 @@ return [
         'overdue_orders' => 'Overdue orders retrieved successfully.',
         'abc_analysis' => 'ABC analysis retrieved successfully.',
         'margin_summary' => 'Margin summary retrieved successfully.',
-        'cashback_liability' => 'Cashback liability retrieved successfully.',
         'coupon_roi' => 'Coupon ticket comparison retrieved successfully.',
         'revenue_concentration' => 'Revenue concentration retrieved successfully.',
         'delivery_otif' => 'Delivery OTIF retrieved successfully.',
@@ -954,10 +903,6 @@ return [
         'order_delivered_body' => 'Your order was delivered!',
         'order_out_for_delivery_title' => 'Order out for delivery',
         'order_out_for_delivery_body' => 'Your order is out for delivery!',
-        'cashback_credited_title' => 'You earned cashback',
-        'cashback_credited_body' => 'You earned $:amount in cashback on this purchase!',
-        'reactivation_title' => 'We miss you!',
-        'reactivation_body' => 'Use coupon :code and come back to save on your next order.',
     ],
 
     /*

@@ -284,7 +284,7 @@ class OrderService
             // Taxa de serviço (roadmap Balcão, Fases 1+2) — acréscimo somado
             // ao total, espelhando delivery_fee: persistida em coluna própria
             // (service_fee) para o breakdown, distinta de entrega em
-            // relatórios. default 0.0 preserva os fluxos staff/pdv/storefront.
+            // relatórios. default 0.0 preserva os fluxos internos e da loja.
             $serviceFeeCents = (int) round($dto->serviceFee * 100);
             $totalCents += $serviceFeeCents;
 
@@ -1686,7 +1686,7 @@ class OrderService
      * mapeados no código: create() e updateItems(), sempre que o item traz
      * `unit_price` explícito no payload (override manual de preço — o
      * único mecanismo de "desconto manual" que hoje existe, tanto pra
-     * origin=staff/pdv quanto pra edição de pedido já criado). Compara o
+     * pedidos internos quanto pra edição de pedido já criado). Compara o
      * unit_price informado contra o preço que teria sido resolvido sem
      * override ($this->pricingService->resolvePrice, mesmo preço "cheio"
      * usado como fallback) — a diferença pra baixo é o desconto sendo

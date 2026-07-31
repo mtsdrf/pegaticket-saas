@@ -41,7 +41,6 @@ Baseado nas rotas reais de [web/src/routes/AppRoutes.tsx](/home/mtsdrf/workspace
 | `/portal/favoritos` | Favoritos | `PortalFavoritesPage` | `PortalProtectedRoute` |
 | `/portal/enderecos` | Meus endereços | `PortalAddressesPage` | `PortalProtectedRoute` |
 | `/portal/vouchers` | Meus vouchers | `PortalVouchersPage` | `PortalProtectedRoute` |
-| `/portal/cashback` | Cashback | `PortalCashbackPage` | `PortalProtectedRoute` |
 | `/portal/perfil` | Meu perfil | `PortalProfilePage` | `PortalProtectedRoute` |
 
 ## 3. Contador
@@ -226,8 +225,6 @@ Observação: a subárvore inteira passa antes por `PdvCashSessionGatePage`.
 | `/configuracoes/pedidos` | Pedidos e Operação | `tenant-settings:read` | `OperationsBlock` |
 | `/configuracoes/horario-endereco` | Horário e Endereço | `storefront:update` | `ScheduleAddressBlock` |
 | `/configuracoes/pagamento` | Pagamento | `tenant-settings:read` | `PaymentBlock` |
-| `/configuracoes/cashback` | Cashback e Fidelidade | `tenant-settings:read` | `CashbackBlock` |
-| `/configuracoes/retencao` | Retenção e Marketing | `reactivation:read` | `RetentionBlock` |
 | `/configuracoes/dados-privacidade` | Dados e Privacidade | `tenant-profile:export` | `DataPrivacyBlock` |
 
 ### 16.3 Telas de Configuração Fora do Hub

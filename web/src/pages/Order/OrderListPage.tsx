@@ -2,13 +2,11 @@ import AddIcon from '@mui/icons-material/Add'
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
-import CountertopsOutlinedIcon from '@mui/icons-material/CountertopsOutlined'
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
-import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import { Alert, Box, Button, Chip, IconButton, Stack, Typography, Tooltip } from '@mui/material'
@@ -41,16 +39,14 @@ const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
   { value: 'all', label: 'Todos os canais' },
   { value: 'staff', label: 'Manual' },
   { value: 'storefront', label: 'Loja' },
-  { value: 'pdv', label: 'Venda interna' },
-  { value: 'counter', label: 'Balcão' },
   { value: 'ifood', label: 'iFood' },
 ]
 
 const ORIGIN_META: Record<OrderOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Pedido manual', shortLabel: 'Manual' },
   storefront: { label: 'Loja online', shortLabel: 'Loja' },
-  pdv: { label: 'Venda interna', shortLabel: 'Interna' },
-  counter: { label: 'Balcão', shortLabel: 'Balcão' },
+  pdv: { label: 'Canal legado', shortLabel: 'Legado' },
+  counter: { label: 'Canal legado', shortLabel: 'Legado' },
   ifood: { label: 'iFood importado', shortLabel: 'iFood' },
 }
 
@@ -460,8 +456,9 @@ function QueueOrderCard({
  * Primeira versão da central operacional multi-origem do PegaTicket. A rota
  * permanece `/pedidos`, mas a experiência deixa de ser "só pedidos manuais"
  * e passa a reunir o pedido canônico do sistema por origem (`staff`,
- * `storefront`, `pdv`, `counter`, `ifood`), mantendo `/pedidos-loja` e
- * `/pedidos-ifood` como filas especializadas complementares.
+ * `storefront`, `ifood` e canais legados ainda presentes em histórico),
+ * mantendo `/pedidos-loja` e `/pedidos-ifood` como filas especializadas
+ * complementares.
  */
 export function OrderListPage() {
   const location = useLocation()
@@ -622,7 +619,7 @@ export function OrderListPage() {
     const productionPromise = orderService.listOrders({ stage: 'production', active_only: true, per_page: 5 })
     const dispatchPromise = orderService.listOrders({ stage: 'dispatch', active_only: true, per_page: 5 })
     const financialPendingPromise = orderService.listOrders({ stage: 'financial_pending', active_only: true, per_page: 5 })
-    const originPromises = (['staff', 'storefront', 'pdv', 'counter', 'ifood'] as OrderOrigin[]).map(async (origin) => {
+    const originPromises = (['staff', 'storefront', 'ifood'] as OrderOrigin[]).map(async (origin) => {
       const page = await orderService.listOrders({ origin, active_only: true, per_page: 1 })
       return [origin, page.pagination.total] as const
     })
@@ -1669,18 +1666,6 @@ export function OrderListPage() {
                 size="small"
                 label={`Loja: ${snapshot.byOrigin.storefront ?? 0}`}
                 icon={<LanguageOutlinedIcon fontSize="small" />}
-                variant="outlined"
-              />
-              <Chip
-                size="small"
-                label={`Interna: ${snapshot.byOrigin.pdv ?? 0}`}
-                icon={<PointOfSaleOutlinedIcon fontSize="small" />}
-                variant="outlined"
-              />
-              <Chip
-                size="small"
-                label={`Balcão: ${snapshot.byOrigin.counter ?? 0}`}
-                icon={<CountertopsOutlinedIcon fontSize="small" />}
                 variant="outlined"
               />
               <Chip

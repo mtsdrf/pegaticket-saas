@@ -204,10 +204,8 @@ class StockService
     }
 
     /**
-     * $sourceType/$sourceId (opcionais) apontam para a origem da saída —
-     * usado pelo Balcão (Fase 1) para vincular a baixa real de estoque ao
-     * ComandaItem que a gerou no envio à estação, mesmo mecanismo polimórfico
-     * já usado por reserve().
+     * $sourceType/$sourceId (opcionais) apontam para a origem da saída,
+     * preservando rastreabilidade polimórfica da baixa operacional.
      */
     public function exit(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?string $sourceType = null, ?int $sourceId = null): StockMovement
     {

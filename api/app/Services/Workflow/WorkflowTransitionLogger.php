@@ -2,7 +2,6 @@
 
 namespace App\Services\Workflow;
 
-use App\Models\Balcao\ComandaItem;
 use App\Models\Order\Order;
 use App\Models\Workflow\WorkflowTransitionLog;
 use Carbon\CarbonInterface;
@@ -27,33 +26,6 @@ class WorkflowTransitionLogger
             workflowType: 'order',
             entityId: (int) $order->id,
             entityUuid: $order->uuid,
-            fromStage: $fromStage,
-            toStage: $resolvedToStage,
-            transitionType: $transitionType,
-            reason: $reason,
-            meta: $meta,
-            movedAt: $movedAt,
-        );
-    }
-
-    public function recordComandaItemTransition(
-        ComandaItem $item,
-        ?string $fromStage,
-        ?string $toStage = null,
-        string $transitionType = 'move',
-        ?string $reason = null,
-        ?int $actorId = null,
-        array $meta = [],
-        ?CarbonInterface $movedAt = null,
-    ): void {
-        $resolvedToStage = $toStage ?? $this->resolveComandaItemStage($item);
-
-        $this->record(
-            tenantId: (int) $item->tenant_id,
-            actorId: $actorId,
-            workflowType: 'comanda_item',
-            entityId: (int) $item->id,
-            entityUuid: $item->uuid,
             fromStage: $fromStage,
             toStage: $resolvedToStage,
             transitionType: $transitionType,
@@ -94,11 +66,6 @@ class WorkflowTransitionLogger
         }
 
         return 'production';
-    }
-
-    public function resolveComandaItemStage(ComandaItem $item): string
-    {
-        return $item->prep_status;
     }
 
     private function record(

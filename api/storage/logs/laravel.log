@@ -987,3 +987,85 @@
 #37 /home/mtsdrf/workspace/pegaticket-saas/api/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
 #38 {main}
 "} 
+[2026-07-31 12:52:41] local.ERROR: Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'u452434908_pegaticket.plans' doesn't exist in /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php:47
+Stack trace:
+#0 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(47): PDO->prepare()
+#1 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate\Database\MySqlConnection->{closure:Illuminate\Database\MySqlConnection::insert():42}()
+#2 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\Database\Connection->runQueryCallback()
+#3 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\Database\Connection->run()
+#4 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\Database\MySqlConnection->insert()
+#5 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4257): Illuminate\Database\Query\Processors\MySqlProcessor->processInsertGetId()
+#6 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\Database\Query\Builder->insertGetId()
+#7 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1662): Illuminate\Database\Eloquent\Builder->__call()
+#8 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1578): Illuminate\Database\Eloquent\Model->insertAndSetId()
+#9 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\Database\Eloquent\Model->performInsert()
+#10 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\Database\Eloquent\Model->save()
+#11 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1224}()
+#12 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap()
+#13 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create()
+#14 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\Database\Eloquent\Model->forwardCallTo()
+#15 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\Database\Eloquent\Model->__call()
+#16 Command line code(1): Illuminate\Database\Eloquent\Model::__callStatic()
+#17 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'u452434908_pegaticket.plans' doesn't exist (Connection: mysql, Host: 212.85.3.218, Port: 3306, Database: u452434908_pegaticket, SQL: insert into `plans` (`name`, `slug`, `description`, `sort_order`, `is_active`, `uuid`, `updated_at`, `created_at`) values (P, p-bSBlrn19, d, 1, 1, 8a913b85-846b-4086-a0de-9d0212cac0bb, 2026-07-31 12:52:41, 2026-07-31 12:52:41)) in /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
+Stack trace:
+#0 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\Database\Connection->runQueryCallback()
+#1 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\Database\Connection->run()
+#2 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\Database\MySqlConnection->insert()
+#3 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4257): Illuminate\Database\Query\Processors\MySqlProcessor->processInsertGetId()
+#4 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\Database\Query\Builder->insertGetId()
+#5 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1662): Illuminate\Database\Eloquent\Builder->__call()
+#6 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1578): Illuminate\Database\Eloquent\Model->insertAndSetId()
+#7 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\Database\Eloquent\Model->performInsert()
+#8 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\Database\Eloquent\Model->save()
+#9 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1224}()
+#10 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap()
+#11 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create()
+#12 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\Database\Eloquent\Model->forwardCallTo()
+#13 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\Database\Eloquent\Model->__call()
+#14 Command line code(1): Illuminate\Database\Eloquent\Model::__callStatic()
+#15 {main}
+  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'u452434908_pegaticket.plans' doesn't exist in /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php:47
+Stack trace:
+#0 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(47): PDO->prepare()
+#1 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate\\Database\\MySqlConnection->{closure:Illuminate\\Database\\MySqlConnection::insert():42}()
+#2 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#3 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#4 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#5 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4257): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#6 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\\Database\\Query\\Builder->insertGetId()
+#7 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1662): Illuminate\\Database\\Eloquent\\Builder->__call()
+#8 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1578): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#9 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#10 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\\Database\\Eloquent\\Model->save()
+#11 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Builder->{closure:Illuminate\\Database\\Eloquent\\Builder::create():1224}()
+#12 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap()
+#13 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\\Database\\Eloquent\\Builder->create()
+#14 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\\Database\\Eloquent\\Model->forwardCallTo()
+#15 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\\Database\\Eloquent\\Model->__call()
+#16 Command line code(1): Illuminate\\Database\\Eloquent\\Model::__callStatic()
+#17 {main}
+
+Next Illuminate\\Database\\QueryException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'u452434908_pegaticket.plans' doesn't exist (Connection: mysql, Host: 212.85.3.218, Port: 3306, Database: u452434908_pegaticket, SQL: insert into `plans` (`name`, `slug`, `description`, `sort_order`, `is_active`, `uuid`, `updated_at`, `created_at`) values (P, p-bSBlrn19, d, 1, 1, 8a913b85-846b-4086-a0de-9d0212cac0bb, 2026-07-31 12:52:41, 2026-07-31 12:52:41)) in /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
+Stack trace:
+#0 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#1 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#2 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#3 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4257): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#4 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\\Database\\Query\\Builder->insertGetId()
+#5 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1662): Illuminate\\Database\\Eloquent\\Builder->__call()
+#6 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1578): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#7 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#8 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\\Database\\Eloquent\\Model->save()
+#9 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Builder->{closure:Illuminate\\Database\\Eloquent\\Builder::create():1224}()
+#10 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap()
+#11 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\\Database\\Eloquent\\Builder->create()
+#12 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\\Database\\Eloquent\\Model->forwardCallTo()
+#13 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\\Database\\Eloquent\\Model->__call()
+#14 Command line code(1): Illuminate\\Database\\Eloquent\\Model::__callStatic()
+#15 {main}
+  thrown at /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857)
+[stacktrace]
+#0 {main}
+"} 

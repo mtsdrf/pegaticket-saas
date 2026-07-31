@@ -15,6 +15,8 @@ Status macro atual:
 
 ## Fase A — Remover `cashback` e `reactivation`
 
+Status em 2026-07-31: concluída no fluxo ativo; manter esta seção apenas como trilha histórica da limpeza executada.
+
 Risco: médio
 Motivo: módulos legados com superfície ampla, mas mais isolados do que `stock`/`pdv`.
 
@@ -93,6 +95,10 @@ Motivo: módulos legados com superfície ampla, mas mais isolados do que `stock`
 ---
 
 ## Fase B — Remover `client_categories`, `product_types`, `dias_ideais`, `periodos_ideais`
+
+Status em 2026-07-31: parcialmente concluída.
+Concluído: `client_categories`, `dias_ideais`, `periodos_ideais`, `product_category_price` e resíduos correspondentes em testes, seeders e fluxo ativo.
+Aberto: `product_types` e qualquer acoplamento remanescente ao bloco de estoque.
 
 Risco: médio
 Motivo: bastante espalhado, mas menos crítico do que `stock`.
@@ -174,6 +180,7 @@ Motivo: aqui mora o padrão-base para o futuro `InventoryHoldService`.
 
 Risco: alto
 Motivo: ainda aparece como origem operacional e compartilha comportamento com pedidos.
+Observação em 2026-07-31: a carga `DemoPlansPresentationSeeder` já não demonstra mais `pdv` nem concede `pdv:sell` ao perfil restrito; falta remover o módulo da aplicação.
 
 ### Backend
 

@@ -114,12 +114,9 @@ Acesso controlado por `TenantRolePermission`.
 
 | Funcionalidade | Ações |
 | --- | --- |
-| `client_categories` | `read`, `create`, `update`, `delete` |
 | `product_categories` | `read`, `create`, `update`, `delete` |
 | `product_types` | `read`, `create`, `update`, `delete` |
 | `enderecos` | `read`, `create`, `update`, `delete` |
-| `dias_ideais` | `read`, `create`, `update`, `delete` |
-| `periodos_ideais` | `read`, `create`, `update`, `delete` |
 | `clients` | `read`, `create`, `update`, `delete` |
 | `products` | `read`, `create`, `update`, `delete` |
 | `stock_locations` | `read`, `create`, `update`, `delete` |

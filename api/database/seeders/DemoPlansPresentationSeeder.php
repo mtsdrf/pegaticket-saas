@@ -2,18 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Balcao\AddComandaItemDTO;
-use App\DTOs\Balcao\CloseComandaDTO;
-use App\DTOs\Balcao\CreateStationDTO;
-use App\DTOs\Balcao\CreateTableDTO;
-use App\DTOs\Balcao\OpenComandaDTO;
-use App\DTOs\Balcao\UpdatePrepStatusDTO;
 use App\DTOs\Client\CreateClientDTO;
 use App\DTOs\Location\CreateBairroDTO;
 use App\DTOs\Location\CreateCidadeDTO;
 use App\DTOs\Order\CreateOrderDTO;
-use App\DTOs\Pdv\CreatePdvSaleDTO;
-use App\DTOs\Pdv\OpenCashSessionDTO;
 use App\DTOs\Product\CreateProductCategoryDTO;
 use App\DTOs\Product\CreateProductDTO;
 use App\DTOs\Product\CreateProductTypeDTO;
@@ -23,10 +15,7 @@ use App\DTOs\Tenant\CreateTenantRoleDTO;
 use App\DTOs\Tenant\CreateTenantUserDTO;
 use App\DTOs\Tenant\SyncTenantRolePermissionsDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
-use App\Models\Balcao\Station;
 use App\Models\Client\Client;
-use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Estado;
@@ -35,16 +24,10 @@ use App\Models\Product\Product;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Balcao\ComandaItemService;
-use App\Services\Balcao\ComandaService;
-use App\Services\Balcao\StationService;
-use App\Services\Balcao\TableService;
 use App\Services\Client\ClientService;
 use App\Services\Location\BairroService;
 use App\Services\Location\CidadeService;
 use App\Services\Order\OrderService;
-use App\Services\Pdv\CashSessionService;
-use App\Services\Pdv\PdvSaleService;
 use App\Services\Product\ProductCategoryService;
 use App\Services\Product\ProductService;
 use App\Services\Product\ProductTypeService;
@@ -170,7 +153,7 @@ class DemoPlansPresentationSeeder extends Seeder
 
         [$estado, $cidade, $bairros] = $this->setupGeography();
 
-        $catalog = $this->setupCatalog($tenant, $cfg['tier']);
+        $catalog = $this->setupCatalog($tenant);
         $location = $this->resolveDefaultStockLocation($tenant);
         $this->stockUp($catalog['products'], $location);
 
@@ -181,15 +164,12 @@ class DemoPlansPresentationSeeder extends Seeder
         $this->setupEmployee($tenant, $cfg);
 
         if (in_array($cfg['tier'], ['ouro', 'diamante'], true)) {
-            $this->setupCashbackDemo($tenant, $clients[0]);
-            $this->setupPdvDemo($tenant, $catalog['products']);
             $this->setupCoupon($tenant);
             $this->setupPromotion($tenant, $catalog['products']);
         }
 
         if ($cfg['tier'] === 'diamante') {
             $this->setupSubscription($tenant, $plan);
-            $this->setupBalcao($tenant, $catalog);
         }
 
         return [
@@ -233,36 +213,15 @@ class DemoPlansPresentationSeeder extends Seeder
 
     /**
      * Catálogo comum a todos os planos (cafeteria/restaurante): categoria
-     * "Bebidas" (3 produtos) + "Lanches" (3 produtos). Só no plano Diamante
-     * cria também as 2 estações (Cozinha/Bar) e roteia cada categoria pra
-     * sua estação via `product_categories.station_id` — coluna sem DTO/rota
-     * própria ainda (ver ComandaService), setada aqui via DB::table()
-     * direto, mesmo padrão que o DemoTenantSeeder já usa para ajustar
-     * timestamp de simulação.
+     * "Bebidas" (3 produtos) + "Lanches" (3 produtos), sem acoplamento com
+     * módulos legados de atendimento interno na carga de demonstração.
      *
-     * @return array{products: array<int, array{model: Product, price: float}>, stations: array{kitchen: ?Station, bar: ?Station}}
+     * @return array{products: array<int, array{model: Product, price: float}>}
      */
-    private function setupCatalog(Tenant $tenant, string $tier): array
+    private function setupCatalog(Tenant $tenant): array
     {
-        $stations = ['kitchen' => null, 'bar' => null];
-
-        if ($tier === 'diamante') {
-            $stations['kitchen'] = app(StationService::class)->create(CreateStationDTO::fromArray([
-                'name' => 'Cozinha',
-                'type' => 'kitchen',
-                'is_active' => true,
-            ], $tenant->id));
-
-            $stations['bar'] = app(StationService::class)->create(CreateStationDTO::fromArray([
-                'name' => 'Bar',
-                'type' => 'bar',
-                'is_active' => true,
-            ], $tenant->id));
-        }
-
         $categoriesSpec = [
             'Bebidas' => [
-                'station' => $stations['bar'],
                 'type' => 'Bebida',
                 'products' => [
                     ['name' => 'Refrigerante Lata 350ml', 'price' => 6.00, 'sku' => 'BEB-REF-350'],
@@ -271,7 +230,6 @@ class DemoPlansPresentationSeeder extends Seeder
                 ],
             ],
             'Lanches' => [
-                'station' => $stations['kitchen'],
                 'type' => 'Lanche',
                 'products' => [
                     ['name' => 'Sanduíche Natural', 'price' => 15.00, 'sku' => 'LAN-SAN-001'],
@@ -289,10 +247,6 @@ class DemoPlansPresentationSeeder extends Seeder
                 'priority' => 1,
                 'is_active' => true,
             ], $tenant->id));
-
-            if ($spec['station'] !== null) {
-                DB::table('product_categories')->where('id', $category->id)->update(['station_id' => $spec['station']->id]);
-            }
 
             $type = app(ProductTypeService::class)->create(CreateProductTypeDTO::fromArray([
                 'name' => $spec['type'],
@@ -317,7 +271,7 @@ class DemoPlansPresentationSeeder extends Seeder
             }
         }
 
-        return ['products' => $products, 'stations' => $stations];
+        return ['products' => $products];
     }
 
     private function resolveDefaultStockLocation(Tenant $tenant): StockLocation
@@ -485,8 +439,8 @@ class DemoPlansPresentationSeeder extends Seeder
                 'dashboard:read',
                 'storefront-orders:read', 'storefront-orders:update',
             ],
-            'ouro' => ['stock:read', 'pdv:sell'],
-            'diamante' => ['balcao:add_item', 'balcao:prep'],
+            'ouro' => ['stock:read'],
+            'diamante' => [],
         ];
 
         $pairs = $permissionsByTier['prata'];
@@ -523,85 +477,6 @@ class DemoPlansPresentationSeeder extends Seeder
             'tenant_uuid' => $tenant->uuid,
             'role_uuid' => $role->uuid,
             'is_active' => true,
-        ]));
-    }
-
-    /**
-     * Ativa cashback no tenant e credita pelo menos 1 pedido: exige um
-     * pedido `origin=storefront` de um cliente com FinalCustomerTenantLink
-     * CONFIRMADO (CreditCashbackOnOrderPaid::handle → CashbackService::
-     * creditEarning) — criado direto via Model (sem checkout HTTP), já que
-     * o objetivo aqui é só popular o extrato pra demonstração.
-     */
-    private function setupCashbackDemo(Tenant $tenant, Client $client): void
-    {
-        app(TenantSettingsService::class)->update($tenant->id, UpdateTenantSettingsDTO::fromArray([
-            'send_tracking_link_whatsapp' => false,
-            'block_order_without_stock' => false,
-            'minimum_order_value' => 0,
-            'estimated_preparation_minutes' => 20,
-            'cashback_enabled' => true,
-            'cashback_percentage' => 5.0,
-            'cashback_max_per_order' => 20.0,
-            'cashback_hold_days' => 0,
-            'cashback_expiration_days' => 90,
-            'cashback_name' => 'Cashback',
-        ]));
-
-        $finalCustomer = FinalCustomer::firstOrCreate(
-            ['email' => 'cliente.final.' . $tenant->slug . '@pegaticket.com'],
-            ['uuid' => (string) Str::uuid(), 'name' => 'Cliente Final Demo']
-        );
-
-        FinalCustomerTenantLink::firstOrCreate(
-            ['final_customer_id' => $finalCustomer->id, 'tenant_id' => $tenant->id, 'client_id' => $client->id],
-            ['uuid' => (string) Str::uuid(), 'confirmed_at' => now()]
-        );
-
-        $location = $this->resolveDefaultStockLocation($tenant);
-        $product = Product::where('tenant_id', $tenant->id)->firstOrFail();
-
-        app(OrderService::class)->create(CreateOrderDTO::fromArray([
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'items' => [['product_uuid' => $product->uuid, 'quantity' => 2.0, 'unit_price' => (float) $product->price]],
-            'origin' => 'storefront',
-            'status' => 'confirmed',
-            'mark_as_delivered' => true,
-            'mark_as_paid' => true,
-        ], $tenant->id));
-    }
-
-    /**
-     * Abre um caixa e registra 2 vendas de PDV com métodos de pagamento
-     * variados. Cada venda usa itens com preço/quantidade inteiros
-     * conhecidos de antemão para que a soma dos pagamentos bata EXATAMENTE
-     * com o total calculado no backend (senão PaymentAmountMismatchException).
-     *
-     * @param array<int, array{model: Product, price: float}> $products
-     */
-    private function setupPdvDemo(Tenant $tenant, array $products): void
-    {
-        app(CashSessionService::class)->open($tenant->id, OpenCashSessionDTO::fromArray(['opening_amount' => 100.00]));
-
-        $p1 = $products[0];
-        app(PdvSaleService::class)->create($tenant->id, CreatePdvSaleDTO::fromArray([
-            'items' => [['product_uuid' => $p1['model']->uuid, 'quantity' => 2, 'unit_price' => $p1['price']]],
-            'payments' => [['method' => 'cash', 'amount' => round($p1['price'] * 2, 2)]],
-        ]));
-
-        $p2 = $products[3];
-        $p3 = $products[4];
-        $total = round($p2['price'] + $p3['price'], 2);
-        app(PdvSaleService::class)->create($tenant->id, CreatePdvSaleDTO::fromArray([
-            'items' => [
-                ['product_uuid' => $p2['model']->uuid, 'quantity' => 1, 'unit_price' => $p2['price']],
-                ['product_uuid' => $p3['model']->uuid, 'quantity' => 1, 'unit_price' => $p3['price']],
-            ],
-            'payments' => [
-                ['method' => 'pix', 'amount' => round($total / 2, 2)],
-                ['method' => 'credit', 'amount' => $total - round($total / 2, 2)],
-            ],
         ]));
     }
 
@@ -648,89 +523,4 @@ class DemoPlansPresentationSeeder extends Seeder
         ])->save();
     }
 
-    /**
-     * Balcão: mesa/comanda com itens em estágios variados de preparo
-     * (queued, sent_to_station->preparing->ready->delivered_to_table) e
-     * uma segunda mesa fechada completa, pra mostrar o ciclo inteiro lado a
-     * lado (mesa aberta + mesa fechada).
-     *
-     * @param array{products: array<int, array{model: Product, price: float}>, stations: array{kitchen: ?Station, bar: ?Station}} $catalog
-     */
-    private function setupBalcao(Tenant $tenant, array $catalog): void
-    {
-        $tableService = app(TableService::class);
-        $comandaService = app(ComandaService::class);
-        $itemService = app(ComandaItemService::class);
-
-        $tables = [];
-        foreach (['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4'] as $label) {
-            $tables[] = $tableService->create(CreateTableDTO::fromArray([
-                'label' => $label,
-                'seats' => 4,
-                'status' => 'free',
-            ], $tenant->id));
-        }
-
-        $products = $catalog['products'];
-
-        // Mesa 1: comanda aberta com 3 itens em estágios variados de preparo.
-        $comandaOpen = $comandaService->open($tenant->id, OpenComandaDTO::fromArray(['table_uuid' => $tables[0]->uuid]));
-
-        $item1 = $comandaService->addItem($tenant->id, $comandaOpen->uuid, AddComandaItemDTO::fromArray([
-            'product_uuid' => $products[3]['model']->uuid, // Sanduíche
-            'qty' => 1,
-        ]));
-        $item2 = $comandaService->addItem($tenant->id, $comandaOpen->uuid, AddComandaItemDTO::fromArray([
-            'product_uuid' => $products[4]['model']->uuid, // Coxinha
-            'qty' => 1,
-        ]));
-        $item3 = $comandaService->addItem($tenant->id, $comandaOpen->uuid, AddComandaItemDTO::fromArray([
-            'product_uuid' => $products[0]['model']->uuid, // Refrigerante
-            'qty' => 1,
-        ]));
-
-        // item1: enviado + em preparo.
-        $itemService->sendToStation($tenant->id, $comandaOpen->uuid, $item1->uuid);
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item1->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'preparing']));
-
-        // item2: enviado, em preparo e pronto.
-        $itemService->sendToStation($tenant->id, $comandaOpen->uuid, $item2->uuid);
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item2->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'preparing']));
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item2->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'ready']));
-
-        // item3: ciclo completo até entregue na mesa (comanda continua aberta).
-        $itemService->sendToStation($tenant->id, $comandaOpen->uuid, $item3->uuid);
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item3->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'preparing']));
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item3->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'ready']));
-        $itemService->updatePrepStatus($tenant->id, $comandaOpen->uuid, $item3->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'delivered_to_table']));
-
-        // Mesa 2: comanda aberta e fechada por completo (ciclo inteiro).
-        $comandaClosed = $comandaService->open($tenant->id, OpenComandaDTO::fromArray(['table_uuid' => $tables[1]->uuid]));
-
-        $itemA = $comandaService->addItem($tenant->id, $comandaClosed->uuid, AddComandaItemDTO::fromArray([
-            'product_uuid' => $products[1]['model']->uuid, // Suco Natural
-            'qty' => 2,
-        ]));
-        $itemB = $comandaService->addItem($tenant->id, $comandaClosed->uuid, AddComandaItemDTO::fromArray([
-            'product_uuid' => $products[5]['model']->uuid, // Bolo Fatia
-            'qty' => 1,
-        ]));
-
-        $itemService->sendToStation($tenant->id, $comandaClosed->uuid, $itemA->uuid);
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemA->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'preparing']));
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemA->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'ready']));
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemA->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'delivered_to_table']));
-
-        $itemService->sendToStation($tenant->id, $comandaClosed->uuid, $itemB->uuid);
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemB->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'preparing']));
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemB->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'ready']));
-        $itemService->updatePrepStatus($tenant->id, $comandaClosed->uuid, $itemB->uuid, UpdatePrepStatusDTO::fromArray(['prep_status' => 'delivered_to_table']));
-
-        $total = round(($products[1]['price'] * 2) + $products[5]['price'], 2);
-
-        $comandaService->close($tenant->id, $comandaClosed->uuid, CloseComandaDTO::fromArray([
-            'payments' => [['method' => 'credit', 'amount' => $total]],
-            'apply_service_fee' => true,
-        ]));
-    }
 }

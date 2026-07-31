@@ -116,20 +116,6 @@ test.describe('Checkout público da loja', () => {
     })
 
     await mockApiRoute(page, {
-      path: '/portal/cashback',
-      body: {
-        enabled: false,
-        program_name: 'Cashback',
-        available_amount: 0,
-        pending_amount: 0,
-        next_expiration: null,
-        earn_percentage: null,
-        earn_max_per_order: null,
-        redeem_max_percentage: null,
-      },
-    })
-
-    await mockApiRoute(page, {
       path: '/loja/localizacoes/estados',
       body: [
         {

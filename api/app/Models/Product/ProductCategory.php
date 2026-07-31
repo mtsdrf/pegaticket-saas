@@ -2,7 +2,6 @@
 
 namespace App\Models\Product;
 
-use App\Models\Balcao\Station;
 use App\Models\BaseModel;
 use App\Models\Tenant\Tenant;
 
@@ -15,7 +14,6 @@ class ProductCategory extends BaseModel
         'name',
         'priority',
         'is_active',
-        'station_id',
     ];
 
     protected $casts = [
@@ -26,7 +24,6 @@ class ProductCategory extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'station_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -41,10 +38,5 @@ class ProductCategory extends BaseModel
     public function productTypes()
     {
         return $this->hasMany(ProductType::class);
-    }
-
-    public function station()
-    {
-        return $this->belongsTo(Station::class);
     }
 }
