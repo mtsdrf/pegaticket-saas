@@ -3,7 +3,6 @@
 namespace App\Models\Order;
 
 use App\Models\BaseModel;
-use App\Models\Report\ReceivableInteraction;
 use App\Models\Tenant\Tenant;
 
 /**
@@ -59,8 +58,4 @@ class OrderInstallment extends BaseModel
         return $this->belongsTo(Order::class);
     }
 
-    public function receivableInteractions()
-    {
-        return $this->hasMany(ReceivableInteraction::class, 'order_installment_id');
-    }
 }

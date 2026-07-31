@@ -4,10 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Order\OrderResource;
-use App\Http\Resources\Report\ClientReportListResource;
-use App\Http\Resources\Report\ClientReportResource;
 use App\Http\Resources\Report\CmvResource;
-use App\Http\Resources\Report\ReceivableReportListResource;
 use App\Services\APIResponse;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
@@ -24,21 +21,6 @@ class ReportController extends Controller
         'date_from',
         'date_to',
         'origin',
-    ];
-
-    private const CLIENT_FILTERS = [
-        'name',
-        'phone_primary',
-        'cidade_uuid',
-        'bairro_uuid',
-    ];
-
-    private const RECEIVABLE_FILTERS = [
-        'client_name',
-        'amount_min',
-        'amount_max',
-        'is_overdue',
-        'aging_bucket',
     ];
 
     public function __construct(
@@ -127,63 +109,6 @@ class ReportController extends Controller
         return APIResponse::success($data, __('messages.report.by_channel'));
     }
 
-    public function clients(Request $request)
-    {
-        $list = $this->service->filteredClients(
-            app('tenant_id'),
-            $request->only(self::CLIENT_FILTERS),
-            (int) $request->get('per_page', 15),
-            $request->get('sort_by'),
-            (string) $request->get('sort_dir', 'asc')
-        );
-
-        return APIResponse::success(
-            ClientReportListResource::collection($list),
-            __('messages.report.clients_list'),
-            200,
-            [
-                'pagination' => [
-                    'current_page' => $list->currentPage(),
-                    'per_page' => $list->perPage(),
-                    'total' => $list->total(),
-                    'last_page' => $list->lastPage(),
-                ]
-            ]
-        );
-    }
-
-    public function receivables(Request $request)
-    {
-        $list = $this->service->filteredReceivables(
-            app('tenant_id'),
-            $request->only(self::RECEIVABLE_FILTERS),
-            (int) $request->get('per_page', 15),
-            $request->get('sort_by'),
-            (string) $request->get('sort_dir', 'asc')
-        );
-
-        return APIResponse::success(
-            ReceivableReportListResource::collection($list),
-            __('messages.report.receivables_list'),
-            200,
-            [
-                'pagination' => [
-                    'current_page' => $list->currentPage(),
-                    'per_page' => $list->perPage(),
-                    'total' => $list->total(),
-                    'last_page' => $list->lastPage(),
-                ]
-            ]
-        );
-    }
-
-    public function receivablesSummary()
-    {
-        $data = $this->service->receivablesSummary(app('tenant_id'));
-
-        return APIResponse::success($data, __('messages.report.receivables_summary'));
-    }
-
     public function cmv()
     {
         $data = $this->service->cmv(app('tenant_id'));
@@ -205,17 +130,4 @@ class ReportController extends Controller
         );
     }
 
-    public function clientsPdf(Request $request)
-    {
-        $pdf = $this->service->generateClientsPdf(
-            app('tenant_id'),
-            $request->only(self::CLIENT_FILTERS)
-        );
-
-        return response()->streamDownload(
-            fn() => print($pdf['content']),
-            $pdf['filename'],
-            ['Content-Type' => 'application/pdf']
-        );
-    }
 }

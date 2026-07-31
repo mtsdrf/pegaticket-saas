@@ -4,7 +4,6 @@ namespace App\Models\Order;
 
 use App\Models\BaseModel;
 use App\Models\Client\Client;
-use App\Models\Report\ReceivableInteraction;
 use App\Models\Stock\StockLocation;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\OrderRating;
@@ -164,11 +163,6 @@ class Order extends BaseModel
     public function installments()
     {
         return $this->hasMany(OrderInstallment::class);
-    }
-
-    public function receivableInteractions()
-    {
-        return $this->hasMany(ReceivableInteraction::class);
     }
 
     public function rating()

@@ -1,6 +1,6 @@
 {{--
     CSS compartilhado por todo PDF gerado via DomPDF (reports/orders-pdf,
-    reports/clients-pdf, products/pdf, clients/pdf). Cores fixas da marca
+    products/pdf, clients/pdf). Cores fixas da marca
     Maskats — DomPDF não lê custom properties (--mk-*) do app, por isso os
     valores estão hardcoded aqui em vez de referenciar o design system web.
     'DejaVu Sans' é a única fonte embutida no DomPDF com suporte confiável a

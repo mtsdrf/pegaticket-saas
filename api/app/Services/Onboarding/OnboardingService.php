@@ -2,10 +2,8 @@
 
 namespace App\Services\Onboarding;
 
-use App\Models\Balcao\Table;
 use App\Models\Client\Client;
 use App\Models\Order\Order;
-use App\Models\Pdv\CashRegister;
 use App\Models\Product\Product;
 use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Storefront\StoreDeliveryFee;
@@ -53,9 +51,9 @@ class OnboardingService
             ],
             [
                 'key' => 'has_client',
-                'label' => 'Cadastre seu primeiro cliente',
-                'to' => '/clientes',
-                'link_label' => 'Cadastrar cliente',
+                'label' => 'Preencha um cliente em um pedido',
+                'to' => '/pedidos/novo',
+                'link_label' => 'Abrir pedido',
                 'completed' => $items['has_client'],
             ],
         ];
@@ -83,34 +81,6 @@ class OnboardingService
                 'to' => '/configuracoes/loja-online',
                 'link_label' => 'Configurar loja',
                 'completed' => $items['storefront_configured'],
-            ];
-        }
-
-        if (isset($allowedFunctionalities['pdv'])) {
-            $items['has_pdv_register'] = CashRegister::where('tenant_id', $tenantId)
-                ->whereNull('deleted_at')
-                ->exists();
-
-            $steps[] = [
-                'key' => 'has_pdv_register',
-                'label' => 'Cadastre um caixa para o PDV',
-                'to' => '/pdv',
-                'link_label' => 'Configurar PDV',
-                'completed' => $items['has_pdv_register'],
-            ];
-        }
-
-        if (isset($allowedFunctionalities['balcao'])) {
-            $items['has_balcao_tables'] = Table::where('tenant_id', $tenantId)
-                ->whereNull('deleted_at')
-                ->exists();
-
-            $steps[] = [
-                'key' => 'has_balcao_tables',
-                'label' => 'Cadastre as mesas do Balcão',
-                'to' => '/balcao/mesas',
-                'link_label' => 'Configurar Balcão',
-                'completed' => $items['has_balcao_tables'],
             ];
         }
 

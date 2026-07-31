@@ -400,8 +400,6 @@ use App\Listeners\Order\SendPushOnOrderApproved;
 use App\Listeners\Order\SendPushOnOrderRejected;
 use App\Listeners\Order\SendPushOnOrderDelivered;
 use App\Listeners\Order\SendPushOnOrderOutForDelivery;
-use App\Events\Report\ReceivableInteractionCreated;
-use App\Listeners\Report\AuditReceivableInteractionCreated;
 
 /*
 |--------------------------------------------------------------------------
@@ -725,7 +723,6 @@ class EventServiceProvider extends ServiceProvider
         OrderCancellationRequested::class => [AuditOrderCancellationRequested::class],
         OrderCancellationApproved::class => [AuditOrderCancellationApproved::class],
         OrderCancellationRejected::class => [AuditOrderCancellationRejected::class],
-        ReceivableInteractionCreated::class => [AuditReceivableInteractionCreated::class],
 
         /*
         |--------------------------------------------------------------------------

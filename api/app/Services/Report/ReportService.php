@@ -2,8 +2,8 @@
 
 namespace App\Services\Report;
 
-use App\Models\Client\Client;
 use App\Models\Order\Order;
+use App\Support\GridQuery;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +11,6 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Support\GridQuery;
 
 /**
  * Leitura agregada de Order/Client, sem tabela própria. Pedido cancelado
@@ -237,82 +236,6 @@ class ReportService
         })->all();
     }
 
-    public function filteredClients(
-        int $tenantId,
-        array $filters,
-        int $perPage = 15,
-        ?string $sortBy = null,
-        string $sortDir = 'asc'
-    ): LengthAwarePaginator
-    {
-        $sortable = [
-            'name' => 'clients.name',
-            'phone_primary' => 'clients.phone_primary',
-        ];
-
-        $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
-
-        return $this->clientsListQuery($tenantId, $filters)
-            ->orderBy($sortColumn ?? 'clients.name', GridQuery::normalizeSortDir($sortDir))
-            ->paginate($perPage);
-    }
-
-    public function filteredReceivables(
-        int $tenantId,
-        array $filters,
-        int $perPage = 15,
-        ?string $sortBy = null,
-        string $sortDir = 'asc'
-    ): LengthAwarePaginator
-    {
-        $sortable = [
-            'client_name' => 'client_name',
-            'amount' => 'amount',
-            'due_date' => 'due_date',
-            'created_at' => 'created_at',
-            'source' => 'source',
-        ];
-
-        $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
-        $query = DB::query()->fromSub($this->receivablesListQuery($tenantId, $filters), 'receivables');
-
-        return $query
-            ->orderBy($sortColumn ?? 'due_date', GridQuery::normalizeSortDir($sortDir))
-            ->paginate($perPage);
-    }
-
-    public function receivablesSummary(int $tenantId): array
-    {
-        $aging = $this->receivablesAging($tenantId);
-        $totals = collect($aging)->reduce(function (array $carry, array $bucket) {
-            $amount = (float) $bucket['amount'];
-            $count = (int) $bucket['count'];
-
-            $carry['open_amount'] += $amount;
-            $carry['open_count'] += $count;
-
-            if ($bucket['bucket'] !== 'current') {
-                $carry['overdue_amount'] += $amount;
-                $carry['overdue_count'] += $count;
-            }
-
-            return $carry;
-        }, [
-            'open_amount' => 0.0,
-            'open_count' => 0,
-            'overdue_amount' => 0.0,
-            'overdue_count' => 0,
-        ]);
-
-        return [
-            'open_amount' => $this->formatMoney($totals['open_amount']),
-            'open_count' => (int) $totals['open_count'],
-            'overdue_amount' => $this->formatMoney($totals['overdue_amount']),
-            'overdue_count' => (int) $totals['overdue_count'],
-            'aging_buckets' => $aging,
-        ];
-    }
-
     /**
      * @return array{content: string, filename: string}
      */
@@ -329,25 +252,6 @@ class ReportService
         return [
             'content' => $pdf->output(),
             'filename' => 'relatorio-pedidos-' . now()->format('Ymd_His') . '.pdf',
-        ];
-    }
-
-    /**
-     * @return array{content: string, filename: string}
-     */
-    public function generateClientsPdf(int $tenantId, array $filters): array
-    {
-        $clients = $this->clientsEloquentQuery($tenantId, $filters)->orderBy('name')->get();
-
-        $pdf = Pdf::loadView('reports.clients-pdf', [
-            'clients' => $clients,
-            'tenantName' => tenant()?->name,
-            'generatedAt' => now(),
-        ]);
-
-        return [
-            'content' => $pdf->output(),
-            'filename' => 'relatorio-clientes-' . now()->format('Ymd_His') . '.pdf',
         ];
     }
 
@@ -1098,176 +1002,6 @@ class ReportService
         // GET /reports/orders?origin=X&date_from=Y&date_to=Z.
         if (!empty($filters['origin'])) {
             $query->where('orders.origin', $filters['origin']);
-        }
-
-        return $query;
-    }
-
-    private function receivablesListQuery(int $tenantId, array $filters): QueryBuilder
-    {
-        $today = now()->toDateString();
-        $agingBucket = isset($filters['aging_bucket']) && is_string($filters['aging_bucket'])
-            ? trim($filters['aging_bucket'])
-            : null;
-
-        $installments = DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('clients.deleted_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->when(!empty($filters['client_name']), fn($q) => $q->where('clients.name', 'like', '%' . trim((string) $filters['client_name']) . '%'))
-            ->when(isset($filters['amount_min']), fn($q) => $q->where('order_installments.amount', '>=', (float) $filters['amount_min']))
-            ->when(isset($filters['amount_max']), fn($q) => $q->where('order_installments.amount', '<=', (float) $filters['amount_max']))
-            ->when(array_key_exists('is_overdue', $filters) && $filters['is_overdue'] !== null, function ($q) use ($filters, $today) {
-                $isOverdue = filter_var($filters['is_overdue'], FILTER_VALIDATE_BOOLEAN);
-                $operator = $isOverdue ? '<' : '>=';
-
-                $q->whereDate('order_installments.due_date', $operator, $today);
-            })
-            ->when($agingBucket, fn($q) => $this->applyAgingBucketFilter($q, 'order_installments.due_date', $agingBucket, $today))
-            ->selectRaw("'installment' as source")
-            ->addSelect([
-                'orders.uuid as order_uuid',
-                'order_installments.uuid as installment_uuid',
-                'clients.name as client_name',
-                'clients.phone_primary as client_phone_primary',
-                'order_installments.amount as amount',
-                'order_installments.due_date as due_date',
-                'orders.created_at as created_at',
-            ]);
-
-        $orders = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('clients.deleted_at')
-            ->where('orders.is_installment', false)
-            ->where('orders.is_paid', false)
-            ->whereNotNull('orders.due_date')
-            ->when(!empty($filters['client_name']), fn($q) => $q->where('clients.name', 'like', '%' . trim((string) $filters['client_name']) . '%'))
-            ->when(isset($filters['amount_min']), fn($q) => $q->where('orders.total_amount', '>=', (float) $filters['amount_min']))
-            ->when(isset($filters['amount_max']), fn($q) => $q->where('orders.total_amount', '<=', (float) $filters['amount_max']))
-            ->when(array_key_exists('is_overdue', $filters) && $filters['is_overdue'] !== null, function ($q) use ($filters, $today) {
-                $isOverdue = filter_var($filters['is_overdue'], FILTER_VALIDATE_BOOLEAN);
-                $operator = $isOverdue ? '<' : '>=';
-
-                $q->whereDate('orders.due_date', $operator, $today);
-            })
-            ->when($agingBucket, fn($q) => $this->applyAgingBucketFilter($q, 'orders.due_date', $agingBucket, $today))
-            ->selectRaw("'order' as source")
-            ->addSelect([
-                'orders.uuid as order_uuid',
-                DB::raw('NULL as installment_uuid'),
-                'clients.name as client_name',
-                'clients.phone_primary as client_phone_primary',
-                'orders.total_amount as amount',
-                'orders.due_date as due_date',
-                'orders.created_at as created_at',
-            ]);
-
-        return $installments->unionAll($orders);
-    }
-
-    private function applyAgingBucketFilter(QueryBuilder $query, string $dueDateColumn, string $bucket, string $today): void
-    {
-        match ($bucket) {
-            'current' => $query->whereDate($dueDateColumn, '>=', $today),
-            'overdue_1_30' => $query
-                ->whereDate($dueDateColumn, '<', $today)
-                ->whereDate($dueDateColumn, '>=', Carbon::parse($today)->subDays(30)->toDateString()),
-            'overdue_31_60' => $query
-                ->whereDate($dueDateColumn, '<=', Carbon::parse($today)->subDays(31)->toDateString())
-                ->whereDate($dueDateColumn, '>=', Carbon::parse($today)->subDays(60)->toDateString()),
-            'overdue_61_90' => $query
-                ->whereDate($dueDateColumn, '<=', Carbon::parse($today)->subDays(61)->toDateString())
-                ->whereDate($dueDateColumn, '>=', Carbon::parse($today)->subDays(90)->toDateString()),
-            'overdue_90_plus' => $query
-                ->whereDate($dueDateColumn, '<=', Carbon::parse($today)->subDays(91)->toDateString()),
-            default => null,
-        };
-    }
-
-    /**
-     * Clientes ADIMPLENTES: filtra quais clientes aparecem, não um
-     * subconjunto de pedidos dentro de cada um. Exige (a) pelo menos um
-     * pedido ativo (não cancelado) e (b) nenhum pedido ativo pendente
-     * (não pago ou não entregue) — cliente sem nenhum pedido ativo
-     * (nunca comprou, ou todos cancelados) fica de fora, não conta como
-     * "adimplente por vacuidade" (decisão: relatório de clientes em dia
-     * é mais útil filtrado a quem realmente tem histórico quitado, não
-     * a quem nunca teve pendência por nunca ter comprado). Achado crítico
-     * de regra de negócio corrigido em 2026-07-09, ver
-     * `.claude/memory/architecture-decisions.md`.
-     */
-    private function clientsEloquentQuery(int $tenantId, array $filters): Builder
-    {
-        $query = Client::where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->whereHas('orders', fn($q) => $q->whereNull('cancelled_at'))
-            ->whereDoesntHave('orders', fn($q) => $q->whereNull('cancelled_at')
-                ->where(fn($q2) => $q2->where('is_paid', false)->orWhere('is_delivered', false)))
-            ->with([
-                'endereco.estado',
-                'endereco.cidade',
-                'endereco.bairro',
-                'orders' => fn($q) => $q->whereNull('cancelled_at')
-                    ->where('is_paid', true)
-                    ->where('is_delivered', true)
-                    ->orderByDesc('id'),
-            ]);
-
-        if (!empty($filters['cidade_uuid'])) {
-            $query->whereHas('endereco.cidade', fn($q) => $q->where('uuid', $filters['cidade_uuid']));
-        }
-
-        if (!empty($filters['bairro_uuid'])) {
-            $query->whereHas('endereco.bairro', fn($q) => $q->where('uuid', $filters['bairro_uuid']));
-        }
-
-        if (!empty($filters['name'])) {
-            $query->where('clients.name', 'like', '%' . $filters['name'] . '%');
-        }
-
-        if (!empty($filters['phone_primary'])) {
-            $query->where('clients.phone_primary', 'like', '%' . $filters['phone_primary'] . '%');
-        }
-
-        return $query;
-    }
-
-    private function clientsListQuery(int $tenantId, array $filters): Builder
-    {
-        $query = Client::where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->whereHas('orders', fn($q) => $q->whereNull('cancelled_at'))
-            ->whereDoesntHave('orders', fn($q) => $q->whereNull('cancelled_at')
-                ->where(fn($q2) => $q2->where('is_paid', false)->orWhere('is_delivered', false)))
-            ->with(['endereco.cidade', 'endereco.bairro'])
-            ->withCount([
-                'orders as orders_count' => fn($q) => $q->whereNull('cancelled_at')
-                    ->where('is_paid', true)
-                    ->where('is_delivered', true),
-            ]);
-
-        if (!empty($filters['cidade_uuid'])) {
-            $query->whereHas('endereco.cidade', fn($q) => $q->where('uuid', $filters['cidade_uuid']));
-        }
-
-        if (!empty($filters['bairro_uuid'])) {
-            $query->whereHas('endereco.bairro', fn($q) => $q->where('uuid', $filters['bairro_uuid']));
-        }
-
-        if (!empty($filters['name'])) {
-            $query->where('clients.name', 'like', '%' . $filters['name'] . '%');
-        }
-
-        if (!empty($filters['phone_primary'])) {
-            $query->where('clients.phone_primary', 'like', '%' . $filters['phone_primary'] . '%');
         }
 
         return $query;

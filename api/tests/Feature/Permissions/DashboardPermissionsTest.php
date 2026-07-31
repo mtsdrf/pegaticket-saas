@@ -68,9 +68,9 @@ class DashboardPermissionsTest extends TestCase
     {
         $this->grantPermission('dashboard', 'read');
 
-        $this->auth()->getJson('/api/v1/reports/clients')->assertStatus(403);
-        $this->auth()->getJson('/api/v1/reports/receivables')->assertStatus(403);
-        $this->auth()->getJson('/api/v1/reports/receivables/summary')->assertStatus(403);
+        $this->auth()->getJson('/api/v1/reports/orders')->assertStatus(403);
+        $this->auth()->getJson('/api/v1/reports/by-channel')->assertStatus(403);
+        $this->auth()->getJson('/api/v1/reports/cmv')->assertStatus(403);
     }
 
     #[Test]

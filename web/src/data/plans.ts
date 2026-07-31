@@ -19,9 +19,8 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
     featureHighlights: [
       'Loja online com cardápio/catálogo digital',
       'Gestão de pedidos da loja',
-      'Cadastro de clientes e categorias',
       'Cadastro de produtos e categorias',
-      'Relatórios e dashboard',
+      'Pedidos internos e dashboard operacional',
       'Usuários, papéis e permissões',
       'Configurações da empresa e redes sociais',
     ],
@@ -31,8 +30,7 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
     name: 'Ouro',
     featureHighlights: [
       'Tudo do plano Prata',
-      'Controle de estoque por depósito/filial',
-      'PDV (frente de caixa)',
+      'Disponibilidade e reserva de estoque no fluxo de pedidos',
       'Cashback e fidelidade',
       'Analytics avançado',
       'Planejamento de rotas de entrega',
@@ -43,7 +41,7 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
     name: 'Diamante',
     featureHighlights: [
       'Tudo do plano Ouro',
-      'Balcão: mesas, comandas, cozinha e bar',
+      'Integrações operacionais e visão omnichannel',
       'Assinatura self-service',
       'Acesso dedicado do contador',
       'Regras fiscais aplicadas aos pedidos',
