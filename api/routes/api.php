@@ -929,9 +929,6 @@ Route::prefix('v1')->group(function () {
                 Route::get('/margin-summary', [AnalyticsController::class, 'marginSummary'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-margin-summary']);
 
-                Route::get('/cashback-liability', [AnalyticsController::class, 'cashbackLiability'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-cashback-liability']);
-
                 Route::get('/coupon-roi', [AnalyticsController::class, 'couponRoi'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-coupon-roi']);
 

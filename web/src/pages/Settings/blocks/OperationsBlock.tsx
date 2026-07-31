@@ -20,7 +20,7 @@ import type { StorefrontCatalogLayout } from '../../../types/storefront'
 /**
  * Bloco "Pedidos e Operação" — subconjunto de `tenant_settings` (extraído de
  * `TenantSettingsPage`, 2026-07-24). Edita só os campos operacionais; o
- * restante do objeto (`accepted_payment_methods`, `cashback_*`) é preservado
+ * restante do objeto (`accepted_payment_methods`, dados de recebimento) é preservado
  * do payload carregado por `useTenantSettingsData`.
  */
 export function OperationsBlock() {
@@ -68,13 +68,6 @@ export function OperationsBlock() {
         allow_delivery: allowDelivery,
         storefront_enabled: storefrontEnabled,
         catalog_layout: catalogLayout,
-        cashback_enabled: settings.cashback_enabled,
-        cashback_percentage: settings.cashback_percentage,
-        cashback_max_per_order: settings.cashback_max_per_order,
-        cashback_hold_days: settings.cashback_hold_days,
-        cashback_expiration_days: settings.cashback_expiration_days,
-        cashback_redeem_max_percentage: settings.cashback_redeem_max_percentage,
-        cashback_name: settings.cashback_name,
         accepted_payment_methods: settings.accepted_payment_methods,
         payment_receiving_method: settings.payment_receiving_method,
         payment_pix_key: settings.payment_pix_key,

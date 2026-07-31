@@ -147,13 +147,6 @@ class AnalyticsController extends Controller
         return APIResponse::success($data, __('messages.analytics.margin_summary'));
     }
 
-    public function cashbackLiability()
-    {
-        $data = $this->service->cashbackLiability(app('tenant_id'));
-
-        return APIResponse::success($data, __('messages.analytics.cashback_liability'));
-    }
-
     public function couponRoi(AnalyticsPeriodRequest $request)
     {
         $validated = $request->validated();

@@ -34,8 +34,6 @@ use App\Models\Product\Product;
 use App\Models\Product\ProductOption;
 use App\Models\Stock\StockLocation;
 use App\Models\Stock\StockMovement;
-use App\Models\Storefront\CashbackEarning;
-use App\Models\Storefront\CashbackRedemption;
 use App\Models\Storefront\CouponRedemption;
 use App\Exceptions\DiscountLimitExceededException;
 use App\Repositories\Contracts\OrderRepositoryInterface;
@@ -299,14 +297,6 @@ class OrderService
             $discountAmountCents = (int) round($dto->discountAmount * 100);
             $totalCents = max(0, $totalCents - $discountAmountCents);
 
-            // Resgate de cashback (roadmap Delivery, Fase 5) — mesma ordem
-            // do cupom, subtraído por último. CashbackService já validou e
-            // reservou esse valor contra o saldo real do cliente ANTES de
-            // chamar create() (StorefrontCheckoutService); aqui só persiste
-            // o valor já decidido, congelado no pedido.
-            $cashbackRedeemedAmountCents = (int) round($dto->cashbackRedeemedAmount * 100);
-            $totalCents = max(0, $totalCents - $cashbackRedeemedAmountCents);
-
             $dueDate = $dto->isInstallment ? null : $this->vencimentoCalculator->calculateDueDate(now());
 
             // Sequência de exibição por tenant (tenants.next_order_code) —
@@ -328,7 +318,6 @@ class OrderService
                 'service_fee' => $dto->serviceFee,
                 'coupon_id' => $dto->couponId,
                 'discount_amount' => $dto->discountAmount,
-                'cashback_redeemed_amount' => $dto->cashbackRedeemedAmount,
                 'is_paid' => false,
                 'is_delivered' => false,
                 'due_date' => $dueDate,
@@ -1092,22 +1081,6 @@ class OrderService
             // de estoque acima) — roadmap Delivery, Fase 3.
             if ($order->coupon_id !== null) {
                 CouponRedemption::where('order_id', $order->id)->delete();
-            }
-
-            // Resgate de cashback (roadmap Delivery, Fase 5) — mesmo
-            // espírito do bloco de cupom acima: pedido recusado nunca deve
-            // consumir saldo do cliente. Devolve o valor drenado de cada
-            // lote de origem (pode ter tocado mais de um, FIFO por
-            // expires_at) antes de apagar as linhas de resgate.
-            if ((float) $order->cashback_redeemed_amount > 0) {
-                $redemptions = CashbackRedemption::where('order_id', $order->id)->get();
-
-                foreach ($redemptions as $redemption) {
-                    CashbackEarning::where('id', $redemption->cashback_earning_id)
-                        ->increment('remaining_amount', $redemption->amount);
-                }
-
-                CashbackRedemption::where('order_id', $order->id)->delete();
             }
 
             $order->status = 'rejected';

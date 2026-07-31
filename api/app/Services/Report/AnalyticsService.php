@@ -390,36 +390,6 @@ class AnalyticsService
     }
 
     /**
-     * Passivo de cashback (quanto o tenant ainda deve resgatar) e taxa de
-     * resgate histórica. Sem período — é uma foto do saldo vivo agora.
-     */
-    public function cashbackLiability(int $tenantId): array
-    {
-        $outstanding = (float) DB::table('cashback_earnings')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->where('status', 'available')
-            ->sum('remaining_amount');
-
-        $earned = (float) DB::table('cashback_earnings')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->sum('amount');
-
-        $redeemed = (float) DB::table('cashback_redemptions')
-            ->where('tenant_id', $tenantId)
-            ->whereNotNull('order_id')
-            ->sum('amount');
-
-        return [
-            'outstanding_balance' => $this->formatMoney($outstanding),
-            'total_earned_all_time' => $this->formatMoney($earned),
-            'total_redeemed_all_time' => $this->formatMoney($redeemed),
-            'redemption_rate_percentage' => $earned > 0 ? round(($redeemed / $earned) * 100, 2) : 0.0,
-        ];
-    }
-
-    /**
      * Comparação de ticket médio de pedidos COM cupom vs SEM cupom no
      * período, mais o desconto total concedido.
      *

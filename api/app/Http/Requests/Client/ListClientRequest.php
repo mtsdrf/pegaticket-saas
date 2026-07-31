@@ -29,8 +29,6 @@ class ListClientRequest extends FormRequest
             'category_uuid' => ['nullable', 'uuid'],
             'cidade_uuid' => ['nullable', 'uuid'],
             'bairro_uuid' => ['nullable', 'uuid'],
-            'dia_ideal_uuid' => ['nullable', 'uuid'],
-            'periodo_ideal_uuid' => ['nullable', 'uuid'],
             'is_trusted' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];

@@ -10,20 +10,6 @@ export interface TenantSettings {
   minimum_order_value: number | null
   /** Delivery Fase 2 — `null` = sem estimativa configurada (catálogo não exibe "~XX min"). */
   estimated_preparation_minutes: number | null
-  /** Delivery Fase 5 (cashback) — desligado por padrão, nenhuma loja ganha cashback sem configurar. */
-  cashback_enabled: boolean
-  /** % sobre o valor líquido pago (sem frete, sem o que já foi pago com cashback) — `null` enquanto não configurado. */
-  cashback_percentage: number | null
-  /** Teto em R$ de cashback ganho por pedido — `null` = sem teto. */
-  cashback_max_per_order: number | null
-  /** Dias de carência antes do saldo ficar disponível pra gastar — `null`/`0` = sem carência. */
-  cashback_hold_days: number | null
-  /** Validade do crédito em dias a partir do momento em que é ganho. */
-  cashback_expiration_days: number | null
-  /** % máximo do subtotal (já líquido de cupom) pagável em cashback num pedido. */
-  cashback_redeem_max_percentage: number | null
-  /** Nome customizado do programa de cashback (ex.: "eCash") — `null` = usa "Cashback" padrão. */
-  cashback_name: string | null
   /** Reforma da loja — formas de pagamento aceitas (`cash|pix|credit_card|debit_card`); `[]` = nenhuma configurada. */
   accepted_payment_methods: PaymentMethod[]
   /** Como a empresa recebe os pagamentos combinados fora do gateway da plataforma. */
@@ -45,13 +31,6 @@ export interface UpdateTenantSettingsPayload {
   block_order_without_stock: boolean
   minimum_order_value: number | null
   estimated_preparation_minutes: number | null
-  cashback_enabled: boolean
-  cashback_percentage: number | null
-  cashback_max_per_order: number | null
-  cashback_hold_days: number | null
-  cashback_expiration_days: number | null
-  cashback_redeem_max_percentage: number | null
-  cashback_name: string | null
   accepted_payment_methods: PaymentMethod[]
   payment_receiving_method: 'manual' | 'pix_key'
   payment_pix_key: string | null

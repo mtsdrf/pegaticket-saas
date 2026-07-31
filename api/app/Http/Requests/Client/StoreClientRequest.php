@@ -31,21 +31,6 @@ class StoreClientRequest extends FormRequest
             'is_trusted' => ['boolean'],
             'is_active' => ['boolean'],
 
-            'dia_ideal_uuid' => [
-                'nullable',
-                'uuid',
-                Rule::exists('dia_ideais', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-            'periodo_ideal_uuid' => [
-                'nullable',
-                'uuid',
-                Rule::exists('periodo_ideais', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-
             // Endereço criado inline junto com o cliente (sem tela de endereço separada).
             'logradouro' => ['required', 'string', 'max:255'],
             'numero' => ['nullable', 'string', 'max:20'],
@@ -76,8 +61,6 @@ class StoreClientRequest extends FormRequest
         return [
             'cpf_cnpj.required' => __('messages.client.cpf_cnpj_required'),
             'cpf_cnpj.regex' => __('messages.client.cpf_cnpj_invalid'),
-            'dia_ideal_uuid.exists' => __('messages.client.invalid_dia_ideal'),
-            'periodo_ideal_uuid.exists' => __('messages.client.invalid_periodo_ideal'),
             'estado_uuid.exists' => __('messages.endereco.invalid_estado'),
             'cidade_uuid.exists' => __('messages.endereco.invalid_cidade'),
             'bairro_uuid.exists' => __('messages.endereco.invalid_bairro'),

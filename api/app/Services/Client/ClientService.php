@@ -12,8 +12,6 @@ use App\Events\Client\ClientUpdated;
 use App\Events\Client\ClientDeleted;
 use App\Events\Client\ClientCategoriesSynced;
 use App\Models\Client\Client;
-use App\Models\Client\DiaIdeal;
-use App\Models\Client\PeriodoIdeal;
 use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Services\Location\EnderecoService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -35,7 +33,7 @@ class ClientService
         return $client;
     }
 
-    public const EAGER_RELATIONS = ['endereco.estado', 'endereco.cidade', 'endereco.bairro', 'diaIdeal', 'periodoIdeal', 'categories'];
+    public const EAGER_RELATIONS = ['endereco.estado', 'endereco.cidade', 'endereco.bairro', 'categories'];
     public const LIST_EAGER_RELATIONS = ['endereco.cidade'];
 
     /**
@@ -102,14 +100,6 @@ class ClientService
 
         if (!empty($filters['category_uuid'])) {
             $query->whereHas('categories', fn($q) => $q->where('uuid', $filters['category_uuid']));
-        }
-
-        if (!empty($filters['dia_ideal_uuid'])) {
-            $query->whereHas('diaIdeal', fn($q) => $q->where('uuid', $filters['dia_ideal_uuid']));
-        }
-
-        if (!empty($filters['periodo_ideal_uuid'])) {
-            $query->whereHas('periodoIdeal', fn($q) => $q->where('uuid', $filters['periodo_ideal_uuid']));
         }
 
         if (!empty($filters['cidade_uuid'])) {
@@ -183,14 +173,6 @@ class ClientService
             $query->whereHas('categories', fn($q) => $q->where('uuid', $filters['category_uuid']));
         }
 
-        if (!empty($filters['dia_ideal_uuid'])) {
-            $query->whereHas('diaIdeal', fn($q) => $q->where('uuid', $filters['dia_ideal_uuid']));
-        }
-
-        if (!empty($filters['periodo_ideal_uuid'])) {
-            $query->whereHas('periodoIdeal', fn($q) => $q->where('uuid', $filters['periodo_ideal_uuid']));
-        }
-
         if (!empty($filters['cidade_uuid'])) {
             $query->whereHas('endereco.cidade', fn($q) => $q->where('uuid', $filters['cidade_uuid']));
         }
@@ -229,27 +211,9 @@ class ClientService
                 lng: $dto->lng,
             ));
 
-            $diaIdealId = $dto->diaIdealUuid
-                ? DiaIdeal::where('uuid', $dto->diaIdealUuid)
-                    ->where('tenant_id', $dto->tenantId)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                    ->id
-                : null;
-
-            $periodoIdealId = $dto->periodoIdealUuid
-                ? PeriodoIdeal::where('uuid', $dto->periodoIdealUuid)
-                    ->where('tenant_id', $dto->tenantId)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                    ->id
-                : null;
-
             $client = $this->repository->create([
                 'tenant_id' => $dto->tenantId,
                 'endereco_id' => $endereco->id,
-                'dia_ideal_id' => $diaIdealId,
-                'periodo_ideal_id' => $periodoIdealId,
                 'name' => $dto->name,
                 'last_name' => $dto->lastName,
                 'cpf_cnpj' => $dto->cpfCnpj,
@@ -297,24 +261,6 @@ class ClientService
                 ));
             }
 
-            $diaIdealId = null;
-            if ($dto->diaIdealUuid) {
-                $diaIdealId = DiaIdeal::where('uuid', $dto->diaIdealUuid)
-                    ->where('tenant_id', $client->tenant_id)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                    ->id;
-            }
-
-            $periodoIdealId = null;
-            if ($dto->periodoIdealUuid) {
-                $periodoIdealId = PeriodoIdeal::where('uuid', $dto->periodoIdealUuid)
-                    ->where('tenant_id', $client->tenant_id)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                    ->id;
-            }
-
             $data = array_filter([
                 'name' => $dto->name,
                 'cpf_cnpj' => $dto->cpfCnpj,
@@ -325,8 +271,6 @@ class ClientService
                 'notes' => $dto->notes,
                 'is_trusted' => $dto->isTrusted,
                 'is_active' => $dto->isActive,
-                'dia_ideal_id' => $diaIdealId,
-                'periodo_ideal_id' => $periodoIdealId,
             ], fn($v) => !is_null($v));
 
             if (!empty($data)) {

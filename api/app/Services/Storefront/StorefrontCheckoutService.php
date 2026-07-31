@@ -22,7 +22,6 @@ use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use App\Services\Client\ClientService;
 use App\Services\Order\OrderService;
 use App\Services\Permission\PermissionService;
-use App\Services\Storefront\CashbackService;
 use App\Services\Product\ProductPricingService;
 use App\Services\Tenant\TenantSettingsService;
 use App\Services\Tenant\TenantExecutionContext;
@@ -53,7 +52,6 @@ class StorefrontCheckoutService
         private ProductPricingService $pricingService,
         private ProductPromotionService $productPromotionService,
         private CouponService $couponService,
-        private CashbackService $cashbackService,
         private StoreAddressService $storeAddressService,
         private TenantExecutionContext $tenantExecutionContext,
     ) {
@@ -181,35 +179,6 @@ class StorefrontCheckoutService
                 $couponId = $coupon->id;
             }
 
-            // Guard 5: cashback (roadmap Delivery, Fase 5) — opcional, só
-            // roda quando dto->useCashback=true e o plano do tenant permite
-            // a funcionalidade (defesa em profundidade, mesmo espírito do
-            // guard de 'storefront' no início). Teto = min(saldo disponível
-            // real, % configurada do subtotal já líquido de cupom) —
-            // reserveRedemption() é quem de fato garante que nunca resgata
-            // mais do que o saldo real em banco permite.
-            $cashbackReservation = ['reserved_cents' => 0, 'redemption_ids' => []];
-
-            if (
-                $dto->useCashback
-                && $settings->cashback_enabled
-                && $settings->cashback_redeem_max_percentage !== null
-                && $this->permissionService->tenantPlanAllowsFunctionality($tenant->id, 'cashback')
-            ) {
-                $subtotalPostCouponCents = max(0, $subtotalCents - $discountAmountCents);
-                $redeemCapCents = (int) round(
-                    $subtotalPostCouponCents * ((float) $settings->cashback_redeem_max_percentage) / 100
-                );
-
-                if ($redeemCapCents > 0) {
-                    $cashbackReservation = $this->cashbackService->reserveRedemption(
-                        $tenant->id,
-                        $customer->id,
-                        $redeemCapCents
-                    );
-                }
-            }
-
             $clientUuid = $this->resolveClientUuid($tenant->id, $customer, $dto);
 
             // unit_price explícito por item (prioridade máxima sobre a
@@ -237,7 +206,6 @@ class StorefrontCheckoutService
                 deliveryFee: $deliveryFee,
                 couponId: $couponId,
                 discountAmount: $discountAmountCents / 100,
-                cashbackRedeemedAmount: $cashbackReservation['reserved_cents'] / 100,
                 fulfillmentType: $dto->fulfillmentType,
                 paymentMethod: $dto->paymentMethod,
                 needsChange: $dto->needsChange,
@@ -258,11 +226,6 @@ class StorefrontCheckoutService
                     'redeemed_at' => now(),
                 ]);
             }
-
-            // Vincula as CashbackRedemption reservadas pelo Guard 5 (criadas
-            // com order_id nulo, antes do Order existir) ao pedido recém-
-            // criado — mesma transação, nunca fica órfão de fato.
-            $this->cashbackService->attachRedemptionToOrder($cashbackReservation['redemption_ids'], $order->id);
 
                 return $order;
             });

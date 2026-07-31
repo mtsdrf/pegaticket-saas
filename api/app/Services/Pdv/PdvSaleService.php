@@ -108,8 +108,8 @@ class PdvSaleService
             }
 
             // Soma bateu: marca o pedido como pago reaproveitando o fluxo
-            // existente (OrderService::pay dispara OrderPaid + cascata de
-            // cashback, mesma trilha de um pedido staff pago).
+            // existente (OrderService::pay dispara OrderPaid, mesma trilha
+            // de um pedido staff pago).
             $order = $this->orderService->pay($order);
 
             event(new PdvSaleCompleted(

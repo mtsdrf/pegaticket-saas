@@ -189,8 +189,6 @@ export interface StorefrontCheckoutPayload extends StorefrontCheckoutAddress {
   notes?: string
   /** Delivery Fase 3 — código do cupom aplicado com sucesso na prévia (`validateStorefrontCoupon`); omitido = sem cupom. */
   coupon_code?: string
-  /** Delivery Fase 5 — cliente optou por usar o cashback disponível; backend recalcula o valor com autoridade, nunca confia num total vindo daqui. */
-  use_cashback?: boolean
   /** Omitido = tratado como `'delivery'` no backend (retrocompatível). */
   fulfillment_type?: StorefrontFulfillmentType
   /** Meio de pagamento pretendido — só formato validado no backend; usado sobretudo para checar cupom restrito por meio de pagamento (`allowed_payment_methods`). */

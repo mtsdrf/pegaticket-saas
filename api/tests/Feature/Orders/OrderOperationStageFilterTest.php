@@ -182,7 +182,6 @@ class OrderOperationStageFilterTest extends TestCase
             'delivery_fee' => 0,
             'service_fee' => 0,
             'discount_amount' => 0,
-            'cashback_redeemed_amount' => 0,
             'is_paid' => false,
             'paid_amount' => null,
             'paid_at' => null,

@@ -366,16 +366,6 @@ use App\Events\Order\OrderCancellationApproved;
 use App\Events\Order\OrderCancellationRejected;
 use App\Listeners\Order\AuditOrderPaymentCharged;
 use App\Listeners\Order\AuditOrderPaymentRefundRequested;
-use App\Events\Storefront\CashbackCredited;
-use App\Listeners\Order\CreditCashbackOnOrderPaid;
-use App\Listeners\Order\ReverseCashbackOnOrderUnpaid;
-use App\Listeners\Storefront\AuditCashbackCredited;
-use App\Listeners\Storefront\SendPushOnCashbackCredited;
-use App\Events\Storefront\ReactivationRuleUpdated;
-use App\Events\Storefront\ReactivationDispatched;
-use App\Listeners\Storefront\AuditReactivationRuleUpdated;
-use App\Listeners\Storefront\AuditReactivationDispatched;
-use App\Listeners\Storefront\SendPushOnReactivationDispatched;
 use App\Listeners\Order\AuditOrderCreated;
 use App\Listeners\Order\AuditOrderDelivered;
 use App\Listeners\Order\AuditOrderUndelivered;
@@ -704,9 +694,9 @@ class EventServiceProvider extends ServiceProvider
         OrderCreated::class => [AuditOrderCreated::class, WriteWorkflowTransitionLog::class],
         OrderDelivered::class => [AuditOrderDelivered::class, SendPushOnOrderDelivered::class, WriteWorkflowTransitionLog::class],
         OrderUndelivered::class => [AuditOrderUndelivered::class],
-        OrderPaid::class => [AuditOrderPaid::class, CreditCashbackOnOrderPaid::class],
+        OrderPaid::class => [AuditOrderPaid::class],
         OrderPartiallyPaid::class => [AuditOrderPartiallyPaid::class],
-        OrderUnpaid::class => [AuditOrderUnpaid::class, ReverseCashbackOnOrderUnpaid::class],
+        OrderUnpaid::class => [AuditOrderUnpaid::class],
         OrderInstallmentPaid::class => [AuditOrderInstallmentPaid::class],
         OrderInstallmentUnpaid::class => [AuditOrderInstallmentUnpaid::class],
         OrderInstallmentCreated::class => [AuditOrderInstallmentCreated::class],
@@ -761,21 +751,6 @@ class EventServiceProvider extends ServiceProvider
         CouponDeleted::class => [AuditCouponDeleted::class],
         ProductPromotionUpserted::class => [AuditProductPromotionUpserted::class],
         ProductPromotionDeleted::class => [AuditProductPromotionDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cashback (Delivery Fase 5)
-        |--------------------------------------------------------------------------
-        */
-        CashbackCredited::class => [AuditCashbackCredited::class, SendPushOnCashbackCredited::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Régua de reativação de cliente (roadmap A5, item 18)
-        |--------------------------------------------------------------------------
-        */
-        ReactivationRuleUpdated::class => [AuditReactivationRuleUpdated::class],
-        ReactivationDispatched::class => [AuditReactivationDispatched::class, SendPushOnReactivationDispatched::class],
 
         /*
         |--------------------------------------------------------------------------

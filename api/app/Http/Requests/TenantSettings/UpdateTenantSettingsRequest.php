@@ -43,15 +43,6 @@ class UpdateTenantSettingsRequest extends FormRequest
             'block_order_without_stock' => ['required', 'boolean'],
             'minimum_order_value' => ['nullable', 'numeric', 'min:0'],
             'estimated_preparation_minutes' => ['nullable', 'integer', 'min:1'],
-            'cashback_enabled' => ['nullable', 'boolean'],
-            // required_if evita cashback "ligado" sem percentual, que
-            // creditaria R$0 silenciosamente (auditoria 2026-07-24).
-            'cashback_percentage' => ['nullable', 'required_if:cashback_enabled,true', 'numeric', 'min:0', 'max:100'],
-            'cashback_max_per_order' => ['nullable', 'numeric', 'min:0'],
-            'cashback_hold_days' => ['nullable', 'integer', 'min:0'],
-            'cashback_expiration_days' => ['nullable', 'integer', 'min:1'],
-            'cashback_redeem_max_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'cashback_name' => ['nullable', 'string', 'max:60'],
             'accepted_payment_methods' => ['nullable', 'array'],
             'accepted_payment_methods.*' => ['string', 'in:cash,pix,credit_card,debit_card'],
             'payment_receiving_method' => ['nullable', 'string', 'in:manual,pix_key'],
@@ -60,13 +51,6 @@ class UpdateTenantSettingsRequest extends FormRequest
             'allow_delivery' => ['nullable', 'boolean'],
             'storefront_enabled' => ['nullable', 'boolean'],
             'catalog_layout' => ['nullable', 'string', 'in:grid,list'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'cashback_percentage.required_if' => __('messages.tenant_settings.cashback_percentage_required'),
         ];
     }
 }

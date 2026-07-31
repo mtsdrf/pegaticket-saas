@@ -3,7 +3,6 @@
 namespace Tests\Feature\Reports;
 
 use App\Models\Client\Client;
-use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -17,8 +16,6 @@ use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductType;
 use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
-use App\Models\Storefront\CashbackEarning;
-use App\Models\Storefront\CashbackRedemption;
 use App\Models\Storefront\Coupon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -635,71 +632,6 @@ class AnalyticsTest extends TestCase
         $response->assertJsonPath('data.total_revenue', '0.00')
             ->assertJsonPath('data.gross_margin_percentage', 0)
             ->assertJsonPath('data.coverage_percentage', 0);
-    }
-
-    #[Test]
-    public function cashback_liability_sums_outstanding_earned_and_confirmed_redeemed(): void
-    {
-        $this->grantPermission('analytics', 'read');
-        $client = $this->createClientWithLocation();
-        $location = $this->createLocation();
-        $order = $this->createOrder($client, $location);
-        $customer = $this->createFinalCustomer();
-
-        $earning = CashbackEarning::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'final_customer_id' => $customer->id,
-            'order_id' => $order->id,
-            'amount' => 100,
-            'remaining_amount' => 40,
-            'status' => 'available',
-            'available_at' => now(),
-            'expires_at' => now()->addMonths(6),
-        ]);
-
-        CashbackRedemption::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'final_customer_id' => $customer->id,
-            'order_id' => $order->id,
-            'cashback_earning_id' => $earning->id,
-            'amount' => 60,
-            'redeemed_at' => now(),
-        ]);
-
-        // Resgate reservado (order_id null) não conta como confirmado.
-        CashbackRedemption::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'final_customer_id' => $customer->id,
-            'order_id' => null,
-            'cashback_earning_id' => $earning->id,
-            'amount' => 999,
-            'redeemed_at' => now(),
-        ]);
-
-        $response = $this->auth()
-            ->getJson('/api/v1/reports/analytics/cashback-liability')
-            ->assertStatus(200);
-
-        $response->assertJsonPath('data.outstanding_balance', '40.00')
-            ->assertJsonPath('data.total_earned_all_time', '100.00')
-            ->assertJsonPath('data.total_redeemed_all_time', '60.00')
-            ->assertJsonPath('data.redemption_rate_percentage', 60);
-    }
-
-    #[Test]
-    public function cashback_liability_returns_zeroes_without_data(): void
-    {
-        $this->grantPermission('analytics', 'read');
-
-        $response = $this->auth()
-            ->getJson('/api/v1/reports/analytics/cashback-liability')
-            ->assertStatus(200);
-
-        $response->assertJsonPath('data.outstanding_balance', '0.00')
-            ->assertJsonPath('data.redemption_rate_percentage', 0);
     }
 
     #[Test]

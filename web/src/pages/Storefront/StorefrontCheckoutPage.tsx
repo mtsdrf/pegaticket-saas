@@ -25,7 +25,6 @@ import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelem
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
-import * as cashbackService from '../../services/cashbackService'
 import { getOrderTracking } from '../../services/orderTrackingService'
 import * as portalAddressService from '../../services/portalAddressService'
 import * as portalOrderService from '../../services/portalOrderService'
@@ -35,7 +34,6 @@ import * as storefrontService from '../../services/storefrontService'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
-import type { CashbackBalance } from '../../types/cashback'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
 import type { OrderPayment } from '../../types/order'
 import {
@@ -316,9 +314,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const [appliedDiscount, setAppliedDiscount] = useState(0)
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null)
 
-  const [cashbackBalance, setCashbackBalance] = useState<CashbackBalance | null>(null)
-  const [useCashback, setUseCashback] = useState(false)
-
   // Checkout Pix (roadmap Fase B, item 1) — só oferecido se a loja aceita
   // Pix (`tenant_settings.accepted_payment_methods`). Escolha é só local:
   // o backend de checkout não recebe forma de pagamento, a cobrança Pix é
@@ -373,22 +368,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             setFulfillmentType('delivery')
           }
         }
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [slug])
-
-  // Saldo de cashback (Delivery Fase 5) — cliente já identificado nesta
-  // etapa (OTP), busca uma vez ao montar. Falha silenciosa: cashback é um
-  // extra, nunca deve travar o checkout se a consulta falhar.
-  useEffect(() => {
-    let cancelled = false
-    cashbackService
-      .getCashbackBalance(slug)
-      .then((balance) => {
-        if (!cancelled) setCashbackBalance(balance)
       })
       .catch(() => undefined)
     return () => {
@@ -717,7 +696,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           }
         : {}),
       coupon_code: appliedCouponCode ?? undefined,
-      use_cashback: useCashback || undefined,
       payment_method: intendedPaymentMethod || undefined,
       needs_change: (intendedPaymentMethod === 'cash' && needsChange) || undefined,
       change_for_amount:
@@ -778,24 +756,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       }
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  // Preview client-side — o backend recalcula tudo com autoridade
-  // (CashbackService::reserveRedemption()/creditEarning()), isto é só pra
-  // dar expectativa correta ao cliente antes de confirmar.
-  const subtotalAfterCoupon = Math.max(0, totalAmount - (couponStatus === 'applied' ? appliedDiscount : 0))
-  const maxRedeemable = cashbackBalance
-    ? Math.min(cashbackBalance.available_amount, subtotalAfterCoupon * ((cashbackBalance.redeem_max_percentage ?? 0) / 100))
-    : 0
-  const cashbackRedeemAmount = useCashback ? maxRedeemable : 0
-  const netBaseForEarn = Math.max(0, subtotalAfterCoupon - cashbackRedeemAmount)
-  const cashbackLabel = cashbackBalance?.program_name ?? 'Cashback'
-  let previewEarnAmount = 0
-  if (cashbackBalance?.enabled && cashbackBalance.earn_percentage !== null) {
-    previewEarnAmount = netBaseForEarn * (cashbackBalance.earn_percentage / 100)
-    if (cashbackBalance.earn_max_per_order !== null) {
-      previewEarnAmount = Math.min(previewEarnAmount, cashbackBalance.earn_max_per_order)
     }
   }
 
@@ -973,25 +933,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         )}
       </Paper>
 
-      {cashbackBalance?.enabled && cashbackBalance.available_amount > 0 && (
-        <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}>{cashbackLabel}</Typography>
-          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-            Você tem {formatCurrency(cashbackBalance.available_amount)} em {cashbackLabel} disponível.
-          </Typography>
-          <FormControlLabel
-            control={<Checkbox checked={useCashback} onChange={(event) => setUseCashback(event.target.checked)} />}
-            label={`Usar ${cashbackLabel} nesta compra (-${formatCurrency(maxRedeemable)})`}
-          />
-        </Paper>
-      )}
-
-      {previewEarnAmount > 0 && (
-        <Alert severity="info" variant="outlined" sx={{ mb: 2.5 }}>
-          Você vai ganhar até {formatCurrency(previewEarnAmount)} em {cashbackLabel} nesta compra.
-        </Alert>
-      )}
-
       {acceptedPaymentMethods.length > 0 && (
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}>Forma de pagamento</Typography>
@@ -1089,12 +1030,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>-{formatCurrency(appliedDiscount)}</Typography>
             </Stack>
           )}
-          {cashbackRedeemAmount > 0 && (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{cashbackLabel} usado</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>-{formatCurrency(cashbackRedeemAmount)}</Typography>
-            </Stack>
-          )}
           <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 0.5 }}>
             <Typography sx={{ fontWeight: 700 }}>Total</Typography>
             <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
@@ -1105,8 +1040,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
                     (fulfillmentType === 'delivery' && deliveryFeeStatus === 'available' && deliveryFee !== null
                       ? deliveryFee
                       : 0) -
-                    (couponStatus === 'applied' ? appliedDiscount : 0) -
-                    cashbackRedeemAmount,
+                    (couponStatus === 'applied' ? appliedDiscount : 0),
                 ),
               )}
             </Typography>

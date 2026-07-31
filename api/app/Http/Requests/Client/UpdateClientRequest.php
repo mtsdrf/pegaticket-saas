@@ -27,21 +27,6 @@ class UpdateClientRequest extends FormRequest
             'is_trusted' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
 
-            'dia_ideal_uuid' => [
-                'sometimes',
-                'uuid',
-                Rule::exists('dia_ideais', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-            'periodo_ideal_uuid' => [
-                'sometimes',
-                'uuid',
-                Rule::exists('periodo_ideais', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-
             // Endereço: só validado se algum campo vier no request (update parcial).
             'logradouro' => ['sometimes', 'string', 'max:255'],
             'numero' => ['nullable', 'string', 'max:20'],
@@ -70,8 +55,6 @@ class UpdateClientRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'dia_ideal_uuid.exists' => __('messages.client.invalid_dia_ideal'),
-            'periodo_ideal_uuid.exists' => __('messages.client.invalid_periodo_ideal'),
             'estado_uuid.exists' => __('messages.endereco.invalid_estado'),
             'cidade_uuid.exists' => __('messages.endereco.invalid_cidade'),
             'bairro_uuid.exists' => __('messages.endereco.invalid_bairro'),

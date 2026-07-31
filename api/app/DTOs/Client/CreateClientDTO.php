@@ -14,8 +14,6 @@ class CreateClientDTO
         public readonly ?string $notes,
         public readonly bool $isTrusted,
         public readonly bool $isActive,
-        public readonly ?string $diaIdealUuid,
-        public readonly ?string $periodoIdealUuid,
         // Endereço criado inline (sem tela de endereço separada, replicando o legado).
         public readonly string $estadoUuid,
         public readonly string $cidadeUuid,
@@ -52,8 +50,6 @@ class CreateClientDTO
             notes: $data['notes'] ?? null,
             isTrusted: $data['is_trusted'] ?? true,
             isActive: $data['is_active'] ?? true,
-            diaIdealUuid: $data['dia_ideal_uuid'] ?? null,
-            periodoIdealUuid: $data['periodo_ideal_uuid'] ?? null,
             estadoUuid: $data['estado_uuid'],
             cidadeUuid: $data['cidade_uuid'],
             bairroUuid: $data['bairro_uuid'],

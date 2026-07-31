@@ -5,7 +5,7 @@ import type { TenantSettings } from '../../../types/tenantSettings'
 
 /**
  * Carrega `GET /tenant-settings` uma vez — compartilhado pelos blocos
- * "Pedidos e Operação", "Pagamento" e "Cashback e Fidelidade" (todos
+ * "Pedidos e Operação" e "Pagamento" (todos
  * derivados do mesmo endpoint singleton, cada um editando só o próprio
  * subconjunto de campos). Cada bloco chama `updateTenantSettings` enviando
  * o objeto carregado aqui com só os campos dele sobrescritos — preserva os

@@ -31,7 +31,7 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
     featureHighlights: [
       'Tudo do plano Prata',
       'Disponibilidade e reserva de estoque no fluxo de pedidos',
-      'Cashback e fidelidade',
+      'Campanhas e relacionamento',
       'Analytics avançado',
       'Planejamento de rotas de entrega',
     ],

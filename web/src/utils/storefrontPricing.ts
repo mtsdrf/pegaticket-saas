@@ -10,7 +10,7 @@ export interface UnitPricingInput {
  * Preço unitário efetivo (roadmap Loja): promoção sempre vence; senão atacado
  * quando `quantity >= wholesale_min_quantity`; senão o preço base. O carrinho
  * não conhece a categoria de cliente antes do login — o backend recalcula com
- * autoridade no checkout (mesmo espírito do preview de cashback).
+ * autoridade no checkout antes de criar o pedido.
  */
 export function computeUnitPrice(input: UnitPricingInput, quantity: number): number {
   if (input.promo_price !== null) {

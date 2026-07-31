@@ -59,7 +59,6 @@ use App\Repositories\Contracts\{
     CartEventRepositoryInterface,
     UserPinRepositoryInterface,
     SupportTicketRepositoryInterface,
-    ReactivationRuleRepositoryInterface,
     TenantFeatureOverrideRepositoryInterface,
     IdempotencyRepositoryInterface,
     RefundRepositoryInterface,
@@ -115,7 +114,6 @@ use App\Repositories\Eloquent\{
     CartEventRepository,
     UserPinRepository,
     SupportTicketRepository,
-    ReactivationRuleRepository,
     TenantFeatureOverrideRepository,
     IdempotencyRepository,
     RefundRepository,
@@ -504,12 +502,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             SupportTicketRepositoryInterface::class,
             SupportTicketRepository::class
-        );
-
-        // Régua de reativação de cliente (roadmap A5, item 18)
-        $this->app->bind(
-            ReactivationRuleRepositoryInterface::class,
-            ReactivationRuleRepository::class
         );
 
         // Feature flag por tenant individual (roadmap A5, item 19)

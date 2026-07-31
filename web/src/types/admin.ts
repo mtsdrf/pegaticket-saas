@@ -235,8 +235,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   cidades: CRUD_ACTION_OPTIONS,
   bairros: CRUD_ACTION_OPTIONS,
   enderecos: CRUD_ACTION_OPTIONS,
-  dias_ideais: CRUD_ACTION_OPTIONS,
-  periodos_ideais: CRUD_ACTION_OPTIONS,
   clients: CRUD_ACTION_OPTIONS,
   products: CRUD_ACTION_OPTIONS,
   stock_locations: CRUD_ACTION_OPTIONS,
@@ -250,9 +248,7 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   tenant_settings: ['read', 'update'],
   'tenant-profile': ['read', 'update', 'export'],
   storefront: ['read', 'update'],
-  cashback: ['read'],
   subscription: ['read', 'update'],
-  reactivation: ['read', 'update'],
   stock: [
     'read',
     'create',

@@ -38,14 +38,6 @@ class ClientResource extends JsonResource
                 'lng' => $this->endereco->lng !== null ? (float) $this->endereco->lng : null,
                 'geocode_status' => $this->endereco->geocode_status,
             ] : null,
-            'dia_ideal' => $this->whenLoaded('diaIdeal', fn() => $this->diaIdeal ? [
-                'uuid' => $this->diaIdeal->uuid,
-                'name' => $this->diaIdeal->name,
-            ] : null),
-            'periodo_ideal' => $this->whenLoaded('periodoIdeal', fn() => $this->periodoIdeal ? [
-                'uuid' => $this->periodoIdeal->uuid,
-                'name' => $this->periodoIdeal->name,
-            ] : null),
             'categories' => $this->whenLoaded('categories', fn() => $this->categories->map(fn($category) => [
                 'uuid' => $category->uuid,
                 'name' => $category->name,

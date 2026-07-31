@@ -65,23 +65,6 @@ trait CreatesStorefrontFixtures
         ]);
     }
 
-    protected function cashbackFunctionalityId(): int
-    {
-        $existing = DB::table('functionalities')->where('slug', 'cashback')->value('id');
-
-        if ($existing) {
-            return $existing;
-        }
-
-        return DB::table('functionalities')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Cashback',
-            'slug' => 'cashback',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
     protected function balcaoFunctionalityId(): int
     {
         $existing = DB::table('functionalities')->where('slug', 'balcao')->value('id');
@@ -94,18 +77,6 @@ trait CreatesStorefrontFixtures
             'uuid' => (string) Str::uuid(),
             'name' => 'Balcão',
             'slug' => 'balcao',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    /** Plano de teste não ganha 'cashback' por padrão (só quem chama isso). */
-    protected function grantCashbackFunctionality(Tenant $tenant): void
-    {
-        DB::table('plan_functionalities')->insert([
-            'uuid' => (string) Str::uuid(),
-            'plan_id' => $tenant->plan_id,
-            'functionality_id' => $this->cashbackFunctionalityId(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

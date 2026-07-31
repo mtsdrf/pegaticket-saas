@@ -8,12 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Primeiro Schedule::command() do projeto (roadmap Delivery, Fase 5) — só
-// tem efeito se o cron do servidor rodar `php artisan schedule:run` a cada
-// minuto (padrão Laravel). Confirmar/configurar isso no ambiente de
-// produção/staging é responsabilidade do deploy manual via SSH.
-Schedule::command('cashback:process')->daily();
-
 // Backup diário do banco (roadmap 1A — endurecimento de produção). Mesma
 // dependência do cron `schedule:run` acima. Ver BackupDatabaseCommand.
 Schedule::command('backup:database')->daily();
@@ -47,10 +41,6 @@ Schedule::command('subscriptions:reconcile-mercadopago --limit=100')->hourly();
 // contra o Mercado Pago antes que um retry manual do usuário possa gerar
 // uma cobrança/assinatura duplicada.
 Schedule::command('payments:reconcile-idempotency --limit=100')->everyFiveMinutes();
-
-// Régua de reativação de cliente (roadmap A5, item 18) — mesma dependência
-// do cron `schedule:run` acima.
-Schedule::command('reactivation:process')->daily();
 
 // iFood: a documentação pública recomenda polling frequente; em infra
 // simples garantimos pelo menos 1 varredura por minuto via scheduler.

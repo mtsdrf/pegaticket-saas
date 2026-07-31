@@ -14,11 +14,6 @@ export interface ClientEndereco {
   lng: number | null
 }
 
-export interface ClientIdealRef {
-  uuid: string
-  name: string
-}
-
 export interface Client {
   uuid: string
   name: string
@@ -32,8 +27,6 @@ export interface Client {
   is_trusted: boolean
   is_active: boolean
   endereco: ClientEndereco
-  dia_ideal: ClientIdealRef | null
-  periodo_ideal: ClientIdealRef | null
   created_at: string
 }
 
@@ -49,8 +42,6 @@ export interface ClientPayload {
   notes?: string
   is_trusted?: boolean
   is_active?: boolean
-  dia_ideal_uuid?: string
-  periodo_ideal_uuid?: string
   logradouro: string
   numero?: string
   complemento?: string
@@ -71,8 +62,6 @@ export interface ClientFilters {
   cidade_name?: string
   cidade_uuid?: string
   bairro_uuid?: string
-  dia_ideal_uuid?: string
-  periodo_ideal_uuid?: string
   is_trusted?: boolean
   is_active?: boolean
   sort_by?: string
@@ -91,18 +80,4 @@ export interface PaginationMeta {
 export interface ClientListResult {
   clients: Client[]
   pagination: PaginationMeta
-}
-
-export interface DiaIdeal {
-  uuid: string
-  name: string
-  is_active: boolean
-  created_at: string
-}
-
-export interface PeriodoIdeal {
-  uuid: string
-  name: string
-  is_active: boolean
-  created_at: string
 }

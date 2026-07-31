@@ -30,7 +30,6 @@ class CreateOrderDTO
         public readonly float $serviceFee = 0.0,
         public readonly ?int $couponId = null,
         public readonly float $discountAmount = 0.0,
-        public readonly float $cashbackRedeemedAmount = 0.0,
         // Retirada na loja (roadmap Delivery) — 'delivery'|'pickup', persistido
         // no pedido. default 'delivery' preserva 100% o fluxo staff existente
         // (sem conceito de retirada/entrega antes desta feature).
@@ -68,7 +67,6 @@ class CreateOrderDTO
             serviceFee: (float) ($data['service_fee'] ?? 0.0),
             couponId: isset($data['coupon_id']) ? (int) $data['coupon_id'] : null,
             discountAmount: (float) ($data['discount_amount'] ?? 0.0),
-            cashbackRedeemedAmount: (float) ($data['cashback_redeemed_amount'] ?? 0.0),
             fulfillmentType: $data['fulfillment_type'] ?? 'delivery',
             paymentMethod: $data['payment_method'] ?? null,
             needsChange: (bool) ($data['needs_change'] ?? false),

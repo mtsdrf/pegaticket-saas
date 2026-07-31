@@ -16,8 +16,6 @@ class UpdateClientDTO
         public readonly ?string $notes,
         public readonly ?bool $isTrusted,
         public readonly ?bool $isActive,
-        public readonly ?string $diaIdealUuid,
-        public readonly ?string $periodoIdealUuid,
         // Campos de endereço inline: só preenchidos quando o request realmente
         // pede alteração do endereço vinculado (delega para EnderecoService::update).
         public readonly ?string $estadoUuid,
@@ -44,8 +42,6 @@ class UpdateClientDTO
             notes: $data['notes'] ?? null,
             isTrusted: $data['is_trusted'] ?? null,
             isActive: $data['is_active'] ?? null,
-            diaIdealUuid: $data['dia_ideal_uuid'] ?? null,
-            periodoIdealUuid: $data['periodo_ideal_uuid'] ?? null,
             estadoUuid: $data['estado_uuid'] ?? null,
             cidadeUuid: $data['cidade_uuid'] ?? null,
             bairroUuid: $data['bairro_uuid'] ?? null,

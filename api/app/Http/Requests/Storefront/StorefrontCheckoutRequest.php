@@ -121,12 +121,6 @@ class StorefrontCheckoutRequest extends FormRequest
             // (o valor que o cliente vai entregar em espécie).
             'needs_change' => ['nullable', 'boolean'],
             'change_for_amount' => ['nullable', 'numeric', 'min:0', 'required_if:needs_change,true'],
-
-            // Cashback (roadmap Delivery, Fase 5) — só um booleano: usa o
-            // teto elegível calculado no servidor ou não. Valor efetivo é
-            // sempre recalculado por CashbackService::reserveRedemption()
-            // contra o saldo real, nunca confia num valor vindo do request.
-            'use_cashback' => ['nullable', 'boolean'],
         ];
     }
 
