@@ -67,7 +67,8 @@ function buildPayload(sessionId: string, eventType: CartTelemetryEventType, item
     session_id: sessionId,
     event_type: eventType,
     items: items.map((item) => ({
-      product_uuid: item.product_uuid,
+      ticket_type_uuid: item.ticket_type_uuid,
+      event_product_uuid: item.event_product_uuid,
       name: item.name,
       quantity: item.quantity,
       unit_price: item.unit_price,

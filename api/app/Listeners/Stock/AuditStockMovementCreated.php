@@ -20,7 +20,7 @@ class AuditStockMovementCreated
             meta: [
                 'stock_movement_uuid' => $event->stockMovementUuid,
                 'type' => $event->type,
-                'product_uuid' => $event->productUuid,
+                'ticket_type_uuid' => $event->ticketTypeUuid,
                 'location_uuid' => $event->locationUuid,
                 'quantity' => $event->quantity,
             ],

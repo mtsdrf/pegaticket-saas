@@ -91,11 +91,13 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     kind: 'group',
-    label: 'Produto',
+    label: 'Eventos',
     icon: Inventory2OutlinedIcon,
     children: [
-      { to: '/produtos/categorias', label: 'Categorias de produto', access: ACCESS.productCategoriesRead },
-      { to: '/produtos', label: 'Produtos', exact: true, access: ACCESS.productsRead },
+      { to: '/eventos/categorias', label: 'Categorias de evento', access: ACCESS.eventCategoriesRead },
+      { to: '/eventos', label: 'Eventos', exact: true, access: ACCESS.eventsRead },
+      { to: '/tipos-de-ingresso', label: 'Tipos de ingresso', access: ACCESS.ticketTypesRead },
+      { to: '/adicionais', label: 'Adicionais', access: ACCESS.eventProductsRead },
     ],
   },
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },

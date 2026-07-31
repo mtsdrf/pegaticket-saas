@@ -6,9 +6,9 @@ import type {
   StorefrontCategory,
   StorefrontCheckoutItemPayload,
   StorefrontCouponValidationResult,
-  StorefrontListResult,
-  StorefrontProduct,
-  StorefrontProductFilters,
+  StorefrontEvent,
+  StorefrontEventFilters,
+  StorefrontEventListResult,
   StorefrontTenant,
 } from '../types/storefront'
 
@@ -42,23 +42,17 @@ export function getStorefrontDeliveryFee(slug: string, bairroUuid: string): Prom
  * `crudService.ts`, que está acoplado ao `apiClient` de staff) — mesmo
  * formato de `meta.pagination` do resto da API.
  */
-export function listStorefrontProducts(slug: string, filters: StorefrontProductFilters): Promise<StorefrontListResult> {
-  // `publicApiClient` não tem o interceptor de normalização boolean->1/0 de
-  // `apiClient` (ver comentário em `apiClient.ts`) — resolve aqui, no único
-  // filtro boolean deste endpoint, em vez de duplicar o interceptor.
-  const { on_promotion, ...rest } = filters
-  const params = { ...rest, ...(on_promotion ? { on_promotion: 1 } : {}) }
-
+export function listStorefrontEvents(slug: string, filters: StorefrontEventFilters): Promise<StorefrontEventListResult> {
   // Delivery Fase 4 — rota pública, NUNCA exige login (não usar
   // `portalApiClient` aqui, que redireciona em 401). Quando o cliente final
   // já tem um token do portal salvo (mesmo usado no checkout), anexa o
-  // Bearer manualmente só para o backend marcar `is_favorited` por produto;
+  // Bearer manualmente só para o backend marcar `is_favorited` por evento;
   // sem token, a chamada segue idêntica a antes.
   const token = getPortalAccessToken()
 
   return publicApiClient
-    .get<ApiSuccess<StorefrontProduct[]>>(`/loja/${slug}/produtos`, {
-      params,
+    .get<ApiSuccess<StorefrontEvent[]>>(`/loja/${slug}/eventos`, {
+      params: filters,
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
     .then((response) => {
@@ -73,6 +67,16 @@ export function listStorefrontProducts(slug: string, filters: StorefrontProductF
         },
       }
     })
+}
+
+/** `GET /loja/{slug}/eventos/{eventSlug}` — detalhe público, com `ticket_types`/`event_products` aninhados. */
+export function getStorefrontEvent(slug: string, eventSlug: string): Promise<StorefrontEvent> {
+  const token = getPortalAccessToken()
+  return publicApiClient
+    .get<ApiSuccess<StorefrontEvent>>(`/loja/${slug}/eventos/${eventSlug}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    .then((response) => response.data.data)
 }
 
 /**

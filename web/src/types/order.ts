@@ -1,7 +1,7 @@
 import type { PaginationMeta } from './pagination'
 
 /** Bloco de endereço aditivo do `OrderResource` (roadmap Loja) — presente no detalhe do pedido da loja e na tela pública de preparo. */
-export interface OrderClientAddress {
+export interface OrderFinalCustomerAddress {
   logradouro: string | null
   numero: string | null
   complemento: string | null
@@ -10,14 +10,15 @@ export interface OrderClientAddress {
   cidade_name: string | null
 }
 
-export interface OrderClientRef {
+/** `final_customer` do `OrderResource`/`OrderListResource` — comprador (`FinalCustomer`), não mais `Client` (CRUD descontinuado, migração 2026-07-31). */
+export interface OrderFinalCustomerRef {
   uuid: string
   name: string
   /** Sobrenome informado no checkout da loja — `null`/ausente para pedidos staff/sem informação. */
   last_name?: string | null
   /** Aditivos do `OrderResource` (roadmap Loja) — só presentes quando o pedido é carregado com o detalhe completo. */
   phone_primary?: string | null
-  endereco?: OrderClientAddress | null
+  endereco?: OrderFinalCustomerAddress | null
 }
 
 export interface OrderStockLocationRef {
@@ -25,29 +26,22 @@ export interface OrderStockLocationRef {
   name: string
 }
 
+/** Espelha `items[]` de `OrderResource` — exatamente um de `ticket_type`/`event_product` vem não-nulo por item. */
 export interface OrderItem {
   uuid: string
-  product: {
+  ticket_type: {
     uuid: string
     name: string
     unit: string | null
-  }
+  } | null
+  event_product: {
+    uuid: string
+    name: string
+  } | null
   quantity: number
   unit_price: number
   line_total: number
-  options_total?: number
-  options?: Array<{
-    uuid: string
-    quantity: number
-    unit_price: number
-    line_total: number
-    product_option: {
-      uuid: string
-      name: string
-      description: string | null
-      group_name: string | null
-    }
-  }>
+  notes: string | null
 }
 
 export interface OrderInstallment {
@@ -102,7 +96,7 @@ export interface Order {
   /** "Saiu para entrega" (tela dedicada de gestão de pedidos da loja) — etapa opcional entre aprovado e entregue. */
   is_out_for_delivery: boolean
   out_for_delivery_at: string | null
-  client?: OrderClientRef
+  final_customer?: OrderFinalCustomerRef
   stock_location?: OrderStockLocationRef | null
   items?: OrderItem[]
   installments?: OrderInstallment[]
@@ -129,19 +123,19 @@ export interface OrderFilters {
   page?: number
 }
 
+/** Exatamente um de `ticket_type_uuid`/`event_product_uuid` por item — nunca os dois nem nenhum. */
 export interface OrderCreateItemPayload {
-  product_uuid: string
+  ticket_type_uuid?: string
+  event_product_uuid?: string
   quantity: number
-  /** Preço praticado do item — sobrepõe `Product.price` quando enviado. Omitido = usa o preço de tabela. */
+  /** Preço praticado do item — sobrepõe o preço de tabela quando enviado. Omitido = usa o preço de tabela. */
   unit_price?: number
-  options?: Array<{
-    product_option_uuid: string
-    quantity?: number
-  }>
+  /** Observação por item, até 200 caracteres. */
+  notes?: string
 }
 
 export interface OrderPayload {
-  client_uuid: string
+  final_customer_uuid: string
   stock_location_uuid?: string
   is_installment: boolean
   installments_count?: number | null
@@ -185,14 +179,12 @@ export interface OrderInstallmentsReallocatePayload {
  */
 export interface OrderUpdateItemDraft {
   uuid?: string
-  product_uuid: string
+  ticket_type_uuid?: string
+  event_product_uuid?: string
   quantity: number
-  /** Omitido em item existente sem troca de produto = preserva o preço já gravado; em item novo/trocado, cai na resolução automática do backend. */
+  /** Omitido em item existente sem troca de ingresso/produto = preserva o preço já gravado; em item novo/trocado, cai na resolução automática do backend. */
   unit_price?: number
-  options?: Array<{
-    product_option_uuid: string
-    quantity?: number
-  }>
+  notes?: string
 }
 
 export interface OrderUpdateItemsPayload {

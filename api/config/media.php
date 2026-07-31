@@ -16,13 +16,21 @@ return [
             'MEDIA_AVATARS_DISK',
             env('R2_ENABLED', false) ? 'r2_avatars' : 'public'
         ),
-        'product' => env(
-            'MEDIA_PRODUCTS_DISK',
-            env('R2_ENABLED', false) ? 'r2_products' : 'public'
+        'ticket_type' => env(
+            'MEDIA_TICKET_TYPES_DISK',
+            env('R2_ENABLED', false) ? 'r2_ticket_types' : 'public'
+        ),
+        'event' => env(
+            'MEDIA_EVENTS_DISK',
+            env('R2_ENABLED', false) ? 'r2_events' : 'public'
         ),
         'tenant' => env(
             'MEDIA_TENANTS_DISK',
             env('R2_ENABLED', false) ? 'r2_tenants' : 'public'
+        ),
+        'venue' => env(
+            'MEDIA_VENUES_DISK',
+            env('R2_ENABLED', false) ? 'r2_venues' : 'public'
         ),
     ],
 

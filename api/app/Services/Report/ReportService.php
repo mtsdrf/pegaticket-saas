@@ -86,14 +86,14 @@ class ReportService
             'orders_by_city' => $this->ordersByCity($tenantId, $dateFrom, $dateTo),
             'orders_by_neighborhood' => $this->ordersByNeighborhood($tenantId, $dateFrom, $dateTo),
             'seasonality_matrix' => $this->seasonalityMatrix($tenantId),
-            'top_products' => $this->topProducts($tenantId, $dateFrom, $dateTo),
+            'top_ticket_types' => $this->topTicketTypes($tenantId, $dateFrom, $dateTo),
             'top_clients' => $this->topClients($tenantId, $dateFrom, $dateTo),
             'rfm_clients' => $this->rfmClients($tenantId, $dateFrom, $dateTo),
             'late_payment_clients' => $this->latePaymentClients($tenantId, $dateFrom, $dateTo),
             'overdue_orders' => $this->overdueOrders($tenantId),
             'receivables_aging' => $this->receivablesAging($tenantId),
             'receivables_forecast_by_month' => $this->receivablesForecastByMonth($tenantId),
-            'abc_products' => $this->abcProducts($tenantId, $dateFrom, $dateTo),
+            'abc_ticket_types' => $this->abcTicketTypes($tenantId, $dateFrom, $dateTo),
             'abc_clients' => $this->abcClients($tenantId, $dateFrom, $dateTo),
         ];
     }
@@ -406,8 +406,11 @@ class ReportService
     private function ordersByCity(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         return DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
-            ->join('enderecos', 'enderecos.id', '=', 'clients.endereco_id')
+            ->join('final_customer_tenant_links', function ($join) {
+                $join->on('final_customer_tenant_links.final_customer_id', '=', 'orders.final_customer_id')
+                    ->on('final_customer_tenant_links.tenant_id', '=', 'orders.tenant_id');
+            })
+            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
             ->join('cidades', 'cidades.id', '=', 'enderecos.cidade_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
@@ -429,8 +432,11 @@ class ReportService
     private function ordersByNeighborhood(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         return DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
-            ->join('enderecos', 'enderecos.id', '=', 'clients.endereco_id')
+            ->join('final_customer_tenant_links', function ($join) {
+                $join->on('final_customer_tenant_links.final_customer_id', '=', 'orders.final_customer_id')
+                    ->on('final_customer_tenant_links.tenant_id', '=', 'orders.tenant_id');
+            })
+            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
             ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
@@ -488,25 +494,25 @@ class ReportService
         })->values()->all();
     }
 
-    private function topProducts(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
+    private function topTicketTypes(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         return DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
             ->whereNull('order_items.deleted_at')
-            ->whereNull('products.deleted_at')
+            ->whereNull('ticket_types.deleted_at')
             ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('products.id', 'products.name')
-            ->selectRaw('products.name as product_name, SUM(order_items.quantity) as quantity_sold, SUM(order_items.line_total) as revenue')
+            ->groupBy('ticket_types.id', 'ticket_types.name')
+            ->selectRaw('ticket_types.name as ticket_type_name, SUM(order_items.quantity) as quantity_sold, SUM(order_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit)
             ->get()
             ->map(fn($row) => [
-                'product_name' => $row->product_name,
+                'ticket_type_name' => $row->ticket_type_name,
                 'quantity_sold' => (float) $row->quantity_sold,
                 'revenue' => $this->formatMoney((float) $row->revenue),
             ])
@@ -516,15 +522,14 @@ class ReportService
     private function topClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         return DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
-            ->whereNull('clients.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
+                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('clients.id', 'clients.name')
-            ->selectRaw('clients.name as client_name, COUNT(orders.id) as order_count, SUM(orders.total_amount) as total_amount')
+            ->groupBy('final_customers.id', 'final_customers.name')
+            ->selectRaw('final_customers.name as client_name, COUNT(orders.id) as order_count, SUM(orders.total_amount) as total_amount')
             ->orderByDesc('total_amount')
             ->limit($limit)
             ->get()
@@ -539,15 +544,14 @@ class ReportService
     private function rfmClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         $rows = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
-            ->whereNull('clients.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
+                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('clients.id', 'clients.name')
-            ->selectRaw('clients.name as client_name, COUNT(orders.id) as frequency, SUM(orders.total_amount) as monetary, MAX(orders.created_at) as last_order_at')
+            ->groupBy('final_customers.id', 'final_customers.name')
+            ->selectRaw('final_customers.name as client_name, COUNT(orders.id) as frequency, SUM(orders.total_amount) as monetary, MAX(orders.created_at) as last_order_at')
             ->orderByDesc('monetary')
             ->limit($limit)
             ->get();
@@ -572,16 +576,15 @@ class ReportService
     private function latePaymentClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         $rows = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
             ->whereNotNull('orders.delivered_at')
             ->whereNotNull('orders.paid_at')
-            ->whereNull('clients.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
+                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->get(['clients.name as client_name', 'orders.delivered_at', 'orders.paid_at']);
+            ->get(['final_customers.name as client_name', 'orders.delivered_at', 'orders.paid_at']);
 
         return $rows
             ->groupBy('client_name')
@@ -606,7 +609,7 @@ class ReportService
     {
         $installmentRows = DB::table('order_installments')
             ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
@@ -615,7 +618,7 @@ class ReportService
             ->whereDate('order_installments.due_date', '<', now()->toDateString())
             ->select(
                 'orders.uuid as order_uuid',
-                'clients.name as client_name',
+                'final_customers.name as client_name',
                 'order_installments.amount as amount',
                 'order_installments.due_date as due_date'
             )
@@ -630,7 +633,7 @@ class ReportService
             ]);
 
         $orderRows = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
@@ -640,7 +643,7 @@ class ReportService
             ->whereDate('orders.due_date', '<', now()->toDateString())
             ->select(
                 'orders.uuid as order_uuid',
-                'clients.name as client_name',
+                'final_customers.name as client_name',
                 'orders.total_amount as amount',
                 'orders.due_date as due_date'
             )
@@ -770,39 +773,38 @@ class ReportService
         ])->values()->all();
     }
 
-    private function abcProducts(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
+    private function abcTicketTypes(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         $rows = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
             ->whereNull('order_items.deleted_at')
-            ->whereNull('products.deleted_at')
+            ->whereNull('ticket_types.deleted_at')
             ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('products.id', 'products.name')
-            ->selectRaw('products.name as product_name, SUM(order_items.line_total) as revenue')
+            ->groupBy('ticket_types.id', 'ticket_types.name')
+            ->selectRaw('ticket_types.name as ticket_type_name, SUM(order_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->get()
-            ->map(fn($row) => ['product_name' => $row->product_name, 'revenue' => (float) $row->revenue]);
+            ->map(fn($row) => ['ticket_type_name' => $row->ticket_type_name, 'revenue' => (float) $row->revenue]);
 
-        return $this->abcCurve($rows->all(), 'product_name', $limit);
+        return $this->abcCurve($rows->all(), 'ticket_type_name', $limit);
     }
 
     private function abcClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         $rows = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
-            ->whereNull('clients.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
+                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('clients.id', 'clients.name')
-            ->selectRaw('clients.name as client_name, SUM(orders.total_amount) as revenue')
+            ->groupBy('final_customers.id', 'final_customers.name')
+            ->selectRaw('final_customers.name as client_name, SUM(orders.total_amount) as revenue')
             ->orderByDesc('revenue')
             ->get()
             ->map(fn($row) => ['client_name' => $row->client_name, 'revenue' => (float) $row->revenue]);
@@ -966,22 +968,43 @@ class ReportService
         $query = Order::where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->whereNull('cancelled_at')
-            ->with(['client', 'stockLocation']);
+            // finalCustomerLink NÃO entra no with() de propósito — ver
+            // comentário em OrderService::EAGER_RELATIONS (relation
+            // depende de tenant_id da instância real, quebra em eager
+            // load). Endereço/cidade/bairro filtrados abaixo via
+            // whereExists com o $tenantId já conhecido nesta query.
+            ->with(['finalCustomer', 'stockLocation']);
 
         if (!empty($filters['client_uuid'])) {
-            $query->whereHas('client', fn($q) => $q->where('uuid', $filters['client_uuid']));
+            $query->whereHas('finalCustomer', fn($q) => $q->where('uuid', $filters['client_uuid']));
         }
 
         if (!empty($filters['client_name'])) {
-            $query->whereHas('client', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
+            $query->whereHas('finalCustomer', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
         }
 
         if (!empty($filters['cidade_uuid'])) {
-            $query->whereHas('client.endereco.cidade', fn($q) => $q->where('uuid', $filters['cidade_uuid']));
+            $query->whereExists(function ($sub) use ($tenantId, $filters) {
+                $sub->selectRaw('1')
+                    ->from('final_customer_tenant_links')
+                    ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
+                    ->join('cidades', 'cidades.id', '=', 'enderecos.cidade_id')
+                    ->whereColumn('final_customer_tenant_links.final_customer_id', 'orders.final_customer_id')
+                    ->where('final_customer_tenant_links.tenant_id', $tenantId)
+                    ->where('cidades.uuid', $filters['cidade_uuid']);
+            });
         }
 
         if (!empty($filters['bairro_uuid'])) {
-            $query->whereHas('client.endereco.bairro', fn($q) => $q->where('uuid', $filters['bairro_uuid']));
+            $query->whereExists(function ($sub) use ($tenantId, $filters) {
+                $sub->selectRaw('1')
+                    ->from('final_customer_tenant_links')
+                    ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
+                    ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
+                    ->whereColumn('final_customer_tenant_links.final_customer_id', 'orders.final_customer_id')
+                    ->where('final_customer_tenant_links.tenant_id', $tenantId)
+                    ->where('bairros.uuid', $filters['bairro_uuid']);
+            });
         }
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {
@@ -1033,22 +1056,22 @@ class ReportService
     public function cmv(int $tenantId): Collection
     {
         $costSubquery = DB::table('stock_movements')
-            ->select('product_id', DB::raw('SUM(unit_cost * quantity) / SUM(quantity) as weighted_cost'))
+            ->select('ticket_type_id', DB::raw('SUM(unit_cost * quantity) / SUM(quantity) as weighted_cost'))
             ->where('tenant_id', $tenantId)
             ->where('type', 'entry')
             ->whereNotNull('unit_cost')
             ->whereNull('deleted_at')
-            ->groupBy('product_id');
+            ->groupBy('ticket_type_id');
 
-        return DB::table('products')
-            ->leftJoinSub($costSubquery, 'cmv_data', 'cmv_data.product_id', '=', 'products.id')
-            ->where('products.tenant_id', $tenantId)
-            ->whereNull('products.deleted_at')
-            ->orderBy('products.name')
+        return DB::table('ticket_types')
+            ->leftJoinSub($costSubquery, 'cmv_data', 'cmv_data.ticket_type_id', '=', 'ticket_types.id')
+            ->where('ticket_types.tenant_id', $tenantId)
+            ->whereNull('ticket_types.deleted_at')
+            ->orderBy('ticket_types.name')
             ->select([
-                'products.uuid as product_uuid',
-                'products.name as product_name',
-                'products.price as sale_price',
+                'ticket_types.uuid as ticket_type_uuid',
+                'ticket_types.name as ticket_type_name',
+                'ticket_types.price as sale_price',
                 'cmv_data.weighted_cost as cmv',
             ])
             ->get();

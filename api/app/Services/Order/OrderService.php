@@ -24,22 +24,21 @@ use App\Events\Order\OrderCancellationApproved;
 use App\Events\Order\OrderCancellationRejected;
 use App\Exceptions\InvalidOrderStateException;
 use App\Models\BaseModel;
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
 use App\Models\Order\OrderItem;
-use App\Models\Order\OrderItemOption;
 use App\Models\Order\OrderPrepLink;
-use App\Models\Product\Product;
-use App\Models\Product\ProductOption;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockLocation;
 use App\Models\Stock\StockMovement;
 use App\Models\Storefront\CouponRedemption;
 use App\Exceptions\DiscountLimitExceededException;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Services\Permission\PermissionService;
-use App\Services\Product\ProductPricingService;
-use App\Services\Product\ProductService;
+use App\Services\Event\TicketTypeService;
 use App\Services\Stock\StockService;
 use App\Services\Workflow\WorkflowTransitionLogger;
 use App\Support\GridQuery;
@@ -56,14 +55,21 @@ use Illuminate\Support\Str;
  */
 class OrderService
 {
-    public const EAGER_RELATIONS = ['client.endereco.cidade', 'client.endereco.bairro', 'stockLocation', 'items.product', 'items.options.productOption.group', 'installments', 'coupon', 'rating'];
-    public const LIST_EAGER_RELATIONS = ['client'];
+    // finalCustomerLink NÃO entra aqui de propósito: a relation depende de
+    // $this->tenant_id do PRÓPRIO Order (ver Order::finalCustomerLink()),
+    // que só é correto em acesso LAZY sobre uma instância real já
+    // carregada — com with()/load(), Eloquent constrói a query da relation
+    // a partir de um model "stub" vazio (tenant_id null), o que zeraria o
+    // resultado pra todo pedido. Resources acessam
+    // $order->finalCustomerLink diretamente (lazy, 1 query por pedido),
+    // nunca via este array.
+    public const EAGER_RELATIONS = ['finalCustomer', 'stockLocation', 'items.ticketType', 'items.eventProduct', 'installments', 'coupon', 'rating'];
+    public const LIST_EAGER_RELATIONS = ['finalCustomer'];
 
     public function __construct(
         private OrderRepositoryInterface $repository,
         private StockService $stockService,
         private ParcelaVencimentoCalculator $vencimentoCalculator,
-        private ProductPricingService $pricingService,
         private OrderPaymentService $paymentService,
         private PermissionService $permissionService,
         private WorkflowTransitionLogger $workflowTransitionLogger,
@@ -104,7 +110,7 @@ class OrderService
     ): LengthAwarePaginator
     {
         $sortable = [
-            'client_name' => 'clients.name',
+            'client_name' => 'final_customers.name',
             'total_amount' => 'orders.total_amount',
             'is_installment' => 'orders.is_installment',
             'is_paid' => 'orders.is_paid',
@@ -112,13 +118,13 @@ class OrderService
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
-        $needsClientJoin = $sortColumn === 'clients.name';
+        $needsClientJoin = $sortColumn === 'final_customers.name';
 
         $query = Order::query()
             ->select([
                 'orders.id',
                 'orders.uuid',
-                'orders.client_id',
+                'orders.final_customer_id',
                 'orders.is_installment',
                 'orders.total_amount',
                 'orders.is_paid',
@@ -138,15 +144,15 @@ class OrderService
             ->with(self::LIST_EAGER_RELATIONS);
 
         if ($needsClientJoin) {
-            $query->leftJoin('clients', 'clients.id', '=', 'orders.client_id');
+            $query->leftJoin('final_customers', 'final_customers.id', '=', 'orders.final_customer_id');
         }
 
         if (!empty($filters['client_name'])) {
-            $query->whereHas('client', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
+            $query->whereHas('finalCustomer', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
         }
 
         if (!empty($filters['client_uuid'])) {
-            $query->whereHas('client', fn($q) => $q->where('uuid', $filters['client_uuid']));
+            $query->whereHas('finalCustomer', fn($q) => $q->where('uuid', $filters['client_uuid']));
         }
 
         if (isset($filters['total_amount_min']) && $filters['total_amount_min'] !== '') {
@@ -251,9 +257,14 @@ class OrderService
     public function create(CreateOrderDTO $dto): Order
     {
         return DB::transaction(function () use ($dto) {
-            $client = Client::where('uuid', $dto->clientUuid)
+            // final_customers é GLOBAL (sem tenant_id) — a checagem de
+            // "pertence a este tenant" (antes feita via clients.tenant_id)
+            // passa a ser: existe um FinalCustomerTenantLink confirmando
+            // esse FinalCustomer nesta loja.
+            $client = FinalCustomer::where('uuid', $dto->finalCustomerUuid)->firstOrFail();
+
+            FinalCustomerTenantLink::where('final_customer_id', $client->id)
                 ->where('tenant_id', $dto->tenantId)
-                ->whereNull('deleted_at')
                 ->firstOrFail();
 
             $stockLocation = $dto->stockLocationUuid
@@ -267,13 +278,9 @@ class OrderService
             $totalCents = 0;
 
             foreach ($dto->items as $item) {
-                $product = Product::where('uuid', $item['product_uuid'])
-                    ->where('tenant_id', $dto->tenantId)
-                    ->whereNull('deleted_at')
-                    ->with(['optionGroups.options'])
-                    ->firstOrFail();
+                $sellable = $this->resolveSellable($item, $dto->tenantId);
 
-                $line = $this->resolveOrderItemLine($product, $client, $item, $dto->tenantId);
+                $line = $this->resolveOrderItemLine($sellable, $client, $item);
 
                 $totalCents += $line['line_total_cents'];
                 $lines[] = $line;
@@ -315,7 +322,7 @@ class OrderService
 
             $order = $this->repository->create([
                 'tenant_id' => $dto->tenantId,
-                'client_id' => $client->id,
+                'final_customer_id' => $client->id,
                 'stock_location_id' => $stockLocation->id,
                 'codigo' => $codigo,
                 'is_installment' => $dto->isInstallment,
@@ -342,18 +349,17 @@ class OrderService
                 $orderItem = OrderItem::create([
                     'tenant_id' => $dto->tenantId,
                     'order_id' => $order->id,
-                    'product_id' => $line['product']->id,
+                    'ticket_type_id' => $line['is_ticket_type'] ? $line['sellable']->id : null,
+                    'event_product_id' => $line['is_ticket_type'] ? null : $line['sellable']->id,
                     'quantity' => $line['quantity'],
                     'unit_price' => $this->centsToDecimal($line['unit_price_cents']),
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
                 ]);
 
-                $this->syncOrderItemOptions($orderItem, $line['options']);
-
-                if ($dto->reserveStock) {
+                if ($dto->reserveStock && $line['is_ticket_type']) {
                     $this->stockService->reserve(
-                        product: $line['product'],
+                        ticketType: $line['sellable'],
                         location: $stockLocation,
                         quantity: $line['quantity'],
                         reason: "Reserva do pedido {$order->uuid}",
@@ -415,8 +421,8 @@ class OrderService
 
             $this->assertOrderItemsEditable($order);
 
-            $order->loadMissing('client', 'stockLocation');
-            $client = $order->client;
+            $order->loadMissing('finalCustomer', 'stockLocation');
+            $client = $order->finalCustomer;
 
             $stockLocation = $dto->stockLocationUuid
                 ? StockLocation::where('uuid', $dto->stockLocationUuid)
@@ -457,28 +463,23 @@ class OrderService
                     continue;
                 }
 
-                $product = Product::where('uuid', $item['product_uuid'])
-                    ->where('tenant_id', $order->tenant_id)
-                    ->whereNull('deleted_at')
-                    ->with(['optionGroups.options'])
-                    ->firstOrFail();
-                $line = $this->resolveOrderItemLine($product, $client, $item, $order->tenant_id);
+                $sellable = $this->resolveSellable($item, $order->tenant_id);
+                $line = $this->resolveOrderItemLine($sellable, $client, $item);
 
                 $newItem = OrderItem::create([
                     'tenant_id' => $order->tenant_id,
                     'order_id' => $order->id,
-                    'product_id' => $product->id,
+                    'ticket_type_id' => $line['is_ticket_type'] ? $sellable->id : null,
+                    'event_product_id' => $line['is_ticket_type'] ? null : $sellable->id,
                     'quantity' => $line['quantity'],
                     'unit_price' => $this->centsToDecimal($line['unit_price_cents']),
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
                 ]);
 
-                $this->syncOrderItemOptions($newItem, $line['options']);
-
-                if ($order->stock_reserved) {
+                if ($order->stock_reserved && $line['is_ticket_type']) {
                     $this->stockService->reserve(
-                        product: $product,
+                        ticketType: $sellable,
                         location: $stockLocation,
                         quantity: $line['quantity'],
                         reason: "Atualização de itens do pedido {$order->uuid}",
@@ -497,48 +498,48 @@ class OrderService
                 }
 
                 $existing = $currentItems->get($uuid);
-                $existing->loadMissing('options.productOption.group');
 
-                $product = Product::where('uuid', $item['product_uuid'])
-                    ->where('tenant_id', $order->tenant_id)
-                    ->whereNull('deleted_at')
-                    ->with(['optionGroups.options'])
-                    ->firstOrFail();
+                $sellable = $this->resolveSellable($item, $order->tenant_id);
+                $isTicketType = $sellable instanceof TicketType;
 
-                $line = $this->resolveOrderItemLine($product, $client, $item, $order->tenant_id, $existing);
+                $line = $this->resolveOrderItemLine($sellable, $client, $item, $existing);
                 $quantity = $line['quantity'];
-                $productChanged = (int) $existing->product_id !== (int) $product->id;
+
+                $existingWasTicketType = $existing->ticket_type_id !== null;
+                $sellableChanged = $isTicketType
+                    ? (!$existingWasTicketType || (int) $existing->ticket_type_id !== (int) $sellable->id)
+                    : ($existingWasTicketType || (int) $existing->event_product_id !== (int) $sellable->id);
                 $quantityChanged = abs(round((float) $existing->quantity, 3) - round($quantity, 3)) > 0.0001;
-                $optionsChanged = $this->orderItemOptionsChanged($existing, $line['options']);
 
-                if (($productChanged || $quantityChanged) && $order->stock_reserved) {
-                    $reserveMovement = $this->findReserveMovement($order, $existing);
+                if (($sellableChanged || $quantityChanged) && $order->stock_reserved) {
+                    if ($existingWasTicketType) {
+                        $reserveMovement = $this->findReserveMovement($order, $existing);
 
-                    $this->stockService->reserveCancel(
-                        originalReserve: $reserveMovement,
-                        notes: "Atualização de itens do pedido {$order->uuid}",
-                    );
+                        $this->stockService->reserveCancel(
+                            originalReserve: $reserveMovement,
+                            notes: "Atualização de itens do pedido {$order->uuid}",
+                        );
+                    }
 
-                    $this->stockService->reserve(
-                        product: $product,
-                        location: $stockLocation,
-                        quantity: $quantity,
-                        reason: "Atualização de itens do pedido {$order->uuid}",
-                        sourceType: OrderItem::class,
-                        sourceId: $existing->id,
-                    );
+                    if ($isTicketType) {
+                        $this->stockService->reserve(
+                            ticketType: $sellable,
+                            location: $stockLocation,
+                            quantity: $quantity,
+                            reason: "Atualização de itens do pedido {$order->uuid}",
+                            sourceType: OrderItem::class,
+                            sourceId: $existing->id,
+                        );
+                    }
                 }
 
-                $existing->product_id = $product->id;
+                $existing->ticket_type_id = $isTicketType ? $sellable->id : null;
+                $existing->event_product_id = $isTicketType ? null : $sellable->id;
                 $existing->quantity = $quantity;
                 $existing->unit_price = $this->centsToDecimal($line['unit_price_cents']);
                 $existing->line_total = $this->centsToDecimal($line['line_total_cents']);
                 $existing->notes = $line['notes'];
                 $existing->save();
-
-                if ($productChanged || $quantityChanged || $optionsChanged) {
-                    $this->syncOrderItemOptions($existing, $line['options']);
-                }
             }
 
             // Itens existentes NÃO referenciados no payload: remove.
@@ -547,7 +548,7 @@ class OrderService
                     continue;
                 }
 
-                if ($order->stock_reserved) {
+                if ($order->stock_reserved && $existing->ticket_type_id !== null) {
                     $reserveMovement = $this->findReserveMovement($order, $existing);
 
                     $this->stockService->reserveCancel(
@@ -956,7 +957,7 @@ class OrderService
 
             // select() exclui image_data — ver convertReservationsToExit().
             $order->loadMissing([
-                'items.product' => fn($query) => $query->select(ProductService::listColumns()),
+                'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
                 'stockLocation',
             ]);
 
@@ -964,11 +965,17 @@ class OrderService
             // performDelivery() (ver convertReservationsToExit()), mesmo
             // para pedido com stock_reserved=false — por isso a devolução
             // aqui também é incondicional. Só a liberação de RESERVA (pedido
-            // ainda não entregue) depende de reserva ter existido.
+            // ainda não entregue) depende de reserva ter existido. Itens de
+            // event_product não têm estoque físico (fora do módulo Estoque
+            // nesta rodada) — pulados aqui.
             foreach ($order->items as $item) {
+                if ($item->ticket_type_id === null) {
+                    continue;
+                }
+
                 if ($order->is_delivered) {
                     $this->stockService->returnStock(
-                        product: $item->product,
+                        ticketType: $item->ticketType,
                         location: $order->stockLocation,
                         quantity: (float) $item->quantity,
                         reason: "Cancelamento do pedido {$order->uuid}",
@@ -1068,11 +1075,15 @@ class OrderService
             if ($order->stock_reserved) {
                 // select() exclui image_data — ver convertReservationsToExit().
                 $order->loadMissing([
-                    'items.product' => fn($query) => $query->select(ProductService::listColumns()),
+                    'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
                     'stockLocation',
                 ]);
 
                 foreach ($order->items as $item) {
+                    if ($item->ticket_type_id === null) {
+                        continue;
+                    }
+
                     $reserveMovement = $this->findReserveMovement($order, $item);
 
                     $this->stockService->reserveCancel(
@@ -1391,16 +1402,22 @@ class OrderService
      */
     private function convertReservationsToExit(Order $order): void
     {
-        // select() exclui image_data (BLOB, ~1MB/produto) — sem isso, um
-        // pedido com vários itens de produtos com foto grande pode estourar
-        // memory_limit só pra registrar a saída de estoque, que nunca usa a
-        // imagem. Mesmo padrão de whitelist de ProductService::listColumns().
+        // select() exclui image_data (BLOB, ~1MB/ingresso) — sem isso, um
+        // pedido com vários itens de ticket types com foto grande pode
+        // estourar memory_limit só pra registrar a saída de estoque, que
+        // nunca usa a imagem. Mesmo padrão de whitelist de
+        // TicketTypeService::listColumns(). Itens de event_product não têm
+        // estoque físico (fora do módulo Estoque nesta rodada) — pulados.
         $order->loadMissing([
-            'items.product' => fn($query) => $query->select(ProductService::listColumns()),
+            'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
             'stockLocation',
         ]);
 
         foreach ($order->items as $item) {
+            if ($item->ticket_type_id === null) {
+                continue;
+            }
+
             if ($order->stock_reserved) {
                 $reserveMovement = $this->findReserveMovement($order, $item);
 
@@ -1411,7 +1428,7 @@ class OrderService
             }
 
             $this->stockService->exit(
-                product: $item->product,
+                ticketType: $item->ticketType,
                 location: $order->stockLocation,
                 quantity: (float) $item->quantity,
                 reason: "Entrega do pedido {$order->uuid}",
@@ -1435,13 +1452,17 @@ class OrderService
         // Mesmo motivo do select() em convertReservationsToExit() — evitar
         // carregar image_data (BLOB) à toa.
         $order->loadMissing([
-            'items.product' => fn($query) => $query->select(ProductService::listColumns()),
+            'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
             'stockLocation',
         ]);
 
         foreach ($order->items as $item) {
+            if ($item->ticket_type_id === null) {
+                continue;
+            }
+
             $this->stockService->returnStock(
-                product: $item->product,
+                ticketType: $item->ticketType,
                 location: $order->stockLocation,
                 quantity: (float) $item->quantity,
                 reason: "Reversão de entrega do pedido {$order->uuid}",
@@ -1449,7 +1470,7 @@ class OrderService
 
             if ($order->stock_reserved) {
                 $this->stockService->reserve(
-                    product: $item->product,
+                    ticketType: $item->ticketType,
                     location: $order->stockLocation,
                     quantity: (float) $item->quantity,
                     reason: "Reversão de entrega do pedido {$order->uuid}",
@@ -1496,175 +1517,79 @@ class OrderService
     }
 
     /**
+     * Resolve o item vendável (ingresso OU adicional/estacionamento) a
+     * partir do payload — exatamente um de ticket_type_uuid/
+     * event_product_uuid deve estar presente (garantido pelo Request, mas
+     * revalidado aqui defensivamente, já que create()/updateItems() também
+     * são chamados por StorefrontCheckoutService).
+     */
+    private function resolveSellable(array $item, int $tenantId): TicketType|EventProduct
+    {
+        $ticketTypeUuid = $item['ticket_type_uuid'] ?? null;
+        $eventProductUuid = $item['event_product_uuid'] ?? null;
+
+        if (($ticketTypeUuid === null) === ($eventProductUuid === null)) {
+            throw new InvalidOrderStateException(__('messages.order.item_missing_sellable'));
+        }
+
+        if ($ticketTypeUuid !== null) {
+            return TicketType::where('uuid', $ticketTypeUuid)
+                ->where('tenant_id', $tenantId)
+                ->whereNull('deleted_at')
+                ->firstOrFail();
+        }
+
+        return EventProduct::where('uuid', $eventProductUuid)
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+    }
+
+    /**
      * @param array<string, mixed> $item
      * @return array{
-     *   product: Product,
+     *   sellable: TicketType|EventProduct,
+     *   is_ticket_type: bool,
      *   quantity: float,
      *   unit_price_cents: int,
      *   line_total_cents: int,
-     *   options: array<int, array{product_option: ProductOption, quantity: int, unit_price_cents: int, line_total_cents: int}>
+     *   notes: ?string
      * }
      */
     private function resolveOrderItemLine(
-        Product $product,
-        Client $client,
+        TicketType|EventProduct $sellable,
+        FinalCustomer $client,
         array $item,
-        int $tenantId,
         ?OrderItem $existing = null
     ): array {
         $quantity = (float) $item['quantity'];
+        $isTicketType = $sellable instanceof TicketType;
+
+        $sameAsExisting = $existing !== null && (
+            $isTicketType
+                ? (int) $existing->ticket_type_id === (int) $sellable->id
+                : (int) $existing->event_product_id === (int) $sellable->id
+        );
 
         if (isset($item['unit_price'])) {
             $unitPriceCents = (int) round(((float) $item['unit_price']) * 100);
-            $this->assertDiscountWithinLimit($product, $client, $unitPriceCents);
-        } elseif ($existing !== null && (int) $existing->product_id === (int) $product->id) {
+            $this->assertDiscountWithinLimit($sellable, $client, $unitPriceCents);
+        } elseif ($sameAsExisting) {
             $unitPriceCents = (int) round(((float) $existing->unit_price) * 100);
         } else {
-            $unitPriceCents = (int) round($this->pricingService->resolvePrice($product, $client) * 100);
+            $unitPriceCents = (int) round(((float) $sellable->price) * 100);
         }
 
-        $baseLineTotalCents = (int) round($unitPriceCents * $quantity);
-        $options = $this->resolveOrderItemOptions(
-            $product,
-            is_array($item['options'] ?? null) ? $item['options'] : [],
-            $tenantId,
-            $quantity
-        );
+        $lineTotalCents = (int) round($unitPriceCents * $quantity);
 
         return [
-            'product' => $product,
+            'sellable' => $sellable,
+            'is_ticket_type' => $isTicketType,
             'quantity' => $quantity,
             'unit_price_cents' => $unitPriceCents,
-            'line_total_cents' => $baseLineTotalCents + array_sum(array_column($options, 'line_total_cents')),
-            'options' => $options,
+            'line_total_cents' => $lineTotalCents,
             'notes' => isset($item['notes']) && trim((string) $item['notes']) !== '' ? trim((string) $item['notes']) : null,
         ];
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $selectedOptions
-     * @return array<int, array{product_option: ProductOption, quantity: int, unit_price_cents: int, line_total_cents: int}>
-     */
-    private function resolveOrderItemOptions(
-        Product $product,
-        array $selectedOptions,
-        int $tenantId,
-        float $itemQuantity
-    ): array {
-        $product->loadMissing(['optionGroups.options']);
-
-        $activeGroups = $product->optionGroups
-            ->filter(fn($group) => $group->is_active)
-            ->values();
-
-        if ($activeGroups->isEmpty() && $selectedOptions === []) {
-            return [];
-        }
-
-        $optionsByUuid = [];
-        $groupSelectionTotals = [];
-        $resolved = [];
-
-        foreach ($activeGroups as $group) {
-            foreach ($group->options->filter(fn($option) => $option->is_available) as $option) {
-                $option->setRelation('group', $group);
-                $optionsByUuid[$option->uuid] = $option;
-            }
-        }
-
-        foreach ($selectedOptions as $selectedOption) {
-            $optionUuid = (string) ($selectedOption['product_option_uuid'] ?? '');
-            $optionQuantity = max(1, (int) ($selectedOption['quantity'] ?? 1));
-
-            $option = $optionsByUuid[$optionUuid] ?? null;
-
-            if (!$option || (int) $option->tenant_id !== $tenantId) {
-                throw new InvalidOrderStateException(__('messages.order.invalid_product_option'));
-            }
-
-            if (isset($resolved[$optionUuid])) {
-                throw new InvalidOrderStateException(__('messages.order.duplicate_product_option'));
-            }
-
-            $groupUuid = (string) $option->group->uuid;
-            $groupSelectionTotals[$groupUuid] = ($groupSelectionTotals[$groupUuid] ?? 0) + $optionQuantity;
-
-            $unitPriceCents = (int) round(((float) $option->price) * 100);
-            $resolved[$optionUuid] = [
-                'product_option' => $option,
-                'quantity' => $optionQuantity,
-                'unit_price_cents' => $unitPriceCents,
-                'line_total_cents' => (int) round($unitPriceCents * $optionQuantity * $itemQuantity),
-            ];
-        }
-
-        foreach ($activeGroups as $group) {
-            $selectedCount = $groupSelectionTotals[$group->uuid] ?? 0;
-
-            if ($selectedCount < (int) $group->min_select) {
-                throw new InvalidOrderStateException(__('messages.order.option_group_min_select_not_met', [
-                    'group' => $group->name,
-                    'min' => $group->min_select,
-                ]));
-            }
-
-            if ($selectedCount > (int) $group->max_select) {
-                throw new InvalidOrderStateException(__('messages.order.option_group_max_select_exceeded', [
-                    'group' => $group->name,
-                    'max' => $group->max_select,
-                ]));
-            }
-        }
-
-        return array_values($resolved);
-    }
-
-    /**
-     * @param array<int, array{product_option: ProductOption, quantity: int, unit_price_cents: int, line_total_cents: int}> $options
-     */
-    private function syncOrderItemOptions(OrderItem $orderItem, array $options): void
-    {
-        OrderItemOption::where('order_item_id', $orderItem->id)->delete();
-
-        foreach ($options as $option) {
-            OrderItemOption::create([
-                'tenant_id' => $orderItem->tenant_id,
-                'order_item_id' => $orderItem->id,
-                'product_option_id' => $option['product_option']->id,
-                'quantity' => $option['quantity'],
-                'unit_price' => $this->centsToDecimal($option['unit_price_cents']),
-                'line_total' => $this->centsToDecimal($option['line_total_cents']),
-            ]);
-        }
-    }
-
-    /**
-     * @param array<int, array{product_option: ProductOption, quantity: int, unit_price_cents: int, line_total_cents: int}> $resolvedOptions
-     */
-    private function orderItemOptionsChanged(OrderItem $existing, array $resolvedOptions): bool
-    {
-        $current = $existing->options
-            ->mapWithKeys(fn($option) => [
-                $option->productOption->uuid => [
-                    'quantity' => (int) $option->quantity,
-                    'unit_price_cents' => (int) round(((float) $option->unit_price) * 100),
-                ],
-            ])
-            ->all();
-
-        $incoming = [];
-
-        foreach ($resolvedOptions as $resolvedOption) {
-            $incoming[$resolvedOption['product_option']->uuid] = [
-                'quantity' => $resolvedOption['quantity'],
-                'unit_price_cents' => $resolvedOption['unit_price_cents'],
-            ];
-        }
-
-        ksort($current);
-        ksort($incoming);
-
-        return $current !== $incoming;
     }
 
     private function resolveDefaultStockLocation(int $tenantId): StockLocation
@@ -1704,7 +1629,7 @@ class OrderService
      * hoje existente. discount_limit_percent não configurado (null) = sem
      * restrição, comportamento anterior a esta feature.
      */
-    private function assertDiscountWithinLimit(Product $product, Client $client, int $unitPriceCents): void
+    private function assertDiscountWithinLimit(TicketType|EventProduct $sellable, FinalCustomer $client, int $unitPriceCents): void
     {
         if (!app()->bound('tenant_role')) {
             return;
@@ -1722,7 +1647,7 @@ class OrderService
             return;
         }
 
-        $expectedCents = (int) round($this->pricingService->resolvePrice($product, $client) * 100);
+        $expectedCents = (int) round(((float) $sellable->price) * 100);
 
         if ($expectedCents <= 0 || $unitPriceCents >= $expectedCents) {
             return;

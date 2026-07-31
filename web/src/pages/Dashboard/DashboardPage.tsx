@@ -35,7 +35,7 @@ import type { OperationHealthStageSummary } from '../../types/report'
 
 const QUICK_ACTIONS = [
   { icon: ReceiptLongOutlinedIcon, label: 'Novo pedido', to: '/pedidos/novo' },
-  { icon: Inventory2OutlinedIcon, label: 'Cadastrar produto', to: '/produtos/novo' },
+  { icon: Inventory2OutlinedIcon, label: 'Cadastrar evento', to: '/eventos/novo' },
 ]
 
 const DEFAULT_RANGE = presetRange('this_month')
@@ -161,7 +161,7 @@ export function DashboardPage() {
   const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_orders === 0
   const quickActions = QUICK_ACTIONS.filter((action) => {
     if (action.to === '/pedidos/novo') return can(ACCESS.ordersCreate)
-    if (action.to === '/produtos/novo') return can(ACCESS.productsCreate)
+    if (action.to === '/eventos/novo') return can(ACCESS.eventsCreate)
     return true
   })
   const operationStages = operationHealth
@@ -308,9 +308,9 @@ export function DashboardPage() {
                     Fazer primeiro pedido
                   </Button>
                 ) : null}
-                {can(ACCESS.productsCreate) ? (
-                  <Button component={RouterLink} to="/produtos/novo" variant="outlined">
-                    Cadastrar produto
+                {can(ACCESS.eventsCreate) ? (
+                  <Button component={RouterLink} to="/eventos/novo" variant="outlined">
+                    Cadastrar evento
                   </Button>
                 ) : null}
               </Stack>

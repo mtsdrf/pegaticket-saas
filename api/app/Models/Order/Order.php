@@ -3,7 +3,8 @@
 namespace App\Models\Order;
 
 use App\Models\BaseModel;
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Stock\StockLocation;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\OrderRating;
@@ -20,7 +21,7 @@ class Order extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'client_id',
+        'final_customer_id',
         'stock_location_id',
         'codigo',
         'is_installment',
@@ -77,7 +78,7 @@ class Order extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'client_id',
+        'final_customer_id',
         'stock_location_id',
         'coupon_id',
         'operated_by',
@@ -142,9 +143,19 @@ class Order extends BaseModel
         return self::LEGACY_ORIGIN_MAP[$origin] ?? $origin;
     }
 
-    public function client()
+    public function finalCustomer()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(FinalCustomer::class, 'final_customer_id');
+    }
+
+    /**
+     * Resolve o FinalCustomerTenantLink (dados por-tenant: telefone,
+     * endereço, documento) do MESMO tenant deste pedido.
+     */
+    public function finalCustomerLink()
+    {
+        return $this->belongsTo(FinalCustomerTenantLink::class, 'final_customer_id', 'final_customer_id')
+            ->where('tenant_id', $this->tenant_id);
     }
 
     public function stockLocation()

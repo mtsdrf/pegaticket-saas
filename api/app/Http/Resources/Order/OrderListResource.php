@@ -23,9 +23,9 @@ class OrderListResource extends JsonResource
             'origin' => Order::normalizeOrigin($this->origin),
             'is_out_for_delivery' => $this->is_out_for_delivery,
             'out_for_delivery_at' => $this->out_for_delivery_at,
-            'client' => $this->whenLoaded('client', fn() => [
-                'uuid' => $this->client->uuid,
-                'name' => $this->client->name,
+            'final_customer' => $this->whenLoaded('finalCustomer', fn() => [
+                'uuid' => $this->finalCustomer->uuid,
+                'name' => $this->finalCustomer->name,
             ]),
             'created_at' => $this->created_at,
         ];

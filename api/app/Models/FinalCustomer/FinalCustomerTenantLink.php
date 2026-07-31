@@ -2,16 +2,17 @@
 
 namespace App\Models\FinalCustomer;
 
-use App\Models\Client\Client;
+use App\Models\Location\Endereco;
 use App\Models\Tenant\Tenant;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Vínculo explícito entre FinalCustomer e uma loja (tenant+client) — ver
- * migration para a regra de negócio. Sem BaseModel de propósito (mesmo
- * desvio de FinalCustomer).
+ * Vínculo explícito entre FinalCustomer e uma loja (tenant) — é o registro
+ * POR-TENANT do cliente final (absorveu os campos de App\Models\Client\Client
+ * descontinuado em 2026-07-31: endereco/documento/telefone/notes/flags).
+ * Sem BaseModel de propósito (mesmo desvio de FinalCustomer).
  */
 class FinalCustomerTenantLink extends Model
 {
@@ -23,12 +24,22 @@ class FinalCustomerTenantLink extends Model
         'uuid',
         'final_customer_id',
         'tenant_id',
-        'client_id',
+        'endereco_id',
+        'cpf_cnpj',
+        'ie',
+        'ie_indicator',
+        'phone_primary',
+        'phone_secondary',
+        'notes',
+        'is_trusted',
+        'is_active',
         'confirmed_at',
     ];
 
     protected $casts = [
         'confirmed_at' => 'datetime',
+        'is_trusted' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     protected $hidden = [
@@ -46,8 +57,8 @@ class FinalCustomerTenantLink extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function client(): BelongsTo
+    public function endereco(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Endereco::class);
     }
 }

@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
             GroupsSeeder::class,
             AdminUserSeeder::class,
             AdminPermissionsSeeder::class,
-            ClientPermissionsSeeder::class,
             EstadosSeeder::class,
             LegalDocumentsSeeder::class,
             PlanPricesSeeder::class,

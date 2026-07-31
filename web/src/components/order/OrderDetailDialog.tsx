@@ -22,14 +22,13 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AsyncAutocomplete } from '../crud/AsyncAutocomplete'
 import { LocalAutocomplete } from '../crud/LocalAutocomplete'
-import { ProductOptionsConfiguratorDialog, type ProductOptionSelection } from '../product/ProductOptionsConfiguratorDialog'
+import * as eventProductService from '../../services/eventProductService'
 import * as orderService from '../../services/orderService'
-import * as productService from '../../services/productService'
 import * as stockLocationService from '../../services/stockLocationService'
+import * as ticketTypeService from '../../services/ticketTypeService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
 import type { Order, OrderInstallmentsReallocatePayload, OrderUpdateItemsPayload } from '../../types/order'
-import type { Product } from '../../types/product'
 import type { StockLocation } from '../../types/stockLocation'
 import { formatCurrency, formatDateBR, formatItemQuantity, toDateOnly } from '../../utils/format'
 
@@ -43,26 +42,48 @@ interface InstallmentDraftRow {
   due_date: string
 }
 
-/** Opção mínima de produto usada no editor de itens — não exige o `Product` completo (o item existente só traz `uuid`/`name` no `OrderItem.product`). */
-interface EditableProductOption {
+/** Item de catálogo vendável usado no editor de itens — `ticket_type` OU `event_product`, nunca os dois. */
+interface EditableCatalogItemOption {
+  kind: 'ticket_type' | 'event_product'
   uuid: string
   name: string
   price: number
-  option_groups?: Product['option_groups']
 }
 
 /** Linha editável do editor de itens. `uuid` presente = item existente (atualiza); ausente = item novo (cria). */
 interface EditableOrderItemDraft {
   id: string
   uuid?: string
-  product: EditableProductOption | null
+  item: EditableCatalogItemOption | null
   quantity: string
   unitPrice: string
-  selectedOptions: ProductOptionSelection[]
 }
 
 function createEmptyItemDraft(): EditableOrderItemDraft {
-  return { id: crypto.randomUUID(), product: null, quantity: '1', unitPrice: '', selectedOptions: [] }
+  return { id: crypto.randomUUID(), item: null, quantity: '1', unitPrice: '' }
+}
+
+/** Busca combinada de tipos de ingresso e adicionais do evento — mesmo padrão de `OrderFormPage`. */
+async function fetchCatalogOptions(query: string): Promise<EditableCatalogItemOption[]> {
+  const [ticketTypes, eventProducts] = await Promise.all([
+    ticketTypeService.listTicketTypes({ name: query || undefined, per_page: 15, sort_by: 'name', sort_dir: 'asc' }),
+    eventProductService.listEventProducts({ name: query || undefined, per_page: 15, sort_by: 'name', sort_dir: 'asc' }),
+  ])
+
+  return [
+    ...ticketTypes.items.map((ticketType) => ({
+      kind: 'ticket_type' as const,
+      uuid: ticketType.uuid,
+      name: `${ticketType.name} (ingresso)`,
+      price: ticketType.price,
+    })),
+    ...eventProducts.items.map((eventProduct) => ({
+      kind: 'event_product' as const,
+      uuid: eventProduct.uuid,
+      name: `${eventProduct.name} (adicional)`,
+      price: eventProduct.price,
+    })),
+  ]
 }
 
 interface OrderDetailDialogProps {
@@ -108,7 +129,6 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
   const [headerExpectedDeliveryDraft, setHeaderExpectedDeliveryDraft] = useState('')
   const [locations, setLocations] = useState<StockLocation[]>([])
   const [isLoadingLocations, setIsLoadingLocations] = useState(false)
-  const [optionsDialogItemId, setOptionsDialogItemId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open || !orderUuid) return
@@ -166,7 +186,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
     (row) => !row.installment_number.trim() || !row.amount.trim() || !row.due_date.trim(),
   )
 
-  const itemsEditorHasIncompleteRow = itemDrafts.some((row) => !row.product || !row.quantity.trim() || Number(row.quantity) <= 0)
+  const itemsEditorHasIncompleteRow = itemDrafts.some((row) => !row.item || !row.quantity.trim() || Number(row.quantity) <= 0)
 
   async function refetchSelectedOrder(uuid: string) {
     const order = await orderService.getOrder(uuid)
@@ -279,20 +299,17 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
     const drafts: EditableOrderItemDraft[] = (selectedOrder.items ?? []).map((item) => ({
       id: crypto.randomUUID(),
       uuid: item.uuid,
-      product: { uuid: item.product.uuid, name: item.product.name, price: item.unit_price },
+      item: item.ticket_type
+        ? { kind: 'ticket_type' as const, uuid: item.ticket_type.uuid, name: item.ticket_type.name, price: item.unit_price }
+        : item.event_product
+          ? { kind: 'event_product' as const, uuid: item.event_product.uuid, name: item.event_product.name, price: item.unit_price }
+          : null,
       // `item.quantity` chega como string com 3 casas fixas do cast
       // decimal:3 (ex. "7.000") — Number()+String() normaliza pro campo
       // editável sem o ".000" que confundia (mesma causa raiz corrigida em
       // formatItemQuantity, aqui é um input editável, não texto read-only).
       quantity: String(Number(item.quantity)),
       unitPrice: String(item.unit_price),
-      selectedOptions: (item.options ?? []).map((option) => ({
-        product_option_uuid: option.product_option.uuid,
-        group_name: option.product_option.group_name ?? 'Opções',
-        name: option.product_option.name,
-        quantity: option.quantity,
-        unit_price: option.unit_price,
-      })),
     }))
     setItemDrafts(drafts.length > 0 ? drafts : [createEmptyItemDraft()])
     setHeaderNotesDraft(selectedOrder.notes ?? '')
@@ -329,53 +346,15 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
     setItemDrafts((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)))
   }
 
-  const fetchProductOptions = useCallback(async (query: string): Promise<EditableProductOption[]> => {
-    const result = await productService.listProducts({ name: query || undefined, per_page: 20, sort_by: 'name', sort_dir: 'asc' })
-    return result.items
+  const fetchProductOptions = useCallback(async (query: string): Promise<EditableCatalogItemOption[]> => {
+    return fetchCatalogOptions(query)
   }, [])
 
-  async function handleItemDraftProductChange(id: string, product: EditableProductOption | null) {
-    // Mesma lógica de `OrderFormPage`: troca de produto reinicia o preço
-    // praticado pro preço de tabela do novo produto, depois substitui pelo
-    // preço sugerido pra categoria do cliente quando a chamada resolver.
-    updateItemDraftRow(id, { product, unitPrice: product ? String(product.price) : '', selectedOptions: [] })
-
-    if (!product || !selectedOrder?.client) return
-
-    try {
-      const [suggestedPrice, detailedProduct] = await Promise.all([
-        productService.getSuggestedPrice(product.uuid, selectedOrder.client.uuid),
-        productService.getProduct(product.uuid),
-      ])
-      setItemDrafts((current) =>
-        current.map((row) =>
-          row.id === id && row.product?.uuid === product.uuid
-            ? {
-                ...row,
-                product: {
-                  uuid: detailedProduct.uuid,
-                  name: detailedProduct.name,
-                  price: detailedProduct.price,
-                  option_groups: detailedProduct.option_groups,
-                },
-                unitPrice: String(suggestedPrice),
-              }
-            : row,
-        ),
-      )
-    } catch {
-      // Sugestão é só conveniência — se falhar, mantém o preço de tabela já preenchido.
-    }
-  }
-
-  function openItemOptionsEditor(id: string) {
-    setOptionsDialogItemId(id)
-  }
-
-  function handleConfirmItemOptions(selections: ProductOptionSelection[]) {
-    if (!optionsDialogItemId) return
-    updateItemDraftRow(optionsDialogItemId, { selectedOptions: selections })
-    setOptionsDialogItemId(null)
+  function handleItemDraftProductChange(id: string, item: EditableCatalogItemOption | null) {
+    // Mesma lógica de `OrderFormPage`: troca de item reinicia o preço
+    // praticado pro preço de tabela do novo item. Preços por categoria de
+    // cliente foram descontinuados nesta migração.
+    updateItemDraftRow(id, { item, unitPrice: item ? String(item.price) : '' })
   }
 
   async function saveItemsEdits() {
@@ -390,13 +369,11 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
         expected_delivery_date: headerExpectedDeliveryDraft || undefined,
         items: itemDrafts.map((row) => ({
           ...(row.uuid ? { uuid: row.uuid } : {}),
-          product_uuid: row.product!.uuid,
+          ...(row.item!.kind === 'ticket_type'
+            ? { ticket_type_uuid: row.item!.uuid }
+            : { event_product_uuid: row.item!.uuid }),
           quantity: Number(row.quantity),
           ...(row.unitPrice.trim() !== '' ? { unit_price: Number(row.unitPrice) } : {}),
-          options: row.selectedOptions.map((option) => ({
-            product_option_uuid: option.product_option_uuid,
-            quantity: option.quantity,
-          })),
         })),
       }
       await orderService.updateOrderItems(selectedOrder.uuid, payload)
@@ -412,8 +389,6 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
     }
   }
 
-  const optionsDialogDraft = itemDrafts.find((row) => row.id === optionsDialogItemId) ?? null
-
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -422,7 +397,7 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
           {dialogError && <Typography color="error">{dialogError}</Typography>}
           {!dialogError && selectedOrder && (
             <Stack spacing={2}>
-              <Typography><strong>Cliente:</strong> {selectedOrder.client?.name ?? '—'}</Typography>
+              <Typography><strong>Cliente:</strong> {selectedOrder.final_customer?.name ?? '—'}</Typography>
               <Typography><strong>Total:</strong> {formatCurrency(selectedOrder.total_amount)}</Typography>
 
               {selectedOrder.status === 'cancellation_requested' && (
@@ -461,14 +436,11 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                     {selectedOrder.items?.map((item) => (
                       <Box key={item.uuid}>
                         <Typography>
-                          {item.product.name} • {formatItemQuantity(item.quantity, item.product.unit)} • {formatCurrency(item.line_total)}
+                          {item.ticket_type?.name ?? item.event_product?.name ?? '—'} •{' '}
+                          {formatItemQuantity(item.quantity, item.ticket_type?.unit ?? null)} • {formatCurrency(item.line_total)}
                         </Typography>
-                        {(item.options?.length ?? 0) > 0 && (
-                          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                            {(item.options ?? [])
-                              .map((option) => `${option.product_option.group_name ?? 'Opções'}: ${option.product_option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
-                              .join(' • ')}
-                          </Typography>
+                        {item.notes && (
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{item.notes}</Typography>
                         )}
                       </Box>
                     ))}
@@ -525,15 +497,21 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                             sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) 110px 150px 44px' }, gap: 1.5, alignItems: 'flex-start' }}
                           >
                             <AsyncAutocomplete
-                              label="Produto"
-                              value={row.product}
-                              onChange={(product) => void handleItemDraftProductChange(row.id, product)}
+                              label="Ingresso / adicional"
+                              value={row.item}
+                              onChange={(option) => handleItemDraftProductChange(row.id, option)}
                               fetchOptions={fetchProductOptions}
                               getOptionLabel={(option) => option.name}
-                              getOptionKey={(option) => option.uuid}
-                              placeholder="Buscar produto pelo nome"
-                              error={Boolean(itemsFieldErrors[`items.${index}.product_uuid`]?.[0])}
-                              helperText={itemsFieldErrors[`items.${index}.product_uuid`]?.[0]}
+                              getOptionKey={(option) => `${option.kind}:${option.uuid}`}
+                              placeholder="Buscar tipo de ingresso ou adicional pelo nome"
+                              error={Boolean(
+                                itemsFieldErrors[`items.${index}.ticket_type_uuid`]?.[0] ??
+                                  itemsFieldErrors[`items.${index}.event_product_uuid`]?.[0],
+                              )}
+                              helperText={
+                                itemsFieldErrors[`items.${index}.ticket_type_uuid`]?.[0] ??
+                                itemsFieldErrors[`items.${index}.event_product_uuid`]?.[0]
+                              }
                             />
 
                             <TextField
@@ -551,8 +529,8 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                               type="number"
                               value={row.unitPrice}
                               onChange={(event) => updateItemDraftRow(row.id, { unitPrice: event.target.value })}
-                              disabled={!row.product}
-                              placeholder={row.product ? String(row.product.price) : undefined}
+                              disabled={!row.item}
+                              placeholder={row.item ? String(row.item.price) : undefined}
                               slotProps={{
                                 htmlInput: { min: 0, step: '0.01' },
                                 input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
@@ -572,21 +550,6 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
                               </IconButton>
                             </Tooltip>
                           </Box>
-
-                          {row.product?.option_groups && row.product.option_groups.length > 0 && (
-                            <Box>
-                              <Button variant="outlined" size="small" onClick={() => openItemOptionsEditor(row.id)}>
-                                {row.selectedOptions.length > 0 ? `Editar opcionais de ${row.product.name}` : `Selecionar opcionais de ${row.product.name}`}
-                              </Button>
-                              {row.selectedOptions.length > 0 && (
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5 }}>
-                                  {row.selectedOptions
-                                    .map((option) => `${option.group_name}: ${option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
-                                    .join(' • ')}
-                                </Typography>
-                              )}
-                            </Box>
-                          )}
                         </Stack>
                       ))}
                     </Stack>
@@ -860,29 +823,6 @@ export function OrderDetailDialog({ orderUuid, open, onClose, onChanged }: Order
           </Button>
         </DialogActions>
       </Dialog>
-
-      <ProductOptionsConfiguratorDialog
-        open={Boolean(optionsDialogDraft)}
-        title={optionsDialogDraft?.product ? `Personalizar ${optionsDialogDraft.product.name}` : 'Personalizar produto'}
-        groups={(optionsDialogDraft?.product?.option_groups ?? []).map((group) => ({
-          uuid: group.uuid,
-          name: group.name,
-          description: group.description,
-          min_select: group.min_select,
-          max_select: group.max_select,
-          options: group.options
-            .filter((option) => option.is_available)
-            .map((option) => ({
-              uuid: option.uuid,
-              name: option.name,
-              description: option.description,
-              price: option.price,
-            })),
-        }))}
-        initialSelections={optionsDialogDraft?.selectedOptions ?? []}
-        onClose={() => setOptionsDialogItemId(null)}
-        onConfirm={handleConfirmItemOptions}
-      />
     </>
   )
 }

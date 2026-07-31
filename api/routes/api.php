@@ -32,16 +32,19 @@ use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Subscription\PaymentWebhookController;
 use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Payment\PaymentIssueController;
-use App\Http\Controllers\Product\ProductCategoryController;
-use App\Http\Controllers\Product\ProductTypeController;
+use App\Http\Controllers\Event\EventCategoryController;
+use App\Http\Controllers\Event\EventController;
+use App\Http\Controllers\Event\EventImageController;
+use App\Http\Controllers\Event\TicketTypeController;
+use App\Http\Controllers\Event\TicketTypeImageController;
+use App\Http\Controllers\Event\EventProductController;
+use App\Http\Controllers\FinalCustomer\FinalCustomerController;
 use App\Http\Controllers\Location\EstadoController;
 use App\Http\Controllers\Location\CidadeController;
 use App\Http\Controllers\Location\BairroController;
 use App\Http\Controllers\Location\EnderecoController;
 use App\Http\Controllers\Location\LocationController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
-use App\Http\Controllers\Product\ProductController;
-use App\Http\Controllers\Product\ProductImportController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Order\OrderInstallmentController;
@@ -56,7 +59,6 @@ use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Portal\PortalFavoriteController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\User\UserAvatarController;
-use App\Http\Controllers\Product\ProductImageController;
 use App\Http\Controllers\Tenant\TenantLogoController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\CartEventController;
@@ -138,8 +140,11 @@ Route::prefix('v1')->group(function () {
     Route::get('/users/{user}/avatar', [UserAvatarController::class, 'show'])
         ->middleware('throttle:100,1,users-avatar-show');
 
-    Route::get('/products/{product}/image', [ProductImageController::class, 'show'])
-        ->middleware('throttle:100,1,products-image-show');
+    Route::get('/events/{event}/image', [EventImageController::class, 'show'])
+        ->middleware('throttle:100,1,events-image-show');
+
+    Route::get('/ticket-types/{ticketType}/image', [TicketTypeImageController::class, 'show'])
+        ->middleware('throttle:100,1,ticket-types-image-show');
 
     Route::get('/tenants/{tenant}/logo', [TenantLogoController::class, 'show'])
         ->middleware('throttle:100,1,tenants-logo-show');
@@ -157,11 +162,16 @@ Route::prefix('v1')->group(function () {
     // catálogo já vem com is_favorited calculado, sem round-trip extra.
     // Nunca exige login (nunca 401), ver
     // App\Http\Middleware\OptionalCustomerJwtMiddleware.
-    Route::get('/loja/{slug}/produtos', [StorefrontController::class, 'products'])
+    Route::get('/loja/{slug}/eventos', [StorefrontController::class, 'events'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-products']);
 
-    // Categorias com produto disponível (vitrine estilo iFood) — mesmo
-    // espírito de /loja/{slug}/produtos.
+    // Detalhe público de um evento, com ticket_types/event_products
+    // aninhados (NOVO — não existia equivalente no catálogo de comércio).
+    Route::get('/loja/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
+        ->middleware('throttle:100,1,storefront-event-show');
+
+    // Categorias com evento disponível (vitrine) — mesmo espírito de
+    // /loja/{slug}/eventos.
     Route::get('/loja/{slug}/categorias', [StorefrontController::class, 'categories'])
         ->middleware('throttle:100,1,storefront-categories');
 
@@ -242,9 +252,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/me', [PortalController::class, 'me'])
             ->middleware('throttle:60,1,portal-me');
 
-        // Favoritos de produto (roadmap Delivery, Fase 4 — retenção).
-        // Toggle idempotente: favorito existente remove, inexistente cria.
-        Route::post('/favorites/{product_uuid}/toggle', [PortalFavoriteController::class, 'toggle'])
+        // Favoritos de evento. Toggle idempotente: favorito existente
+        // remove, inexistente cria.
+        Route::post('/favorites/{event_uuid}/toggle', [PortalFavoriteController::class, 'toggle'])
             ->middleware('throttle:60,1,portal-favorites-toggle');
 
         Route::get('/favorites', [PortalFavoriteController::class, 'index'])
@@ -522,18 +532,18 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:tenant_users,create', 'throttle:10,1,tenant-users-invite']);
         });
 
-        Route::prefix('product-categories')->group(function () {
-            Route::get('/', [ProductCategoryController::class, 'index'])
-                ->middleware(['tenant', 'perm:product_categories,read', 'throttle:100,1,product-categories-list']);
+        Route::prefix('event-categories')->group(function () {
+            Route::get('/', [EventCategoryController::class, 'index'])
+                ->middleware(['tenant', 'perm:event_categories,read', 'throttle:100,1,event-categories-list']);
 
-            Route::post('/', [ProductCategoryController::class, 'store'])
-                ->middleware(['tenant', 'perm:product_categories,create', 'throttle:30,1,product-categories-create']);
+            Route::post('/', [EventCategoryController::class, 'store'])
+                ->middleware(['tenant', 'perm:event_categories,create', 'throttle:30,1,event-categories-create']);
 
-            Route::put('/{productCategory}', [ProductCategoryController::class, 'update'])
-                ->middleware(['tenant', 'perm:product_categories,update', 'throttle:30,1,product-categories-update']);
+            Route::put('/{eventCategory}', [EventCategoryController::class, 'update'])
+                ->middleware(['tenant', 'perm:event_categories,update', 'throttle:30,1,event-categories-update']);
 
-            Route::delete('/{productCategory}', [ProductCategoryController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:product_categories,delete', 'throttle:10,1,product-categories-delete']);
+            Route::delete('/{eventCategory}', [EventCategoryController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:event_categories,delete', 'throttle:10,1,event-categories-delete']);
         });
 
         // Global (sem middleware tenant): Estado/Cidade/Bairro são compartilhados entre tenants.
@@ -659,8 +669,8 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,coupons-delete']);
         });
 
-        // Preço promocional "de/por" por produto (Delivery Fase 3) — upsert
-        // 1 por produto, mesmo shape de store-delivery-fees. Ver
+        // Preço promocional "de/por" por tipo de ingresso — upsert 1 por
+        // ticket type, mesmo shape de store-delivery-fees. Ver
         // App\Services\Storefront\ProductPromotionService.
         Route::prefix('product-promotions')->group(function () {
             Route::get('/', [ProductPromotionController::class, 'index'])
@@ -673,51 +683,66 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,product-promotions-delete']);
         });
 
-        Route::prefix('products')->group(function () {
-            Route::get('/', [ProductController::class, 'index'])
-                ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,products-list']);
+        Route::prefix('events')->group(function () {
+            Route::get('/', [EventController::class, 'index'])
+                ->middleware(['tenant', 'perm:events,read', 'throttle:100,1,events-list']);
 
-            Route::post('/', [ProductController::class, 'store'])
-                ->middleware(['tenant', 'perm:products,create', 'throttle:30,1,products-create']);
+            Route::post('/', [EventController::class, 'store'])
+                ->middleware(['tenant', 'perm:events,create', 'throttle:30,1,events-create']);
 
-            Route::get('/{product}', [ProductController::class, 'show'])
-                ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,products-show']);
+            Route::get('/{event}', [EventController::class, 'show'])
+                ->middleware(['tenant', 'perm:events,read', 'throttle:100,1,events-show']);
 
-            Route::put('/{product}', [ProductController::class, 'update'])
-                ->middleware(['tenant', 'perm:products,update', 'throttle:30,1,products-update']);
+            Route::put('/{event}', [EventController::class, 'update'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-update']);
 
-            Route::delete('/{product}', [ProductController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:products,delete', 'throttle:10,1,products-delete']);
-
-            // Ação administrativa rápida no PWA (roadmap A4, item 16) —
-            // bloquear/desbloquear produto sem o payload inteiro de update().
-            Route::patch('/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])
-                ->middleware(['tenant', 'perm:products,update', 'throttle:60,1,products-toggle-availability']);
-
-            Route::get('/{product}/suggested-price', [ProductController::class, 'suggestedPrice'])
-                ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,products-suggested-price']);
-
-            // Catálogo completo em PDF pro cliente final, não paginado.
-            Route::post('/pdf', [ProductController::class, 'pdf'])
-                ->middleware(['tenant', 'perm:products,read', 'throttle:20,1,products-pdf']);
-
-            // Importação de produto por planilha CSV (roadmap A2) — preview
-            // não grava nada (só parsing/validação), throttle baixo por ser
-            // operação pesada (até 2000 linhas); commit grava de fato,
-            // reaproveita perm:products,create dos dois lados (preview é só
-            // uma simulação do que create faria). Ver ProductImportService.
-            Route::post('/import/preview', [ProductImportController::class, 'preview'])
-                ->middleware(['tenant', 'perm:products,create', 'throttle:10,1,products-import-preview']);
-
-            Route::post('/import/commit', [ProductImportController::class, 'commit'])
-                ->middleware(['tenant', 'perm:products,create', 'throttle:5,1,products-import-commit']);
+            Route::delete('/{event}', [EventController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:events,delete', 'throttle:10,1,events-delete']);
         });
 
-        // Dependência técnica do cadastro de produto: o formulário ainda
-        // precisa listar tipos válidos para preencher `product_type_uuid`,
-        // mas o módulo CRUD de tipos já não é mais exposto na navegação.
-        Route::get('/product-types', [ProductTypeController::class, 'index'])
-            ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,product-types-list']);
+        Route::prefix('ticket-types')->group(function () {
+            Route::get('/', [TicketTypeController::class, 'index'])
+                ->middleware(['tenant', 'perm:ticket_types,read', 'throttle:100,1,ticket-types-list']);
+
+            Route::post('/', [TicketTypeController::class, 'store'])
+                ->middleware(['tenant', 'perm:ticket_types,create', 'throttle:30,1,ticket-types-create']);
+
+            Route::get('/{ticketType}', [TicketTypeController::class, 'show'])
+                ->middleware(['tenant', 'perm:ticket_types,read', 'throttle:100,1,ticket-types-show']);
+
+            Route::put('/{ticketType}', [TicketTypeController::class, 'update'])
+                ->middleware(['tenant', 'perm:ticket_types,update', 'throttle:30,1,ticket-types-update']);
+
+            Route::delete('/{ticketType}', [TicketTypeController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:ticket_types,delete', 'throttle:10,1,ticket-types-delete']);
+
+            // Atalho pra alternar status ativo/pausado sem payload inteiro.
+            Route::patch('/{ticketType}/toggle-status', [TicketTypeController::class, 'toggleStatus'])
+                ->middleware(['tenant', 'perm:ticket_types,update', 'throttle:60,1,ticket-types-toggle-status']);
+        });
+
+        Route::prefix('event-products')->group(function () {
+            Route::get('/', [EventProductController::class, 'index'])
+                ->middleware(['tenant', 'perm:event_products,read', 'throttle:100,1,event-products-list']);
+
+            Route::post('/', [EventProductController::class, 'store'])
+                ->middleware(['tenant', 'perm:event_products,create', 'throttle:30,1,event-products-create']);
+
+            Route::get('/{eventProduct}', [EventProductController::class, 'show'])
+                ->middleware(['tenant', 'perm:event_products,read', 'throttle:100,1,event-products-show']);
+
+            Route::put('/{eventProduct}', [EventProductController::class, 'update'])
+                ->middleware(['tenant', 'perm:event_products,update', 'throttle:30,1,event-products-update']);
+
+            Route::delete('/{eventProduct}', [EventProductController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:event_products,delete', 'throttle:10,1,event-products-delete']);
+        });
+
+        // Busca de comprador (FinalCustomerTenantLink) pro staff, usada no
+        // pedido manual (OrderFormPage) — equivalente ao antigo GET /clients
+        // do ClientController removido em favor de FinalCustomer.
+        Route::get('/final-customers', [FinalCustomerController::class, 'index'])
+            ->middleware(['tenant', 'perm:customers,read', 'throttle:100,1,final-customers-list']);
 
         Route::prefix('orders')->group(function () {
             Route::get('/', [OrderController::class, 'index'])

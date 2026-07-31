@@ -36,7 +36,7 @@ export function createTenant(payload: TenantPayload, logoFile?: File | null): Pr
 
 /**
  * Sem logo novo, envia PUT normal (JSON). Com logo novo, o Laravel precisa
- * de multipart — mesmo spoofing de `productService.updateProduct` (PHP não
+ * de multipart — mesmo spoofing de `eventService.updateEvent` (PHP não
  * faz parse de multipart em PUT nativo): POST + campo `_method=PUT`.
  */
 export function updateTenant(uuid: string, payload: Partial<TenantPayload>, logoFile?: File | null): Promise<Tenant> {

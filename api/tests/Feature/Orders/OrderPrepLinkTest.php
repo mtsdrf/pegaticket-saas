@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -38,15 +38,16 @@ class OrderPrepLinkTest extends TestCase
     private function createOrderWithClient(): Order
     {
         $client = $this->createClient($this->tenant->id);
-        $client->phone_primary = '11988887777';
-        $client->save();
+        \App\Models\FinalCustomer\FinalCustomerTenantLink::where('final_customer_id', $client->id)
+            ->where('tenant_id', $this->tenant->id)
+            ->update(['phone_primary' => '11988887777']);
 
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
 
         return Order::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,

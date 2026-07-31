@@ -15,12 +15,20 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_uuid' => [
+            'final_customer_uuid' => [
                 'required',
                 'uuid',
-                Rule::exists('clients', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
+                Rule::exists('final_customers', 'uuid'),
+                function ($attribute, $value, $fail) {
+                    $exists = \App\Models\FinalCustomer\FinalCustomerTenantLink::query()
+                        ->where('tenant_id', app('tenant_id'))
+                        ->whereHas('finalCustomer', fn($q) => $q->where('uuid', $value))
+                        ->exists();
+
+                    if (!$exists) {
+                        $fail(__('messages.order.invalid_client'));
+                    }
+                },
             ],
             'stock_location_uuid' => [
                 'nullable',
@@ -48,7 +56,7 @@ class StoreOrderRequest extends FormRequest
 
             // Retirada na loja (roadmap Delivery) — mesma semântica do
             // checkout público, mas sem guard próprio aqui: staff já
-            // escolhe manualmente client_uuid/stock_location_uuid, não há
+            // escolhe manualmente final_customer_uuid/stock_location_uuid, não há
             // conceito de endereço de entrega obrigatório neste fluxo.
             // Omitido = 'delivery' (comportamento atual).
             'fulfillment_type' => ['nullable', 'string', Rule::in(['delivery', 'pickup'])],
@@ -62,39 +70,41 @@ class StoreOrderRequest extends FormRequest
             'payment_method' => ['nullable', 'string', Rule::in(['cash', 'pix', 'credit_card', 'debit_card'])],
 
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_uuid' => [
-                'required',
+            'items.*.ticket_type_uuid' => [
+                'required_without:items.*.event_product_uuid',
+                'nullable',
                 'uuid',
-                Rule::exists('products', 'uuid')->where(function ($query) {
+                Rule::exists('ticket_types', 'uuid')->where(function ($query) {
+                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
+                }),
+            ],
+            'items.*.event_product_uuid' => [
+                'required_without:items.*.ticket_type_uuid',
+                'nullable',
+                'uuid',
+                Rule::exists('event_products', 'uuid')->where(function ($query) {
                     $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
                 }),
             ],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             // Opcional: preço praticado do item (desconto/acréscimo por
-            // linha), igual ao legado. Omitido = comportamento atual
-            // (usa Product.price atual, nunca confiado no request).
+            // linha), igual ao legado. Omitido = comportamento atual (usa
+            // o preço atual do ingresso/produto do evento, nunca confiado
+            // no request).
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
-            // Observação por item (ex: "sem cebola") — distinta de `notes`
-            // (recado do pedido inteiro, acima).
+            // Observação por item — distinta de `notes` (recado do pedido
+            // inteiro, acima).
             'items.*.notes' => ['nullable', 'string', 'max:200'],
-            'items.*.options' => ['nullable', 'array'],
-            'items.*.options.*.product_option_uuid' => [
-                'required',
-                'uuid',
-                Rule::exists('product_options', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-            'items.*.options.*.quantity' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'client_uuid.exists' => __('messages.order.invalid_client'),
+            'final_customer_uuid.exists' => __('messages.order.invalid_client'),
             'stock_location_uuid.exists' => __('messages.order.invalid_stock_location'),
-            'items.*.product_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
             'installments_count.required_if' => __('messages.order.installments_count_required'),
             'mark_as_paid.prohibited_if' => __('messages.order.mark_as_paid_requires_non_installment'),
         ];

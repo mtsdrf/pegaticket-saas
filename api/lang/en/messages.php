@@ -366,26 +366,67 @@ return [
     | Product category
     |--------------------------------------------------------------------------
     */
-    'product_category' => [
-        'list' => 'Product categories list.',
-        'created' => 'Product category created successfully.',
-        'updated' => 'Product category updated successfully.',
-        'deleted' => 'Product category deleted successfully.',
-        'name_exists' => 'Já existe uma categoria de produto com este nome nesta empresa.',
+    'event_category' => [
+        'list' => 'Event categories list.',
+        'created' => 'Event category created successfully.',
+        'updated' => 'Event category updated successfully.',
+        'deleted' => 'Event category deleted successfully.',
+        'name_exists' => 'An event category with this name already exists for this company.',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Product type
+    | Event
     |--------------------------------------------------------------------------
     */
-    'product_type' => [
-        'list' => 'Product types list.',
-        'created' => 'Product type created successfully.',
-        'updated' => 'Product type updated successfully.',
-        'deleted' => 'Product type deleted successfully.',
-        'name_exists' => 'Já existe um tipo de produto com este nome nesta empresa.',
-        'invalid_category' => 'Categoria de produto inválida para esta empresa.',
+    'event' => [
+        'list' => 'Events list.',
+        'show' => 'Event shown successfully.',
+        'created' => 'Event created successfully.',
+        'updated' => 'Event updated successfully.',
+        'deleted' => 'Event deleted successfully.',
+        'invalid_category' => 'Invalid event category for this company.',
+        'slug_exists' => 'An event with this slug already exists for this company.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket type
+    |--------------------------------------------------------------------------
+    */
+    'ticket_type' => [
+        'list' => 'Ticket types list.',
+        'show' => 'Ticket type shown successfully.',
+        'created' => 'Ticket type created successfully.',
+        'updated' => 'Ticket type updated successfully.',
+        'deleted' => 'Ticket type deleted successfully.',
+        'invalid_event' => 'Invalid event for this company.',
+        'sku_exists' => 'A ticket type with this SKU already exists for this company.',
+        'suggested_price' => 'Suggested price calculated successfully.',
+        'status_updated' => 'Ticket type status updated successfully.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event product (add-on/parking)
+    |--------------------------------------------------------------------------
+    */
+    'event_product' => [
+        'list' => 'Event products list.',
+        'show' => 'Event product shown successfully.',
+        'created' => 'Event product created successfully.',
+        'updated' => 'Event product updated successfully.',
+        'deleted' => 'Event product deleted successfully.',
+        'invalid_event' => 'Invalid event for this company.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customers (FinalCustomer, staff search)
+    |--------------------------------------------------------------------------
+    */
+    'customers' => [
+        'listed' => 'Customers list.',
     ],
 
     /*
@@ -473,49 +514,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Product
-    |--------------------------------------------------------------------------
-    */
-    'product' => [
-        'list' => 'Product list.',
-        'show' => 'Product shown successfully.',
-        'created' => 'Product created successfully.',
-        'updated' => 'Product updated successfully.',
-        'deleted' => 'Product deleted successfully.',
-        'invalid_type' => 'Tipo de produto inválido para esta empresa.',
-        'sku_exists' => 'Já existe um produto com este SKU nesta empresa.',
-        'option_group_invalid_limits' => 'The maximum selection must be greater than or equal to the minimum.',
-        'option_group_duplicate_name' => 'There is already an option group with this name in this product.',
-        'option_duplicate_name' => 'There is already an add-on with this name inside this group.',
-        'suggested_price' => 'Suggested price calculated successfully.',
-        'availability_enabled' => 'Product enabled successfully.',
-        'availability_disabled' => 'Product blocked successfully.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Product Import (CSV) — roadmap A2
-    |--------------------------------------------------------------------------
-    */
-    'product_import' => [
-        'preview' => 'Import preview generated successfully.',
-        'committed' => 'Import completed.',
-        'unreadable_file' => 'Could not read the uploaded file.',
-        'empty_file' => 'The uploaded file is empty.',
-        'missing_columns' => 'Missing required columns in the CSV header: :columns.',
-        'limit_exceeded' => 'The spreadsheet has :count rows, above the limit of :max per import.',
-        'row_name_required' => 'nome (name) is required.',
-        'row_price_required' => 'preco (price) is required.',
-        'row_price_invalid' => 'preco (price) is invalid (use a number greater than or equal to 0).',
-        'row_type_required' => 'tipo (product type) is required.',
-        'row_category_required_for_new_type' => 'categoria is required to create the type ":type" (new type for this company).',
-        'row_type_category_conflict' => 'type ":type" will already be created with category ":pending_category" in this same import (category ":given_category" is different on this row).',
-        'row_sku_duplicate' => 'sku ":sku" is duplicated (already used on another row of this import or already exists for this company).',
-        'row_available_invalid' => 'disponivel (available) is invalid (use sim/não, verdadeiro/falso or 1/0).',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Stock Location
     |--------------------------------------------------------------------------
     */
@@ -562,7 +560,7 @@ return [
         'unblock_created' => 'Stock unblock recorded successfully.',
         'reserve_created' => 'Stock reserve recorded successfully.',
         'reserve_cancel_created' => 'Stock reserve cancellation recorded successfully.',
-        'invalid_product' => 'Produto inválido para esta empresa.',
+        'invalid_product' => 'Invalid ticket type for this company.',
         'invalid_location' => 'Local de estoque inválido para esta empresa.',
         'invalid_reserve_movement' => 'Movimento de reserva inválido ou inexistente para esta empresa.',
         'transfer_same_location' => 'The destination location must be different from the origin location.',
@@ -618,11 +616,8 @@ return [
         'cancelled' => 'Order cancelled successfully.',
         'invalid_client' => 'Cliente inválido para esta empresa.',
         'invalid_stock_location' => 'Local de estoque inválido para esta empresa.',
-        'invalid_product' => 'Produto inválido para esta empresa.',
-        'invalid_product_option' => 'One of the selected options is invalid for this product.',
-        'duplicate_product_option' => 'The same option cannot be selected twice in the same item.',
-        'option_group_min_select_not_met' => 'Select at least :min option(s) in group ":group".',
-        'option_group_max_select_exceeded' => 'Select at most :max option(s) in group ":group".',
+        'invalid_product' => 'Invalid ticket type or event product for this company.',
+        'item_missing_sellable' => 'Each item must reference exactly one ticket type or event product.',
         'installments_count_required' => 'Installments count is required for installment orders.',
         'already_cancelled' => 'This order has already been cancelled.',
         'already_delivered' => 'This order has already been marked as delivered.',

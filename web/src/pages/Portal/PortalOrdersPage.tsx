@@ -41,22 +41,20 @@ import { PortalShell } from './PortalShell'
  */
 function replaceCartForStore(slug: string, items: PortalReorderItem[]): void {
   const cartItems: StorefrontCartItem[] = items
-    .filter((item) => item.is_available && item.product_uuid && item.current_price !== null)
+    .filter((item) => item.is_available && item.ticket_type_uuid && item.current_price !== null)
     .map((item) => ({
       id: globalThis.crypto?.randomUUID?.() ?? `cart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-      product_uuid: item.product_uuid as string,
-      name: item.product_name ?? '',
+      // Backend (`PortalCustomerService::getOrderItemsForReorder()`) não
+      // distingue ticket_type/event_product no reorder — sempre trata como
+      // ticket_type_uuid. Simplificação aceita: reorder de item que era um
+      // event_product some do carrinho reconstruído (filtrado por
+      // `is_available` acima, que já é `false` nesse caso hoje).
+      ticket_type_uuid: item.ticket_type_uuid as string,
+      name: item.ticket_type_name ?? '',
+      event_name: '',
       unit_price: item.current_price as number,
-      // Reorder só conhece o preço atual — sem promoção/atacado; o snapshot
-      // vira o preço base e o carrinho recalcula ao mexer na quantidade.
-      price: item.current_price as number,
-      promo_price: null,
-      wholesale_min_quantity: null,
-      wholesale_price: null,
       image_url: null,
       quantity: item.quantity,
-      configuration_label: null,
-      options: [],
     }))
   localStorage.setItem(storefrontCartStorageKey(slug), JSON.stringify(cartItems))
 }
@@ -355,7 +353,7 @@ function ReorderDialog({ order, onClose }: { order: PortalOrderSummary | null; o
               <Stack spacing={1}>
                 {availableItems.map((item, index) => (
                   <Box
-                    key={item.product_uuid ?? index}
+                    key={item.ticket_type_uuid ?? index}
                     sx={{
                       p: 1.25,
                       ...SOFT_PANEL_SX,
@@ -365,7 +363,7 @@ function ReorderDialog({ order, onClose }: { order: PortalOrderSummary | null; o
                     }}
                   >
                     <Typography sx={{ fontSize: 13.5, wordBreak: 'break-word' }}>
-                      {item.quantity} × {item.product_name}
+                      {item.quantity} × {item.ticket_type_name}
                     </Typography>
                     <Typography sx={{ fontSize: 13.5, fontWeight: 700, flexShrink: 0 }}>
                       {item.current_price !== null ? formatCurrency(item.current_price) : '—'}

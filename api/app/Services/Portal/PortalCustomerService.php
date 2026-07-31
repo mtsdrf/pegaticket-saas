@@ -4,7 +4,8 @@ namespace App\Services\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
-use App\Models\Product\Product;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Support\Collection;
 
@@ -28,16 +29,12 @@ class PortalCustomerService
             return collect();
         }
 
+        $tenantIds = $links->pluck('tenant_id')->all();
+
         return Order::query()
             ->whereNull('deleted_at')
-            ->where(function ($query) use ($links) {
-                foreach ($links as $link) {
-                    $query->orWhere(function ($sub) use ($link) {
-                        $sub->where('tenant_id', $link->tenant_id)
-                            ->where('client_id', $link->client_id);
-                    });
-                }
-            })
+            ->where('final_customer_id', $customer->id)
+            ->whereIn('tenant_id', $tenantIds)
             ->with(['tenant', 'coupon'])
             ->orderByDesc('created_at')
             ->get();
@@ -46,7 +43,7 @@ class PortalCustomerService
     public function me(FinalCustomer $customer): FinalCustomer
     {
         $customer->load(['links' => function ($query) {
-            $query->whereNotNull('confirmed_at')->with(['tenant', 'client']);
+            $query->whereNotNull('confirmed_at')->with('tenant');
         }]);
 
         return $customer;
@@ -64,13 +61,13 @@ class PortalCustomerService
     {
         $order = Order::where('uuid', $orderUuid)->whereNull('deleted_at')->first();
 
-        if (!$order) {
+        if (!$order || (int) $order->final_customer_id !== $finalCustomerId) {
             abort(404);
         }
 
-        $link = $this->linkRepository->findByCustomerAndClient($finalCustomerId, $order->client_id);
+        $link = $this->linkRepository->findConfirmedByTenantAndFinalCustomer((int) $order->tenant_id, $finalCustomerId);
 
-        if (!$link || (int) $link->tenant_id !== (int) $order->tenant_id) {
+        if (!$link) {
             abort(404);
         }
 
@@ -79,10 +76,10 @@ class PortalCustomerService
 
     /**
      * "Pedir de novo" (roadmap Delivery, Fase 4 — retenção): itens do
-     * pedido antigo, com preço ATUAL do produto (não o preço congelado no
-     * pedido) e disponibilidade atual. withTrashed() no Product porque o
-     * nome histórico do item precisa aparecer mesmo se o produto foi
-     * removido desde então — nesse caso is_available fica false.
+     * pedido antigo, com preço ATUAL do ingresso/produto do evento (não o
+     * preço congelado no pedido) e disponibilidade atual. withTrashed()
+     * porque o nome histórico do item precisa aparecer mesmo se o item
+     * foi removido desde então — nesse caso is_available fica false.
      */
     public function getOrderItemsForReorder(FinalCustomer $customer, string $orderUuid): array
     {
@@ -90,14 +87,18 @@ class PortalCustomerService
         $order->load('items');
 
         return $order->items->map(function ($item) {
-            $product = Product::withTrashed()->find($item->product_id);
+            $sellable = $item->ticket_type_id !== null
+                ? TicketType::withTrashed()->find($item->ticket_type_id)
+                : EventProduct::withTrashed()->find($item->event_product_id);
 
             return [
-                'product_uuid' => $product?->uuid,
-                'product_name' => $product?->name,
+                'ticket_type_uuid' => $sellable?->uuid,
+                'ticket_type_name' => $sellable?->name,
                 'quantity' => (float) $item->quantity,
-                'current_price' => $product ? (float) $product->price : null,
-                'is_available' => $product ? (!$product->trashed() && (bool) $product->is_available) : false,
+                'current_price' => $sellable ? (float) $sellable->price : null,
+                'is_available' => $sellable
+                    ? (!$sellable->trashed() && ($item->ticket_type_id === null || $sellable->status === 'ativo'))
+                    : false,
             ];
         })->values()->all();
     }

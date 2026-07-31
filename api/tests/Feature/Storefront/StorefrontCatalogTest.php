@@ -2,21 +2,18 @@
 
 namespace Tests\Feature\Storefront;
 
+use App\Models\Event\Event;
+use App\Models\Event\EventCategory;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
-use App\Models\Location\Endereco;
 use App\Models\Location\Estado;
+use App\Models\Location\Endereco;
 use App\Models\Order\Order;
-use App\Models\Order\OrderItem;
-use App\Models\Product\Product;
-use App\Models\Product\ProductOption;
-use App\Models\Product\ProductOptionGroup;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
+use App\Models\Storefront\EventFavorite;
 use App\Models\Storefront\OrderRating;
-use App\Models\Storefront\ProductFavorite;
-use App\Models\Storefront\ProductPromotion;
 use App\Models\Tenant\TenantSettings;
 use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,14 +24,55 @@ use Tests\Feature\Storefront\Concerns\CreatesStorefrontFixtures;
 use Tests\TestCase;
 
 /**
- * Catálogo público da loja (Delivery Fase 1) — GET /loja/{slug} e
- * GET /loja/{slug}/produtos, 100% públicos (sem jwt/tenant/perm).
+ * Catálogo público da loja — GET /loja/{slug}, /loja/{slug}/eventos,
+ * /loja/{slug}/eventos/{eventSlug} e /loja/{slug}/categorias, 100%
+ * públicos (sem jwt/tenant/perm). Migrado de Product para
+ * Event+TicketType+EventProduct (roadmap PegaTicket seção 2.4/4A,
+ * 2026-07-31) — ver SIMPLIFICAÇÃO DOCUMENTADA em StorefrontCatalogService:
+ * badges (new/best_selling/low_stock), atacado por quantidade, promoção
+ * por item complexa e ordenação por preço/mais vendido do catálogo antigo
+ * de Product foram descartados de propósito e não têm equivalente aqui.
  */
 class StorefrontCatalogTest extends TestCase
 {
     use RefreshDatabase;
     use CreatesOrderFixtures;
     use CreatesStorefrontFixtures;
+
+    protected function createEvent(int $tenantId, array $overrides = []): Event
+    {
+        return Event::create(array_merge([
+            'tenant_id' => $tenantId,
+            'name' => 'Evento ' . Str::random(6),
+            'slug' => 'evento-' . Str::random(8),
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
+        ], $overrides));
+    }
+
+    protected function createTicketType(Event $event, array $overrides = []): TicketType
+    {
+        return TicketType::create(array_merge([
+            'tenant_id' => $event->tenant_id,
+            'event_id' => $event->id,
+            'name' => 'Inteira',
+            'price' => 50,
+            'status' => 'ativo',
+        ], $overrides));
+    }
+
+    protected function createEventProduct(Event $event, array $overrides = []): EventProduct
+    {
+        return EventProduct::create(array_merge([
+            'tenant_id' => $event->tenant_id,
+            'event_id' => $event->id,
+            'name' => 'Estacionamento',
+            'price' => 20,
+            'status' => 'ativo',
+        ], $overrides));
+    }
 
     #[Test]
     public function show_returns_tenant_info_when_plan_allows_storefront(): void
@@ -67,109 +105,75 @@ class StorefrontCatalogTest extends TestCase
     }
 
     #[Test]
-    public function products_lists_only_available_products_and_never_exposes_stock_or_cost(): void
+    public function events_lists_only_published_and_public_events(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $available = $this->createProduct($tenant->id, [
-            'name' => 'Queijo Disponível',
-            'is_available' => true,
-            'last_purchase_cost' => 12.5,
-        ]);
-        $this->createProduct($tenant->id, [
-            'name' => 'Queijo Indisponível',
-            'is_available' => false,
-        ]);
+        $published = $this->createEvent($tenant->id, ['name' => 'Show Publicado']);
+        $this->createEvent($tenant->id, ['name' => 'Rascunho', 'status' => 'rascunho']);
+        $this->createEvent($tenant->id, ['name' => 'Privado', 'visibility' => 'private']);
 
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
+        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.uuid', $available->uuid)
-            ->assertJsonPath('data.0.name', 'Queijo Disponível')
-            ->assertJsonMissingPath('data.0.stock_quantity')
-            ->assertJsonMissingPath('data.0.last_purchase_cost')
-            ->assertJsonMissingPath('data.0.sku')
-            ->assertJsonMissingPath('data.0.min_stock');
+            ->assertJsonPath('data.0.uuid', $published->uuid)
+            ->assertJsonPath('data.0.name', 'Show Publicado');
     }
 
     #[Test]
-    public function products_ignores_external_attempt_to_disable_is_available_filter(): void
+    public function events_ignores_external_attempt_to_bypass_status_and_visibility_filter(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->createProduct($tenant->id, ['name' => 'Indisponível', 'is_available' => false]);
+        $this->createEvent($tenant->id, ['name' => 'Rascunho', 'status' => 'rascunho']);
 
-        // Mesmo tentando "desligar" o filtro via query string, o catálogo
-        // público nunca deve devolver produto indisponível.
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?is_available=false');
+        // Mesmo tentando forjar status/visibility via query string, o
+        // catálogo público nunca deve devolver evento fora de
+        // status=publicado/visibility=public (não são filtros aceitos por
+        // StorefrontController::events()).
+        $response = $this->getJson(
+            '/api/v1/loja/' . $tenant->slug . '/eventos?status=rascunho&visibility=private'
+        );
 
         $response->assertStatus(200)->assertJsonCount(0, 'data');
     }
 
     #[Test]
-    public function products_only_lists_products_from_the_requested_tenant(): void
+    public function events_only_lists_events_from_the_requested_tenant(): void
     {
         $tenantA = $this->createTenantWithStorefrontPlan(true);
         $tenantB = $this->createTenantWithStorefrontPlan(true);
-        $this->createProduct($tenantA->id, ['name' => 'Produto A']);
-        $this->createProduct($tenantB->id, ['name' => 'Produto B']);
+        $this->createEvent($tenantA->id, ['name' => 'Evento A']);
+        $this->createEvent($tenantB->id, ['name' => 'Evento B']);
 
-        $response = $this->getJson('/api/v1/loja/' . $tenantA->slug . '/produtos');
+        $response = $this->getJson('/api/v1/loja/' . $tenantA->slug . '/eventos');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.name', 'Produto A');
+            ->assertJsonPath('data.0.name', 'Evento A');
     }
 
     #[Test]
-    public function products_expose_active_option_groups_and_available_options_only(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $product = $this->createProduct($tenant->id, ['name' => 'Hambúrguer com adicionais']);
-
-        $group = ProductOptionGroup::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $product->id,
-            'name' => 'Adicionais',
-            'description' => 'Escolha seus extras',
-            'min_select' => 1,
-            'max_select' => 2,
-            'sort_order' => 1,
-            'is_active' => true,
-        ]);
-
-        ProductOption::create([
-            'tenant_id' => $tenant->id,
-            'product_option_group_id' => $group->id,
-            'name' => 'Queijo extra',
-            'price' => 4.50,
-            'sort_order' => 1,
-            'is_available' => true,
-        ]);
-
-        ProductOption::create([
-            'tenant_id' => $tenant->id,
-            'product_option_group_id' => $group->id,
-            'name' => 'Opção oculta',
-            'price' => 9.90,
-            'sort_order' => 2,
-            'is_available' => false,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.0.option_groups.0.name', 'Adicionais')
-            ->assertJsonPath('data.0.option_groups.0.min_select', 1)
-            ->assertJsonPath('data.0.option_groups.0.options.0.name', 'Queijo extra')
-            ->assertJsonCount(1, 'data.0.option_groups.0.options');
-    }
-
-    #[Test]
-    public function products_returns_404_when_plan_does_not_allow_storefront(): void
+    public function events_returns_404_when_plan_does_not_allow_storefront(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(false);
 
-        $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos')
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos')
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function events_return_404_when_storefront_is_disabled_in_settings(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+
+        TenantSettings::create([
+            'tenant_id' => $tenant->id,
+            'send_tracking_link_whatsapp' => false,
+            'block_order_without_stock' => false,
+            'storefront_enabled' => false,
+        ]);
+
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos')
             ->assertStatus(404);
     }
 
@@ -201,22 +205,6 @@ class StorefrontCatalogTest extends TestCase
             ->assertJsonPath('data.whatsapp', '11988887777')
             ->assertJsonPath('data.instagram', '@empresa')
             ->assertJsonPath('data.facebook', 'empresa.oficial');
-    }
-
-    #[Test]
-    public function products_return_404_when_storefront_is_disabled_in_settings(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-
-        TenantSettings::create([
-            'tenant_id' => $tenant->id,
-            'send_tracking_link_whatsapp' => false,
-            'block_order_without_stock' => false,
-            'storefront_enabled' => false,
-        ]);
-
-        $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos')
-            ->assertStatus(404);
     }
 
     /**
@@ -339,9 +327,9 @@ class StorefrontCatalogTest extends TestCase
     }
 
     /**
-     * GET /loja/{slug}/taxa-entrega/{bairro_uuid} (Delivery Fase 2) —
-     * consulta prévia de taxa, usada pelo frontend antes de confirmar o
-     * checkout.
+     * GET /loja/{slug}/taxa-entrega/{bairro_uuid} — consulta prévia de
+     * taxa, mantida por não ter sido removida explicitamente no roadmap
+     * (ver nota em StorefrontController::deliveryFee()).
      */
     #[Test]
     public function delivery_fee_endpoint_returns_fee_when_configured(): void
@@ -374,119 +362,47 @@ class StorefrontCatalogTest extends TestCase
     }
 
     /**
-     * promo_price no catálogo (Delivery Fase 3) —
-     * StorefrontCatalogService::paginateProducts() carrega as promoções
-     * ativas do tenant de uma vez (keyed por product_id) e repassa pro
-     * StorefrontProductResource, sem N+1.
+     * is_favorited (roadmap Delivery, Fase 4 — retenção, migrado pra
+     * EventFavorite): só calculado quando o catálogo é acessado com
+     * customer.jwt.optional autenticado (portal_customer() populado).
+     * Visitante anônimo nunca ganha o atributo — EventResource usa
+     * $this->when(offsetExists(...)), então a chave nem aparece no JSON
+     * (comportamento novo, diferente do ProductResource antigo que sempre
+     * expunha `false`).
      */
     #[Test]
-    public function products_exposes_promo_price_when_product_has_active_promotion(): void
+    public function events_exposes_is_favorited_only_when_authenticated_as_portal_customer(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $product = $this->createProduct($tenant->id, ['name' => 'Com Promoção', 'price' => 20]);
-        $this->createProduct($tenant->id, ['name' => 'Sem Promoção', 'price' => 10]);
+        $event = $this->createEvent($tenant->id, ['name' => 'Favoritável']);
 
-        ProductPromotion::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $product->id,
-            'promo_price' => 15,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-
-        $response->assertStatus(200)->assertJsonCount(2, 'data');
-
-        $data = collect($response->json('data'))->keyBy('name');
-        $this->assertEquals(15.0, $data['Com Promoção']['promo_price']);
-        $this->assertNull($data['Sem Promoção']['promo_price']);
-    }
-
-    #[Test]
-    public function products_ignores_inactive_or_out_of_window_promotion(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $inactive = $this->createProduct($tenant->id, ['name' => 'Promoção Inativa', 'price' => 20]);
-        $expired = $this->createProduct($tenant->id, ['name' => 'Promoção Expirada', 'price' => 20]);
-
-        ProductPromotion::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $inactive->id,
-            'promo_price' => 15,
-            'is_active' => false,
-        ]);
-
-        ProductPromotion::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $expired->id,
-            'promo_price' => 15,
-            'expires_at' => now()->subDay(),
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-
-        $data = collect($response->json('data'))->keyBy('name');
-        $this->assertNull($data['Promoção Inativa']['promo_price']);
-        $this->assertNull($data['Promoção Expirada']['promo_price']);
-    }
-
-    #[Test]
-    public function products_on_promotion_filter_returns_only_products_with_active_promotion(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $promoted = $this->createProduct($tenant->id, ['name' => 'Promovido', 'price' => 20]);
-        $this->createProduct($tenant->id, ['name' => 'Normal', 'price' => 10]);
-
-        ProductPromotion::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $promoted->id,
-            'promo_price' => 15,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?on_promotion=1');
-
-        $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.name', 'Promovido');
-    }
-
-    /**
-     * is_favorited (roadmap Delivery, Fase 4 — retenção): só calculado
-     * quando o catálogo é acessado com customer.jwt.optional autenticado
-     * (portal_customer() populado); visitante anônimo sempre recebe false.
-     */
-    #[Test]
-    public function products_exposes_is_favorited_only_when_authenticated_as_portal_customer(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $product = $this->createProduct($tenant->id, ['name' => 'Favoritável']);
-
-        $anonymous = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-        $anonymous->assertStatus(200)->assertJsonPath('data.0.is_favorited', false);
+        $anonymous = $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos');
+        $anonymous->assertStatus(200)->assertJsonMissingPath('data.0.is_favorited');
 
         $customer = FinalCustomer::create(['email' => 'fav@test.com']);
         $token = app(CustomerJWTService::class)->issueAccessToken($customer);
 
-        ProductFavorite::create([
+        EventFavorite::create([
             'final_customer_id' => $customer->id,
-            'product_id' => $product->id,
+            'event_id' => $event->id,
         ]);
 
         $authenticated = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
+            ->getJson('/api/v1/loja/' . $tenant->slug . '/eventos');
 
         $authenticated->assertStatus(200)->assertJsonPath('data.0.is_favorited', true);
     }
 
     #[Test]
-    public function products_ignores_invalid_customer_token_and_stays_public(): void
+    public function events_ignores_invalid_customer_token_and_stays_public(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->createProduct($tenant->id);
+        $this->createEvent($tenant->id);
 
         $response = $this->withHeader('Authorization', 'Bearer invalid-token')
-            ->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
+            ->getJson('/api/v1/loja/' . $tenant->slug . '/eventos');
 
-        $response->assertStatus(200)->assertJsonPath('data.0.is_favorited', false);
+        $response->assertStatus(200)->assertJsonMissingPath('data.0.is_favorited');
     }
 
     /**
@@ -510,7 +426,7 @@ class StorefrontCatalogTest extends TestCase
 
         $orderA = Order::create([
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
@@ -527,7 +443,7 @@ class StorefrontCatalogTest extends TestCase
 
         $orderB = Order::create([
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
@@ -548,261 +464,163 @@ class StorefrontCatalogTest extends TestCase
         $this->assertEquals(4.0, $response->json('data.average_rating'));
     }
 
-    /**
-     * sort=price_asc/price_desc (vitrine estilo iFood) — usa o preço
-     * EFETIVO (promoção ativa quando houver, senão preço base), nunca o
-     * preço de tabela ignorando promoção.
-     */
     #[Test]
-    public function products_sort_by_price_uses_effective_price_including_active_promotion(): void
+    public function events_are_ordered_by_starts_at_ascending(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $expensive = $this->createProduct($tenant->id, ['name' => 'Caro', 'price' => 30]);
-        $withPromo = $this->createProduct($tenant->id, ['name' => 'Com Promoção Barata', 'price' => 20]);
-        $middle = $this->createProduct($tenant->id, ['name' => 'Meio Termo', 'price' => 10]);
+        $later = $this->createEvent($tenant->id, ['name' => 'Mais Tarde', 'starts_at' => now()->addDays(20), 'ends_at' => now()->addDays(20)->addHours(2)]);
+        $sooner = $this->createEvent($tenant->id, ['name' => 'Mais Cedo', 'starts_at' => now()->addDays(5), 'ends_at' => now()->addDays(5)->addHours(2)]);
 
-        ProductPromotion::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $withPromo->id,
-            'promo_price' => 5,
-        ]);
-
-        $ascending = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?sort=price_asc');
-        $ascending->assertStatus(200);
-        $this->assertEquals(
-            ['Com Promoção Barata', 'Meio Termo', 'Caro'],
-            collect($ascending->json('data'))->pluck('name')->all()
-        );
-
-        $descending = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?sort=price_desc');
-        $descending->assertStatus(200);
-        $this->assertEquals(
-            ['Caro', 'Meio Termo', 'Com Promoção Barata'],
-            collect($descending->json('data'))->pluck('name')->all()
-        );
-    }
-
-    /**
-     * sort=best_selling — soma de order_items.quantity dos últimos 90 dias,
-     * mesma base de filtro (tenant, não cancelado, não deletado) de
-     * AnalyticsService::orderItemsQuery(). Produto nunca vendido entra por
-     * último (COALESCE 0), sem quebrar a ordenação.
-     */
-    #[Test]
-    public function products_sort_by_best_selling_orders_by_quantity_sold_recently(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
-
-        $topSeller = $this->createProduct($tenant->id, ['name' => 'Mais Vendido']);
-        $mediumSeller = $this->createProduct($tenant->id, ['name' => 'Vendido Ok']);
-        $neverSold = $this->createProduct($tenant->id, ['name' => 'Nunca Vendido']);
-
-        $order = Order::create([
-            'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
-            'stock_location_id' => $location->id,
-            'is_installment' => false,
-            'total_amount' => 100,
-            'is_paid' => false,
-        ]);
-
-        OrderItem::create([
-            'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
-            'product_id' => $topSeller->id,
-            'quantity' => 10,
-            'unit_price' => 10,
-            'line_total' => 100,
-        ]);
-
-        OrderItem::create([
-            'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
-            'product_id' => $mediumSeller->id,
-            'quantity' => 3,
-            'unit_price' => 10,
-            'line_total' => 30,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?sort=best_selling');
+        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos');
 
         $response->assertStatus(200);
         $this->assertEquals(
-            ['Mais Vendido', 'Vendido Ok', 'Nunca Vendido'],
+            ['Mais Cedo', 'Mais Tarde'],
             collect($response->json('data'))->pluck('name')->all()
         );
     }
 
-    /**
-     * Selos do card (gap-analysis de catálogo, item 3) —
-     * StorefrontCatalogService::resolveBadgeIds()/NEW_PRODUCT_DAYS(14).
-     */
     #[Test]
-    public function products_expose_new_badge_only_for_recently_created_products(): void
+    public function events_filter_by_category_uuid(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
-        $recent = $this->createProduct($tenant->id, ['name' => 'Produto Novo']);
-        $old = $this->createProduct($tenant->id, ['name' => 'Produto Antigo']);
-        $old->forceFill(['created_at' => now()->subDays(30)])->save();
 
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
+        $categoryA = EventCategory::create(['tenant_id' => $tenant->id, 'name' => 'Shows', 'is_active' => true]);
+        $categoryB = EventCategory::create(['tenant_id' => $tenant->id, 'name' => 'Teatro', 'is_active' => true]);
 
-        $response->assertStatus(200);
-        $data = collect($response->json('data'))->keyBy('name');
+        $this->createEvent($tenant->id, ['name' => 'Evento Shows', 'event_category_id' => $categoryA->id]);
+        $this->createEvent($tenant->id, ['name' => 'Evento Teatro', 'event_category_id' => $categoryB->id]);
 
-        $this->assertContains('new', $data['Produto Novo']['badges']);
-        $this->assertNotContains('new', $data['Produto Antigo']['badges']);
-    }
-
-    #[Test]
-    public function products_expose_best_selling_badge_for_top_sold_products(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
-
-        $topSeller = $this->createProduct($tenant->id, ['name' => 'Mais Vendido']);
-        $neverSold = $this->createProduct($tenant->id, ['name' => 'Nunca Vendido']);
-
-        $order = Order::create([
-            'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
-            'stock_location_id' => $location->id,
-            'is_installment' => false,
-            'total_amount' => 100,
-            'is_paid' => false,
-        ]);
-
-        OrderItem::create([
-            'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
-            'product_id' => $topSeller->id,
-            'quantity' => 10,
-            'unit_price' => 10,
-            'line_total' => 100,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-
-        $response->assertStatus(200);
-        $data = collect($response->json('data'))->keyBy('name');
-
-        $this->assertContains('best_selling', $data['Mais Vendido']['badges']);
-        $this->assertNotContains('best_selling', $data['Nunca Vendido']['badges']);
-    }
-
-    #[Test]
-    public function products_expose_low_stock_badge_when_available_quantity_is_low(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $location = $this->createLocation($tenant->id);
-
-        $lowStock = $this->createProduct($tenant->id, ['name' => 'Quase Acabando']);
-        $wellStocked = $this->createProduct($tenant->id, ['name' => 'Estoque Cheio']);
-        $outOfStock = $this->createProduct($tenant->id, ['name' => 'Zerado']);
-
-        \App\Models\Stock\StockBalance::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $lowStock->id,
-            'location_id' => $location->id,
-            'quantity_on_hand' => 3,
-            'quantity_reserved' => 0,
-            'quantity_blocked' => 0,
-        ]);
-
-        \App\Models\Stock\StockBalance::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $wellStocked->id,
-            'location_id' => $location->id,
-            'quantity_on_hand' => 50,
-            'quantity_reserved' => 0,
-            'quantity_blocked' => 0,
-        ]);
-
-        \App\Models\Stock\StockBalance::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $outOfStock->id,
-            'location_id' => $location->id,
-            'quantity_on_hand' => 0,
-            'quantity_reserved' => 0,
-            'quantity_blocked' => 0,
-        ]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos');
-
-        $response->assertStatus(200);
-        $data = collect($response->json('data'))->keyBy('name');
-
-        $this->assertContains('low_stock', $data['Quase Acabando']['badges']);
-        $this->assertNotContains('low_stock', $data['Estoque Cheio']['badges']);
-        // Zerado (0 disponível): não é "últimas unidades" — é ruptura, um
-        // conceito diferente (produto some do card por is_available, não
-        // ganha selo de "acabando").
-        $this->assertNotContains('low_stock', $data['Zerado']['badges']);
-    }
-
-    #[Test]
-    public function products_ignores_unknown_sort_value_and_falls_back_to_default(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->createProduct($tenant->id, ['name' => 'Zebra']);
-        $this->createProduct($tenant->id, ['name' => 'Abacaxi']);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/produtos?sort=algo-invalido');
-
-        $response->assertStatus(200);
-        $this->assertEquals(
-            ['Abacaxi', 'Zebra'],
-            collect($response->json('data'))->pluck('name')->all()
+        $response = $this->getJson(
+            '/api/v1/loja/' . $tenant->slug . '/eventos?event_category_uuid=' . $categoryA->uuid
         );
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Evento Shows');
     }
 
     /**
-     * GET /loja/{slug}/categorias (vitrine estilo iFood) — só categorias com
-     * pelo menos 1 produto disponível, ordenadas por priority.
+     * Detalhe público de um evento (NOVO — não existia equivalente no
+     * catálogo de comércio), com ticket_types/event_products aninhados,
+     * restritos ao que está status=ativo e não deletado, sem expor custo.
      */
     #[Test]
-    public function categories_lists_only_categories_with_available_product_ordered_by_priority(): void
+    public function event_show_returns_detail_with_active_ticket_types_and_event_products_nested(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+        $event = $this->createEvent($tenant->id, ['name' => 'Show com Ingressos']);
+
+        $activeTicket = $this->createTicketType($event, ['name' => 'Inteira', 'price' => 100, 'last_purchase_cost' => 30]);
+        $this->createTicketType($event, ['name' => 'Esgotada', 'status' => 'inativo']);
+
+        $activeProduct = $this->createEventProduct($event, ['name' => 'Estacionamento']);
+        $this->createEventProduct($event, ['name' => 'Item Inativo', 'status' => 'inativo']);
+
+        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos/' . $event->slug);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.uuid', $event->uuid)
+            ->assertJsonCount(1, 'data.ticket_types')
+            ->assertJsonPath('data.ticket_types.0.uuid', $activeTicket->uuid)
+            ->assertJsonMissingPath('data.ticket_types.0.last_purchase_cost')
+            ->assertJsonCount(1, 'data.event_products')
+            ->assertJsonPath('data.event_products.0.uuid', $activeProduct->uuid);
+    }
+
+    #[Test]
+    public function event_show_returns_404_for_draft_event(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+        $event = $this->createEvent($tenant->id, ['status' => 'rascunho']);
+
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos/' . $event->slug)
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function event_show_returns_404_for_private_event(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+        $event = $this->createEvent($tenant->id, ['visibility' => 'private']);
+
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos/' . $event->slug)
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function event_show_returns_404_for_event_of_another_tenant(): void
+    {
+        $tenantA = $this->createTenantWithStorefrontPlan(true);
+        $tenantB = $this->createTenantWithStorefrontPlan(true);
+        $eventB = $this->createEvent($tenantB->id, ['slug' => 'evento-de-b']);
+
+        $this->getJson('/api/v1/loja/' . $tenantA->slug . '/eventos/' . $eventB->slug)
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function event_show_returns_404_when_plan_does_not_allow_storefront(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(false);
+        // Sem plano/gate, o slug do evento nem chega a ser resolvido —
+        // qualquer valor de eventSlug basta pra provar o 404 do gate.
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos/qualquer-evento')
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function event_show_returns_404_when_storefront_is_disabled_in_settings(): void
+    {
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+        $event = $this->createEvent($tenant->id);
+
+        TenantSettings::create([
+            'tenant_id' => $tenant->id,
+            'send_tracking_link_whatsapp' => false,
+            'block_order_without_stock' => false,
+            'storefront_enabled' => false,
+        ]);
+
+        $this->getJson('/api/v1/loja/' . $tenant->slug . '/eventos/' . $event->slug)
+            ->assertStatus(404);
+    }
+
+    /**
+     * GET /loja/{slug}/categorias (vitrine) — só categorias com pelo menos
+     * 1 evento publicado/público, ordenadas por priority e depois nome.
+     */
+    #[Test]
+    public function categories_lists_only_categories_with_available_event_ordered_by_priority(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
 
-        $categoryLow = ProductCategory::create([
+        $categoryLow = EventCategory::create([
             'tenant_id' => $tenant->id,
             'name' => 'Segunda',
             'priority' => 2,
             'is_active' => true,
         ]);
-        $categoryHigh = ProductCategory::create([
+        $categoryHigh = EventCategory::create([
             'tenant_id' => $tenant->id,
             'name' => 'Primeira',
             'priority' => 1,
             'is_active' => true,
         ]);
-        $categoryWithoutAvailableProduct = ProductCategory::create([
+        $categoryWithoutPublishedEvent = EventCategory::create([
             'tenant_id' => $tenant->id,
-            'name' => 'Sem Produto Disponível',
+            'name' => 'Sem Evento Publicado',
             'priority' => 0,
             'is_active' => true,
         ]);
 
-        foreach ([$categoryLow, $categoryHigh, $categoryWithoutAvailableProduct] as $category) {
-            $type = ProductType::create([
-                'tenant_id' => $tenant->id,
-                'product_category_id' => $category->id,
-                'name' => 'Tipo ' . $category->name,
-                'is_active' => true,
-            ]);
-
-            Product::create([
-                'tenant_id' => $tenant->id,
-                'product_type_id' => $type->id,
-                'name' => 'Produto ' . $category->name,
-                'price' => 10,
-                'is_available' => $category->id !== $categoryWithoutAvailableProduct->id,
-            ]);
-        }
+        $this->createEvent($tenant->id, ['name' => 'Evento Segunda', 'event_category_id' => $categoryLow->id]);
+        $this->createEvent($tenant->id, ['name' => 'Evento Primeira', 'event_category_id' => $categoryHigh->id]);
+        $this->createEvent($tenant->id, [
+            'name' => 'Rascunho',
+            'event_category_id' => $categoryWithoutPublishedEvent->id,
+            'status' => 'rascunho',
+        ]);
 
         $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/categorias');
 

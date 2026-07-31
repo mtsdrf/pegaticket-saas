@@ -2,9 +2,9 @@
 
 namespace App\Services\Onboarding;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Storefront\StoreDeliveryFee;
 use App\Models\Tenant\Tenant;
@@ -36,17 +36,17 @@ class OnboardingService
     public function checklist(int $tenantId, TenantUser $tenantUser): array
     {
         $items = [
-            'has_product' => Product::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
-            'has_client' => Client::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
+            'has_product' => TicketType::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
+            'has_client' => FinalCustomerTenantLink::where('tenant_id', $tenantId)->exists(),
             'has_first_order' => Order::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
         ];
 
         $steps = [
             [
                 'key' => 'has_product',
-                'label' => 'Cadastre seu primeiro produto',
-                'to' => '/produtos',
-                'link_label' => 'Cadastrar produto',
+                'label' => 'Cadastre seu primeiro tipo de ingresso',
+                'to' => '/ticket-types',
+                'link_label' => 'Cadastrar tipo de ingresso',
                 'completed' => $items['has_product'],
             ],
             [

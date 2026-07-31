@@ -29,25 +29,25 @@ class UpdateOrderItemsRequest extends FormRequest
             // uuid presente = item existente (atualiza); ausente = item
             // novo (cria). Mesma convenção de OrderInstallmentService::reallocate().
             'items.*.uuid' => ['nullable', 'uuid'],
-            'items.*.product_uuid' => [
-                'required',
+            'items.*.ticket_type_uuid' => [
+                'required_without:items.*.event_product_uuid',
+                'nullable',
                 'uuid',
-                Rule::exists('products', 'uuid')->where(function ($query) {
+                Rule::exists('ticket_types', 'uuid')->where(function ($query) {
+                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
+                }),
+            ],
+            'items.*.event_product_uuid' => [
+                'required_without:items.*.ticket_type_uuid',
+                'nullable',
+                'uuid',
+                Rule::exists('event_products', 'uuid')->where(function ($query) {
                     $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
                 }),
             ],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.notes' => ['nullable', 'string', 'max:200'],
-            'items.*.options' => ['nullable', 'array'],
-            'items.*.options.*.product_option_uuid' => [
-                'required',
-                'uuid',
-                Rule::exists('product_options', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
-            'items.*.options.*.quantity' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
@@ -55,7 +55,8 @@ class UpdateOrderItemsRequest extends FormRequest
     {
         return [
             'stock_location_uuid.exists' => __('messages.order.invalid_stock_location'),
-            'items.*.product_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
         ];
     }
 }

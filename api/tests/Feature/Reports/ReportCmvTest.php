@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Reports;
 
-use App\Models\Product\Product;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
+use App\Models\Event\Event;
+use App\Models\Event\EventCategory;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
 use App\Models\Stock\StockMovement;
@@ -36,12 +36,12 @@ class ReportCmvTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function entry(Product $product, StockLocation $location, float $quantity, ?float $unitCost, string $reason): void
+    protected function entry(TicketType $product, StockLocation $location, float $quantity, ?float $unitCost, string $reason): void
     {
         $balance = StockBalance::firstOrCreate(
             [
                 'tenant_id' => $product->tenant_id,
-                'product_id' => $product->id,
+                'ticket_type_id' => $product->id,
                 'location_id' => $location->id,
             ],
             [
@@ -60,7 +60,7 @@ class ReportCmvTest extends TestCase
 
         StockMovement::create([
             'tenant_id' => $product->tenant_id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'location_id' => $location->id,
             'type' => 'entry',
             'quantity' => $quantity,
@@ -71,31 +71,36 @@ class ReportCmvTest extends TestCase
         ]);
     }
 
-    protected function createProduct(int $tenantId, array $overrides = []): Product
+    protected function createProduct(int $tenantId, array $overrides = []): TicketType
     {
-        $category = ProductCategory::create([
+        $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'name' => 'Category ' . Str::random(6),
             'is_active' => true,
         ]);
 
-        $type = ProductType::create([
+        $event = Event::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'product_category_id' => $category->id,
-            'name' => 'Type ' . Str::random(6),
-            'is_active' => true,
+            'event_category_id' => $category->id,
+            'name' => 'Event ' . Str::random(6),
+            'slug' => 'event-' . Str::random(10),
+            'type' => 'ingresso',
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
         ]);
 
-        return Product::create(array_merge([
+        return TicketType::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'product_type_id' => $type->id,
+            'event_id' => $event->id,
             'name' => 'Product ' . Str::random(6),
             'price' => 20,
-            'is_available' => true,
-            'stock_quantity' => 0,
+            'status' => 'ativo',
+            'unit' => 'un',
         ], $overrides));
     }
 
@@ -120,7 +125,7 @@ class ReportCmvTest extends TestCase
 
         $response = $this->auth()->getJson('/api/v1/reports/cmv')->assertStatus(200);
 
-        $item = collect($response->json('data'))->firstWhere('product_uuid', $product->uuid);
+        $item = collect($response->json('data'))->firstWhere('ticket_type_uuid', $product->uuid);
         $this->assertNotNull($item);
         $this->assertEquals('8.00', $item['cmv']);
         $this->assertEquals('20.00', $item['sale_price']);
@@ -141,7 +146,7 @@ class ReportCmvTest extends TestCase
 
         $response = $this->auth()->getJson('/api/v1/reports/cmv')->assertStatus(200);
 
-        $item = collect($response->json('data'))->firstWhere('product_uuid', $product->uuid);
+        $item = collect($response->json('data'))->firstWhere('ticket_type_uuid', $product->uuid);
         $this->assertEquals('7.00', $item['cmv']);
         $this->assertTrue($item['has_cost_data']);
     }
@@ -158,7 +163,7 @@ class ReportCmvTest extends TestCase
 
         $response = $this->auth()->getJson('/api/v1/reports/cmv')->assertStatus(200);
 
-        $item = collect($response->json('data'))->firstWhere('product_uuid', $product->uuid);
+        $item = collect($response->json('data'))->firstWhere('ticket_type_uuid', $product->uuid);
         $this->assertNotNull($item);
         $this->assertNull($item['cmv']);
         $this->assertNull($item['margin_percent']);

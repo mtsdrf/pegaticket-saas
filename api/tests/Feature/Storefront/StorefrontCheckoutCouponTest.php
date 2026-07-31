@@ -71,7 +71,7 @@ class StorefrontCheckoutCouponTest extends TestCase
 
         return array_merge([
             'items' => [
-                ['product_uuid' => $productUuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $productUuid, 'quantity' => 2],
             ],
             'client_name' => 'Cliente Loja',
             'client_last_name' => 'Sobrenome',
@@ -309,7 +309,7 @@ class StorefrontCheckoutCouponTest extends TestCase
         $otherClient = $this->createClient($tenant->id);
         $otherOrder = Order::create([
             'tenant_id' => $tenant->id,
-            'client_id' => $otherClient->id,
+            'final_customer_id' => $otherClient->id,
             'stock_location_id' => $this->createLocation($tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,
@@ -435,11 +435,11 @@ class StorefrontCheckoutCouponTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->postJson('/api/v1/orders', [
-                'client_uuid' => $client->uuid,
+                'final_customer_uuid' => $client->uuid,
                 'stock_location_uuid' => $location->uuid,
                 'is_installment' => false,
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
             ]);
 
@@ -577,7 +577,7 @@ class StorefrontCheckoutCouponTest extends TestCase
         $response = $this->postJson('/api/v1/loja/' . $tenant->slug . '/cupons/validar', [
             'code' => 'PREVIEW10',
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -594,7 +594,7 @@ class StorefrontCheckoutCouponTest extends TestCase
         $response = $this->postJson('/api/v1/loja/' . $tenant->slug . '/cupons/validar', [
             'code' => 'DOESNOTEXIST',
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ]);
 
@@ -618,7 +618,7 @@ class StorefrontCheckoutCouponTest extends TestCase
         $client = $this->createClient($tenant->id);
         $order = Order::create([
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $this->createLocation($tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,
@@ -645,7 +645,7 @@ class StorefrontCheckoutCouponTest extends TestCase
         $response = $this->postJson('/api/v1/loja/' . $tenant->slug . '/cupons/validar', [
             'code' => 'ANYCUSTOMER',
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ]);
 

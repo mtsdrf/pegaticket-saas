@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Subscription\Payment;
@@ -53,11 +52,11 @@ class MercadoPagoOrderPaymentTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         return $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => $qty],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => $qty],
             ],
         ])->json('data');
     }
@@ -193,13 +192,16 @@ class MercadoPagoOrderPaymentTest extends TestCase
     }
 
     /**
-     * Bug real confirmado contra a API real do Mercado Pago: POST /v1/orders
-     * exige `payer` com ao menos 1 propriedade preenchida. `clients` (cadastro
-     * do staff) não tem coluna e-mail; só `final_customers` (login do Portal)
-     * tem, ligada via `final_customer_tenant_links`.
+     * FinalCustomer absorveu Client (2026-07-31): orders.final_customer_id
+     * referencia final_customers diretamente, que sempre tem `email`
+     * (coluna obrigatória) — não existe mais o cenário "Client sem
+     * FinalCustomer vinculado" do desenho antigo (Client nunca tinha
+     * e-mail). POST /v1/orders exige `payer` com ao menos 1 propriedade
+     * preenchida; aqui é sempre satisfeito pelo e-mail do próprio
+     * comprador do pedido.
      */
     #[Test]
-    public function pix_charge_uses_the_linked_final_customers_email_as_payer(): void
+    public function pix_charge_uses_the_final_customers_email_as_payer(): void
     {
         Http::fake([
             'api.mercadopago.com/v1/orders' => Http::response([
@@ -212,30 +214,17 @@ class MercadoPagoOrderPaymentTest extends TestCase
         $this->grantPermission('orders', 'update');
         $this->grantPermission('orders', 'create');
         $client = $this->createClient($this->tenant->id);
-
-        $finalCustomer = FinalCustomer::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'Cliente Final',
-            'email' => 'cliente.final@example.com',
-        ]);
-
-        FinalCustomerTenantLink::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'final_customer_id' => $finalCustomer->id,
-            'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
-            'confirmed_at' => now(),
-        ]);
+        $client->update(['email' => 'cliente.final@example.com']);
 
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 40]);
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
-            'items' => [['product_uuid' => $product->uuid, 'quantity' => 1]],
+            'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 1]],
         ])->json('data');
 
         $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")->assertStatus(201);
@@ -246,8 +235,14 @@ class MercadoPagoOrderPaymentTest extends TestCase
         });
     }
 
+    /**
+     * Documento (CPF/CNPJ) do FinalCustomerTenantLink (dado por-tenant)
+     * entra em `payer.identification` ao lado do e-mail — os dois
+     * coexistem no payer, não é fallback exclusivo (e-mail sempre
+     * presente desde que FinalCustomer.email é obrigatório).
+     */
     #[Test]
-    public function pix_charge_falls_back_to_client_document_when_no_final_customer_is_linked(): void
+    public function pix_charge_includes_the_links_document_alongside_the_email(): void
     {
         Http::fake([
             'api.mercadopago.com/v1/orders' => Http::response([
@@ -260,17 +255,20 @@ class MercadoPagoOrderPaymentTest extends TestCase
         $this->grantPermission('orders', 'update');
         $this->grantPermission('orders', 'create');
         $client = $this->createClient($this->tenant->id);
-        $client->update(['cpf_cnpj' => '12345678901']);
+
+        FinalCustomerTenantLink::where('final_customer_id', $client->id)
+            ->where('tenant_id', $this->tenant->id)
+            ->update(['cpf_cnpj' => '12345678901']);
 
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 40]);
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
-            'items' => [['product_uuid' => $product->uuid, 'quantity' => 1]],
+            'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 1]],
         ])->json('data');
 
         $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")->assertStatus(201);
@@ -279,45 +277,7 @@ class MercadoPagoOrderPaymentTest extends TestCase
             return $request->url() === 'https://api.mercadopago.com/v1/orders'
                 && ($request['payer']['identification']['type'] ?? null) === 'CPF'
                 && ($request['payer']['identification']['number'] ?? null) === '12345678901'
-                && !isset($request['payer']['email']);
-        });
-    }
-
-    #[Test]
-    public function pix_charge_falls_back_to_the_clients_real_name_when_no_email_or_document_is_available(): void
-    {
-        Http::fake([
-            'api.mercadopago.com/v1/orders' => Http::response([
-                'id' => 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3',
-                'status' => 'action_required',
-                'transactions' => ['payments' => [['id' => 'txn_1', 'status' => 'pending', 'payment_method' => ['id' => 'pix', 'type' => 'bank_transfer']]]],
-            ], 201),
-        ]);
-
-        $this->grantPermission('orders', 'update');
-        $this->grantPermission('orders', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $client->update(['name' => 'Maria Souza']);
-
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 40]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
-
-        $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [['product_uuid' => $product->uuid, 'quantity' => 1]],
-        ])->json('data');
-
-        $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")->assertStatus(201);
-
-        Http::assertSent(function ($request) {
-            return $request->url() === 'https://api.mercadopago.com/v1/orders'
-                && $request['payer']['first_name'] === 'Maria'
-                && $request['payer']['last_name'] === 'Souza'
-                && !isset($request['payer']['email'])
-                && !isset($request['payer']['identification']);
+                && isset($request['payer']['email']);
         });
     }
 }

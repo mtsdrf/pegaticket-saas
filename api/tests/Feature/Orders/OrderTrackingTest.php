@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
 use App\Models\Order\OrderItem;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,12 +36,12 @@ class OrderTrackingTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, Client $client, StockLocation $location, array $overrides = []): Order
+    private function createOrder(Tenant $tenant, FinalCustomer $client, StockLocation $location, array $overrides = []): Order
     {
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -51,13 +51,13 @@ class OrderTrackingTest extends TestCase
         ], $overrides));
     }
 
-    private function createOrderItem(Tenant $tenant, Order $order, Product $product, array $overrides = []): OrderItem
+    private function createOrderItem(Tenant $tenant, Order $order, TicketType $product, array $overrides = []): OrderItem
     {
         return OrderItem::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 38,
             'line_total' => 114,
@@ -91,7 +91,7 @@ class OrderTrackingTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.uuid', $order->uuid)
             ->assertJsonPath('data.tenant_name', $tenant->name)
-            ->assertJsonPath('data.client_name', $client->name);
+            ->assertJsonPath('data.final_customer_name', $client->name);
     }
 
     #[Test]
@@ -108,7 +108,7 @@ class OrderTrackingTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.is_installment', false)
-            ->assertJsonPath('data.items.0.product_name', 'Queijo Meia Cura')
+            ->assertJsonPath('data.items.0.ticket_type_name', 'Queijo Meia Cura')
             ->assertJsonPath('data.items.0.quantity', '3.000')
             ->assertJsonPath('data.items.0.line_total', '114.00')
             ->assertJsonPath('data.installments', []);
@@ -192,12 +192,12 @@ class OrderTrackingTest extends TestCase
         $this->getJson('/api/v1/rastreio/' . $orderA->uuid)
             ->assertStatus(200)
             ->assertJsonPath('data.tenant_name', $tenantA->name)
-            ->assertJsonPath('data.client_name', $clientA->name);
+            ->assertJsonPath('data.final_customer_name', $clientA->name);
 
         $this->getJson('/api/v1/rastreio/' . $orderB->uuid)
             ->assertStatus(200)
             ->assertJsonPath('data.tenant_name', $tenantB->name)
-            ->assertJsonPath('data.client_name', $clientB->name);
+            ->assertJsonPath('data.final_customer_name', $clientB->name);
     }
 
     #[Test]

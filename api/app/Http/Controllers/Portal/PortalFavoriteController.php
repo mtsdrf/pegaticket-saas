@@ -3,21 +3,21 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Storefront\StorefrontProductResource;
+use App\Http\Resources\Event\EventResource;
 use App\Services\APIResponse;
-use App\Services\Storefront\ProductFavoriteService;
+use App\Services\Storefront\EventFavoriteService;
 use Illuminate\Http\Request;
 
 class PortalFavoriteController extends Controller
 {
     public function __construct(
-        private ProductFavoriteService $service
+        private EventFavoriteService $service
     ) {
     }
 
-    public function toggle(string $productUuid)
+    public function toggle(string $eventUuid)
     {
-        $result = $this->service->toggle(portal_customer()->id, $productUuid);
+        $result = $this->service->toggle(portal_customer()->id, $eventUuid);
 
         return APIResponse::success(
             $result,
@@ -32,7 +32,7 @@ class PortalFavoriteController extends Controller
         $list = $this->service->list(portal_customer()->id, (int) $request->get('per_page', 15));
 
         return APIResponse::success(
-            StorefrontProductResource::collection($list),
+            EventResource::collection($list),
             __('messages.storefront.favorites_listed'),
             200,
             [

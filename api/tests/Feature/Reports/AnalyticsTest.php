@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Reports;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -11,9 +12,9 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
 use App\Models\Order\OrderItem;
 use App\Models\Plan\Plan;
-use App\Models\Product\Product;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
+use App\Models\Event\Event;
+use App\Models\Event\EventCategory;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
 use App\Models\Storefront\Coupon;
@@ -47,7 +48,7 @@ class AnalyticsTest extends TestCase
     // Fixtures (mesmo padrão do ReportTest)
     // ------------------------------------------------------------------
 
-    protected function createClientWithLocation(string $cityName = 'Cidade Teste', string $neighborhoodName = 'Bairro Teste'): Client
+    protected function createClientWithLocation(string $cityName = 'Cidade Teste', string $neighborhoodName = 'Bairro Teste'): FinalCustomer
     {
         $estado = Estado::create([
             'uuid' => (string) Str::uuid(),
@@ -77,14 +78,23 @@ class AnalyticsTest extends TestCase
             'is_active' => true,
         ]);
 
-        return Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
+            'name' => 'Client ' . Str::random(6),
+            'email' => 'client-' . Str::random(10) . '@test.com',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
             'tenant_id' => $this->tenant->id,
             'endereco_id' => $endereco->id,
-            'name' => 'Client ' . Str::random(6),
             'is_trusted' => true,
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
+
+        return $finalCustomer;
     }
 
     protected function createLocation(): StockLocation
@@ -98,39 +108,45 @@ class AnalyticsTest extends TestCase
         ]);
     }
 
-    protected function createProduct(string $name = 'Produto Teste'): Product
+    protected function createProduct(string $name = 'Produto Teste'): TicketType
     {
-        $category = ProductCategory::create([
+        $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'name' => 'Categoria ' . Str::random(5),
             'is_active' => true,
         ]);
 
-        $type = ProductType::create([
+        $event = Event::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_category_id' => $category->id,
-            'name' => 'Tipo ' . Str::random(5),
-            'is_active' => true,
+            'event_category_id' => $category->id,
+            'name' => 'Evento ' . Str::random(5),
+            'slug' => 'evento-' . Str::random(10),
+            'type' => 'ingresso',
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
         ]);
 
-        return Product::create([
+        return TicketType::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_type_id' => $type->id,
+            'event_id' => $event->id,
             'name' => $name,
             'price' => 10,
-            'is_available' => true,
+            'status' => 'ativo',
+            'unit' => 'un',
         ]);
     }
 
-    protected function createOrder(Client $client, StockLocation $location, array $overrides = [], ?string $createdAt = null): Order
+    protected function createOrder(FinalCustomer $client, StockLocation $location, array $overrides = [], ?string $createdAt = null): Order
     {
         $order = Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -145,13 +161,13 @@ class AnalyticsTest extends TestCase
         return $order->fresh();
     }
 
-    protected function attachOrderItem(Order $order, Product $product, float $quantity, float $unitPrice): void
+    protected function attachOrderItem(Order $order, TicketType $product, float $quantity, float $unitPrice): void
     {
         OrderItem::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $order->tenant_id,
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'line_total' => round($quantity * $unitPrice, 2),
@@ -182,7 +198,7 @@ class AnalyticsTest extends TestCase
     }
 
     protected function createStockBalance(
-        Product $product,
+        TicketType $product,
         StockLocation $location,
         float $onHand,
         float $reserved = 0,
@@ -191,7 +207,7 @@ class AnalyticsTest extends TestCase
         return StockBalance::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'location_id' => $location->id,
             'quantity_on_hand' => $onHand,
             'quantity_reserved' => $reserved,
@@ -343,10 +359,10 @@ class AnalyticsTest extends TestCase
         $data = $response->json('data');
 
         $this->assertCount(2, $data);
-        $this->assertSame('Produto A', $data[0]['product_name']);
+        $this->assertSame('Produto A', $data[0]['ticket_type_name']);
         $this->assertEquals(10, $data[0]['quantity_sold']);
         $this->assertSame('100.00', $data[0]['revenue']);
-        $this->assertSame('Produto B', $data[1]['product_name']);
+        $this->assertSame('Produto B', $data[1]['ticket_type_name']);
         $this->assertSame('30.00', $data[1]['revenue']);
     }
 
@@ -554,10 +570,10 @@ class AnalyticsTest extends TestCase
         $this->attachOrderItem($order, $productC, 5, 10);  // 50 -> 100% acumulado -> C
 
         $response = $this->auth()
-            ->getJson('/api/v1/reports/analytics/abc-analysis?dimension=products')
+            ->getJson('/api/v1/reports/analytics/abc-analysis?dimension=ticket_types')
             ->assertStatus(200);
 
-        $response->assertJsonPath('data.dimension', 'products')
+        $response->assertJsonPath('data.dimension', 'ticket_types')
             ->assertJsonPath('data.total_revenue', '1000.00')
             ->assertJsonPath('data.items.0.name', 'Produto A')
             ->assertJsonPath('data.items.0.curve_class', 'A')
@@ -831,7 +847,7 @@ class AnalyticsTest extends TestCase
             ->assertStatus(200);
 
         $response->assertJsonPath('data.count', 1)
-            ->assertJsonPath('data.items.0.product_name', 'Encalhado')
+            ->assertJsonPath('data.items.0.ticket_type_name', 'Encalhado')
             ->assertJsonPath('data.items.0.quantity_on_hand', 10)
             ->assertJsonPath('data.items.0.value_tied_up', '40.00')
             ->assertJsonPath('data.items.0.cost_is_estimated', false)
@@ -893,7 +909,7 @@ class AnalyticsTest extends TestCase
             ->assertStatus(200);
 
         $response->assertJsonPath('data.count', 1)
-            ->assertJsonPath('data.items.0.product_name', 'Rompido')
+            ->assertJsonPath('data.items.0.ticket_type_name', 'Rompido')
             ->assertJsonPath('data.items.0.units_sold_last_90_days', 8);
     }
 

@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Reports;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -39,7 +40,7 @@ class ReportByChannelTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function createClientWithCity(int $tenantId): Client
+    protected function createClientWithCity(int $tenantId): FinalCustomer
     {
         $estado = Estado::create([
             'uuid' => (string) Str::uuid(),
@@ -69,14 +70,23 @@ class ReportByChannelTest extends TestCase
             'is_active' => true,
         ]);
 
-        return Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
+            'name' => 'Client ' . Str::random(6),
+            'email' => 'client-' . Str::random(10) . '@test.com',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
             'tenant_id' => $tenantId,
             'endereco_id' => $endereco->id,
-            'name' => 'Client ' . Str::random(6),
             'is_trusted' => true,
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
+
+        return $finalCustomer;
     }
 
     protected function createLocation(int $tenantId): StockLocation
@@ -90,12 +100,12 @@ class ReportByChannelTest extends TestCase
         ]);
     }
 
-    protected function createOrder(int $tenantId, Client $client, StockLocation $location, array $overrides = []): Order
+    protected function createOrder(int $tenantId, FinalCustomer $client, StockLocation $location, array $overrides = []): Order
     {
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,

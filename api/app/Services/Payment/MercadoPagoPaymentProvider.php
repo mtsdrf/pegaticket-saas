@@ -669,40 +669,41 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
     /**
      * Resolve o `payer` de uma cobrança de PEDIDO (cliente final → tenant).
      * `POST /v1/orders` exige ao menos 1 propriedade preenchida em `payer` —
-     * `clients` (cadastro do staff, `orders.client_id`) NÃO tem coluna
-     * `email`; só `final_customers` (login do Portal/loja) tem, ligada por
-     * `final_customer_tenant_links` (mesmo padrão de reverse lookup já usado
-     * pelo Web Push). Prioridade: e-mail do FinalCustomer vinculado e
-     * confirmado > CPF/CNPJ do Client (já validado 11/14 dígitos no
-     * cadastro) > nome real do Client (sempre presente, coluna obrigatória)
-     * como último recurso. NUNCA usa o e-mail do tenant/loja aqui — o
-     * payer é o cliente final, não o estabelecimento.
+     * `orders.final_customer_id` referencia `final_customers` diretamente
+     * (FinalCustomer absorveu Client em 2026-07-31), que já tem `email`
+     * (login do Portal/loja). CPF/CNPJ vem do FinalCustomerTenantLink
+     * (dado por-tenant). Prioridade: e-mail do FinalCustomer > CPF/CNPJ do
+     * link por-tenant (já validado 11/14 dígitos no cadastro) > nome do
+     * FinalCustomer (name/last_name) como último recurso. NUNCA usa o
+     * e-mail do tenant/loja aqui — o payer é o cliente final, não o
+     * estabelecimento.
      *
      * @return array<string, mixed>
      */
     private function resolveOrderPayer(Order $order): array
     {
-        $client = $order->client;
+        // finalCustomerLink NÃO entra em loadMissing() de propósito (ver
+        // OrderService::EAGER_RELATIONS) — acesso abaixo via
+        // $order->finalCustomerLink é lazy sobre a instância REAL de
+        // $order, o único jeito correto de resolver essa relation.
+        $order->loadMissing('finalCustomer');
 
-        if ($client === null) {
+        $customer = $order->finalCustomer;
+
+        if ($customer === null) {
             return [];
         }
 
         $payer = [];
 
-        $link = $this->finalCustomerTenantLinkRepository->findConfirmedByTenantAndClient(
-            (int) $order->tenant_id,
-            (int) $client->id
-        );
-
-        $email = $link?->finalCustomer?->email;
-
-        if (!empty($email)) {
-            $payer['email'] = $email;
+        if (!empty($customer->email)) {
+            $payer['email'] = $customer->email;
         }
 
-        if (!empty($client->cpf_cnpj)) {
-            $digits = (string) $client->cpf_cnpj;
+        $link = $order->finalCustomerLink;
+
+        if ($link && !empty($link->cpf_cnpj)) {
+            $digits = (string) $link->cpf_cnpj;
 
             $payer['identification'] = [
                 'type' => strlen($digits) === 11 ? 'CPF' : 'CNPJ',
@@ -710,13 +711,11 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
             ];
         }
 
-        if ($payer === [] && !empty($client->name)) {
-            [$firstName, $lastName] = $this->splitName((string) $client->name);
+        if ($payer === [] && !empty($customer->name)) {
+            $payer['first_name'] = $customer->name;
 
-            $payer['first_name'] = $firstName;
-
-            if ($lastName !== null) {
-                $payer['last_name'] = $lastName;
+            if (!empty($customer->last_name)) {
+                $payer['last_name'] = $customer->last_name;
             }
         }
 

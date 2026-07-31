@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Client\CreateClientDTO;
 use App\DTOs\Location\CreateBairroDTO;
 use App\DTOs\Location\CreateCidadeDTO;
+use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Order\CreateOrderDTO;
 use App\DTOs\Product\CreateProductCategoryDTO;
 use App\DTOs\Product\CreateProductDTO;
@@ -15,7 +15,8 @@ use App\DTOs\Tenant\CreateTenantRoleDTO;
 use App\DTOs\Tenant\CreateTenantUserDTO;
 use App\DTOs\Tenant\SyncTenantRolePermissionsDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Estado;
@@ -24,9 +25,9 @@ use App\Models\Product\Product;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Client\ClientService;
 use App\Services\Location\BairroService;
 use App\Services\Location\CidadeService;
+use App\Services\Location\EnderecoService;
 use App\Services\Order\OrderService;
 use App\Services\Product\ProductCategoryService;
 use App\Services\Product\ProductService;
@@ -276,7 +277,13 @@ class DemoPlansPresentationSeeder extends Seeder
         }
     }
 
-    /** @return array<int, Client> */
+    /**
+     * FinalCustomer absorveu Client (2026-07-31): cliente demo passa a ser
+     * um FinalCustomer global + FinalCustomerTenantLink (registro por-tenant
+     * com endereço/telefone), em vez de um Client tenant-scoped.
+     *
+     * @return array<int, FinalCustomer>
+     */
     private function setupClients(Tenant $tenant, Estado $estado, Cidade $cidade, array $bairros): array
     {
         $spec = [
@@ -289,17 +296,32 @@ class DemoPlansPresentationSeeder extends Seeder
         foreach ($spec as $c) {
             $bairro = $bairros[$c['bairro']];
 
-            $created[] = app(ClientService::class)->create(CreateClientDTO::fromArray([
-                'name' => $c['name'],
-                'phone_primary' => $c['phone'],
-                'is_trusted' => true,
-                'is_active' => true,
+            $endereco = app(EnderecoService::class)->create(CreateEnderecoDTO::fromArray([
                 'estado_uuid' => $estado->uuid,
                 'cidade_uuid' => $cidade->uuid,
                 'bairro_uuid' => $bairro->uuid,
                 'logradouro' => $c['logradouro'],
                 'numero' => $c['numero'],
             ], $tenant->id));
+
+            $finalCustomer = FinalCustomer::create([
+                'uuid' => (string) Str::uuid(),
+                'name' => $c['name'],
+                'email' => Str::slug($c['name']) . '-' . $tenant->id . '@demo.pegaticket.com',
+            ]);
+
+            FinalCustomerTenantLink::create([
+                'uuid' => (string) Str::uuid(),
+                'final_customer_id' => $finalCustomer->id,
+                'tenant_id' => $tenant->id,
+                'endereco_id' => $endereco->id,
+                'phone_primary' => $c['phone'],
+                'is_trusted' => true,
+                'is_active' => true,
+                'confirmed_at' => now(),
+            ]);
+
+            $created[] = $finalCustomer;
         }
 
         return $created;
@@ -342,7 +364,7 @@ class DemoPlansPresentationSeeder extends Seeder
             $items = $this->randomItems($products, 1, 3);
 
             $order = $orderService->create(CreateOrderDTO::fromArray([
-                'client_uuid' => $client->uuid,
+                'final_customer_uuid' => $client->uuid,
                 'stock_location_uuid' => $location->uuid,
                 'items' => $items,
                 'origin' => 'staff',
@@ -365,7 +387,7 @@ class DemoPlansPresentationSeeder extends Seeder
             $items = $this->randomItems($products, 1, 2);
 
             $orderService->create(CreateOrderDTO::fromArray([
-                'client_uuid' => $client->uuid,
+                'final_customer_uuid' => $client->uuid,
                 'stock_location_uuid' => $location->uuid,
                 'items' => $items,
                 'origin' => 'storefront',
@@ -375,7 +397,7 @@ class DemoPlansPresentationSeeder extends Seeder
 
         $client = $clients[array_rand($clients)];
         $orderService->create(CreateOrderDTO::fromArray([
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'items' => $this->randomItems($products, 1, 2),
             'origin' => 'staff',
@@ -407,8 +429,6 @@ class DemoPlansPresentationSeeder extends Seeder
         $permissions = [
             ['functionality' => 'orders', 'action' => 'read'],
             ['functionality' => 'orders', 'action' => 'create'],
-            ['functionality' => 'clients', 'action' => 'read'],
-            ['functionality' => 'clients', 'action' => 'create'],
             ['functionality' => 'products', 'action' => 'read'],
             ['functionality' => 'dashboard', 'action' => 'read'],
             ['functionality' => 'storefront-orders', 'action' => 'read'],

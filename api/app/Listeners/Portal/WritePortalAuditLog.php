@@ -54,7 +54,6 @@ class WritePortalAuditLog
             AuditLog::record('portal_link_confirmed', null, [
                 'final_customer_uuid' => $event->finalCustomerUuid,
                 'tenant_uuid' => $event->tenantUuid,
-                'client_uuid' => $event->clientUuid,
             ]),
 
             default => null,

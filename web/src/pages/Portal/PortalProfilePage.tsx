@@ -61,9 +61,6 @@ export function PortalProfilePage() {
                     <Typography sx={{ fontSize: 14.5, fontWeight: 700, wordBreak: 'break-word' }}>
                       {store.tenant_name}
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', wordBreak: 'break-word' }}>
-                      Cadastrado como {store.client_name}
-                    </Typography>
                     <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>
                       Vinculado em {formatDateBR(store.confirmed_at)}
                     </Typography>

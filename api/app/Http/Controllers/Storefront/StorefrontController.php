@@ -6,9 +6,10 @@ use App\Exceptions\CouponUsageLimitReachedException;
 use App\Exceptions\InvalidCouponException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\StorefrontValidateCouponRequest;
-use App\Http\Resources\Storefront\StorefrontProductResource;
+use App\Http\Resources\Event\EventResource;
 use App\Http\Resources\Storefront\StorefrontTenantResource;
-use App\Models\Product\Product;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Services\APIResponse;
 use App\Services\Storefront\CouponService;
 use App\Services\Storefront\OrderRatingService;
@@ -19,6 +20,11 @@ use App\Services\Storefront\StoreDeliveryFeeService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Http\Request;
 
+/**
+ * Catálogo público migrado de comércio/delivery (Product) para o domínio
+ * de ingressos (Event) — roadmap PegaTicket seção 2.4/4A, 2026-07-31.
+ * Ver SIMPLIFICAÇÃO DOCUMENTADA em StorefrontCatalogService.
+ */
 class StorefrontController extends Controller
 {
     public function __construct(
@@ -58,7 +64,11 @@ class StorefrontController extends Controller
         );
     }
 
-    public function products(string $slug, Request $request)
+    /**
+     * Lista de eventos publicados/públicos do catálogo (substitui products()
+     * do domínio de comércio).
+     */
+    public function events(string $slug, Request $request)
     {
         $tenant = $this->service->findTenantBySlug($slug);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
@@ -67,9 +77,9 @@ class StorefrontController extends Controller
             abort(404);
         }
 
-        $filters = $request->only(['name', 'product_type_uuid', 'product_category_uuid', 'on_promotion', 'sort']);
+        $filters = $request->only(['name', 'event_category_uuid', 'type']);
 
-        $list = $this->service->paginateProducts(
+        $list = $this->service->paginateEvents(
             $tenant->id,
             $filters,
             (int) $request->get('per_page', 15),
@@ -77,7 +87,7 @@ class StorefrontController extends Controller
         );
 
         return APIResponse::success(
-            StorefrontProductResource::collection($list),
+            EventResource::collection($list),
             __('messages.storefront.products_listed'),
             200,
             [
@@ -92,8 +102,29 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Categorias com produto disponível (vitrine estilo iFood) — mesmo
-     * espírito de products(): 100% público, sem jwt/tenant/perm.
+     * Detalhe público de um evento, com ticket_types/event_products
+     * aninhados (NOVO — não existia equivalente no catálogo de comércio).
+     */
+    public function event(string $slug, string $eventSlug)
+    {
+        $tenant = $this->service->findTenantBySlug($slug);
+        $settings = $this->tenantSettingsService->getForTenant($tenant->id);
+
+        if (!$settings->storefront_enabled) {
+            abort(404);
+        }
+
+        $event = $this->service->findPublicEvent($tenant->id, $eventSlug);
+
+        return APIResponse::success(
+            new EventResource($event),
+            __('messages.event.show')
+        );
+    }
+
+    /**
+     * Categorias com evento publicado (vitrine) — mesmo espírito de
+     * events(): 100% público, sem jwt/tenant/perm.
      */
     public function categories(string $slug)
     {
@@ -112,12 +143,11 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Consulta prévia de taxa de entrega (roadmap Delivery, Fase 2) — o
-     * frontend chama ao escolher o bairro no checkout, antes de confirmar
-     * o pedido, mesmo espírito de products(): 100% público, sem
-     * jwt/tenant/perm. 404 quando o bairro não tem taxa cadastrada pro
-     * tenant (mesma regra do guard 3 do checkout: nunca frete
-     * grátis/padrão implícito).
+     * Consulta prévia de taxa de entrega — SIMPLIFICAÇÃO DOCUMENTADA:
+     * mantido por não ter sido removido explicitamente no roadmap, mas taxa
+     * de entrega física não faz sentido pra domínio de ingresso digital;
+     * candidato a remoção quando o checkout novo (roadmap seção 2.8/5.10)
+     * for desenhado.
      */
     public function deliveryFee(string $slug, string $bairroUuid)
     {
@@ -142,21 +172,9 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Prévia pública de cupom (roadmap Delivery, Fase 3) — o frontend chama
-     * ao digitar o código no checkout, ANTES do OTP/identificação do
-     * cliente final. Subtotal calculado com
-     * StorefrontCheckoutService::resolveEffectiveUnitPrice() SEM Client
-     * (promoção/preço base, nunca desconto de categoria — cliente
-     * desconhecido nesta etapa). Usa CouponService::validatePreview(), que
-     * roda todos os checks de validateForCheckout() MENOS o limite por
-     * cliente (só garantido de fato no submit final do checkout, mesmo
-     * padrão já documentado pra taxa de entrega na Fase 2).
-     *
-     * type=free_shipping: sem bairro escolhido aqui (body só tem
-     * code+items), não há taxa de entrega resolvida ainda — discount_amount
-     * retorna 0 nesse caso (simplificação documentada), o frontend exibe
-     * "frete grátis" pelo campo `type`; o desconto real é calculado no
-     * guard 4 do checkout final.
+     * Prévia pública de cupom — subtotal calculado a partir de
+     * ticket_type_uuid/event_product_uuid (StorefrontCheckoutService::
+     * resolveEffectiveUnitPrice()), exatamente um por item.
      */
     public function validateCoupon(string $slug, StorefrontValidateCouponRequest $request)
     {
@@ -172,13 +190,12 @@ class StorefrontController extends Controller
         $subtotalCents = 0;
 
         foreach ($data['items'] as $item) {
-            $product = Product::where('uuid', $item['product_uuid'])
-                ->where('tenant_id', $tenant->id)
-                ->whereNull('deleted_at')
-                ->firstOrFail();
+            $sellable = !empty($item['ticket_type_uuid'])
+                ? TicketType::where('uuid', $item['ticket_type_uuid'])->where('tenant_id', $tenant->id)->whereNull('deleted_at')->firstOrFail()
+                : EventProduct::where('uuid', $item['event_product_uuid'])->where('tenant_id', $tenant->id)->whereNull('deleted_at')->firstOrFail();
 
             $unitPriceCents = (int) round(
-                $this->checkoutService->resolveEffectiveUnitPrice($product, null, (float) $item['quantity']) * 100
+                $this->checkoutService->resolveEffectiveUnitPrice($sellable, (float) $item['quantity']) * 100
             );
             $subtotalCents += (int) round($unitPriceCents * (float) $item['quantity']);
         }

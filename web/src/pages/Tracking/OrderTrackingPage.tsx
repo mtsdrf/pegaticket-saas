@@ -428,7 +428,7 @@ export function OrderTrackingPage() {
             >
               <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Cliente</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>
-                {order.client_name}
+                {order.final_customer_name}
               </Typography>
 
               {order.expected_delivery_date && (

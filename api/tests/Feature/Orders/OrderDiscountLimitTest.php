@@ -97,11 +97,11 @@ class OrderDiscountLimitTest extends TestCase
         // 15% de desconto (unit_price 85 sobre um preço de 100) excede o
         // limite de 10% configurado.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 85],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 85],
             ],
         ]);
 
@@ -122,11 +122,11 @@ class OrderDiscountLimitTest extends TestCase
 
         // 8% de desconto, dentro do limite de 10%.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 92],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 92],
             ],
         ]);
 
@@ -146,11 +146,11 @@ class OrderDiscountLimitTest extends TestCase
         // unit_price maior que o preço de catálogo é acréscimo, não
         // desconto — nunca bloqueado por discount_limit_percent.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 150],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 150],
             ],
         ]);
 
@@ -168,11 +168,11 @@ class OrderDiscountLimitTest extends TestCase
         // Sem discount_limit_percent configurado (default), qualquer
         // desconto manual continua livre — comportamento anterior à feature.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 1],
             ],
         ]);
 
@@ -190,11 +190,11 @@ class OrderDiscountLimitTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $created = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ])->assertStatus(201)->json('data');
 
@@ -202,7 +202,7 @@ class OrderDiscountLimitTest extends TestCase
 
         $response = $this->auth()->putJson("/api/v1/orders/{$created['uuid']}/items", [
             'items' => [
-                ['uuid' => $itemUuid, 'product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 80],
+                ['uuid' => $itemUuid, 'ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 80],
             ],
         ]);
 

@@ -32,7 +32,7 @@ class ProductPromotionController extends Controller
 
         $promotion = $this->service->upsert(
             app('tenant_id'),
-            $dto->productUuid,
+            $dto->ticketTypeUuid,
             $dto->promoPrice,
             $dto->startsAt,
             $dto->expiresAt,

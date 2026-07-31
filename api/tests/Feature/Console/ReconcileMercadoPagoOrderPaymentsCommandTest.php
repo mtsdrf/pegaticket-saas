@@ -48,11 +48,11 @@ class ReconcileMercadoPagoOrderPaymentsCommandTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->postJson('/api/v1/orders', [
-                'client_uuid' => $client->uuid,
+                'final_customer_uuid' => $client->uuid,
                 'stock_location_uuid' => $location->uuid,
                 'is_installment' => false,
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
             ])
             ->assertStatus(201);

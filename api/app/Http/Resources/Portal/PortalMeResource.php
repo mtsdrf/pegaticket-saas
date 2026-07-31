@@ -14,7 +14,6 @@ class PortalMeResource extends JsonResource
             'email' => $this->email,
             'linked_stores' => $this->whenLoaded('links', fn() => $this->links->map(fn($link) => [
                 'tenant_name' => $link->tenant->name,
-                'client_name' => $link->client->name,
                 'confirmed_at' => $link->confirmed_at,
             ])),
         ];

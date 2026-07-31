@@ -11,11 +11,16 @@ use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Confirmação explícita de vínculo entre o cliente final e uma loja
- * (tenant), a partir de um pedido que ele já tem em mãos (order_uuid já
- * validado no FormRequest via Rule::exists — mesmo padrão de FK cross-tabela
- * do resto do projeto). Idempotente: chamar de novo para o mesmo Client não
- * duplica nem dispara evento de novo, só retorna o vínculo já existente.
+ * Confirmação explícita de vínculo entre o cliente final (autenticado no
+ * Portal) e uma loja (tenant), a partir de um pedido que ele já tem em
+ * mãos (order_uuid já validado no FormRequest via Rule::exists — mesmo
+ * padrão de FK cross-tabela do resto do projeto) — o order_uuid é só PROVA
+ * de que ele é cliente real dessa loja, não precisa ser um pedido feito
+ * por ESTE FinalCustomer (order.final_customer_id não muda aqui: o pedido
+ * já nasceu vinculado ao seu comprador original em OrderService::create()
+ * ou StorefrontCheckoutService::checkout()). Idempotente: chamar de novo
+ * para o mesmo tenant não duplica nem dispara evento de novo, só retorna o
+ * vínculo já existente.
  */
 class PortalLinkService
 {
@@ -31,7 +36,7 @@ class PortalLinkService
                 ->whereNull('deleted_at')
                 ->firstOrFail();
 
-            $existing = $this->linkRepository->findByCustomerAndClient($customer->id, $order->client_id);
+            $existing = $this->linkRepository->findByCustomerAndTenant($customer->id, (int) $order->tenant_id);
 
             if ($existing) {
                 return $existing;
@@ -40,16 +45,14 @@ class PortalLinkService
             $link = $this->linkRepository->create([
                 'final_customer_id' => $customer->id,
                 'tenant_id' => $order->tenant_id,
-                'client_id' => $order->client_id,
                 'confirmed_at' => now(),
             ]);
 
-            $link->load(['tenant', 'client']);
+            $link->load('tenant');
 
             event(new PortalLinkConfirmed(
                 finalCustomerUuid: $customer->uuid,
                 tenantUuid: $link->tenant->uuid,
-                clientUuid: $link->client->uuid,
             ));
 
             return $link;

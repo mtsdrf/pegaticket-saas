@@ -34,10 +34,10 @@ class StorefrontCheckoutTest extends TestCase
         parent::setUp();
 
         // Checkout sempre cria um Endereco na primeira compra do cliente
-        // final (via ClientService::create() -> EnderecoService::create()),
-        // que sem lat/lng manual dispara GeocodeEnderecoJob síncrono em
-        // testing — mesmo padrão de ClientPermissionsTest, nenhum teste
-        // aqui verifica lat/lng, só precisa não bater na API real.
+        // final (StorefrontCheckoutService::ensureCustomerLink() ->
+        // EnderecoService::create()), que sem lat/lng manual dispara
+        // GeocodeEnderecoJob síncrono em testing — nenhum teste aqui
+        // verifica lat/lng, só precisa não bater na API real.
         Http::fake([
             'nominatim.openstreetmap.org/*' => Http::response([], 200),
         ]);
@@ -66,7 +66,7 @@ class StorefrontCheckoutTest extends TestCase
 
         return array_merge([
             'items' => [
-                ['product_uuid' => $productUuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $productUuid, 'quantity' => 2],
             ],
             'client_name' => 'Cliente Loja',
             'client_last_name' => 'Sobrenome',
@@ -93,7 +93,6 @@ class StorefrontCheckoutTest extends TestCase
         $address = $this->createAddressTrio();
         $this->createDeliveryFeeForBairro($tenant->id, $address[2]);
 
-        $this->assertDatabaseCount('clients', 0);
         $this->assertDatabaseCount('final_customer_tenant_links', 0);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -113,24 +112,21 @@ class StorefrontCheckoutTest extends TestCase
         $this->assertSame('pending_approval', $order->status);
         $this->assertFalse((bool) $order->stock_reserved);
         $this->assertEquals(50, (float) $order->total_amount);
+        $this->assertSame($customer->id, $order->final_customer_id);
 
-        $this->assertDatabaseCount('clients', 1);
-        $this->assertDatabaseHas('clients', [
-            'name' => 'Cliente Loja',
-            'phone_primary' => '11999998888',
-            'is_trusted' => false,
-        ]);
-
+        $this->assertDatabaseCount('final_customer_tenant_links', 1);
         $this->assertDatabaseHas('final_customer_tenant_links', [
             'final_customer_id' => $customer->id,
             'tenant_id' => $tenant->id,
-            'client_id' => $order->client_id,
+            'phone_primary' => '11999998888',
+            'is_trusted' => false,
         ]);
 
         $link = \App\Models\FinalCustomer\FinalCustomerTenantLink::where('final_customer_id', $customer->id)
             ->where('tenant_id', $tenant->id)
             ->firstOrFail();
         $this->assertNotNull($link->confirmed_at);
+        $this->assertNotNull($link->endereco_id);
     }
 
     #[Test]
@@ -140,7 +136,7 @@ class StorefrontCheckoutTest extends TestCase
         $this->makeStoreOpenAllDay($tenant->id);
         $this->createLocation($tenant->id, ['is_default' => true]);
         $product = $this->createProduct($tenant->id, ['price' => 10]);
-        [, $token] = $this->authenticatedCustomer('repetido@storefront.test');
+        [$customer, $token] = $this->authenticatedCustomer('repetido@storefront.test');
         $address = $this->createAddressTrio();
         $this->createDeliveryFeeForBairro($tenant->id, $address[2]);
 
@@ -152,7 +148,6 @@ class StorefrontCheckoutTest extends TestCase
 
         $firstOrder = Order::where('uuid', $first->json('data.order.uuid'))->firstOrFail();
 
-        $this->assertDatabaseCount('clients', 1);
         $this->assertDatabaseCount('final_customer_tenant_links', 1);
 
         $second = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -163,38 +158,33 @@ class StorefrontCheckoutTest extends TestCase
 
         $secondOrder = Order::where('uuid', $second->json('data.order.uuid'))->firstOrFail();
 
-        // Não cria um segundo Client/Endereco/Link — reaproveita o mesmo
-        // client_id do vínculo já confirmado.
-        $this->assertDatabaseCount('clients', 1);
+        // Não cria um segundo Endereco/Link — reaproveita o mesmo
+        // FinalCustomerTenantLink já confirmado, e os dois pedidos
+        // pertencem ao mesmo FinalCustomer (identidade global).
         $this->assertDatabaseCount('final_customer_tenant_links', 1);
-        $this->assertSame($firstOrder->client_id, $secondOrder->client_id);
+        $this->assertSame($customer->id, $firstOrder->final_customer_id);
+        $this->assertSame($customer->id, $secondOrder->final_customer_id);
     }
 
     /**
-     * Achado de code review: a unique antiga em final_customer_tenant_links
-     * era (final_customer_id, client_id), não (final_customer_id,
-     * tenant_id) — duas requisições concorrentes na primeira compra de um
-     * cliente podiam criar 2 Client diferentes pro mesmo par
-     * cliente+loja. Trava a constraint nova no nível de banco (a corrida
-     * de verdade, com 2 requisições simultâneas, não é reproduzível de
-     * forma determinística num teste de Feature single-threaded).
+     * A unique em final_customer_tenant_links é (final_customer_id,
+     * tenant_id) — impede 2 linhas de link pro mesmo par cliente+loja,
+     * mesmo em requisições concorrentes na primeira compra (a corrida de
+     * verdade, com 2 requisições simultâneas, não é reproduzível de forma
+     * determinística num teste de Feature single-threaded).
      */
     #[Test]
     public function final_customer_tenant_link_unique_constraint_prevents_duplicate_pair(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
         [$customer] = $this->authenticatedCustomer();
-        $client = $this->createClient($tenant->id);
 
         \App\Models\FinalCustomer\FinalCustomerTenantLink::create([
             'uuid' => (string) Str::uuid(),
             'final_customer_id' => $customer->id,
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
             'confirmed_at' => now(),
         ]);
-
-        $otherClient = $this->createClient($tenant->id);
 
         $this->expectException(\Illuminate\Database\QueryException::class);
 
@@ -202,7 +192,6 @@ class StorefrontCheckoutTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'final_customer_id' => $customer->id,
             'tenant_id' => $tenant->id,
-            'client_id' => $otherClient->id,
             'confirmed_at' => now(),
         ]);
     }
@@ -266,7 +255,7 @@ class StorefrontCheckoutTest extends TestCase
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
                 $this->checkoutPayload($product->uuid, $address, [
                     'items' => [
-                        ['product_uuid' => $product->uuid, 'quantity' => 2, 'notes' => 'Bem passado'],
+                        ['ticket_type_uuid' => $product->uuid, 'quantity' => 2, 'notes' => 'Bem passado'],
                     ],
                 ])
             );
@@ -278,7 +267,7 @@ class StorefrontCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('order_items', [
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'notes' => 'Bem passado',
         ]);
     }
@@ -338,74 +327,6 @@ class StorefrontCheckoutTest extends TestCase
     }
 
     #[Test]
-    public function checkout_applies_chosen_product_options_to_the_created_order(): void
-    {
-        // Achado de code review (2026-07-28): resolveItemsWithEffectivePrice()
-        // descartava silenciosamente `options`, então nenhum adicional
-        // escolhido no checkout público era realmente aplicado ao pedido —
-        // este teste cobre a correção.
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->makeStoreOpenAllDay($tenant->id);
-        $this->createLocation($tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($tenant->id, ['price' => 25]);
-
-        $group = \App\Models\Product\ProductOptionGroup::create([
-            'tenant_id' => $tenant->id,
-            'product_id' => $product->id,
-            'name' => 'Adicionais',
-            'kind' => 'addon',
-            'min_select' => 0,
-            'max_select' => 2,
-            'sort_order' => 1,
-            'is_active' => true,
-        ]);
-
-        $option = \App\Models\Product\ProductOption::create([
-            'tenant_id' => $tenant->id,
-            'product_option_group_id' => $group->id,
-            'name' => 'Bacon extra',
-            'price' => 8,
-            'sort_order' => 1,
-            'is_available' => true,
-        ]);
-
-        [, $token] = $this->authenticatedCustomer();
-        $address = $this->createAddressTrio();
-        $this->createDeliveryFeeForBairro($tenant->id, $address[2]);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson(
-                '/api/v1/loja/' . $tenant->slug . '/checkout',
-                $this->checkoutPayload($product->uuid, $address, [
-                    'items' => [
-                        [
-                            'product_uuid' => $product->uuid,
-                            'quantity' => 2,
-                            'options' => [
-                                ['product_option_uuid' => $option->uuid, 'quantity' => 1],
-                            ],
-                        ],
-                    ],
-                ])
-            );
-
-        $response->assertStatus(201);
-
-        $orderUuid = $response->json('data.order.uuid');
-        $order = Order::where('uuid', $orderUuid)->firstOrFail();
-        $orderItem = $order->items()->firstOrFail();
-
-        $this->assertDatabaseHas('order_item_options', [
-            'order_item_id' => $orderItem->id,
-            'product_option_id' => $option->id,
-        ]);
-
-        // Subtotal do pedido mínimo/cupom também precisa contar o adicional
-        // (2 unidades do produto x R$8 do adicional = +R$16 no total).
-        $this->assertEquals(2 * (25 + 8) * 100, (int) round($order->fresh()->total_amount * 100));
-    }
-
-    #[Test]
     public function checkout_returns_401_without_authentication(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
@@ -440,7 +361,7 @@ class StorefrontCheckoutTest extends TestCase
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
                 $this->checkoutPayload($product->uuid, $address, [
-                    'items' => [['product_uuid' => $product->uuid, 'quantity' => 5]],
+                    'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 5]],
                 ])
             );
 
@@ -473,7 +394,7 @@ class StorefrontCheckoutTest extends TestCase
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
                 $this->checkoutPayload($product->uuid, $address, [
-                    'items' => [['product_uuid' => $product->uuid, 'quantity' => 5]],
+                    'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 5]],
                 ])
             );
 

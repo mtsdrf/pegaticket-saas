@@ -6,7 +6,7 @@ use App\Events\Stock\StockMovementCreated;
 use App\Exceptions\InsufficientStockException;
 use App\Exceptions\InvalidStockMovementException;
 use App\Models\BaseModel;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
 use App\Models\Stock\StockMovement;
@@ -44,7 +44,7 @@ class StockService
     ): LengthAwarePaginator
     {
         $sortable = [
-            'product_name' => 'products.name',
+            'ticket_type_name' => 'ticket_types.name',
             'location_name' => 'stock_locations.name',
             'quantity_on_hand' => 'stock_balances.quantity_on_hand',
             'quantity_reserved' => 'stock_balances.quantity_reserved',
@@ -53,8 +53,8 @@ class StockService
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
-        $needsJoin = in_array($sortColumn, ['products.name', 'stock_locations.name'], true)
-            || !empty($filters['product_name'])
+        $needsJoin = in_array($sortColumn, ['ticket_types.name', 'stock_locations.name'], true)
+            || !empty($filters['ticket_type_name'])
             || !empty($filters['location_name']);
 
         $query = StockBalance::query()
@@ -64,23 +64,23 @@ class StockService
             ])
             ->where('stock_balances.tenant_id', $tenantId)
             ->whereNull('stock_balances.deleted_at')
-            ->with(['product', 'location']);
+            ->with(['ticketType', 'location']);
 
         if ($needsJoin) {
-            $query->leftJoin('products', 'products.id', '=', 'stock_balances.product_id')
+            $query->leftJoin('ticket_types', 'ticket_types.id', '=', 'stock_balances.ticket_type_id')
                 ->leftJoin('stock_locations', 'stock_locations.id', '=', 'stock_balances.location_id');
         }
 
-        if (!empty($filters['product_uuid'])) {
-            $query->whereHas('product', fn($q) => $q->where('uuid', $filters['product_uuid']));
+        if (!empty($filters['ticket_type_uuid'])) {
+            $query->whereHas('ticketType', fn($q) => $q->where('uuid', $filters['ticket_type_uuid']));
         }
 
         if (!empty($filters['location_uuid'])) {
             $query->whereHas('location', fn($q) => $q->where('uuid', $filters['location_uuid']));
         }
 
-        if (!empty($filters['product_name'])) {
-            $query->where('products.name', 'like', '%' . $filters['product_name'] . '%');
+        if (!empty($filters['ticket_type_name'])) {
+            $query->where('ticket_types.name', 'like', '%' . $filters['ticket_type_name'] . '%');
         }
 
         if (!empty($filters['location_name'])) {
@@ -117,7 +117,7 @@ class StockService
     {
         $sortable = [
             'type' => 'stock_movements.type',
-            'product_name' => 'products.name',
+            'ticket_type_name' => 'ticket_types.name',
             'location_name' => 'stock_locations.name',
             'quantity' => 'stock_movements.quantity',
             'reason' => 'stock_movements.reason',
@@ -125,23 +125,23 @@ class StockService
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
-        $needsJoin = in_array($sortColumn, ['products.name', 'stock_locations.name'], true)
-            || !empty($filters['product_name'])
+        $needsJoin = in_array($sortColumn, ['ticket_types.name', 'stock_locations.name'], true)
+            || !empty($filters['ticket_type_name'])
             || !empty($filters['location_name']);
 
         $query = StockMovement::query()
             ->select(['stock_movements.*'])
             ->where('stock_movements.tenant_id', $tenantId)
             ->whereNull('stock_movements.deleted_at')
-            ->with(['product', 'location', 'destinationLocation']);
+            ->with(['ticketType', 'location', 'destinationLocation']);
 
         if ($needsJoin) {
-            $query->leftJoin('products', 'products.id', '=', 'stock_movements.product_id')
+            $query->leftJoin('ticket_types', 'ticket_types.id', '=', 'stock_movements.ticket_type_id')
                 ->leftJoin('stock_locations', 'stock_locations.id', '=', 'stock_movements.location_id');
         }
 
-        if (!empty($filters['product_uuid'])) {
-            $query->whereHas('product', fn($q) => $q->where('uuid', $filters['product_uuid']));
+        if (!empty($filters['ticket_type_uuid'])) {
+            $query->whereHas('ticketType', fn($q) => $q->where('uuid', $filters['ticket_type_uuid']));
         }
 
         if (!empty($filters['location_uuid'])) {
@@ -152,8 +152,8 @@ class StockService
             $query->where('stock_movements.type', $filters['type']);
         }
 
-        if (!empty($filters['product_name'])) {
-            $query->where('products.name', 'like', '%' . $filters['product_name'] . '%');
+        if (!empty($filters['ticket_type_name'])) {
+            $query->where('ticket_types.name', 'like', '%' . $filters['ticket_type_name'] . '%');
         }
 
         if (!empty($filters['location_name'])) {
@@ -198,42 +198,42 @@ class StockService
         }
     }
 
-    public function entry(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?float $unitCost = null): StockMovement
+    public function entry(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?float $unitCost = null): StockMovement
     {
-        return $this->creditOnHand($product, $location, $quantity, 'entry', $reason, $notes, $unitCost);
+        return $this->creditOnHand($ticketType, $location, $quantity, 'entry', $reason, $notes, $unitCost);
     }
 
     /**
      * $sourceType/$sourceId (opcionais) apontam para a origem da saída,
      * preservando rastreabilidade polimórfica da baixa operacional.
      */
-    public function exit(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?string $sourceType = null, ?int $sourceId = null): StockMovement
+    public function exit(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?string $sourceType = null, ?int $sourceId = null): StockMovement
     {
-        return $this->debitOnHand($product, $location, $quantity, 'exit', $reason, $notes, $sourceType, $sourceId);
+        return $this->debitOnHand($ticketType, $location, $quantity, 'exit', $reason, $notes, $sourceType, $sourceId);
     }
 
-    public function returnStock(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
+    public function returnStock(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
     {
-        return $this->creditOnHand($product, $location, $quantity, 'return', $reason, $notes);
+        return $this->creditOnHand($ticketType, $location, $quantity, 'return', $reason, $notes);
     }
 
-    public function loss(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
+    public function loss(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
     {
-        return $this->debitOnHand($product, $location, $quantity, 'loss', $reason, $notes);
+        return $this->debitOnHand($ticketType, $location, $quantity, 'loss', $reason, $notes);
     }
 
-    public function adjust(Product $product, StockLocation $location, float $quantity, string $direction, string $reason, ?string $notes = null): StockMovement
+    public function adjust(TicketType $ticketType, StockLocation $location, float $quantity, string $direction, string $reason, ?string $notes = null): StockMovement
     {
         return match ($direction) {
-            'increase' => $this->creditOnHand($product, $location, $quantity, 'adjustment_positive', $reason, $notes),
-            'decrease' => $this->debitOnHand($product, $location, $quantity, 'adjustment_negative', $reason, $notes),
+            'increase' => $this->creditOnHand($ticketType, $location, $quantity, 'adjustment_positive', $reason, $notes),
+            'decrease' => $this->debitOnHand($ticketType, $location, $quantity, 'adjustment_negative', $reason, $notes),
             default => throw new \InvalidArgumentException("Invalid adjustment direction: {$direction}"),
         };
     }
 
-    public function transfer(Product $product, StockLocation $from, StockLocation $to, float $quantity, string $reason, ?string $notes = null): StockMovement
+    public function transfer(TicketType $ticketType, StockLocation $from, StockLocation $to, float $quantity, string $reason, ?string $notes = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($from);
         $this->assertTenantOwnership($to);
 
@@ -241,8 +241,8 @@ class StockService
             throw new InvalidStockMovementException(__('messages.stock.transfer_same_location'));
         }
 
-        return DB::transaction(function () use ($product, $from, $to, $quantity, $reason, $notes) {
-            [$fromBalance, $toBalance] = $this->lockTransferBalances($product, $from, $to);
+        return DB::transaction(function () use ($ticketType, $from, $to, $quantity, $reason, $notes) {
+            [$fromBalance, $toBalance] = $this->lockTransferBalances($ticketType, $from, $to);
 
             if ($quantity > $fromBalance->quantity_available) {
                 throw new InsufficientStockException(__('messages.stock.insufficient_balance'));
@@ -256,7 +256,7 @@ class StockService
             $toBalance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $from,
                 type: 'transfer',
                 quantity: $quantity,
@@ -269,13 +269,13 @@ class StockService
         });
     }
 
-    public function block(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
+    public function block(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($location);
 
-        return DB::transaction(function () use ($product, $location, $quantity, $reason, $notes) {
-            $balance = $this->lockOrCreateBalance($product, $location);
+        return DB::transaction(function () use ($ticketType, $location, $quantity, $reason, $notes) {
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             if ($quantity > $balance->quantity_available) {
                 throw new InsufficientStockException(__('messages.stock.insufficient_balance'));
@@ -286,7 +286,7 @@ class StockService
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: 'block',
                 quantity: $quantity,
@@ -298,13 +298,13 @@ class StockService
         });
     }
 
-    public function unblock(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
+    public function unblock(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($location);
 
-        return DB::transaction(function () use ($product, $location, $quantity, $reason, $notes) {
-            $balance = $this->lockOrCreateBalance($product, $location);
+        return DB::transaction(function () use ($ticketType, $location, $quantity, $reason, $notes) {
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             if ($quantity > (float) $balance->quantity_blocked) {
                 throw new InsufficientStockException(__('messages.stock.insufficient_blocked_balance'));
@@ -315,7 +315,7 @@ class StockService
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: 'unblock',
                 quantity: $quantity,
@@ -333,13 +333,13 @@ class StockService
      * reserva, reaproveitando a mesma coluna polimórfica já usada por
      * reserve_cancel para apontar para o reserve original.
      */
-    public function reserve(Product $product, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?string $sourceType = null, ?int $sourceId = null): StockMovement
+    public function reserve(TicketType $ticketType, StockLocation $location, float $quantity, string $reason, ?string $notes = null, ?string $sourceType = null, ?int $sourceId = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($location);
 
-        return DB::transaction(function () use ($product, $location, $quantity, $reason, $notes, $sourceType, $sourceId) {
-            $balance = $this->lockOrCreateBalance($product, $location);
+        return DB::transaction(function () use ($ticketType, $location, $quantity, $reason, $notes, $sourceType, $sourceId) {
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             if ($quantity > (float) $balance->quantity_available) {
                 throw new InsufficientStockException(__('messages.stock.insufficient_balance'));
@@ -350,7 +350,7 @@ class StockService
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: 'reserve',
                 quantity: $quantity,
@@ -379,7 +379,7 @@ class StockService
         }
 
         return DB::transaction(function () use ($originalReserve, $notes) {
-            $product = Product::findOrFail($originalReserve->product_id);
+            $ticketType = TicketType::findOrFail($originalReserve->ticket_type_id);
             $location = StockLocation::findOrFail($originalReserve->location_id);
 
             // A checagem de "já cancelado" só é segura DEPOIS do lock do
@@ -392,7 +392,7 @@ class StockService
             // sempre disputam essa mesma linha, reaproveitamos esse lock
             // como ponto de serialização em vez de confiar no lock da
             // checagem isolada.
-            $balance = $this->lockOrCreateBalance($product, $location);
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             $alreadyCancelled = StockMovement::where('source_type', StockMovement::class)
                 ->where('source_id', $originalReserve->id)
@@ -414,7 +414,7 @@ class StockService
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: 'reserve_cancel',
                 quantity: $quantity,
@@ -428,20 +428,20 @@ class StockService
         });
     }
 
-    private function creditOnHand(Product $product, StockLocation $location, float $quantity, string $type, string $reason, ?string $notes, ?float $unitCost = null): StockMovement
+    private function creditOnHand(TicketType $ticketType, StockLocation $location, float $quantity, string $type, string $reason, ?string $notes, ?float $unitCost = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($location);
 
-        return DB::transaction(function () use ($product, $location, $quantity, $type, $reason, $notes, $unitCost) {
-            $balance = $this->lockOrCreateBalance($product, $location);
+        return DB::transaction(function () use ($ticketType, $location, $quantity, $type, $reason, $notes, $unitCost) {
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             $before = (float) $balance->quantity_on_hand;
             $balance->quantity_on_hand = $before + $quantity;
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: $type,
                 quantity: $quantity,
@@ -454,13 +454,13 @@ class StockService
         });
     }
 
-    private function debitOnHand(Product $product, StockLocation $location, float $quantity, string $type, string $reason, ?string $notes, ?string $sourceType = null, ?int $sourceId = null): StockMovement
+    private function debitOnHand(TicketType $ticketType, StockLocation $location, float $quantity, string $type, string $reason, ?string $notes, ?string $sourceType = null, ?int $sourceId = null): StockMovement
     {
-        $this->assertTenantOwnership($product);
+        $this->assertTenantOwnership($ticketType);
         $this->assertTenantOwnership($location);
 
-        return DB::transaction(function () use ($product, $location, $quantity, $type, $reason, $notes, $sourceType, $sourceId) {
-            $balance = $this->lockOrCreateBalance($product, $location);
+        return DB::transaction(function () use ($ticketType, $location, $quantity, $type, $reason, $notes, $sourceType, $sourceId) {
+            $balance = $this->lockOrCreateBalance($ticketType, $location);
 
             if ($quantity > $balance->quantity_available) {
                 throw new InsufficientStockException(__('messages.stock.insufficient_balance'));
@@ -471,7 +471,7 @@ class StockService
             $balance->save();
 
             return $this->recordMovement(
-                product: $product,
+                ticketType: $ticketType,
                 location: $location,
                 type: $type,
                 quantity: $quantity,
@@ -489,13 +489,13 @@ class StockService
      * Busca (com lockForUpdate) o StockBalance do par produto+local. Cria
      * lazy com zeros na primeira movimentação que tocar o par. Se duas
      * transações concorrentes tentarem criar o mesmo par pela primeira
-     * vez ao mesmo tempo, a unique (product_id,location_id) rejeita a
+     * vez ao mesmo tempo, a unique (ticket_type_id,location_id) rejeita a
      * segunda — recuperamos reconsultando com lock, já que a primeira já
      * deve ter comprometido a linha a essa altura.
      */
-    private function lockOrCreateBalance(Product $product, StockLocation $location): StockBalance
+    private function lockOrCreateBalance(TicketType $ticketType, StockLocation $location): StockBalance
     {
-        $balance = StockBalance::where('product_id', $product->id)
+        $balance = StockBalance::where('ticket_type_id', $ticketType->id)
             ->where('location_id', $location->id)
             ->lockForUpdate()
             ->first();
@@ -506,8 +506,8 @@ class StockService
 
         try {
             StockBalance::create([
-                'tenant_id' => $product->tenant_id,
-                'product_id' => $product->id,
+                'tenant_id' => $ticketType->tenant_id,
+                'ticket_type_id' => $ticketType->id,
                 'location_id' => $location->id,
                 'quantity_on_hand' => 0,
                 'quantity_reserved' => 0,
@@ -524,7 +524,7 @@ class StockService
             }
         }
 
-        return StockBalance::where('product_id', $product->id)
+        return StockBalance::where('ticket_type_id', $ticketType->id)
             ->where('location_id', $location->id)
             ->lockForUpdate()
             ->firstOrFail();
@@ -536,13 +536,13 @@ class StockService
      * de qual é origem/destino — evita deadlock se duas transferências
      * cruzadas (A->B e B->A) do mesmo produto acontecerem ao mesmo tempo.
      */
-    private function lockTransferBalances(Product $product, StockLocation $from, StockLocation $to): array
+    private function lockTransferBalances(TicketType $ticketType, StockLocation $from, StockLocation $to): array
     {
         $firstLoc = $from->id <= $to->id ? $from : $to;
         $secondLoc = $from->id <= $to->id ? $to : $from;
 
-        $firstBalance = $this->lockOrCreateBalance($product, $firstLoc);
-        $secondBalance = $this->lockOrCreateBalance($product, $secondLoc);
+        $firstBalance = $this->lockOrCreateBalance($ticketType, $firstLoc);
+        $secondBalance = $this->lockOrCreateBalance($ticketType, $secondLoc);
 
         return $firstLoc->id === $from->id
             ? [$firstBalance, $secondBalance]
@@ -550,7 +550,7 @@ class StockService
     }
 
     private function recordMovement(
-        Product $product,
+        TicketType $ticketType,
         StockLocation $location,
         string $type,
         float $quantity,
@@ -564,8 +564,8 @@ class StockService
         ?float $unitCost = null
     ): StockMovement {
         $movement = $this->movementRepository->create([
-            'tenant_id' => $product->tenant_id,
-            'product_id' => $product->id,
+            'tenant_id' => $ticketType->tenant_id,
+            'ticket_type_id' => $ticketType->id,
             'location_id' => $location->id,
             'destination_location_id' => $destinationLocation?->id,
             'type' => $type,
@@ -582,7 +582,7 @@ class StockService
         event(new StockMovementCreated(
             stockMovementUuid: $movement->uuid,
             type: $type,
-            productUuid: $product->uuid,
+            ticketTypeUuid: $ticketType->uuid,
             locationUuid: $location->uuid,
             quantity: $quantity,
             actorId: Auth::id()
@@ -592,9 +592,9 @@ class StockService
     }
 
     /**
-     * Todo Product/StockLocation/StockMovement recebido precisa ser
+     * Todo TicketType/StockLocation/StockMovement recebido precisa ser
      * confirmado como do tenant atual antes de qualquer coisa — mesmo
-     * cuidado de IDOR já corrigido antes em Client/Product/TenantRole.
+     * cuidado de IDOR já corrigido antes em Client/TicketType/TenantRole.
      */
     private function assertTenantOwnership(BaseModel $model): void
     {

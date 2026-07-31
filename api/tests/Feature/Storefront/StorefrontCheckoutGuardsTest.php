@@ -63,7 +63,7 @@ class StorefrontCheckoutGuardsTest extends TestCase
 
         return array_merge([
             'items' => [
-                ['product_uuid' => $productUuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $productUuid, 'quantity' => 2],
             ],
             'client_name' => 'Cliente Loja',
             'client_last_name' => 'Sobrenome',
@@ -323,16 +323,12 @@ class StorefrontCheckoutGuardsTest extends TestCase
             'block_order_without_stock' => false,
         ]);
 
-        // Primeira compra: cria o Client/Link (sem mínimo configurado ainda).
-        $first = $this->withHeader('Authorization', 'Bearer ' . $token)
+        // Primeira compra: cria o FinalCustomerTenantLink (sem mínimo configurado ainda).
+        $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
                 $this->checkoutPayload($product->uuid, $address)
             )->assertStatus(201);
-
-        $client = \App\Models\Order\Order::where('uuid', $first->json('data.order.uuid'))
-            ->firstOrFail()
-            ->client;
 
         TenantSettings::where('tenant_id', $tenant->id)->update(['minimum_order_value' => 15]);
 

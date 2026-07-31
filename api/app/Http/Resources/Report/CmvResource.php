@@ -22,8 +22,8 @@ class CmvResource extends JsonResource
             : null;
 
         return [
-            'product_uuid' => $this->product_uuid,
-            'product_name' => $this->product_name,
+            'ticket_type_uuid' => $this->ticket_type_uuid,
+            'ticket_type_name' => $this->ticket_type_name,
             'sale_price' => number_format($salePrice, 2, '.', ''),
             'cmv' => $cmv !== null ? number_format($cmv, 2, '.', '') : null,
             'margin_percent' => $marginPercent,

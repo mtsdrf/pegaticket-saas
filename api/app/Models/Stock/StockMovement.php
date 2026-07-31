@@ -3,7 +3,7 @@
 namespace App\Models\Stock;
 
 use App\Models\BaseModel;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
 
 /**
@@ -25,7 +25,7 @@ class StockMovement extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'product_id',
+        'ticket_type_id',
         'location_id',
         'destination_location_id',
         'type',
@@ -61,9 +61,9 @@ class StockMovement extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function product()
+    public function ticketType()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(TicketType::class);
     }
 
     public function location()

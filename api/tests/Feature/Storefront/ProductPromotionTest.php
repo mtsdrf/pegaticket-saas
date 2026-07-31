@@ -40,17 +40,17 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $response = $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 15.5,
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.promo_price', 15.5)
-            ->assertJsonPath('data.product.uuid', $product->uuid);
+            ->assertJsonPath('data.ticketType.uuid', $product->uuid);
 
         $this->assertDatabaseHas('product_promotions', [
             'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'promo_price' => 15.5,
         ]);
     }
@@ -62,12 +62,12 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 15.5,
         ])->assertStatus(201);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 12.5,
         ])->assertStatus(201)->assertJsonPath('data.promo_price', 12.5);
 
@@ -82,7 +82,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 15,
         ])->assertStatus(201);
 
@@ -97,7 +97,7 @@ class ProductPromotionTest extends TestCase
 
         ProductPromotion::create([
             'tenant_id' => $otherTenant->id,
-            'product_id' => $otherProduct->id,
+            'ticket_type_id' => $otherProduct->id,
             'promo_price' => 5,
         ]);
 
@@ -115,7 +115,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $created = $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 15,
         ])->assertStatus(201);
 
@@ -125,7 +125,7 @@ class ProductPromotionTest extends TestCase
 
         $this->assertSoftDeleted('product_promotions', [
             'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
         ]);
     }
 
@@ -136,7 +136,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $created = $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 15.5,
         ])->assertStatus(201);
 
@@ -144,7 +144,7 @@ class ProductPromotionTest extends TestCase
             ->assertStatus(204);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 8.5,
         ])->assertStatus(201)->assertJsonPath('data.promo_price', 8.5);
 
@@ -157,7 +157,7 @@ class ProductPromotionTest extends TestCase
         $this->grantPermission('storefront', 'update');
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => (string) Str::uuid(),
+            'ticket_type_uuid' => (string) Str::uuid(),
             'promo_price' => 10,
         ])->assertStatus(422);
     }
@@ -169,7 +169,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $response = $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'discount_type' => 'percentage',
             'discount_percentage' => 25,
         ]);
@@ -182,7 +182,7 @@ class ProductPromotionTest extends TestCase
 
         $this->assertDatabaseHas('product_promotions', [
             'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'discount_type' => 'percentage',
             'discount_percentage' => 25,
         ]);
@@ -195,7 +195,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'discount_type' => 'fixed_price',
         ])->assertStatus(422)->assertJsonValidationErrors(['promo_price']);
     }
@@ -207,7 +207,7 @@ class ProductPromotionTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 20]);
 
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'discount_type' => 'percentage',
         ])->assertStatus(422)->assertJsonValidationErrors(['discount_percentage']);
     }
@@ -219,7 +219,7 @@ class ProductPromotionTest extends TestCase
 
         $this->auth()->getJson('/api/v1/product-promotions')->assertStatus(403);
         $this->auth()->postJson('/api/v1/product-promotions', [
-            'product_uuid' => $product->uuid,
+            'ticket_type_uuid' => $product->uuid,
             'promo_price' => 10,
         ])->assertStatus(403);
     }

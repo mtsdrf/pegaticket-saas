@@ -5,12 +5,12 @@ namespace App\DTOs\Storefront;
 class UpsertProductPromotionDTO
 {
     public function __construct(
-        public readonly string $productUuid,
+        public readonly string $ticketTypeUuid,
         public readonly ?float $promoPrice,
         public readonly ?string $startsAt,
         public readonly ?string $expiresAt,
         // 'fixed_price' (default, "de/por" absoluto) | 'percentage'
-        // (desconto % sobre o Product.price vigente, ver
+        // (desconto % sobre o TicketType.price vigente, ver
         // ProductPromotion::effectivePrice()).
         public readonly string $discountType = 'fixed_price',
         public readonly ?float $discountPercentage = null,
@@ -20,7 +20,7 @@ class UpsertProductPromotionDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            productUuid: $data['product_uuid'],
+            ticketTypeUuid: $data['ticket_type_uuid'],
             promoPrice: isset($data['promo_price']) ? (float) $data['promo_price'] : null,
             startsAt: $data['starts_at'] ?? null,
             expiresAt: $data['expires_at'] ?? null,

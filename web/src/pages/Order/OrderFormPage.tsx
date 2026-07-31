@@ -18,47 +18,90 @@ import { useNavigate } from 'react-router-dom'
 import { AsyncAutocomplete } from '../../components/crud/AsyncAutocomplete'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
-import { ProductOptionsConfiguratorDialog, type ProductOptionSelection } from '../../components/product/ProductOptionsConfiguratorDialog'
 import { useAuth } from '../../hooks/useAuth'
-import * as clientService from '../../services/clientService'
+import * as eventProductService from '../../services/eventProductService'
+import * as finalCustomerService from '../../services/finalCustomerService'
 import * as orderService from '../../services/orderService'
-import * as productService from '../../services/productService'
 import * as stockLocationService from '../../services/stockLocationService'
+import * as ticketTypeService from '../../services/ticketTypeService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
-import type { Client } from '../../types/client'
-import type { Order, OrderCreateItemPayload } from '../../types/order'
-import type { Product } from '../../types/product'
+import type { FinalCustomerSearchResult } from '../../types/finalCustomer'
+import type { Order, OrderCreateItemPayload, OrderFinalCustomerRef } from '../../types/order'
 import type { StockLocation } from '../../types/stockLocation'
 import { formatCurrency } from '../../utils/format'
 import { buildOrderCreatedWhatsAppMessage, buildWhatsAppUrl, isDigitsOnlyPhone } from '../../utils/whatsApp'
 
 const NOTES_MAX_LENGTH = 500
 
+/** Item de catálogo vendável — `ticket_type` OU `event_product`, nunca os dois (mesma regra do backend, `OrderCreateItemPayload`). */
+interface CatalogItemOption {
+  kind: 'ticket_type' | 'event_product'
+  uuid: string
+  name: string
+  price: number
+}
+
 interface DraftItem {
   id: string
-  product: Product | null
+  item: CatalogItemOption | null
   quantity: string
-  /** Preço praticado — pré-preenchido com `product.price` ao selecionar, mas editável (desconto/acréscimo manual). */
+  /** Preço praticado — pré-preenchido com `item.price` ao selecionar, mas editável (desconto/acréscimo manual). */
   unitPrice: string
-  selectedOptions: ProductOptionSelection[]
 }
 
 function createDraftItem(): DraftItem {
-  return { id: crypto.randomUUID(), product: null, quantity: '1', unitPrice: '', selectedOptions: [] }
+  return { id: crypto.randomUUID(), item: null, quantity: '1', unitPrice: '' }
 }
 
 /** `unitPrice` vazio (item recém-adicionado, ainda sem edição manual) cai no preço de tabela. */
 function effectiveUnitPrice(item: DraftItem): number {
   if (item.unitPrice.trim() !== '' && Number.isFinite(Number(item.unitPrice))) return Number(item.unitPrice)
-  return item.product?.price ?? 0
+  return item.item?.price ?? 0
+}
+
+/** Busca combinada de tipos de ingresso e adicionais do evento — um único autocomplete cobre `ticket_type_uuid`/`event_product_uuid`. */
+async function fetchCatalogOptions(query: string): Promise<CatalogItemOption[]> {
+  const [ticketTypes, eventProducts] = await Promise.all([
+    ticketTypeService.listTicketTypes({ name: query || undefined, per_page: 15, sort_by: 'name', sort_dir: 'asc' }),
+    eventProductService.listEventProducts({ name: query || undefined, per_page: 15, sort_by: 'name', sort_dir: 'asc' }),
+  ])
+
+  return [
+    ...ticketTypes.items.map((ticketType) => ({
+      kind: 'ticket_type' as const,
+      uuid: ticketType.uuid,
+      name: `${ticketType.name} (ingresso)`,
+      price: ticketType.price,
+    })),
+    ...eventProducts.items.map((eventProduct) => ({
+      kind: 'event_product' as const,
+      uuid: eventProduct.uuid,
+      name: `${eventProduct.name} (adicional)`,
+      price: eventProduct.price,
+    })),
+  ]
 }
 
 export function OrderFormPage() {
   const navigate = useNavigate()
   const { activeTenantUuid, activeTenant } = useAuth()
 
-  const [client, setClient] = useState<Client | null>(null)
+  const [customerOption, setCustomerOption] = useState<FinalCustomerSearchResult | null>(null)
+  /**
+   * Derivado da opção selecionada no autocomplete — `uuid` aqui é o do
+   * comprador GLOBAL (`customerOption.final_customer.uuid`), não o do
+   * vínculo tenant×comprador (`customerOption.uuid`), porque é esse que o
+   * backend espera em `OrderPayload.final_customer_uuid`.
+   */
+  const client: OrderFinalCustomerRef | null = customerOption
+    ? {
+        uuid: customerOption.final_customer.uuid,
+        name: customerOption.final_customer.name,
+        last_name: customerOption.final_customer.last_name,
+        phone_primary: customerOption.phone_primary,
+      }
+    : null
   const [locations, setLocations] = useState<StockLocation[]>([])
   const [stockLocationUuid, setStockLocationUuid] = useState('')
   const [isInstallment, setIsInstallment] = useState(false)
@@ -75,7 +118,6 @@ export function OrderFormPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const whatsAppWindowRef = useRef<Window | null>(null)
-  const [optionsDialogItemId, setOptionsDialogItemId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!activeTenantUuid) return
@@ -95,20 +137,16 @@ export function OrderFormPage() {
     if (isInstallment) setMarkAsPaid(false)
   }, [isInstallment])
 
-  const fetchClientOptions = useCallback(
-    async (query: string): Promise<Client[]> => {
-      if (!activeTenantUuid) return []
-      const result = await clientService.listClients({ name: query || undefined, per_page: 20, sort_by: 'name', sort_dir: 'asc' })
-      return result.clients
-    },
-    [activeTenantUuid],
-  )
+  const fetchClientOptions = useCallback(async (query: string): Promise<FinalCustomerSearchResult[]> => {
+    if (!activeTenantUuid) return []
+    const result = await finalCustomerService.searchFinalCustomers(query, 20)
+    return result.items
+  }, [activeTenantUuid])
 
   const fetchProductOptions = useCallback(
-    async (query: string): Promise<Product[]> => {
+    async (query: string): Promise<CatalogItemOption[]> => {
       if (!activeTenantUuid) return []
-      const result = await productService.listProducts({ name: query || undefined, per_page: 20, sort_by: 'name', sort_dir: 'asc' })
-      return result.items
+      return fetchCatalogOptions(query)
     },
     [activeTenantUuid],
   )
@@ -117,37 +155,12 @@ export function OrderFormPage() {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)))
   }
 
-  async function handleItemProductChange(id: string, product: Product | null) {
-    // Troca de produto reinicia o preço praticado pro preço de tabela do
-    // novo produto — o "desconto manual" anterior não faz sentido pra um
-    // produto diferente. Preenche primeiro com o preço de tabela (fallback
-    // visual imediato, síncrono) e substitui pelo preço sugerido pra
-    // categoria do cliente quando a chamada resolver — evita o campo
-    // ficar vazio/travado enquanto a requisição está em voo.
-    updateItem(id, { product, unitPrice: product ? String(product.price) : '', selectedOptions: [] })
-
-    if (!product || !client) return
-
-    try {
-      const [suggestedPrice, detailedProduct] = await Promise.all([
-        productService.getSuggestedPrice(product.uuid, client.uuid),
-        productService.getProduct(product.uuid),
-      ])
-      // Confirma que o item ainda está no mesmo produto antes de aplicar —
-      // evita sobrescrever uma troca de produto mais recente caso essa
-      // chamada resolva atrasada (condição de corrida).
-      setItems((current) =>
-        current.map((item) =>
-          item.id === id && item.product?.uuid === product.uuid
-            ? { ...item, product: detailedProduct, unitPrice: String(suggestedPrice) }
-            : item,
-        ),
-      )
-    } catch {
-      // Sugestão é só uma conveniência — se falhar, mantém o preço de
-      // tabela já preenchido acima; não bloqueia o formulário nem mostra
-      // erro (o campo continua editável manualmente).
-    }
+  function handleItemProductChange(id: string, item: CatalogItemOption | null) {
+    // Troca de item reinicia o preço praticado pro preço de tabela do novo
+    // item — o "desconto manual" anterior não faz sentido pra um item
+    // diferente. Preços por categoria de cliente foram descontinuados
+    // nesta migração (sem endpoint de sugestão para ticket_type/event_product).
+    updateItem(id, { item, unitPrice: item ? String(item.price) : '' })
   }
 
   const summary = useMemo(() => {
@@ -156,10 +169,9 @@ export function OrderFormPage() {
 
     for (const item of items) {
       const quantity = Number(item.quantity)
-      if (!item.product || !quantity || quantity <= 0) continue
-      const optionsTotal = item.selectedOptions.reduce((sum, option) => sum + option.unit_price * option.quantity, 0) * quantity
-      totalTable += item.product.price * quantity + optionsTotal
-      totalPracticed += effectiveUnitPrice(item) * quantity + optionsTotal
+      if (!item.item || !quantity || quantity <= 0) continue
+      totalTable += item.item.price * quantity
+      totalPracticed += effectiveUnitPrice(item) * quantity
     }
 
     return {
@@ -181,9 +193,9 @@ export function OrderFormPage() {
       return
     }
 
-    const validItems = items.filter((item) => item.product && Number(item.quantity) > 0)
+    const validItems = items.filter((item) => item.item && Number(item.quantity) > 0)
     if (validItems.length === 0) {
-      setFormError('Adicione ao menos um item com produto e quantidade.')
+      setFormError('Adicione ao menos um item com ingresso/adicional e quantidade.')
       return
     }
 
@@ -195,18 +207,16 @@ export function OrderFormPage() {
     setIsSubmitting(true)
 
     const itemsPayload: OrderCreateItemPayload[] = validItems.map((item) => ({
-      product_uuid: item.product!.uuid,
+      ...(item.item!.kind === 'ticket_type'
+        ? { ticket_type_uuid: item.item!.uuid }
+        : { event_product_uuid: item.item!.uuid }),
       quantity: Number(item.quantity),
       unit_price: effectiveUnitPrice(item),
-      options: item.selectedOptions.map((option) => ({
-        product_option_uuid: option.product_option_uuid,
-        quantity: option.quantity,
-      })),
     }))
 
     try {
       const order: Order = await orderService.createOrder({
-        client_uuid: client.uuid,
+        final_customer_uuid: client.uuid,
         stock_location_uuid: stockLocationUuid || undefined,
         is_installment: isInstallment,
         installments_count: isInstallment ? Number(installmentsCount) : null,
@@ -221,7 +231,7 @@ export function OrderFormPage() {
         const message = buildOrderCreatedWhatsAppMessage({
           clientName: client.name,
           items: validItems.map((item) => ({
-            name: item.product!.name,
+            name: item.item!.name,
             quantity: item.quantity,
             unitPrice: effectiveUnitPrice(item),
           })),
@@ -245,18 +255,6 @@ export function OrderFormPage() {
     }
   }
 
-  const optionsDialogItem = items.find((item) => item.id === optionsDialogItemId) ?? null
-
-  function handleOpenOptions(itemId: string) {
-    setOptionsDialogItemId(itemId)
-  }
-
-  function handleConfirmOptions(selections: ProductOptionSelection[]) {
-    if (!optionsDialogItemId) return
-    updateItem(optionsDialogItemId, { selectedOptions: selections })
-    setOptionsDialogItemId(null)
-  }
-
   return (
     <CrudFormShell
       backLabel="Pedidos"
@@ -272,16 +270,22 @@ export function OrderFormPage() {
     >
       <Stack spacing={2.2}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <AsyncAutocomplete
-            label="Cliente"
-            required
-            value={client}
-            onChange={setClient}
-            fetchOptions={fetchClientOptions}
-            getOptionLabel={(option) => option.name}
-            getOptionKey={(option) => option.uuid}
-            placeholder="Buscar cliente pelo nome"
-          />
+          <Box>
+            <AsyncAutocomplete
+              label="Cliente"
+              required
+              value={customerOption}
+              onChange={setCustomerOption}
+              fetchOptions={fetchClientOptions}
+              getOptionLabel={(option) => {
+                const fullName = [option.final_customer.name, option.final_customer.last_name].filter(Boolean).join(' ')
+                const identifier = option.cpf_cnpj || option.phone_primary
+                return identifier ? `${fullName} (${identifier})` : fullName
+              }}
+              getOptionKey={(option) => option.uuid}
+              placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
+            />
+          </Box>
 
           <LocalAutocomplete
             label="Local de estoque"
@@ -315,8 +319,8 @@ export function OrderFormPage() {
           <Typography sx={{ fontWeight: 700 }}>Itens do pedido</Typography>
 
           {items.map((item) => {
-            const discount = item.product && Number(item.quantity) > 0 ? (item.product.price - effectiveUnitPrice(item)) * Number(item.quantity) : 0
-            const hasDiscountInfo = item.product && Number(item.quantity) > 0 && Math.abs(discount) > 0.005
+            const discount = item.item && Number(item.quantity) > 0 ? (item.item.price - effectiveUnitPrice(item)) * Number(item.quantity) : 0
+            const hasDiscountInfo = item.item && Number(item.quantity) > 0 && Math.abs(discount) > 0.005
 
             return (
               <Box key={item.id}>
@@ -329,13 +333,13 @@ export function OrderFormPage() {
                   }}
                 >
                   <AsyncAutocomplete
-                    label="Produto"
-                    value={item.product}
-                    onChange={(product) => void handleItemProductChange(item.id, product)}
+                    label="Ingresso / adicional"
+                    value={item.item}
+                    onChange={(option) => handleItemProductChange(item.id, option)}
                     fetchOptions={fetchProductOptions}
                     getOptionLabel={(option) => option.name}
-                    getOptionKey={(option) => option.uuid}
-                    placeholder="Buscar produto pelo nome"
+                    getOptionKey={(option) => `${option.kind}:${option.uuid}`}
+                    placeholder="Buscar tipo de ingresso ou adicional pelo nome"
                   />
 
                   <TextField
@@ -351,8 +355,8 @@ export function OrderFormPage() {
                     type="number"
                     value={item.unitPrice}
                     onChange={(event) => updateItem(item.id, { unitPrice: event.target.value })}
-                    disabled={!item.product}
-                    placeholder={item.product ? String(item.product.price) : undefined}
+                    disabled={!item.item}
+                    placeholder={item.item ? String(item.item.price) : undefined}
                     slotProps={{
                       htmlInput: { min: 0, step: '0.01' },
                       input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
@@ -379,20 +383,6 @@ export function OrderFormPage() {
                   </Typography>
                 )}
 
-                {item.product?.option_groups && item.product.option_groups.length > 0 && (
-                  <Stack spacing={0.75} sx={{ mt: 1 }}>
-                    <Button variant="outlined" onClick={() => handleOpenOptions(item.id)} sx={{ alignSelf: 'flex-start' }}>
-                      {item.selectedOptions.length > 0 ? 'Editar opcionais' : 'Selecionar opcionais'}
-                    </Button>
-                    {item.selectedOptions.length > 0 && (
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                        {item.selectedOptions
-                          .map((option) => `${option.group_name}: ${option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
-                          .join(' • ')}
-                      </Typography>
-                    )}
-                  </Stack>
-                )}
               </Box>
             )
           })}
@@ -510,29 +500,6 @@ export function OrderFormPage() {
           </Alert>
         )}
       </Stack>
-
-      <ProductOptionsConfiguratorDialog
-        open={Boolean(optionsDialogItem)}
-        title={optionsDialogItem?.product ? `Personalizar ${optionsDialogItem.product.name}` : 'Personalizar produto'}
-        groups={(optionsDialogItem?.product?.option_groups ?? []).map((group) => ({
-          uuid: group.uuid,
-          name: group.name,
-          description: group.description,
-          min_select: group.min_select,
-          max_select: group.max_select,
-          options: group.options
-            .filter((option) => option.is_available)
-            .map((option) => ({
-              uuid: option.uuid,
-              name: option.name,
-              description: option.description,
-              price: option.price,
-            })),
-        }))}
-        initialSelections={optionsDialogItem?.selectedOptions ?? []}
-        onClose={() => setOptionsDialogItemId(null)}
-        onConfirm={handleConfirmOptions}
-      />
     </CrudFormShell>
   )
 }

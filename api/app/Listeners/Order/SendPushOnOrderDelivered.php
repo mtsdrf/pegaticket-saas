@@ -27,9 +27,9 @@ class SendPushOnOrderDelivered
             return;
         }
 
-        $link = $this->linkRepository->findConfirmedByTenantAndClient(
+        $link = $this->linkRepository->findConfirmedByTenantAndFinalCustomer(
             (int) $order->tenant_id,
-            (int) $order->client_id
+            (int) $order->final_customer_id
         );
 
         if (!$link) {

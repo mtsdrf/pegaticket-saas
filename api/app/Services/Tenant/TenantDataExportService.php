@@ -30,8 +30,8 @@ class TenantDataExportService
         $zip = new ZipArchive();
         $zip->open($tempPath, ZipArchive::OVERWRITE);
 
-        $zip->addFromString('clients.csv', $this->clientsCsv($tenantId));
-        $zip->addFromString('products.csv', $this->productsCsv($tenantId));
+        $zip->addFromString('customers.csv', $this->customersCsv($tenantId));
+        $zip->addFromString('ticket_types.csv', $this->productsCsv($tenantId));
         $zip->addFromString('orders.csv', $this->ordersCsv($tenantId));
 
         $zip->close();
@@ -47,13 +47,26 @@ class TenantDataExportService
         ];
     }
 
-    private function clientsCsv(int $tenantId): string
+    /**
+     * FinalCustomer absorveu Client (2026-07-31): "clientes desta loja"
+     * agora é final_customer_tenant_links (registro por-tenant) + nome/
+     * e-mail do FinalCustomer global vinculado.
+     */
+    private function customersCsv(int $tenantId): string
     {
-        $rows = DB::table('clients')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->orderBy('name')
-            ->select(['uuid', 'name', 'phone_primary', 'phone_secondary', 'is_trusted', 'is_active', 'created_at'])
+        $rows = DB::table('final_customer_tenant_links')
+            ->join('final_customers', 'final_customers.id', '=', 'final_customer_tenant_links.final_customer_id')
+            ->where('final_customer_tenant_links.tenant_id', $tenantId)
+            ->orderBy('final_customers.name')
+            ->select([
+                'final_customers.uuid as uuid',
+                'final_customers.name as name',
+                'final_customer_tenant_links.phone_primary as phone_primary',
+                'final_customer_tenant_links.phone_secondary as phone_secondary',
+                'final_customer_tenant_links.is_trusted as is_trusted',
+                'final_customer_tenant_links.is_active as is_active',
+                'final_customer_tenant_links.created_at as created_at',
+            ])
             ->get();
 
         return $this->toCsv(
@@ -64,15 +77,15 @@ class TenantDataExportService
 
     private function productsCsv(int $tenantId): string
     {
-        $rows = DB::table('products')
+        $rows = DB::table('ticket_types')
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->orderBy('name')
-            ->select(['uuid', 'name', 'price', 'is_available', 'stock_quantity', 'created_at'])
+            ->select(['uuid', 'name', 'price', 'status', 'quantity_available', 'created_at'])
             ->get();
 
         return $this->toCsv(
-            ['uuid', 'name', 'price', 'is_available', 'stock_quantity', 'created_at'],
+            ['uuid', 'name', 'price', 'status', 'quantity_available', 'created_at'],
             $rows
         );
     }
@@ -80,13 +93,13 @@ class TenantDataExportService
     private function ordersCsv(int $tenantId): string
     {
         $rows = DB::table('orders')
-            ->join('clients', 'clients.id', '=', 'orders.client_id')
+            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->orderByDesc('orders.id')
             ->select([
                 'orders.uuid as uuid',
-                'clients.name as client_name',
+                'final_customers.name as client_name',
                 'orders.total_amount as total_amount',
                 'orders.origin as origin',
                 'orders.is_paid as is_paid',

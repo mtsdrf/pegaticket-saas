@@ -3,7 +3,7 @@
 namespace App\Models\Storefront;
 
 use App\Models\BaseModel;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
 
 class ProductPromotion extends BaseModel
@@ -12,7 +12,7 @@ class ProductPromotion extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'product_id',
+        'ticket_type_id',
         'promo_price',
         'discount_type',
         'discount_percentage',
@@ -32,7 +32,7 @@ class ProductPromotion extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'product_id',
+        'ticket_type_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -44,9 +44,9 @@ class ProductPromotion extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function product()
+    public function ticketType()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(TicketType::class);
     }
 
     /**
@@ -55,7 +55,7 @@ class ProductPromotion extends BaseModel
      * igual sempre foi. `percentage`: calcula em cima do `$basePrice`
      * VIGENTE passado pelo chamador (nunca congelado) — decisão consciente,
      * já que é um desconto percentual sobre um preço que pode mudar
-     * (Product.price), diferente do "de/por" que é o preço de venda público
+     * (TicketType.price), diferente do "de/por" que é o preço de venda público
      * que o tenant decidiu fixar. Ver .claude/memory/architecture-decisions.md.
      */
     public function effectivePrice(float $basePrice): float

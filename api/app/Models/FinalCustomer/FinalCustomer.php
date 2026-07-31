@@ -22,6 +22,7 @@ class FinalCustomer extends Model implements JWTSubject
     protected $fillable = [
         'uuid',
         'name',
+        'last_name',
         'email',
     ];
 

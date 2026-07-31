@@ -4,11 +4,6 @@ namespace Tests\Feature\Orders;
 
 use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
-use App\Models\Product\Product;
-use App\Models\Product\ProductOption;
-use App\Models\Product\ProductOptionGroup;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
 use App\Models\Stock\StockBalance;
 use App\Models\Tenant\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,14 +46,14 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 // total_amount não é um campo de item válido (só
-                // product_uuid/quantity/unit_price) — sempre ignorado, o
+                // ticket_type_uuid/quantity/unit_price) — sempre ignorado, o
                 // total do pedido é sempre recalculado no backend.
-                ['product_uuid' => $product->uuid, 'quantity' => 3, 'total_amount' => 999],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3, 'total_amount' => 999],
             ],
         ]);
 
@@ -71,7 +66,7 @@ class OrderTest extends TestCase
 
         $this->assertNotNull($response->json('data.due_date'));
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(100, $balance->quantity_on_hand);
         $this->assertEquals(3, $balance->quantity_reserved);
         $this->assertEquals(97, $balance->quantity_available);
@@ -88,11 +83,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'notes' => 'Sem cebola'],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'notes' => 'Sem cebola'],
             ],
         ]);
 
@@ -101,76 +96,8 @@ class OrderTest extends TestCase
 
         $this->assertDatabaseHas('order_items', [
             'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'notes' => 'Sem cebola',
-        ]);
-    }
-
-    #[Test]
-    public function creating_an_order_with_product_options_adds_option_totals_and_returns_selected_options(): void
-    {
-        $this->grantPermission('orders', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 30.00]);
-
-        $group = ProductOptionGroup::create([
-            'tenant_id' => $this->tenant->id,
-            'product_id' => $product->id,
-            'name' => 'Adicionais',
-            'min_select' => 1,
-            'max_select' => 2,
-            'sort_order' => 1,
-            'is_active' => true,
-        ]);
-
-        $cheese = ProductOption::create([
-            'tenant_id' => $this->tenant->id,
-            'product_option_group_id' => $group->id,
-            'name' => 'Queijo extra',
-            'price' => 4.50,
-            'sort_order' => 1,
-            'is_available' => true,
-        ]);
-
-        $bacon = ProductOption::create([
-            'tenant_id' => $this->tenant->id,
-            'product_option_group_id' => $group->id,
-            'name' => 'Bacon',
-            'price' => 6.00,
-            'sort_order' => 2,
-            'is_available' => true,
-        ]);
-
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
-
-        $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [[
-                'product_uuid' => $product->uuid,
-                'quantity' => 2,
-                'options' => [
-                    ['product_option_uuid' => $cheese->uuid, 'quantity' => 1],
-                    ['product_option_uuid' => $bacon->uuid, 'quantity' => 1],
-                ],
-            ]],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.total_amount', '81.00')
-            ->assertJsonPath('data.items.0.line_total', '81.00')
-            ->assertJsonPath('data.items.0.options.0.product_option.name', 'Queijo extra')
-            ->assertJsonPath('data.items.0.options.1.product_option.name', 'Bacon');
-
-        $this->assertDatabaseHas('order_item_options', [
-            'product_option_id' => $cheese->id,
-            'line_total' => 9.00,
-        ]);
-        $this->assertDatabaseHas('order_item_options', [
-            'product_option_id' => $bacon->id,
-            'line_total' => 12.00,
         ]);
     }
 
@@ -193,11 +120,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3, 'unit_price' => 20],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3, 'unit_price' => 20],
             ],
         ]);
 
@@ -207,7 +134,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.items.0.line_total', '60.00');
 
         // Estoque reservado usa a quantidade, não o preço — não muda.
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(3, $balance->quantity_reserved);
     }
 
@@ -226,11 +153,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 5.00],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 5.00],
             ],
         ]);
 
@@ -256,11 +183,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 10);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 0.5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 0.5],
             ],
         ]);
 
@@ -270,7 +197,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.items.0.unit_price', '50.00')
             ->assertJsonPath('data.items.0.line_total', '25.00');
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEqualsWithDelta(0.5, (float) $balance->quantity_reserved, 0.0001);
         $this->assertEqualsWithDelta(9.5, $balance->quantity_available, 0.0001);
     }
@@ -292,12 +219,12 @@ class OrderTest extends TestCase
         // Total precisa ser a SOMA das linhas já arredondadas (20.19), não
         // um recálculo independente sobre a soma das quantidades/preços.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productA->uuid, 'quantity' => 0.333],
-                ['product_uuid' => $productB->uuid, 'quantity' => 0.7],
+                ['ticket_type_uuid' => $productA->uuid, 'quantity' => 0.333],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 0.7],
             ],
         ]);
 
@@ -306,8 +233,8 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.items.1.line_total', '9.09')
             ->assertJsonPath('data.total_amount', '20.19');
 
-        $balanceA = StockBalance::where('product_id', $productA->id)->where('location_id', $location->id)->first();
-        $balanceB = StockBalance::where('product_id', $productB->id)->where('location_id', $location->id)->first();
+        $balanceA = StockBalance::where('ticket_type_id', $productA->id)->where('location_id', $location->id)->first();
+        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
         $this->assertEqualsWithDelta(0.333, (float) $balanceA->quantity_reserved, 0.0001);
         $this->assertEqualsWithDelta(0.7, (float) $balanceB->quantity_reserved, 0.0001);
     }
@@ -323,11 +250,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 2);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -336,7 +263,7 @@ class OrderTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('order_items', 0);
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(0, $balance->quantity_reserved);
     }
 
@@ -352,12 +279,12 @@ class OrderTest extends TestCase
 
         // total = 33.33 * 3 = 99.99 dividido em 3 parcelas -> 33.33 cada, bate exato.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 3,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ]);
 
@@ -373,12 +300,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product2, $location, 10);
 
         $response2 = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 3,
             'items' => [
-                ['product_uuid' => $product2->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product2->uuid, 'quantity' => 1],
             ],
         ]);
 
@@ -402,15 +329,15 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
-        $balanceBefore = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceBefore = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(20, $balanceBefore->quantity_on_hand);
         $this->assertEquals(5, $balanceBefore->quantity_reserved);
         $this->assertEquals(15, $balanceBefore->quantity_available);
@@ -419,7 +346,7 @@ class OrderTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balanceAfter = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceAfter = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(15, $balanceAfter->quantity_on_hand);
         $this->assertEquals(0, $balanceAfter->quantity_reserved);
         $this->assertEquals(15, $balanceAfter->quantity_available);
@@ -437,12 +364,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -460,7 +387,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.is_paid', true)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(18, $balance->quantity_on_hand);
         $this->assertEquals(0, $balance->quantity_reserved);
     }
@@ -483,11 +410,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -511,11 +438,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -541,11 +468,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -572,12 +499,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -614,12 +541,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -645,11 +572,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -657,7 +584,7 @@ class OrderTest extends TestCase
             'cancellation_reason' => 'Cliente desistiu',
         ])->assertStatus(200)->assertJsonPath('data.cancellation_reason', 'Cliente desistiu');
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(20, $balance->quantity_on_hand);
         $this->assertEquals(0, $balance->quantity_reserved);
         $this->assertEquals(20, $balance->quantity_available);
@@ -676,24 +603,24 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
         $this->auth()->patchJson("/api/v1/orders/{$order['uuid']}/deliver")->assertStatus(200);
 
-        $balanceAfterDeliver = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceAfterDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(15, $balanceAfterDeliver->quantity_on_hand);
 
         $this->auth()->patchJson("/api/v1/orders/{$order['uuid']}/cancel", [
             'cancellation_reason' => 'Produto com defeito',
         ])->assertStatus(200);
 
-        $balanceAfterCancel = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceAfterCancel = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(20, $balanceAfterCancel->quantity_on_hand);
         $this->assertEquals(0, $balanceAfterCancel->quantity_reserved);
     }
@@ -711,11 +638,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -740,11 +667,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -770,11 +697,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -806,15 +733,15 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
-        $balanceBeforeDeliver = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceBeforeDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(20, $balanceBeforeDeliver->quantity_on_hand);
         $this->assertEquals(5, $balanceBeforeDeliver->quantity_reserved);
         $this->assertEquals(15, $balanceBeforeDeliver->quantity_available);
@@ -827,7 +754,7 @@ class OrderTest extends TestCase
 
         $this->assertNull(Order::where('uuid', $order['uuid'])->first()->delivered_at);
 
-        $balanceAfterUndeliver = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceAfterUndeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals($balanceBeforeDeliver->quantity_on_hand, $balanceAfterUndeliver->quantity_on_hand);
         $this->assertEquals($balanceBeforeDeliver->quantity_reserved, $balanceAfterUndeliver->quantity_reserved);
         $this->assertEquals($balanceBeforeDeliver->quantity_available, $balanceAfterUndeliver->quantity_available);
@@ -838,7 +765,7 @@ class OrderTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balanceAfterSecondDeliver = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balanceAfterSecondDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(15, $balanceAfterSecondDeliver->quantity_on_hand);
         $this->assertEquals(0, $balanceAfterSecondDeliver->quantity_reserved);
     }
@@ -855,11 +782,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -882,11 +809,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -912,11 +839,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -943,12 +870,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -969,11 +896,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -1002,12 +929,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1052,12 +979,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1079,11 +1006,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -1105,11 +1032,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -1133,10 +1060,10 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $default, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1162,12 +1089,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_delivered' => true,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -1176,7 +1103,7 @@ class OrderTest extends TestCase
 
         $this->assertNotNull($response->json('data.delivered_at'));
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(15, $balance->quantity_on_hand);
         $this->assertEquals(0, $balance->quantity_reserved);
         $this->assertEquals(15, $balance->quantity_available);
@@ -1199,12 +1126,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_paid' => true,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -1233,13 +1160,13 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_delivered' => true,
             'mark_as_paid' => true,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -1247,7 +1174,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.is_delivered', true)
             ->assertJsonPath('data.is_paid', true);
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(15, $balance->quantity_on_hand);
         $this->assertEquals(0, $balance->quantity_reserved);
     }
@@ -1263,13 +1190,13 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'mark_as_paid' => true,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1290,12 +1217,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'expected_delivery_date' => '2026-08-01',
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1319,12 +1246,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'notes' => str_repeat('a', 501),
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1350,7 +1277,7 @@ class OrderTest extends TestCase
 
         $order = Order::create([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
@@ -1386,18 +1313,18 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productA->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $productA->uuid, 'quantity' => 3],
             ],
         ])->json('data');
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $productA->uuid, 'quantity' => 3],
-                ['product_uuid' => $productB->uuid, 'quantity' => 2],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $productA->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1405,7 +1332,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.total_amount', '40.00')
             ->assertJsonCount(2, 'data.items');
 
-        $balanceB = StockBalance::where('product_id', $productB->id)->where('location_id', $location->id)->first();
+        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
         $this->assertEquals(2, $balanceB->quantity_reserved);
     }
 
@@ -1423,20 +1350,20 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productA->uuid, 'quantity' => 2],
-                ['product_uuid' => $productB->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
             ],
         ])->json('data');
 
-        $itemA = collect($order['items'])->firstWhere('product.uuid', $productA->uuid);
+        $itemA = collect($order['items'])->firstWhere('ticket_type.uuid', $productA->uuid);
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $itemA['uuid'], 'product_uuid' => $productA->uuid, 'quantity' => 2],
+                ['uuid' => $itemA['uuid'], 'ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1444,7 +1371,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.total_amount', '20.00')
             ->assertJsonCount(1, 'data.items');
 
-        $balanceB = StockBalance::where('product_id', $productB->id)->where('location_id', $location->id)->first();
+        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
         $this->assertEquals(0, $balanceB->quantity_reserved);
         $this->assertEquals(20, $balanceB->quantity_available);
     }
@@ -1461,17 +1388,17 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 5],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -1479,7 +1406,7 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.total_amount', '50.00')
             ->assertJsonPath('data.items.0.quantity', '5.000');
 
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(5, $balance->quantity_reserved);
         $this->assertEquals(15, $balance->quantity_available);
     }
@@ -1498,26 +1425,26 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productA->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $productB->uuid, 'quantity' => 2],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $productB->uuid, 'quantity' => 2],
             ],
         ]);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.total_amount', '16.00')
-            ->assertJsonPath('data.items.0.product.uuid', $productB->uuid);
+            ->assertJsonPath('data.items.0.ticket_type.uuid', $productB->uuid);
 
-        $balanceA = StockBalance::where('product_id', $productA->id)->where('location_id', $location->id)->first();
-        $balanceB = StockBalance::where('product_id', $productB->id)->where('location_id', $location->id)->first();
+        $balanceA = StockBalance::where('ticket_type_id', $productA->id)->where('location_id', $location->id)->first();
+        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
         $this->assertEquals(0, $balanceA->quantity_reserved);
         $this->assertEquals(2, $balanceB->quantity_reserved);
     }
@@ -1535,11 +1462,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1548,7 +1475,7 @@ class OrderTest extends TestCase
             'stock_location_uuid' => $otherLocation->uuid,
             'expected_delivery_date' => '2026-09-01',
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 2],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
@@ -1561,7 +1488,7 @@ class OrderTest extends TestCase
 
         // Item não mudou (mesmo produto/quantidade) — reserva original
         // continua intacta, nenhum movimento de estoque ruído.
-        $balance = StockBalance::where('product_id', $product->id)->where('location_id', $location->id)->first();
+        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
         $this->assertEquals(2, $balance->quantity_reserved);
     }
 
@@ -1578,11 +1505,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1590,7 +1517,7 @@ class OrderTest extends TestCase
 
         $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 3],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -1608,11 +1535,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1620,7 +1547,7 @@ class OrderTest extends TestCase
 
         $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 3],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -1638,11 +1565,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1652,7 +1579,7 @@ class OrderTest extends TestCase
 
         $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 3],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -1670,20 +1597,20 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 40);
 
         $orderA = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
         $orderB = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->json('data');
 
@@ -1691,7 +1618,7 @@ class OrderTest extends TestCase
 
         $this->auth()->putJson("/api/v1/orders/{$orderA['uuid']}/items", [
             'items' => [
-                ['uuid' => $foreignItemUuid, 'product_uuid' => $product->uuid, 'quantity' => 2],
+                ['uuid' => $foreignItemUuid, 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
@@ -1713,11 +1640,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1725,8 +1652,8 @@ class OrderTest extends TestCase
 
         $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $itemUuid, 'product_uuid' => $product->uuid, 'quantity' => 2],
-                ['uuid' => $itemUuid, 'product_uuid' => $product->uuid, 'quantity' => 3],
+                ['uuid' => $itemUuid, 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
+                ['uuid' => $itemUuid, 'ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -1743,11 +1670,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
@@ -1762,12 +1689,12 @@ class OrderTest extends TestCase
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $foreignProduct->uuid, 'quantity' => 2],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $foreignProduct->uuid, 'quantity' => 2],
             ],
         ]);
 
         $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
-        $this->assertArrayHasKey('items.0.product_uuid', $response->json('errors'));
+        $this->assertArrayHasKey('items.0.ticket_type_uuid', $response->json('errors'));
     }
 
     #[Test]
@@ -1782,12 +1709,12 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->json('data');
 
@@ -1795,7 +1722,7 @@ class OrderTest extends TestCase
 
         $response = $this->auth()->putJson("/api/v1/orders/{$order['uuid']}/items", [
             'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'product_uuid' => $product->uuid, 'quantity' => 5],
+                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
@@ -1830,11 +1757,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $payload = [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ];
 
@@ -1866,20 +1793,20 @@ class OrderTest extends TestCase
         $tokenB = $this->token;
 
         $orderA = $this->withHeader('Authorization', 'Bearer ' . $tokenA)->postJson('/api/v1/orders', [
-            'client_uuid' => $clientA->uuid,
+            'final_customer_uuid' => $clientA->uuid,
             'stock_location_uuid' => $locationA->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productA->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $productA->uuid, 'quantity' => 1],
             ],
         ]);
 
         $orderB = $this->withHeader('Authorization', 'Bearer ' . $tokenB)->postJson('/api/v1/orders', [
-            'client_uuid' => $clientB->uuid,
+            'final_customer_uuid' => $clientB->uuid,
             'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productB->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
             ],
         ]);
 
@@ -1897,7 +1824,7 @@ class OrderTest extends TestCase
 
         $firstOrder = Order::create([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
@@ -1911,7 +1838,7 @@ class OrderTest extends TestCase
 
         $secondOrder = Order::create([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 20,
@@ -1944,11 +1871,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -1982,11 +1909,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 10],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 10],
             ],
         ])->json('data');
 
@@ -2019,11 +1946,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -2047,11 +1974,11 @@ class OrderTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 5],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
@@ -2084,11 +2011,11 @@ class OrderTest extends TestCase
 
         for ($i = 0; $i < 2; $i++) {
             $this->auth()->postJson('/api/v1/orders', [
-                'client_uuid' => $client->uuid,
+                'final_customer_uuid' => $client->uuid,
                 'stock_location_uuid' => $location->uuid,
                 'is_installment' => false,
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
             ])->assertStatus(201);
         }
@@ -2107,11 +2034,11 @@ class OrderTest extends TestCase
         $tenantB = $this->tenant;
 
         $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $clientB->uuid,
+            'final_customer_uuid' => $clientB->uuid,
             'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productB->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
             ],
         ])->assertStatus(201);
 
@@ -2138,11 +2065,11 @@ class OrderTest extends TestCase
         // Pedido criado depois do backfill não colide com os códigos
         // recém-atribuídos.
         $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $clientB->uuid,
+            'final_customer_uuid' => $clientB->uuid,
             'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $productB->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
             ],
         ])->assertStatus(201)->assertJsonPath('data.codigo', '1001');
     }
@@ -2171,11 +2098,11 @@ class OrderTest extends TestCase
         // configurado pra este tenant — se algum guard novo vazasse pro
         // fluxo staff, este pedido seria bloqueado.
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 

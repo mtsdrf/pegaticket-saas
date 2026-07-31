@@ -4,7 +4,7 @@ namespace App\Services\Storefront;
 
 use App\Events\Storefront\ProductPromotionDeleted;
 use App\Events\Storefront\ProductPromotionUpserted;
-use App\Models\Product\Product;
+use App\Models\Event\TicketType;
 use App\Models\Storefront\ProductPromotion;
 use App\Repositories\Contracts\ProductPromotionRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Preço promocional "de/por" por produto (roadmap Delivery, Fase 3) — mesmo
  * shape de StoreDeliveryFeeService: upsert 1 por chave (aqui, por
- * product_id), nunca duplica.
+ * ticket_type_id), nunca duplica.
  */
 class ProductPromotionService
 {
@@ -30,22 +30,22 @@ class ProductPromotionService
 
     public function upsert(
         int $tenantId,
-        string $productUuid,
+        string $ticketTypeUuid,
         ?float $promoPrice,
         ?string $startsAt,
         ?string $expiresAt,
         string $discountType = 'fixed_price',
         ?float $discountPercentage = null
     ): ProductPromotion {
-        return DB::transaction(function () use ($tenantId, $productUuid, $promoPrice, $startsAt, $expiresAt, $discountType, $discountPercentage) {
-            $product = Product::where('uuid', $productUuid)
+        return DB::transaction(function () use ($tenantId, $ticketTypeUuid, $promoPrice, $startsAt, $expiresAt, $discountType, $discountPercentage) {
+            $ticketType = TicketType::where('uuid', $ticketTypeUuid)
                 ->where('tenant_id', $tenantId)
                 ->whereNull('deleted_at')
                 ->firstOrFail();
 
             $promotion = $this->repository->upsertForTenant(
                 $tenantId,
-                $product->id,
+                $ticketType->id,
                 $promoPrice,
                 $startsAt,
                 $expiresAt,
@@ -77,19 +77,19 @@ class ProductPromotionService
      * Preço promocional EFETIVO de um produto — usado pelo checkout
      * (StorefrontCheckoutService::resolveEffectiveUnitPrice(), 1 produto por
      * vez). Recebe o Product inteiro (não só o id) porque o preço efetivo
-     * de uma promoção 'percentage' depende do Product.price VIGENTE no
+     * de uma promoção 'percentage' depende do TicketType.price VIGENTE no
      * momento da chamada — nunca congelado. Ver
      * ProductPromotion::effectivePrice().
      */
-    public function findActivePromoPrice(Product $product): ?float
+    public function findActivePromoPrice(TicketType $ticketType): ?float
     {
-        $promotion = $this->repository->findActivePromotion($product->tenant_id, $product->id);
+        $promotion = $this->repository->findActivePromotion($ticketType->tenant_id, $ticketType->id);
 
-        return $promotion?->effectivePrice((float) $product->price);
+        return $promotion?->effectivePrice((float) $ticketType->price);
     }
 
     /**
-     * Coleção de promoções ativas keyed por product_id — repassada pelo
+     * Coleção de promoções ativas keyed por ticket_type_id — repassada pelo
      * StorefrontCatalogService pro StorefrontProductResource sem N+1.
      */
     public function activePromotionsForProducts(int $tenantId, array $productIds): Collection

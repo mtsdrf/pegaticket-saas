@@ -14,7 +14,7 @@ class CreateOrderDTO
      */
     public function __construct(
         public readonly int $tenantId,
-        public readonly string $clientUuid,
+        public readonly string $finalCustomerUuid,
         public readonly ?string $stockLocationUuid,
         public readonly bool $isInstallment,
         public readonly ?int $installmentsCount,
@@ -51,7 +51,7 @@ class CreateOrderDTO
     {
         return new self(
             tenantId: $tenantId,
-            clientUuid: $data['client_uuid'],
+            finalCustomerUuid: $data['final_customer_uuid'],
             stockLocationUuid: $data['stock_location_uuid'] ?? null,
             isInstallment: (bool) ($data['is_installment'] ?? false),
             installmentsCount: isset($data['installments_count']) ? (int) $data['installments_count'] : null,

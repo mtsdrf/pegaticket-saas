@@ -25,7 +25,7 @@ class CartEventTest extends TestCase
             'session_id' => 'anon-session-123',
             'event_type' => 'cart_abandoned',
             'items' => [
-                ['product_uuid' => (string) \Illuminate\Support\Str::uuid(), 'name' => 'Produto X', 'quantity' => 2, 'unit_price' => 10.5],
+                ['ticket_type_uuid' => (string) \Illuminate\Support\Str::uuid(), 'name' => 'Produto X', 'quantity' => 2, 'unit_price' => 10.5],
             ],
             'total_amount' => 21.0,
         ]);

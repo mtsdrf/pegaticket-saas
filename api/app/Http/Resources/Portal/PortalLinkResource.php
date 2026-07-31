@@ -11,7 +11,6 @@ class PortalLinkResource extends JsonResource
         return [
             'uuid' => $this->uuid,
             'tenant_name' => $this->whenLoaded('tenant', fn() => $this->tenant->name),
-            'client_name' => $this->whenLoaded('client', fn() => $this->client->name),
             'confirmed_at' => $this->confirmed_at,
         ];
     }

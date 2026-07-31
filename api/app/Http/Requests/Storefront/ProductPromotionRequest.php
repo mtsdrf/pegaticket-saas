@@ -23,17 +23,17 @@ class ProductPromotionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_uuid' => [
+            'ticket_type_uuid' => [
                 'required',
                 'uuid',
-                Rule::exists('products', 'uuid')->where(function ($query) {
+                Rule::exists('ticket_types', 'uuid')->where(function ($query) {
                     $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
                 }),
             ],
             'discount_type' => ['required', 'string', Rule::in(['fixed_price', 'percentage'])],
             // required_if: cada tipo exige só o campo correspondente —
             // promo_price é o valor "de/por" absoluto (fixed_price),
-            // discount_percentage é o % sobre o Product.price vigente
+            // discount_percentage é o % sobre o TicketType.price vigente
             // (percentage). Ver ProductPromotion::effectivePrice().
             'promo_price' => ['required_if:discount_type,fixed_price', 'nullable', 'numeric', 'min:0'],
             'discount_percentage' => ['required_if:discount_type,percentage', 'nullable', 'numeric', 'min:0.01', 'max:100'],

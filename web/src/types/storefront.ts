@@ -35,118 +35,123 @@ export interface StorefrontTenant {
   /** Par de `allow_store_pickup` — `true` só quando o tenant habilitou `allow_delivery`; a UI de checkout só oferece a opção "receber em casa" quando este campo vem `true`. */
   allow_delivery: boolean
   storefront_enabled: boolean
-  /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — `grid` (cards com foto grande) ou `list` (padrão, lista compacta com imagem à direita). */
+  /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos (migração PegaTicket, ver `.claude/memory`) usa sempre 1 cartão por evento, sem alternância grid/lista. */
   catalog_layout: StorefrontCatalogLayout
 }
 
-/** `grid` (cards com foto grande, 1:1) ou `list` (padrão — lista compacta com imagem à direita). */
 export type StorefrontCatalogLayout = 'grid' | 'list'
 
-export interface StorefrontProductTypeRef {
+export type StorefrontEventType = 'ingresso' | 'inscricao' | 'mesa' | 'assento' | 'misto'
+export type StorefrontEventStatus =
+  | 'rascunho'
+  | 'agendado'
+  | 'publicado'
+  | 'vendas_pausadas'
+  | 'esgotado'
+  | 'encerrado'
+  | 'cancelado'
+  | 'arquivado'
+
+export interface StorefrontEventCategoryRef {
+  uuid: string
   name: string
-  product_category: { name: string } | null
 }
 
-export interface StorefrontProductOption {
+export type StorefrontTicketTypeStatus = 'rascunho' | 'ativo' | 'pausado' | 'esgotado' | 'encerrado'
+
+/** Nó `ticket_types[]` do detalhe do evento (`TicketTypeResource`, allow-list de leitura pública). */
+export interface StorefrontTicketType {
   uuid: string
   name: string
   description: string | null
   price: number
-  sort_order: number
-}
-
-/** `addon` (default) soma preço ao escolher; `ingredient_removal` é usado para desmarcar um ingrediente do produto (preço tipicamente 0). */
-export type StorefrontProductOptionGroupKind = 'addon' | 'ingredient_removal'
-
-export interface StorefrontProductOptionGroup {
-  uuid: string
-  name: string
-  description: string | null
-  kind: StorefrontProductOptionGroupKind
-  min_select: number
-  max_select: number
-  sort_order: number
-  options: StorefrontProductOption[]
-}
-
-/** Selos calculados pelo backend em `StorefrontCatalogService::paginateProducts()` — array vazio quando nenhum se aplica. */
-export type StorefrontProductBadge = 'new' | 'best_selling' | 'low_stock'
-
-/** `GET /loja/{slug}/produtos` — allow-list estrita (`StorefrontProductResource`), nunca custo/estoque. */
-export interface StorefrontProduct {
-  uuid: string
-  name: string
-  description: string | null
-  price: number
-  /** Delivery Fase 3 — preço promocional ativo (`ProductPromotion`), quando houver. `null` = sem promoção vigente, exibe só `price`. */
-  promo_price: number | null
-  /** Roadmap Loja — preço de atacado por quantidade. Os dois nulos = sem atacado configurado; promoção sempre vence sobre atacado. */
-  wholesale_min_quantity: number | null
-  wholesale_price: number | null
   image_url: string | null
-  is_available: boolean
-  /**
-   * Delivery Fase 4 — só reflete o cliente final logado quando o Bearer do
-   * portal é enviado em `GET /loja/{slug}/produtos` (`customer.jwt.optional`
-   * no backend); `false` para visitante anônimo. Mesmo campo, sempre `true`,
-   * em `GET /portal/favorites` (é a própria lista de favoritos).
-   */
-  is_favorited: boolean
-  /** Selos ('new'|'best_selling'|'low_stock') — [] quando o endpoint não passa por `paginateProducts()` (ex: detalhe avulso), nunca `null`. */
-  badges: StorefrontProductBadge[]
-  option_groups?: StorefrontProductOptionGroup[]
-  product_type?: StorefrontProductTypeRef
+  quantity_available: number | null
+  min_per_order: number | null
+  max_per_order: number | null
+  sales_start_at: string | null
+  sales_end_at: string | null
+  status: StorefrontTicketTypeStatus
 }
 
-/** Vitrine estilo iFood — `relevance` (default, mesmo comportamento de sempre) é a única ordenação sem custo extra de query; as outras 3 usam preço efetivo/vendas dos últimos 90 dias no backend (`StorefrontCatalogService::applySort`). */
-export type StorefrontSortOption = 'relevance' | 'price_asc' | 'price_desc' | 'best_selling'
+/** Nó `event_products[]` do detalhe do evento (`EventProductResource`). */
+export interface StorefrontEventProduct {
+  uuid: string
+  name: string
+  description: string | null
+  price: number
+  quantity_available: number | null
+  max_per_order: number | null
+  sales_start_at: string | null
+  sales_end_at: string | null
+  kind: 'addon' | 'parking'
+  requires_plate: boolean
+  requires_model: boolean
+  requires_color: boolean
+  status: StorefrontTicketTypeStatus
+}
 
-export interface StorefrontProductFilters {
+/** `GET /loja/{slug}/eventos` (`EventResource`) — catálogo público de eventos publicados/públicos, substitui o antigo catálogo de produtos. */
+export interface StorefrontEvent {
+  uuid: string
+  name: string
+  slug: string
+  description_short: string | null
+  description_full: string | null
+  cover_image_url: string | null
+  type: StorefrontEventType
+  location_name: string | null
+  location_address: string | null
+  starts_at: string
+  ends_at: string
+  status: StorefrontEventStatus
+  category: StorefrontEventCategoryRef | null
+  /**
+   * Só reflete o cliente final logado quando o Bearer do portal é enviado
+   * (`customer.jwt.optional`); `undefined` para visitante anônimo — nunca
+   * tratar ausência como `false` definitivo.
+   */
+  is_favorited?: boolean
+  /** Só presentes no detalhe (`GET /loja/{slug}/eventos/{eventSlug}`), ausentes na listagem. */
+  ticket_types?: StorefrontTicketType[]
+  event_products?: StorefrontEventProduct[]
+}
+
+export interface StorefrontEventFilters {
   name?: string
-  product_type_uuid?: string
-  product_category_uuid?: string
-  /** Delivery Fase 3 — filtra só produtos com promoção ativa no momento. */
-  on_promotion?: boolean
-  sort?: StorefrontSortOption
+  event_category_uuid?: string
+  type?: StorefrontEventType
   per_page?: number
   page?: number
 }
 
-/** `GET /loja/{slug}/categorias` — só categorias com produto disponível, ordenadas por priority no backend. */
+/** `GET /loja/{slug}/categorias` — só categorias com evento disponível, ordenadas por priority no backend. */
 export interface StorefrontCategory {
   uuid: string
   name: string
 }
 
-export interface StorefrontListResult {
-  items: StorefrontProduct[]
+export interface StorefrontEventListResult {
+  items: StorefrontEvent[]
   pagination: PaginationMeta
 }
 
-/** Item do carrinho local (`localStorage`, por slug — ver `constants/storage.ts`). */
+/**
+ * Item do carrinho local (`localStorage`, por slug — ver `constants/storage.ts`).
+ * Exatamente um de `ticket_type_uuid`/`event_product_uuid` por item (mesma
+ * regra de `StorefrontCheckoutItemPayload`/backend).
+ */
 export interface StorefrontCartItem {
   id: string
-  product_uuid: string
+  ticket_type_uuid?: string
+  event_product_uuid?: string
   name: string
-  configuration_label?: string | null
-  /** Preço efetivo corrente — recalculado por `computeUnitPrice()` a cada mudança de quantidade (promoção > atacado > base). */
+  event_name: string
   unit_price: number
-  /** Snapshot dos preços do produto no momento de adicionar (config de produto, não muda por sessão) — base do recálculo de atacado. */
-  price: number
-  promo_price: number | null
-  wholesale_min_quantity: number | null
-  wholesale_price: number | null
   image_url: string | null
   quantity: number
-  /** Observação livre do cliente sobre este item (ex: "sem cebola") — até 200 caracteres, enviada como `items[].notes` no checkout. */
+  /** Observação livre do cliente sobre este item (ex: "meia-entrada") — até 200 caracteres, enviada como `items[].notes` no checkout. */
   notes?: string | null
-  options?: Array<{
-    product_option_uuid: string
-    group_name: string
-    name: string
-    quantity: number
-    unit_price: number
-  }>
 }
 
 /**
@@ -166,15 +171,13 @@ export interface StorefrontCheckoutAddress {
   cep?: string
 }
 
+/** Exatamente um de `ticket_type_uuid`/`event_product_uuid` por item — mesma regra do backend. */
 export interface StorefrontCheckoutItemPayload {
-  product_uuid: string
+  ticket_type_uuid?: string
+  event_product_uuid?: string
   quantity: number
-  /** Observação por item (ex: "sem cebola") — distinta do `notes` geral do pedido, até 200 caracteres. */
+  /** Observação por item, até 200 caracteres, distinta do `notes` geral do pedido. */
   notes?: string
-  options?: Array<{
-    product_option_uuid: string
-    quantity?: number
-  }>
 }
 
 /** Roadmap retirada na loja — `delivery` (padrão, retrocompatível) entrega no endereço; `pickup` dispensa endereço, cliente busca na loja. */
@@ -202,7 +205,6 @@ export interface StorefrontCheckoutPayload extends StorefrontCheckoutAddress {
 export interface StorefrontCheckoutResult {
   order: { uuid: string }
 }
-
 
 /** Código de erro específico quando `tenant_settings.block_order_without_stock` está ligado e falta estoque. */
 export const INSUFFICIENT_STOCK_CODE = 'INSUFFICIENT_STOCK'

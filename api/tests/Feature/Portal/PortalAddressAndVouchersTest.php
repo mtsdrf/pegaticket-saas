@@ -3,7 +3,6 @@
 namespace Tests\Feature\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\CouponRedemption;
@@ -54,17 +53,6 @@ class PortalAddressAndVouchersTest extends TestCase
         return [$customer, $token];
     }
 
-    private function confirmLink(FinalCustomer $customer, Tenant $tenant, $client): void
-    {
-        FinalCustomerTenantLink::create([
-            'uuid' => (string) Str::uuid(),
-            'final_customer_id' => $customer->id,
-            'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
-            'confirmed_at' => now(),
-        ]);
-    }
-
     #[Test]
     public function voucher_history_only_returns_the_authenticated_customers_redemptions(): void
     {
@@ -78,7 +66,7 @@ class PortalAddressAndVouchersTest extends TestCase
         $order = Order::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 50,

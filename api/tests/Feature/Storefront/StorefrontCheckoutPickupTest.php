@@ -98,7 +98,7 @@ class StorefrontCheckoutPickupTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/loja/' . $tenant->slug . '/checkout', [
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 2],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
                 ],
                 'client_name' => 'Cliente Retirada',
                 'client_last_name' => 'Sobrenome',
@@ -126,7 +126,7 @@ class StorefrontCheckoutPickupTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/loja/' . $tenant->slug . '/checkout', [
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
                 'client_name' => 'Cliente Retirada',
                 'client_last_name' => 'Sobrenome',
@@ -148,7 +148,7 @@ class StorefrontCheckoutPickupTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/loja/' . $tenant->slug . '/checkout', [
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
                 'client_name' => 'Cliente Retirada',
                 'client_last_name' => 'Sobrenome',
@@ -179,7 +179,7 @@ class StorefrontCheckoutPickupTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/loja/' . $tenant->slug . '/checkout', [
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
                 'client_name' => 'Cliente Loja',
                 'client_last_name' => 'Sobrenome',
@@ -206,7 +206,7 @@ class StorefrontCheckoutPickupTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/loja/' . $tenant->slug . '/checkout', [
                 'items' => [
-                    ['product_uuid' => $product->uuid, 'quantity' => 1],
+                    ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
                 ],
                 'client_name' => 'Cliente Loja',
                 'client_last_name' => 'Sobrenome',

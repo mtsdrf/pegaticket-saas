@@ -18,7 +18,6 @@ export interface PortalAuthTokens {
 
 export interface PortalLinkedStore {
   tenant_name: string
-  client_name: string
   confirmed_at: string
 }
 
@@ -48,14 +47,16 @@ export interface PortalOrderSummary {
 
 /**
  * Item de `GET /portal/orders/{uuid}/items` ("pedir de novo", Delivery Fase
- * 4) — preço/disponibilidade sempre ATUAIS do produto, nunca o valor
- * congelado no pedido original. `product_uuid`/`product_name` podem vir
- * `null` só no caso raro do produto ter sido removido permanentemente do
- * banco (nunca deveria acontecer com soft delete, mas o backend permite).
+ * 4) — preço/disponibilidade sempre ATUAIS do ingresso/adicional, nunca o
+ * valor congelado no pedido original. `ticket_type_uuid`/`ticket_type_name`
+ * cobrem tanto `TicketType` quanto `EventProduct` (mesmo campo no backend,
+ * `PortalCustomerService::getOrderItemsForReorder()`) — podem vir `null` só
+ * no caso raro do item ter sido removido permanentemente do banco (nunca
+ * deveria acontecer com soft delete, mas o backend permite).
  */
 export interface PortalReorderItem {
-  product_uuid: string | null
-  product_name: string | null
+  ticket_type_uuid: string | null
+  ticket_type_name: string | null
   quantity: number
   current_price: number | null
   is_available: boolean
@@ -111,6 +112,5 @@ export interface CreatePortalLinkPayload {
 export interface PortalLink {
   uuid: string
   tenant_name: string
-  client_name: string
   confirmed_at: string
 }

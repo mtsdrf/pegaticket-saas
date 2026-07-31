@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Portal;
 
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Tenant\Tenant;
@@ -42,14 +41,14 @@ class PortalOrderRatingTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, Client $client, array $overrides = []): Order
+    private function createOrder(Tenant $tenant, FinalCustomer $owner, array $overrides = []): Order
     {
         $location = $this->createLocation($tenant->id);
 
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $owner->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -68,10 +67,9 @@ class PortalOrderRatingTest extends TestCase
     #[Test]
     public function rates_a_delivered_order_successfully(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -95,10 +93,9 @@ class PortalOrderRatingTest extends TestCase
     #[Test]
     public function rejects_rating_when_order_is_not_delivered_yet(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['is_delivered' => false]);
+        $order = $this->createOrder($tenant, $customer, ['is_delivered' => false]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -113,10 +110,9 @@ class PortalOrderRatingTest extends TestCase
     #[Test]
     public function rejects_second_rating_for_the_same_order_with_a_clear_message(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -135,12 +131,11 @@ class PortalOrderRatingTest extends TestCase
     #[Test]
     public function returns_404_for_order_belonging_to_another_customer(): void
     {
-        [, $tokenA] = $this->authenticatedCustomer('a@test.com');
+        [$customerA, $tokenA] = $this->authenticatedCustomer('a@test.com');
         [, $tokenB] = $this->authenticatedCustomer('b@test.com');
 
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customerA, ['is_delivered' => true, 'delivered_at' => now()]);
 
         $this->linkCustomerToOrder($tokenA, $order->uuid);
 
@@ -154,10 +149,9 @@ class PortalOrderRatingTest extends TestCase
     #[Test]
     public function validates_rating_is_between_one_and_five(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 

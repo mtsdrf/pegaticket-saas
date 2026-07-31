@@ -15,7 +15,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('operated_by')->nullable()->index()->after('cash_session_id');
+            // Achado durante migrate:fresh (2026-07-31, fora do escopo da
+            // migração Client->FinalCustomer): ->after('cash_session_id')
+            // referenciava uma coluna que nunca chegou a existir em
+            // nenhuma migration deste repositório — bug pré-existente,
+            // quebrava migrate:fresh do zero. Removido o ->after() (só
+            // afeta ordem cosmética de coluna, sem efeito em dado/schema).
+            $table->unsignedBigInteger('operated_by')->nullable()->index();
         });
     }
 

@@ -18,7 +18,7 @@ export interface OrderTrackingInstallment {
 export interface OrderTracking {
   uuid: string
   tenant_name: string
-  client_name: string
+  final_customer_name: string
   is_installment: boolean
   total_amount: string
   is_paid: boolean

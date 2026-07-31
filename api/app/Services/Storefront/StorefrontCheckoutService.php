@@ -2,7 +2,7 @@
 
 namespace App\Services\Storefront;
 
-use App\DTOs\Client\CreateClientDTO;
+use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Order\CreateOrderDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumOrderException;
@@ -11,45 +11,43 @@ use App\Exceptions\StorefrontDisabledException;
 use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
 use App\Exceptions\DeliveryUnavailableException;
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
-use App\Models\Product\Product;
-use App\Models\Product\ProductOption;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
-use App\Services\Client\ClientService;
+use App\Services\Location\EnderecoService;
 use App\Services\Order\OrderService;
 use App\Services\Permission\PermissionService;
-use App\Services\Product\ProductPricingService;
 use App\Services\Tenant\TenantSettingsService;
 use App\Services\Tenant\TenantExecutionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Checkout da loja pública (roadmap Delivery, Fase 1) — implementa a
- * "decisão central" do plano: resolve/cria Client+Endereco+
- * FinalCustomerTenantLink pra satisfazer orders.client_id/clients.
- * endereco_id (obrigatórios), sem tocar em PortalLinkService::link()
- * (caminho de vínculo por order_uuid pré-existente, continua intocado).
- * Toda a lógica de preço/estoque/criação de pedido é 100% reaproveitada de
- * OrderService::create() — este service só resolve client_uuid e monta o
- * CreateOrderDTO com origin='storefront'/status='pending_approval'.
+ * Checkout da loja pública (roadmap Delivery, Fase 1) — desde 2026-07-31,
+ * FinalCustomer absorveu Client por completo: não existe mais Client pra
+ * criar. O que este service resolve/cria é o FinalCustomerTenantLink (o
+ * registro POR-TENANT do cliente já autenticado via OTP) + Endereco, sem
+ * tocar em PortalLinkService::link() (caminho de vínculo por order_uuid
+ * pré-existente, continua intocado). Toda a lógica de preço/estoque/
+ * criação de pedido é 100% reaproveitada de OrderService::create() — este
+ * service só garante o link e monta o CreateOrderDTO com
+ * origin='storefront'/status='pending_approval'.
  */
 class StorefrontCheckoutService
 {
     public function __construct(
         private StorefrontCatalogService $catalogService,
-        private ClientService $clientService,
+        private EnderecoService $enderecoService,
         private FinalCustomerTenantLinkRepositoryInterface $linkRepository,
         private TenantSettingsService $tenantSettingsService,
         private OrderService $orderService,
         private PermissionService $permissionService,
         private StoreBusinessHoursService $businessHoursService,
         private StoreDeliveryFeeService $deliveryFeeService,
-        private ProductPricingService $pricingService,
         private ProductPromotionService $productPromotionService,
         private CouponService $couponService,
         private StoreAddressService $storeAddressService,
@@ -104,25 +102,12 @@ class StorefrontCheckoutService
                 throw new DeliveryUnavailableException(__('messages.storefront.delivery_not_enabled'));
             }
 
-            // Achado de code review: o guard 2 original somava sempre pelo
-            // Product.price BASE, mesmo quando o cliente já tinha um
-            // Client vinculado (segunda compra+) com desconto de categoria
-            // aplicável — o total final calculado por OrderService::create()
-            // via ProductPricingService podia ficar abaixo do mínimo
-            // mesmo o guard tendo liberado o checkout. Correção: resolve o
-            // Client já vinculado (busca só-leitura, sem side-effect) ANTES
-            // do guard, e usa o preço com desconto quando ele existe —
-            // cliente novo (sem Client ainda) continua pelo preço base,
-            // que é a única opção possível nesse caso (nada pra descontar
-            // ainda).
-            $existingClient = $this->findExistingClient($tenant->id, $customer);
-
             // Calculado incondicionalmente (não só quando há mínimo
             // configurado) — Guard 4 (cupom) também precisa deste mesmo
-            // subtotal (com promoção/desconto de categoria já aplicados)
+            // subtotal (com promoção/desconto por atacado já aplicado)
             // para checar coupons.minimum_order_value e calcular o
             // desconto.
-            $subtotalCents = $this->calculateCartSubtotalCents($tenant->id, $dto->items, $existingClient);
+            $subtotalCents = $this->calculateCartSubtotalCents($tenant->id, $dto->items);
 
             // Guard 2: pedido mínimo (quando configurado).
             if ($settings->minimum_order_value !== null) {
@@ -179,19 +164,19 @@ class StorefrontCheckoutService
                 $couponId = $coupon->id;
             }
 
-            $clientUuid = $this->resolveClientUuid($tenant->id, $customer, $dto);
+            $this->ensureCustomerLink($tenant->id, $customer, $dto);
 
             // unit_price explícito por item (prioridade máxima sobre a
             // resolução interna de OrderService::create(), já documentado no
-            // DTO desde a Fase 1) — garante que promoção/desconto de
-            // categoria resolvidos AQUI (resolveEffectiveUnitPrice()) sejam
-            // exatamente os praticados no pedido criado, sem depender de
-            // OrderService recalcular (ele nem sabe de ProductPromotion).
-            $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items, $existingClient);
+            // DTO desde a Fase 1) — garante que promoção/atacado resolvidos
+            // AQUI (resolveEffectiveUnitPrice()) sejam exatamente os
+            // praticados no pedido criado, sem depender de OrderService
+            // recalcular (ele nem sabe de ProductPromotion).
+            $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
 
             $orderDto = new CreateOrderDTO(
                 tenantId: $tenant->id,
-                clientUuid: $clientUuid,
+                finalCustomerUuid: $customer->uuid,
                 stockLocationUuid: null,
                 isInstallment: false,
                 installmentsCount: null,
@@ -233,38 +218,26 @@ class StorefrontCheckoutService
     }
 
     /**
-     * Achado de code review: a unique antiga em final_customer_tenant_links
-     * era (final_customer_id, client_id) — não impedia 2 requisições
-     * concorrentes de checkout criarem 2 Client diferentes pro mesmo par
-     * (final_customer_id, tenant_id) na primeira compra desse cliente
-     * nessa loja (client_id sempre novo, satisfaz a unique antiga
-     * trivialmente). Migration nova adiciona unique(final_customer_id,
-     * tenant_id); aqui capturamos a violação da corrida perdedora e
-     * reaproveitamos o link da vencedora, em vez de deixar 2 Client
-     * órfãos/duplicados para o mesmo cliente na mesma loja.
+     * Garante que existe um FinalCustomerTenantLink CONFIRMADO pra este
+     * (customer, tenant) — cria na primeira compra dessa loja, com o
+     * endereço/telefone informados no checkout; em compras seguintes só
+     * retorna o link já existente (não sobrescreve dado já capturado).
+     * A prova de posse aqui é o próprio OTP já verificado (customer.jwt),
+     * não um order_uuid pré-existente como no fluxo de
+     * PortalLinkService::link().
      */
-    private function resolveClientUuid(int $tenantId, FinalCustomer $customer, StorefrontCheckoutDTO $dto): string
+    private function ensureCustomerLink(int $tenantId, FinalCustomer $customer, StorefrontCheckoutDTO $dto): FinalCustomerTenantLink
     {
-        $existing = $this->findExistingClient($tenantId, $customer);
+        $existing = $this->findExistingLink($tenantId, $customer);
 
         if ($existing) {
-            return $existing->uuid;
+            return $existing;
         }
 
         [$estadoUuid, $cidadeUuid, $bairroUuid, $logradouro] = $this->resolveClientAddress($tenantId, $dto);
 
-        // is_trusted: false — diferente do default do formulário do staff
-        // (true): cliente autoatendido, ainda não verificado por ninguém
-        // da equipe.
-        $client = $this->clientService->create(new CreateClientDTO(
+        $endereco = $this->enderecoService->create(new CreateEnderecoDTO(
             tenantId: $tenantId,
-            name: $dto->clientName,
-            lastName: $dto->clientLastName,
-            phonePrimary: $dto->clientPhone,
-            phoneSecondary: null,
-            notes: null,
-            isTrusted: false,
-            isActive: true,
             estadoUuid: $estadoUuid,
             cidadeUuid: $cidadeUuid,
             bairroUuid: $bairroUuid,
@@ -272,16 +245,27 @@ class StorefrontCheckoutService
             numero: $dto->numero,
             complemento: $dto->complemento,
             cep: $dto->cep,
+            isActive: true,
         ));
 
+        if ($customer->name === null) {
+            $customer->forceFill([
+                'name' => $dto->clientName,
+                'last_name' => $dto->clientLastName,
+            ])->save();
+        }
+
         try {
-            // confirmed_at = now(): a prova de posse aqui é o próprio OTP já
-            // verificado (customer.jwt), não um order_uuid pré-existente
-            // como no fluxo de PortalLinkService::link().
-            $this->linkRepository->create([
+            // is_trusted: false — diferente do default do formulário do
+            // staff (true): cliente autoatendido, ainda não verificado por
+            // ninguém da equipe. confirmed_at = now(): ver docblock acima.
+            return $this->linkRepository->create([
                 'final_customer_id' => $customer->id,
                 'tenant_id' => $tenantId,
-                'client_id' => $client->id,
+                'endereco_id' => $endereco->id,
+                'phone_primary' => $dto->clientPhone,
+                'is_trusted' => false,
+                'is_active' => true,
                 'confirmed_at' => now(),
             ]);
         } catch (QueryException $e) {
@@ -291,32 +275,25 @@ class StorefrontCheckoutService
 
             // Perdemos a corrida: outra requisição concorrente já criou o
             // link pra esse (final_customer_id, tenant_id) entre o SELECT
-            // acima e este INSERT. Descarta o Client órfão que acabamos de
-            // criar (sem link nenhum, seguro de remover) e reaproveita o
-            // client_id da vencedora.
-            $client->delete();
+            // acima e este INSERT. Descarta o Endereco órfão que acabamos
+            // de criar (sem link nenhum apontando pra ele, seguro de
+            // remover) e reaproveita o link da vencedora.
+            $endereco->delete();
 
-            $winningLink = FinalCustomerTenantLink::where('final_customer_id', $customer->id)
+            return FinalCustomerTenantLink::where('final_customer_id', $customer->id)
                 ->where('tenant_id', $tenantId)
                 ->firstOrFail();
-
-            $winningLink->loadMissing('client');
-
-            return $winningLink->client->uuid;
         }
-
-        return $client->uuid;
     }
 
     /**
-     * Resolve o endereço a persistir num Client NOVO: clients.endereco_id é
-     * NOT NULL no banco (todo Client precisa de UM endereço, mesmo sem
-     * entrega) — quando o checkout é pickup e o cliente não informou
-     * endereço (fluxo esperado do frontend nesse caso), reaproveita o
-     * endereço da própria loja (StoreAddressService) em vez de um endereço
-     * de entrega que não existe. Loja com pickup habilitado mas sem
-     * endereço próprio configurado ainda bloqueia com mensagem clara, nunca
-     * quebra com erro de FK.
+     * Resolve o endereço a persistir num FinalCustomerTenantLink NOVO —
+     * quando o checkout é pickup e o cliente não informou endereço (fluxo
+     * esperado do frontend nesse caso), reaproveita o endereço da própria
+     * loja (StoreAddressService) em vez de um endereço de entrega que não
+     * existe. Loja com pickup habilitado mas sem endereço próprio
+     * configurado ainda bloqueia com mensagem clara, nunca quebra com erro
+     * de FK.
      *
      * @return array{0: string, 1: string, 2: string, 3: string} [estado_uuid, cidade_uuid, bairro_uuid, logradouro]
      */
@@ -338,100 +315,58 @@ class StorefrontCheckoutService
     }
 
     /**
-     * Busca só-leitura do Client já vinculado a este FinalCustomer nesta
-     * loja, sem nenhum side-effect (não cria nada) — usada tanto pelo
-     * guard 2 (pedido mínimo, precisa do preço com desconto de categoria
-     * quando o cliente já existe) quanto por resolveClientUuid() (que só
-     * cria um Client novo quando esta busca não encontra nada).
+     * Busca só-leitura do link já confirmado deste FinalCustomer nesta
+     * loja, sem nenhum side-effect (não cria nada) — usada por
+     * ensureCustomerLink() (que só cria um link novo quando esta busca não
+     * encontra nada).
      */
-    private function findExistingClient(int $tenantId, FinalCustomer $customer): ?Client
+    private function findExistingLink(int $tenantId, FinalCustomer $customer): ?FinalCustomerTenantLink
     {
-        $link = FinalCustomerTenantLink::where('final_customer_id', $customer->id)
+        return FinalCustomerTenantLink::where('final_customer_id', $customer->id)
             ->where('tenant_id', $tenantId)
             ->first();
-
-        if (!$link) {
-            return null;
-        }
-
-        $link->loadMissing('client');
-
-        return $link->client;
     }
 
     /**
      * Soma dos itens do carrinho em centavos, já usando o preço EFETIVO
-     * (resolveEffectiveUnitPrice() — promoção sempre vence, senão preço de
-     * categoria, senão base). Achado de code review da Fase 2: usar sempre
-     * o Product.price BASE, mesmo para um cliente já vinculado com desconto
-     * de categoria aplicável, podia liberar um checkout cujo total final
-     * ficasse abaixo do mínimo configurado — por isso o guard de mínimo
-     * precisa do MESMO preço que será praticado no pedido. Mesmo cuidado de
-     * centavos/arredondamento de OrderService::create() — evita erro de
-     * ponto flutuante na soma.
+     * (resolveEffectiveUnitPrice() — promoção sempre vence, senão base).
+     * Mesmo cuidado de centavos/arredondamento de OrderService::create() —
+     * evita erro de ponto flutuante na soma. SIMPLIFICAÇÃO DOCUMENTADA:
+     * atacado por quantidade e adicionais (product_options) foram
+     * descartados junto com o split Product -> TicketType/EventProduct
+     * (roadmap seção 4A) — fora do MVP de ingresso.
      *
-     * @param array<int, array{product_uuid: string, quantity: float, options?: array<int, array{product_option_uuid: string, quantity?: int}>}> $items
+     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float}> $items
      */
-    private function calculateCartSubtotalCents(int $tenantId, array $items, ?Client $client): int
+    private function calculateCartSubtotalCents(int $tenantId, array $items): int
     {
         $totalCents = 0;
 
         foreach ($items as $item) {
-            $product = Product::where('uuid', $item['product_uuid'])
-                ->where('tenant_id', $tenantId)
-                ->whereNull('deleted_at')
-                ->firstOrFail();
+            $sellable = $this->resolveSellable($tenantId, $item);
 
-            $unitPrice = $this->resolveEffectiveUnitPrice($product, $client, (float) $item['quantity']);
+            $unitPrice = $this->resolveEffectiveUnitPrice($sellable, (float) $item['quantity']);
 
             $unitPriceCents = (int) round($unitPrice * 100);
             $totalCents += (int) round($unitPriceCents * (float) $item['quantity']);
-            $totalCents += $this->calculateItemOptionsCents($item['options'] ?? [], (float) $item['quantity']);
         }
 
         return $totalCents;
     }
 
-    /**
-     * Soma o preço dos adicionais (product_options) escolhidos num item —
-     * usada tanto pelo guard de pedido mínimo/cupom (calculateCartSubtotalCents)
-     * quanto implicitamente reproduzida por OrderService::resolveOrderItemOptions()
-     * na criação do pedido em si. Preço/quantidade inválidos (opção
-     * inexistente/indisponível) são ignorados aqui de propósito — a
-     * validação de existência já é feita no Request, e a resolução final e
-     * autoritativa acontece dentro de OrderService::create(); esta soma é
-     * só para o guard de elegibilidade rodar com o valor certo antes de
-     * chegar lá.
-     *
-     * @param array<int, array{product_option_uuid: string, quantity?: int}> $options
-     */
-    private function calculateItemOptionsCents(array $options, float $itemQuantity): int
+    private function resolveSellable(int $tenantId, array $item): TicketType|EventProduct
     {
-        if ($options === []) {
-            return 0;
+        if (!empty($item['ticket_type_uuid'])) {
+            return TicketType::where('uuid', $item['ticket_type_uuid'])
+                ->where('tenant_id', $tenantId)
+                ->whereNull('deleted_at')
+                ->firstOrFail();
         }
 
-        $optionUuids = array_column($options, 'product_option_uuid');
-
-        $prices = ProductOption::whereIn('uuid', $optionUuids)
+        return EventProduct::where('uuid', $item['event_product_uuid'])
+            ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
-            ->pluck('price', 'uuid');
-
-        $totalCents = 0;
-
-        foreach ($options as $option) {
-            $price = $prices->get($option['product_option_uuid']);
-
-            if ($price === null) {
-                continue;
-            }
-
-            $optionQuantity = (int) ($option['quantity'] ?? 1);
-
-            $totalCents += (int) round((float) $price * 100) * $optionQuantity * (int) $itemQuantity;
-        }
-
-        return $totalCents;
+            ->firstOrFail();
     }
 
     /**
@@ -441,31 +376,20 @@ class StorefrontCheckoutService
      * preço que passou pelo guard de mínimo acima, sem duplicar a
      * resolução de preço numa segunda camada.
      *
-     * @param array<int, array{product_uuid: string, quantity: float, notes?: string}> $items
-     * @return array<int, array{product_uuid: string, quantity: float, unit_price: float, notes: ?string}>
+     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string}> $items
+     * @return array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, unit_price: float, notes: ?string}>
      */
-    private function resolveItemsWithEffectivePrice(int $tenantId, array $items, ?Client $client): array
+    private function resolveItemsWithEffectivePrice(int $tenantId, array $items): array
     {
-        return array_map(function (array $item) use ($tenantId, $client) {
-            $product = Product::where('uuid', $item['product_uuid'])
-                ->where('tenant_id', $tenantId)
-                ->whereNull('deleted_at')
-                ->firstOrFail();
+        return array_map(function (array $item) use ($tenantId) {
+            $sellable = $this->resolveSellable($tenantId, $item);
 
             return [
-                'product_uuid' => $item['product_uuid'],
+                'ticket_type_uuid' => $item['ticket_type_uuid'] ?? null,
+                'event_product_uuid' => $item['event_product_uuid'] ?? null,
                 'quantity' => $item['quantity'],
-                'unit_price' => $this->resolveEffectiveUnitPrice($product, $client, (float) $item['quantity']),
+                'unit_price' => $this->resolveEffectiveUnitPrice($sellable, (float) $item['quantity']),
                 'notes' => isset($item['notes']) && trim((string) $item['notes']) !== '' ? trim((string) $item['notes']) : null,
-                // Achado de code review (2026-07-28): esta função descartava
-                // silenciosamente as opções escolhidas no checkout público —
-                // eram validadas pelo Request mas nunca chegavam a
-                // OrderService::create()/resolveOrderItemOptions(), então
-                // nenhum adicional escolhido pelo cliente final era
-                // realmente aplicado ao pedido. `options` já está no shape
-                // exato que OrderService espera ({product_option_uuid,
-                // quantity}), mesmo formato usado por StoreOrderRequest.
-                'options' => $item['options'] ?? [],
             ];
         }, $items);
     }
@@ -473,28 +397,21 @@ class StorefrontCheckoutService
     /**
      * Preço efetivo de venda pro público:
      * 1. Promoção ativa (ProductPromotionService::findActivePromoPrice())
-     *    SEMPRE vence, quando existir — é o preço de venda público que o
-     *    tenant decidiu, mesmo com quantidade de atacado aplicável.
-     * 2. Senão, atacado por quantidade (roadmap Loja) — quando o produto
-     *    tem os dois campos configurados e a quantidade atinge o mínimo.
-     * 3. Senão, Product.price base.
+     *    SEMPRE vence, quando existir e o item for um TicketType — é o
+     *    preço de venda público que o tenant decidiu. EventProduct não tem
+     *    promoção (fora do MVP).
+     * 2. Senão, preço base do item.
      */
-    public function resolveEffectiveUnitPrice(Product $product, ?Client $client, float $quantity): float
+    public function resolveEffectiveUnitPrice(TicketType|EventProduct $sellable, float $quantity): float
     {
-        $promoPrice = $this->productPromotionService->findActivePromoPrice($product);
+        if ($sellable instanceof TicketType) {
+            $promoPrice = $this->productPromotionService->findActivePromoPrice($sellable);
 
-        if ($promoPrice !== null) {
-            return $promoPrice;
+            if ($promoPrice !== null) {
+                return $promoPrice;
+            }
         }
 
-        if (
-            $product->wholesale_min_quantity !== null
-            && $product->wholesale_price !== null
-            && $quantity >= (float) $product->wholesale_min_quantity
-        ) {
-            return (float) $product->wholesale_price;
-        }
-
-        return (float) $product->price;
+        return (float) $sellable->price;
     }
 }

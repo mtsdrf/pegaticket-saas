@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Finance;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Stock\StockLocation;
 use App\Models\Subscription\Payment;
@@ -46,7 +46,7 @@ class ReconciliationTest extends TestCase
         return Order::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'codigo' => 'PED-' . Str::random(6),
             'total_amount' => 100.0,

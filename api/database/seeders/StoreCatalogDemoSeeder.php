@@ -262,10 +262,10 @@ class StoreCatalogDemoSeeder extends Seeder
             return;
         }
 
-        $bairros = DB::table('clients')
-            ->join('enderecos', 'enderecos.id', '=', 'clients.endereco_id')
+        $bairros = DB::table('final_customer_tenant_links')
+            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
             ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
-            ->where('clients.tenant_id', $tenant->id)
+            ->where('final_customer_tenant_links.tenant_id', $tenant->id)
             ->distinct()
             ->pluck('bairros.uuid');
 

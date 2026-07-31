@@ -9,7 +9,7 @@ export function getProfile(): Promise<UserProfile> {
 /**
  * Sempre multipart (mesmo sem avatar novo) — payload aqui é sempre pequeno
  * (só `name` opcional) e usar `_method=PUT` via POST evita duplicar um
- * caminho JSON só pra esse caso, ao contrário de `productService`
+ * caminho JSON só pra esse caso, ao contrário de `eventService`
  * (que tem payload grande e prioriza JSON quando não há imagem).
  */
 export function updateProfile(payload: UpdateProfilePayload, avatarFile?: File | null): Promise<UserProfile> {

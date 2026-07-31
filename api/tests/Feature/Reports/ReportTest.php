@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Reports;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -10,9 +11,9 @@ use App\Models\Location\Estado;
 use App\Models\Order\Order;
 use App\Models\Order\OrderInstallment;
 use App\Models\Order\OrderItem;
-use App\Models\Product\Product;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
+use App\Models\Event\Event;
+use App\Models\Event\EventCategory;
+use App\Models\Event\TicketType;
 use App\Models\Stock\StockLocation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,47 +41,17 @@ class ReportTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function createClientWithCity(int $tenantId, string $cityName = 'Cidade Teste'): Client
+    protected function createClientWithCity(int $tenantId, string $cityName = 'Cidade Teste'): FinalCustomer
     {
-        $estado = Estado::create([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Estado ' . Str::random(6),
-            'uf' => $this->nextUf(),
-        ]);
-
-        $cidade = Cidade::create([
-            'uuid' => (string) Str::uuid(),
-            'estado_id' => $estado->id,
-            'name' => $cityName,
-        ]);
-
-        $bairro = Bairro::create([
-            'uuid' => (string) Str::uuid(),
-            'cidade_id' => $cidade->id,
-            'name' => 'Bairro ' . Str::random(6),
-        ]);
-
-        $endereco = Endereco::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenantId,
-            'estado_id' => $estado->id,
-            'cidade_id' => $cidade->id,
-            'bairro_id' => $bairro->id,
-            'logradouro' => 'Rua Teste, 123',
-            'is_active' => true,
-        ]);
-
-        return Client::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenantId,
-            'endereco_id' => $endereco->id,
-            'name' => 'Client ' . Str::random(6),
-            'is_trusted' => true,
-            'is_active' => true,
-        ]);
+        return $this->createClientWithLocation($tenantId, $cityName, 'Bairro ' . Str::random(6));
     }
 
-    protected function createClientWithLocation(int $tenantId, string $cityName, string $neighborhoodName): Client
+    /**
+     * FinalCustomer absorveu Client (2026-07-31): endereço/cidade/bairro
+     * agora vivem no FinalCustomerTenantLink (registro por-tenant), não
+     * mais numa linha de Client.
+     */
+    protected function createClientWithLocation(int $tenantId, string $cityName, string $neighborhoodName): FinalCustomer
     {
         $estado = Estado::create([
             'uuid' => (string) Str::uuid(),
@@ -110,14 +81,23 @@ class ReportTest extends TestCase
             'is_active' => true,
         ]);
 
-        return Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
+            'name' => 'Client ' . Str::random(6),
+            'email' => 'client-' . Str::random(10) . '@test.com',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
             'tenant_id' => $tenantId,
             'endereco_id' => $endereco->id,
-            'name' => 'Client ' . Str::random(6),
             'is_trusted' => true,
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
+
+        return $finalCustomer;
     }
 
     protected function createLocation(int $tenantId): StockLocation
@@ -131,39 +111,45 @@ class ReportTest extends TestCase
         ]);
     }
 
-    protected function createProduct(int $tenantId, string $name = 'Produto Teste'): Product
+    protected function createProduct(int $tenantId, string $name = 'Produto Teste'): TicketType
     {
-        $category = ProductCategory::create([
+        $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'name' => 'Categoria ' . Str::random(5),
             'is_active' => true,
         ]);
 
-        $type = ProductType::create([
+        $event = Event::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'product_category_id' => $category->id,
-            'name' => 'Tipo ' . Str::random(5),
-            'is_active' => true,
+            'event_category_id' => $category->id,
+            'name' => 'Evento ' . Str::random(5),
+            'slug' => 'evento-' . Str::random(10),
+            'type' => 'ingresso',
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
         ]);
 
-        return Product::create([
+        return TicketType::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'product_type_id' => $type->id,
+            'event_id' => $event->id,
             'name' => $name,
             'price' => 10,
-            'is_available' => true,
+            'status' => 'ativo',
+            'unit' => 'un',
         ]);
     }
 
-    protected function createOrder(int $tenantId, Client $client, StockLocation $location, array $overrides = []): Order
+    protected function createOrder(int $tenantId, FinalCustomer $client, StockLocation $location, array $overrides = []): Order
     {
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -172,13 +158,13 @@ class ReportTest extends TestCase
         ], $overrides));
     }
 
-    protected function attachOrderItem(Order $order, Product $product, float $quantity, float $unitPrice): void
+    protected function attachOrderItem(Order $order, TicketType $product, float $quantity, float $unitPrice): void
     {
         OrderItem::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $order->tenant_id,
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'line_total' => round($quantity * $unitPrice, 2),
@@ -438,8 +424,8 @@ class ReportTest extends TestCase
             ->assertJsonPath('data.orders_by_neighborhood.0.total_amount', '160.00')
             ->assertJsonPath('data.seasonality_matrix.0.year', now()->year)
             ->assertJsonPath('data.seasonality_matrix.1.year', 2025)
-            ->assertJsonPath('data.top_products.0.product_name', 'Doce de Leite')
-            ->assertJsonPath('data.top_products.0.revenue', '130.00')
+            ->assertJsonPath('data.top_ticket_types.0.ticket_type_name', 'Doce de Leite')
+            ->assertJsonPath('data.top_ticket_types.0.revenue', '130.00')
             ->assertJsonPath('data.top_clients.0.client_name', $clientTwo->name)
             ->assertJsonPath('data.top_clients.0.total_amount', '160.00')
             ->assertJsonPath('data.receivables_aging.0.bucket', 'current')
@@ -482,7 +468,7 @@ class ReportTest extends TestCase
         ]);
 
         $response->assertJsonFragment([
-            'product_name' => 'Doce de Leite',
+            'ticket_type_name' => 'Doce de Leite',
             'revenue' => '130.00',
             'curve_class' => 'A',
         ]);
@@ -502,8 +488,6 @@ class ReportTest extends TestCase
         $this->grantPermission('reports', 'read');
         $clientA = $this->createClientWithCity($this->tenant->id, 'Campinas');
         $clientB = $this->createClientWithCity($this->tenant->id, 'Santos');
-        $clientA->forceFill(['phone_primary' => '11999990001'])->save();
-        $clientB->forceFill(['phone_primary' => '11999990002'])->save();
         $location = $this->createLocation($this->tenant->id);
 
         $this->createOrder($this->tenant->id, $clientA, $location, ['is_paid' => true, 'paid_at' => now()]);

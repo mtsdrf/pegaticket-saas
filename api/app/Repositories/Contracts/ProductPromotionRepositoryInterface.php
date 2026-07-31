@@ -13,11 +13,11 @@ interface ProductPromotionRepositoryInterface extends BaseRepositoryInterface
      * Um produto só pode ter 1 promoção por tenant — atualiza em vez de
      * duplicar quando já existe (inclusive se a linha existente estava
      * soft-deletada, restaura em vez de colidir com a unique
-     * (tenant_id, product_id)).
+     * (tenant_id, ticket_type_id)).
      */
     public function upsertForTenant(
         int $tenantId,
-        int $productId,
+        int $ticketTypeId,
         ?float $promoPrice,
         ?string $startsAt,
         ?string $expiresAt,
@@ -27,7 +27,7 @@ interface ProductPromotionRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Coleção de promoções ATIVAS e dentro da janela de datas, keyed por
-     * product_id — usada por StorefrontCatalogService::paginateProducts()
+     * ticket_type_id — usada por StorefrontCatalogService::paginateProducts()
      * para evitar N+1 ao montar a página inteira de produtos de uma vez.
      */
     public function activePromotionsForProducts(int $tenantId, array $productIds): Collection;
@@ -36,8 +36,8 @@ interface ProductPromotionRepositoryInterface extends BaseRepositoryInterface
      * Promoção ATIVA de UM produto (checkout) — mesma regra de
      * elegibilidade de activePromotionsForProducts(), só que para 1 item.
      * Retorna o model (não só o preço) porque o preço efetivo de
-     * 'percentage' depende do Product.price vigente, resolvido pelo
+     * 'percentage' depende do TicketType.price vigente, resolvido pelo
      * chamador via ProductPromotion::effectivePrice().
      */
-    public function findActivePromotion(int $tenantId, int $productId): ?ProductPromotion;
+    public function findActivePromotion(int $tenantId, int $ticketTypeId): ?ProductPromotion;
 }

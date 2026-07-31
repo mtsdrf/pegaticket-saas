@@ -145,65 +145,95 @@ use App\Listeners\Plan\AuditPlanFunctionalitiesSynced;
 
 /*
 |--------------------------------------------------------------------------
-| Client
+| Event Category
 |--------------------------------------------------------------------------
 */
-use App\Events\Client\ClientCreated;
-use App\Events\Client\ClientUpdated;
-use App\Events\Client\ClientDeleted;
-use App\Listeners\Client\AuditClientCreated;
-use App\Listeners\Client\AuditClientUpdated;
-use App\Listeners\Client\AuditClientDeleted;
+use App\Events\Event\EventCategoryCreated;
+use App\Events\Event\EventCategoryUpdated;
+use App\Events\Event\EventCategoryDeleted;
+use App\Listeners\Event\AuditEventCategoryCreated;
+use App\Listeners\Event\AuditEventCategoryUpdated;
+use App\Listeners\Event\AuditEventCategoryDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Product Category
+| Event
 |--------------------------------------------------------------------------
 */
-use App\Events\Product\ProductCategoryCreated;
-use App\Events\Product\ProductCategoryUpdated;
-use App\Events\Product\ProductCategoryDeleted;
-use App\Listeners\Product\AuditProductCategoryCreated;
-use App\Listeners\Product\AuditProductCategoryUpdated;
-use App\Listeners\Product\AuditProductCategoryDeleted;
+use App\Events\Event\EventCreated;
+use App\Events\Event\EventUpdated;
+use App\Events\Event\EventDeleted;
+use App\Listeners\Event\AuditEventCreated;
+use App\Listeners\Event\AuditEventUpdated;
+use App\Listeners\Event\AuditEventDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Product Type
+| Ticket Type
 |--------------------------------------------------------------------------
 */
-use App\Events\Product\ProductTypeCreated;
-use App\Events\Product\ProductTypeUpdated;
-use App\Events\Product\ProductTypeDeleted;
-use App\Listeners\Product\AuditProductTypeCreated;
-use App\Listeners\Product\AuditProductTypeUpdated;
-use App\Listeners\Product\AuditProductTypeDeleted;
+use App\Events\Event\TicketTypeCreated;
+use App\Events\Event\TicketTypeUpdated;
+use App\Events\Event\TicketTypeDeleted;
+use App\Listeners\Event\AuditTicketTypeCreated;
+use App\Listeners\Event\AuditTicketTypeUpdated;
+use App\Listeners\Event\AuditTicketTypeDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Product
+| Event Product (adicional/estacionamento)
 |--------------------------------------------------------------------------
 */
-use App\Events\Product\ProductCreated;
-use App\Events\Product\ProductUpdated;
-use App\Events\Product\ProductDeleted;
-use App\Listeners\Product\AuditProductCreated;
-use App\Listeners\Product\AuditProductUpdated;
-use App\Listeners\Product\AuditProductDeleted;
+use App\Events\Event\EventProductCreated;
+use App\Events\Event\EventProductUpdated;
+use App\Events\Event\EventProductDeleted;
+use App\Listeners\Event\AuditEventProductCreated;
+use App\Listeners\Event\AuditEventProductUpdated;
+use App\Listeners\Event\AuditEventProductDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Product Import (roadmap A2) — evento agregado, ver ProductImportCommitted
+| Event Session Events
 |--------------------------------------------------------------------------
 */
-use App\Events\Product\ProductImportCommitted;
-use App\Listeners\Product\AuditProductImportCommitted;
+use App\Events\Event\EventSessionCreated;
+use App\Events\Event\EventSessionUpdated;
+use App\Events\Event\EventSessionDeleted;
+use App\Listeners\Event\AuditEventSessionCreated;
+use App\Listeners\Event\AuditEventSessionUpdated;
+use App\Listeners\Event\AuditEventSessionDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Product Category Prices
+| Ticket Batch Events
 |--------------------------------------------------------------------------
 */
+use App\Events\Event\TicketBatchCreated;
+use App\Events\Event\TicketBatchUpdated;
+use App\Events\Event\TicketBatchDeleted;
+use App\Listeners\Event\AuditTicketBatchCreated;
+use App\Listeners\Event\AuditTicketBatchUpdated;
+use App\Listeners\Event\AuditTicketBatchDeleted;
+
+/*
+|--------------------------------------------------------------------------
+| Venue Events
+|--------------------------------------------------------------------------
+*/
+use App\Events\Venue\VenueCreated;
+use App\Events\Venue\VenueUpdated;
+use App\Events\Venue\VenueDeleted;
+use App\Events\Venue\VenuePublished;
+use App\Events\Venue\SeatCreated;
+use App\Events\Venue\SeatUpdated;
+use App\Events\Venue\SeatDeleted;
+use App\Listeners\Venue\AuditVenueCreated;
+use App\Listeners\Venue\AuditVenueUpdated;
+use App\Listeners\Venue\AuditVenueDeleted;
+use App\Listeners\Venue\AuditVenuePublished;
+use App\Listeners\Venue\AuditSeatCreated;
+use App\Listeners\Venue\AuditSeatUpdated;
+use App\Listeners\Venue\AuditSeatDeleted;
 
 /*
 |--------------------------------------------------------------------------
@@ -482,46 +512,70 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Client
+        | Event Category
         |--------------------------------------------------------------------------
         */
-        ClientCreated::class => [AuditClientCreated::class],
-        ClientUpdated::class => [AuditClientUpdated::class],
-        ClientDeleted::class => [AuditClientDeleted::class],
+        EventCategoryCreated::class => [AuditEventCategoryCreated::class],
+        EventCategoryUpdated::class => [AuditEventCategoryUpdated::class],
+        EventCategoryDeleted::class => [AuditEventCategoryDeleted::class],
 
         /*
         |--------------------------------------------------------------------------
-        | Product Category
+        | Event
         |--------------------------------------------------------------------------
         */
-        ProductCategoryCreated::class => [AuditProductCategoryCreated::class],
-        ProductCategoryUpdated::class => [AuditProductCategoryUpdated::class],
-        ProductCategoryDeleted::class => [AuditProductCategoryDeleted::class],
+        EventCreated::class => [AuditEventCreated::class],
+        EventUpdated::class => [AuditEventUpdated::class],
+        EventDeleted::class => [AuditEventDeleted::class],
 
         /*
         |--------------------------------------------------------------------------
-        | Product Type
+        | Ticket Type
         |--------------------------------------------------------------------------
         */
-        ProductTypeCreated::class => [AuditProductTypeCreated::class],
-        ProductTypeUpdated::class => [AuditProductTypeUpdated::class],
-        ProductTypeDeleted::class => [AuditProductTypeDeleted::class],
+        TicketTypeCreated::class => [AuditTicketTypeCreated::class],
+        TicketTypeUpdated::class => [AuditTicketTypeUpdated::class],
+        TicketTypeDeleted::class => [AuditTicketTypeDeleted::class],
 
         /*
         |--------------------------------------------------------------------------
-        | Product
+        | Event Product
         |--------------------------------------------------------------------------
         */
-        ProductCreated::class => [AuditProductCreated::class],
-        ProductUpdated::class => [AuditProductUpdated::class],
-        ProductDeleted::class => [AuditProductDeleted::class],
+        EventProductCreated::class => [AuditEventProductCreated::class],
+        EventProductUpdated::class => [AuditEventProductUpdated::class],
+        EventProductDeleted::class => [AuditEventProductDeleted::class],
 
         /*
         |--------------------------------------------------------------------------
-        | Product Import
+        | Event Session
         |--------------------------------------------------------------------------
         */
-        ProductImportCommitted::class => [AuditProductImportCommitted::class],
+        EventSessionCreated::class => [AuditEventSessionCreated::class],
+        EventSessionUpdated::class => [AuditEventSessionUpdated::class],
+        EventSessionDeleted::class => [AuditEventSessionDeleted::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ticket Batch
+        |--------------------------------------------------------------------------
+        */
+        TicketBatchCreated::class => [AuditTicketBatchCreated::class],
+        TicketBatchUpdated::class => [AuditTicketBatchUpdated::class],
+        TicketBatchDeleted::class => [AuditTicketBatchDeleted::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Venue / Seat
+        |--------------------------------------------------------------------------
+        */
+        VenueCreated::class => [AuditVenueCreated::class],
+        VenueUpdated::class => [AuditVenueUpdated::class],
+        VenueDeleted::class => [AuditVenueDeleted::class],
+        VenuePublished::class => [AuditVenuePublished::class],
+        SeatCreated::class => [AuditSeatCreated::class],
+        SeatUpdated::class => [AuditSeatUpdated::class],
+        SeatDeleted::class => [AuditSeatDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

@@ -49,6 +49,9 @@ const PortalProfilePage = lazy(() =>
 const StorefrontCatalogPage = lazy(() =>
   import('../pages/Storefront/StorefrontCatalogPage').then((m) => ({ default: m.StorefrontCatalogPage })),
 )
+const StorefrontEventDetailPage = lazy(() =>
+  import('../pages/Storefront/StorefrontEventDetailPage').then((m) => ({ default: m.StorefrontEventDetailPage })),
+)
 const StorefrontProfilePage = lazy(() =>
   import('../pages/Storefront/StorefrontProfilePage').then((m) => ({ default: m.StorefrontProfilePage })),
 )
@@ -71,8 +74,20 @@ const EnderecoListPage = lazy(() =>
 const EnderecoFormPage = lazy(() =>
   import('../pages/Location/EnderecoFormPage').then((m) => ({ default: m.EnderecoFormPage })),
 )
-const ProductListPage = lazy(() => import('../pages/Product/ProductListPage').then((m) => ({ default: m.ProductListPage })))
-const ProductFormPage = lazy(() => import('../pages/Product/ProductFormPage').then((m) => ({ default: m.ProductFormPage })))
+const EventListPage = lazy(() => import('../pages/Event/EventListPage').then((m) => ({ default: m.EventListPage })))
+const EventFormPage = lazy(() => import('../pages/Event/EventFormPage').then((m) => ({ default: m.EventFormPage })))
+const TicketTypeListPage = lazy(() =>
+  import('../pages/TicketType/TicketTypeListPage').then((m) => ({ default: m.TicketTypeListPage })),
+)
+const TicketTypeFormPage = lazy(() =>
+  import('../pages/TicketType/TicketTypeFormPage').then((m) => ({ default: m.TicketTypeFormPage })),
+)
+const EventProductListPage = lazy(() =>
+  import('../pages/EventProduct/EventProductListPage').then((m) => ({ default: m.EventProductListPage })),
+)
+const EventProductFormPage = lazy(() =>
+  import('../pages/EventProduct/EventProductFormPage').then((m) => ({ default: m.EventProductFormPage })),
+)
 const OrderListPage = lazy(() => import('../pages/Order/OrderListPage').then((m) => ({ default: m.OrderListPage })))
 const StorefrontOrderManagementPage = lazy(() =>
   import('../pages/Order/StorefrontOrderManagementPage').then((m) => ({ default: m.StorefrontOrderManagementPage })),
@@ -119,11 +134,11 @@ const TenantUserFormPage = lazy(() =>
 const TenantUserInviteFormPage = lazy(() =>
   import('../pages/Admin/TenantUserInviteFormPage').then((m) => ({ default: m.TenantUserInviteFormPage })),
 )
-const ProductCategoryListPage = lazy(() =>
-  import('../pages/ProductCategory/ProductCategoryListPage').then((m) => ({ default: m.ProductCategoryListPage })),
+const EventCategoryListPage = lazy(() =>
+  import('../pages/EventCategory/EventCategoryListPage').then((m) => ({ default: m.EventCategoryListPage })),
 )
-const ProductCategoryFormPage = lazy(() =>
-  import('../pages/ProductCategory/ProductCategoryFormPage').then((m) => ({ default: m.ProductCategoryFormPage })),
+const EventCategoryFormPage = lazy(() =>
+  import('../pages/EventCategory/EventCategoryFormPage').then((m) => ({ default: m.EventCategoryFormPage })),
 )
 const AuditLogListPage = lazy(() =>
   import('../pages/Admin/AuditLogListPage').then((m) => ({ default: m.AuditLogListPage })),
@@ -208,6 +223,7 @@ export function AppRoutes() {
             reaproveitada) + `StorefrontCartProvider` (carrinho por slug). */}
         <Route path="/loja/:slug" element={<StorefrontLayout />}>
           <Route index element={<StorefrontCatalogPage />} />
+          <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
           <Route path="perfil" element={<StorefrontProfilePage />} />
           <Route path="carrinho" element={<StorefrontCartPage />} />
           <Route path="checkout" element={<StorefrontCheckoutPage />} />
@@ -237,12 +253,20 @@ export function AppRoutes() {
             <Route path="/enderecos/novo" element={<PermissionRoute requirement={ACCESS.enderecosCreate}><EnderecoFormPage /></PermissionRoute>} />
             <Route path="/enderecos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.enderecosUpdate}><EnderecoFormPage /></PermissionRoute>} />
 
-            <Route path="/produtos" element={<PermissionRoute requirement={ACCESS.productsRead}><ProductListPage /></PermissionRoute>} />
-            <Route path="/produtos/novo" element={<PermissionRoute requirement={ACCESS.productsCreate}><ProductFormPage /></PermissionRoute>} />
-            <Route path="/produtos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.productsUpdate}><ProductFormPage /></PermissionRoute>} />
-            <Route path="/produtos/categorias" element={<PermissionRoute requirement={ACCESS.productCategoriesRead}><ProductCategoryListPage /></PermissionRoute>} />
-            <Route path="/produtos/categorias/nova" element={<PermissionRoute requirement={ACCESS.productCategoriesCreate}><ProductCategoryFormPage /></PermissionRoute>} />
-            <Route path="/produtos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.productCategoriesUpdate}><ProductCategoryFormPage /></PermissionRoute>} />
+            <Route path="/eventos" element={<PermissionRoute requirement={ACCESS.eventsRead}><EventListPage /></PermissionRoute>} />
+            <Route path="/eventos/novo" element={<PermissionRoute requirement={ACCESS.eventsCreate}><EventFormPage /></PermissionRoute>} />
+            <Route path="/eventos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventsUpdate}><EventFormPage /></PermissionRoute>} />
+            <Route path="/eventos/categorias" element={<PermissionRoute requirement={ACCESS.eventCategoriesRead}><EventCategoryListPage /></PermissionRoute>} />
+            <Route path="/eventos/categorias/nova" element={<PermissionRoute requirement={ACCESS.eventCategoriesCreate}><EventCategoryFormPage /></PermissionRoute>} />
+            <Route path="/eventos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventCategoriesUpdate}><EventCategoryFormPage /></PermissionRoute>} />
+
+            <Route path="/tipos-de-ingresso" element={<PermissionRoute requirement={ACCESS.ticketTypesRead}><TicketTypeListPage /></PermissionRoute>} />
+            <Route path="/tipos-de-ingresso/novo" element={<PermissionRoute requirement={ACCESS.ticketTypesCreate}><TicketTypeFormPage /></PermissionRoute>} />
+            <Route path="/tipos-de-ingresso/:uuid/editar" element={<PermissionRoute requirement={ACCESS.ticketTypesUpdate}><TicketTypeFormPage /></PermissionRoute>} />
+
+            <Route path="/adicionais" element={<PermissionRoute requirement={ACCESS.eventProductsRead}><EventProductListPage /></PermissionRoute>} />
+            <Route path="/adicionais/novo" element={<PermissionRoute requirement={ACCESS.eventProductsCreate}><EventProductFormPage /></PermissionRoute>} />
+            <Route path="/adicionais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventProductsUpdate}><EventProductFormPage /></PermissionRoute>} />
 
             <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />

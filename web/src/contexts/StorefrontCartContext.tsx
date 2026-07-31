@@ -1,44 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { storefrontCartStorageKey } from '../constants/storage'
-import type { StorefrontCartItem, StorefrontProduct } from '../types/storefront'
+import type { StorefrontCartItem, StorefrontEvent, StorefrontEventProduct, StorefrontTicketType } from '../types/storefront'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { readOrCreateCartSession, sendCartEvent } from '../utils/cartTelemetry'
-import { computeUnitPrice } from '../utils/storefrontPricing'
-import {
-  StorefrontCartContext,
-  type StorefrontCartContextValue,
-  type StorefrontCartSelectedOption,
-} from './storefront-cart-context'
+import { StorefrontCartContext, type StorefrontCartContextValue } from './storefront-cart-context'
 
 function createCartItemId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `cart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-}
-
-function buildConfigurationLabel(options: StorefrontCartSelectedOption[]): string | null {
-  if (options.length === 0) return null
-
-  return options
-    .map((option) => `${option.group_name}: ${option.name}${option.quantity > 1 ? ` x${option.quantity}` : ''}`)
-    .join(' • ')
-}
-
-/**
- * Normaliza um item lido do `localStorage` — carrinhos gravados antes do
- * preço de atacado (roadmap Loja) não têm `price`/`promo_price`/`wholesale_*`;
- * retrocompatibiliza a partir do `unit_price` já persistido pra o recálculo de
- * quantidade nunca produzir `NaN`/`undefined`.
- */
-function normalizeCartItem(item: StorefrontCartItem): StorefrontCartItem {
-  return {
-    ...item,
-    id: item.id ?? createCartItemId(),
-    configuration_label: item.configuration_label ?? buildConfigurationLabel(item.options ?? []),
-    price: item.price ?? item.unit_price,
-    promo_price: item.promo_price ?? null,
-    wholesale_min_quantity: item.wholesale_min_quantity ?? null,
-    wholesale_price: item.wholesale_price ?? null,
-    options: item.options ?? [],
-  }
 }
 
 function readCart(slug: string): StorefrontCartItem[] {
@@ -46,7 +14,7 @@ function readCart(slug: string): StorefrontCartItem[] {
     const raw = localStorage.getItem(storefrontCartStorageKey(slug))
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
-    return Array.isArray(parsed) ? (parsed as StorefrontCartItem[]).map(normalizeCartItem) : []
+    return Array.isArray(parsed) ? (parsed as StorefrontCartItem[]) : []
   } catch {
     // JSON corrompido/manipulado manualmente — carrinho vazio é mais seguro que travar a tela.
     return []
@@ -63,6 +31,10 @@ function writeCart(slug: string, items: StorefrontCartItem[]): void {
  * diferentes no mesmo navegador. Navegação e montagem do carrinho são
  * anônimas; a identidade (OTP do Portal) só é exigida no passo final do
  * checkout (`StorefrontCheckoutPage`), não aqui.
+ *
+ * Migração PegaTicket (2026-07-31): item de carrinho passou de `Product`
+ * pra `TicketType`/`EventProduct` — sem opcionais/promoções/atacado
+ * (conceitos exclusivos do domínio de comércio removido do backend).
  */
 export function StorefrontCartProvider({ slug, children }: { slug: string; children: ReactNode }) {
   const [items, setItems] = useState<StorefrontCartItem[]>(() => readCart(slug))
@@ -132,64 +104,50 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedItems])
 
-  const addItem = useCallback((product: StorefrontProduct, quantity = 1) => {
+  const addTicketType = useCallback((event: StorefrontEvent, ticketType: StorefrontTicketType, quantity = 1) => {
     setItems((current) => {
-      const existing = current.find((item) => item.product_uuid === product.uuid)
+      const existing = current.find((item) => item.ticket_type_uuid === ticketType.uuid)
       if (existing) {
-        const newQuantity = existing.quantity + quantity
         return current.map((item) =>
-          item.product_uuid === product.uuid
-            ? { ...item, quantity: newQuantity, unit_price: computeUnitPrice(item, newQuantity) }
-            : item,
+          item.ticket_type_uuid === ticketType.uuid ? { ...item, quantity: item.quantity + quantity } : item,
         )
-      }
-      const pricing = {
-        price: product.price,
-        promo_price: product.promo_price,
-        wholesale_min_quantity: product.wholesale_min_quantity,
-        wholesale_price: product.wholesale_price,
       }
       return [
         ...current,
         {
           id: createCartItemId(),
-          product_uuid: product.uuid,
-          name: product.name,
-          image_url: product.image_url,
+          ticket_type_uuid: ticketType.uuid,
+          name: ticketType.name,
+          event_name: event.name,
+          unit_price: ticketType.price,
+          image_url: ticketType.image_url,
           quantity,
-          configuration_label: null,
-          unit_price: computeUnitPrice(pricing, quantity),
-          ...pricing,
-          options: [],
         },
       ]
     })
   }, [])
 
-  const addConfiguredItem = useCallback((product: StorefrontProduct, quantity: number, options: StorefrontCartSelectedOption[]) => {
-    const pricing = {
-      price: product.price,
-      promo_price: product.promo_price,
-      wholesale_min_quantity: product.wholesale_min_quantity,
-      wholesale_price: product.wholesale_price,
-    }
-    const baseUnitPrice = computeUnitPrice(pricing, quantity)
-    const optionsUnitPrice = options.reduce((sum, option) => sum + option.unit_price * option.quantity, 0)
-
-    setItems((current) => [
-      ...current,
-      {
-        id: createCartItemId(),
-        product_uuid: product.uuid,
-        name: product.name,
-        image_url: product.image_url,
-        quantity,
-        configuration_label: buildConfigurationLabel(options),
-        unit_price: baseUnitPrice + optionsUnitPrice,
-        ...pricing,
-        options,
-      },
-    ])
+  const addEventProduct = useCallback((event: StorefrontEvent, eventProduct: StorefrontEventProduct, quantity = 1) => {
+    setItems((current) => {
+      const existing = current.find((item) => item.event_product_uuid === eventProduct.uuid)
+      if (existing) {
+        return current.map((item) =>
+          item.event_product_uuid === eventProduct.uuid ? { ...item, quantity: item.quantity + quantity } : item,
+        )
+      }
+      return [
+        ...current,
+        {
+          id: createCartItemId(),
+          event_product_uuid: eventProduct.uuid,
+          name: eventProduct.name,
+          event_name: event.name,
+          unit_price: eventProduct.price,
+          image_url: null,
+          quantity,
+        },
+      ]
+    })
   }, [])
 
   const removeItem = useCallback((itemId: string) => {
@@ -198,32 +156,21 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       if (hasDirectId) {
         return current.filter((item) => item.id !== itemId)
       }
-
-      return current.filter((item) => !(item.product_uuid === itemId && (item.options?.length ?? 0) === 0))
+      return current.filter((item) => item.ticket_type_uuid !== itemId && item.event_product_uuid !== itemId)
     })
   }, [])
 
   const updateQuantity = useCallback((itemId: string, quantity: number) => {
     setItems((current) => {
       const hasDirectId = current.some((item) => item.id === itemId)
+      const matches = (item: StorefrontCartItem) =>
+        hasDirectId ? item.id === itemId : item.ticket_type_uuid === itemId || item.event_product_uuid === itemId
 
       if (quantity <= 0) {
-        return hasDirectId
-          ? current.filter((item) => item.id !== itemId)
-          : current.filter((item) => !(item.product_uuid === itemId && (item.options?.length ?? 0) === 0))
+        return current.filter((item) => !matches(item))
       }
 
-      return current.map((item) =>
-        (hasDirectId ? item.id === itemId : item.product_uuid === itemId && (item.options?.length ?? 0) === 0)
-          ? {
-              ...item,
-              quantity,
-              unit_price:
-                computeUnitPrice(item, quantity) +
-                (item.options ?? []).reduce((sum, option) => sum + option.unit_price * option.quantity, 0),
-            }
-          : item,
-      )
+      return current.map((item) => (matches(item) ? { ...item, quantity } : item))
     })
   }, [])
 
@@ -234,7 +181,7 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
   const clear = useCallback(() => setItems([]), [])
 
   const getQuantity = useCallback(
-    (productUuid: string) => items.find((item) => item.product_uuid === productUuid)?.quantity ?? 0,
+    (uuid: string) => items.find((item) => item.ticket_type_uuid === uuid || item.event_product_uuid === uuid)?.quantity ?? 0,
     [items],
   )
 
@@ -243,8 +190,8 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       items,
       totalQuantity,
       totalAmount,
-      addItem,
-      addConfiguredItem,
+      addTicketType,
+      addEventProduct,
       removeItem,
       updateQuantity,
       setItemNotes,
@@ -256,8 +203,8 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       items,
       totalQuantity,
       totalAmount,
-      addItem,
-      addConfiguredItem,
+      addTicketType,
+      addEventProduct,
       removeItem,
       updateQuantity,
       setItemNotes,

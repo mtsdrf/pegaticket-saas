@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Portal;
 
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Tenant\Tenant;
@@ -33,14 +32,19 @@ class PortalOrdersTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, Client $client, array $overrides = []): Order
+    /**
+     * `$owner` é o FinalCustomer autenticado no portal (order.final_customer_id
+     * referencia final_customers diretamente desde 2026-07-31) — diferente
+     * do fluxo antigo, não existe mais um Client tenant-scoped intermediário.
+     */
+    private function createOrder(Tenant $tenant, FinalCustomer $owner, array $overrides = []): Order
     {
         $location = $this->createLocation($tenant->id);
 
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $owner->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -63,12 +67,10 @@ class PortalOrdersTest extends TestCase
         [$customer, $token] = $this->authenticatedCustomer();
 
         $linkedTenant = $this->createTenant('Loja Vinculada');
-        $linkedClient = $this->createClient($linkedTenant->id);
-        $linkedOrder = $this->createOrder($linkedTenant, $linkedClient);
+        $linkedOrder = $this->createOrder($linkedTenant, $customer);
 
         $unlinkedTenant = $this->createTenant('Loja Não Vinculada');
-        $unlinkedClient = $this->createClient($unlinkedTenant->id);
-        $this->createOrder($unlinkedTenant, $unlinkedClient);
+        $this->createOrder($unlinkedTenant, $customer);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/portal/links', ['order_uuid' => $linkedOrder->uuid])
@@ -89,11 +91,10 @@ class PortalOrdersTest extends TestCase
     #[Test]
     public function orders_are_empty_when_no_store_is_linked_yet(): void
     {
-        [, $token] = $this->authenticatedCustomer();
+        [$customer, $token] = $this->authenticatedCustomer();
 
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $this->createOrder($tenant, $client);
+        $this->createOrder($tenant, $customer);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->getJson('/api/v1/portal/orders');
@@ -104,11 +105,10 @@ class PortalOrdersTest extends TestCase
     #[Test]
     public function me_returns_profile_and_linked_stores(): void
     {
-        [, $token] = $this->authenticatedCustomer('perfil@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('perfil@test.com');
 
         $tenant = $this->createTenant('Loja X');
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client);
+        $order = $this->createOrder($tenant, $customer);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
@@ -119,8 +119,7 @@ class PortalOrdersTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.email', 'perfil@test.com')
-            ->assertJsonPath('data.linked_stores.0.tenant_name', 'Loja X')
-            ->assertJsonPath('data.linked_stores.0.client_name', $client->name);
+            ->assertJsonPath('data.linked_stores.0.tenant_name', 'Loja X');
     }
 
     #[Test]

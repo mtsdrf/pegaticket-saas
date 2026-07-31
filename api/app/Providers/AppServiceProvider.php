@@ -21,10 +21,14 @@ use App\Repositories\Contracts\{
     TenantRolePermissionRepositoryInterface,
     TenantUserRepositoryInterface,
     TenantUserInviteRepositoryInterface,
-    ClientRepositoryInterface,
-    ProductCategoryRepositoryInterface,
-    ProductTypeRepositoryInterface,
-    ProductRepositoryInterface,
+    EventCategoryRepositoryInterface,
+    EventRepositoryInterface,
+    TicketTypeRepositoryInterface,
+    EventProductRepositoryInterface,
+    EventSessionRepositoryInterface,
+    TicketBatchRepositoryInterface,
+    VenueRepositoryInterface,
+    SeatRepositoryInterface,
     EstadoRepositoryInterface,
     CidadeRepositoryInterface,
     BairroRepositoryInterface,
@@ -67,10 +71,14 @@ use App\Repositories\Eloquent\{
     TenantRolePermissionRepository,
     TenantUserRepository,
     TenantUserInviteRepository,
-    ClientRepository,
-    ProductCategoryRepository,
-    ProductTypeRepository,
-    ProductRepository,
+    EventCategoryRepository,
+    EventRepository,
+    TicketTypeRepository,
+    EventProductRepository,
+    EventSessionRepository,
+    TicketBatchRepository,
+    VenueRepository,
+    SeatRepository,
     EstadoRepository,
     CidadeRepository,
     BairroRepository,
@@ -260,28 +268,52 @@ class AppServiceProvider extends ServiceProvider
             TenantUserInviteRepository::class
         );
 
-        // Client Repository
+        // Event Category Repository
         $this->app->bind(
-            ClientRepositoryInterface::class,
-            ClientRepository::class
+            EventCategoryRepositoryInterface::class,
+            EventCategoryRepository::class
         );
 
-        // Product Category Repository
+        // Event Repository
         $this->app->bind(
-            ProductCategoryRepositoryInterface::class,
-            ProductCategoryRepository::class
+            EventRepositoryInterface::class,
+            EventRepository::class
         );
 
-        // Product Type Repository
+        // Ticket Type Repository
         $this->app->bind(
-            ProductTypeRepositoryInterface::class,
-            ProductTypeRepository::class
+            TicketTypeRepositoryInterface::class,
+            TicketTypeRepository::class
         );
 
-        // Product Repository
+        // Event Product Repository
         $this->app->bind(
-            ProductRepositoryInterface::class,
-            ProductRepository::class
+            EventProductRepositoryInterface::class,
+            EventProductRepository::class
+        );
+
+        // Event Session Repository
+        $this->app->bind(
+            EventSessionRepositoryInterface::class,
+            EventSessionRepository::class
+        );
+
+        // Ticket Batch Repository
+        $this->app->bind(
+            TicketBatchRepositoryInterface::class,
+            TicketBatchRepository::class
+        );
+
+        // Venue Repository
+        $this->app->bind(
+            VenueRepositoryInterface::class,
+            VenueRepository::class
+        );
+
+        // Seat Repository
+        $this->app->bind(
+            SeatRepositoryInterface::class,
+            SeatRepository::class
         );
 
         // Estado Repository

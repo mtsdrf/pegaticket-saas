@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Order\OrderItem;
 use App\Services\Storefront\PushNotificationService;
@@ -45,7 +43,7 @@ class OrderPushNotificationTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    private function createPendingApprovalOrder(Client $client, array $overrides = []): Order
+    private function createPendingApprovalOrder(FinalCustomer $client, array $overrides = []): Order
     {
         $location = $this->createLocation($this->tenant->id);
         $product = $this->createProduct($this->tenant->id);
@@ -53,7 +51,7 @@ class OrderPushNotificationTest extends TestCase
         $order = Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,
@@ -68,7 +66,7 @@ class OrderPushNotificationTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 10,
             'line_total' => 30,
@@ -85,18 +83,18 @@ class OrderPushNotificationTest extends TestCase
      * (exit()), que exige saldo de estoque real (diferente de
      * approve()/reject(), que não tocam saldo físico).
      */
-    private function createPendingApprovalOrderWithRealReservation(Client $client): Order
+    private function createPendingApprovalOrderWithRealReservation(FinalCustomer $client): Order
     {
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
         $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(201);
 
@@ -108,32 +106,22 @@ class OrderPushNotificationTest extends TestCase
         return $order->fresh();
     }
 
-    private function confirmedLinkFor(Client $client): FinalCustomer
-    {
-        $customer = FinalCustomer::create(['email' => 'cliente-' . Str::random(6) . '@test.com']);
-
-        FinalCustomerTenantLink::create([
-            'final_customer_id' => $customer->id,
-            'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
-            'confirmed_at' => now(),
-        ]);
-
-        return $customer;
-    }
-
     #[Test]
     public function approving_a_storefront_order_with_a_confirmed_link_sends_a_push(): void
     {
+        // createClient() (CreatesOrderFixtures) já cria o FinalCustomer com
+        // um FinalCustomerTenantLink CONFIRMADO pra este tenant — desde que
+        // FinalCustomer absorveu Client (2026-07-31), o "cliente" do pedido
+        // JÁ É o customer notificável, sem indireção por um Client
+        // separado como antes.
         $client = $this->createClient($this->tenant->id);
-        $customer = $this->confirmedLinkFor($client);
         $order = $this->createPendingApprovalOrder($client);
 
-        $this->mock(PushNotificationService::class, function ($mock) use ($customer, $order) {
+        $this->mock(PushNotificationService::class, function ($mock) use ($client, $order) {
             $mock->shouldReceive('notifyFinalCustomer')
                 ->once()
                 ->with(
-                    $customer->id,
+                    $client->id,
                     __('messages.push.order_approved_title'),
                     __('messages.push.order_approved_body'),
                     '/rastreio/' . $order->uuid
@@ -148,14 +136,13 @@ class OrderPushNotificationTest extends TestCase
     public function rejecting_a_storefront_order_with_a_confirmed_link_sends_a_push(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $customer = $this->confirmedLinkFor($client);
         $order = $this->createPendingApprovalOrder($client);
 
-        $this->mock(PushNotificationService::class, function ($mock) use ($customer, $order) {
+        $this->mock(PushNotificationService::class, function ($mock) use ($client, $order) {
             $mock->shouldReceive('notifyFinalCustomer')
                 ->once()
                 ->with(
-                    $customer->id,
+                    $client->id,
                     __('messages.push.order_rejected_title'),
                     __('messages.push.order_rejected_body'),
                     '/rastreio/' . $order->uuid
@@ -170,16 +157,15 @@ class OrderPushNotificationTest extends TestCase
     public function delivering_a_storefront_order_with_a_confirmed_link_sends_a_push(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $customer = $this->confirmedLinkFor($client);
         $order = $this->createPendingApprovalOrderWithRealReservation($client);
 
         $this->auth()->postJson('/api/v1/orders/' . $order->uuid . '/approve')->assertStatus(200);
 
-        $this->mock(PushNotificationService::class, function ($mock) use ($customer, $order) {
+        $this->mock(PushNotificationService::class, function ($mock) use ($client, $order) {
             $mock->shouldReceive('notifyFinalCustomer')
                 ->once()
                 ->with(
-                    $customer->id,
+                    $client->id,
                     __('messages.push.order_delivered_title'),
                     __('messages.push.order_delivered_body'),
                     '/rastreio/' . $order->uuid
@@ -223,7 +209,6 @@ class OrderPushNotificationTest extends TestCase
     public function does_not_notify_when_order_origin_is_staff(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $this->confirmedLinkFor($client);
         $order = $this->createPendingApprovalOrder($client, ['origin' => 'staff']);
 
         $this->mock(PushNotificationService::class, function ($mock) {
@@ -237,7 +222,13 @@ class OrderPushNotificationTest extends TestCase
     #[Test]
     public function stays_silent_when_there_is_no_confirmed_link(): void
     {
-        $client = $this->createClient($this->tenant->id);
+        // FinalCustomer SEM FinalCustomerTenantLink pra este tenant —
+        // diferente de createClient() (CreatesOrderFixtures), que sempre
+        // cria o link já confirmado.
+        $client = FinalCustomer::create([
+            'uuid' => (string) Str::uuid(),
+            'email' => 'sem-link-' . Str::random(6) . '@test.com',
+        ]);
         $order = $this->createPendingApprovalOrder($client);
 
         $this->mock(PushNotificationService::class, function ($mock) {

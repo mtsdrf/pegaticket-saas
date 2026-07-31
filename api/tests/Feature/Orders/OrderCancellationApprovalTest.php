@@ -50,11 +50,11 @@ class OrderCancellationApprovalTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(201);
 
@@ -119,11 +119,11 @@ class OrderCancellationApprovalTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ])->assertStatus(201);
 

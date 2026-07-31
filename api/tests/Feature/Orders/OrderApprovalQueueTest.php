@@ -56,11 +56,11 @@ class OrderApprovalQueueTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 3],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
         ])->assertStatus(201);
 
@@ -81,7 +81,7 @@ class OrderApprovalQueueTest extends TestCase
         $order = Order::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,
@@ -96,7 +96,7 @@ class OrderApprovalQueueTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'order_id' => $order->id,
-            'product_id' => $product->id,
+            'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 10,
             'line_total' => 30,
@@ -158,7 +158,7 @@ class OrderApprovalQueueTest extends TestCase
         $order->load('items', 'stockLocation');
         $item = $order->items->first();
 
-        $before = StockBalance::where('product_id', $item->product_id)
+        $before = StockBalance::where('ticket_type_id', $item->ticket_type_id)
             ->where('location_id', $order->stock_location_id)
             ->firstOrFail();
         $this->assertEquals(3, $before->quantity_reserved);
@@ -167,7 +167,7 @@ class OrderApprovalQueueTest extends TestCase
             'reason' => 'Estoque redirecionado.',
         ])->assertStatus(200);
 
-        $after = StockBalance::where('product_id', $item->product_id)
+        $after = StockBalance::where('ticket_type_id', $item->ticket_type_id)
             ->where('location_id', $order->stock_location_id)
             ->firstOrFail();
         $this->assertEquals(0, $after->quantity_reserved);

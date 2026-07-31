@@ -377,7 +377,7 @@ function QueueOrderCard({
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{order.codigo}</Typography>
             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }} noWrap>
-              {order.client?.name ?? 'Cliente não identificado'}
+              {order.final_customer?.name ?? 'Cliente não identificado'}
             </Typography>
           </Box>
           <Chip
@@ -1135,8 +1135,8 @@ export function OrderListPage() {
         field: 'client_name',
         headerName: 'Cliente',
         filterType: 'text',
-        cellRenderer: (row) => row.client?.name ?? '',
-        exportValue: (row) => row.client?.name ?? '',
+        cellRenderer: (row) => row.final_customer?.name ?? '',
+        exportValue: (row) => row.final_customer?.name ?? '',
       },
       {
         field: 'total_amount',
@@ -1201,7 +1201,7 @@ export function OrderListPage() {
             <Tooltip title="Abrir pedido" arrow>
               <IconButton
                 size="small"
-                aria-label={`Abrir pedido do cliente ${row.client?.name ?? ''}`}
+                aria-label={`Abrir pedido do cliente ${row.final_customer?.name ?? ''}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >

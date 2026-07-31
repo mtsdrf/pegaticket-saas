@@ -36,7 +36,7 @@ class AnalyticsController extends Controller
     {
         $validated = $request->validated();
 
-        $data = $this->service->topProducts(
+        $data = $this->service->topTicketTypes(
             app('tenant_id'),
             $validated['from'] ?? null,
             $validated['to'] ?? null,
@@ -195,7 +195,7 @@ class AnalyticsController extends Controller
 
     public function stalledProducts()
     {
-        $data = $this->service->stalledProducts(app('tenant_id'));
+        $data = $this->service->stalledTicketTypes(app('tenant_id'));
 
         return APIResponse::success($data, __('messages.analytics.stalled_products'));
     }

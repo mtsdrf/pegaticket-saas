@@ -1,14 +1,14 @@
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
 import { Alert, Avatar, Box, IconButton, Pagination, Paper, Skeleton, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { EmptyState } from '../../components/layout/EmptyState'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { listFavorites, toggleFavorite } from '../../services/favoriteService'
 import { getApiErrorMessage } from '../../types/api'
-import type { StorefrontProduct } from '../../types/storefront'
-import { formatCurrency } from '../../utils/format'
+import type { StorefrontEvent } from '../../types/storefront'
+import { formatDateBR } from '../../utils/format'
 import { PortalShell } from './PortalShell'
 
 const PER_PAGE = 15
@@ -24,13 +24,13 @@ function LoadingSkeleton() {
 }
 
 /**
- * Item favoritado — `StorefrontProductResource` (catálogo/favoritos) não
- * expõe nenhuma referência à loja (nem `tenant_name` nem slug), então não há
- * como montar aqui um link de volta pra loja de origem sem inventar dado que
- * a API não devolve. Sinalizado no relatório final da tarefa; se o backend
- * um dia expuser isso, trocar este card por um `RouterLink` pra `/loja/{slug}`.
+ * Item favoritado — `EventResource` (catálogo/favoritos) não expõe nenhuma
+ * referência à loja (nem `tenant_name` nem slug), então não há como montar
+ * aqui um link de volta pra loja de origem sem inventar dado que a API não
+ * devolve. Sinalizado no relatório final da tarefa; se o backend um dia
+ * expuser isso, trocar este card por um `RouterLink` pra `/loja/{slug}/eventos/{event.slug}`.
  */
-function FavoriteCard({ product, onUnfavorite }: { product: StorefrontProduct; onUnfavorite: (product: StorefrontProduct) => void }) {
+function FavoriteCard({ event, onUnfavorite }: { event: StorefrontEvent; onUnfavorite: (event: StorefrontEvent) => void }) {
   return (
     <Paper
       elevation={0}
@@ -43,26 +43,21 @@ function FavoriteCard({ product, onUnfavorite }: { product: StorefrontProduct; o
       }}
     >
       <Avatar
-        src={product.image_url ?? undefined}
+        src={event.cover_image_url ?? undefined}
         variant="rounded"
         sx={{ width: 56, height: 56, flexShrink: 0, ...SOFT_PANEL_SX }}
       >
-        <StorefrontOutlinedIcon sx={{ color: 'var(--pt-muted)' }} />
+        <EventOutlinedIcon sx={{ color: 'var(--pt-muted)' }} />
       </Avatar>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14.5, fontWeight: 700, wordBreak: 'break-word' }}>{product.name}</Typography>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: 'var(--pt-primary)', mt: 0.25 }}>
-          {formatCurrency(product.promo_price ?? product.price)}
-        </Typography>
-        {!product.is_available && (
-          <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>Indisponível no momento</Typography>
-        )}
+        <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14.5, fontWeight: 700, wordBreak: 'break-word' }}>{event.name}</Typography>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mt: 0.25 }}>{formatDateBR(event.starts_at)}</Typography>
       </Box>
 
       <IconButton
-        onClick={() => onUnfavorite(product)}
-        aria-label={`Remover ${product.name} dos favoritos`}
+        onClick={() => onUnfavorite(event)}
+        aria-label={`Remover ${event.name} dos favoritos`}
         size="small"
         sx={{ flexShrink: 0, minWidth: 44, minHeight: 44 }}
       >
@@ -77,15 +72,15 @@ function EmptyFavorites() {
     <Paper elevation={0} sx={{ p: 4, ...ELEVATED_SURFACE_SX }}>
       <EmptyState
         icon={<FavoriteBorderOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
-        title="Nenhum produto favoritado ainda"
-        description="Toque no coração de um produto no catálogo de uma loja para favoritá-lo e acompanhar por aqui."
+        title="Nenhum evento favoritado ainda"
+        description="Toque no coração de um evento no catálogo de uma loja para favoritá-lo e acompanhar por aqui."
       />
     </Paper>
   )
 }
 
 export function PortalFavoritesPage() {
-  const [products, setProducts] = useState<StorefrontProduct[] | null>(null)
+  const [events, setEvents] = useState<StorefrontEvent[] | null>(null)
   const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
@@ -98,7 +93,7 @@ export function PortalFavoritesPage() {
     listFavorites(PER_PAGE, page)
       .then((result) => {
         if (cancelled) return
-        setProducts(result.items)
+        setEvents(result.items)
         setLastPage(result.pagination.last_page)
       })
       .catch((error: unknown) => {
@@ -114,17 +109,17 @@ export function PortalFavoritesPage() {
     }
   }, [page])
 
-  function handleUnfavorite(product: StorefrontProduct) {
-    setProducts((current) => (current ? current.filter((item) => item.uuid !== product.uuid) : current))
-    toggleFavorite(product.uuid).catch((error: unknown) => {
+  function handleUnfavorite(event: StorefrontEvent) {
+    setEvents((current) => (current ? current.filter((item) => item.uuid !== event.uuid) : current))
+    toggleFavorite(event.uuid).catch((error: unknown) => {
       // Reverte a remoção otimista se a chamada falhar de verdade.
-      setProducts((current) => (current ? [product, ...current] : current))
+      setEvents((current) => (current ? [event, ...current] : current))
       setErrorMessage(getApiErrorMessage(error, 'Não foi possível remover este favorito agora.'))
     })
   }
 
   return (
-    <PortalShell title="Favoritos" subtitle="Produtos que você favoritou nas lojas que visitou.">
+    <PortalShell title="Favoritos" subtitle="Eventos que você favoritou nas lojas que visitou.">
       {isLoading && <LoadingSkeleton />}
 
       {!isLoading && errorMessage && (
@@ -133,12 +128,12 @@ export function PortalFavoritesPage() {
         </Alert>
       )}
 
-      {!isLoading && !errorMessage && products && products.length === 0 && <EmptyFavorites />}
+      {!isLoading && !errorMessage && events && events.length === 0 && <EmptyFavorites />}
 
-      {!isLoading && !errorMessage && products && products.length > 0 && (
+      {!isLoading && !errorMessage && events && events.length > 0 && (
         <Stack spacing={1.25}>
-          {products.map((product) => (
-            <FavoriteCard key={product.uuid} product={product} onUnfavorite={handleUnfavorite} />
+          {events.map((event) => (
+            <FavoriteCard key={event.uuid} event={event} onUnfavorite={handleUnfavorite} />
           ))}
 
           {lastPage > 1 && (

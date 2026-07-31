@@ -54,11 +54,11 @@ class PaymentIdempotencyTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         return $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ])->json('data');
     }

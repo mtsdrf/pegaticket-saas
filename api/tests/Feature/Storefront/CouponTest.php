@@ -337,7 +337,7 @@ class CouponTest extends TestCase
         $client = $this->createClient($this->tenant->id);
         $order = Order::create([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $this->createLocation($this->tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,
@@ -381,7 +381,7 @@ class CouponTest extends TestCase
         $client = $this->createClient($this->tenant->id);
         $order = Order::create([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $this->createLocation($this->tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,

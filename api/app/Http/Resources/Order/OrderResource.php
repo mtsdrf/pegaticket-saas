@@ -38,20 +38,24 @@ class OrderResource extends JsonResource
             'out_for_delivery_at' => $this->out_for_delivery_at,
             'rating' => $this->rating?->rating,
             'rating_comment' => $this->rating?->comment,
-            'client' => $this->whenLoaded('client', fn() => [
-                'uuid' => $this->client->uuid,
-                'name' => $this->client->name,
-                'last_name' => $this->client->last_name,
-                'phone_primary' => $this->client->phone_primary,
-                'endereco' => $this->client->endereco ? [
-                    'logradouro' => $this->client->endereco->logradouro,
-                    'numero' => $this->client->endereco->numero,
-                    'complemento' => $this->client->endereco->complemento,
-                    'cep' => $this->client->endereco->cep,
-                    'bairro_name' => $this->client->endereco->bairro?->name,
-                    'cidade_name' => $this->client->endereco->cidade?->name,
-                ] : null,
-            ]),
+            'final_customer' => $this->whenLoaded('finalCustomer', function () {
+                $link = $this->finalCustomerLink;
+
+                return [
+                    'uuid' => $this->finalCustomer->uuid,
+                    'name' => $this->finalCustomer->name,
+                    'last_name' => $this->finalCustomer->last_name,
+                    'phone_primary' => $link?->phone_primary,
+                    'endereco' => $link?->endereco ? [
+                        'logradouro' => $link->endereco->logradouro,
+                        'numero' => $link->endereco->numero,
+                        'complemento' => $link->endereco->complemento,
+                        'cep' => $link->endereco->cep,
+                        'bairro_name' => $link->endereco->bairro?->name,
+                        'cidade_name' => $link->endereco->cidade?->name,
+                    ] : null,
+                ];
+            }),
             'stock_location' => $this->whenLoaded('stockLocation', fn() => [
                 'uuid' => $this->stockLocation->uuid,
                 'name' => $this->stockLocation->name,
@@ -62,28 +66,19 @@ class OrderResource extends JsonResource
             ] : null),
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'uuid' => $item->uuid,
-                'product' => [
-                    'uuid' => $item->product->uuid,
-                    'name' => $item->product->name,
-                    'unit' => $item->product->unit,
-                ],
+                'ticket_type' => $item->ticketType ? [
+                    'uuid' => $item->ticketType->uuid,
+                    'name' => $item->ticketType->name,
+                    'unit' => $item->ticketType->unit,
+                ] : null,
+                'event_product' => $item->eventProduct ? [
+                    'uuid' => $item->eventProduct->uuid,
+                    'name' => $item->eventProduct->name,
+                ] : null,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'line_total' => $item->line_total,
                 'notes' => $item->notes,
-                'options_total' => (float) $item->options->sum(fn($option) => (float) $option->line_total),
-                'options' => $item->options->map(fn($option) => [
-                    'uuid' => $option->uuid,
-                    'quantity' => $option->quantity,
-                    'unit_price' => $option->unit_price,
-                    'line_total' => $option->line_total,
-                    'product_option' => [
-                        'uuid' => $option->productOption->uuid,
-                        'name' => $option->productOption->name,
-                        'description' => $option->productOption->description,
-                        'group_name' => $option->productOption->group?->name,
-                    ],
-                ])->values(),
             ])),
             'installments' => $this->when(
                 $this->is_installment,

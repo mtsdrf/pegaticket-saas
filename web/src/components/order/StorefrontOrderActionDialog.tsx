@@ -36,7 +36,7 @@ interface StorefrontOrderActionDialogProps {
 }
 
 function formatOrderAddress(order: Order): string | null {
-  const e = order.client?.endereco
+  const e = order.final_customer?.endereco
   if (!e) return null
   const parts = [
     [e.logradouro, e.numero].filter(Boolean).join(', '),
@@ -174,7 +174,7 @@ export function StorefrontOrderActionDialog({
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 1.5 }}>
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700, fontSize: 16, wordBreak: 'break-word' }}>
-                {order?.client?.name ?? 'Pedido'}
+                {order?.final_customer?.name ?? 'Pedido'}
               </Typography>
               {order && (
                 <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
@@ -227,7 +227,8 @@ export function StorefrontOrderActionDialog({
                   <Stack key={item.uuid} direction="row" sx={{ justifyContent: 'space-between', gap: 1 }}>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ fontSize: 13.5, fontWeight: 600, wordBreak: 'break-word' }}>
-                        {formatItemQuantity(item.quantity, item.product.unit)} × {item.product.name}
+                        {formatItemQuantity(item.quantity, item.ticket_type?.unit ?? null)} ×{' '}
+                        {item.ticket_type?.name ?? item.event_product?.name ?? '—'}
                       </Typography>
                       <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
                     </Box>
@@ -239,12 +240,12 @@ export function StorefrontOrderActionDialog({
               <Divider />
 
               <Stack spacing={0.5}>
-                {order.client?.phone_primary && (
+                {order.final_customer?.phone_primary && (
                   <Typography sx={{ fontSize: 13 }}>
                     <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Telefone:{' '}
                     </Box>
-                    {order.client.phone_primary}
+                    {order.final_customer.phone_primary}
                   </Typography>
                 )}
                 {address && (

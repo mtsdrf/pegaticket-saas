@@ -11,8 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * adicionar campo novo sem confirmação explícita — é rota pública, todo
  * campo extra é superfície de vazamento. Nunca expor `notes`/
  * `cancellation_reason` (podem conter observação interna da equipe),
- * `client.uuid`/`client.phone`, `stock_location`, `created_by/updated_by`
- * nem uuid de items/installments.
+ * `final_customer.uuid`/`final_customer.phone`, `stock_location`,
+ * `created_by/updated_by` nem uuid de items/installments.
  */
 class OrderPublicTrackingResource extends JsonResource
 {
@@ -21,7 +21,7 @@ class OrderPublicTrackingResource extends JsonResource
         return [
             'uuid' => $this->uuid,
             'tenant_name' => $this->whenLoaded('tenant', fn() => $this->tenant->name),
-            'client_name' => $this->whenLoaded('client', fn() => $this->client->name),
+            'final_customer_name' => $this->whenLoaded('finalCustomer', fn() => $this->finalCustomer->name),
             'is_installment' => $this->is_installment,
             'total_amount' => $this->total_amount,
             'delivery_fee' => (float) $this->delivery_fee,
@@ -44,11 +44,11 @@ class OrderPublicTrackingResource extends JsonResource
             'is_cancelled' => $this->cancelled_at !== null,
             'created_at' => $this->created_at,
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
-                'product_name' => $item->product->name,
+                'ticket_type_name' => $item->ticketType?->name ?? $item->eventProduct?->name,
                 'quantity' => $item->quantity,
                 // Não sensível (rótulo de exibição, ex. "un"/"kg") — usado
                 // só pra decidir se a quantidade mostra casas decimais.
-                'unit' => $item->product->unit,
+                'unit' => $item->ticketType?->unit,
                 'unit_price' => $item->unit_price,
                 'line_total' => $item->line_total,
                 'notes' => $item->notes,

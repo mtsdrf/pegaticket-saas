@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Portal;
 
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Tenant\Tenant;
@@ -34,14 +33,14 @@ class PortalLinkTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, Client $client, array $overrides = []): Order
+    private function createOrder(Tenant $tenant, FinalCustomer $client, array $overrides = []): Order
     {
         $location = $this->createLocation($tenant->id);
 
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -71,22 +70,24 @@ class PortalLinkTest extends TestCase
             ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.tenant_name', $tenant->name)
-            ->assertJsonPath('data.client_name', $client->name);
+            ->assertJsonPath('data.tenant_name', $tenant->name);
 
         $this->assertDatabaseHas('final_customer_tenant_links', [
             'final_customer_id' => $customer->id,
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
         ]);
 
-        $this->assertDatabaseCount('final_customer_tenant_links', 1);
+        // 2 linhas no total: a do próprio $client (criada por
+        // createClient(), CreatesOrderFixtures — já confirmada de
+        // fábrica) + a nova, do $customer autenticado que acabou de
+        // vincular via order_uuid.
+        $this->assertDatabaseCount('final_customer_tenant_links', 2);
     }
 
     #[Test]
     public function linking_the_same_order_twice_is_idempotent(): void
     {
-        [, $token] = $this->authenticatedCustomer();
+        [$customer, $token] = $this->authenticatedCustomer();
 
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
@@ -100,13 +101,16 @@ class PortalLinkTest extends TestCase
             ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
             ->assertStatus(200);
 
-        $this->assertDatabaseCount('final_customer_tenant_links', 1);
+        // Só 1 linha pro $customer autenticado (idempotente) — a segunda
+        // linha do total é a do próprio $client (fixture já confirmada).
+        $this->assertDatabaseCount('final_customer_tenant_links', 2);
+        $this->assertSame(1, \App\Models\FinalCustomer\FinalCustomerTenantLink::where('final_customer_id', $customer->id)->count());
     }
 
     #[Test]
     public function a_second_order_from_the_same_store_reuses_the_existing_link(): void
     {
-        [, $token] = $this->authenticatedCustomer();
+        [$customer, $token] = $this->authenticatedCustomer();
 
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
@@ -121,7 +125,8 @@ class PortalLinkTest extends TestCase
             ->postJson('/api/v1/portal/links', ['order_uuid' => $secondOrder->uuid])
             ->assertStatus(200);
 
-        $this->assertDatabaseCount('final_customer_tenant_links', 1);
+        $this->assertDatabaseCount('final_customer_tenant_links', 2);
+        $this->assertSame(1, \App\Models\FinalCustomer\FinalCustomerTenantLink::where('final_customer_id', $customer->id)->count());
     }
 
     #[Test]

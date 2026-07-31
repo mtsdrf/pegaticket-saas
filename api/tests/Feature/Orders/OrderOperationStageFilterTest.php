@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -25,7 +26,7 @@ class OrderOperationStageFilterTest extends TestCase
     private Tenant $tenant;
     private User $user;
     private array $headers;
-    private Client $client;
+    private FinalCustomer $client;
     private StockLocation $location;
 
     protected function setUp(): void
@@ -124,11 +125,19 @@ class OrderOperationStageFilterTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->client = Client::create([
+        $this->client = FinalCustomer::create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => 'Cliente Teste',
+            'email' => 'cliente-teste-' . uniqid() . '@pegaticket.test',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'final_customer_id' => $this->client->id,
             'tenant_id' => $this->tenant->id,
             'endereco_id' => $endereco->id,
-            'name' => 'Cliente Teste',
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
 
         $this->location = StockLocation::create([
@@ -174,7 +183,7 @@ class OrderOperationStageFilterTest extends TestCase
     {
         return Order::create(array_merge([
             'tenant_id' => $this->tenant->id,
-            'client_id' => $this->client->id,
+            'final_customer_id' => $this->client->id,
             'stock_location_id' => $this->location->id,
             'codigo' => (string) random_int(1000, 9999),
             'is_installment' => false,

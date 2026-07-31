@@ -83,17 +83,8 @@ export function StorefrontCartPage() {
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ fontSize: 14.5, fontWeight: 600, wordBreak: 'break-word' }}>{item.name}</Typography>
+                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{item.event_name}</Typography>
                       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
-                      {item.configuration_label && (
-                        <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', mt: 0.25 }}>
-                          {item.configuration_label}
-                        </Typography>
-                      )}
-                      {item.unit_price < item.price && (
-                        <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'var(--pt-success, #1b7a3d)' }}>
-                          Preço de atacado aplicado
-                        </Typography>
-                      )}
 
                       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mt: 1 }}>
                         <IconButton

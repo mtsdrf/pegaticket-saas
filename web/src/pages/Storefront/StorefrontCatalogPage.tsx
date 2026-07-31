@@ -3,7 +3,6 @@ import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined'
 import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
 import StarIcon from '@mui/icons-material/Star'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import {
   Alert,
@@ -11,30 +10,24 @@ import {
   Box,
   Button,
   Chip,
-  FormControl,
   InputAdornment,
-  MenuItem,
   Pagination,
   Paper,
-  Select,
   Skeleton,
   Snackbar,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
-import type { SelectChangeEvent } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import { useEffect, useState } from 'react'
-import { ProductOptionsConfiguratorDialog, type ProductOptionSelection } from '../../components/product/ProductOptionsConfiguratorDialog'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CategoryChipBar } from '../../components/storefront/CategoryChipBar'
 import { EmptyState } from '../../components/layout/EmptyState'
+import { EventCard } from '../../components/storefront/EventCard'
 import { FloatingCheckoutBar, FLOATING_CHECKOUT_BAR_HEIGHT } from '../../components/storefront/FloatingCheckoutBar'
 import { STOREFRONT_BOTTOM_NAV_HEIGHT } from '../../components/storefront/StorefrontBottomNav'
 import { OtpLoginDialog } from '../../components/storefront/OtpLoginDialog'
-import { ProductGridCard } from '../../components/storefront/ProductGridCard'
-import { ProductListItem } from '../../components/storefront/ProductListItem'
 import { Logo } from '../../components/ui/Logo'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
@@ -44,12 +37,7 @@ import * as storefrontService from '../../services/storefrontService'
 import { UI_RADIUS, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
-import type {
-  StorefrontCategory,
-  StorefrontProduct,
-  StorefrontSortOption,
-  StorefrontTenant,
-} from '../../types/storefront'
+import type { StorefrontCategory, StorefrontEvent, StorefrontTenant } from '../../types/storefront'
 import { isStoreOpenNow } from '../../utils/businessHours'
 
 /** Badge "Aberto agora"/"Fechado no momento" + tempo estimado — calculado client-side a partir de `tenant.business_hours` (ver `utils/businessHours.ts`). */
@@ -78,22 +66,14 @@ function StoreStatusBadge({ tenant }: { tenant: StorefrontTenant }) {
 }
 
 const PER_PAGE = 12
-const BEST_SELLERS_LIMIT = 10
-
-const SORT_OPTIONS: { value: StorefrontSortOption; label: string }[] = [
-  { value: 'relevance', label: 'Relevância' },
-  { value: 'price_asc', label: 'Menor preço' },
-  { value: 'price_desc', label: 'Maior preço' },
-  { value: 'best_selling', label: 'Mais vendidos' },
-]
 
 function CatalogSkeleton() {
   return (
-    <Stack spacing={1.5}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(45%, 220px), 1fr))', gap: 1.5 }}>
       {Array.from({ length: 6 }).map((_, index) => (
-        <Skeleton key={index} variant="rounded" height={104} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
+        <Skeleton key={index} variant="rounded" height={220} sx={{ borderRadius: 'var(--pt-radius-lg)' }} />
       ))}
-    </Stack>
+    </Box>
   )
 }
 
@@ -102,138 +82,68 @@ function digitsOnly(value: string) {
 }
 
 /**
- * Rail horizontal "Mais vendidos" (vitrine estilo iFood) — só aparece como
- * seção de destaque quando o cliente ainda não filtrou/ordenou nada (ver
- * condição de fetch no efeito abaixo). SEMPRE usa `ProductGridCard`
- * (vertical, foto centralizada) independente do `catalog_layout` escolhido
- * pela empresa para o catálogo principal — decisão de produto: destaque de
- * "mais vendidos" tem identidade visual própria, não herda o configurador.
+ * Catálogo público de eventos — substitui o catálogo de produtos do domínio
+ * de comércio (migração PegaTicket, roadmap seção 4A). SIMPLIFICAÇÃO
+ * DOCUMENTADA: a versão anterior tinha rail "Mais vendidos", ordenação por
+ * preço/mais vendidos, filtro "em promoção" e alternância grid/lista — nenhum
+ * desses conceitos existe no domínio de Event (sem preço de produto único,
+ * sem promoção, sem histórico de vendas por item de catálogo aqui). Mantido:
+ * busca por nome, categorias, paginação, favoritos.
  */
-function BestSellersRail({
-  products,
-  onToggleFavorite,
-  onConfigureOptions,
-}: {
-  products: StorefrontProduct[]
-  onToggleFavorite: (product: StorefrontProduct) => void
-  onConfigureOptions: (product: StorefrontProduct) => void
-}) {
-  if (products.length === 0) return null
-
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 1.25 }}>
-        <TrendingUpOutlinedIcon sx={{ fontSize: 20, color: 'var(--pt-primary)' }} />
-        <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Mais vendidos</Typography>
-      </Stack>
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{
-          overflowX: 'auto',
-          pb: 0.5,
-          alignItems: 'stretch',
-          scrollbarWidth: 'none',
-          '&::-webkit-scrollbar': { display: 'none' },
-        }}
-      >
-        {products.map((product) => (
-          <Box key={product.uuid} sx={{ width: 168, flexShrink: 0, display: 'flex' }}>
-            <ProductGridCard
-              product={product}
-              onToggleFavorite={onToggleFavorite}
-              onConfigureOptions={onConfigureOptions}
-              excludeBadges={['best_selling']}
-            />
-          </Box>
-        ))}
-      </Stack>
-    </Box>
-  )
-}
-
 export function StorefrontCatalogPage() {
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
   const { isAuthenticated } = usePortalAuth()
-  const { addConfiguredItem, totalQuantity } = useStorefrontCart()
+  const { totalQuantity } = useStorefrontCart()
 
   const [tenant, setTenant] = useState<StorefrontTenant | null>(null)
   const [tenantError, setTenantError] = useState<string | null>(null)
   const [isLoadingTenant, setIsLoadingTenant] = useState(true)
 
-  const [products, setProducts] = useState<StorefrontProduct[]>([])
+  const [events, setEvents] = useState<StorefrontEvent[]>([])
   const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
-  const [productsError, setProductsError] = useState<string | null>(null)
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true)
+  const [eventsError, setEventsError] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useDebouncedValue(searchTerm, 400)
-  const [onlyPromotion, setOnlyPromotion] = useState(false)
-  const [sort, setSort] = useState<StorefrontSortOption>('relevance')
 
-  // Categorias (vitrine estilo iFood) — carregadas 1x quando o tenant
-  // resolve, independente de busca/ordenação.
   const [categories, setCategories] = useState<StorefrontCategory[]>([])
   const [selectedCategoryUuid, setSelectedCategoryUuid] = useState<string | null>(null)
 
-  // "Mais vendidos" — seção de destaque, só busca quando não há
-  // busca/categoria/ordenação/promoção ativa (é a home da loja, não um
-  // resultado filtrado); falha silenciosa, some se vier vazio.
-  const [bestSellers, setBestSellers] = useState<StorefrontProduct[]>([])
-  const [optionsDialogProduct, setOptionsDialogProduct] = useState<StorefrontProduct | null>(null)
-  const showBestSellersRail =
-    !debouncedSearch && !onlyPromotion && !selectedCategoryUuid && sort === 'relevance' && page === 1
-
-  // Favoritos (Delivery Fase 4) — exige identidade do FinalCustomer; se
-  // ainda não autenticado, abre o mesmo diálogo de OTP do checkout antes de
-  // favoritar (nunca duplica o fluxo). Otimista: alterna o ícone na hora,
-  // reverte se a chamada falhar.
   const [otpDialogOpen, setOtpDialogOpen] = useState(false)
-  const [pendingFavoriteProduct, setPendingFavoriteProduct] = useState<StorefrontProduct | null>(null)
+  const [pendingFavoriteEvent, setPendingFavoriteEvent] = useState<StorefrontEvent | null>(null)
   const [favoriteErrorMessage, setFavoriteErrorMessage] = useState<string | null>(null)
 
-  function performFavoriteToggle(product: StorefrontProduct) {
-    const applyToggle = (list: StorefrontProduct[]) =>
-      list.map((item) => (item.uuid === product.uuid ? { ...item, is_favorited: !item.is_favorited } : item))
+  function performFavoriteToggle(event: StorefrontEvent) {
+    const applyToggle = (list: StorefrontEvent[]) =>
+      list.map((item) => (item.uuid === event.uuid ? { ...item, is_favorited: !item.is_favorited } : item))
 
-    setProducts(applyToggle)
-    setBestSellers(applyToggle)
+    setEvents(applyToggle)
 
-    toggleFavorite(product.uuid).catch((error: unknown) => {
-      const revertToggle = (list: StorefrontProduct[]) =>
-        list.map((item) => (item.uuid === product.uuid ? { ...item, is_favorited: product.is_favorited } : item))
-      setProducts(revertToggle)
-      setBestSellers(revertToggle)
+    toggleFavorite(event.uuid).catch((error: unknown) => {
+      const revertToggle = (list: StorefrontEvent[]) =>
+        list.map((item) => (item.uuid === event.uuid ? { ...item, is_favorited: event.is_favorited } : item))
+      setEvents(revertToggle)
       setFavoriteErrorMessage(getApiErrorMessage(error, 'Não foi possível atualizar seus favoritos agora.'))
     })
   }
 
-  function handleToggleFavorite(product: StorefrontProduct) {
+  function handleToggleFavorite(event: StorefrontEvent) {
     if (!isAuthenticated) {
-      setPendingFavoriteProduct(product)
+      setPendingFavoriteEvent(event)
       setOtpDialogOpen(true)
       return
     }
-    performFavoriteToggle(product)
-  }
-
-  function handleConfigureOptions(product: StorefrontProduct) {
-    setOptionsDialogProduct(product)
-  }
-
-  function handleConfirmOptions(selections: ProductOptionSelection[]) {
-    if (!optionsDialogProduct) return
-    addConfiguredItem(optionsDialogProduct, 1, selections)
-    setOptionsDialogProduct(null)
+    performFavoriteToggle(event)
   }
 
   function handleFavoriteOtpAuthenticated() {
     setOtpDialogOpen(false)
-    if (pendingFavoriteProduct) {
-      performFavoriteToggle(pendingFavoriteProduct)
-      setPendingFavoriteProduct(null)
+    if (pendingFavoriteEvent) {
+      performFavoriteToggle(pendingFavoriteEvent)
+      setPendingFavoriteEvent(null)
     }
   }
 
@@ -279,7 +189,7 @@ export function StorefrontCatalogPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, onlyPromotion, selectedCategoryUuid, sort])
+  }, [debouncedSearch, selectedCategoryUuid])
 
   useEffect(() => {
     if (isLoadingTenant || !tenant) {
@@ -287,60 +197,39 @@ export function StorefrontCatalogPage() {
     }
 
     if (tenant?.storefront_enabled === false) {
-      setProducts([])
+      setEvents([])
       setLastPage(1)
-      setProductsError(null)
-      setIsLoadingProducts(false)
+      setEventsError(null)
+      setIsLoadingEvents(false)
       return
     }
 
     if (!slug) return
     let cancelled = false
-    setIsLoadingProducts(true)
-    setProductsError(null)
+    setIsLoadingEvents(true)
+    setEventsError(null)
     storefrontService
-      .listStorefrontProducts(slug, {
+      .listStorefrontEvents(slug, {
         name: debouncedSearch || undefined,
-        on_promotion: onlyPromotion || undefined,
-        product_category_uuid: selectedCategoryUuid ?? undefined,
-        sort,
+        event_category_uuid: selectedCategoryUuid ?? undefined,
         per_page: PER_PAGE,
         page,
       })
       .then((result) => {
         if (cancelled) return
-        setProducts(result.items)
+        setEvents(result.items)
         setLastPage(result.pagination.last_page)
       })
       .catch((error: unknown) => {
-        if (!cancelled) setProductsError(getApiErrorMessage(error, 'Não foi possível carregar os produtos agora.'))
+        if (!cancelled) setEventsError(getApiErrorMessage(error, 'Não foi possível carregar os eventos agora.'))
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingProducts(false)
+        if (!cancelled) setIsLoadingEvents(false)
       })
     return () => {
       cancelled = true
     }
-  }, [slug, debouncedSearch, onlyPromotion, selectedCategoryUuid, sort, page, isLoadingTenant, tenant])
-
-  useEffect(() => {
-    if (!slug || isLoadingTenant || !tenant || !showBestSellersRail || tenant.storefront_enabled === false) {
-      setBestSellers([])
-      return
-    }
-    let cancelled = false
-    storefrontService
-      .listStorefrontProducts(slug, { sort: 'best_selling', per_page: BEST_SELLERS_LIMIT, page: 1 })
-      .then((result) => {
-        if (!cancelled) setBestSellers(result.items)
-      })
-      .catch(() => {
-        // Seção de destaque opcional — falha silenciosa, não afeta o grid principal.
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [slug, showBestSellersRail, isLoadingTenant, tenant])
+  }, [slug, debouncedSearch, selectedCategoryUuid, page, isLoadingTenant, tenant])
 
   if (tenantError) {
     return (
@@ -359,8 +248,7 @@ export function StorefrontCatalogPage() {
       component="main"
       sx={{
         minHeight: '100dvh',
-        background:
-          'var(--pt-page-background)',
+        background: 'var(--pt-page-background)',
         pb:
           totalQuantity > 0
             ? `calc(${STOREFRONT_BOTTOM_NAV_HEIGHT}px + ${FLOATING_CHECKOUT_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`
@@ -405,7 +293,7 @@ export function StorefrontCatalogPage() {
                 )}
               </Stack>
             ) : (
-              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Cardápio digital</Typography>
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Eventos e ingressos</Typography>
             )}
           </Box>
         </Stack>
@@ -418,7 +306,7 @@ export function StorefrontCatalogPage() {
                   Esta empresa está usando esta página como canal de contato
                 </Typography>
                 <Typography sx={{ color: 'var(--pt-muted)' }}>
-                  O catálogo de produtos e o checkout estão desativados no momento. Aqui você encontra os dados de contato e localização da empresa.
+                  O catálogo de eventos e o checkout estão desativados no momento. Aqui você encontra os dados de contato e localização da empresa.
                 </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   {tenant.whatsapp ? (
@@ -459,7 +347,7 @@ export function StorefrontCatalogPage() {
         ) : (
           <>
             <TextField
-              placeholder="Buscar produto pelo nome"
+              placeholder="Buscar evento pelo nome"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               fullWidth
@@ -480,93 +368,46 @@ export function StorefrontCatalogPage() {
               <CategoryChipBar categories={categories} selectedUuid={selectedCategoryUuid} onSelect={setSelectedCategoryUuid} />
             )}
 
-            {showBestSellersRail && (
-              <BestSellersRail
-                products={bestSellers}
-                onToggleFavorite={handleToggleFavorite}
-                onConfigureOptions={handleConfigureOptions}
-              />
-            )}
-
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1, mb: 2.5 }}>
-              <Chip
-                label="Em promoção"
-                clickable
-                onClick={() => setOnlyPromotion((current) => !current)}
-                color={onlyPromotion ? 'primary' : 'default'}
-                variant={onlyPromotion ? 'filled' : 'outlined'}
-                sx={{ fontWeight: 600 }}
-              />
-
-              <FormControl size="small" sx={{ ml: 'auto', minWidth: 168 }}>
-                <Select
-                  value={sort}
-                  onChange={(event: SelectChangeEvent) => setSort(event.target.value as StorefrontSortOption)}
-                  displayEmpty
-                  sx={{ ...SOFT_PANEL_SX, fontSize: 14, fontWeight: 600 }}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value} sx={{ fontSize: 14 }}>
-                      Ordenar: {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            {productsError && (
+            {eventsError && (
               <Alert severity="error" variant="outlined" sx={{ mb: 2.5 }}>
-                {productsError}
+                {eventsError}
               </Alert>
             )}
 
-            {isLoadingProducts && <CatalogSkeleton />}
+            {isLoadingEvents && <CatalogSkeleton />}
           </>
         )}
 
-        {tenant?.storefront_enabled !== false && !isLoadingProducts && !productsError && products.length === 0 && (
+        {tenant?.storefront_enabled !== false && !isLoadingEvents && !eventsError && events.length === 0 && (
           <EmptyState
             icon={<SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
-            title="Nenhum produto encontrado"
+            title="Nenhum evento encontrado"
             description={
               debouncedSearch
                 ? 'Tente buscar por outro termo.'
-                : 'Esta loja ainda não cadastrou produtos disponíveis.'
+                : 'Esta loja ainda não publicou eventos disponíveis.'
             }
           />
         )}
 
-        {tenant?.storefront_enabled !== false && !isLoadingProducts && products.length > 0 && (
+        {tenant?.storefront_enabled !== false && !isLoadingEvents && events.length > 0 && (
           <>
-            {tenant?.catalog_layout === 'grid' ? (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(45%, 190px), 1fr))',
-                  gap: 1.5,
-                }}
-              >
-                {products.map((product) => (
-                  <ProductGridCard
-                    key={product.uuid}
-                    product={product}
-                    onToggleFavorite={handleToggleFavorite}
-                    onConfigureOptions={handleConfigureOptions}
-                  />
-                ))}
-              </Box>
-            ) : (
-              <Stack spacing={1.5}>
-                {products.map((product) => (
-                  <ProductListItem
-                    key={product.uuid}
-                    product={product}
-                    onToggleFavorite={handleToggleFavorite}
-                    onConfigureOptions={handleConfigureOptions}
-                  />
-                ))}
-              </Stack>
-            )}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(45%, 220px), 1fr))',
+                gap: 1.5,
+              }}
+            >
+              {events.map((event) => (
+                <EventCard
+                  key={event.uuid}
+                  event={event}
+                  onClick={(clicked) => navigate(`/loja/${slug}/eventos/${clicked.slug}`)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))}
+            </Box>
 
             {lastPage > 1 && (
               <Stack sx={{ mt: 3, alignItems: 'center' }}>
@@ -586,30 +427,9 @@ export function StorefrontCatalogPage() {
         open={otpDialogOpen}
         onClose={() => {
           setOtpDialogOpen(false)
-          setPendingFavoriteProduct(null)
+          setPendingFavoriteEvent(null)
         }}
         onAuthenticated={handleFavoriteOtpAuthenticated}
-      />
-
-      <ProductOptionsConfiguratorDialog
-        open={Boolean(optionsDialogProduct)}
-        title={optionsDialogProduct ? `Personalizar ${optionsDialogProduct.name}` : 'Personalizar produto'}
-        groups={(optionsDialogProduct?.option_groups ?? []).map((group) => ({
-          uuid: group.uuid,
-          name: group.name,
-          description: group.description,
-          kind: group.kind,
-          min_select: group.min_select,
-          max_select: group.max_select,
-          options: group.options.map((option) => ({
-            uuid: option.uuid,
-            name: option.name,
-            description: option.description,
-            price: option.price,
-          })),
-        }))}
-        onClose={() => setOptionsDialogProduct(null)}
-        onConfirm={handleConfirmOptions}
       />
 
       <Snackbar

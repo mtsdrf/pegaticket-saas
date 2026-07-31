@@ -50,11 +50,11 @@ class OrderPaymentTest extends TestCase
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         return $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
+            'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => $qty],
+                ['ticket_type_uuid' => $product->uuid, 'quantity' => $qty],
             ],
         ])->json('data');
     }
@@ -170,7 +170,7 @@ class OrderPaymentTest extends TestCase
 
         $foreignOrder = Order::create([
             'tenant_id' => $otherTenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $client->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,

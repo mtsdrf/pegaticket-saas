@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Portal;
 
-use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Order\Order;
 use App\Models\Tenant\Tenant;
@@ -42,14 +41,14 @@ class PortalOrderCancellationRequestTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, Client $client, array $overrides = []): Order
+    private function createOrder(Tenant $tenant, FinalCustomer $owner, array $overrides = []): Order
     {
         $location = $this->createLocation($tenant->id);
 
         return Order::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'client_id' => $client->id,
+            'final_customer_id' => $owner->id,
             'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
@@ -70,10 +69,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function customer_requests_cancellation_successfully(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client);
+        $order = $this->createOrder($tenant, $customer);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -102,10 +100,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function customer_can_request_cancellation_without_a_reason(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente2@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente2@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client);
+        $order = $this->createOrder($tenant, $customer);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -119,10 +116,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function rejects_request_when_order_already_out_for_delivery(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente3@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente3@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, [
+        $order = $this->createOrder($tenant, $customer, [
             'is_out_for_delivery' => true,
             'out_for_delivery_at' => now(),
         ]);
@@ -143,10 +139,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function rejects_request_when_order_already_delivered(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente4@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente4@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, [
+        $order = $this->createOrder($tenant, $customer, [
             'is_delivered' => true,
             'delivered_at' => now(),
         ]);
@@ -162,10 +157,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function rejects_request_when_order_origin_is_not_storefront(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente5@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente5@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client, ['origin' => 'staff']);
+        $order = $this->createOrder($tenant, $customer, ['origin' => 'staff']);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -198,10 +192,9 @@ class PortalOrderCancellationRequestTest extends TestCase
     #[Test]
     public function rejects_second_cancellation_request_for_the_same_order(): void
     {
-        [, $token] = $this->authenticatedCustomer('cliente7@test.com');
+        [$customer, $token] = $this->authenticatedCustomer('cliente7@test.com');
         $tenant = $this->createTenant();
-        $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client);
+        $order = $this->createOrder($tenant, $customer);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 

@@ -437,7 +437,11 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       const result = await storefrontService.validateStorefrontCoupon(
         slug,
         code,
-        items.map((item) => ({ product_uuid: item.product_uuid, quantity: item.quantity })),
+        items.map((item) => ({
+          ticket_type_uuid: item.ticket_type_uuid,
+          event_product_uuid: item.event_product_uuid,
+          quantity: item.quantity,
+        })),
       )
       setAppliedDiscount(result.discount_amount)
       setAppliedCouponCode(code)
@@ -671,13 +675,10 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
     const payload: StorefrontCheckoutPayload = {
       items: items.map((item) => ({
-        product_uuid: item.product_uuid,
+        ticket_type_uuid: item.ticket_type_uuid,
+        event_product_uuid: item.event_product_uuid,
         quantity: item.quantity,
         notes: item.notes?.trim() || undefined,
-        options: item.options?.map((option) => ({
-          product_option_uuid: option.product_option_uuid,
-          quantity: option.quantity,
-        })),
       })),
       client_name: clientName.trim(),
       client_last_name: clientLastName.trim(),
@@ -991,7 +992,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>Resumo do pedido</Typography>
         <Stack spacing={1}>
           {items.map((item) => (
-            <Box key={item.product_uuid}>
+            <Box key={item.id}>
               <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1 }}>
                 <Typography sx={{ fontSize: 13.5, wordBreak: 'break-word' }}>
                   {item.quantity} × {item.name}

@@ -2,14 +2,15 @@
 
 namespace Tests\Feature\Onboarding;
 
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
 use App\Models\Location\Estado;
-use App\Models\Product\Product;
-use App\Models\Product\ProductCategory;
-use App\Models\Product\ProductType;
+use App\Models\Event\Event;
+use App\Models\Event\EventCategory;
+use App\Models\Event\TicketType;
 use App\Models\Storefront\StoreBusinessHour;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,35 +58,48 @@ class OnboardingChecklistTest extends TestCase
     #[Test]
     public function checklist_reflects_existing_product_and_client(): void
     {
-        $category = ProductCategory::create([
+        $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'name' => 'Bebidas',
             'is_active' => true,
         ]);
 
-        $type = ProductType::create([
+        $event = Event::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_category_id' => $category->id,
-            'name' => 'Refrigerante',
-            'is_active' => true,
+            'event_category_id' => $category->id,
+            'name' => 'Evento Teste',
+            'slug' => 'evento-' . Str::random(10),
+            'type' => 'ingresso',
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
         ]);
 
-        Product::create([
+        TicketType::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_type_id' => $type->id,
+            'event_id' => $event->id,
             'name' => 'Coca-Cola',
             'price' => 10.00,
-            'is_available' => true,
+            'status' => 'ativo',
+            'unit' => 'un',
         ]);
 
-        Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
             'name' => 'Cliente Teste',
+            'email' => 'cliente-teste-' . Str::random(8) . '@test.com',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
+            'tenant_id' => $this->tenant->id,
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
 
         $data = $this->auth()
@@ -225,13 +239,20 @@ class OnboardingChecklistTest extends TestCase
     #[Test]
     public function checklist_ignores_soft_deleted_records(): void
     {
-        $client = Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
             'name' => 'Cliente Removido',
-            'is_active' => true,
+            'email' => 'cliente-removido-' . Str::random(8) . '@test.com',
         ]);
-        $client->delete();
+
+        $link = FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
+            'tenant_id' => $this->tenant->id,
+            'is_active' => true,
+            'confirmed_at' => now(),
+        ]);
+        $link->delete();
 
         $data = $this->auth()
             ->getJson('/api/v1/onboarding/checklist')
@@ -244,28 +265,34 @@ class OnboardingChecklistTest extends TestCase
     #[Test]
     public function checklist_is_scoped_per_tenant(): void
     {
-        $category = ProductCategory::create([
+        $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'name' => 'Bebidas',
             'is_active' => true,
         ]);
 
-        $type = ProductType::create([
+        $event = Event::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_category_id' => $category->id,
-            'name' => 'Refrigerante',
-            'is_active' => true,
+            'event_category_id' => $category->id,
+            'name' => 'Evento Teste',
+            'slug' => 'evento-' . Str::random(10),
+            'type' => 'ingresso',
+            'starts_at' => now()->addDays(10),
+            'ends_at' => now()->addDays(10)->addHours(4),
+            'visibility' => 'public',
+            'status' => 'publicado',
         ]);
 
-        Product::create([
+        TicketType::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'product_type_id' => $type->id,
+            'event_id' => $event->id,
             'name' => 'Coca-Cola',
             'price' => 10.00,
-            'is_available' => true,
+            'status' => 'ativo',
+            'unit' => 'un',
         ]);
 
         // Novo tenant/usuário (setUpTenantScopedUser cria um Tenant novo a

@@ -211,8 +211,8 @@ export function StorefrontOrderManagementPage() {
         field: 'client_name',
         headerName: 'Cliente',
         filterType: 'text',
-        cellRenderer: (row) => `${row.client?.name ?? ''} ${row.client?.last_name ?? ''}`.trim(),
-        exportValue: (row) => `${row.client?.name ?? ''} ${row.client?.last_name ?? ''}`.trim(),
+        cellRenderer: (row) => `${row.final_customer?.name ?? ''} ${row.final_customer?.last_name ?? ''}`.trim(),
+        exportValue: (row) => `${row.final_customer?.name ?? ''} ${row.final_customer?.last_name ?? ''}`.trim(),
       },
       {
         field: 'status',
@@ -244,7 +244,7 @@ export function StorefrontOrderManagementPage() {
             <Tooltip title="Gerenciar pedido" arrow>
               <IconButton
                 size="small"
-                aria-label={`Gerenciar pedido do cliente ${`${row.client?.name ?? ''} ${row.client?.last_name ?? ''}`.trim()}`}
+                aria-label={`Gerenciar pedido do cliente ${`${row.final_customer?.name ?? ''} ${row.final_customer?.last_name ?? ''}`.trim()}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
@@ -511,8 +511,8 @@ export function StorefrontOrderManagementPage() {
                       <Box sx={{ minWidth: 0 }}>
                         <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{order.codigo}</Typography>
                         <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }} noWrap>
-                          {order.client
-                            ? `${order.client.name} ${order.client.last_name ?? ''}`.trim()
+                          {order.final_customer
+                            ? `${order.final_customer.name} ${order.final_customer.last_name ?? ''}`.trim()
                             : 'Cliente não identificado'}
                         </Typography>
                       </Box>

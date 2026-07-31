@@ -89,8 +89,8 @@ export function OrderReportListPage() {
         headerName: 'Cliente',
         filterType: 'text',
         sortable: false,
-        cellRenderer: (row) => row.client?.name ?? '',
-        exportValue: (row) => row.client?.name ?? '',
+        cellRenderer: (row) => row.final_customer?.name ?? '',
+        exportValue: (row) => row.final_customer?.name ?? '',
       },
       {
         field: 'total_amount',

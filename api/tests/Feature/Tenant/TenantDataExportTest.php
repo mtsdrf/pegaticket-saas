@@ -3,7 +3,8 @@
 namespace Tests\Feature\Tenant;
 
 use App\Models\AuditLog;
-use App\Models\Client\Client;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -38,7 +39,7 @@ class TenantDataExportTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function createClient(int $tenantId): Client
+    protected function createFinalCustomer(int $tenantId): FinalCustomer
     {
         $estado = Estado::create([
             'uuid' => (string) Str::uuid(),
@@ -68,14 +69,23 @@ class TenantDataExportTest extends TestCase
             'is_active' => true,
         ]);
 
-        return Client::create([
+        $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
+            'name' => 'Client Export ' . Str::random(6),
+            'email' => 'export-' . Str::random(8) . '@test.com',
+        ]);
+
+        FinalCustomerTenantLink::create([
+            'uuid' => (string) Str::uuid(),
+            'final_customer_id' => $finalCustomer->id,
             'tenant_id' => $tenantId,
             'endereco_id' => $endereco->id,
-            'name' => 'Client Export ' . Str::random(6),
             'is_trusted' => true,
             'is_active' => true,
+            'confirmed_at' => now(),
         ]);
+
+        return $finalCustomer;
     }
 
     #[Test]
@@ -88,7 +98,7 @@ class TenantDataExportTest extends TestCase
     public function exports_a_zip_with_one_csv_per_entity_and_writes_audit_log(): void
     {
         $this->grantPermission('tenant-profile', 'export');
-        $client = $this->createClient($this->tenant->id);
+        $finalCustomer = $this->createFinalCustomer($this->tenant->id);
 
         AuditLog::query()->delete();
 
@@ -104,12 +114,12 @@ class TenantDataExportTest extends TestCase
         $opened = $zip->open($tempFile);
         $this->assertTrue($opened === true);
 
-        $this->assertNotFalse($zip->locateName('clients.csv'));
-        $this->assertNotFalse($zip->locateName('products.csv'));
+        $this->assertNotFalse($zip->locateName('customers.csv'));
+        $this->assertNotFalse($zip->locateName('ticket_types.csv'));
         $this->assertNotFalse($zip->locateName('orders.csv'));
 
-        $clientsCsv = $zip->getFromName('clients.csv');
-        $this->assertStringContainsString($client->name, $clientsCsv);
+        $customersCsv = $zip->getFromName('customers.csv');
+        $this->assertStringContainsString($finalCustomer->name, $customersCsv);
 
         $zip->close();
         unlink($tempFile);

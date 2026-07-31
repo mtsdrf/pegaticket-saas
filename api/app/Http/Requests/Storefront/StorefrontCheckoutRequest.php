@@ -45,26 +45,26 @@ class StorefrontCheckoutRequest extends FormRequest
 
         return [
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_uuid' => [
-                'required',
+            'items.*.ticket_type_uuid' => [
+                'required_without:items.*.event_product_uuid',
+                'nullable',
                 'uuid',
-                Rule::exists('products', 'uuid')->where(function ($query) use ($tenantId) {
+                Rule::exists('ticket_types', 'uuid')->where(function ($query) use ($tenantId) {
+                    $query->where('tenant_id', $tenantId)->whereNull('deleted_at');
+                }),
+            ],
+            'items.*.event_product_uuid' => [
+                'required_without:items.*.ticket_type_uuid',
+                'nullable',
+                'uuid',
+                Rule::exists('event_products', 'uuid')->where(function ($query) use ($tenantId) {
                     $query->where('tenant_id', $tenantId)->whereNull('deleted_at');
                 }),
             ],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
-            // Observação por item (ex: "sem cebola") — distinta de `notes`
-            // (recado do pedido inteiro, abaixo).
+            // Observação por item — distinta de `notes` (recado do pedido
+            // inteiro, abaixo).
             'items.*.notes' => ['nullable', 'string', 'max:200'],
-            'items.*.options' => ['nullable', 'array'],
-            'items.*.options.*.product_option_uuid' => [
-                'required',
-                'uuid',
-                Rule::exists('product_options', 'uuid')->where(function ($query) use ($tenantId) {
-                    $query->where('tenant_id', $tenantId)->whereNull('deleted_at');
-                }),
-            ],
-            'items.*.options.*.quantity' => ['nullable', 'integer', 'min:1'],
 
             'client_name' => ['required', 'string', 'max:255'],
             'client_last_name' => ['required', 'string', 'max:255'],
@@ -78,8 +78,8 @@ class StorefrontCheckoutRequest extends FormRequest
             'fulfillment_type' => ['required', 'string', Rule::in(['delivery', 'pickup'])],
 
             // Endereço de entrega — mesmo shape de campo já usado por
-            // CreateClientDTO/ClientService (estado/cidade/bairro globais,
-            // sem tenant_id). required_if:fulfillment_type,delivery.
+            // CreateEnderecoDTO/EnderecoService (estado/cidade/bairro
+            // globais, sem tenant_id). required_if:fulfillment_type,delivery.
             'estado_uuid' => [
                 'nullable',
                 'required_if:fulfillment_type,delivery',
@@ -127,7 +127,8 @@ class StorefrontCheckoutRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.*.product_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
         ];
     }
 }

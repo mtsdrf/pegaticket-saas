@@ -373,26 +373,67 @@ return [
     | Categoria de produto
     |--------------------------------------------------------------------------
     */
-    'product_category' => [
-        'list' => 'Lista de categorias de produto.',
-        'created' => 'Categoria de produto criada com sucesso.',
-        'updated' => 'Categoria de produto atualizada com sucesso.',
-        'deleted' => 'Categoria de produto removida com sucesso.',
-        'name_exists' => 'Já existe uma categoria de produto com este nome nesta empresa.',
+    'event_category' => [
+        'list' => 'Lista de categorias de evento.',
+        'created' => 'Categoria de evento criada com sucesso.',
+        'updated' => 'Categoria de evento atualizada com sucesso.',
+        'deleted' => 'Categoria de evento removida com sucesso.',
+        'name_exists' => 'Já existe uma categoria de evento com este nome nesta empresa.',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Tipo de produto
+    | Evento
     |--------------------------------------------------------------------------
     */
-    'product_type' => [
-        'list' => 'Lista de tipos de produto.',
-        'created' => 'Tipo de produto criado com sucesso.',
-        'updated' => 'Tipo de produto atualizado com sucesso.',
-        'deleted' => 'Tipo de produto removido com sucesso.',
-        'name_exists' => 'Já existe um tipo de produto com este nome nesta empresa.',
-        'invalid_category' => 'Categoria de produto inválida para esta empresa.',
+    'event' => [
+        'list' => 'Lista de eventos.',
+        'show' => 'Evento exibido com sucesso.',
+        'created' => 'Evento criado com sucesso.',
+        'updated' => 'Evento atualizado com sucesso.',
+        'deleted' => 'Evento removido com sucesso.',
+        'invalid_category' => 'Categoria de evento inválida para esta empresa.',
+        'slug_exists' => 'Já existe um evento com este slug nesta empresa.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tipo de ingresso
+    |--------------------------------------------------------------------------
+    */
+    'ticket_type' => [
+        'list' => 'Lista de tipos de ingresso.',
+        'show' => 'Tipo de ingresso exibido com sucesso.',
+        'created' => 'Tipo de ingresso criado com sucesso.',
+        'updated' => 'Tipo de ingresso atualizado com sucesso.',
+        'deleted' => 'Tipo de ingresso removido com sucesso.',
+        'invalid_event' => 'Evento inválido para esta empresa.',
+        'sku_exists' => 'Já existe um tipo de ingresso com este SKU nesta empresa.',
+        'suggested_price' => 'Preço sugerido calculado com sucesso.',
+        'status_updated' => 'Status do tipo de ingresso atualizado com sucesso.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Produto do evento (adicional/estacionamento)
+    |--------------------------------------------------------------------------
+    */
+    'event_product' => [
+        'list' => 'Lista de produtos do evento.',
+        'show' => 'Produto do evento exibido com sucesso.',
+        'created' => 'Produto do evento criado com sucesso.',
+        'updated' => 'Produto do evento atualizado com sucesso.',
+        'deleted' => 'Produto do evento removido com sucesso.',
+        'invalid_event' => 'Evento inválido para esta empresa.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compradores (FinalCustomer, busca pelo staff)
+    |--------------------------------------------------------------------------
+    */
+    'customers' => [
+        'listed' => 'Lista de compradores.',
     ],
 
     /*
@@ -480,49 +521,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Produto
-    |--------------------------------------------------------------------------
-    */
-    'product' => [
-        'list' => 'Lista de produtos.',
-        'show' => 'Produto exibido com sucesso.',
-        'created' => 'Produto criado com sucesso.',
-        'updated' => 'Produto atualizado com sucesso.',
-        'deleted' => 'Produto removido com sucesso.',
-        'invalid_type' => 'Tipo de produto inválido para esta empresa.',
-        'sku_exists' => 'Já existe um produto com este SKU nesta empresa.',
-        'option_group_invalid_limits' => 'O máximo de seleção precisa ser maior ou igual ao mínimo.',
-        'option_group_duplicate_name' => 'Já existe um grupo de opcionais com este nome neste produto.',
-        'option_duplicate_name' => 'Já existe um complemento com este nome dentro deste grupo.',
-        'suggested_price' => 'Preço sugerido calculado com sucesso.',
-        'availability_enabled' => 'Produto disponibilizado com sucesso.',
-        'availability_disabled' => 'Produto bloqueado com sucesso.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Importação de produtos (CSV) — roadmap A2
-    |--------------------------------------------------------------------------
-    */
-    'product_import' => [
-        'preview' => 'Pré-visualização da importação gerada com sucesso.',
-        'committed' => 'Importação concluída.',
-        'unreadable_file' => 'Não foi possível ler o arquivo enviado.',
-        'empty_file' => 'O arquivo enviado está vazio.',
-        'missing_columns' => 'Colunas obrigatórias ausentes no cabeçalho do CSV: :columns.',
-        'limit_exceeded' => 'A planilha tem :count linhas, acima do limite de :max por importação.',
-        'row_name_required' => 'nome é obrigatório.',
-        'row_price_required' => 'preco é obrigatório.',
-        'row_price_invalid' => 'preco inválido (use um número maior ou igual a 0).',
-        'row_type_required' => 'tipo é obrigatório.',
-        'row_category_required_for_new_type' => 'categoria é obrigatória para criar o tipo ":type" (tipo novo para esta empresa).',
-        'row_type_category_conflict' => 'o tipo ":type" já será criado com a categoria ":pending_category" nesta mesma importação (categoria ":given_category" divergente nesta linha).',
-        'row_sku_duplicate' => 'sku ":sku" duplicado (já usado em outra linha desta importação ou já existe nesta empresa).',
-        'row_available_invalid' => 'disponivel inválido (use sim/não, verdadeiro/falso ou 1/0).',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Local de estoque
     |--------------------------------------------------------------------------
     */
@@ -569,7 +567,7 @@ return [
         'unblock_created' => 'Desbloqueio de estoque registrado com sucesso.',
         'reserve_created' => 'Reserva de estoque registrada com sucesso.',
         'reserve_cancel_created' => 'Cancelamento de reserva registrado com sucesso.',
-        'invalid_product' => 'Produto inválido para esta empresa.',
+        'invalid_product' => 'Tipo de ingresso inválido para esta empresa.',
         'invalid_location' => 'Local de estoque inválido para esta empresa.',
         'invalid_reserve_movement' => 'Movimento de reserva inválido ou inexistente para esta empresa.',
         'transfer_same_location' => 'O local de destino deve ser diferente do local de origem.',
@@ -625,11 +623,8 @@ return [
         'cancelled' => 'Pedido cancelado com sucesso.',
         'invalid_client' => 'Cliente inválido para esta empresa.',
         'invalid_stock_location' => 'Local de estoque inválido para esta empresa.',
-        'invalid_product' => 'Produto inválido para esta empresa.',
-        'invalid_product_option' => 'Uma das opções selecionadas é inválida para este produto.',
-        'duplicate_product_option' => 'A mesma opção não pode ser selecionada duas vezes no mesmo item.',
-        'option_group_min_select_not_met' => 'Selecione pelo menos :min opção(ões) no grupo ":group".',
-        'option_group_max_select_exceeded' => 'Selecione no máximo :max opção(ões) no grupo ":group".',
+        'invalid_product' => 'Tipo de ingresso ou produto do evento inválido para esta empresa.',
+        'item_missing_sellable' => 'Cada item precisa referenciar exatamente um tipo de ingresso ou produto do evento.',
         'installments_count_required' => 'A quantidade de parcelas é obrigatória para pedido parcelado.',
         'already_cancelled' => 'Este pedido já foi cancelado.',
         'already_delivered' => 'Este pedido já foi marcado como entregue.',

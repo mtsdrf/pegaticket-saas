@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
- * POST /loja/{slug}/cupons/validar (roadmap Delivery, Fase 3) — prévia
- * pública de cupom, mesmo espírito de StorefrontCheckoutRequest (escopa
- * items.*.product_uuid pelo tenant do slug). authorize() sempre true: rota
- * 100% pública, sem customer.jwt (identidade do cliente ainda não existe
- * nesta etapa do checkout).
+ * POST /loja/{slug}/cupons/validar — prévia pública de cupom, mesmo
+ * espírito de StorefrontCheckoutRequest (escopa items.*.ticket_type_uuid/
+ * event_product_uuid pelo tenant do slug — exatamente um por item).
+ * authorize() sempre true: rota 100% pública, sem customer.jwt (identidade
+ * do cliente ainda não existe nesta etapa do checkout).
  */
 class StorefrontValidateCouponRequest extends FormRequest
 {
@@ -30,10 +30,19 @@ class StorefrontValidateCouponRequest extends FormRequest
         return [
             'code' => ['required', 'string', 'max:50'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_uuid' => [
-                'required',
+            'items.*.ticket_type_uuid' => [
+                'required_without:items.*.event_product_uuid',
+                'nullable',
                 'uuid',
-                Rule::exists('products', 'uuid')->where(function ($query) use ($tenantId) {
+                Rule::exists('ticket_types', 'uuid')->where(function ($query) use ($tenantId) {
+                    $query->where('tenant_id', $tenantId)->whereNull('deleted_at');
+                }),
+            ],
+            'items.*.event_product_uuid' => [
+                'required_without:items.*.ticket_type_uuid',
+                'nullable',
+                'uuid',
+                Rule::exists('event_products', 'uuid')->where(function ($query) use ($tenantId) {
                     $query->where('tenant_id', $tenantId)->whereNull('deleted_at');
                 }),
             ],
@@ -44,7 +53,8 @@ class StorefrontValidateCouponRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.*.product_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
         ];
     }
 }
