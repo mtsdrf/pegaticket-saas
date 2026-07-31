@@ -3,7 +3,6 @@
 namespace Tests\Feature\Orders\Concerns;
 
 use App\Models\Client\Client;
-use App\Models\Client\ClientCategory;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Endereco;
@@ -13,7 +12,6 @@ use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductType;
 use App\Models\Stock\StockBalance;
 use App\Models\Stock\StockLocation;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Concerns\GeneratesUniqueUf;
 
@@ -103,47 +101,6 @@ trait CreatesOrderFixtures
             'is_active' => true,
         ]);
     }
-
-    /**
-     * Categoria de cliente + preço de categoria por produto, usados pelos
-     * testes de resolução de preço (ProductPricingService) dentro da
-     * criação de pedido — ver ProductCategoryPriceTest.php para a
-     * cobertura dedicada do endpoint de sync.
-     */
-    protected function createClientCategory(int $tenantId, array $overrides = []): ClientCategory
-    {
-        return ClientCategory::create(array_merge([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenantId,
-            'name' => 'Client Category ' . Str::random(6),
-            'is_active' => true,
-        ], $overrides));
-    }
-
-    protected function attachClientCategory(Client $client, ClientCategory $category): void
-    {
-        DB::table('client_client_categories')->insert([
-            'uuid' => (string) Str::uuid(),
-            'client_id' => $client->id,
-            'client_category_id' => $category->id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    protected function setProductCategoryPrice(Product $product, ClientCategory $category, float $price): void
-    {
-        DB::table('product_category_prices')->insert([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $product->tenant_id,
-            'product_id' => $product->id,
-            'client_category_id' => $category->id,
-            'price' => $price,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
     protected function stockEntry(int $tenantId, Product $product, StockLocation $location, int $quantity): void
     {
         StockBalance::updateOrCreate(

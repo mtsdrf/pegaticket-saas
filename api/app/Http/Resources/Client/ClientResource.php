@@ -38,10 +38,6 @@ class ClientResource extends JsonResource
                 'lng' => $this->endereco->lng !== null ? (float) $this->endereco->lng : null,
                 'geocode_status' => $this->endereco->geocode_status,
             ] : null,
-            'categories' => $this->whenLoaded('categories', fn() => $this->categories->map(fn($category) => [
-                'uuid' => $category->uuid,
-                'name' => $category->name,
-            ])),
             'created_at' => $this->created_at,
         ];
     }

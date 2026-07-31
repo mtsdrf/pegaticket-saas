@@ -265,8 +265,6 @@ class StorefrontCheckoutService
             notes: null,
             isTrusted: false,
             isActive: true,
-            diaIdealUuid: null,
-            periodoIdealUuid: null,
             estadoUuid: $estadoUuid,
             cidadeUuid: $cidadeUuid,
             bairroUuid: $bairroUuid,
@@ -476,15 +474,10 @@ class StorefrontCheckoutService
      * Preço efetivo de venda pro público:
      * 1. Promoção ativa (ProductPromotionService::findActivePromoPrice())
      *    SEMPRE vence, quando existir — é o preço de venda público que o
-     *    tenant decidiu, mesmo pra um cliente com desconto de categoria
-     *    aplicável ou quantidade de atacado.
-     * 2. Senão, preço de categoria via ProductPricingService (quando
-     *    $client já é conhecido e tem override aplicável) — se existir,
-     *    USA esse valor e NÃO aplica atacado (decisão de produto travada:
-     *    atacado só pra quem NÃO tem categoria; categoria sempre vence).
-     * 3. Senão, atacado por quantidade (roadmap Loja) — quando o produto
+     *    tenant decidiu, mesmo com quantidade de atacado aplicável.
+     * 2. Senão, atacado por quantidade (roadmap Loja) — quando o produto
      *    tem os dois campos configurados e a quantidade atinge o mínimo.
-     * 4. Senão, Product.price base.
+     * 3. Senão, Product.price base.
      */
     public function resolveEffectiveUnitPrice(Product $product, ?Client $client, float $quantity): float
     {
@@ -492,12 +485,6 @@ class StorefrontCheckoutService
 
         if ($promoPrice !== null) {
             return $promoPrice;
-        }
-
-        $categoryPrice = $this->pricingService->resolveCategoryPrice($product, $client);
-
-        if ($categoryPrice !== null) {
-            return $categoryPrice;
         }
 
         if (

@@ -4,13 +4,11 @@ namespace App\Services\Client;
 
 use App\DTOs\Client\CreateClientDTO;
 use App\DTOs\Client\UpdateClientDTO;
-use App\DTOs\Client\SyncClientCategoriesDTO;
 use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Location\UpdateEnderecoDTO;
 use App\Events\Client\ClientCreated;
 use App\Events\Client\ClientUpdated;
 use App\Events\Client\ClientDeleted;
-use App\Events\Client\ClientCategoriesSynced;
 use App\Models\Client\Client;
 use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Services\Location\EnderecoService;
@@ -33,7 +31,7 @@ class ClientService
         return $client;
     }
 
-    public const EAGER_RELATIONS = ['endereco.estado', 'endereco.cidade', 'endereco.bairro', 'categories'];
+    public const EAGER_RELATIONS = ['endereco.estado', 'endereco.cidade', 'endereco.bairro'];
     public const LIST_EAGER_RELATIONS = ['endereco.cidade'];
 
     /**
@@ -96,10 +94,6 @@ class ClientService
 
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {
             $query->where('clients.is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if (!empty($filters['category_uuid'])) {
-            $query->whereHas('categories', fn($q) => $q->where('uuid', $filters['category_uuid']));
         }
 
         if (!empty($filters['cidade_uuid'])) {
@@ -167,10 +161,6 @@ class ClientService
 
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {
             $query->where('clients.is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if (!empty($filters['category_uuid'])) {
-            $query->whereHas('categories', fn($q) => $q->where('uuid', $filters['category_uuid']));
         }
 
         if (!empty($filters['cidade_uuid'])) {
@@ -304,23 +294,6 @@ class ClientService
                 clientUuid: $client->uuid,
                 actorId: Auth::id()
             ));
-        });
-    }
-
-    public function syncCategoriesSoft(Client $client, SyncClientCategoriesDTO $dto): Client
-    {
-        $this->assertBelongsToCurrentTenant($client);
-
-        return DB::transaction(function () use ($client, $dto) {
-            $this->repository->syncCategories($client, $dto->categoryUuids);
-
-            event(new ClientCategoriesSynced(
-                clientUuid: $client->uuid,
-                categoryUuids: $dto->categoryUuids,
-                actorId: Auth::id()
-            ));
-
-            return $client->refresh();
         });
     }
 

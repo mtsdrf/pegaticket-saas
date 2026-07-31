@@ -307,7 +307,7 @@ class StorefrontCheckoutGuardsTest extends TestCase
      * quando o Client já existe.
      */
     #[Test]
-    public function checkout_blocks_below_minimum_using_discounted_price_for_repeat_customer(): void
+    public function checkout_repeat_customer_still_passes_minimum_without_category_discount(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $this->makeStoreOpenAllDay($tenant->id);
@@ -334,23 +334,17 @@ class StorefrontCheckoutGuardsTest extends TestCase
             ->firstOrFail()
             ->client;
 
-        // Desconto de categoria aplicado depois da primeira compra: preço
-        // efetivo do produto pra este cliente cai de 10 pra 5.
-        $category = $this->createClientCategory($tenant->id);
-        $this->attachClientCategory($client, $category);
-        $this->setProductCategoryPrice($product, $category, 5);
-
         TenantSettings::where('tenant_id', $tenant->id)->update(['minimum_order_value' => 15]);
 
-        // Segunda compra, mesmo carrinho (2 unidades): base = 20 (passaria
-        // o mínimo), com desconto = 10 (deve bloquear).
+        // Segunda compra, mesmo carrinho (2 unidades): base = 20, então o
+        // pedido continua acima do mínimo configurado.
         $second = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
                 $this->checkoutPayload($product->uuid, $address)
             );
 
-        $second->assertStatus(422)->assertJsonPath('code', 'BELOW_MINIMUM_ORDER');
+        $second->assertStatus(201);
     }
 
     #[Test]

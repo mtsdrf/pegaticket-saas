@@ -21,18 +21,14 @@ use App\Repositories\Contracts\{
     TenantRolePermissionRepositoryInterface,
     TenantUserRepositoryInterface,
     TenantUserInviteRepositoryInterface,
-    ClientCategoryRepositoryInterface,
     ClientRepositoryInterface,
     ProductCategoryRepositoryInterface,
     ProductTypeRepositoryInterface,
     ProductRepositoryInterface,
-    ProductCategoryPriceRepositoryInterface,
     EstadoRepositoryInterface,
     CidadeRepositoryInterface,
     BairroRepositoryInterface,
     EnderecoRepositoryInterface,
-    DiaIdealRepositoryInterface,
-    PeriodoIdealRepositoryInterface,
     StockLocationRepositoryInterface,
     StockBalanceRepositoryInterface,
     StockMovementRepositoryInterface,
@@ -76,18 +72,14 @@ use App\Repositories\Eloquent\{
     TenantRolePermissionRepository,
     TenantUserRepository,
     TenantUserInviteRepository,
-    ClientCategoryRepository,
     ClientRepository,
     ProductCategoryRepository,
     ProductTypeRepository,
     ProductRepository,
-    ProductCategoryPriceRepository,
     EstadoRepository,
     CidadeRepository,
     BairroRepository,
     EnderecoRepository,
-    DiaIdealRepository,
-    PeriodoIdealRepository,
     StockLocationRepository,
     StockBalanceRepository,
     StockMovementRepository,
@@ -278,12 +270,6 @@ class AppServiceProvider extends ServiceProvider
             TenantUserInviteRepository::class
         );
 
-        // Client Category Repository
-        $this->app->bind(
-            ClientCategoryRepositoryInterface::class,
-            ClientCategoryRepository::class
-        );
-
         // Client Repository
         $this->app->bind(
             ClientRepositoryInterface::class,
@@ -308,12 +294,6 @@ class AppServiceProvider extends ServiceProvider
             ProductRepository::class
         );
 
-        // Product Category Price Repository
-        $this->app->bind(
-            ProductCategoryPriceRepositoryInterface::class,
-            ProductCategoryPriceRepository::class
-        );
-
         // Estado Repository
         $this->app->bind(
             EstadoRepositoryInterface::class,
@@ -336,18 +316,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             EnderecoRepositoryInterface::class,
             EnderecoRepository::class
-        );
-
-        // Dia Ideal Repository
-        $this->app->bind(
-            DiaIdealRepositoryInterface::class,
-            DiaIdealRepository::class
-        );
-
-        // Periodo Ideal Repository
-        $this->app->bind(
-            PeriodoIdealRepositoryInterface::class,
-            PeriodoIdealRepository::class
         );
 
         // Stock Location Repository

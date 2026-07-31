@@ -131,38 +131,6 @@ class StorefrontCheckoutWholesaleTest extends TestCase
     }
 
     #[Test]
-    public function customer_with_applicable_category_ignores_wholesale_even_with_enough_quantity(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->makeStoreOpenAllDay($tenant->id);
-        $this->createLocation($tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($tenant->id, [
-            'price' => 20,
-            'wholesale_min_quantity' => 10,
-            'wholesale_price' => 15,
-        ]);
-
-        [, $token] = $this->authenticatedCustomer();
-        $address = $this->createAddressTrio();
-        $this->createDeliveryFeeForBairro($tenant->id, $address[2]);
-
-        // Primeira compra: cria o Client/Link.
-        $first = $this->checkout($tenant->slug, $token, $this->checkoutPayload($product->uuid, 10, $address));
-        $client = $first->client;
-
-        // Preço de categoria (R$18,00) — vence sobre o atacado (R$15,00),
-        // mesmo com quantidade suficiente pro atacado (categoria sempre vence).
-        $category = $this->createClientCategory($tenant->id);
-        $this->attachClientCategory($client, $category);
-        $this->setProductCategoryPrice($product, $category, 18);
-
-        $order = $this->checkout($tenant->slug, $token, $this->checkoutPayload($product->uuid, 10, $address));
-
-        // 10 x R$18,00 (categoria, ignora atacado) = R$180,00.
-        $this->assertEquals(180.0, (float) $order->total_amount);
-    }
-
-    #[Test]
     public function promotion_wins_over_wholesale(): void
     {
         $tenant = $this->createTenantWithStorefrontPlan(true);

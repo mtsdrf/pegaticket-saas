@@ -2,18 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Client\CreateClientCategoryDTO;
 use App\DTOs\Product\CreateProductDTO;
-use App\DTOs\Product\SyncProductCategoryPricesDTO;
 use App\DTOs\Storefront\CreateCouponDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
-use App\Models\Client\ClientCategory;
 use App\Models\Product\Product;
 use App\Models\Storefront\Coupon;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Client\ClientCategoryService;
-use App\Services\Product\ProductCategoryPriceService;
 use App\Services\Product\ProductService;
 use App\Services\Storefront\CouponService;
 use App\Services\Storefront\ProductPromotionService;
@@ -32,10 +27,9 @@ use RuntimeException;
  *   php artisan db:seed --class=StoreCatalogDemoSeeder
  *
  * NÃO cria tenant novo — só popula/atualiza dados do tenant existente para
- * exercitar TODAS as funcionalidades de catálogo/loja que o sistema suporta:
- * cashback, formas de pagamento, pedido mínimo, atacado/varejo por produto,
- * preço por categoria de cliente, cupons (3 tipos), promoções, taxa de
- * entrega por bairro e endereço da loja.
+ * exercitar as funcionalidades de catálogo/loja que o sistema suporta:
+ * formas de pagamento, pedido mínimo, atacado por produto, cupons (3
+ * tipos), promoções, taxa de entrega por bairro e endereço da loja.
  *
  * Reaproveita os Services de domínio (não INSERT cru) para que eventos e
  * auditoria fiquem idênticos a uma operação real — replicando o mesmo truque
@@ -52,9 +46,8 @@ use RuntimeException;
  * updated_by do BaseModel) sob o contexto de auth já simulado. Isso não
  * dispara o evento ProductUpdated de auditoria — aceitável para carga.
  *
- * Idempotente onde razoável: cashback/promoções/taxa/endereço são upsert por
- * natureza; produtos novos, categoria de cliente e cupons checam existência
- * antes de criar; overrides de preço por categoria são "replace completo".
+ * Idempotente onde razoável: promoções/taxa/endereço são upsert por
+ * natureza; produtos novos e cupons checam existência antes de criar.
  */
 class StoreCatalogDemoSeeder extends Seeder
 {
@@ -74,13 +67,6 @@ class StoreCatalogDemoSeeder extends Seeder
         ['name' => 'Red Bull Energético Lata 250 ml', 'type' => 'Refrigerante', 'price' => 9.90, 'sku' => 'REDB-LT-250', 'brand' => 'Red Bull'],
         ['name' => 'Água Tônica Antarctica Lata 350 ml', 'type' => 'Refrigerante', 'price' => 4.50, 'sku' => 'TONI-LT-350', 'brand' => 'Antarctica'],
         ['name' => 'Água com Gás 500 ml', 'type' => 'Água', 'price' => 4.00, 'sku' => 'AGUAG-500', 'brand' => 'Fonte Pura'],
-    ];
-
-    /** Override de preço por categoria de cliente "Atacado": nome do produto => preço. */
-    private array $categoryPrices = [
-        'Coca-Cola Lata 350 ml' => 4.80,
-        'Guaraná Antarctica Lata 350 ml' => 4.30,
-        'Água Mineral sem Gás 500 ml' => 3.00,
     ];
 
     /** Promoção "de/por": nome do produto => promo_price (< price). */
@@ -117,7 +103,6 @@ class StoreCatalogDemoSeeder extends Seeder
             $this->configureSettings($tenant);
             $this->applyWholesale($tenant);
             $this->createRetailOnlyProducts($tenant);
-            $this->applyCategoryPrices($tenant);
             $this->createCoupons($tenant);
             $this->applyPromotions($tenant);
             $this->ensureDeliveryFees($tenant);
@@ -137,17 +122,10 @@ class StoreCatalogDemoSeeder extends Seeder
             'block_order_without_stock' => (bool) $current->block_order_without_stock,
             'minimum_order_value' => 100.00,
             'estimated_preparation_minutes' => 30,
-            'cashback_enabled' => true,
-            'cashback_percentage' => 5.00,
-            'cashback_max_per_order' => 50.00,
-            'cashback_hold_days' => 3,
-            'cashback_expiration_days' => 90,
-            'cashback_redeem_max_percentage' => 50.00,
-            'cashback_name' => 'Cashback 10k',
             'accepted_payment_methods' => ['cash', 'pix', 'credit_card', 'debit_card'],
         ]));
 
-        $this->command?->info('  settings: cashback ativo + 4 formas de pagamento + pedido mínimo R$100,00.');
+        $this->command?->info('  settings: 4 formas de pagamento + pedido mínimo R$100,00.');
     }
 
     private function applyWholesale(Tenant $tenant): void
@@ -200,48 +178,6 @@ class StoreCatalogDemoSeeder extends Seeder
         }
 
         $this->command?->info('  varejo: ' . $created . ' produtos novos só-varejo (sem atacado).');
-    }
-
-    private function applyCategoryPrices(Tenant $tenant): void
-    {
-        $category = ClientCategory::where('tenant_id', $tenant->id)
-            ->where('name', 'Atacado')
-            ->whereNull('deleted_at')
-            ->first();
-
-        // Garante uma segunda categoria de cliente para o demo ficar completo.
-        // Existência checada SEM filtrar deleted_at: a unique
-        // (uniq_tenant_client_category_name) não filtra soft-delete, então uma
-        // linha "Varejo" já excluída ainda colidiria no insert (gotcha
-        // documentado em api-patterns.md).
-        if (!ClientCategory::withTrashed()->where('tenant_id', $tenant->id)->where('name', 'Varejo')->exists()) {
-            app(ClientCategoryService::class)->create(
-                CreateClientCategoryDTO::fromArray(['name' => 'Varejo', 'is_active' => true], $tenant->id)
-            );
-        }
-
-        if (!$category) {
-            $category = app(ClientCategoryService::class)->create(
-                CreateClientCategoryDTO::fromArray(['name' => 'Atacado', 'is_active' => true], $tenant->id)
-            );
-        }
-
-        $service = app(ProductCategoryPriceService::class);
-
-        foreach ($this->categoryPrices as $name => $price) {
-            $product = $this->findProduct($tenant, $name);
-            if (!$product) {
-                continue;
-            }
-
-            $service->sync($product, SyncProductCategoryPricesDTO::fromArray([
-                'prices' => [
-                    ['client_category_uuid' => $category->uuid, 'price' => $price],
-                ],
-            ]));
-        }
-
-        $this->command?->info('  preço por categoria: ' . count($this->categoryPrices) . ' overrides na categoria "Atacado".');
     }
 
     private function createCoupons(Tenant $tenant): void

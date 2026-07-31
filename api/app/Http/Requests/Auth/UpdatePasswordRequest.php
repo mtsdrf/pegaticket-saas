@@ -24,10 +24,9 @@ class UpdatePasswordRequest extends FormRequest
 
     /**
      * Senha atual errada é regra de negócio (depende do hash já salvo do
-     * usuário autenticado), não formato de campo — checada aqui, mesmo
-     * padrão de withValidator/after() já usado em
-     * SyncProductCategoryPricesRequest, pra dar 422 VALIDATION_ERROR
-     * consistente em vez de uma exceção dedicada só pra isso.
+     * usuário autenticado), não formato de campo — checada aqui pra dar
+     * 422 VALIDATION_ERROR consistente em vez de uma exceção dedicada só
+     * pra isso.
      */
     public function withValidator(Validator $validator): void
     {

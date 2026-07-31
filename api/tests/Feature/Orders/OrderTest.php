@@ -212,92 +212,16 @@ class OrderTest extends TestCase
     }
 
     /**
-     * Roadmap 2.4 (atacado/varejo por categoria de cliente): sem unit_price
-     * manual no item, OrderService::create() consulta ProductPricingService
-     * — cliente com categoria com override cadastrado usa esse preço em vez
-     * do Product.price puro.
+     * unit_price manual continua com prioridade máxima sobre o preço de
+     * tabela calculado pelo servidor.
      */
     #[Test]
-    public function item_without_unit_price_uses_client_category_override_price(): void
+    public function explicit_unit_price_still_wins_over_default_price(): void
     {
         $this->grantPermission('orders', 'create');
         $client = $this->createClient($this->tenant->id);
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
-
-        $category = $this->createClientCategory($this->tenant->id);
-        $this->attachClientCategory($client, $category);
-        $this->setProductCategoryPrice($product, $category, 18.00);
-
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
-
-        $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.items.0.unit_price', '18.00')
-            ->assertJsonPath('data.items.0.line_total', '36.00')
-            ->assertJsonPath('data.total_amount', '36.00');
-    }
-
-    /**
-     * Cliente com duas categorias com override cadastrado pro mesmo
-     * produto usa o MENOR preço entre elas (decisão confirmada com o
-     * usuário — o cliente sempre recebe o melhor desconto pro qual se
-     * qualifica).
-     */
-    #[Test]
-    public function item_without_unit_price_uses_lowest_price_among_client_categories(): void
-    {
-        $this->grantPermission('orders', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
-
-        $categoryA = $this->createClientCategory($this->tenant->id);
-        $categoryB = $this->createClientCategory($this->tenant->id);
-        $this->attachClientCategory($client, $categoryA);
-        $this->attachClientCategory($client, $categoryB);
-        $this->setProductCategoryPrice($product, $categoryA, 18.00);
-        $this->setProductCategoryPrice($product, $categoryB, 15.00);
-
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
-
-        $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.items.0.unit_price', '15.00');
-    }
-
-    /**
-     * unit_price manual continua com prioridade máxima mesmo quando o
-     * cliente tem categoria com override cadastrado — regressão do
-     * comportamento já existente, agora com uma camada nova no meio.
-     */
-    #[Test]
-    public function explicit_unit_price_still_wins_over_client_category_override(): void
-    {
-        $this->grantPermission('orders', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
-
-        $category = $this->createClientCategory($this->tenant->id);
-        $this->attachClientCategory($client, $category);
-        $this->setProductCategoryPrice($product, $category, 18.00);
 
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
@@ -312,38 +236,6 @@ class OrderTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('data.items.0.unit_price', '5.00');
-    }
-
-    /**
-     * Cliente sem nenhuma categoria com override cadastrado pro produto
-     * cai no Product.price puro, mesmo já tendo categoria(s) sem preço
-     * configurado.
-     */
-    #[Test]
-    public function item_without_unit_price_falls_back_to_product_price_when_client_has_no_applicable_override(): void
-    {
-        $this->grantPermission('orders', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
-
-        $category = $this->createClientCategory($this->tenant->id);
-        $this->attachClientCategory($client, $category);
-        // Sem setProductCategoryPrice() — categoria existe, mas sem override pra este produto.
-
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
-
-        $response = $this->auth()->postJson('/api/v1/orders', [
-            'client_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['product_uuid' => $product->uuid, 'quantity' => 1],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.items.0.unit_price', '25.50');
     }
 
     /**

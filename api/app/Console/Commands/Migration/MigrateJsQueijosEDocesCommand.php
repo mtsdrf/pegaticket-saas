@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands\Migration;
 
-use App\Models\Client\DiaIdeal;
-use App\Models\Client\PeriodoIdeal;
 use App\Models\Location\Bairro;
 use App\Models\Location\Cidade;
 use App\Models\Location\Estado;
@@ -120,9 +118,10 @@ class MigrateJsQueijosEDocesCommand extends Command
             [$estadoMap, $cidadeMap, $bairroMap, $locStats] = $this->migrateLocations($legacy);
             $stats = array_merge($stats, $locStats);
 
-            $this->info('4/8 — Migrando dia ideal / período ideal...');
-            [$diaMap, $periodoMap, $idealStats] = $this->migrateDiaPeriodoIdeal($legacy, $tenant);
-            $stats = array_merge($stats, $idealStats);
+            $stats = array_merge($stats, [
+                'dia_ideal_migrados' => 0,
+                'periodo_ideal_migrados' => 0,
+            ]);
 
             $this->info('5/8 — Migrando categorias e tipos de produto...');
             [$categoryMap, $typeMap, $catStats] = $this->migrateProductCategoriesAndTypes($legacy, $tenant);
@@ -138,9 +137,7 @@ class MigrateJsQueijosEDocesCommand extends Command
                 $tenant,
                 $estadoMap,
                 $cidadeMap,
-                $bairroMap,
-                $diaMap,
-                $periodoMap
+                $bairroMap
             );
             $stats = array_merge($stats, $clientStats);
 
@@ -176,8 +173,6 @@ class MigrateJsQueijosEDocesCommand extends Command
             DB::table('products')->where('tenant_id', $tenant->id)->delete();
             DB::table('product_types')->where('tenant_id', $tenant->id)->delete();
             DB::table('product_categories')->where('tenant_id', $tenant->id)->delete();
-            DB::table('dia_ideais')->where('tenant_id', $tenant->id)->delete();
-            DB::table('periodo_ideais')->where('tenant_id', $tenant->id)->delete();
             DB::table('stock_locations')->where('tenant_id', $tenant->id)->delete();
             DB::table('tenant_role_permissions')
                 ->whereIn('tenant_role_id', TenantRole::where('tenant_id', $tenant->id)->pluck('id'))
@@ -361,35 +356,6 @@ class MigrateJsQueijosEDocesCommand extends Command
     /**
      * @return array{0: array<int,int>, 1: array<int,int>, 2: array<string,int>}
      */
-    private function migrateDiaPeriodoIdeal($legacy, Tenant $tenant): array
-    {
-        $diaMap = [];
-        foreach ($legacy->table('dia_ideal')->where('estabelecimento_id', self::LEGACY_ESTABELECIMENTO_ID)->get() as $row) {
-            $dia = DiaIdeal::firstOrCreate(
-                ['tenant_id' => $tenant->id, 'name' => $row->nome],
-                ['is_active' => (bool) $row->ativo]
-            );
-            $diaMap[$row->id] = $dia->id;
-        }
-
-        $periodoMap = [];
-        foreach ($legacy->table('periodo_ideal')->where('estabelecimento_id', self::LEGACY_ESTABELECIMENTO_ID)->get() as $row) {
-            $periodo = PeriodoIdeal::firstOrCreate(
-                ['tenant_id' => $tenant->id, 'name' => $row->nome],
-                ['is_active' => (bool) $row->ativo]
-            );
-            $periodoMap[$row->id] = $periodo->id;
-        }
-
-        return [$diaMap, $periodoMap, [
-            'dia_ideal_migrados' => count($diaMap),
-            'periodo_ideal_migrados' => count($periodoMap),
-        ]];
-    }
-
-    /**
-     * @return array{0: array<int,int>, 1: array<int,int>, 2: array<string,int>}
-     */
     private function migrateProductCategoriesAndTypes($legacy, Tenant $tenant): array
     {
         $categoryMap = [];
@@ -561,9 +527,7 @@ class MigrateJsQueijosEDocesCommand extends Command
         Tenant $tenant,
         array $estadoMap,
         array $cidadeMap,
-        array $bairroMap,
-        array $diaMap,
-        array $periodoMap
+        array $bairroMap
     ): array {
         $clientMap = [];
         $criados = 0;
@@ -584,8 +548,6 @@ class MigrateJsQueijosEDocesCommand extends Command
                 $estadoMap,
                 $cidadeMap,
                 $bairroMap,
-                $diaMap,
-                $periodoMap,
                 $legacyEnderecos
             ) {
                 foreach ($clientes as $row) {
@@ -634,8 +596,6 @@ class MigrateJsQueijosEDocesCommand extends Command
                         'tenant_id' => $tenant->id,
                         'name' => $row->nome,
                         'endereco_id' => $enderecoId,
-                        'dia_ideal_id' => $diaMap[$row->dia_ideal_id] ?? null,
-                        'periodo_ideal_id' => $periodoMap[$row->periodo_ideal_id] ?? null,
                         'phone_primary' => $row->telefone_principal,
                         'phone_secondary' => $row->telefone_secundario,
                         'notes' => $row->observacao,

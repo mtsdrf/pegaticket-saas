@@ -135,12 +135,6 @@ class StorefrontCheckoutPromotionTest extends TestCase
 
         $client = Order::where('uuid', $first->json('data.order.uuid'))->firstOrFail()->client;
 
-        // Desconto de categoria (R$8,00) aplicado depois — deveria vencer o
-        // preço base, mas a promoção ativa (R$12,00) continua vencendo.
-        $category = $this->createClientCategory($tenant->id);
-        $this->attachClientCategory($client, $category);
-        $this->setProductCategoryPrice($product, $category, 8);
-
         $second = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',
@@ -151,7 +145,7 @@ class StorefrontCheckoutPromotionTest extends TestCase
 
         $order = Order::where('uuid', $second->json('data.order.uuid'))->firstOrFail();
 
-        // 2 x R$12,00 (promoção, vence sobre os R$8,00 de categoria) = R$24,00.
+        // 2 x R$12,00 (promoção ainda ativa na recompra) = R$24,00.
         $this->assertEquals(24.0, (float) $order->total_amount);
     }
 

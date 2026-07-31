@@ -14,8 +14,6 @@ class Client extends BaseModel
     protected $fillable = [
         'tenant_id',
         'endereco_id',
-        'dia_ideal_id',
-        'periodo_ideal_id',
         'name',
         'last_name',
         // Cadastro fiscal do destinatário (roadmap Fiscal D0)
@@ -38,8 +36,6 @@ class Client extends BaseModel
         'id',
         'tenant_id',
         'endereco_id',
-        'dia_ideal_id',
-        'periodo_ideal_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -54,24 +50,6 @@ class Client extends BaseModel
     public function endereco()
     {
         return $this->belongsTo(Endereco::class);
-    }
-
-    public function diaIdeal()
-    {
-        return $this->belongsTo(DiaIdeal::class);
-    }
-
-    public function periodoIdeal()
-    {
-        return $this->belongsTo(PeriodoIdeal::class);
-    }
-
-    public function categories()
-    {
-        return $this->belongsToMany(ClientCategory::class, 'client_client_categories')
-            ->withTimestamps()
-            ->wherePivotNull('deleted_at')
-            ->withPivot(['uuid', 'created_by', 'updated_by', 'deleted_by', 'deleted_at']);
     }
 
     /**

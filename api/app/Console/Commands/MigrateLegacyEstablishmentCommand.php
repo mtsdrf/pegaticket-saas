@@ -193,7 +193,6 @@ class MigrateLegacyEstablishmentCommand extends Command
         $cidades = $filterByEstab($parser->rows('cidade'));
         $bairros = $filterByEstab($parser->rows('bairro'));
         $enderecos = $filterByEstab($parser->rows('endereco'));
-        $diaIdeais = $filterByEstab($parser->rows('dia_ideal'));
         $clientes = $filterByEstab($parser->rows('cliente'));
         $categoriaProdutos = $filterByEstab($parser->rows('categoria_produto'));
         $tipoProdutos = $filterByEstab($parser->rows('tipo_produto'));
@@ -234,7 +233,6 @@ class MigrateLegacyEstablishmentCommand extends Command
             'cidades' => $cidades,
             'bairros' => $bairros,
             'enderecos' => $enderecos,
-            'dia_ideais' => $diaIdeais,
             'clientes' => $clientes,
             'categoria_produtos' => $categoriaProdutos,
             'tipo_produtos' => $tipoProdutos,
@@ -273,7 +271,6 @@ class MigrateLegacyEstablishmentCommand extends Command
             'cidade' => count($d['cidades']),
             'bairro' => count($d['bairros']),
             'endereco' => count($d['enderecos']),
-            'dia_ideal' => count($d['dia_ideais']),
             'cliente' => count($d['clientes']),
             'produto' => count($d['produtos']),
             'pedido' => count($d['pedidos']),
@@ -444,9 +441,8 @@ class MigrateLegacyEstablishmentCommand extends Command
                 $stockLocationId = $this->createStockLocation($tenant->id);
 
                 [$estadoMap, $cidadeMap, $bairroMap] = $this->migrateLocations($d);
-                $diaMap = $this->migrateDiaIdeal($tenant->id, $d['dia_ideais']);
                 $enderecoMap = $this->migrateEnderecos($tenant->id, $d['clientes'], $d['enderecos'], $estadoMap, $cidadeMap, $bairroMap);
-                $clientMap = $this->migrateClients($tenant->id, $d['clientes'], $enderecoMap, $diaMap);
+                $clientMap = $this->migrateClients($tenant->id, $d['clientes'], $enderecoMap);
 
                 [$categoryMap, $typeMap] = $this->migrateProductCategoriesAndTypes($tenant->id, $d['categoria_produtos'], $d['tipo_produtos']);
                 $productMap = $this->migrateProducts($tenant->id, $d['produtos'], $typeMap);
@@ -628,26 +624,6 @@ class MigrateLegacyEstablishmentCommand extends Command
         return [$estadoMap, $cidadeMap, $bairroMap];
     }
 
-    /** @return array<int,int> */
-    private function migrateDiaIdeal(int $tenantId, array $diaIdeais): array
-    {
-        $map = [];
-        foreach ($diaIdeais as $row) {
-            $map[(int) $row['id']] = DB::table('dia_ideais')->insertGetId([
-                'uuid' => (string) Str::uuid(),
-                'tenant_id' => $tenantId,
-                'name' => $row['nome'],
-                'is_active' => (bool) $row['ativo'],
-                'created_by' => $this->actorId,
-                'updated_by' => $this->actorId,
-                'created_at' => $row['inclusao_data'] ?? now(),
-                'updated_at' => $row['alteracao_data'] ?? $row['inclusao_data'] ?? now(),
-            ]);
-        }
-
-        return $map;
-    }
-
     /**
      * 1 linha em `enderecos` por combinação única
      * (endereco_id legado + numero + complemento) — `numero`/`complemento`
@@ -705,7 +681,7 @@ class MigrateLegacyEstablishmentCommand extends Command
     }
 
     /** @return array<int,int> id do cliente legado => id do client novo */
-    private function migrateClients(int $tenantId, array $clientes, array $enderecoMap, array $diaMap): array
+    private function migrateClients(int $tenantId, array $clientes, array $enderecoMap): array
     {
         $map = [];
 
@@ -732,8 +708,6 @@ class MigrateLegacyEstablishmentCommand extends Command
                     'tenant_id' => $tenantId,
                     'name' => mb_substr((string) $row['nome'], 0, 90),
                     'endereco_id' => $enderecoId,
-                    'dia_ideal_id' => $diaMap[(int) ($row['dia_ideal_id'] ?? 0)] ?? null,
-                    'periodo_ideal_id' => null,
                     'phone_primary' => $row['telefone_principal'] ?? null,
                     'phone_secondary' => $row['telefone_secundario'] ?? null,
                     'notes' => $row['observacao'] ?? null,

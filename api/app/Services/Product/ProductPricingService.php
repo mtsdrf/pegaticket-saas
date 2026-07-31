@@ -2,9 +2,7 @@
 
 namespace App\Services\Product;
 
-use App\Models\Client\Client;
 use App\Models\Product\Product;
-use App\Models\Product\ProductCategoryPrice;
 
 /**
  * Camada de resolução de preço compartilhada entre OrderService::create()
@@ -15,43 +13,8 @@ use App\Models\Product\ProductCategoryPrice;
  */
 class ProductPricingService
 {
-    /**
-     * Sem cliente, ou cliente sem categoria com override cadastrado para
-     * este produto, cai no Product.price puro. Cliente com mais de uma
-     * categoria com override aplicável usa o MENOR preço entre elas
-     * (decisão confirmada com o usuário — o cliente sempre recebe o
-     * melhor desconto pro qual se qualifica).
-     */
-    public function resolvePrice(Product $product, ?Client $client): float
+    public function resolvePrice(Product $product, ?object $client): float
     {
-        return $this->resolveCategoryPrice($product, $client) ?? (float) $product->price;
-    }
-
-    /**
-     * Preço de categoria aplicável ao cliente, ou `null` quando NÃO há
-     * override de categoria (sem cliente, cliente sem categoria, ou
-     * categoria(s) do cliente sem override pra este produto). Diferente de
-     * resolvePrice(), NÃO cai no Product.price nesse caso — devolve null
-     * pra quem chama decidir o próximo degrau (ex.: preço de atacado no
-     * checkout da loja, que só se aplica a cliente SEM preço de categoria).
-     */
-    public function resolveCategoryPrice(Product $product, ?Client $client): ?float
-    {
-        if (!$client) {
-            return null;
-        }
-
-        $categoryIds = $client->categories()->pluck('client_categories.id');
-
-        if ($categoryIds->isEmpty()) {
-            return null;
-        }
-
-        $lowestOverride = ProductCategoryPrice::where('product_id', $product->id)
-            ->where('tenant_id', $product->tenant_id)
-            ->whereIn('client_category_id', $categoryIds)
-            ->min('price');
-
-        return $lowestOverride !== null ? (float) $lowestOverride : null;
+        return (float) $product->price;
     }
 }

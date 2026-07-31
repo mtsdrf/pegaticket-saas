@@ -33,7 +33,6 @@ use App\Http\Controllers\Subscription\PaymentWebhookController;
 use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Product\ProductCategoryController;
-use App\Http\Controllers\Product\ProductCategoryPriceController;
 use App\Http\Controllers\Product\ProductTypeController;
 use App\Http\Controllers\Location\EstadoController;
 use App\Http\Controllers\Location\CidadeController;
@@ -697,12 +696,6 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/{product}/suggested-price', [ProductController::class, 'suggestedPrice'])
                 ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,products-suggested-price']);
-
-            Route::get('/{product}/category-prices', [ProductCategoryPriceController::class, 'index'])
-                ->middleware(['tenant', 'perm:products,read', 'throttle:100,1,products-category-prices-list']);
-
-            Route::post('/{product}/category-prices/sync', [ProductCategoryPriceController::class, 'sync'])
-                ->middleware(['tenant', 'perm:products,update', 'throttle:30,1,products-category-prices-sync']);
 
             // Catálogo completo em PDF pro cliente final, não paginado.
             Route::post('/pdf', [ProductController::class, 'pdf'])

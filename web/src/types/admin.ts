@@ -228,7 +228,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   users: CRUD_ACTION_OPTIONS,
   tenant_roles: CRUD_ACTION_OPTIONS,
   tenant_users: CRUD_ACTION_OPTIONS,
-  client_categories: CRUD_ACTION_OPTIONS,
   product_categories: CRUD_ACTION_OPTIONS,
   product_types: CRUD_ACTION_OPTIONS,
   estados: CRUD_ACTION_OPTIONS,

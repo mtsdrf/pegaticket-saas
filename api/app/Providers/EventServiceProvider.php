@@ -145,29 +145,15 @@ use App\Listeners\Plan\AuditPlanFunctionalitiesSynced;
 
 /*
 |--------------------------------------------------------------------------
-| Client Category
-|--------------------------------------------------------------------------
-*/
-use App\Events\Client\ClientCategoryCreated;
-use App\Events\Client\ClientCategoryUpdated;
-use App\Events\Client\ClientCategoryDeleted;
-use App\Listeners\Client\AuditClientCategoryCreated;
-use App\Listeners\Client\AuditClientCategoryUpdated;
-use App\Listeners\Client\AuditClientCategoryDeleted;
-
-/*
-|--------------------------------------------------------------------------
 | Client
 |--------------------------------------------------------------------------
 */
 use App\Events\Client\ClientCreated;
 use App\Events\Client\ClientUpdated;
 use App\Events\Client\ClientDeleted;
-use App\Events\Client\ClientCategoriesSynced;
 use App\Listeners\Client\AuditClientCreated;
 use App\Listeners\Client\AuditClientUpdated;
 use App\Listeners\Client\AuditClientDeleted;
-use App\Listeners\Client\AuditClientCategoriesSynced;
 
 /*
 |--------------------------------------------------------------------------
@@ -218,8 +204,6 @@ use App\Listeners\Product\AuditProductImportCommitted;
 | Product Category Prices
 |--------------------------------------------------------------------------
 */
-use App\Events\Product\ProductCategoryPricesSynced;
-use App\Listeners\Product\AuditProductCategoryPricesSynced;
 
 /*
 |--------------------------------------------------------------------------
@@ -268,30 +252,6 @@ use App\Events\Location\EnderecoDeleted;
 use App\Listeners\Location\AuditEnderecoCreated;
 use App\Listeners\Location\AuditEnderecoUpdated;
 use App\Listeners\Location\AuditEnderecoDeleted;
-
-/*
-|--------------------------------------------------------------------------
-| Dia Ideal
-|--------------------------------------------------------------------------
-*/
-use App\Events\Client\DiaIdealCreated;
-use App\Events\Client\DiaIdealUpdated;
-use App\Events\Client\DiaIdealDeleted;
-use App\Listeners\Client\AuditDiaIdealCreated;
-use App\Listeners\Client\AuditDiaIdealUpdated;
-use App\Listeners\Client\AuditDiaIdealDeleted;
-
-/*
-|--------------------------------------------------------------------------
-| Periodo Ideal
-|--------------------------------------------------------------------------
-*/
-use App\Events\Client\PeriodoIdealCreated;
-use App\Events\Client\PeriodoIdealUpdated;
-use App\Events\Client\PeriodoIdealDeleted;
-use App\Listeners\Client\AuditPeriodoIdealCreated;
-use App\Listeners\Client\AuditPeriodoIdealUpdated;
-use App\Listeners\Client\AuditPeriodoIdealDeleted;
 
 /*
 |--------------------------------------------------------------------------
@@ -558,22 +518,12 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Client Category
-        |--------------------------------------------------------------------------
-        */
-        ClientCategoryCreated::class => [AuditClientCategoryCreated::class],
-        ClientCategoryUpdated::class => [AuditClientCategoryUpdated::class],
-        ClientCategoryDeleted::class => [AuditClientCategoryDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
         | Client
         |--------------------------------------------------------------------------
         */
         ClientCreated::class => [AuditClientCreated::class],
         ClientUpdated::class => [AuditClientUpdated::class],
         ClientDeleted::class => [AuditClientDeleted::class],
-        ClientCategoriesSynced::class => [AuditClientCategoriesSynced::class],
 
         /*
         |--------------------------------------------------------------------------
@@ -611,13 +561,6 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Product Category Prices
-        |--------------------------------------------------------------------------
-        */
-        ProductCategoryPricesSynced::class => [AuditProductCategoryPricesSynced::class],
-
-        /*
-        |--------------------------------------------------------------------------
         | Estado
         |--------------------------------------------------------------------------
         */
@@ -651,24 +594,6 @@ class EventServiceProvider extends ServiceProvider
         EnderecoCreated::class => [AuditEnderecoCreated::class],
         EnderecoUpdated::class => [AuditEnderecoUpdated::class],
         EnderecoDeleted::class => [AuditEnderecoDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Dia Ideal
-        |--------------------------------------------------------------------------
-        */
-        DiaIdealCreated::class => [AuditDiaIdealCreated::class],
-        DiaIdealUpdated::class => [AuditDiaIdealUpdated::class],
-        DiaIdealDeleted::class => [AuditDiaIdealDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Periodo Ideal
-        |--------------------------------------------------------------------------
-        */
-        PeriodoIdealCreated::class => [AuditPeriodoIdealCreated::class],
-        PeriodoIdealUpdated::class => [AuditPeriodoIdealUpdated::class],
-        PeriodoIdealDeleted::class => [AuditPeriodoIdealDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

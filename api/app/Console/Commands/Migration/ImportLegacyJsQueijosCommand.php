@@ -127,11 +127,10 @@ class ImportLegacyJsQueijosCommand extends Command
         $this->info($this->dryRun ? '=== DRY-RUN — nenhuma escrita será feita no banco alvo ===' : '=== EXECUÇÃO REAL — escrevendo no banco alvo (produção) ===');
 
         [$estadoMap, $cidadeMap, $bairroMap] = $this->transactional(fn () => $this->migrateLocations($legacy));
-        [$diaMap, $periodoMap] = $this->transactional(fn () => $this->migrateDiaPeriodoIdeal($legacy));
         [$categoryMap, $typeMap] = $this->transactional(fn () => $this->migrateProductCategoriesAndTypes($legacy));
         $productMap = $this->transactional(fn () => $this->migrateProducts($legacy, $typeMap));
 
-        $clientMap = $this->migrateClients($legacy, $estadoMap, $cidadeMap, $bairroMap, $diaMap, $periodoMap);
+        $clientMap = $this->migrateClients($legacy, $estadoMap, $cidadeMap, $bairroMap);
         $this->migrateOrders($legacy, $stockLocationId, $clientMap, $productMap);
 
         $this->printSummary();
@@ -294,87 +293,6 @@ class ImportLegacyJsQueijosCommand extends Command
         $this->stats['bairros_reaproveitados'] = $bairrosReaproveitados;
 
         return [$estadoMap, $cidadeMap, $bairroMap];
-    }
-
-    /**
-     * @return array{0: array<int,int>, 1: array<int,int>}
-     */
-    private function migrateDiaPeriodoIdeal($legacy): array
-    {
-        $tenantId = self::TARGET_TENANT_ID;
-
-        $diaMap = [];
-        $diaCriados = 0;
-        $diaReaproveitados = 0;
-
-        foreach ($legacy->table('dia_ideal')->where('estabelecimento_id', self::LEGACY_ESTABELECIMENTO_ID)->get() as $row) {
-            $existing = DB::table('dia_ideais')
-                ->where('tenant_id', $tenantId)
-                ->whereRaw('LOWER(TRIM(name)) = ?', [$this->norm($row->nome)])
-                ->first();
-
-            if ($existing) {
-                $diaMap[$row->id] = $existing->id;
-                $diaReaproveitados++;
-
-                continue;
-            }
-
-            $diaMap[$row->id] = $this->dryRun
-                ? -$row->id
-                : DB::table('dia_ideais')->insertGetId([
-                    'uuid' => (string) Str::uuid(),
-                    'tenant_id' => $tenantId,
-                    'name' => $row->nome,
-                    'is_active' => (bool) $row->ativo,
-                    'created_by' => $this->actorId,
-                    'updated_by' => $this->actorId,
-                    'created_at' => $row->inclusao_data ?? now(),
-                    'updated_at' => $row->alteracao_data ?? $row->inclusao_data ?? now(),
-                ]);
-
-            $diaCriados++;
-        }
-
-        $periodoMap = [];
-        $periodoCriados = 0;
-        $periodoReaproveitados = 0;
-
-        foreach ($legacy->table('periodo_ideal')->where('estabelecimento_id', self::LEGACY_ESTABELECIMENTO_ID)->get() as $row) {
-            $existing = DB::table('periodo_ideais')
-                ->where('tenant_id', $tenantId)
-                ->whereRaw('LOWER(TRIM(name)) = ?', [$this->norm($row->nome)])
-                ->first();
-
-            if ($existing) {
-                $periodoMap[$row->id] = $existing->id;
-                $periodoReaproveitados++;
-
-                continue;
-            }
-
-            $periodoMap[$row->id] = $this->dryRun
-                ? -$row->id
-                : DB::table('periodo_ideais')->insertGetId([
-                    'uuid' => (string) Str::uuid(),
-                    'tenant_id' => $tenantId,
-                    'name' => $row->nome,
-                    'is_active' => (bool) $row->ativo,
-                    'created_by' => $this->actorId,
-                    'updated_by' => $this->actorId,
-                    'created_at' => $row->inclusao_data ?? now(),
-                    'updated_at' => $row->alteracao_data ?? $row->inclusao_data ?? now(),
-                ]);
-
-            $periodoCriados++;
-        }
-
-        $this->stats['dia_ideal_criados'] = $diaCriados;
-        $this->stats['dia_ideal_reaproveitados'] = $diaReaproveitados;
-        $this->stats['periodo_ideal_criados'] = $periodoCriados;
-        $this->stats['periodo_ideal_reaproveitados'] = $periodoReaproveitados;
-
-        return [$diaMap, $periodoMap];
     }
 
     /**
@@ -556,9 +474,7 @@ class ImportLegacyJsQueijosCommand extends Command
         $legacy,
         array $estadoMap,
         array $cidadeMap,
-        array $bairroMap,
-        array $diaMap,
-        array $periodoMap
+        array $bairroMap
     ): array {
         $clientMap = [];
         $criados = 0;
@@ -591,8 +507,6 @@ class ImportLegacyJsQueijosCommand extends Command
                     $estadoMap,
                     $cidadeMap,
                     $bairroMap,
-                    $diaMap,
-                    $periodoMap,
                     $legacyEnderecos
                 ) {
                     foreach ($clientes as $row) {
@@ -644,8 +558,6 @@ class ImportLegacyJsQueijosCommand extends Command
                                 'tenant_id' => self::TARGET_TENANT_ID,
                                 'name' => $row->nome,
                                 'endereco_id' => $enderecoId,
-                                'dia_ideal_id' => $diaMap[$row->dia_ideal_id] ?? null,
-                                'periodo_ideal_id' => $periodoMap[$row->periodo_ideal_id] ?? null,
                                 'phone_primary' => $row->telefone_principal,
                                 'phone_secondary' => $row->telefone_secundario,
                                 'notes' => $row->observacao,

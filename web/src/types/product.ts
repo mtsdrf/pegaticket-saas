@@ -99,13 +99,6 @@ export interface ProductPayload {
   }>
 }
 
-/** Override de preço por categoria de cliente (roadmap 2.4 — atacado/varejo). Ausente da lista = sem override, usa `product.price`. */
-export interface ProductCategoryPrice {
-  client_category_uuid: string
-  client_category_name: string
-  price: number
-}
-
 export interface ProductFilters {
   /** Busca genérica OR-contains (name, product_type_name, product_category_name) — usada pela caixa "Buscar em todos os campos". */
   q?: string

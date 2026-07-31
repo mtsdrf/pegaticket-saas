@@ -2,7 +2,7 @@ import { apiClient, unwrap } from './apiClient'
 import { listPaginated } from './crudService'
 import type { ApiSuccess } from '../types/api'
 import type { PaginatedResult } from '../types/pagination'
-import type { Product, ProductCategoryPrice, ProductFilters, ProductPayload } from '../types/product'
+import type { Product, ProductFilters, ProductPayload } from '../types/product'
 
 export function listProducts(filters: ProductFilters): Promise<PaginatedResult<Product>> {
   return listPaginated<Product>('/products', filters)
@@ -80,18 +80,6 @@ export function toggleProductAvailability(uuid: string, isAvailable?: boolean): 
       isAvailable === undefined ? {} : { is_available: isAvailable },
     ),
   )
-}
-
-export function listProductCategoryPrices(productUuid: string): Promise<ProductCategoryPrice[]> {
-  return unwrap(apiClient.get<ApiSuccess<ProductCategoryPrice[]>>(`/products/${productUuid}/category-prices`))
-}
-
-/** Substituição completa (full-replace) — enviar só as categorias que devem ter override depois da chamada. */
-export function syncProductCategoryPrices(
-  productUuid: string,
-  prices: { client_category_uuid: string; price: number }[],
-): Promise<void> {
-  return apiClient.post(`/products/${productUuid}/category-prices/sync`, { prices }).then(() => undefined)
 }
 
 /** Sem `clientUuid`, sempre resolve pro preço de tabela (`product.price`). */
