@@ -235,20 +235,6 @@ class TenantService
                 $data = ['name' => $dto->name];
                 $this->applyLogoUpload($data, $dto->logo, $newMedia);
 
-                // Campos fiscais só entram no update quando vieram no request
-                // (roadmap Fiscal D0) — quem atualiza só nome/logo não zera o
-                // cadastro fiscal por omissão.
-                foreach ($dto->fiscal as $field => $value) {
-                    $data[$field] = $value;
-                }
-
-                if ($dto->fiscalCertificateA1) {
-                    $data['fiscal_certificate_a1_data'] = file_get_contents($dto->fiscalCertificateA1->getRealPath());
-                    $data['fiscal_certificate_a1_mime'] = $dto->fiscalCertificateA1->getMimeType();
-                    $data['fiscal_certificate_a1_name'] = $dto->fiscalCertificateA1->getClientOriginalName();
-                    $data['fiscal_certificate_a1_updated_at'] = now();
-                }
-
                 $tenant = $this->repository->update($tenant, $data);
 
                 if ($newMedia && $oldPath && $oldPath !== $newMedia['path']) {

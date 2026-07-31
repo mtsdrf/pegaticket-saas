@@ -6,13 +6,11 @@ import { StorefrontLayout } from '../layouts/StorefrontLayout'
 import { ACCESS } from '../access/requirements'
 import { SETTINGS_BLOCKS } from '../pages/Settings/blocks/registry'
 import { PortalAuthProvider } from '../contexts/PortalAuthContext'
-import { AccountingAuthProvider } from '../contexts/AccountingAuthContext'
 import { ThemeFab } from '../components/ThemeFab'
 import { LoginPage } from '../pages/Login/LoginPage'
 import { SignupPage } from '../pages/Login/SignupPage'
 import { PermissionRoute } from './PermissionRoute'
 import { PortalProtectedRoute } from './PortalProtectedRoute'
-import { AccountingProtectedRoute } from './AccountingProtectedRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 
 const AcceptInvitePage = lazy(() =>
@@ -73,46 +71,6 @@ const StorefrontReservationPage = lazy(() =>
   import('../pages/Storefront/StorefrontReservationPage').then((m) => ({ default: m.StorefrontReservationPage })),
 )
 
-const AccountingRegisterPage = lazy(() =>
-  import('../pages/Accounting/AccountingRegisterPage').then((m) => ({ default: m.AccountingRegisterPage })),
-)
-const AccountingConfirmTotpPage = lazy(() =>
-  import('../pages/Accounting/AccountingConfirmTotpPage').then((m) => ({ default: m.AccountingConfirmTotpPage })),
-)
-const AccountingLoginPage = lazy(() =>
-  import('../pages/Accounting/AccountingLoginPage').then((m) => ({ default: m.AccountingLoginPage })),
-)
-const AccountingShell = lazy(() =>
-  import('../pages/Accounting/AccountingShell').then((m) => ({ default: m.AccountingShell })),
-)
-const AccountingCompaniesPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompaniesPage').then((m) => ({ default: m.AccountingCompaniesPage })),
-)
-const AccountingRequestAccessPage = lazy(() =>
-  import('../pages/Accounting/AccountingRequestAccessPage').then((m) => ({ default: m.AccountingRequestAccessPage })),
-)
-const AccountingCompanyLayout = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyLayout').then((m) => ({ default: m.AccountingCompanyLayout })),
-)
-const AccountingCompanyReportsPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyReportsPage').then((m) => ({ default: m.AccountingCompanyReportsPage })),
-)
-const AccountingCompanyMessagesPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyMessagesPage').then((m) => ({ default: m.AccountingCompanyMessagesPage })),
-)
-const AccountingCompanyProductsPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyProductsPage').then((m) => ({ default: m.AccountingCompanyProductsPage })),
-)
-const AccountingCompanyClientsPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyClientsPage').then((m) => ({ default: m.AccountingCompanyClientsPage })),
-)
-const AccountingCompanyTaxRulesPage = lazy(() =>
-  import('../pages/Accounting/AccountingCompanyTaxRulesPage').then((m) => ({ default: m.AccountingCompanyTaxRulesPage })),
-)
-const AccountingAccessPage = lazy(() =>
-  import('../pages/Settings/AccountingAccessPage').then((m) => ({ default: m.AccountingAccessPage })),
-)
-
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ClientListPage = lazy(() => import('../pages/Client/ClientListPage').then((m) => ({ default: m.ClientListPage })))
 const ClientFormPage = lazy(() => import('../pages/Client/ClientFormPage').then((m) => ({ default: m.ClientFormPage })))
@@ -170,9 +128,6 @@ const OrderListPage = lazy(() => import('../pages/Order/OrderListPage').then((m)
 const StorefrontOrderManagementPage = lazy(() =>
   import('../pages/Order/StorefrontOrderManagementPage').then((m) => ({ default: m.StorefrontOrderManagementPage })),
 )
-const MarketplaceOrdersPage = lazy(() =>
-  import('../pages/Marketplace/MarketplaceOrdersPage').then((m) => ({ default: m.MarketplaceOrdersPage })),
-)
 const OrderFormPage = lazy(() => import('../pages/Order/OrderFormPage').then((m) => ({ default: m.OrderFormPage })))
 const PdvCashSessionGatePage = lazy(() =>
   import('../pages/Pdv/PdvCashSessionGatePage').then((m) => ({ default: m.PdvCashSessionGatePage })),
@@ -193,9 +148,6 @@ const BalcaoComandaPage = lazy(() =>
 const BalcaoKdsPage = lazy(() => import('../pages/Balcao/BalcaoKdsPage').then((m) => ({ default: m.BalcaoKdsPage })))
 const BalcaoReceiptView = lazy(() =>
   import('../pages/Balcao/BalcaoReceiptView').then((m) => ({ default: m.BalcaoReceiptView })),
-)
-const RoutePlannerPage = lazy(() =>
-  import('../pages/Route/RoutePlannerPage').then((m) => ({ default: m.RoutePlannerPage })),
 )
 const AnalyticsPage = lazy(() =>
   import('../pages/Analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
@@ -277,21 +229,6 @@ const StoreBusinessSettingsPage = lazy(() =>
 const SubscriptionPage = lazy(() =>
   import('../pages/Settings/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })),
 )
-const IntegrationsPage = lazy(() =>
-  import('../pages/Settings/IntegrationsPage').then((m) => ({ default: m.IntegrationsPage })),
-)
-const TaxRuleListPage = lazy(() =>
-  import('../pages/Fiscal/TaxRuleListPage').then((m) => ({ default: m.TaxRuleListPage })),
-)
-const TaxRuleFormPage = lazy(() =>
-  import('../pages/Fiscal/TaxRuleFormPage').then((m) => ({ default: m.TaxRuleFormPage })),
-)
-const FiscalOperationProfileListPage = lazy(() =>
-  import('../pages/Fiscal/FiscalOperationProfileListPage').then((m) => ({ default: m.FiscalOperationProfileListPage })),
-)
-const FiscalOperationProfileFormPage = lazy(() =>
-  import('../pages/Fiscal/FiscalOperationProfileFormPage').then((m) => ({ default: m.FiscalOperationProfileFormPage })),
-)
 const LegalDocumentPage = lazy(() =>
   import('../pages/Legal/LegalDocumentPage').then((m) => ({ default: m.LegalDocumentPage })),
 )
@@ -325,21 +262,6 @@ function PortalLayout() {
   )
 }
 
-/**
- * `AccountingAuthProvider` isolado da subárvore `/contador/*` — 3ª identidade
- * (`AccountingOffice`), nunca junto do `AuthProvider` (staff) nem do
- * `PortalAuthProvider` (cliente final). Mesmo padrão de isolamento do
- * `PortalLayout`.
- */
-function AccountingLayout() {
-  return (
-    <AccountingAuthProvider>
-      <Outlet />
-      <ThemeFab />
-    </AccountingAuthProvider>
-  )
-}
-
 export function AppRoutes() {
   return (
     <Suspense fallback={<RouteFallback />}>
@@ -369,28 +291,6 @@ export function AppRoutes() {
             <Route path="/portal/vouchers" element={<PortalVouchersPage />} />
             <Route path="/portal/cashback" element={<PortalCashbackPage />} />
             <Route path="/portal/perfil" element={<PortalProfilePage />} />
-          </Route>
-        </Route>
-
-        {/* Módulo do contador (roadmap 2C) — subárvore isolada com provider
-            próprio (`AccountingAuthProvider`), mesma estrutura do Portal. */}
-        <Route element={<AccountingLayout />}>
-          <Route path="/contador/cadastro" element={<AccountingRegisterPage />} />
-          <Route path="/contador/cadastro/confirmar-totp" element={<AccountingConfirmTotpPage />} />
-          <Route path="/contador/entrar" element={<AccountingLoginPage />} />
-
-          <Route element={<AccountingProtectedRoute />}>
-            <Route element={<AccountingShell />}>
-              <Route path="/contador/empresas" element={<AccountingCompaniesPage />} />
-              <Route path="/contador/solicitar-acesso" element={<AccountingRequestAccessPage />} />
-              <Route path="/contador/empresas/:tenantUuid" element={<AccountingCompanyLayout />}>
-                <Route index element={<AccountingCompanyReportsPage />} />
-                <Route path="produtos-fiscais" element={<AccountingCompanyProductsPage />} />
-                <Route path="clientes-fiscais" element={<AccountingCompanyClientsPage />} />
-                <Route path="regras-tributarias" element={<AccountingCompanyTaxRulesPage />} />
-                <Route path="pendencias" element={<AccountingCompanyMessagesPage />} />
-              </Route>
-            </Route>
           </Route>
         </Route>
 
@@ -466,7 +366,6 @@ export function AppRoutes() {
             <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.ordersCreate}><OrderFormPage /></PermissionRoute>} />
             <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
-            <Route path="/pedidos-ifood" element={<PermissionRoute requirement={ACCESS.apiAccessRead}><MarketplaceOrdersPage /></PermissionRoute>} />
             <Route path="/treinamentos" element={<TrainingCenterPage />} />
             {/* PDV — o gate de caixa (PermissionRoute `pdv:read`) envolve toda a
                 sub-árvore: sem caixa aberto mostra a abertura, com caixa aberto
@@ -482,7 +381,6 @@ export function AppRoutes() {
             <Route path="/balcao/comandas/:uuid" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoComandaPage /></PermissionRoute>} />
             <Route path="/balcao/kds" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoKdsPage /></PermissionRoute>} />
             <Route path="/balcao/recibo" element={<PermissionRoute requirement={ACCESS.balcaoRead}><BalcaoReceiptView /></PermissionRoute>} />
-            <Route path="/rotas" element={<PermissionRoute requirement={ACCESS.routesRead}><RoutePlannerPage /></PermissionRoute>} />
 
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
@@ -547,70 +445,6 @@ export function AppRoutes() {
                 element={
                   <PermissionRoute requirement={ACCESS.subscriptionRead} requireOwner ownerBypassesAccess>
                     <SubscriptionPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="integracoes"
-                element={
-                  <PermissionRoute requirement={ACCESS.apiAccessRead}>
-                    <IntegrationsPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="contadores"
-                element={
-                  <PermissionRoute requirement={ACCESS.accountingAccessRead}>
-                    <AccountingAccessPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="regras-tributarias"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesRead}>
-                    <TaxRuleListPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="regras-tributarias/nova"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesCreate}>
-                    <TaxRuleFormPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="regras-tributarias/:uuid/editar"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesUpdate}>
-                    <TaxRuleFormPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="perfis-fiscais"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesRead}>
-                    <FiscalOperationProfileListPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="perfis-fiscais/novo"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesCreate}>
-                    <FiscalOperationProfileFormPage />
-                  </PermissionRoute>
-                }
-              />
-              <Route
-                path="perfis-fiscais/:uuid/editar"
-                element={
-                  <PermissionRoute requirement={ACCESS.taxRulesUpdate}>
-                    <FiscalOperationProfileFormPage />
                   </PermissionRoute>
                 }
               />

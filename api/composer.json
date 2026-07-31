@@ -35,8 +35,7 @@
         },
         "files": [
             "app/Support/tenant.php",
-            "app/Support/portal.php",
-            "app/Support/accounting.php"
+            "app/Support/portal.php"
         ]
     },
     "autoload-dev": {

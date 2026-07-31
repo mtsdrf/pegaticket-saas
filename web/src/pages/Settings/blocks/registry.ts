@@ -1,4 +1,3 @@
-import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined'
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
@@ -8,8 +7,6 @@ import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
-import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { lazy, type ComponentType } from 'react'
 import { ACCESS } from '../../../access/requirements'
@@ -138,38 +135,6 @@ export const SETTINGS_LINKS: SettingsLinkConfig[] = [
     description: 'Taxas de entrega, cupons e promoções.',
     icon: StorefrontOutlinedIcon,
     permission: ACCESS.storefrontUpdate,
-  },
-  {
-    key: 'contadores',
-    to: '/configuracoes/contadores',
-    label: 'Contabilidade',
-    description: 'Acesso de escritórios contábeis à sua empresa.',
-    icon: AccountBalanceOutlinedIcon,
-    permission: ACCESS.accountingAccessRead,
-  },
-  {
-    key: 'regras-tributarias',
-    to: '/configuracoes/regras-tributarias',
-    label: 'Regras tributárias',
-    description: 'Alíquotas, escopo e vigência fiscal da empresa.',
-    icon: ReceiptLongOutlinedIcon,
-    permission: ACCESS.taxRulesRead,
-  },
-  {
-    key: 'perfis-fiscais',
-    to: '/configuracoes/perfis-fiscais',
-    label: 'Perfis fiscais',
-    description: 'CFOP base, documento e prontidão fiscal por operação.',
-    icon: ReceiptLongOutlinedIcon,
-    permission: ACCESS.taxRulesRead,
-  },
-  {
-    key: 'integracoes',
-    to: '/configuracoes/integracoes',
-    label: 'Integrações',
-    description: 'Chaves de API e webhooks.',
-    icon: VpnKeyOutlinedIcon,
-    permission: ACCESS.apiAccessRead,
   },
   {
     key: 'assinatura',

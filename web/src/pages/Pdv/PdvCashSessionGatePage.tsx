@@ -29,8 +29,8 @@ import { PdvSessionContext } from './PdvSessionContext'
  * Gate de caixa: envolve toda a árvore `/pdv/*`. Consulta a sessão aberta
  * atual; sem caixa aberto mostra a abertura (troco inicial), com caixa aberto
  * libera as sub-rotas via `<Outlet />` + `PdvSessionContext`. Mesmo espírito
- * de `AccountingProtectedRoute`/`PortalProtectedRoute`, mas o critério é "tem
- * caixa aberto" em vez de "está autenticado".
+ * de `PortalProtectedRoute`, mas o critério é "tem caixa aberto" em vez de
+ * "está autenticado".
  */
 export function PdvCashSessionGatePage() {
   const { activeTenantUuid } = useAuth()

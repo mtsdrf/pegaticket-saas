@@ -1,4 +1,3 @@
-import AltRouteOutlinedIcon from '@mui/icons-material/AltRouteOutlined'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
@@ -141,8 +140,6 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
   { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
   { kind: 'link', to: '/pedidos-loja', label: 'Pedidos da Loja', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontOrdersRead },
-  { kind: 'link', to: '/pedidos-ifood', label: 'Pedidos iFood', icon: LocalShippingOutlinedIcon, access: ACCESS.apiAccessRead },
-  { kind: 'link', to: '/rotas', label: 'Montar rota', icon: AltRouteOutlinedIcon, access: ACCESS.routesRead },
   { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
   {
     kind: 'group',

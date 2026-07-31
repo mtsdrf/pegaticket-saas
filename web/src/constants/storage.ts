@@ -9,13 +9,6 @@ export const STORAGE_KEYS = {
    * nunca podem se misturar: ver `services/portalApiClient.ts`.
    */
   portalAccessToken: 'maskats.portal_access_token',
-  /**
-   * Token do escritório de contabilidade (`AccountingOffice`, módulo do
-   * contador) — 3ª identidade, chave DEDICADA, nunca reaproveita
-   * `accessToken` (staff) nem `portalAccessToken` (cliente final). Ver
-   * `services/accountingApiClient.ts`.
-   */
-  accountingAccessToken: 'maskats.accounting_access_token',
   /** `sessionStorage` (não `localStorage`) — some ao fechar a aba/navegador, pra o modal de seleção de empresa reaparecer a cada novo acesso, não a cada F5. */
   tenantSelectionConfirmed: 'maskats.tenant_selection_confirmed',
   /** Roadmap A1.6 — `published_at` (ISO) da release note mais recente já vista pelo usuário neste navegador; usado só pra calcular o badge de "novidades" do sino no `AppLayout`. */

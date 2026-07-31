@@ -5,11 +5,12 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Cadastro fiscal do destinatário (roadmap Fiscal D0). Todos nullable —
- * não quebram cliente existente. `clients` não tinha nenhum campo de
- * documento antes (explorado), então `cpf_cnpj` é criado aqui (não há
- * duplicação). `ie_indicator` é o indicador de IE do destinatário
- * (contribuinte|isento|nao_contribuinte), exigido por qualquer NF-e futura.
+ * Identidade documental do cliente (CPF/CNPJ + inscrição estadual). Não é
+ * um recurso fiscal — é usado como identificação obrigatória do cliente em
+ * StoreClientRequest/ClientService/ClientResource, independente de emissão
+ * de nota fiscal (que o PegaTicket não emite na v1). Recriado a partir da
+ * migration fiscal original (`add_fiscal_fields_to_clients_table`) removida
+ * na Fase 2 da migração Maskats -> PegaTicket.
  */
 return new class extends Migration {
     public function up(): void

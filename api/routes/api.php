@@ -32,9 +32,6 @@ use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Subscription\PaymentWebhookController;
 use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Payment\PaymentIssueController;
-use App\Http\Controllers\Fiscal\FiscalOperationProfileController;
-use App\Http\Controllers\Fiscal\FiscalReadinessController;
-use App\Http\Controllers\Fiscal\TaxRuleController;
 use App\Http\Controllers\Client\ClientCategoryController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductCategoryPriceController;
@@ -55,8 +52,6 @@ use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Stock\StockLocationController;
 use App\Http\Controllers\Stock\StockMovementController;
 use App\Http\Controllers\Order\OrderController;
-use App\Http\Controllers\Order\OrderFiscalDocumentController;
-use App\Http\Controllers\Order\OrderFiscalPreviewController;
 use App\Http\Controllers\Order\OrderInstallmentController;
 use App\Http\Controllers\Order\OrderTrackingController;
 use App\Http\Controllers\Order\OrderPrepViewController;
@@ -74,7 +69,6 @@ use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\ReceivableInteractionController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
-use App\Http\Controllers\Route\RouteCandidateController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalLinkController;
 use App\Http\Controllers\Portal\PortalCashbackController;
@@ -97,23 +91,8 @@ use App\Http\Controllers\Storefront\StoreAddressController;
 use App\Http\Controllers\Storefront\StoreDeliveryFeeController;
 use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\ProductPromotionController;
-use App\Http\Controllers\Accounting\AccountingAuthController;
-use App\Http\Controllers\Accounting\AccountingAccessRequestController;
-use App\Http\Controllers\Accounting\AccountingAccessApprovalController;
-use App\Http\Controllers\Accounting\AccountingReportController;
-use App\Http\Controllers\Accounting\AccountingMessageController;
-use App\Http\Controllers\Accounting\AccountingProductController;
-use App\Http\Controllers\Accounting\AccountingClientController;
-use App\Http\Controllers\Accounting\AccountingTaxRuleController;
-use App\Http\Controllers\Accounting\TenantAccountingMessageController;
 use App\Http\Controllers\Support\SupportTicketController;
-use App\Http\Controllers\ApiKey\ApiKeyController;
-use App\Http\Controllers\Marketplace\MarketplaceIntegrationController;
-use App\Http\Controllers\Marketplace\MarketplaceWebhookController;
 use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
-use App\Http\Controllers\Webhook\WebhookSubscriptionController;
-use App\Http\Controllers\Public\PublicOrderController;
-use App\Http\Controllers\Public\PublicProductController;
 
 Route::prefix('v1')->group(function () {
 
@@ -167,14 +146,6 @@ Route::prefix('v1')->group(function () {
     // Ver PaymentWebhookController.
     Route::post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])
         ->middleware('throttle:120,1,payments-webhook');
-
-    // Webhook público de marketplace (Fase iFood) — nesta etapa a assinatura
-    // exata do iFood ainda depende da confirmação integral do portal autenticado,
-    // então a ingestão é deliberadamente defensiva e idempotente por
-    // external_event_id. A URL já fica estável para a empresa configurar.
-    Route::post('/webhooks/marketplace/ifood/{marketplaceIntegration:uuid}', [MarketplaceWebhookController::class, 'ifood'])
-        ->name('marketplace.webhook.ifood')
-        ->middleware('throttle:120,1,marketplace-ifood-webhook');
 
     // Acompanhamento de pedido (roadmap 5.1) — 100% público, sem
     // jwt/tenant/perm, protegido só pelo uuid do pedido ser imprevisível
@@ -375,77 +346,6 @@ Route::prefix('v1')->group(function () {
     // portal. Ver App\Services\Storefront\StorefrontCheckoutService.
     Route::post('/loja/{slug}/checkout', [StorefrontCheckoutController::class, 'store'])
         ->middleware(['customer.jwt', 'throttle:20,1,storefront-checkout']);
-
-    // Módulo do contador (roadmap 2C) — identidade própria
-    // (App\Models\Accounting\AccountingOffice), NÃO é User staff nem
-    // FinalCustomer. TOTP obrigatório: login só funciona depois de
-    // /accounting/totp/confirm. Rotas de cadastro/login públicas (sem jwt).
-    Route::post('/accounting/register', [AccountingAuthController::class, 'register'])
-        ->middleware('throttle:5,1,accounting-register');
-
-    Route::post('/accounting/totp/confirm', [AccountingAuthController::class, 'confirmTotp'])
-        ->middleware('throttle:10,1,accounting-totp-confirm');
-
-    Route::post('/accounting/login', [AccountingAuthController::class, 'login'])
-        ->middleware('throttle:5,1,accounting-login');
-
-    // Autenticado como AccountingOffice via `accounting.jwt`.
-    Route::middleware(['accounting.jwt'])->prefix('accounting')->group(function () {
-
-        Route::get('/me', [AccountingAuthController::class, 'me'])
-            ->middleware('throttle:60,1,accounting-me');
-
-        // Solicitações de acesso a tenants (lado do contador).
-        Route::post('/access-requests', [AccountingAccessRequestController::class, 'store'])
-            ->middleware('throttle:20,1,accounting-access-request');
-
-        Route::get('/access-requests', [AccountingAccessRequestController::class, 'index'])
-            ->middleware('throttle:60,1,accounting-access-list');
-
-        // Consultas escopadas a um tenant específico (vínculo aprovado
-        // resolvido por `accounting.tenant` a partir do path param).
-        Route::middleware(['accounting.tenant'])->prefix('tenants/{tenant_uuid}')->group(function () {
-
-            Route::get('/reports/sales', [AccountingReportController::class, 'sales'])
-                ->middleware('throttle:60,1,accounting-report-sales');
-
-            Route::get('/reports/cash-flow', [AccountingReportController::class, 'cashFlow'])
-                ->middleware('throttle:60,1,accounting-report-cashflow');
-
-            Route::get('/reports/dre', [AccountingReportController::class, 'dre'])
-                ->middleware('throttle:60,1,accounting-report-dre');
-
-            Route::get('/messages', [AccountingMessageController::class, 'index'])
-                ->middleware('throttle:60,1,accounting-messages-list');
-
-            Route::post('/messages', [AccountingMessageController::class, 'store'])
-                ->middleware('throttle:30,1,accounting-messages-create');
-
-            Route::get('/products', [AccountingProductController::class, 'index'])
-                ->middleware(['accounting.scope:fiscal.read,fiscal.write', 'throttle:60,1,accounting-products-list']);
-
-            Route::put('/products/{product}', [AccountingProductController::class, 'updateFiscal'])
-                ->middleware(['accounting.scope:fiscal.write', 'throttle:30,1,accounting-products-update-fiscal']);
-
-            Route::get('/clients', [AccountingClientController::class, 'index'])
-                ->middleware(['accounting.scope:fiscal.read,fiscal.write', 'throttle:60,1,accounting-clients-list']);
-
-            Route::put('/clients/{client}', [AccountingClientController::class, 'updateFiscal'])
-                ->middleware(['accounting.scope:fiscal.write', 'throttle:30,1,accounting-clients-update-fiscal']);
-
-            Route::get('/tax-rules', [AccountingTaxRuleController::class, 'index'])
-                ->middleware(['accounting.scope:fiscal.read,fiscal.write', 'throttle:60,1,accounting-tax-rules-list']);
-
-            Route::post('/tax-rules', [AccountingTaxRuleController::class, 'store'])
-                ->middleware(['accounting.scope:fiscal.write', 'throttle:30,1,accounting-tax-rules-store']);
-
-            Route::put('/tax-rules/{uuid}', [AccountingTaxRuleController::class, 'update'])
-                ->middleware(['accounting.scope:fiscal.write', 'throttle:30,1,accounting-tax-rules-update']);
-
-            Route::delete('/tax-rules/{uuid}', [AccountingTaxRuleController::class, 'destroy'])
-                ->middleware(['accounting.scope:fiscal.write', 'throttle:30,1,accounting-tax-rules-delete']);
-        });
-    });
 
     Route::middleware(['jwt'])->group(function () {
 
@@ -917,60 +817,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,coupons-delete']);
         });
 
-        // Regras tributárias parametrizadas e versionadas (roadmap Fiscal D0)
-        // — CRUD tenant-scoped, cada tenant define AS SUAS regras. Sem motor
-        // de cálculo ainda. Ver App\Services\Fiscal\TaxRuleService.
-        Route::prefix('tax-rules')->group(function () {
-            Route::get('/', [TaxRuleController::class, 'index'])
-                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,tax-rules-list']);
-
-            Route::post('/', [TaxRuleController::class, 'store'])
-                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,tax-rules-create']);
-
-            Route::put('/{uuid}', [TaxRuleController::class, 'update'])
-                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,tax-rules-update']);
-
-            Route::delete('/{uuid}', [TaxRuleController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:10,1,tax-rules-delete']);
-        });
-
-        Route::prefix('fiscal-operation-profiles')->group(function () {
-            Route::get('/', [FiscalOperationProfileController::class, 'index'])
-                ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:100,1,fiscal-operation-profiles-list']);
-
-            Route::post('/', [FiscalOperationProfileController::class, 'store'])
-                ->middleware(['tenant', 'perm:tax-rules,create', 'throttle:30,1,fiscal-operation-profiles-create']);
-
-            Route::put('/{uuid}', [FiscalOperationProfileController::class, 'update'])
-                ->middleware(['tenant', 'perm:tax-rules,update', 'throttle:30,1,fiscal-operation-profiles-update']);
-
-            Route::delete('/{uuid}', [FiscalOperationProfileController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:tax-rules,delete', 'throttle:10,1,fiscal-operation-profiles-delete']);
-        });
-
-        Route::get('/fiscal-readiness', [FiscalReadinessController::class, 'show'])
-            ->middleware(['tenant', 'perm:tax-rules,read', 'throttle:60,1,fiscal-readiness-show']);
-
-        // Acesso do contador — lado do TENANT (roadmap 2C). Dono aprova/revoga
-        // solicitações e conversa na central de pendências. `perm:accounting-access`
-        // só é concedida ao papel `owner` por padrão (via provisionamento).
-        Route::prefix('accounting-access-requests')->group(function () {
-            Route::get('/', [AccountingAccessApprovalController::class, 'index'])
-                ->middleware(['tenant', 'perm:accounting-access,read', 'throttle:60,1,accounting-access-requests-list']);
-
-            Route::post('/{uuid}/approve', [AccountingAccessApprovalController::class, 'approve'])
-                ->middleware(['tenant', 'perm:accounting-access,approve', 'throttle:30,1,accounting-access-approve']);
-
-            Route::post('/{uuid}/revoke', [AccountingAccessApprovalController::class, 'revoke'])
-                ->middleware(['tenant', 'perm:accounting-access,revoke', 'throttle:30,1,accounting-access-revoke']);
-
-            Route::get('/{uuid}/messages', [TenantAccountingMessageController::class, 'index'])
-                ->middleware(['tenant', 'perm:accounting-access,read', 'throttle:60,1,accounting-access-messages-list']);
-
-            Route::post('/{uuid}/messages', [TenantAccountingMessageController::class, 'store'])
-                ->middleware(['tenant', 'perm:accounting-access,create', 'throttle:30,1,accounting-access-messages-create']);
-        });
-
         // Preço promocional "de/por" por produto (Delivery Fase 3) — upsert
         // 1 por produto, mesmo shape de store-delivery-fees. Ver
         // App\Services\Storefront\ProductPromotionService.
@@ -1118,27 +964,6 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/{order}', [OrderController::class, 'show'])
                 ->middleware(['tenant', 'perm:orders,read', 'throttle:100,1,orders-show']);
-
-            Route::get('/{order}/fiscal-preview', [OrderFiscalPreviewController::class, 'show'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:60,1,orders-fiscal-preview']);
-
-            Route::get('/{order}/fiscal-document', [OrderFiscalDocumentController::class, 'show'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:60,1,orders-fiscal-document-show']);
-
-            Route::get('/{order}/fiscal-document/xml-preview', [OrderFiscalDocumentController::class, 'xmlPreview'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:30,1,orders-fiscal-document-xml-preview']);
-
-            Route::post('/{order}/fiscal-document', [OrderFiscalDocumentController::class, 'store'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:20,1,orders-fiscal-document-store']);
-
-            Route::post('/{order}/fiscal-document/submit', [OrderFiscalDocumentController::class, 'submit'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:20,1,orders-fiscal-document-submit']);
-
-            Route::post('/{order}/fiscal-document/sync-status', [OrderFiscalDocumentController::class, 'syncStatus'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:20,1,orders-fiscal-document-sync-status']);
-
-            Route::post('/{order}/fiscal-document/cancel', [OrderFiscalDocumentController::class, 'cancel'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:20,1,orders-fiscal-document-cancel']);
 
             // Edição de itens/cabeçalho de pedido já criado — escopo
             // limitado (não altera client_uuid/is_installment), só
@@ -1551,14 +1376,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'tenant.owner', 'perm:subscription,read', 'throttle:60,1,subscription-refunds']);
         });
 
-        // Rota de entrega/cobrança com mapa (Fase 3.2 do roadmap) —
-        // Functionality própria `routes`, só nos planos Ouro/Diamante;
-        // endpoint de leitura, otimização de rota (OSRM) é 100% frontend.
-        Route::prefix('routes')->group(function () {
-            Route::get('/candidates', [RouteCandidateController::class, 'index'])
-                ->middleware(['tenant', 'perm:routes,read', 'throttle:60,1,routes-candidates']);
-        });
-
         // Central de chamados nativa (roadmap A4, item 17) — reaproveita o
         // padrão de dado do módulo do contador (anexo opcional, status
         // simples). Ver App\Services\Support\SupportTicketService.
@@ -1570,134 +1387,5 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:support,create', 'throttle:20,1,support-tickets-create']);
         });
 
-        // API pública + webhooks de saída (roadmap A6, item 20) — gestão de
-        // API keys e webhook subscriptions pelo staff (JWT normal, mesma
-        // Functionality 'api-access' pras duas coisas). A API key em texto
-        // puro/secret do webhook só aparecem na resposta do respectivo
-        // POST (nunca mais depois). Ver App\Services\ApiKey\ApiKeyService
-        // e App\Services\Webhook\WebhookSubscriptionService.
-        Route::prefix('api-keys')->group(function () {
-            Route::get('/', [ApiKeyController::class, 'index'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,api-keys-list']);
-
-            Route::post('/', [ApiKeyController::class, 'store'])
-                ->middleware(['tenant', 'perm:api-access,create', 'throttle:10,1,api-keys-create']);
-
-            Route::delete('/{apiKey:uuid}', [ApiKeyController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:api-access,delete', 'throttle:20,1,api-keys-delete']);
-        });
-
-        Route::prefix('webhook-subscriptions')->group(function () {
-            Route::get('/', [WebhookSubscriptionController::class, 'index'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,webhook-subscriptions-list']);
-
-            Route::post('/', [WebhookSubscriptionController::class, 'store'])
-                ->middleware(['tenant', 'perm:api-access,create', 'throttle:20,1,webhook-subscriptions-create']);
-
-            Route::get('/{webhookSubscription:uuid}', [WebhookSubscriptionController::class, 'show'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,webhook-subscriptions-show']);
-
-            Route::put('/{webhookSubscription:uuid}', [WebhookSubscriptionController::class, 'update'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,webhook-subscriptions-update']);
-
-            Route::delete('/{webhookSubscription:uuid}', [WebhookSubscriptionController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:api-access,delete', 'throttle:20,1,webhook-subscriptions-delete']);
-
-            Route::get('/{webhookSubscription:uuid}/deliveries', [WebhookSubscriptionController::class, 'deliveries'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:30,1,webhook-subscriptions-deliveries']);
-        });
-
-        // Integrações de marketplace (Fase iFood) — por ora geridas no mesmo
-        // escopo de "API e Webhooks" para evitar abrir outra functionality
-        // antes de a frente estabilizar. O tenant configura a credencial,
-        // sincroniza lojas, executa polling manual e opera ações externas do
-        // pedido a partir do próprio Maskats.
-        Route::prefix('marketplace')->group(function () {
-            Route::get('/integrations', [MarketplaceIntegrationController::class, 'index'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-integrations-list']);
-
-            Route::post('/integrations', [MarketplaceIntegrationController::class, 'store'])
-                ->middleware(['tenant', 'perm:api-access,create', 'throttle:10,1,marketplace-integrations-create']);
-
-            Route::put('/integrations/{marketplaceIntegration:uuid}', [MarketplaceIntegrationController::class, 'update'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:10,1,marketplace-integrations-update']);
-
-            Route::post('/integrations/{marketplaceIntegration:uuid}/sync-merchants', [MarketplaceIntegrationController::class, 'syncMerchants'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:10,1,marketplace-integrations-sync-merchants']);
-
-            Route::post('/integrations/{marketplaceIntegration:uuid}/poll', [MarketplaceIntegrationController::class, 'poll'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-integrations-poll']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/events', [MarketplaceIntegrationController::class, 'events'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-integrations-events']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/operations-summary', [MarketplaceIntegrationController::class, 'operationsSummary'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-integrations-operations-summary']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/catalog/preview', [MarketplaceIntegrationController::class, 'catalogPreview'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:30,1,marketplace-integrations-catalog-preview']);
-
-            Route::post('/integrations/{marketplaceIntegration:uuid}/catalog/sync', [MarketplaceIntegrationController::class, 'syncCatalog'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:10,1,marketplace-integrations-catalog-sync']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/catalog/syncs', [MarketplaceIntegrationController::class, 'catalogSyncs'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:30,1,marketplace-integrations-catalog-syncs']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/merchant-status', [MarketplaceIntegrationController::class, 'merchantStatus'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:30,1,marketplace-integrations-merchant-status']);
-
-            Route::post('/integrations/{marketplaceIntegration:uuid}/interruptions', [MarketplaceIntegrationController::class, 'createInterruption'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:10,1,marketplace-integrations-interruptions-create']);
-
-            Route::delete('/integrations/{marketplaceIntegration:uuid}/interruptions/{interruptionId}', [MarketplaceIntegrationController::class, 'deleteInterruption'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-integrations-interruptions-delete']);
-
-            Route::post('/integrations/{marketplaceIntegration:uuid}/opening-hours/sync', [MarketplaceIntegrationController::class, 'syncOpeningHours'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:10,1,marketplace-integrations-opening-hours-sync']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/orders', [MarketplaceIntegrationController::class, 'orders'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-integrations-orders']);
-
-            Route::get('/orders/{marketplaceOrder:uuid}', [MarketplaceIntegrationController::class, 'showOrder'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-orders-show']);
-
-            Route::get('/orders/{marketplaceOrder:uuid}/cancellation-reasons', [MarketplaceIntegrationController::class, 'cancellationReasons'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:60,1,marketplace-order-cancellation-reasons']);
-
-            Route::get('/integrations/{marketplaceIntegration:uuid}/health', [MarketplaceIntegrationController::class, 'health'])
-                ->middleware(['tenant', 'perm:api-access,read', 'throttle:20,1,marketplace-integrations-health']);
-
-            Route::post('/orders/{marketplaceOrder:uuid}/actions', [MarketplaceIntegrationController::class, 'performAction'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-order-actions']);
-
-            Route::post('/orders/{marketplaceOrder:uuid}/import', [MarketplaceIntegrationController::class, 'importOrder'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-order-import']);
-
-            Route::post('/orders/{marketplaceOrder:uuid}/refresh', [MarketplaceIntegrationController::class, 'refreshOrder'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-order-refresh']);
-
-            Route::post('/events/{marketplaceEvent:uuid}/retry', [MarketplaceIntegrationController::class, 'retryEvent'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-event-retry']);
-
-            Route::post('/catalog/syncs/{marketplaceCatalogSync:uuid}/refresh', [MarketplaceIntegrationController::class, 'refreshCatalogSync'])
-                ->middleware(['tenant', 'perm:api-access,update', 'throttle:20,1,marketplace-catalog-sync-refresh']);
-        });
-    });
-
-    // API pública (roadmap A6, item 20) — leitura de pedidos/produtos
-    // autenticada por API key (`api.key`, não `jwt`+`tenant`). Escopo
-    // inicial deliberadamente restrito a leitura (ver
-    // App\Http\Controllers\Public\PublicOrderController/
-    // PublicProductController — reaproveitam OrderService/ProductService
-    // já usados no staff). Sem `perm:`: a posse da chave já autoriza.
-    Route::prefix('public')->middleware('api.key')->group(function () {
-        Route::get('/orders', [PublicOrderController::class, 'index'])
-            ->middleware('throttle:60,1,public-orders-list');
-
-        Route::get('/orders/{order:uuid}', [PublicOrderController::class, 'show'])
-            ->middleware('throttle:100,1,public-orders-show');
-
-        Route::get('/products', [PublicProductController::class, 'index'])
-            ->middleware('throttle:60,1,public-products-list');
     });
 });

@@ -40,7 +40,6 @@ use App\Models\Storefront\CouponRedemption;
 use App\Exceptions\DiscountLimitExceededException;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Services\Permission\PermissionService;
-use App\Services\Fiscal\FiscalDocumentLifecycleService;
 use App\Services\Product\ProductPricingService;
 use App\Services\Product\ProductService;
 use App\Services\Stock\StockService;
@@ -59,7 +58,7 @@ use Illuminate\Support\Str;
  */
 class OrderService
 {
-    public const EAGER_RELATIONS = ['client.endereco.cidade', 'client.endereco.bairro', 'stockLocation', 'items.product', 'items.options.productOption.group', 'installments', 'coupon', 'rating', 'latestFiscalDocument'];
+    public const EAGER_RELATIONS = ['client.endereco.cidade', 'client.endereco.bairro', 'stockLocation', 'items.product', 'items.options.productOption.group', 'installments', 'coupon', 'rating'];
     public const LIST_EAGER_RELATIONS = ['client'];
 
     public function __construct(
@@ -69,7 +68,6 @@ class OrderService
         private ProductPricingService $pricingService,
         private OrderPaymentService $paymentService,
         private PermissionService $permissionService,
-        private FiscalDocumentLifecycleService $fiscalDocumentLifecycleService,
         private WorkflowTransitionLogger $workflowTransitionLogger,
     ) {
     }
@@ -586,10 +584,6 @@ class OrderService
             }
 
             $order->save();
-            $this->fiscalDocumentLifecycleService->invalidatePreparedDocuments(
-                $order,
-                __('messages.order.fiscal_document_invalidated_after_order_update')
-            );
 
             event(new OrderItemsUpdated(
                 orderUuid: $order->uuid,
@@ -1004,10 +998,6 @@ class OrderService
             $order->cancelled_at = now();
             $order->cancellation_reason = $dto->cancellationReason;
             $order->save();
-            $this->fiscalDocumentLifecycleService->invalidatePreparedDocuments(
-                $order,
-                __('messages.order.fiscal_document_invalidated_after_order_cancel')
-            );
 
             // Pedido pago via Pix sendo cancelado: gera um Refund pendente
             // (não apaga o pagamento) — roadmap 2A.

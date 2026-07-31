@@ -91,7 +91,6 @@ export const ACCESS = {
   storefrontOrdersDeliver: tenant('storefront-orders', 'deliver'),
   storefrontOrdersUndeliver: tenant('storefront-orders', 'undeliver'),
   storefrontOrdersPay: tenant('storefront-orders', 'pay'),
-  routesRead: tenant('routes', 'read'),
   reportsRead: tenant('reports', 'read'),
   /** Conciliação financeira (roadmap A3.12) — `payments`/`refunds`/`webhook_events` do tenant. */
   financeRead: tenant('finance', 'read'),

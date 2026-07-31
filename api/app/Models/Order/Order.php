@@ -4,14 +4,11 @@ namespace App\Models\Order;
 
 use App\Models\BaseModel;
 use App\Models\Client\Client;
-use App\Models\Fiscal\FiscalDocument;
 use App\Models\Report\ReceivableInteraction;
 use App\Models\Stock\StockLocation;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\OrderRating;
 use App\Models\Tenant\Tenant;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
 
 class Order extends BaseModel
@@ -187,15 +184,5 @@ class Order extends BaseModel
     public function payments()
     {
         return $this->morphMany(\App\Models\Subscription\Payment::class, 'payable');
-    }
-
-    public function fiscalDocuments(): MorphMany
-    {
-        return $this->morphMany(FiscalDocument::class, 'documentable');
-    }
-
-    public function latestFiscalDocument(): MorphOne
-    {
-        return $this->morphOne(FiscalDocument::class, 'documentable')->latestOfMany();
     }
 }

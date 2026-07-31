@@ -2,10 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Accounting\ApproveAccessDTO;
-use App\DTOs\Accounting\CreateAccessRequestDTO;
-use App\DTOs\Accounting\CreateAccountingMessageDTO;
-use App\DTOs\Accounting\RegisterAccountingOfficeDTO;
 use App\DTOs\Balcao\AddComandaItemDTO;
 use App\DTOs\Balcao\CloseComandaDTO;
 use App\DTOs\Balcao\CreateStationDTO;
@@ -13,7 +9,6 @@ use App\DTOs\Balcao\CreateTableDTO;
 use App\DTOs\Balcao\OpenComandaDTO;
 use App\DTOs\Balcao\UpdatePrepStatusDTO;
 use App\DTOs\Client\CreateClientDTO;
-use App\DTOs\Fiscal\CreateTaxRuleDTO;
 use App\DTOs\Location\CreateBairroDTO;
 use App\DTOs\Location\CreateCidadeDTO;
 use App\DTOs\Order\CreateOrderDTO;
@@ -28,7 +23,6 @@ use App\DTOs\Tenant\CreateTenantRoleDTO;
 use App\DTOs\Tenant\CreateTenantUserDTO;
 use App\DTOs\Tenant\SyncTenantRolePermissionsDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
-use App\Models\Accounting\AccountingOffice;
 use App\Models\Balcao\Station;
 use App\Models\Client\Client;
 use App\Models\FinalCustomer\FinalCustomer;
@@ -41,16 +35,11 @@ use App\Models\Product\Product;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Accounting\AccountingAccessApprovalService;
-use App\Services\Accounting\AccountingAccessRequestService;
-use App\Services\Accounting\AccountingAuthService;
-use App\Services\Accounting\AccountingMessageService;
 use App\Services\Balcao\ComandaItemService;
 use App\Services\Balcao\ComandaService;
 use App\Services\Balcao\StationService;
 use App\Services\Balcao\TableService;
 use App\Services\Client\ClientService;
-use App\Services\Fiscal\TaxRuleService;
 use App\Services\Location\BairroService;
 use App\Services\Location\CidadeService;
 use App\Services\Order\OrderService;
@@ -199,9 +188,7 @@ class DemoPlansPresentationSeeder extends Seeder
         }
 
         if ($cfg['tier'] === 'diamante') {
-            $this->setupFiscal($tenant);
             $this->setupSubscription($tenant, $plan);
-            $this->setupAccounting($tenant, $owner);
             $this->setupBalcao($tenant, $catalog);
         }
 
@@ -644,42 +631,6 @@ class DemoPlansPresentationSeeder extends Seeder
     }
 
     /**
-     * Cadastro fiscal do emitente (roadmap Fiscal D0). `fiscal_environment`
-     * NUNCA 'producao' num tenant de demonstração (evita risco de emissão
-     * real por engano) — mantém o default seguro 'homologacao'. CNPJ/IE/IM/
-     * CNAE fictícios, só com o formato certo (14 dígitos numéricos).
-     */
-    private function setupFiscal(Tenant $tenant): void
-    {
-        Tenant::where('id', $tenant->id)->update([
-            'cnpj' => '12345678000199',
-            'ie' => '123456789',
-            'im' => '987654',
-            'cnae' => '5611203',
-            'tax_regime' => 'simples_nacional',
-            'fiscal_environment' => 'homologacao',
-            'ibge_city_code' => '3503208', // Araraquara/SP
-        ]);
-
-        // $tenant é reaproveitado depois (setupAccounting usa $tenant->cnpj)
-        // — refresh() sincroniza o objeto em memória com o UPDATE acima,
-        // que foi feito via query builder (não $tenant->update()).
-        $tenant->refresh();
-
-        app(TaxRuleService::class)->create($tenant->id, CreateTaxRuleDTO::fromArray([
-            'tax_type' => 'icms',
-            'rate_percent' => 18.0,
-            'is_active' => true,
-        ]));
-
-        app(TaxRuleService::class)->create($tenant->id, CreateTaxRuleDTO::fromArray([
-            'tax_type' => 'iss',
-            'rate_percent' => 5.0,
-            'is_active' => true,
-        ]));
-    }
-
-    /**
      * Assinatura ativa (não trial) com período coerente com "hoje" — o
      * fluxo normal (SubscriptionService::create) sempre nasce trialing;
      * forceFill direto no model pra representar uma assinatura já paga na
@@ -695,51 +646,6 @@ class DemoPlansPresentationSeeder extends Seeder
             'current_period_end' => now()->endOfMonth(),
             'next_charge_at' => now()->addMonth()->startOfMonth(),
         ])->save();
-    }
-
-    /**
-     * Escritório de contabilidade fake vinculado e aprovado, com 1 mensagem
-     * de exemplo na central de pendências. `totp_enabled_at` forçado direto
-     * no model (sem passar pelo fluxo real de confirmação de TOTP, que
-     * exigiria gerar um código válido agora) — suficiente pra representar
-     * "contador já habilitado" na demo.
-     */
-    private function setupAccounting(Tenant $tenant, User $owner): void
-    {
-        $registration = app(AccountingAuthService::class)->register(RegisterAccountingOfficeDTO::fromArray([
-            'cnpj' => '98765432000188',
-            'company_name' => 'Contabilidade Modelo Ltda',
-            'responsible_name' => 'Fernanda Contadora',
-            'email' => 'contabilidade.modelo.' . $tenant->slug . '@maskats.com',
-            'password' => self::PASSWORD,
-        ]));
-
-        /** @var AccountingOffice $office */
-        $office = $registration['office'];
-        $office->forceFill(['totp_enabled_at' => now()])->save();
-
-        $link = app(AccountingAccessRequestService::class)->request(
-            $office,
-            CreateAccessRequestDTO::fromArray(['tenant_cnpj' => $tenant->cnpj])
-        );
-
-        app(AccountingAccessApprovalService::class)->approve(
-            $link->uuid,
-            $tenant->id,
-            ApproveAccessDTO::fromArray(['scopes' => ['reports', 'messages']]),
-            $owner->id
-        );
-
-        app(AccountingMessageService::class)->create(
-            $link->fresh(),
-            CreateAccountingMessageDTO::fromArray([
-                'body' => 'Pendência de exemplo: enviar relatório de vendas do mês para conciliação.',
-                'due_date' => now()->addDays(5)->toDateString(),
-            ]),
-            AccountingMessageService::SENDER_TENANT,
-            $owner->id,
-            null
-        );
     }
 
     /**

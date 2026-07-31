@@ -1,5 +1,4 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
@@ -12,7 +11,6 @@ import { useSearchParams } from 'react-router-dom'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
-import { OrderFiscalDialog } from '../../components/order/OrderFiscalDialog'
 import { StorefrontOrderActionDialog } from '../../components/order/StorefrontOrderActionDialog'
 import { WorkflowActionDropZone } from '../../components/workflow/WorkflowActionDropZone'
 import { WorkflowBoardColumn } from '../../components/workflow/WorkflowBoardColumn'
@@ -108,7 +106,6 @@ export function StorefrontOrderManagementPage() {
   const openedFromDashboard = sourceFromQuery === 'dashboard'
 
   const [selectedOrderUuid, setSelectedOrderUuid] = useState<string | null>(null)
-  const [selectedFiscalOrderUuid, setSelectedFiscalOrderUuid] = useState<string | null>(null)
   const [selectedTimelineOrderUuid, setSelectedTimelineOrderUuid] = useState<string | null>(null)
   const [boardOrders, setBoardOrders] = useState<Order[]>([])
   const [boardError, setBoardError] = useState<string | null>(null)
@@ -252,16 +249,6 @@ export function StorefrontOrderManagementPage() {
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
               >
                 <VisibilityOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Informações fiscais" arrow>
-              <IconButton
-                size="small"
-                aria-label={`Ver informações fiscais do pedido ${row.codigo}`}
-                onClick={() => setSelectedFiscalOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
-              >
-                <DescriptionOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Histórico operacional" arrow>
@@ -541,9 +528,6 @@ export function StorefrontOrderManagementPage() {
                       <Button size="small" variant="text" onClick={() => setSelectedOrderUuid(order.uuid)} sx={{ px: 0 }}>
                         Gerenciar
                       </Button>
-                      <Button size="small" variant="text" onClick={() => setSelectedFiscalOrderUuid(order.uuid)} sx={{ px: 0 }}>
-                        Fiscal
-                      </Button>
                       <Button size="small" variant="text" onClick={() => setSelectedTimelineOrderUuid(order.uuid)} sx={{ px: 0 }}>
                         Histórico
                       </Button>
@@ -713,13 +697,6 @@ export function StorefrontOrderManagementPage() {
           gridApiRef.current?.refreshInfiniteCache()
           void refreshBoard()
         }}
-      />
-
-      <OrderFiscalDialog
-        orderUuid={selectedFiscalOrderUuid}
-        open={selectedFiscalOrderUuid !== null}
-        onClose={() => setSelectedFiscalOrderUuid(null)}
-        onChanged={() => gridApiRef.current?.refreshInfiniteCache()}
       />
 
       <WorkflowReasonDialog

@@ -41,12 +41,6 @@ class StoreProductRequest extends FormRequest
             ],
             'barcode' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
-            // Cadastro fiscal do produto (roadmap Fiscal D0) — todos nullable.
-            'ncm' => ['nullable', 'string', 'digits:8'],
-            'cest' => ['nullable', 'string', 'max:10'],
-            'origin' => ['nullable', 'string', 'regex:/^[0-8]$/'],
-            'default_cfop' => ['nullable', 'string', 'max:10'],
-            'csosn_cst' => ['nullable', 'string', 'max:10'],
             'unit' => ['nullable', 'string', 'max:50'],
             'is_lot_controlled' => ['boolean'],
             'is_expiry_controlled' => ['boolean'],

@@ -55,10 +55,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.owner' => \App\Http\Middleware\EnsureTenantOwner::class,
             'customer.jwt' => \App\Http\Middleware\CustomerJwtAccessMiddleware::class,
             'customer.jwt.optional' => \App\Http\Middleware\OptionalCustomerJwtMiddleware::class,
-            'accounting.jwt' => \App\Http\Middleware\AccountingJwtAccessMiddleware::class,
-            'accounting.tenant' => \App\Http\Middleware\ResolveAccountingTenant::class,
-            'accounting.scope' => \App\Http\Middleware\EnsureAccountingScope::class,
-            'api.key' => \App\Http\Middleware\ApiKeyAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

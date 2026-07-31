@@ -3,7 +3,6 @@ import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import CountertopsOutlinedIcon from '@mui/icons-material/CountertopsOutlined'
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined'
@@ -22,7 +21,6 @@ import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { OrderDetailDialog } from '../../components/order/OrderDetailDialog'
-import { OrderFiscalDialog } from '../../components/order/OrderFiscalDialog'
 import { WorkflowActionDropZone } from '../../components/workflow/WorkflowActionDropZone'
 import { WorkflowBoardColumn } from '../../components/workflow/WorkflowBoardColumn'
 import { WorkflowReasonDialog } from '../../components/workflow/WorkflowReasonDialog'
@@ -30,18 +28,14 @@ import { WorkflowTimelineDialog } from '../../components/workflow/WorkflowTimeli
 import { ACCESS } from '../../access/requirements'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
-import * as marketplaceService from '../../services/marketplaceService'
 import * as orderService from '../../services/orderService'
-import * as routeService from '../../services/routeService'
 import * as storefrontOrderService from '../../services/storefrontOrderService'
 import * as workflowService from '../../services/workflowService'
 import { getApiErrorMessage } from '../../types/api'
-import type { MarketplaceIntegration } from '../../types/marketplace'
 import type { Order } from '../../types/order'
 import type { OrderOperationStage, OrderOrigin, OrderStatus } from '../../types/order'
 import { formatCurrency, formatDateTimeBR } from '../../utils/format'
 import { deriveOrderStatus, STATUS_TONE_COLORS } from '../../utils/orderStatus'
-import { toIsoDate } from '../../utils/period'
 
 const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
   { value: 'all', label: 'Todos os canais' },
@@ -67,8 +61,6 @@ interface OperationSnapshot {
   dispatchTotal: number | null
   financialPendingTotal: number | null
   byOrigin: Partial<Record<OrderOrigin, number>>
-  externalPendingImport: number | null
-  externalImportErrors: number | null
 }
 
 type OperationQueuePreview = Record<OrderOperationStage, Order[]>
@@ -81,14 +73,6 @@ interface QuickQueueAction {
 
 type OperationPriority = 'normal' | 'attention' | 'urgent' | 'critical'
 type OperationOwner = 'store' | 'operations' | 'delivery' | 'finance'
-
-interface OperationCoordinationSnapshot {
-  deliveryStopsToday: number | null
-  deliveryOrdersToday: number | null
-  collectionStopsToday: number | null
-  deliveryOrderUuids: string[]
-  collectionOrderUuids: string[]
-}
 
 type OrderBoardDropTarget = OrderOperationStage | 'cancel' | 'complete'
 
@@ -249,7 +233,6 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
       label: 'Entrega e rotas',
       caption: 'Organiza deslocamento, rota e confirmação de entrega.',
       accent: 'var(--mk-info)',
-      to: '/rotas',
     }
   }
   return {
@@ -356,8 +339,6 @@ function QueueOrderCard({
   quickAction,
   onQuickAction,
   isSubmitting,
-  isOnDeliveryRouteToday,
-  isOnCollectionRouteToday,
   draggable = false,
   isDragging = false,
   onDragStart,
@@ -369,8 +350,6 @@ function QueueOrderCard({
   quickAction: QuickQueueAction | null
   onQuickAction: (order: Order) => void
   isSubmitting: boolean
-  isOnDeliveryRouteToday: boolean
-  isOnCollectionRouteToday: boolean
   draggable?: boolean
   isDragging?: boolean
   onDragStart?: (event: DragEvent<HTMLDivElement>) => void
@@ -447,33 +426,6 @@ function QueueOrderCard({
           <Typography sx={{ fontSize: 12.5, color: 'var(--mk-muted)' }}>{formatDateTimeBR(order.created_at)}</Typography>
         </Stack>
 
-        {(isOnDeliveryRouteToday || isOnCollectionRouteToday) && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
-            {isOnDeliveryRouteToday ? (
-              <Chip
-                size="small"
-                label="Na rota de entrega de hoje"
-                sx={{
-                  fontWeight: 700,
-                  color: 'var(--mk-info)',
-                  bgcolor: 'color-mix(in srgb, var(--mk-info) 12%, transparent)',
-                }}
-              />
-            ) : null}
-            {isOnCollectionRouteToday ? (
-              <Chip
-                size="small"
-                label="Na rota de cobrança de hoje"
-                sx={{
-                  fontWeight: 700,
-                  color: 'var(--mk-danger)',
-                  bgcolor: 'color-mix(in srgb, var(--mk-danger) 12%, transparent)',
-                }}
-              />
-            ) : null}
-          </Stack>
-        )}
-
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
           {ownerDetails ? (
             <Typography sx={{ fontSize: 12.5, color: ownerDetails.accent, fontWeight: 700 }}>
@@ -529,7 +481,6 @@ export function OrderListPage() {
   const openedFromDashboard = sourceFromQuery === 'dashboard'
 
   const [selectedOrderUuid, setSelectedOrderUuid] = useState<string | null>(null)
-  const [selectedFiscalOrderUuid, setSelectedFiscalOrderUuid] = useState<string | null>(null)
   const [selectedTimelineOrderUuid, setSelectedTimelineOrderUuid] = useState<string | null>(null)
   const [originFilter, setOriginFilter] = useState<'all' | OrderOrigin>(isManualOrdersPage ? 'staff' : 'all')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
@@ -544,8 +495,6 @@ export function OrderListPage() {
     dispatchTotal: null,
     financialPendingTotal: null,
     byOrigin: {},
-    externalPendingImport: null,
-    externalImportErrors: null,
   })
   const [snapshotError, setSnapshotError] = useState<string | null>(null)
   const [queuePreview, setQueuePreview] = useState<OperationQueuePreview>({
@@ -561,13 +510,6 @@ export function OrderListPage() {
   const [pendingOrderBoardAction, setPendingOrderBoardAction] = useState<ResolvedOrderBoardAction | null>(null)
   const [boardActionSubmitting, setBoardActionSubmitting] = useState(false)
   const [submittingOrderUuid, setSubmittingOrderUuid] = useState<string | null>(null)
-  const [coordinationSnapshot, setCoordinationSnapshot] = useState<OperationCoordinationSnapshot>({
-    deliveryStopsToday: null,
-    deliveryOrdersToday: null,
-    collectionStopsToday: null,
-    deliveryOrderUuids: [],
-    collectionOrderUuids: [],
-  })
 
   const fetchPage = useCallback(
     async ({ page, perPage, sortBy, sortDir, filters }: ServerGridFetchParams): Promise<ServerGridFetchResult<Order>> => {
@@ -589,8 +531,6 @@ export function OrderListPage() {
   )
 
   const canReadStorefrontQueue = can(ACCESS.storefrontOrdersRead)
-  const canReadMarketplaceQueue = can(ACCESS.apiAccessRead)
-  const canReadRoutes = can(ACCESS.routesRead)
   const canReadFinance = can(ACCESS.financeRead)
   const canApproveStorefrontOrder = can(ACCESS.storefrontOrdersApprove)
   const canCancelStorefrontOrder = can(ACCESS.storefrontOrdersCancel)
@@ -665,30 +605,11 @@ export function OrderListPage() {
     return base
   }, [queuePreview])
 
-  const deliveryRouteOrderUuids = useMemo(() => new Set(coordinationSnapshot.deliveryOrderUuids), [coordinationSnapshot.deliveryOrderUuids])
-  const collectionRouteOrderUuids = useMemo(
-    () => new Set(coordinationSnapshot.collectionOrderUuids),
-    [coordinationSnapshot.collectionOrderUuids],
-  )
-
-  const dispatchCoordinationSummary = useMemo(
-    () => queuePreview.dispatch.reduce((sum, order) => sum + (deliveryRouteOrderUuids.has(order.uuid) ? 1 : 0), 0),
-    [deliveryRouteOrderUuids, queuePreview.dispatch],
-  )
-
-  const financeCoordinationSummary = useMemo(
-    () => queuePreview.financial_pending.reduce((sum, order) => sum + (collectionRouteOrderUuids.has(order.uuid) ? 1 : 0), 0),
-    [collectionRouteOrderUuids, queuePreview.financial_pending],
-  )
-
   const previewOrderMap = useMemo(() => {
     return new Map(Object.values(queuePreview).flat().map((order) => [order.uuid, order]))
   }, [queuePreview])
 
   const draggedPreviewOrder = draggedOrderUuid ? (previewOrderMap.get(draggedOrderUuid) ?? null) : null
-
-  const dispatchUnplannedCount = Math.max(0, queuePreview.dispatch.length - dispatchCoordinationSummary)
-  const financeUnplannedCount = Math.max(0, queuePreview.financial_pending.length - financeCoordinationSummary)
 
   const refreshOperationData = useCallback(async () => {
     if (!activeTenantUuid) return
@@ -715,52 +636,6 @@ export function OrderListPage() {
       Promise.all(originPromises),
     ])
 
-    let externalPendingImport: number | null = null
-    let externalImportErrors: number | null = null
-
-    if (canReadMarketplaceQueue) {
-      const integrations = await marketplaceService.listMarketplaceIntegrations()
-      const activeIntegrations = integrations.filter((integration) => integration.is_active)
-
-      if (activeIntegrations.length > 0) {
-        const summaries = await Promise.all(
-          activeIntegrations.map((integration: MarketplaceIntegration) =>
-            marketplaceService.getMarketplaceOperationsSummary(integration.uuid),
-          ),
-        )
-
-        externalPendingImport = summaries.reduce((sum, item) => sum + item.orders_pending_import, 0)
-        externalImportErrors = summaries.reduce((sum, item) => sum + item.orders_with_import_error, 0)
-      } else {
-        externalPendingImport = 0
-        externalImportErrors = 0
-      }
-    }
-
-    let nextCoordinationSnapshot: OperationCoordinationSnapshot = {
-      deliveryStopsToday: null,
-      deliveryOrdersToday: null,
-      collectionStopsToday: null,
-      deliveryOrderUuids: [],
-      collectionOrderUuids: [],
-    }
-
-    if (canReadRoutes) {
-      const today = toIsoDate(new Date())
-      const [deliveryCandidates, collectionCandidates] = await Promise.all([
-        routeService.getRouteCandidates('delivery', today),
-        routeService.getRouteCandidates('collection', today),
-      ])
-
-      nextCoordinationSnapshot = {
-        deliveryStopsToday: deliveryCandidates.stops.length,
-        deliveryOrdersToday: deliveryCandidates.stops.reduce((sum, stop) => sum + stop.orders.length, 0),
-        collectionStopsToday: collectionCandidates.stops.length,
-        deliveryOrderUuids: deliveryCandidates.stops.flatMap((stop) => stop.orders.map((order) => order.uuid)),
-        collectionOrderUuids: collectionCandidates.stops.flatMap((stop) => stop.installments.map((installment) => installment.order_uuid)),
-      }
-    }
-
     setSnapshot({
       activeTotal: activeTotalPage.pagination.total,
       storefrontPendingApproval: approvalPage.pagination.total,
@@ -768,8 +643,6 @@ export function OrderListPage() {
       dispatchTotal: dispatchPage.pagination.total,
       financialPendingTotal: financialPendingPage.pagination.total,
       byOrigin: Object.fromEntries(originCounts),
-      externalPendingImport,
-      externalImportErrors,
     })
     setQueuePreview({
       approval: approvalPage.items,
@@ -777,8 +650,7 @@ export function OrderListPage() {
       dispatch: dispatchPage.items,
       financial_pending: financialPendingPage.items,
     })
-    setCoordinationSnapshot(nextCoordinationSnapshot)
-  }, [activeTenantUuid, canReadMarketplaceQueue, canReadRoutes])
+  }, [activeTenantUuid])
 
   useEffect(() => {
     if (isManualOrdersPage) return
@@ -1341,16 +1213,6 @@ export function OrderListPage() {
                 <VisibilityOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Informações fiscais" arrow>
-              <IconButton
-                size="small"
-                aria-label={`Ver informações fiscais do pedido ${row.codigo}`}
-                onClick={() => setSelectedFiscalOrderUuid(row.uuid)}
-                sx={{ minWidth: 44, minHeight: 44, color: 'var(--mk-muted)', '&:hover': { color: 'var(--mk-primary)' } }}
-              >
-                <DescriptionOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Histórico operacional" arrow>
               <IconButton
                 size="small"
@@ -1484,17 +1346,6 @@ export function OrderListPage() {
         </Alert>
       ) : null}
 
-      {(dispatchUnplannedCount > 0 || financeUnplannedCount > 0) && (
-        <Alert severity="warning" variant="outlined">
-          {dispatchUnplannedCount > 0
-            ? `${dispatchUnplannedCount} pedido(s) da expedição ainda não entraram na rota de entrega de hoje. `
-            : ''}
-          {financeUnplannedCount > 0
-            ? `${financeUnplannedCount} pedido(s) do financeiro pendente ainda não entraram na rota de cobrança de hoje.`
-            : ''}
-        </Alert>
-      )}
-
       <Box
         sx={{
           p: 1.5,
@@ -1511,17 +1362,6 @@ export function OrderListPage() {
                 Quem entra em ação em cada etapa e quais módulos especializados destravam o próximo passo.
               </Typography>
             </Box>
-            {canReadRoutes ? (
-              <Chip
-                size="small"
-                label={
-                  coordinationSnapshot.deliveryStopsToday === null
-                    ? 'Rotas do dia: —'
-                    : `Rotas do dia: ${coordinationSnapshot.deliveryStopsToday} parada(s)`
-                }
-                sx={{ fontWeight: 700 }}
-              />
-            ) : null}
           </Stack>
 
           <Box
@@ -1534,18 +1374,7 @@ export function OrderListPage() {
             {(['store', 'operations', 'delivery', 'finance'] as OperationOwner[]).map((owner) => {
               const meta = ownerMeta(owner)
               const count = ownerSummary[owner]
-              const extra =
-                owner === 'delivery'
-                  ? coordinationSnapshot.deliveryOrdersToday === null
-                    ? 'Sem leitura de rota agora.'
-                    : `${coordinationSnapshot.deliveryOrdersToday} pedido(s) de entrega no dia, ${dispatchCoordinationSummary} já refletidos na fila de expedição, ${dispatchUnplannedCount} ainda fora da rota e ${coordinationSnapshot.collectionStopsToday ?? 0} parada(s) de cobrança.`
-                  : owner === 'finance'
-                    ? `${meta.caption} ${
-                        financeCoordinationSummary > 0
-                          ? `${financeCoordinationSummary} pedido(s) desta fila já entraram na cobrança do dia e ${financeUnplannedCount} seguem fora dela.`
-                          : `Nenhum pedido desta fila entrou na cobrança do dia ainda${financeUnplannedCount > 0 ? `; ${financeUnplannedCount} seguem fora dela.` : '.'}`
-                      }`
-                    : meta.caption
+              const extra = meta.caption
 
               return (
                 <Box
@@ -1626,8 +1455,6 @@ export function OrderListPage() {
                 quickAction={resolveQuickAction(order)}
                 onQuickAction={(currentOrder) => void handleQuickAction(currentOrder)}
                 isSubmitting={submittingOrderUuid === order.uuid}
-                isOnDeliveryRouteToday={deliveryRouteOrderUuids.has(order.uuid)}
-                isOnCollectionRouteToday={collectionRouteOrderUuids.has(order.uuid)}
                 draggable
                 isDragging={draggedOrderUuid === order.uuid}
                 onDragStart={(event) => handleOrderCardDragStart(order.uuid, event)}
@@ -1666,8 +1493,6 @@ export function OrderListPage() {
                 quickAction={resolveQuickAction(order)}
                 onQuickAction={(currentOrder) => void handleQuickAction(currentOrder)}
                 isSubmitting={submittingOrderUuid === order.uuid}
-                isOnDeliveryRouteToday={deliveryRouteOrderUuids.has(order.uuid)}
-                isOnCollectionRouteToday={collectionRouteOrderUuids.has(order.uuid)}
                 draggable
                 isDragging={draggedOrderUuid === order.uuid}
                 onDragStart={(event) => handleOrderCardDragStart(order.uuid, event)}
@@ -1688,24 +1513,6 @@ export function OrderListPage() {
             setActiveOnly(true)
             gridApiRef.current?.refreshInfiniteCache()
           }}
-          headerAction={
-            canReadRoutes ? (
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
-                <Button component={RouterLink} to="/rotas" size="small" variant="text" sx={{ px: 0 }}>
-                  Abrir rotas
-                </Button>
-                <Chip
-                  size="small"
-                  label={`${dispatchCoordinationSummary} já na rota`}
-                  sx={{
-                    fontWeight: 700,
-                    color: 'var(--mk-info)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-info) 12%, transparent)',
-                  }}
-                />
-              </Stack>
-            ) : undefined
-          }
           isActiveDrop={activeOrderDropTarget === 'dispatch'}
           onDragOver={(event) => markOrderDropTarget(event, 'dispatch')}
           onDragLeave={clearOrderDropTarget}
@@ -1724,8 +1531,6 @@ export function OrderListPage() {
                 quickAction={resolveQuickAction(order)}
                 onQuickAction={(currentOrder) => void handleQuickAction(currentOrder)}
                 isSubmitting={submittingOrderUuid === order.uuid}
-                isOnDeliveryRouteToday={deliveryRouteOrderUuids.has(order.uuid)}
-                isOnCollectionRouteToday={collectionRouteOrderUuids.has(order.uuid)}
                 draggable
                 isDragging={draggedOrderUuid === order.uuid}
                 onDragStart={(event) => handleOrderCardDragStart(order.uuid, event)}
@@ -1748,20 +1553,9 @@ export function OrderListPage() {
           }}
           headerAction={
             canReadFinance ? (
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75 }}>
-                <Button component={RouterLink} to="/financeiro/conciliacao" size="small" variant="text" sx={{ px: 0 }}>
-                  Abrir conciliação
-                </Button>
-                <Chip
-                  size="small"
-                  label={`${financeCoordinationSummary} já em cobrança`}
-                  sx={{
-                    fontWeight: 700,
-                    color: 'var(--mk-danger)',
-                    bgcolor: 'color-mix(in srgb, var(--mk-danger) 12%, transparent)',
-                  }}
-                />
-              </Stack>
+              <Button component={RouterLink} to="/financeiro/conciliacao" size="small" variant="text" sx={{ px: 0 }}>
+                Abrir conciliação
+              </Button>
             ) : undefined
           }
           isActiveDrop={activeOrderDropTarget === 'financial_pending'}
@@ -1782,8 +1576,6 @@ export function OrderListPage() {
                 quickAction={resolveQuickAction(order)}
                 onQuickAction={(currentOrder) => void handleQuickAction(currentOrder)}
                 isSubmitting={submittingOrderUuid === order.uuid}
-                isOnDeliveryRouteToday={deliveryRouteOrderUuids.has(order.uuid)}
-                isOnCollectionRouteToday={collectionRouteOrderUuids.has(order.uuid)}
                 draggable
                 isDragging={draggedOrderUuid === order.uuid}
                 onDragStart={(event) => handleOrderCardDragStart(order.uuid, event)}
@@ -1897,23 +1689,6 @@ export function OrderListPage() {
                 icon={<LanguageOutlinedIcon fontSize="small" />}
                 variant="outlined"
               />
-              {canReadMarketplaceQueue ? (
-                <Chip
-                  size="small"
-                  label={`Fila externa: ${snapshot.externalPendingImport ?? 0}`}
-                  icon={<LanguageOutlinedIcon fontSize="small" />}
-                  variant="outlined"
-                />
-              ) : null}
-              {canReadMarketplaceQueue ? (
-                <Chip
-                  size="small"
-                  color={(snapshot.externalImportErrors ?? 0) > 0 ? 'warning' : 'default'}
-                  label={`Erros externos: ${snapshot.externalImportErrors ?? 0}`}
-                  icon={<LanguageOutlinedIcon fontSize="small" />}
-                  variant="outlined"
-                />
-              ) : null}
             </Stack>
           </Stack>
 
@@ -2110,18 +1885,6 @@ export function OrderListPage() {
         orderUuid={selectedOrderUuid}
         open={selectedOrderUuid !== null}
         onClose={() => setSelectedOrderUuid(null)}
-        onChanged={() => {
-          gridApiRef.current?.refreshInfiniteCache()
-          if (!isManualOrdersPage) {
-            void refreshOperationData()
-          }
-        }}
-      />
-
-      <OrderFiscalDialog
-        orderUuid={selectedFiscalOrderUuid}
-        open={selectedFiscalOrderUuid !== null}
-        onClose={() => setSelectedFiscalOrderUuid(null)}
         onChanged={() => {
           gridApiRef.current?.refreshInfiniteCache()
           if (!isManualOrdersPage) {

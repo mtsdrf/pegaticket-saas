@@ -24,12 +24,6 @@ class Product extends BaseModel
         'sku',
         'barcode',
         'brand',
-        // Cadastro fiscal do produto (roadmap Fiscal D0)
-        'ncm',
-        'cest',
-        'origin',
-        'default_cfop',
-        'csosn_cst',
         'unit',
         'price',
         'wholesale_min_quantity',

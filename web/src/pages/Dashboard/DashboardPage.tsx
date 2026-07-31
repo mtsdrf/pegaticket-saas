@@ -64,34 +64,6 @@ function stageDestination(stage: OperationHealthStageSummary['stage']): string {
   return `/pedidos?stage=${stage}&source=dashboard`
 }
 
-function marketplaceDestination(operationHealth: NonNullable<ReturnType<typeof useDashboardReport>['operationHealth']>): { to: string; label: string } {
-  if (operationHealth.marketplace.import_error > 0) {
-    return {
-      to: '/pedidos-ifood?focus=import_error&queue_status=import_error&source=dashboard',
-      label: 'Abrir erros de importação',
-    }
-  }
-
-  if (operationHealth.marketplace.pending_critical > 0) {
-    return {
-      to: '/pedidos-ifood?focus=pending_critical&queue_status=pending_import&source=dashboard',
-      label: 'Abrir pendentes críticos',
-    }
-  }
-
-  if (operationHealth.marketplace.imported_without_recent_signal > 0) {
-    return {
-      to: '/pedidos-ifood?focus=stale_imported&queue_status=imported&source=dashboard',
-      label: 'Abrir importados sem sinal',
-    }
-  }
-
-  return {
-    to: '/pedidos-ifood?source=dashboard',
-    label: 'Abrir fila externa',
-  }
-}
-
 function OperationHealthStageCard({
   stage,
   index,
@@ -179,7 +151,6 @@ export function DashboardPage() {
   const canViewStats = can(ACCESS.dashboard)
   const canOpenOrdersQueue = can(ACCESS.ordersRead)
   const canOpenStorefrontQueue = can(ACCESS.storefrontOrdersRead)
-  const canOpenMarketplaceQueue = can(ACCESS.apiAccessRead)
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
   const { indicators, charts, operationHealth, receivableSummary, isLoading, error } = useDashboardReport(from, to, canViewStats)
@@ -205,14 +176,6 @@ export function DashboardPage() {
         operationHealth.internal.financial_pending,
       ]
     : []
-  const marketplaceAttentionTotal = operationHealth
-    ? operationHealth.marketplace.pending_attention
-      + operationHealth.marketplace.pending_critical
-      + operationHealth.marketplace.import_error
-      + operationHealth.marketplace.imported_without_recent_signal
-    : 0
-  const marketplaceLink = operationHealth ? marketplaceDestination(operationHealth) : { to: '/pedidos-ifood', label: 'Abrir fila externa' }
-
   return (
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1600 }}>
       <PageHeader title="Visão geral" subtitle="Acompanhe os principais números da operação." accent />
@@ -448,7 +411,7 @@ export function DashboardPage() {
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: 13, color: 'var(--mk-muted)' }}>
-                  Filas internas e sinais de marketplace que precisam de acompanhamento agora.
+                  Filas internas que precisam de acompanhamento agora.
                 </Typography>
               </Box>
 
@@ -487,7 +450,7 @@ export function DashboardPage() {
             {operationHealth && operationHealth.totals.critical_items > 0 ? (
               <Alert severity="error" variant="outlined">
                 Existem {operationHealth.totals.critical_items} item(ns) críticos entre aprovação, produção,
-                expedição, financeiro e integrações externas.
+                expedição e financeiro.
                 {canOpenOrdersQueue ? (
                   <Button
                     component={RouterLink}
@@ -532,49 +495,28 @@ export function DashboardPage() {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' },
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)' },
                 gap: 1.5,
               }}
             >
               <Paper
                 variant="outlined"
                 className="mk-reveal"
-                sx={{
-                  p: { xs: 2, sm: 2.25 },
-                  ...ELEVATED_SURFACE_SX,
-                  borderColor:
-                    marketplaceAttentionTotal > 0
-                      ? 'color-mix(in srgb, var(--mk-warning) 24%, var(--mk-border))'
-                      : 'var(--mk-border)',
-                }}
+                sx={{ p: { xs: 2, sm: 2.25 }, ...ELEVATED_SURFACE_SX }}
               >
                 <Stack spacing={1.25}>
                   <Box>
                     <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
-                      Integrações externas
+                      Loja online
                     </Typography>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--mk-text)' }}>
-                      {marketplaceAttentionTotal} sinal(is) para acompanhar
+                      {operationHealth ? operationHealth.internal.approval.total : 0} pedido(s) aguardando aprovação
                     </Typography>
                   </Box>
                   <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
-                    {operationHealth
-                      ? `${operationHealth.marketplace.pending_attention} pendentes em atenção • ${operationHealth.marketplace.pending_critical} pendentes críticos • ${operationHealth.marketplace.import_error} com erro`
-                      : 'Sem dados agora.'}
+                    Acompanhe os pedidos recebidos pela loja que ainda dependem de aprovação manual.
                   </Typography>
-                  {canOpenMarketplaceQueue ? (
-                    <Box>
-                      <Button
-                        component={RouterLink}
-                        to={marketplaceLink.to}
-                        size="small"
-                        variant={marketplaceAttentionTotal > 0 ? 'contained' : 'text'}
-                        endIcon={<ArrowOutwardOutlinedIcon sx={{ fontSize: 16 }} />}
-                      >
-                        {marketplaceLink.label}
-                      </Button>
-                    </Box>
-                  ) : canOpenStorefrontQueue ? (
+                  {canOpenStorefrontQueue ? (
                     <Box>
                       <Button
                         component={RouterLink}
@@ -587,23 +529,6 @@ export function DashboardPage() {
                       </Button>
                     </Box>
                   ) : null}
-                </Stack>
-              </Paper>
-
-              <Paper
-                variant="outlined"
-                className="mk-reveal"
-                sx={{ p: { xs: 2, sm: 2.25 }, ...ELEVATED_SURFACE_SX }}
-              >
-                <Stack spacing={1.25}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--mk-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
-                    Relógios da operação
-                  </Typography>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--mk-muted)' }}>
-                    {operationHealth
-                      ? `Marketplace pendente mais antigo: ${formatOperationAge(operationHealth.marketplace.oldest_pending_minutes)} • Erro de importação mais antigo: ${formatOperationAge(operationHealth.marketplace.oldest_import_error_minutes)} • Importado sem sinal: ${formatOperationAge(operationHealth.marketplace.oldest_imported_without_recent_signal_minutes)}`
-                      : 'Sem dados agora.'}
-                  </Typography>
                 </Stack>
               </Paper>
             </Box>

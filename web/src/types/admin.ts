@@ -245,7 +245,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   support: ['read', 'create'],
   dashboard: ['read'],
   analytics: ['read'],
-  routes: ['read'],
   reports: ['read', 'export_pdf'],
   finance: ['read'],
   tenant_settings: ['read', 'update'],
@@ -254,7 +253,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   cashback: ['read'],
   subscription: ['read', 'update'],
   reactivation: ['read', 'update'],
-  'accounting-access': ['read', 'create', 'approve'],
   stock: [
     'read',
     'create',

@@ -51,8 +51,6 @@ use App\Repositories\Contracts\{
     PlanPriceRepositoryInterface,
     InvoiceRepositoryInterface,
     PaymentRepositoryInterface,
-    FiscalOperationProfileRepositoryInterface,
-    TaxRuleRepositoryInterface,
     CashSessionRepositoryInterface,
     StationRepositoryInterface,
     TableRepositoryInterface,
@@ -63,9 +61,6 @@ use App\Repositories\Contracts\{
     SupportTicketRepositoryInterface,
     ReactivationRuleRepositoryInterface,
     TenantFeatureOverrideRepositoryInterface,
-    TenantApiKeyRepositoryInterface,
-    WebhookSubscriptionRepositoryInterface,
-    WebhookDeliveryRepositoryInterface,
     IdempotencyRepositoryInterface,
     RefundRepositoryInterface,
 };
@@ -112,8 +107,6 @@ use App\Repositories\Eloquent\{
     PlanPriceRepository,
     InvoiceRepository,
     PaymentRepository,
-    FiscalOperationProfileRepository,
-    TaxRuleRepository,
     CashSessionRepository,
     StationRepository,
     TableRepository,
@@ -124,9 +117,6 @@ use App\Repositories\Eloquent\{
     SupportTicketRepository,
     ReactivationRuleRepository,
     TenantFeatureOverrideRepository,
-    TenantApiKeyRepository,
-    WebhookSubscriptionRepository,
-    WebhookDeliveryRepository,
     IdempotencyRepository,
     RefundRepository,
 };
@@ -135,10 +125,6 @@ use App\Repositories\Eloquent\{
 use App\Contracts\Payment\PaymentProviderInterface;
 use App\Services\Payment\ManualPaymentProvider;
 use App\Services\Payment\MercadoPagoPaymentProvider;
-
-// Fiscal provider (cadastro fiscal — roadmap Fiscal D0)
-use App\Contracts\Fiscal\FiscalProviderInterface;
-use App\Services\Fiscal\ManualFiscalProvider;
 
 /**
  * Class AppServiceProvider
@@ -496,26 +482,6 @@ class AppServiceProvider extends ServiceProvider
             };
         });
 
-        // Cadastro fiscal (roadmap Fiscal D0)
-        $this->app->bind(
-            FiscalOperationProfileRepositoryInterface::class,
-            FiscalOperationProfileRepository::class
-        );
-
-        $this->app->bind(
-            TaxRuleRepositoryInterface::class,
-            TaxRuleRepository::class
-        );
-
-        // Provedor fiscal — por ora o adapter manual (no-op, sem SEFAZ real;
-        // documento fica pending, nunca autorizado). Ponto de troca futuro:
-        // substituir por um adapter real (serviço pago ou lib sped-nfe) sem
-        // tocar na modelagem (fiscal_documents). Ver ManualFiscalProvider.
-        $this->app->bind(
-            FiscalProviderInterface::class,
-            ManualFiscalProvider::class
-        );
-
         // Caixa/PDV (roadmap PDV, Fase PDV-1)
         $this->app->bind(
             CashSessionRepositoryInterface::class,
@@ -550,22 +516,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TenantFeatureOverrideRepositoryInterface::class,
             TenantFeatureOverrideRepository::class
-        );
-
-        // API pública + webhooks de saída (roadmap A6, item 20)
-        $this->app->bind(
-            TenantApiKeyRepositoryInterface::class,
-            TenantApiKeyRepository::class
-        );
-
-        $this->app->bind(
-            WebhookSubscriptionRepositoryInterface::class,
-            WebhookSubscriptionRepository::class
-        );
-
-        $this->app->bind(
-            WebhookDeliveryRepositoryInterface::class,
-            WebhookDeliveryRepository::class
         );
 
         $this->app->bind(

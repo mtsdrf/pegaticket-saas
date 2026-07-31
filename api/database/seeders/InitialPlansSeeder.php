@@ -41,8 +41,7 @@ class InitialPlansSeeder extends Seeder
                     'tenant-profile',
                     'support',
                     'subscription',
-                    // 'storefront'/'api-access' (loja online, cupons,
-                    // promoções, iFood, chaves de API/webhooks) saíram do
+                    // 'storefront' (loja online, cupons, promoções) saiu do
                     // Prata em 2026-07-24 — decisão de negócio: diferencial
                     // pago a partir do Ouro, ver product-roadmap.md.
                 ],
@@ -75,13 +74,11 @@ class InitialPlansSeeder extends Seeder
                     'tenant_settings',
                     'tenant-profile',
                     'storefront',
-                    'api-access',
                     'support',
                     'subscription',
                     'stock_locations',
                     'stock',
                     'analytics',
-                    'routes',
                     'cashback',
                     'reactivation',
                     'pdv',
@@ -115,19 +112,15 @@ class InitialPlansSeeder extends Seeder
                     'tenant_settings',
                     'tenant-profile',
                     'storefront',
-                    'api-access',
                     'support',
                     'stock_locations',
                     'stock',
                     'analytics',
-                    'routes',
                     'cashback',
                     'reactivation',
                     'pdv',
                     'balcao',
                     'subscription',
-                    'accounting-access',
-                    'tax-rules',
                 ],
             ],
         ];

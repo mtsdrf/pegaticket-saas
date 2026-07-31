@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Order;
 
-use App\Http\Resources\Fiscal\FiscalDocumentResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -38,12 +37,6 @@ class OrderResource extends JsonResource
             'out_for_delivery_at' => $this->out_for_delivery_at,
             'rating' => $this->rating?->rating,
             'rating_comment' => $this->rating?->comment,
-            'fiscal_document' => $this->whenLoaded(
-                'latestFiscalDocument',
-                fn() => $this->latestFiscalDocument
-                    ? new FiscalDocumentResource($this->latestFiscalDocument)
-                    : null
-            ),
             'client' => $this->whenLoaded('client', fn() => [
                 'uuid' => $this->client->uuid,
                 'name' => $this->client->name,

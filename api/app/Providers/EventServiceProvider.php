@@ -420,12 +420,6 @@ use App\Listeners\Portal\WritePortalAuditLog;
 | Assinatura / cobrança de planos (roadmap 1B)
 |--------------------------------------------------------------------------
 */
-use App\Events\Fiscal\TaxRuleCreated;
-use App\Events\Fiscal\TaxRuleUpdated;
-use App\Events\Fiscal\TaxRuleDeleted;
-use App\Listeners\Fiscal\AuditTaxRuleCreated;
-use App\Listeners\Fiscal\AuditTaxRuleUpdated;
-use App\Listeners\Fiscal\AuditTaxRuleDeleted;
 use App\Events\Pdv\CashSessionOpened;
 use App\Events\Pdv\CashSessionClosed;
 use App\Events\Pdv\CashMovementRegistered;
@@ -440,22 +434,6 @@ use App\Listeners\Pdv\AuditOperatorPinSet;
 use App\Listeners\Pdv\AuditOperatorSessionResolved;
 use App\Events\Support\SupportTicketCreated;
 use App\Listeners\Support\AuditSupportTicketCreated;
-use App\Listeners\Webhook\DispatchWebhookOnOrderCreated;
-use App\Listeners\Webhook\DispatchWebhookOnOrderApproved;
-use App\Listeners\Webhook\DispatchWebhookOnOrderRejected;
-use App\Listeners\Webhook\DispatchWebhookOnOrderDelivered;
-use App\Listeners\Webhook\DispatchWebhookOnOrderCancelled;
-use App\Listeners\Webhook\DispatchWebhookOnOrderPaid;
-use App\Events\ApiKey\ApiKeyCreated;
-use App\Events\ApiKey\ApiKeyRevoked;
-use App\Listeners\ApiKey\AuditApiKeyCreated;
-use App\Listeners\ApiKey\AuditApiKeyRevoked;
-use App\Events\Webhook\WebhookSubscriptionCreated;
-use App\Events\Webhook\WebhookSubscriptionUpdated;
-use App\Events\Webhook\WebhookSubscriptionDeleted;
-use App\Listeners\Webhook\AuditWebhookSubscriptionCreated;
-use App\Listeners\Webhook\AuditWebhookSubscriptionUpdated;
-use App\Listeners\Webhook\AuditWebhookSubscriptionDeleted;
 use App\Events\Balcao\StationCreated;
 use App\Events\Balcao\StationUpdated;
 use App\Events\Balcao\StationDeleted;
@@ -487,38 +465,9 @@ use App\Events\Subscription\SubscriptionWithdrawalRequested;
 use App\Listeners\Subscription\WriteSubscriptionAuditLog;
 use App\Listeners\Workflow\WriteWorkflowTransitionLog;
 
-/*
-|--------------------------------------------------------------------------
-| Accounting (módulo do contador — roadmap 2C)
-|--------------------------------------------------------------------------
-*/
-use App\Events\Accounting\AccountingOfficeRegistered;
-use App\Events\Accounting\AccountingTotpEnabled;
-use App\Events\Accounting\AccountingLoginSucceeded;
-use App\Events\Accounting\AccountingLoginFailed;
-use App\Events\Accounting\AccountingAccessRequested;
-use App\Events\Accounting\AccountingAccessApproved;
-use App\Events\Accounting\AccountingAccessRevoked;
-use App\Events\Accounting\AccountingMessageSent;
-use App\Listeners\Accounting\AuditAccountingListener;
-
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-
-        /*
-        |--------------------------------------------------------------------------
-        | Accounting (módulo do contador)
-        |--------------------------------------------------------------------------
-        */
-        AccountingOfficeRegistered::class => [AuditAccountingListener::class],
-        AccountingTotpEnabled::class => [AuditAccountingListener::class],
-        AccountingLoginSucceeded::class => [AuditAccountingListener::class],
-        AccountingLoginFailed::class => [AuditAccountingListener::class],
-        AccountingAccessRequested::class => [AuditAccountingListener::class],
-        AccountingAccessApproved::class => [AuditAccountingListener::class],
-        AccountingAccessRevoked::class => [AuditAccountingListener::class],
-        AccountingMessageSent::class => [AuditAccountingListener::class],
 
         /*
         |--------------------------------------------------------------------------
@@ -754,10 +703,10 @@ class EventServiceProvider extends ServiceProvider
         | Order
         |--------------------------------------------------------------------------
         */
-        OrderCreated::class => [AuditOrderCreated::class, DispatchWebhookOnOrderCreated::class, WriteWorkflowTransitionLog::class],
-        OrderDelivered::class => [AuditOrderDelivered::class, SendPushOnOrderDelivered::class, DispatchWebhookOnOrderDelivered::class, WriteWorkflowTransitionLog::class],
+        OrderCreated::class => [AuditOrderCreated::class, WriteWorkflowTransitionLog::class],
+        OrderDelivered::class => [AuditOrderDelivered::class, SendPushOnOrderDelivered::class, WriteWorkflowTransitionLog::class],
         OrderUndelivered::class => [AuditOrderUndelivered::class],
-        OrderPaid::class => [AuditOrderPaid::class, CreditCashbackOnOrderPaid::class, DispatchWebhookOnOrderPaid::class],
+        OrderPaid::class => [AuditOrderPaid::class, CreditCashbackOnOrderPaid::class],
         OrderPartiallyPaid::class => [AuditOrderPartiallyPaid::class],
         OrderUnpaid::class => [AuditOrderUnpaid::class, ReverseCashbackOnOrderUnpaid::class],
         OrderInstallmentPaid::class => [AuditOrderInstallmentPaid::class],
@@ -765,12 +714,12 @@ class EventServiceProvider extends ServiceProvider
         OrderInstallmentCreated::class => [AuditOrderInstallmentCreated::class],
         OrderInstallmentUpdated::class => [AuditOrderInstallmentUpdated::class],
         OrderInstallmentDeleted::class => [AuditOrderInstallmentDeleted::class],
-        OrderCancelled::class => [AuditOrderCancelled::class, DispatchWebhookOnOrderCancelled::class, WriteWorkflowTransitionLog::class],
+        OrderCancelled::class => [AuditOrderCancelled::class, WriteWorkflowTransitionLog::class],
         OrderPaymentCharged::class => [AuditOrderPaymentCharged::class],
         OrderPaymentRefundRequested::class => [AuditOrderPaymentRefundRequested::class],
         OrderItemsUpdated::class => [AuditOrderItemsUpdated::class],
-        OrderApproved::class => [AuditOrderApproved::class, SendPushOnOrderApproved::class, DispatchWebhookOnOrderApproved::class, WriteWorkflowTransitionLog::class],
-        OrderRejected::class => [AuditOrderRejected::class, SendPushOnOrderRejected::class, DispatchWebhookOnOrderRejected::class, WriteWorkflowTransitionLog::class],
+        OrderApproved::class => [AuditOrderApproved::class, SendPushOnOrderApproved::class, WriteWorkflowTransitionLog::class],
+        OrderRejected::class => [AuditOrderRejected::class, SendPushOnOrderRejected::class, WriteWorkflowTransitionLog::class],
         OrderOutForDelivery::class => [AuditOrderOutForDelivery::class, SendPushOnOrderOutForDelivery::class, WriteWorkflowTransitionLog::class],
         OrderUndispatched::class => [AuditOrderUndispatched::class, WriteWorkflowTransitionLog::class],
         OrderCancellationRequested::class => [AuditOrderCancellationRequested::class],
@@ -850,15 +799,6 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Fiscal (roadmap Fiscal D0) — regras tributárias
-        |--------------------------------------------------------------------------
-        */
-        TaxRuleCreated::class => [AuditTaxRuleCreated::class],
-        TaxRuleUpdated::class => [AuditTaxRuleUpdated::class],
-        TaxRuleDeleted::class => [AuditTaxRuleDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
         | PDV (roadmap PDV, Fase PDV-1) — caixa + venda de balcão
         |--------------------------------------------------------------------------
         */
@@ -893,16 +833,5 @@ class EventServiceProvider extends ServiceProvider
         ComandaItemSentToStation::class => [AuditComandaItemSentToStation::class, WriteWorkflowTransitionLog::class],
         ComandaItemPrepStatusUpdated::class => [AuditComandaItemPrepStatusUpdated::class, WriteWorkflowTransitionLog::class],
         ComandaItemCancelled::class => [AuditComandaItemCancelled::class, WriteWorkflowTransitionLog::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | API pública + webhooks de saída (roadmap A6, item 20)
-        |--------------------------------------------------------------------------
-        */
-        ApiKeyCreated::class => [AuditApiKeyCreated::class],
-        ApiKeyRevoked::class => [AuditApiKeyRevoked::class],
-        WebhookSubscriptionCreated::class => [AuditWebhookSubscriptionCreated::class],
-        WebhookSubscriptionUpdated::class => [AuditWebhookSubscriptionUpdated::class],
-        WebhookSubscriptionDeleted::class => [AuditWebhookSubscriptionDeleted::class],
     ];
 }

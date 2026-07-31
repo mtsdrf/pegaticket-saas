@@ -123,19 +123,8 @@ export interface OperationHealthStageSummary {
   oldest_minutes: number | null
 }
 
-export interface OperationHealthMarketplaceSummary {
-  pending_attention: number
-  pending_critical: number
-  import_error: number
-  imported_without_recent_signal: number
-  oldest_pending_minutes: number | null
-  oldest_import_error_minutes: number | null
-  oldest_imported_without_recent_signal_minutes: number | null
-}
-
 export interface OperationHealthSummary {
   internal: Record<OperationHealthStageKey, OperationHealthStageSummary>
-  marketplace: OperationHealthMarketplaceSummary
   totals: {
     items_requiring_attention: number
     critical_items: number
