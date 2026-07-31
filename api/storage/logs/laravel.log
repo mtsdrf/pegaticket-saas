@@ -2944,3 +2944,5 @@ Stack trace:
 [2026-07-31 21:24:35] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
 [2026-07-31 21:28:58] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
 [2026-07-31 21:29:04] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-07-31 22:18:30] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-07-31 22:18:49] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 

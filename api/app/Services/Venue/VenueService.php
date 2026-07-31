@@ -42,6 +42,7 @@ class VenueService
     public function find(Venue $venue): Venue
     {
         $this->assertBelongsToCurrentTenant($venue);
+        $venue->loadMissing('publishedMapVersion');
 
         return $venue;
     }
@@ -53,7 +54,8 @@ class VenueService
     ): LengthAwarePaginator {
         $query = Venue::query()
             ->where('venues.tenant_id', $tenantId)
-            ->whereNull('venues.deleted_at');
+            ->whereNull('venues.deleted_at')
+            ->with('publishedMapVersion');
 
         if (!empty($filters['name'])) {
             $query->where('venues.name', 'like', '%' . $filters['name'] . '%');

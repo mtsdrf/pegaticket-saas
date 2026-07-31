@@ -10,6 +10,8 @@ use App\Events\Event\EventDeleted;
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
 use App\Models\Tenant\Tenant;
+use App\Models\Venue\Venue;
+use App\Models\Venue\VenueMapVersion;
 use App\Repositories\Contracts\EventRepositoryInterface;
 use App\Services\Media\MediaStorageService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,9 +21,9 @@ use Illuminate\Support\Facades\Schema;
 
 class EventService
 {
-    public const EAGER_RELATIONS = ['category'];
+    public const EAGER_RELATIONS = ['category', 'venueMapVersion.venue'];
 
-    public const DETAIL_RELATIONS = ['category', 'ticketTypes', 'eventProducts'];
+    public const DETAIL_RELATIONS = ['category', 'ticketTypes', 'eventProducts', 'venueMapVersion.venue'];
 
     /**
      * Colunas de `events` exceto `cover_image_data` (LONGBLOB) — mesmo
@@ -129,9 +131,12 @@ class EventService
                         ->id;
                 }
 
+                $venueMapVersionId = $this->resolveVenueMapVersionId($dto->tenantId, $dto->venueUuid);
+
                 $event = $this->repository->create([
                     'tenant_id' => $dto->tenantId,
                     'event_category_id' => $categoryId,
+                    'venue_map_version_id' => $venueMapVersionId,
                     'name' => $dto->name,
                     'slug' => $dto->slug,
                     'description_short' => $dto->descriptionShort,
@@ -202,6 +207,10 @@ class EventService
                         ->id;
                 }
 
+                if ($dto->venueUuidProvided) {
+                    $data['venue_map_version_id'] = $this->resolveVenueMapVersionId($event->tenant_id, $dto->venueUuid);
+                }
+
                 if ($newMedia) {
                     $data['cover_image_path'] = $newMedia['path'];
                     $data['cover_image_data'] = null;
@@ -257,6 +266,33 @@ class EventService
         if ((int) $event->tenant_id !== (int) app('tenant_id')) {
             abort(404);
         }
+    }
+
+    private function resolveVenueMapVersionId(int $tenantId, ?string $venueUuid): ?int
+    {
+        if (!$venueUuid) {
+            return null;
+        }
+
+        $venue = Venue::query()
+            ->where('uuid', $venueUuid)
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+
+        $publishedVersion = VenueMapVersion::query()
+            ->where('venue_id', $venue->id)
+            ->where('tenant_id', $tenantId)
+            ->where('is_published', true)
+            ->whereNull('deleted_at')
+            ->orderByDesc('version_number')
+            ->first();
+
+        if (!$publishedVersion) {
+            abort(422, __('messages.event.venue_requires_published_map'));
+        }
+
+        return $publishedVersion->id;
     }
 
     private function resolveMediaDirectory(int $tenantId): string

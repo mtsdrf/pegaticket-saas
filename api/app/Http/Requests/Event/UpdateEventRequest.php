@@ -33,6 +33,13 @@ class UpdateEventRequest extends FormRequest
                     $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
                 }),
             ],
+            'venue_uuid' => [
+                'nullable',
+                'uuid',
+                Rule::exists('venues', 'uuid')->where(function ($query) {
+                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
+                }),
+            ],
             'description_short' => ['nullable', 'string', 'max:255'],
             'description_full' => ['nullable', 'string'],
             'cover_image' => ['nullable', 'image', 'max:5120'],
@@ -50,6 +57,7 @@ class UpdateEventRequest extends FormRequest
     {
         return [
             'event_category_uuid.exists' => __('messages.event.invalid_category'),
+            'venue_uuid.exists' => __('messages.event.invalid_venue'),
             'slug.unique' => __('messages.event.slug_exists'),
         ];
     }

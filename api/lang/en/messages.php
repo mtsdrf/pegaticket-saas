@@ -386,7 +386,18 @@ return [
         'updated' => 'Event updated successfully.',
         'deleted' => 'Event deleted successfully.',
         'invalid_category' => 'Invalid event category for this company.',
+        'invalid_venue' => 'Invalid venue for this company.',
         'slug_exists' => 'An event with this slug already exists for this company.',
+        'venue_requires_published_map' => 'Publish the venue map before linking it to the event.',
+    ],
+
+    'event_session' => [
+        'list' => 'Event sessions list.',
+        'show' => 'Event session shown successfully.',
+        'created' => 'Event session created successfully.',
+        'updated' => 'Event session updated successfully.',
+        'deleted' => 'Event session deleted successfully.',
+        'has_sales' => 'This session already has linked sales and cannot be deleted.',
     ],
 
     /*
@@ -406,6 +417,15 @@ return [
         'status_updated' => 'Ticket type status updated successfully.',
     ],
 
+    'ticket_batch' => [
+        'list' => 'Ticket batches list.',
+        'show' => 'Ticket batch shown successfully.',
+        'created' => 'Ticket batch created successfully.',
+        'updated' => 'Ticket batch updated successfully.',
+        'deleted' => 'Ticket batch deleted successfully.',
+        'has_sales' => 'This batch already has sales and cannot be deleted.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Event product (add-on/parking)
@@ -418,6 +438,24 @@ return [
         'updated' => 'Event product updated successfully.',
         'deleted' => 'Event product deleted successfully.',
         'invalid_event' => 'Invalid event for this company.',
+    ],
+
+    'venue' => [
+        'list' => 'Venues list.',
+        'show' => 'Venue shown successfully.',
+        'created' => 'Venue created successfully.',
+        'updated' => 'Venue updated successfully.',
+        'deleted' => 'Venue deleted successfully.',
+        'published' => 'Venue map published successfully.',
+    ],
+
+    'seat' => [
+        'list' => 'Seats list.',
+        'show' => 'Seat shown successfully.',
+        'created' => 'Seat created successfully.',
+        'updated' => 'Seat updated successfully.',
+        'deleted' => 'Seat deleted successfully.',
+        'version_published' => 'This map version has already been published and can no longer be changed.',
     ],
 
     /*

@@ -76,11 +76,23 @@ const EnderecoFormPage = lazy(() =>
 )
 const EventListPage = lazy(() => import('../pages/Event/EventListPage').then((m) => ({ default: m.EventListPage })))
 const EventFormPage = lazy(() => import('../pages/Event/EventFormPage').then((m) => ({ default: m.EventFormPage })))
+const EventSessionListPage = lazy(() =>
+  import('../pages/EventSession/EventSessionListPage').then((m) => ({ default: m.EventSessionListPage })),
+)
+const EventSessionFormPage = lazy(() =>
+  import('../pages/EventSession/EventSessionFormPage').then((m) => ({ default: m.EventSessionFormPage })),
+)
 const TicketTypeListPage = lazy(() =>
   import('../pages/TicketType/TicketTypeListPage').then((m) => ({ default: m.TicketTypeListPage })),
 )
 const TicketTypeFormPage = lazy(() =>
   import('../pages/TicketType/TicketTypeFormPage').then((m) => ({ default: m.TicketTypeFormPage })),
+)
+const TicketBatchListPage = lazy(() =>
+  import('../pages/TicketBatch/TicketBatchListPage').then((m) => ({ default: m.TicketBatchListPage })),
+)
+const TicketBatchFormPage = lazy(() =>
+  import('../pages/TicketBatch/TicketBatchFormPage').then((m) => ({ default: m.TicketBatchFormPage })),
 )
 const EventProductListPage = lazy(() =>
   import('../pages/EventProduct/EventProductListPage').then((m) => ({ default: m.EventProductListPage })),
@@ -88,6 +100,10 @@ const EventProductListPage = lazy(() =>
 const EventProductFormPage = lazy(() =>
   import('../pages/EventProduct/EventProductFormPage').then((m) => ({ default: m.EventProductFormPage })),
 )
+const VenueListPage = lazy(() => import('../pages/Venue/VenueListPage').then((m) => ({ default: m.VenueListPage })))
+const VenueFormPage = lazy(() => import('../pages/Venue/VenueFormPage').then((m) => ({ default: m.VenueFormPage })))
+const VenueSeatsPage = lazy(() => import('../pages/Venue/VenueSeatsPage').then((m) => ({ default: m.VenueSeatsPage })))
+const SeatFormPage = lazy(() => import('../pages/Venue/SeatFormPage').then((m) => ({ default: m.SeatFormPage })))
 const OrderListPage = lazy(() => import('../pages/Order/OrderListPage').then((m) => ({ default: m.OrderListPage })))
 const StorefrontOrderManagementPage = lazy(() =>
   import('../pages/Order/StorefrontOrderManagementPage').then((m) => ({ default: m.StorefrontOrderManagementPage })),
@@ -256,6 +272,9 @@ export function AppRoutes() {
             <Route path="/eventos" element={<PermissionRoute requirement={ACCESS.eventsRead}><EventListPage /></PermissionRoute>} />
             <Route path="/eventos/novo" element={<PermissionRoute requirement={ACCESS.eventsCreate}><EventFormPage /></PermissionRoute>} />
             <Route path="/eventos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventsUpdate}><EventFormPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/sessoes" element={<PermissionRoute requirement={ACCESS.eventSessionsRead}><EventSessionListPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/sessoes/nova" element={<PermissionRoute requirement={ACCESS.eventSessionsCreate}><EventSessionFormPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/sessoes/:sessionUuid/editar" element={<PermissionRoute requirement={ACCESS.eventSessionsUpdate}><EventSessionFormPage /></PermissionRoute>} />
             <Route path="/eventos/categorias" element={<PermissionRoute requirement={ACCESS.eventCategoriesRead}><EventCategoryListPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/nova" element={<PermissionRoute requirement={ACCESS.eventCategoriesCreate}><EventCategoryFormPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventCategoriesUpdate}><EventCategoryFormPage /></PermissionRoute>} />
@@ -263,10 +282,19 @@ export function AppRoutes() {
             <Route path="/tipos-de-ingresso" element={<PermissionRoute requirement={ACCESS.ticketTypesRead}><TicketTypeListPage /></PermissionRoute>} />
             <Route path="/tipos-de-ingresso/novo" element={<PermissionRoute requirement={ACCESS.ticketTypesCreate}><TicketTypeFormPage /></PermissionRoute>} />
             <Route path="/tipos-de-ingresso/:uuid/editar" element={<PermissionRoute requirement={ACCESS.ticketTypesUpdate}><TicketTypeFormPage /></PermissionRoute>} />
+            <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes" element={<PermissionRoute requirement={ACCESS.ticketBatchesRead}><TicketBatchListPage /></PermissionRoute>} />
+            <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes/novo" element={<PermissionRoute requirement={ACCESS.ticketBatchesCreate}><TicketBatchFormPage /></PermissionRoute>} />
+            <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes/:batchUuid/editar" element={<PermissionRoute requirement={ACCESS.ticketBatchesUpdate}><TicketBatchFormPage /></PermissionRoute>} />
 
             <Route path="/adicionais" element={<PermissionRoute requirement={ACCESS.eventProductsRead}><EventProductListPage /></PermissionRoute>} />
             <Route path="/adicionais/novo" element={<PermissionRoute requirement={ACCESS.eventProductsCreate}><EventProductFormPage /></PermissionRoute>} />
             <Route path="/adicionais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventProductsUpdate}><EventProductFormPage /></PermissionRoute>} />
+            <Route path="/locais" element={<PermissionRoute requirement={ACCESS.venuesRead}><VenueListPage /></PermissionRoute>} />
+            <Route path="/locais/novo" element={<PermissionRoute requirement={ACCESS.venuesCreate}><VenueFormPage /></PermissionRoute>} />
+            <Route path="/locais/:uuid/editar" element={<PermissionRoute requirement={ACCESS.venuesUpdate}><VenueFormPage /></PermissionRoute>} />
+            <Route path="/locais/:venueUuid/assentos" element={<PermissionRoute requirement={ACCESS.seatsRead}><VenueSeatsPage /></PermissionRoute>} />
+            <Route path="/locais/:venueUuid/assentos/novo" element={<PermissionRoute requirement={ACCESS.seatsCreate}><SeatFormPage /></PermissionRoute>} />
+            <Route path="/locais/:venueUuid/assentos/:seatUuid/editar" element={<PermissionRoute requirement={ACCESS.seatsUpdate}><SeatFormPage /></PermissionRoute>} />
 
             <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />

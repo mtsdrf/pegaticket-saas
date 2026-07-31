@@ -98,6 +98,7 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/eventos', label: 'Eventos', exact: true, access: ACCESS.eventsRead },
       { to: '/tipos-de-ingresso', label: 'Tipos de ingresso', access: ACCESS.ticketTypesRead },
       { to: '/adicionais', label: 'Adicionais', access: ACCESS.eventProductsRead },
+      { to: '/locais', label: 'Locais e mapa', access: ACCESS.venuesRead },
     ],
   },
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },

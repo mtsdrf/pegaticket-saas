@@ -33,6 +33,18 @@ class EventResource extends JsonResource
                 'uuid' => $this->category->uuid,
                 'name' => $this->category->name,
             ] : null),
+            'venue' => $this->whenLoaded('venueMapVersion', function () {
+                if (!$this->venueMapVersion || !$this->venueMapVersion->relationLoaded('venue') || !$this->venueMapVersion->venue) {
+                    return null;
+                }
+
+                return [
+                    'uuid' => $this->venueMapVersion->venue->uuid,
+                    'name' => $this->venueMapVersion->venue->name,
+                    'map_version_uuid' => $this->venueMapVersion->uuid,
+                    'map_version_number' => $this->venueMapVersion->version_number,
+                ];
+            }),
             'ticket_types' => $this->whenLoaded('ticketTypes', fn() => \App\Http\Resources\Event\TicketTypeResource::collection($this->ticketTypes)),
             'event_products' => $this->whenLoaded('eventProducts', fn() => \App\Http\Resources\Event\EventProductResource::collection($this->eventProducts)),
             // Atributo dinâmico (setAttribute), setado por

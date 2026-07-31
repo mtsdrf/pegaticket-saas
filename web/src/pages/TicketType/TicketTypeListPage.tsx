@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined'
 import { Avatar, Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -124,12 +125,24 @@ export function TicketTypeListPage() {
       {
         field: 'uuid',
         headerName: 'Ações',
-        width: 140,
+        width: 190,
         sortable: false,
         filterType: 'none',
         exportable: false,
         cellRenderer: (row) => (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            {can(ACCESS.ticketBatchesRead) ? (
+              <Tooltip title="Gerenciar lotes" arrow>
+                <IconButton
+                  size="small"
+                  aria-label={`Gerenciar lotes de ${row.name}`}
+                  onClick={() => navigate(`/tipos-de-ingresso/${row.uuid}/lotes`)}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
+                >
+                  <LayersOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
             {can(ACCESS.ticketTypesUpdate) ? (
               <Tooltip title="Editar tipo de ingresso" arrow>
                 <IconButton
@@ -161,7 +174,7 @@ export function TicketTypeListPage() {
         ),
       },
     ],
-    [handleEdit, can],
+    [handleEdit, can, navigate],
   )
 
   return (

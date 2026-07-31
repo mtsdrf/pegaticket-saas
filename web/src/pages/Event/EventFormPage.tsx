@@ -6,6 +6,7 @@ import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import * as eventCategoryService from '../../services/eventCategoryService'
 import * as eventService from '../../services/eventService'
+import * as venueService from '../../services/venueService'
 import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { EVENT_STATUS_OPTIONS, EVENT_TYPE_OPTIONS, EVENT_VISIBILITY_OPTIONS, type EventStatus, type EventType, type EventVisibility } from '../../types/event'
@@ -14,6 +15,7 @@ interface EventFormState {
   name: string
   slug: string
   event_category_uuid: string
+  venue_uuid: string
   description_short: string
   description_full: string
   type: EventType
@@ -29,6 +31,7 @@ const EMPTY_FORM: EventFormState = {
   name: '',
   slug: '',
   event_category_uuid: '',
+  venue_uuid: '',
   description_short: '',
   description_full: '',
   type: 'ingresso',
@@ -66,6 +69,7 @@ export function EventFormPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([])
+  const [venueOptions, setVenueOptions] = useState<{ value: string; label: string }[]>([])
   const [isLoadingForm, setIsLoadingForm] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -77,11 +81,20 @@ export function EventFormPage() {
     setLoadError(null)
 
     const categoriesPromise = eventCategoryService.listEventCategories({ per_page: 100 })
+    const venuesPromise = venueService.listVenues({ per_page: 100, is_active: true })
     const recordPromise = uuid ? eventService.getEvent(uuid) : Promise.resolve(null)
 
-    Promise.all([categoriesPromise, recordPromise])
-      .then(([categories, record]) => {
+    Promise.all([categoriesPromise, venuesPromise, recordPromise])
+      .then(([categories, venues, record]) => {
         setCategoryOptions(categories.items.map((category) => ({ value: category.uuid, label: category.name })))
+        setVenueOptions(
+          venues.items
+            .filter((venue) => venue.published_map_version)
+            .map((venue) => ({
+              value: venue.uuid,
+              label: `${venue.name} (mapa v${venue.published_map_version?.version_number})`,
+            })),
+        )
 
         if (record) {
           setSlugTouched(true)
@@ -89,6 +102,7 @@ export function EventFormPage() {
             name: record.name,
             slug: record.slug,
             event_category_uuid: record.category?.uuid ?? '',
+            venue_uuid: record.venue?.uuid ?? '',
             description_short: record.description_short ?? '',
             description_full: record.description_full ?? '',
             type: record.type,
@@ -126,6 +140,7 @@ export function EventFormPage() {
       name: form.name.trim(),
       slug: form.slug.trim(),
       event_category_uuid: form.event_category_uuid || null,
+      venue_uuid: form.venue_uuid || null,
       description_short: form.description_short.trim() || undefined,
       description_full: form.description_full.trim() || undefined,
       type: form.type,
@@ -199,6 +214,24 @@ export function EventFormPage() {
         error={Boolean(fieldErrors.event_category_uuid)}
         helperText={fieldErrors.event_category_uuid?.[0]}
         sx={{ mb: 2, maxWidth: { sm: 400 } }}
+      />
+
+      <LocalAutocomplete
+        label="Local com mapa publicado"
+        options={venueOptions}
+        value={venueOptions.find((option) => option.value === form.venue_uuid) ?? null}
+        onChange={(option) => updateField('venue_uuid', option?.value ?? '')}
+        getOptionLabel={(option) => option.label}
+        getOptionKey={(option) => option.value}
+        fullWidth
+        error={Boolean(fieldErrors.venue_uuid)}
+        helperText={
+          fieldErrors.venue_uuid?.[0] ??
+          (venueOptions.length === 0
+            ? 'Nenhum local ativo com mapa publicado disponível ainda.'
+            : 'Opcional. O evento usará a última versão publicada do mapa deste local.')
+        }
+        sx={{ mb: 2, maxWidth: { sm: 520 } }}
       />
 
       <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>

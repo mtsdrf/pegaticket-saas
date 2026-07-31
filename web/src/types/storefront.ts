@@ -57,6 +57,13 @@ export interface StorefrontEventCategoryRef {
   name: string
 }
 
+export interface StorefrontVenueRef {
+  uuid: string
+  name: string
+  map_version_uuid: string
+  map_version_number: number
+}
+
 export type StorefrontTicketTypeStatus = 'rascunho' | 'ativo' | 'pausado' | 'esgotado' | 'encerrado'
 
 /** Nó `ticket_types[]` do detalhe do evento (`TicketTypeResource`, allow-list de leitura pública). */
@@ -106,6 +113,7 @@ export interface StorefrontEvent {
   ends_at: string
   status: StorefrontEventStatus
   category: StorefrontEventCategoryRef | null
+  venue: StorefrontVenueRef | null
   /**
    * Só reflete o cliente final logado quando o Bearer do portal é enviado
    * (`customer.jwt.optional`); `undefined` para visitante anônimo — nunca

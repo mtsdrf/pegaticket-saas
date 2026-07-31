@@ -51,6 +51,13 @@ export interface EventProductRef {
   name: string
 }
 
+export interface EventVenueRef {
+  uuid: string
+  name: string
+  map_version_uuid: string
+  map_version_number: number
+}
+
 export interface Event {
   uuid: string
   name: string
@@ -66,6 +73,7 @@ export interface Event {
   visibility: EventVisibility
   status: EventStatus
   category: EventCategoryRef | null
+  venue: EventVenueRef | null
   /** Só presente quando o registro é carregado com o detalhe completo (relação `ticketTypes` carregada). */
   ticket_types?: EventTicketTypeRef[]
   /** Só presente quando o registro é carregado com o detalhe completo (relação `eventProducts` carregada). */
@@ -77,6 +85,7 @@ export interface EventPayload {
   name: string
   slug: string
   event_category_uuid?: string | null
+  venue_uuid?: string | null
   description_short?: string
   description_full?: string
   type?: EventType

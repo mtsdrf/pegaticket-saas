@@ -6,6 +6,7 @@ use App\Models\BaseModel;
 use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Venue extends BaseModel
 {
@@ -46,5 +47,12 @@ class Venue extends BaseModel
     public function mapVersions(): HasMany
     {
         return $this->hasMany(VenueMapVersion::class);
+    }
+
+    public function publishedMapVersion(): HasOne
+    {
+        return $this->hasOne(VenueMapVersion::class)
+            ->where('is_published', true)
+            ->latestOfMany('version_number');
     }
 }

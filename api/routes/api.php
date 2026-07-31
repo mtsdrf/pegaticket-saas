@@ -35,7 +35,9 @@ use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Event\EventCategoryController;
 use App\Http\Controllers\Event\EventController;
 use App\Http\Controllers\Event\EventImageController;
+use App\Http\Controllers\Event\EventSessionController;
 use App\Http\Controllers\Event\TicketTypeController;
+use App\Http\Controllers\Event\TicketBatchController;
 use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\Event\EventProductController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
@@ -69,6 +71,9 @@ use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\ProductPromotionController;
 use App\Http\Controllers\Support\HelpRequestController;
 use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
+use App\Http\Controllers\Venue\SeatController;
+use App\Http\Controllers\Venue\VenueController;
+use App\Http\Controllers\Venue\VenueImageController;
 
 Route::prefix('v1')->group(function () {
 
@@ -145,6 +150,9 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/ticket-types/{ticketType}/image', [TicketTypeImageController::class, 'show'])
         ->middleware('throttle:100,1,ticket-types-image-show');
+
+    Route::get('/venues/{venue}/image', [VenueImageController::class, 'show'])
+        ->middleware('throttle:100,1,venues-image-show');
 
     Route::get('/tenants/{tenant}/logo', [TenantLogoController::class, 'show'])
         ->middleware('throttle:100,1,tenants-logo-show');
@@ -700,6 +708,23 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:events,delete', 'throttle:10,1,events-delete']);
         });
 
+        Route::prefix('events/{event}/sessions')->group(function () {
+            Route::get('/', [EventSessionController::class, 'index'])
+                ->middleware(['tenant', 'perm:event_sessions,read', 'throttle:100,1,event-sessions-list']);
+
+            Route::post('/', [EventSessionController::class, 'store'])
+                ->middleware(['tenant', 'perm:event_sessions,create', 'throttle:30,1,event-sessions-create']);
+
+            Route::get('/{session}', [EventSessionController::class, 'show'])
+                ->middleware(['tenant', 'perm:event_sessions,read', 'throttle:100,1,event-sessions-show']);
+
+            Route::put('/{session}', [EventSessionController::class, 'update'])
+                ->middleware(['tenant', 'perm:event_sessions,update', 'throttle:30,1,event-sessions-update']);
+
+            Route::delete('/{session}', [EventSessionController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:event_sessions,delete', 'throttle:10,1,event-sessions-delete']);
+        });
+
         Route::prefix('ticket-types')->group(function () {
             Route::get('/', [TicketTypeController::class, 'index'])
                 ->middleware(['tenant', 'perm:ticket_types,read', 'throttle:100,1,ticket-types-list']);
@@ -721,6 +746,23 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:ticket_types,update', 'throttle:60,1,ticket-types-toggle-status']);
         });
 
+        Route::prefix('ticket-types/{ticketType}/batches')->group(function () {
+            Route::get('/', [TicketBatchController::class, 'index'])
+                ->middleware(['tenant', 'perm:ticket_batches,read', 'throttle:100,1,ticket-batches-list']);
+
+            Route::post('/', [TicketBatchController::class, 'store'])
+                ->middleware(['tenant', 'perm:ticket_batches,create', 'throttle:30,1,ticket-batches-create']);
+
+            Route::get('/{batch}', [TicketBatchController::class, 'show'])
+                ->middleware(['tenant', 'perm:ticket_batches,read', 'throttle:100,1,ticket-batches-show']);
+
+            Route::put('/{batch}', [TicketBatchController::class, 'update'])
+                ->middleware(['tenant', 'perm:ticket_batches,update', 'throttle:30,1,ticket-batches-update']);
+
+            Route::delete('/{batch}', [TicketBatchController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:ticket_batches,delete', 'throttle:10,1,ticket-batches-delete']);
+        });
+
         Route::prefix('event-products')->group(function () {
             Route::get('/', [EventProductController::class, 'index'])
                 ->middleware(['tenant', 'perm:event_products,read', 'throttle:100,1,event-products-list']);
@@ -736,6 +778,41 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{eventProduct}', [EventProductController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:event_products,delete', 'throttle:10,1,event-products-delete']);
+        });
+
+        Route::prefix('venues')->group(function () {
+            Route::get('/', [VenueController::class, 'index'])
+                ->middleware(['tenant', 'perm:venues,read', 'throttle:100,1,venues-list']);
+
+            Route::post('/', [VenueController::class, 'store'])
+                ->middleware(['tenant', 'perm:venues,create', 'throttle:30,1,venues-create']);
+
+            Route::get('/{venue}', [VenueController::class, 'show'])
+                ->middleware(['tenant', 'perm:venues,read', 'throttle:100,1,venues-show']);
+
+            Route::put('/{venue}', [VenueController::class, 'update'])
+                ->middleware(['tenant', 'perm:venues,update', 'throttle:30,1,venues-update']);
+
+            Route::delete('/{venue}', [VenueController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:venues,delete', 'throttle:10,1,venues-delete']);
+
+            Route::post('/{venue}/publish', [VenueController::class, 'publish'])
+                ->middleware(['tenant', 'perm:venues,update', 'throttle:20,1,venues-publish']);
+
+            Route::get('/{venue}/seats', [SeatController::class, 'index'])
+                ->middleware(['tenant', 'perm:seats,read', 'throttle:100,1,seats-list']);
+
+            Route::post('/{venue}/seats', [SeatController::class, 'store'])
+                ->middleware(['tenant', 'perm:seats,create', 'throttle:30,1,seats-create']);
+
+            Route::get('/{venue}/seats/{seat}', [SeatController::class, 'show'])
+                ->middleware(['tenant', 'perm:seats,read', 'throttle:100,1,seats-show']);
+
+            Route::put('/{venue}/seats/{seat}', [SeatController::class, 'update'])
+                ->middleware(['tenant', 'perm:seats,update', 'throttle:30,1,seats-update']);
+
+            Route::delete('/{venue}/seats/{seat}', [SeatController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:seats,delete', 'throttle:10,1,seats-delete']);
         });
 
         // Busca de comprador (FinalCustomerTenantLink) pro staff, usada no

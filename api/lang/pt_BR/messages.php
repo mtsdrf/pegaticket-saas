@@ -393,7 +393,18 @@ return [
         'updated' => 'Evento atualizado com sucesso.',
         'deleted' => 'Evento removido com sucesso.',
         'invalid_category' => 'Categoria de evento inválida para esta empresa.',
+        'invalid_venue' => 'Local inválido para esta empresa.',
         'slug_exists' => 'Já existe um evento com este slug nesta empresa.',
+        'venue_requires_published_map' => 'Publique o mapa do local antes de vinculá-lo ao evento.',
+    ],
+
+    'event_session' => [
+        'list' => 'Lista de sessões.',
+        'show' => 'Sessão exibida com sucesso.',
+        'created' => 'Sessão criada com sucesso.',
+        'updated' => 'Sessão atualizada com sucesso.',
+        'deleted' => 'Sessão removida com sucesso.',
+        'has_sales' => 'Esta sessão já possui vendas vinculadas e não pode ser removida.',
     ],
 
     /*
@@ -413,6 +424,15 @@ return [
         'status_updated' => 'Status do tipo de ingresso atualizado com sucesso.',
     ],
 
+    'ticket_batch' => [
+        'list' => 'Lista de lotes.',
+        'show' => 'Lote exibido com sucesso.',
+        'created' => 'Lote criado com sucesso.',
+        'updated' => 'Lote atualizado com sucesso.',
+        'deleted' => 'Lote removido com sucesso.',
+        'has_sales' => 'Este lote já possui vendas registradas e não pode ser removido.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Produto do evento (adicional/estacionamento)
@@ -425,6 +445,24 @@ return [
         'updated' => 'Produto do evento atualizado com sucesso.',
         'deleted' => 'Produto do evento removido com sucesso.',
         'invalid_event' => 'Evento inválido para esta empresa.',
+    ],
+
+    'venue' => [
+        'list' => 'Lista de locais.',
+        'show' => 'Local exibido com sucesso.',
+        'created' => 'Local criado com sucesso.',
+        'updated' => 'Local atualizado com sucesso.',
+        'deleted' => 'Local removido com sucesso.',
+        'published' => 'Mapa do local publicado com sucesso.',
+    ],
+
+    'seat' => [
+        'list' => 'Lista de assentos.',
+        'show' => 'Assento exibido com sucesso.',
+        'created' => 'Assento criado com sucesso.',
+        'updated' => 'Assento atualizado com sucesso.',
+        'deleted' => 'Assento removido com sucesso.',
+        'version_published' => 'Esta versão do mapa já foi publicada e não pode mais ser alterada.',
     ],
 
     /*

@@ -212,6 +212,14 @@ export function StorefrontEventDetailPage() {
                   </Typography>
                 </Stack>
               )}
+              {event.venue && (
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mt: 0.25 }}>
+                  <PlaceOutlinedIcon sx={{ fontSize: 17, color: 'var(--pt-muted)' }} />
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
+                    Mapa do local disponível em {event.venue.name}
+                  </Typography>
+                </Stack>
+              )}
             </Box>
 
             {event.description_full && (

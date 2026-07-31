@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import { Avatar, Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -116,12 +117,24 @@ export function EventListPage() {
       {
         field: 'uuid',
         headerName: 'Ações',
-        width: 140,
+        width: 190,
         sortable: false,
         filterType: 'none',
         exportable: false,
         cellRenderer: (row) => (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            {can(ACCESS.eventSessionsRead) ? (
+              <Tooltip title="Gerenciar sessões" arrow>
+                <IconButton
+                  size="small"
+                  aria-label={`Gerenciar sessões de ${row.name}`}
+                  onClick={() => navigate(`/eventos/${row.uuid}/sessoes`)}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
+                >
+                  <ScheduleOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
             {can(ACCESS.eventsUpdate) ? (
               <Tooltip title="Editar evento" arrow>
                 <IconButton
@@ -153,7 +166,7 @@ export function EventListPage() {
         ),
       },
     ],
-    [handleEdit, can],
+    [handleEdit, can, navigate],
   )
 
   return (

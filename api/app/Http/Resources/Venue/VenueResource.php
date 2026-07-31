@@ -22,6 +22,12 @@ class VenueResource extends JsonResource
             'width' => $this->width,
             'height' => $this->height,
             'is_active' => $this->is_active,
+            'published_map_version' => $this->whenLoaded('publishedMapVersion', fn() => $this->publishedMapVersion ? [
+                'uuid' => $this->publishedMapVersion->uuid,
+                'version_number' => $this->publishedMapVersion->version_number,
+                'is_published' => $this->publishedMapVersion->is_published,
+                'created_at' => $this->publishedMapVersion->created_at,
+            ] : null),
             'created_at' => $this->created_at,
         ];
     }
