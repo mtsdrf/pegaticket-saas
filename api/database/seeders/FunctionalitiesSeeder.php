@@ -39,7 +39,6 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Rotas', 'slug' => 'routes', 'description' => 'Montagem de rotas de entrega e cobrança com mapa', 'is_active' => true],
             ['name' => 'Configurações', 'slug' => 'tenant_settings', 'description' => 'Gestão das configurações da empresa', 'is_active' => true],
             ['name' => 'Perfil da Empresa', 'slug' => 'tenant-profile', 'description' => 'Edição de nome e logo da própria empresa pelo dono', 'is_active' => true],
-            ['name' => 'Redes Sociais', 'slug' => 'social_media', 'description' => 'Geração e compartilhamento de stories (produtos, indicadores, comunicados)', 'is_active' => true],
             ['name' => 'Loja Online', 'slug' => 'storefront', 'description' => 'Catálogo público e checkout da loja online do tenant', 'is_active' => true],
             ['name' => 'Cashback', 'slug' => 'cashback', 'description' => 'Crédito, resgate e extrato de cashback para clientes da loja online', 'is_active' => true],
             ['name' => 'Assinatura', 'slug' => 'subscription', 'description' => 'Assinatura do plano da empresa (cobrança, faturas, cancelamento, arrependimento)', 'is_active' => true],

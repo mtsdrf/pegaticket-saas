@@ -295,9 +295,6 @@ const FiscalOperationProfileFormPage = lazy(() =>
 const LegalDocumentPage = lazy(() =>
   import('../pages/Legal/LegalDocumentPage').then((m) => ({ default: m.LegalDocumentPage })),
 )
-const SocialMediaPage = lazy(() =>
-  import('../pages/SocialMedia/SocialMediaPage').then((m) => ({ default: m.SocialMediaPage })),
-)
 const SupportTicketsPage = lazy(() =>
   import('../pages/Support/SupportTicketsPage').then((m) => ({ default: m.SupportTicketsPage })),
 )
@@ -620,7 +617,6 @@ export function AppRoutes() {
             </Route>
             {/* `/empresa` foi unificada com `/configuracoes/assinatura` (mesmo domínio: plano/cobrança) — redirect preserva links/favoritos antigos. */}
             <Route path="/empresa" element={<Navigate to="/configuracoes/assinatura" replace />} />
-            <Route path="/redes-sociais" element={<PermissionRoute requirement={ACCESS.socialMediaRead}><SocialMediaPage /></PermissionRoute>} />
             <Route path="/suporte" element={<PermissionRoute requirement={ACCESS.supportTicketsRead}><SupportTicketsPage /></PermissionRoute>} />
           </Route>
         </Route>

@@ -13,7 +13,6 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined'
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined'
 import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined'
 import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined'
@@ -145,7 +144,6 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/pedidos-ifood', label: 'Pedidos iFood', icon: LocalShippingOutlinedIcon, access: ACCESS.apiAccessRead },
   { kind: 'link', to: '/rotas', label: 'Montar rota', icon: AltRouteOutlinedIcon, access: ACCESS.routesRead },
   { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
-  { kind: 'link', to: '/redes-sociais', label: 'Redes sociais', icon: ShareOutlinedIcon, access: ACCESS.socialMediaRead },
   {
     kind: 'group',
     label: 'Relatórios',

@@ -248,7 +248,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   routes: ['read'],
   reports: ['read', 'export_pdf'],
   finance: ['read'],
-  social_media: ['read'],
   tenant_settings: ['read', 'update'],
   'tenant-profile': ['read', 'update', 'export'],
   storefront: ['read', 'update'],

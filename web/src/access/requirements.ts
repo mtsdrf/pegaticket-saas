@@ -122,7 +122,6 @@ export const ACCESS = {
   tenantProfileUpdate: tenant('tenant-profile', 'update'),
   /** Exportar dados (roadmap A1.2) — ZIP com CSVs de clients/products/orders do tenant. */
   tenantProfileExport: tenant('tenant-profile', 'export'),
-  socialMediaRead: tenant('social_media', 'read'),
   /** Central de chamados nativa (roadmap A4, item 17) — functionality `support`, reaproveita actions `read`/`create` já existentes. */
   supportTicketsRead: tenant('support', 'read'),
   supportTicketsCreate: tenant('support', 'create'),
