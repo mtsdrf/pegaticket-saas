@@ -4,9 +4,9 @@ import type { PaginationMeta } from './pagination'
 export interface SaleFinalCustomerRef {
   uuid: string
   name: string
-  /** Sobrenome informado no checkout online — `null`/ausente para pedidos staff/sem informação. */
+  /** Sobrenome informado no checkout online — `null`/ausente para vendas staff/sem informação. */
   last_name?: string | null
-  /** Aditivos do `SaleResource` (roadmap Loja) — só presentes quando o pedido é carregado com o detalhe completo. */
+  /** Aditivos do `SaleResource` (roadmap Loja) — só presentes quando a venda é carregada com o detalhe completo. */
   phone_primary?: string | null
 }
 
@@ -44,12 +44,12 @@ export interface SaleInstallment {
 }
 
 /**
- * Todo pedido staff é sempre `status: 'confirmed'`/`origin: 'staff'` — só o
+ * Toda venda staff é sempre `status: 'confirmed'`/`origin: 'staff'` — só o
  * canal online (`origin: 'storefront'`) nasce `pending_approval`.
- * `cancellation_requested` (roadmap A4) é transitório — só pedido `origin: 'storefront'` chega nele, via solicitação do cliente final no Portal; volta pro status anterior ao aprovar/rejeitar.
+ * `cancellation_requested` (roadmap A4) é transitório — só venda `origin: 'storefront'` chega nele, via solicitação do cliente final no Portal; volta pro status anterior ao aprovar/rejeitar.
  */
 export type SaleStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
-export type SaleOrigin = 'staff' | 'storefront' | 'ifood'
+export type SaleOrigin = 'staff' | 'storefront'
 export type SaleOperationStage = 'approval' | 'production' | 'dispatch' | 'financial_pending'
 
 export interface Sale {
@@ -57,11 +57,11 @@ export interface Sale {
   codigo: string
   is_installment: boolean
   total_amount: number
-  /** Já somado ao `total_amount`; pedidos staff (sem canal online) ficam com `0`. */
+  /** Já somado ao `total_amount`; vendas staff (sem canal online) ficam com `0`. */
   delivery_fee: number
   /** Taxa de serviço, já somada ao `total_amount`; nos canais atuais costuma permanecer `0`. */
   service_fee: number
-  /** Já subtraído do `total_amount`; pedidos staff/sem cupom ficam com `0`. */
+  /** Já subtraído do `total_amount`; vendas staff/sem cupom ficam com `0`. */
   discount_amount: number
   /** Código do cupom aplicado, se houver (via relação `coupon`) — `null` quando nenhum cupom foi usado. */
   coupon_code: string | null
@@ -76,7 +76,7 @@ export interface Sale {
   cancelled_at: string | null
   cancellation_reason: string | null
   notes: string | null
-  /** Meio de pagamento informado no checkout público — `null`/ausente para pedidos staff/sem informação. */
+  /** Meio de pagamento informado no checkout público — `null`/ausente para vendas staff/sem informação. */
   payment_method?: string | null
   /** Só relevante quando `payment_method === 'cash'` — cliente pediu troco. */
   needs_change?: boolean
@@ -131,9 +131,9 @@ export interface SalePayload {
   /** Backend limita a 500 caracteres. */
   notes?: string
   items: SaleCreateItemPayload[]
-  /** Pedido já nasce entregue (mesma lógica interna do botão "Entregar"). */
+  /** Venda já nasce entregue (mesma lógica interna do botão "Entregar"). */
   mark_as_delivered?: boolean
-  /** Pedido já nasce pago — backend rejeita (422) combinado com `is_installment: true`. */
+  /** Venda já nasce paga — backend rejeita (422) combinado com `is_installment: true`. */
   mark_as_paid?: boolean
   /** Data prevista de entrega (informativo, `YYYY-MM-DD`) — não é o mesmo campo que `delivered_at`. */
   expected_delivery_date?: string

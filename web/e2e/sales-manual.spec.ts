@@ -20,7 +20,7 @@ test.describe('Vendas manuais', () => {
       },
     })
 
-    await page.goto('/pedidos-manuais')
+    await page.goto('/vendas-manuais')
 
     await expect(page.getByRole('heading', { name: 'Pedidos manuais' })).toBeVisible()
     await expect(page.getByText('Gerencie os pedidos lançados manualmente pela equipe.')).toBeVisible()
@@ -61,7 +61,7 @@ test.describe('Vendas manuais', () => {
       },
     })
 
-    await page.goto('/pedidos-manuais')
+    await page.goto('/vendas-manuais')
 
     await expect(page.getByRole('heading', { name: 'Pedidos manuais' })).toBeVisible()
     await expect(page.getByText('Maria da Silva')).toBeVisible()
@@ -237,7 +237,7 @@ test.describe('Vendas manuais', () => {
       })
     })
 
-    await page.goto('/pedidos/novo')
+    await page.goto('/vendas/nova')
 
     await expect(page.getByRole('heading', { name: 'Novo pedido' })).toBeVisible()
 
@@ -256,7 +256,7 @@ test.describe('Vendas manuais', () => {
 
     await page.getByRole('button', { name: 'Salvar' }).click()
 
-    await page.waitForURL('**/pedidos')
+    await page.waitForURL('**/vendas')
     await expect(page.getByText('2050').first()).toBeVisible()
     await expect(page.getByText('Comprador Venda Manual').first()).toBeVisible()
   })

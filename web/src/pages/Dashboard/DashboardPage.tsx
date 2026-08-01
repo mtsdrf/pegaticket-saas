@@ -34,7 +34,7 @@ import { ACCESS } from '../../access/requirements'
 import type { OperationHealthStageSummary } from '../../types/report'
 
 const QUICK_ACTIONS = [
-  { icon: ReceiptLongOutlinedIcon, label: 'Novo pedido', to: '/pedidos/novo' },
+  { icon: ReceiptLongOutlinedIcon, label: 'Nova venda', to: '/vendas/nova' },
   { icon: Inventory2OutlinedIcon, label: 'Cadastrar evento', to: '/eventos/novo' },
 ]
 
@@ -58,7 +58,7 @@ function formatOperationAge(totalMinutes: number | null): string {
 }
 
 function stageDestination(stage: OperationHealthStageSummary['stage']): string {
-  return `/pedidos?stage=${stage}&source=dashboard`
+  return `/vendas?stage=${stage}&source=dashboard`
 }
 
 function OperationHealthStageCard({
@@ -160,7 +160,7 @@ export function DashboardPage() {
     : null
   const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_orders === 0
   const quickActions = QUICK_ACTIONS.filter((action) => {
-    if (action.to === '/pedidos/novo') return can(ACCESS.salesCreate)
+    if (action.to === '/vendas/nova') return can(ACCESS.salesCreate)
     if (action.to === '/eventos/novo') return can(ACCESS.eventsCreate)
     return true
   })
@@ -304,8 +304,8 @@ export function DashboardPage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                 {can(ACCESS.salesCreate) ? (
-                  <Button component={RouterLink} to="/pedidos/novo" variant="contained">
-                    Fazer primeiro pedido
+                  <Button component={RouterLink} to="/vendas/nova" variant="contained">
+                    Fazer primeira venda
                   </Button>
                 ) : null}
                 {can(ACCESS.eventsCreate) ? (
@@ -436,7 +436,7 @@ export function DashboardPage() {
                 {canOpenOrdersQueue ? (
                   <Button
                     component={RouterLink}
-                    to="/pedidos?stage=approval&source=dashboard"
+                    to="/vendas?stage=approval&source=dashboard"
                     size="small"
                     color="error"
                     sx={{ ml: 1, mt: { xs: 1, sm: 0 } }}

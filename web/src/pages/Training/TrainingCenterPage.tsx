@@ -173,7 +173,7 @@ const TRAINING_MODULES: TrainingModule[] = [
     requirement: ACCESS.eventsRead,
     whoUses: 'Quem mantém os eventos vendidos ou publicados na loja.',
     dependencies: ['empresa'],
-    connectsTo: ['estoque', 'pedidos', 'loja', 'delivery'],
+    connectsTo: ['estoque', 'pedidos', 'loja'],
     teaches: [
       'Diferença entre categoria, tipo e produto',
       'Como o cadastro impacta loja, estoque, relatórios e integrações',
@@ -181,7 +181,7 @@ const TRAINING_MODULES: TrainingModule[] = [
     ],
     risks: [
       'Produto mal cadastrado quebra estoque, loja e integração externa',
-      'SKU inconsistente dificulta importação do iFood e conferência operacional',
+      'SKU inconsistente dificulta conferência operacional',
     ],
     operations: [
       {
@@ -203,13 +203,13 @@ const TRAINING_MODULES: TrainingModule[] = [
     name: 'Disponibilidade e reserva',
     summary: 'Mostra como a disponibilidade entra no fluxo do pedido e por que reserva e baixa continuam críticas para a operação.',
     status: 'implemented',
-    route: '/pedidos/novo',
+    route: '/vendas/nova',
     audience: ['Estoque', 'Operação', 'Gestão'],
     functionality: 'sales',
     requirement: ACCESS.salesRead,
     whoUses: 'Gestão, operação e quem precisa validar disponibilidade antes de vender.',
     dependencies: ['catalogo'],
-    connectsTo: ['pedidos', 'loja', 'delivery'],
+    connectsTo: ['pedidos', 'loja'],
     teaches: [
       'Como reservas e baixas evitam venda acima do saldo',
       'Como o produto usa local padrão e saldo disponível para aprovar o fluxo',
@@ -225,7 +225,7 @@ const TRAINING_MODULES: TrainingModule[] = [
         purpose: 'Conferir se o pedido pode seguir sem bloquear a operação depois.',
         when: 'Durante a montagem ou revisão do pedido.',
         actor: 'Operação, atendimento ou gestor',
-        route: '/pedidos/novo',
+        route: '/vendas/nova',
         permissionLabel: 'orders:create',
         requirements: ['Produto ativo', 'Estratégia de estoque da empresa configurada'],
         effects: ['Evita prometer item sem saldo e reduz correção manual posterior'],
@@ -239,7 +239,7 @@ const TRAINING_MODULES: TrainingModule[] = [
     name: 'Cliente no contexto do pedido',
     summary: 'Mostra quais dados do cliente realmente sustentam pedido, entrega, cobrança e leitura operacional nesta fase.',
     status: 'implemented',
-    route: '/pedidos/novo',
+    route: '/vendas/nova',
     audience: ['Comercial', 'Atendimento', 'Financeiro'],
     functionality: 'sales',
     requirement: ACCESS.salesRead,
@@ -261,7 +261,7 @@ const TRAINING_MODULES: TrainingModule[] = [
         purpose: 'Garantir que a venda saia com contexto confiável para entrega, contato e histórico.',
         when: 'Na criação ou revisão de um pedido interno.',
         actor: 'Atendimento ou comercial',
-        route: '/pedidos/novo',
+        route: '/vendas/nova',
         permissionLabel: 'orders:create',
         requirements: ['Dados mínimos de contato', 'Endereço válido quando houver entrega'],
         effects: ['Pedido nasce com contexto suficiente para cobrança, logística e histórico'],
@@ -275,17 +275,17 @@ const TRAINING_MODULES: TrainingModule[] = [
     name: 'Pedidos e operação diária',
     summary: 'Mostra como o pedido impacta estoque, financeiro, entrega, loja e analytics.',
     status: 'implemented',
-    route: '/pedidos',
+    route: '/vendas',
     audience: ['Operação', 'Atendimento', 'Gestão'],
     functionality: 'sales',
     requirement: ACCESS.salesRead,
     whoUses: 'Atendimento, operação, logística, gestão e financeiro.',
     dependencies: ['clientes', 'catalogo', 'estoque'],
-    connectsTo: ['financeiro', 'rotas', 'delivery', 'relatorios'],
+    connectsTo: ['financeiro', 'rotas', 'relatorios'],
     teaches: [
       'Fluxo completo: criar, pagar, entregar, cancelar, revisar itens',
       'Como o pedido reserva e baixa estoque',
-      'O que muda quando o pedido vem da loja ou do iFood',
+      'O que muda quando o pedido vem da loja online ou é lançado manualmente',
     ],
     risks: [
       'Cancelar pedido pago exige tratamento correto',
@@ -297,7 +297,7 @@ const TRAINING_MODULES: TrainingModule[] = [
         purpose: 'Registrar a venda operacional com impacto em estoque, financeiro e histórico do cliente.',
         when: 'Venda por atendimento interno, equipe comercial ou operação assistida.',
         actor: 'Operação ou atendimento',
-        route: '/pedidos/novo',
+        route: '/vendas/nova',
         permissionLabel: 'orders:create',
         requirements: ['Cliente e produtos válidos', 'Saldo disponível quando a empresa bloqueia venda sem estoque'],
         effects: ['Reserva estoque, cria totais, parcelas e torna o pedido rastreável'],
@@ -311,13 +311,13 @@ const TRAINING_MODULES: TrainingModule[] = [
     name: 'Bilheteria online e vendas digitais',
     summary: 'Explica a jornada pública do cliente e o que a empresa precisa configurar para vender ingressos online.',
     status: 'implemented',
-    route: '/configuracoes/pedidos',
+    route: '/configuracoes/vendas',
     audience: ['Proprietário', 'Marketing', 'Operação digital'],
     functionality: 'storefront',
     requirement: ACCESS.storefrontUpdate,
     whoUses: 'Quem mantém a bilheteria digital e quem opera vendas vindas dela.',
     dependencies: ['empresa', 'catalogo', 'clientes'],
-    connectsTo: ['pedidos', 'portal', 'financeiro', 'delivery'],
+    connectsTo: ['pedidos', 'portal', 'financeiro'],
     teaches: [
       'Como ativar catálogo, horários e cupom',
       'Quando a venda entra na fila operacional',
@@ -333,7 +333,7 @@ const TRAINING_MODULES: TrainingModule[] = [
         purpose: 'Publicar uma operação mínima confiável para o cliente final.',
         when: 'Na implantação da bilheteria ou ao reabrir o canal digital.',
         actor: 'Proprietário ou responsável digital',
-        route: '/configuracoes/pedidos',
+        route: '/configuracoes/vendas',
         permissionLabel: 'storefront:update',
         requirements: ['Produtos ativos', 'Horários definidos', 'Checkout testado'],
         effects: ['Habilita leitura pública da bilheteria e a jornada de checkout'],
@@ -378,42 +378,6 @@ const TRAINING_MODULES: TrainingModule[] = [
       },
     ],
   },
-  {
-    id: 'delivery',
-    name: 'Delivery e integrações',
-    summary: 'Mostra o status atual das integrações e como pedidos externos entram no centro operacional do PegaTicket.',
-    status: 'partial',
-    route: '/configuracoes/integracoes',
-    audience: ['Operação digital', 'Proprietário', 'Implantação'],
-    functionality: 'api-access',
-    requirement: ACCESS.apiAccessRead,
-    whoUses: 'Quem integra o sistema com parceiros e acompanha pedidos externos.',
-    dependencies: ['catalogo', 'pedidos', 'loja'],
-    connectsTo: ['pedidos', 'estoque'],
-    teaches: [
-      'Como a central de integrações conversa com pedido interno',
-      'Como reprocessar falhas e reimportar pedidos',
-      'Quais partes já estão prontas e quais ainda dependem de credencial/homologação',
-    ],
-    risks: [
-      'Catálogo inconsistente dificulta matching e importação',
-      'Confundir falha de credencial com falha operacional do pedido',
-    ],
-    operations: [
-      {
-        title: 'Operar pedido do iFood',
-        purpose: 'Acompanhar a fila externa, reenfileirar falhas e importar para o fluxo interno.',
-        when: 'Durante operação omnichannel ou testes de integração.',
-        actor: 'Operação digital',
-        route: '/pedidos-ifood',
-        permissionLabel: 'api-access:read/update',
-        requirements: ['Integração ativa', 'Merchant sincronizado', 'Catálogo minimamente compatível'],
-        effects: ['Atualiza timeline, ações externas e vínculo com pedido interno'],
-        commonErrors: ['Pedido sem matching de item', 'Evento com falha não reprocessado', 'Credencial inválida'],
-        goodPractices: ['Acompanhar alerta operacional e fila de erros antes de abrir suporte'],
-      },
-    ],
-  },
 ]
 
 const TRAINING_TRACKS: TrainingTrack[] = [
@@ -430,7 +394,7 @@ const TRAINING_TRACKS: TrainingTrack[] = [
     title: 'Operação de pedidos sem erro',
     audience: 'operations',
     description: 'Treinamento focado em criação, revisão, pagamento, entrega e correção operacional.',
-    modules: ['clientes', 'catalogo', 'estoque', 'pedidos', 'delivery'],
+    modules: ['clientes', 'catalogo', 'estoque', 'pedidos'],
     outcome: 'Equipe entende dependências do pedido e evita erros de fluxo e saldo.',
   },
   {
@@ -527,26 +491,6 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
     ],
     correctIndex: 0,
     explanation: 'A conciliação existe para ligar o evento financeiro ao pedido e separar erro de operação de erro de integração.',
-  },
-  delivery: {
-    question: 'Quando um pedido do iFood falha na materialização, qual reação está mais alinhada à operação do PegaTicket?',
-    options: [
-      'Ignorar e esperar que resolva sozinho',
-      'Acompanhar a fila operacional, reprocessar evento e revisar matching/catálogo',
-      'Excluir a integração inteira imediatamente',
-    ],
-    correctIndex: 1,
-    explanation: 'A central operacional do iFood já foi criada exatamente para isso: separar falha operacional de falha estrutural.',
-  },
-  contador: {
-    question: 'Qual comportamento preserva melhor rastreabilidade com o escritório contábil?',
-    options: [
-      'Tratar tudo por e-mail externo',
-      'Usar a central de pendências e aprovar o vínculo correto',
-      'Dar acesso amplo a qualquer escritório sem revisão',
-    ],
-    correctIndex: 1,
-    explanation: 'A central de pendências existe para manter histórico, contexto e responsabilidade por empresa.',
   },
 }
 
@@ -1573,9 +1517,7 @@ export function TrainingCenterPage() {
                     {
                       title: 'Ainda em evolução',
                       color: 'default' as const,
-                      items: TRAINING_MODULES.filter((module) => module.status === 'planned').map((module) => module.name).concat([
-                        'Integrações homologadas além do iFood',
-                      ]),
+                      items: TRAINING_MODULES.filter((module) => module.status === 'planned').map((module) => module.name),
                     },
                   ].map((column) => (
                     <Paper key={column.title} variant="outlined" sx={{ ...ELEVATED_SURFACE_SX, p: 1.5, ...clampTextSx }}>

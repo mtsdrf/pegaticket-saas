@@ -19,8 +19,8 @@ import type { SaleTracking } from '../../types/saleTracking'
 import { deriveSaleStatus, STATUS_TONE_COLORS } from '../../utils/saleStatus'
 import { formatCurrency, formatDateBR, formatItemQuantity } from '../../utils/format'
 
-function StatusBanner({ order }: { order: SaleTracking }) {
-  const status = deriveSaleStatus(order)
+function StatusBanner({ sale }: { sale: SaleTracking }) {
+  const status = deriveSaleStatus(sale)
   const colors = STATUS_TONE_COLORS[status.tone]
 
   return (
@@ -72,7 +72,7 @@ function NotFoundState({ message }: { message: string }) {
       }}
     >
       <SearchOffOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
-      <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 0.75 }}>Pedido não encontrado</Typography>
+      <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 0.75 }}>Venda não encontrada</Typography>
       <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>{message}</Typography>
     </Paper>
   )
@@ -81,7 +81,7 @@ function NotFoundState({ message }: { message: string }) {
 function ItemsList({ items }: { items: SaleTracking['items'] }) {
   if (items.length === 0) {
     return (
-      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Nenhum item registrado neste pedido.</Typography>
+      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Nenhum item registrado nesta compra.</Typography>
     )
   }
 
@@ -157,7 +157,7 @@ function InstallmentsList({ installments }: { installments: SaleTracking['instal
 
 /**
  * CTA opcional (Fase 5.2, "Portal do cliente final") — não interfere na
- * visualização do pedido atual, só oferece agregar este pedido a uma conta
+ * visualização da compra atual, só oferece agregar esta compra a uma conta
  * do portal. Se o cliente já está logado no portal, vincula direto
  * (`POST /portal/links`, idempotente) e vai pra lista. Se não, manda pro
  * login do portal levando o `order_uuid` via querystring (`?vincular=`) —
@@ -180,9 +180,9 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
     setIsLinking(true)
     try {
       await createPortalLink({ order_uuid: saleUuid })
-      navigate('/portal/pedidos')
+      navigate('/portal/compras')
     } catch (error) {
-      setLinkError(getApiErrorMessage(error, 'Não foi possível vincular este pedido agora. Tente novamente.'))
+      setLinkError(getApiErrorMessage(error, 'Não foi possível vincular esta compra agora. Tente novamente.'))
     } finally {
       setIsLinking(false)
     }
@@ -209,9 +209,9 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
           color: 'var(--pt-primary)',
         }}
       />
-      <Typography sx={{ fontSize: 14.5, fontWeight: 700, mb: 0.5 }}>Ver todos os meus pedidos</Typography>
+      <Typography sx={{ fontSize: 14.5, fontWeight: 700, mb: 0.5 }}>Ver todas as minhas compras</Typography>
       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
-        Opcional: crie ou entre na sua conta PegaTicket e acompanhe, num só lugar, os pedidos de todas as lojas que
+        Opcional: crie ou entre na sua conta PegaTicket e acompanhe, num só lugar, as compras de todas as lojas que
         você confirmar que são suas.
       </Typography>
 
@@ -229,15 +229,15 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
         startIcon={<LinkOutlinedIcon />}
         fullWidth
       >
-        {isLinking ? 'Vinculando…' : 'Ver todos os meus pedidos'}
+        {isLinking ? 'Vinculando…' : 'Ver todas as minhas compras'}
       </Button>
     </Paper>
   )
 }
 
 /**
- * Avaliação de pedido entregue (Delivery Fase 4) — só aparece quando
- * `order.is_delivered` E o `FinalCustomer` está autenticado no portal. Sem
+ * Avaliação de venda entregue (Delivery Fase 4) — só aparece quando
+ * `sale.is_delivered` E o `FinalCustomer` está autenticado no portal. Sem
  * endpoint de "já avaliei" separado: depois do envio, esconde o formulário e
  * mostra a nota enviada só para esta sessão (estado local, não persistido).
  */
@@ -262,7 +262,7 @@ function SaleRatingSection({ saleUuid }: { saleUuid: string }) {
       if (error instanceof ApiRequestError && error.code === 'ORDER_ALREADY_RATED') {
         setAlreadyRated(true)
       } else if (error instanceof ApiRequestError && error.code === 'INVALID_ORDER_STATE') {
-        setErrorMessage(getApiErrorMessage(error, 'Este pedido ainda não pode ser avaliado.'))
+        setErrorMessage(getApiErrorMessage(error, 'Esta compra ainda não pode ser avaliada.'))
       } else {
         setErrorMessage(getApiErrorMessage(error, 'Não foi possível enviar sua avaliação agora. Tente novamente.'))
       }
@@ -274,7 +274,7 @@ function SaleRatingSection({ saleUuid }: { saleUuid: string }) {
   if (alreadyRated) {
     return (
       <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-        <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Você já avaliou este pedido anteriormente.</Typography>
+        <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)' }}>Você já avaliou esta compra anteriormente.</Typography>
       </Paper>
     )
   }
@@ -295,7 +295,7 @@ function SaleRatingSection({ saleUuid }: { saleUuid: string }) {
 
   return (
     <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-      <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Avalie seu pedido</Typography>
+      <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Avalie sua compra</Typography>
       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
         Conte pra gente como foi sua experiência com esta loja.
       </Typography>
@@ -463,8 +463,8 @@ export function SaleTrackingPage() {
           // fixa amigável em vez disso.
           setErrorMessage(
             error instanceof ApiRequestError
-              ? getApiErrorMessage(error, 'Pedido não encontrado ou link inválido.')
-              : 'Não foi possível carregar os dados do pedido agora. Verifique sua conexão e tente novamente.',
+              ? getApiErrorMessage(error, 'Venda não encontrada ou link inválido.')
+              : 'Não foi possível carregar os dados da compra agora. Verifique sua conexão e tente novamente.',
           )
         })
         .finally(() => {
@@ -503,7 +503,7 @@ export function SaleTrackingPage() {
           <Logo variant="mark" size={38} />
           {order?.tenant_name && (
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', lineHeight: 1.2 }}>Pedido de</Typography>
+              <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', lineHeight: 1.2 }}>Compra de</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, wordBreak: 'break-word' }}>
                 {order.tenant_name}
               </Typography>
@@ -517,7 +517,7 @@ export function SaleTrackingPage() {
 
         {!isLoading && order && (
           <Stack spacing={2.5}>
-            <StatusBanner order={order} />
+            <StatusBanner sale={order} />
 
             <Paper
               elevation={0}

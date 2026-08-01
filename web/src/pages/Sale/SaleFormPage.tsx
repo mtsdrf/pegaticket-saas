@@ -27,7 +27,7 @@ import { getApiErrorMessage } from '../../types/api'
 import type { FinalCustomerSearchResult } from '../../types/finalCustomer'
 import type { Sale, SaleCreateItemPayload, SaleFinalCustomerRef } from '../../types/sale'
 import { formatCurrency } from '../../utils/format'
-import { buildOrderCreatedWhatsAppMessage, buildWhatsAppUrl, isDigitsOnlyPhone } from '../../utils/whatsApp'
+import { buildSaleCreatedWhatsAppMessage, buildWhatsAppUrl, isDigitsOnlyPhone } from '../../utils/whatsApp'
 
 const NOTES_MAX_LENGTH = 500
 
@@ -112,7 +112,7 @@ export function SaleFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const whatsAppWindowRef = useRef<Window | null>(null)
 
-  // "Pago" não existe pra pedido parcelado (backend rejeita com 422) — some
+  // "Pago" não existe pra venda parcelada (backend rejeita com 422) — some
   // junto se o usuário ligar "parcelado" depois de já ter marcado "pago".
   useEffect(() => {
     if (isInstallment) setMarkAsPaid(false)
@@ -196,7 +196,7 @@ export function SaleFormPage() {
     }))
 
     try {
-      const order: Sale = await saleService.createSale({
+      const sale: Sale = await saleService.createSale({
         final_customer_uuid: client.uuid,
         is_installment: isInstallment,
         installments_count: isInstallment ? Number(installmentsCount) : null,
@@ -208,28 +208,28 @@ export function SaleFormPage() {
       })
 
       if (isDigitsOnlyPhone(client.phone_primary)) {
-        const message = buildOrderCreatedWhatsAppMessage({
+        const message = buildSaleCreatedWhatsAppMessage({
           clientName: client.name,
           items: validItems.map((item) => ({
             name: item.item!.name,
             quantity: item.quantity,
             unitPrice: effectiveUnitPrice(item),
           })),
-          total: order.total_amount,
+          total: sale.total_amount,
           expectedDeliveryDate,
           isPaid: markAsPaid && !isInstallment,
           paidAmount: markAsPaid && !isInstallment ? paidAmountNumber : null,
           trackingUrl: activeTenant?.send_tracking_link_whatsapp
-            ? `${window.location.origin}/rastreio/${order.uuid}`
+            ? `${window.location.origin}/rastreio/${sale.uuid}`
             : undefined,
         })
         const url = buildWhatsAppUrl(client.phone_primary, message)
         whatsAppWindowRef.current = window.open(url, '_blank')
       }
 
-      navigate('/pedidos')
+      navigate('/vendas')
     } catch (err) {
-      setFormError(getApiErrorMessage(err, 'Não foi possível criar o pedido agora.'))
+      setFormError(getApiErrorMessage(err, 'Não foi possível criar a venda agora.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -237,11 +237,11 @@ export function SaleFormPage() {
 
   return (
     <CrudFormShell
-      backLabel="Pedidos"
-      backTo="/pedidos"
-      title="Novo pedido"
+      backLabel="Vendas"
+      backTo="/vendas"
+      title="Nova venda"
       subtitle="Monte os itens, defina a forma de pagamento e confirme a venda."
-      breadcrumbs={[{ label: 'Pedidos', to: '/pedidos' }, { label: 'Novo' }]}
+      breadcrumbs={[{ label: 'Vendas', to: '/vendas' }, { label: 'Nova' }]}
       formError={formError}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
@@ -266,7 +266,7 @@ export function SaleFormPage() {
 
         <FormControlLabel
           control={<Switch checked={isInstallment} onChange={(event) => setIsInstallment(event.target.checked)} />}
-          label="Pedido parcelado"
+          label="Venda parcelada"
         />
 
         {isInstallment && (

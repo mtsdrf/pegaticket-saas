@@ -85,7 +85,7 @@ async function fetchCatalogOptions(query: string): Promise<EditableCatalogItemOp
 }
 
 interface SaleDetailDialogProps {
-  orderUuid: string | null
+  saleUuid: string | null
   open: boolean
   onClose: () => void
   /** Chamado depois de qualquer mutação bem-sucedida (ação de status, parcelas ou itens) — quem monta o dialog atualiza sua própria lista/grid. */
@@ -93,13 +93,13 @@ interface SaleDetailDialogProps {
 }
 
 /**
- * Dialog reutilizável de "Detalhes do pedido" — busca o pedido sozinho ao
+ * Dialog reutilizável de "Detalhes da venda" — busca a venda sozinha ao
  * abrir e concentra toda a UI de ações (entregar/pagar/cancelar), edição de
- * parcelas e edição de itens/cabeçalho. Usado tanto pela listagem de Pedidos
- * quanto pela tela de Rotas (uma parada pode abrir o pedido de origem).
+ * parcelas e edição de itens/cabeçalho. Usado tanto pela listagem de Vendas
+ * quanto pela tela de Rotas (uma parada pode abrir a venda de origem).
  */
-export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDetailDialogProps) {
-  const [selectedSale, setSelectedOrder] = useState<Sale | null>(null)
+export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDetailDialogProps) {
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
@@ -108,7 +108,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
   const [approveCancellationConfirmOpen, setApproveCancellationConfirmOpen] = useState(false)
   /** Data opcional de pagamento (YYYY-MM-DD) — vazia = comportamento atual (data de hoje, decidida pelo backend). */
   const [paidAtDraft, setPaidAtDraft] = useState('')
-  /** Valor opcional de pagamento — vazio = totalmente pago (comportamento atual). Só usado no pagamento do pedido (não parcelado), nunca em parcela. */
+  /** Valor opcional de pagamento — vazio = totalmente pago (comportamento atual). Só usado no pagamento da venda (não parcelada), nunca em parcela. */
   const [paidAmountDraft, setPaidAmountDraft] = useState('')
 
   const [installmentEditorOpen, setInstallmentEditorOpen] = useState(false)
@@ -126,25 +126,25 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
   const [headerExpectedDeliveryDraft, setHeaderExpectedDeliveryDraft] = useState('')
 
   useEffect(() => {
-    if (!open || !orderUuid) return
+    if (!open || !saleUuid) return
     let cancelled = false
     setDialogError(null)
     setIsLoadingDetail(true)
-    setSelectedOrder(null)
+    setSelectedSale(null)
     setCancelReason('')
     setPaidAtDraft('')
     setPaidAmountDraft('')
     setInstallmentEditorOpen(false)
     setItemsEditorOpen(false)
 
-    Promise.resolve(saleService.getSale(orderUuid))
-      .then((order) => {
+    Promise.resolve(saleService.getSale(saleUuid))
+      .then((sale) => {
         if (cancelled) return
-        setSelectedOrder(order)
+        setSelectedSale(sale)
       })
       .catch((error) => {
         if (!cancelled) {
-          setDialogError(getApiErrorMessage(error, 'Não foi possível carregar o pedido agora.'))
+          setDialogError(getApiErrorMessage(error, 'Não foi possível carregar a venda agora.'))
         }
       })
       .finally(() => {
@@ -156,7 +156,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
     return () => {
       cancelled = true
     }
-  }, [open, orderUuid])
+  }, [open, saleUuid])
 
   const canEditItems = Boolean(selectedSale) && !selectedSale!.is_delivered && !selectedSale!.is_paid && !selectedSale!.cancelled_at
 
@@ -184,8 +184,8 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
   const itemsEditorHasIncompleteRow = itemDrafts.some((row) => !row.item || !row.quantity.trim() || Number(row.quantity) <= 0)
 
   async function refetchSelectedSale(uuid: string) {
-    const order = await saleService.getSale(uuid)
-    setSelectedOrder(order)
+    const sale = await saleService.getSale(uuid)
+    setSelectedSale(sale)
     onChanged?.()
   }
 
@@ -214,7 +214,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
       } else {
         updated = await saleService.cancelSale(selectedSale.uuid, cancelReason.trim())
       }
-      setSelectedOrder(updated)
+      setSelectedSale(updated)
       setApproveCancellationConfirmOpen(false)
       onChanged?.()
     } catch (err) {
@@ -376,7 +376,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle>Detalhes do pedido</DialogTitle>
+        <DialogTitle>Detalhes da venda</DialogTitle>
         <DialogContent dividers>
           {dialogError && <Typography color="error">{dialogError}</Typography>}
           {!dialogError && selectedSale && (
@@ -386,7 +386,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
 
               {selectedSale.status === 'cancellation_requested' && (
                 <Alert severity="warning" variant="outlined">
-                  O cliente solicitou o cancelamento deste pedido
+                  O cliente solicitou o cancelamento desta venda
                   {selectedSale.cancellation_reason ? `: "${selectedSale.cancellation_reason}"` : ', sem motivo informado.'}{' '}
                   Aprove ou rejeite abaixo.
                 </Alert>
@@ -674,7 +674,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
               onClick={() => void runAction('cancel')}
               sx={{ minHeight: 44 }}
             >
-              Cancelar pedido
+              Cancelar venda
             </Button>
           )}
           <Button onClick={onClose} sx={{ minHeight: 44 }}>Fechar</Button>
@@ -685,7 +685,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
         <DialogTitle>Aprovar cancelamento</DialogTitle>
         <DialogContent>
           <Alert severity="warning">
-            Ao aprovar, o pedido é cancelado de verdade agora. Esta ação não pode ser desfeita.
+            Ao aprovar, a venda é cancelada de verdade agora. Esta ação não pode ser desfeita.
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -776,7 +776,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
 
             <Typography sx={{ fontSize: 13, fontWeight: 600, color: installmentEditorMismatch ? 'var(--pt-warning)' : 'var(--pt-success)' }}>
               Total: {formatCurrency(installmentEditorTotal)} de {formatCurrency(selectedSale?.total_amount ?? 0)}
-              {installmentEditorMismatch && ' — a soma precisa bater exatamente com o total do pedido antes de salvar.'}
+              {installmentEditorMismatch && ' — a soma precisa bater exatamente com o total da venda antes de salvar.'}
             </Typography>
           </Stack>
         </DialogContent>

@@ -25,9 +25,9 @@ class SaleRefundController extends Controller
     ) {
     }
 
-    public function index(Sale $order)
+    public function index(Sale $sale)
     {
-        $refunds = $this->service->listForOrder($order);
+        $refunds = $this->service->listForOrder($sale);
 
         return APIResponse::success(
             SaleRefundResource::collection($refunds),
@@ -35,12 +35,12 @@ class SaleRefundController extends Controller
         );
     }
 
-    public function store(StoreSaleRefundRequest $request, Sale $order)
+    public function store(StoreSaleRefundRequest $request, Sale $sale)
     {
         $dto = CreateSaleRefundDTO::fromArray($request->validated());
 
         try {
-            $refund = $this->service->create($order, $dto, $request->file('receipt'));
+            $refund = $this->service->create($sale, $dto, $request->file('receipt'));
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -58,9 +58,9 @@ class SaleRefundController extends Controller
      * tenant-scoped e via perm:sale_refunds,read (mesma rota gate do
      * index()).
      */
-    public function receipt(Sale $order, SaleRefund $refund)
+    public function receipt(Sale $sale, SaleRefund $refund)
     {
-        if ((int) $order->tenant_id !== (int) app('tenant_id') || (int) $refund->order_id !== (int) $order->id) {
+        if ((int) $sale->tenant_id !== (int) app('tenant_id') || (int) $refund->order_id !== (int) $sale->id) {
             abort(404);
         }
 

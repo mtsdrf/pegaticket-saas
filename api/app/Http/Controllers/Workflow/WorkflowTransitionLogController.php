@@ -15,9 +15,9 @@ class WorkflowTransitionLogController extends Controller
     ) {
     }
 
-    public function order(Sale $order)
+    public function sale(Sale $sale)
     {
-        $logs = $this->service->listOrderTimeline($order);
+        $logs = $this->service->listOrderTimeline($sale);
 
         return APIResponse::success(
             WorkflowTransitionLogResource::collection($logs),

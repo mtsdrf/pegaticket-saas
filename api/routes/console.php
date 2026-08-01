@@ -41,12 +41,3 @@ Schedule::command('subscriptions:reconcile-mercadopago --limit=100')->hourly();
 // contra o Mercado Pago antes que um retry manual do usuário possa gerar
 // uma cobrança/assinatura duplicada.
 Schedule::command('payments:reconcile-idempotency --limit=100')->everyFiveMinutes();
-
-// iFood: a documentação pública recomenda polling frequente; em infra
-// simples garantimos pelo menos 1 varredura por minuto via scheduler.
-Schedule::command('marketplace:poll-ifood --limit=20')->everyMinute();
-
-// Recuperação operacional do iFood: reprocessa falhas recentes e tenta
-// reimportar pedidos externos ainda pendentes/erro sem depender de ação
-// manual do operador.
-Schedule::command('marketplace:recover-ifood --limit=20 --events=20 --orders=20')->everyFiveMinutes();

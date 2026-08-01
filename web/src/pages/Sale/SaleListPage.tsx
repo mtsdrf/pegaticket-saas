@@ -39,13 +39,11 @@ const ORIGIN_FILTERS: Array<{ value: 'all' | SaleOrigin; label: string }> = [
   { value: 'all', label: 'Todos os canais' },
   { value: 'staff', label: 'Manual' },
   { value: 'storefront', label: 'Online' },
-  { value: 'ifood', label: 'iFood' },
 ]
 
 const ORIGIN_META: Record<SaleOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Pedido manual', shortLabel: 'Manual' },
   storefront: { label: 'Bilheteria online', shortLabel: 'Online' },
-  ifood: { label: 'iFood importado', shortLabel: 'iFood' },
 }
 
 interface OperationSnapshot {
@@ -451,12 +449,10 @@ function QueueSaleCard({
 }
 
 /**
- * Primeira versão da central operacional multi-origem do PegaTicket. A rota
- * permanece `/pedidos`, mas a experiência deixa de ser "só pedidos manuais"
- * e passa a reunir o pedido canônico do sistema por origem (`staff`,
- * `storefront`, `ifood` e canais legados ainda presentes em histórico),
- * mantendo `/vendas-online` e `/pedidos-ifood` como filas especializadas
- * complementares.
+ * Central operacional multi-origem do PegaTicket. A rota permanece
+ * `/vendas`, reunindo a venda canônica do sistema por origem (`staff`,
+ * `storefront`), mantendo `/vendas-online` como fila especializada
+ * complementar.
  */
 export function SaleListPage() {
   const location = useLocation()
@@ -465,7 +461,7 @@ export function SaleListPage() {
   const { can } = useAccessControl()
   const { activeTenantUuid } = useAuth()
   const gridApiRef = useRef<GridApi | null>(null)
-  const isManualOrdersPage = location.pathname === '/pedidos-manuais'
+  const isManualOrdersPage = location.pathname === '/vendas-manuais'
 
   const stageFilterFromQuery = searchParams.get('stage')
   const sourceFromQuery = searchParams.get('source')
@@ -617,7 +613,7 @@ export function SaleListPage() {
     const productionPromise = saleService.listSales({ stage: 'production', active_only: true, per_page: 5 })
     const dispatchPromise = saleService.listSales({ stage: 'dispatch', active_only: true, per_page: 5 })
     const financialPendingPromise = saleService.listSales({ stage: 'financial_pending', active_only: true, per_page: 5 })
-    const originPromises = (['staff', 'storefront', 'ifood'] as SaleOrigin[]).map(async (origin) => {
+    const originPromises = (['staff', 'storefront'] as SaleOrigin[]).map(async (origin) => {
       const page = await saleService.listSales({ origin, active_only: true, per_page: 1 })
       return [origin, page.pagination.total] as const
     })
@@ -1666,12 +1662,6 @@ export function SaleListPage() {
                 icon={<LanguageOutlinedIcon fontSize="small" />}
                 variant="outlined"
               />
-              <Chip
-                size="small"
-                label={`iFood: ${snapshot.byOrigin.ifood ?? 0}`}
-                icon={<LanguageOutlinedIcon fontSize="small" />}
-                variant="outlined"
-              />
             </Stack>
           </Stack>
 
@@ -1770,11 +1760,11 @@ export function SaleListPage() {
 
   const manualPage = (
     <CrudListPage
-      title="Pedidos manuais"
-      subtitle="Gerencie os pedidos lançados manualmente pela equipe."
-      createLabel="Novo pedido"
+      title="Vendas manuais"
+      subtitle="Gerencie as vendas lançadas manualmente pela equipe."
+      createLabel="Nova venda"
       canCreate={can(ACCESS.salesCreate)}
-      onCreate={() => navigate('/pedidos/novo')}
+      onCreate={() => navigate('/vendas/nova')}
       error={null}
       onRetry={() => undefined}
       isLoading={!activeTenantUuid}
@@ -1786,17 +1776,17 @@ export function SaleListPage() {
             columns={columns}
             fetchPage={fetchPage}
             rowIdField="uuid"
-            exportFileName="pedidos-manuais"
+            exportFileName="vendas-manuais"
             onGridReady={(api) => {
               gridApiRef.current = api
             }}
             emptyState={{
               icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-              title: 'Nenhum pedido manual encontrado',
-              description: 'Assim que a equipe criar pedidos manualmente, eles aparecerão aqui.',
+              title: 'Nenhuma venda manual encontrada',
+              description: 'Assim que a equipe criar vendas manualmente, elas aparecerão aqui.',
               action: can(ACCESS.salesCreate) ? (
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/pedidos/novo')}>
-                  Criar primeiro pedido
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas/nova')}>
+                  Criar primeira venda
                 </Button>
               ) : undefined,
             }}
@@ -1811,10 +1801,10 @@ export function SaleListPage() {
       {isManualOrdersPage ? manualPage : (
         <CrudListPage
           title="Central de operação"
-          subtitle="Acompanhe a fila canônica de pedidos do sistema por canal, etapa e urgência."
-          createLabel="Novo pedido"
+          subtitle="Acompanhe a fila canônica de vendas do sistema por canal, etapa e urgência."
+          createLabel="Nova venda"
           canCreate={can(ACCESS.salesCreate)}
-          onCreate={() => navigate('/pedidos/novo')}
+          onCreate={() => navigate('/vendas/nova')}
           error={null}
           onRetry={() => undefined}
           isLoading={!activeTenantUuid}
@@ -1848,13 +1838,13 @@ export function SaleListPage() {
                 }}
                 emptyState={{
                   icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: activeOnly ? 'Nenhum pedido em andamento neste recorte' : 'Nenhum pedido encontrado',
+                  title: activeOnly ? 'Nenhuma venda em andamento neste recorte' : 'Nenhuma venda encontrada',
                   description: activeOnly
-                    ? 'Quando houver novos pedidos para operar, eles aparecerão aqui independente do canal de entrada.'
-                    : 'Ajuste os filtros acima ou crie o primeiro pedido para iniciar a operação.',
+                    ? 'Quando houver novas vendas para operar, elas aparecerão aqui independente do canal de entrada.'
+                    : 'Ajuste os filtros acima ou crie a primeira venda para iniciar a operação.',
                   action: can(ACCESS.salesCreate) ? (
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/pedidos/novo')}>
-                      Criar primeiro pedido
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas/nova')}>
+                      Criar primeira venda
                     </Button>
                   ) : undefined,
                 }}
@@ -1865,7 +1855,7 @@ export function SaleListPage() {
       )}
 
       <SaleDetailDialog
-        orderUuid={selectedSaleUuid}
+        saleUuid={selectedSaleUuid}
         open={selectedSaleUuid !== null}
         onClose={() => setSelectedOrderUuid(null)}
         onChanged={() => {
@@ -1896,9 +1886,9 @@ export function SaleListPage() {
 
       <WorkflowTimelineDialog
         open={selectedTimelineSaleUuid !== null}
-        title="Histórico operacional do pedido"
-        subjectLabel={selectedTimelineSaleUuid ? `pedido ${selectedTimelineSaleUuid}` : 'pedido'}
-        loader={() => (selectedTimelineSaleUuid ? workflowService.getOrderWorkflowTimeline(selectedTimelineSaleUuid) : Promise.resolve([]))}
+        title="Histórico operacional da venda"
+        subjectLabel={selectedTimelineSaleUuid ? `venda ${selectedTimelineSaleUuid}` : 'venda'}
+        loader={() => (selectedTimelineSaleUuid ? workflowService.getSaleWorkflowTimeline(selectedTimelineSaleUuid) : Promise.resolve([]))}
         stageLabel={(stage) => {
           if (!stage) return 'Sem etapa'
           return STAGE_META[stage as SaleOperationStage]?.label ?? stage

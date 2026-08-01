@@ -115,15 +115,15 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
 }
 
 /**
- * Passo 3 (só quando o cliente escolhe "Pix agora"): pedido já foi criado
+ * Passo 3 (só quando o cliente escolhe "Pix agora"): a venda já foi criada
  * com sucesso — daqui em diante nenhuma falha pode deixar a tela quebrada,
- * o pedido existe de qualquer forma. Gera a cobrança ao montar; erro na
+ * a venda existe de qualquer forma. Gera a cobrança ao montar; erro na
  * geração mostra retry + saída para o rastreio (pagar na entrega continua
- * possível). Sem polling automático (não pedido) — verificação é manual via
+ * possível). Sem polling automático (não solicitado) — verificação é manual via
  * "Já paguei, verificar", que só relê `GET /rastreio/{uuid}` (público,
  * já reflete `is_paid` assim que o webhook do PSP confirmar).
  */
-function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
+function PixPaymentPanel({ saleUuid }: { saleUuid: string }) {
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [payment, setPayment] = useState<SalePayment | null>(null)
@@ -137,7 +137,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     setErrorMessage(null)
     setCheckMessage(null)
     portalSaleService
-      .createSalePixCharge(orderUuid)
+      .createSalePixCharge(saleUuid)
       .then((result) => {
         setPayment(result)
         setStatus('ready')
@@ -146,7 +146,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
         setStatus('error')
         setErrorMessage(getApiErrorMessage(error, 'Não foi possível gerar a cobrança Pix agora.'))
       })
-  }, [orderUuid])
+  }, [saleUuid])
 
   useEffect(() => {
     loadCharge()
@@ -168,9 +168,9 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     setIsCheckingPayment(true)
     setCheckMessage(null)
     try {
-      const tracking = await getSaleTracking(orderUuid)
+      const tracking = await getSaleTracking(saleUuid)
       if (tracking.is_paid) {
-        navigate(`/rastreio/${orderUuid}`)
+        navigate(`/rastreio/${saleUuid}`)
         return
       }
       setCheckMessage('Ainda não identificamos o pagamento. Aguarde alguns instantes após pagar e tente de novo.')
@@ -189,7 +189,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 } }}>
       <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 0.5 }}>Pagar com Pix</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2.5 }}>
-        Seu pedido já foi confirmado. Escaneie o QR Code ou copie o código Pix para concluir o pagamento.
+        Sua compra já foi confirmada. Escaneie o QR Code ou copie o código Pix para concluir o pagamento.
       </Typography>
 
       {status === 'loading' && (
@@ -207,7 +207,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
           <Button variant="contained" onClick={loadCharge}>
             Tentar gerar o Pix novamente
           </Button>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${orderUuid}`)}>
+          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
             Continuar sem pagar agora (pagar na entrega)
           </Button>
         </Stack>
@@ -272,8 +272,8 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
           <Button variant="contained" size="large" onClick={() => void handleCheckPayment()} disabled={isCheckingPayment} sx={{ minHeight: UI_SIZE.controlLarge }}>
             {isCheckingPayment ? 'Verificando…' : 'Já paguei, verificar pagamento'}
           </Button>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${orderUuid}`)}>
-            Ver status do meu pedido
+          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+            Ver status da minha compra
           </Button>
         </Stack>
       )}
@@ -313,7 +313,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   // handleSubmit vira código dormente, não é dead-code deletável agora (é
   // feature desligada, não removida).
   const paymentMethod: 'delivery' | 'pix' = 'delivery'
-  const [paidOrderUuid, setPaidOrderUuid] = useState<string | null>(null)
+  const [paidSaleUuid, setPaidSaleUuid] = useState<string | null>(null)
 
   // Meio de pagamento pretendido (roadmap cupom por meio de pagamento) —
   // distinto do `paymentMethod` acima (que só decide "pagar Pix agora" vs
@@ -665,10 +665,10 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       markCompleted()
       clear()
       if ((paymentMethod as string) === 'pix') {
-        // Pedido já criado com sucesso a partir daqui — trocar de tela pra
-        // gerar o Pix, nunca perder o pedido se a cobrança falhar (o
+        // Venda já criada com sucesso a partir daqui — trocar de tela pra
+        // gerar o Pix, nunca perder a compra se a cobrança falhar (o
         // PixPaymentPanel sempre oferece "continuar sem pagar agora").
-        setPaidOrderUuid(result.order.uuid)
+        setPaidSaleUuid(result.order.uuid)
       } else {
         navigate(`/rastreio/${result.order.uuid}`)
       }
@@ -707,7 +707,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         setHoldError(error.message)
         setFormError(error.message)
       } else {
-        setFormError(getApiErrorMessage(error, 'Não foi possível confirmar seu pedido agora. Tente novamente.'))
+        setFormError(getApiErrorMessage(error, 'Não foi possível confirmar sua compra agora. Tente novamente.'))
         if (error instanceof ApiRequestError) setFieldErrors(error.errors)
       }
       shouldReleaseHoldRef.current = true
@@ -716,8 +716,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     }
   }
 
-  if (paidOrderUuid) {
-    return <PixPaymentPanel orderUuid={paidOrderUuid} />
+  if (paidSaleUuid) {
+    return <PixPaymentPanel saleUuid={paidSaleUuid} />
   }
 
   return (

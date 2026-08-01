@@ -32,10 +32,10 @@ class PortalController extends Controller
 
     public function sales()
     {
-        $orders = $this->service->listOrders(portal_customer());
+        $sales = $this->service->listOrders(portal_customer());
 
         return APIResponse::success(
-            PortalSaleResource::collection($orders),
+            PortalSaleResource::collection($sales),
             __('messages.portal.orders_shown')
         );
     }
@@ -51,17 +51,17 @@ class PortalController extends Controller
     }
 
     /**
-     * "Meus ingressos" do pedido — endpoint próprio (não embutido em
+     * "Meus ingressos" da compra — endpoint próprio (não embutido em
      * `sales`/`saleItems`) porque o shape é diferente (QR/status de
-     * check-in por ingresso, não item de pedido). Posse verificada por
+     * check-in por ingresso, não item de venda). Posse verificada por
      * findOwnedOrder(), mesma checagem de reorder/avaliação/cancelamento.
      */
     public function saleTickets(string $uuid)
     {
-        $order = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
-        $order->load(['items.tickets.ticketType.event', 'items.tickets.ticketType.session', 'items.tickets.seat']);
+        $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+        $sale->load(['items.tickets.ticketType.event', 'items.tickets.ticketType.session', 'items.tickets.seat']);
 
-        $tickets = $order->items->flatMap(fn($item) => $item->tickets);
+        $tickets = $sale->items->flatMap(fn($item) => $item->tickets);
 
         return APIResponse::success(
             PortalTicketResource::collection($tickets),
@@ -104,25 +104,25 @@ class PortalController extends Controller
     }
 
     /**
-     * Cobrança Pix do PRÓPRIO pedido (Fase B, item 1 — checkout Pix na loja
+     * Cobrança Pix da PRÓPRIA venda (Fase B, item 1 — checkout Pix na loja
      * pública). Reaproveita `SalePaymentService::createPixChargeForOrder`
-     * (mesmo caminho do endpoint de staff `POST /orders/{order}/payment-
-     * charge`), mas com posse verificada via `findOwnedOrder` (mesma
-     * checagem de "meu pedido" do reorder/avaliação/cancelamento) em vez de
+     * (mesmo caminho do endpoint de staff), mas com posse verificada via
+     * `findOwnedOrder` (mesma checagem de "minha compra" do
+     * reorder/avaliação/cancelamento) em vez de
      * `perm:sales,update` — o cliente final não tem Group/permissão, só
-     * pode agir sobre o próprio pedido. `tenant_id` é vinculado manualmente
+     * pode agir sobre a própria venda. `tenant_id` é vinculado manualmente
      * (`app()->instance`) porque a rota do portal não passa pelo middleware
      * `tenant` (o cliente final não pertence a um único tenant) — mesmo
      * valor que `assertBelongsToCurrentTenant` do Service exige.
      */
     public function paymentCharge(string $uuid)
     {
-        $order = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+        $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
 
-        app()->instance('tenant_id', $order->tenant_id);
+        app()->instance('tenant_id', $sale->tenant_id);
 
         try {
-            $payment = $this->paymentService->createPixChargeForOrder($order);
+            $payment = $this->paymentService->createPixChargeForOrder($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
@@ -143,13 +143,13 @@ class PortalController extends Controller
         $dto = RequestSaleCancellationDTO::fromArray($request->validated());
 
         try {
-            $order = $this->cancellationService->request(portal_customer(), $uuid, $dto);
+            $sale = $this->cancellationService->request(portal_customer(), $uuid, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
         return APIResponse::success(
-            new PortalSaleResource($order),
+            new PortalSaleResource($sale),
             __('messages.portal.cancellation_requested')
         );
     }

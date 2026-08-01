@@ -12,7 +12,7 @@ import type {
 } from '../types/sale'
 
 export function listSales(filters: SaleFilters): Promise<PaginatedResult<Sale>> {
-  return listPaginated<Sale>('/orders', filters)
+  return listPaginated<Sale>('/sales', filters)
 }
 
 export function getSale(uuid: string): Promise<Sale> {
@@ -20,13 +20,13 @@ export function getSale(uuid: string): Promise<Sale> {
 }
 
 export function createSale(payload: SalePayload): Promise<Sale> {
-  return unwrap(apiClient.post<ApiSuccess<Sale>>('/orders', payload))
+  return unwrap(apiClient.post<ApiSuccess<Sale>>('/sales', payload))
 }
 
 /**
- * Edita itens/cabeçalho de um pedido já criado. `items` é o array COMPLETO
+ * Edita itens/cabeçalho de uma venda já criada. `items` é o array COMPLETO
  * (item com `uuid` atualiza, sem `uuid` cria, item existente ausente do
- * array é removido). Só permitido enquanto o pedido não estiver
+ * array é removido). Só permitido enquanto a venda não estiver
  * entregue/pago/cancelado — 422 `INVALID_ORDER_STATE` fora dessa janela.
  */
 export function updateSaleItems(uuid: string, payload: SaleUpdateItemsPayload): Promise<Sale> {
@@ -52,7 +52,7 @@ export function undeliverSale(uuid: string): Promise<Sale> {
 /**
  * `paidAt` (YYYY-MM-DD) é opcional e pode ser uma data futura (pagamento agendado) —
  * se omitido, o backend usa a data atual do servidor. `amount` é opcional; se
- * enviado MENOR que o total do pedido, o backend registra pagamento PARCIAL
+ * enviado MENOR que o total da venda, o backend registra pagamento PARCIAL
  * (`paid_amount`) sem marcar `is_paid: true`.
  */
 export function paySale(uuid: string, paidAt?: string, amount?: number): Promise<Sale> {
@@ -66,29 +66,29 @@ export function unpaySale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/unpay`))
 }
 
-export function payInstallment(orderUuid: string, installmentUuid: string, paidAt?: string): Promise<Sale> {
+export function payInstallment(saleUuid: string, installmentUuid: string, paidAt?: string): Promise<Sale> {
   return unwrap(
     apiClient.patch<ApiSuccess<Sale>>(
-      `/sales/${orderUuid}/installments/${installmentUuid}/pay`,
+      `/sales/${saleUuid}/installments/${installmentUuid}/pay`,
       paidAt ? { paid_at: paidAt } : undefined,
     ),
   )
 }
 
-export function unpayInstallment(orderUuid: string, installmentUuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${orderUuid}/installments/${installmentUuid}/unpay`))
+export function unpayInstallment(saleUuid: string, installmentUuid: string): Promise<Sale> {
+  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${saleUuid}/installments/${installmentUuid}/unpay`))
 }
 
 export function cancelSale(uuid: string, cancellation_reason: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/cancel`, { cancellation_reason }))
 }
 
-/** Fila de aprovação (Delivery Fase 1) — só válido para pedido `status: 'pending_approval'`. */
+/** Fila de aprovação do canal público — só válido para venda `status: 'pending_approval'`. */
 export function approveSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${uuid}/approve`))
 }
 
-/** `reason` opcional — vira `cancellation_reason` no pedido rejeitado. */
+/** `reason` opcional — vira `cancellation_reason` na venda rejeitada. */
 export function rejectSale(uuid: string, reason?: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${uuid}/reject`, reason ? { reason } : undefined))
 }
@@ -103,31 +103,31 @@ export function approveSaleCancellationRequest(uuid: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${uuid}/approve-cancellation`))
 }
 
-/** Rejeita a solicitação de cancelamento — o pedido volta ao status anterior, nada é executado. */
+/** Rejeita a solicitação de cancelamento — a venda volta ao status anterior, nada é executado. */
 export function rejectSaleCancellationRequest(uuid: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${uuid}/reject-cancellation`))
 }
 
-export function createInstallment(orderUuid: string, payload: SaleInstallmentPayload): Promise<Sale> {
-  return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${orderUuid}/installments`, payload))
+export function createInstallment(saleUuid: string, payload: SaleInstallmentPayload): Promise<Sale> {
+  return unwrap(apiClient.post<ApiSuccess<Sale>>(`/sales/${saleUuid}/installments`, payload))
 }
 
-export function updateInstallment(orderUuid: string, installmentUuid: string, payload: SaleInstallmentPayload): Promise<Sale> {
-  return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${orderUuid}/installments/${installmentUuid}`, payload))
+export function updateInstallment(saleUuid: string, installmentUuid: string, payload: SaleInstallmentPayload): Promise<Sale> {
+  return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${saleUuid}/installments/${installmentUuid}`, payload))
 }
 
-export function deleteInstallment(orderUuid: string, installmentUuid: string): Promise<void> {
-  return apiClient.delete(`/sales/${orderUuid}/installments/${installmentUuid}`).then(() => undefined)
+export function deleteInstallment(saleUuid: string, installmentUuid: string): Promise<void> {
+  return apiClient.delete(`/sales/${saleUuid}/installments/${installmentUuid}`).then(() => undefined)
 }
 
 /**
- * Substitui de uma vez todas as parcelas não pagas do pedido (criação + edição +
+ * Substitui de uma vez todas as parcelas não pagas da venda (criação + edição +
  * exclusão implícita das que saíram do array). Única forma de redistribuir valor
  * entre 2+ parcelas — a validação de soma do backend roda uma vez no final do
  * lote, não a cada parcela isolada (`createInstallment`/`updateInstallment`
  * batem a soma imediatamente, então não dá pra usá-las pra mover valor de uma
  * parcela pra outra sem passar por um 422 intermediário).
  */
-export function reallocateInstallments(orderUuid: string, payload: SaleInstallmentsReallocatePayload): Promise<Sale> {
-  return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${orderUuid}/installments`, payload))
+export function reallocateInstallments(saleUuid: string, payload: SaleInstallmentsReallocatePayload): Promise<Sale> {
+  return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${saleUuid}/installments`, payload))
 }

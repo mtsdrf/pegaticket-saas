@@ -25,7 +25,7 @@ const CHANNEL_ICONS: Record<string, SvgIconComponent> = {
 /**
  * Resultado por canal (roadmap A1.3) — agregação por `orders.origin`.
  * Drill-down: clicar num canal leva pro relatório de pedidos existente
- * (`/relatorios/pedidos`), filtrado por aquele `origin` + mesmo período
+ * (`/relatorios/vendas`), filtrado por aquele `origin` + mesmo período
  * (query string, ver `SaleReportListPage`).
  */
 export function ChannelReportPage() {
@@ -56,7 +56,7 @@ export function ChannelReportPage() {
   }, [load])
 
   function handleDrillDown(origin: string) {
-    navigate(`/relatorios/pedidos?origin=${encodeURIComponent(origin)}&date_from=${from}&date_to=${to}`)
+    navigate(`/relatorios/vendas?origin=${encodeURIComponent(origin)}&date_from=${from}&date_to=${to}`)
   }
 
   const totalOrders = rows?.reduce((sum, row) => sum + row.order_count, 0) ?? 0

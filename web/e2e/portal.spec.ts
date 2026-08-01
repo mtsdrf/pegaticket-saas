@@ -113,7 +113,7 @@ test.describe('Portal do cliente final', () => {
     await page.getByRole('textbox', { name: 'Código de 6 dígitos' }).fill('123456')
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(page).toHaveURL(/\/portal\/pedidos$/)
+    await expect(page).toHaveURL(/\/portal\/compras$/)
     await expect(page.getByRole('tab', { name: 'Meus pedidos' })).toBeVisible()
     await expect(page.getByText('Loja QA')).toBeVisible()
     await expect(page.getByText('R$ 79,90')).toBeVisible()

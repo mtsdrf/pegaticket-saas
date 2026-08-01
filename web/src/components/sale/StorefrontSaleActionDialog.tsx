@@ -31,7 +31,7 @@ interface StorefrontSaleActionDialogProps {
   onClose: () => void
   /** Chamado depois de qualquer ação bem-sucedida — a página que monta o dialog recarrega seu grid. */
   onChanged: () => void
-  /** `perm:sales,update` (roadmap A4) — libera aprovar/rejeitar cancelamento solicitado pelo cliente. Sem ela, o pedido mostra só o badge de status. */
+  /** `perm:sales,update` (roadmap A4) — libera aprovar/rejeitar cancelamento solicitado pelo cliente. Sem ela, a venda mostra só o badge de status. */
   canManageCancellation?: boolean
 }
 
@@ -41,11 +41,11 @@ interface PendingAction {
 }
 
 /**
- * Modal único de gestão de um pedido online (`/vendas-online`): mostra itens,
+ * Modal único de gestão de uma venda online (`/vendas-online`): mostra itens,
  * telefone, endereço e cupom + badge do status atual, e no rodapé
  * exatamente 2 (ou 0) botões de ação escolhidos dinamicamente pelo status
  * via `getSaleActionButtons`. Ação com motivo abre um sub-diálogo de motivo;
- * ação sem motivo abre uma confirmação simples. Após qualquer ação, o pedido
+ * ação sem motivo abre uma confirmação simples. Após qualquer ação, a venda
  * é re-buscado dentro do próprio modal (atualiza os botões pro novo estado)
  * e `onChanged` recarrega o grid por trás.
  */
@@ -58,7 +58,7 @@ export function StorefrontSaleActionDialog({
 }: StorefrontSaleActionDialogProps) {
   const isWide = useMediaQuery('(min-width:900px)')
 
-  const [order, setOrder] = useState<Sale | null>(null)
+  const [sale, setSale] = useState<Sale | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -78,9 +78,9 @@ export function StorefrontSaleActionDialog({
     setLoadError(null)
     try {
       const result = await storefrontSaleService.getStorefrontSale(uuid)
-      setOrder(result)
+      setSale(result)
     } catch (err) {
-      setLoadError(getApiErrorMessage(err, 'Não foi possível carregar os detalhes do pedido.'))
+      setLoadError(getApiErrorMessage(err, 'Não foi possível carregar os detalhes da venda.'))
     } finally {
       if (showLoading) setIsLoading(false)
     }
@@ -88,7 +88,7 @@ export function StorefrontSaleActionDialog({
 
   useEffect(() => {
     if (!open || !saleUuid) return
-    setOrder(null)
+    setSale(null)
     setPending(null)
     setReasonText('')
     setActionError(null)
@@ -107,12 +107,12 @@ export function StorefrontSaleActionDialog({
   }
 
   async function confirmPending() {
-    if (!pending || !order) return
+    if (!pending || !sale) return
     setActionError(null)
     setIsSubmitting(true)
     try {
-      const updated = await pending.button.run(order.uuid, reasonText.trim() || undefined)
-      setOrder(updated)
+      const updated = await pending.button.run(sale.uuid, reasonText.trim() || undefined)
+      setSale(updated)
       setPending(null)
       setReasonText('')
       onChanged()
@@ -124,12 +124,12 @@ export function StorefrontSaleActionDialog({
   }
 
   async function handleGenerateQr() {
-    if (!order) return
+    if (!sale) return
     setIsGeneratingQr(true)
     setQrError(null)
     try {
-      const result = await storefrontSaleService.generatePrepLink(order.uuid)
-      setQrUrl(`${window.location.origin}/preparo/${order.uuid}?token=${result.token}`)
+      const result = await storefrontSaleService.generatePrepLink(sale.uuid)
+      setQrUrl(`${window.location.origin}/preparo/${sale.uuid}?token=${result.token}`)
       setQrExpiresAt(result.expires_at)
       setQrOpen(true)
     } catch (err) {
@@ -139,19 +139,19 @@ export function StorefrontSaleActionDialog({
     }
   }
 
-  const status = order
+  const status = sale
     ? deriveSaleStatus({
-        is_cancelled: order.cancelled_at !== null,
-        is_paid: order.is_paid,
-        is_delivered: order.is_delivered,
-        is_installment: order.is_installment,
-        delivered_at: order.delivered_at,
-        paid_at: order.paid_at,
-        status: order.status,
-        is_out_for_delivery: order.is_out_for_delivery,
+        is_cancelled: sale.cancelled_at !== null,
+        is_paid: sale.is_paid,
+        is_delivered: sale.is_delivered,
+        is_installment: sale.is_installment,
+        delivered_at: sale.delivered_at,
+        paid_at: sale.paid_at,
+        status: sale.status,
+        is_out_for_delivery: sale.is_out_for_delivery,
       })
     : null
-  const actions = order ? getSaleActionButtons(order, canManageCancellation) : []
+  const actions = sale ? getSaleActionButtons(sale, canManageCancellation) : []
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -159,15 +159,15 @@ export function StorefrontSaleActionDialog({
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 1.5 }}>
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700, fontSize: 16, wordBreak: 'break-word' }}>
-                {order?.final_customer?.name ?? 'Pedido'}
+                {sale?.final_customer?.name ?? 'Venda'}
               </Typography>
-              {order && (
+              {sale && (
                 <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                  {order.codigo} • {formatDateTimeBR(order.created_at)}
+                  {sale.codigo} • {formatDateTimeBR(sale.created_at)}
                 </Typography>
               )}
             </Box>
-            {order && <Typography sx={{ fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{formatCurrency(order.total_amount)}</Typography>}
+            {sale && <Typography sx={{ fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{formatCurrency(sale.total_amount)}</Typography>}
           </Stack>
         </DialogTitle>
 
@@ -184,7 +184,7 @@ export function StorefrontSaleActionDialog({
             </Alert>
           )}
 
-          {order && status && (
+          {sale && status && (
             <Stack spacing={1.75}>
               <Box>
                 <Chip
@@ -199,16 +199,16 @@ export function StorefrontSaleActionDialog({
                 />
               </Box>
 
-              {order.status === 'cancellation_requested' && (
+              {sale.status === 'cancellation_requested' && (
                 <Alert severity="warning" variant="outlined">
-                  O cliente solicitou o cancelamento deste pedido
-                  {order.cancellation_reason ? `: "${order.cancellation_reason}"` : ', sem motivo informado.'}
+                  O cliente solicitou o cancelamento desta venda
+                  {sale.cancellation_reason ? `: "${sale.cancellation_reason}"` : ', sem motivo informado.'}
                   {!canManageCancellation && ' Você não tem permissão para aprovar/rejeitar esta solicitação.'}
                 </Alert>
               )}
 
               <Stack spacing={0.75}>
-                {(order.items ?? []).map((item) => (
+                {(sale.items ?? []).map((item) => (
                   <Stack key={item.uuid} direction="row" sx={{ justifyContent: 'space-between', gap: 1 }}>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ fontSize: 13.5, fontWeight: 600, wordBreak: 'break-word' }}>
@@ -225,20 +225,20 @@ export function StorefrontSaleActionDialog({
               <Divider />
 
               <Stack spacing={0.5}>
-                {order.final_customer?.phone_primary && (
+                {sale.final_customer?.phone_primary && (
                   <Typography sx={{ fontSize: 13 }}>
                     <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Telefone:{' '}
                     </Box>
-                    {order.final_customer.phone_primary}
+                    {sale.final_customer.phone_primary}
                   </Typography>
                 )}
-                {order.coupon_code && (
+                {sale.coupon_code && (
                   <Typography sx={{ fontSize: 13 }}>
                     <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
                       Cupom:{' '}
                     </Box>
-                    {order.coupon_code}
+                    {sale.coupon_code}
                   </Typography>
                 )}
               </Stack>
@@ -310,7 +310,7 @@ export function StorefrontSaleActionDialog({
               sx={{ mt: 0.5 }}
             />
           ) : (
-            <DialogContentText>Confirmar esta ação no pedido?</DialogContentText>
+            <DialogContentText>Confirmar esta ação na venda?</DialogContentText>
           )}
           {pending?.button.confirmWarning && (
             <Alert severity="warning" sx={{ mt: 1.5 }}>
@@ -349,7 +349,7 @@ export function StorefrontSaleActionDialog({
               </Box>
             )}
             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
-              Aponte a câmera do celular para abrir a preparação do pedido — sem precisar de login.
+              Aponte a câmera do celular para abrir a preparação da venda — sem precisar de login.
             </Typography>
             {qrExpiresAt && (
               <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Válido até {formatDateTimeBR(qrExpiresAt)}</Typography>

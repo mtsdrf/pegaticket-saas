@@ -83,7 +83,7 @@ const BOARD_STAGE_FILTER_OPTIONS: Array<{ value: 'all' | SaleOperationStage; lab
 /**
  * Gestão de pedidos vindos do canal público (`/vendas-online`, permissão própria
  * storefront-sales,*). Grid enxuto (código/cliente/ação) no mesmo padrão de
- * /pedidos; toda a gestão fica no modal por pedido (`StorefrontSaleActionDialog`),
+ * /vendas; toda a gestão fica no modal por venda (`StorefrontSaleActionDialog`),
  * que mostra sempre 2 botões de ação escolhidos pelo status atual.
  *
  * A listagem usa `active_only=1`: o backend exclui pedidos concluídos/
@@ -666,7 +666,7 @@ export function StorefrontSaleManagementPage() {
               columns={columns}
               fetchPage={fetchPage}
               rowIdField="uuid"
-              exportFileName="pedidos-loja"
+              exportFileName="vendas-loja"
               onGridReady={(api) => {
                 gridApiRef.current = api
               }}
@@ -679,8 +679,8 @@ export function StorefrontSaleManagementPage() {
                     }
                   : {
                       icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                      title: 'Nenhum pedido pendente de ação no momento',
-                      description: 'Pedidos concluídos, recusados ou cancelados não aparecem aqui.',
+                      title: 'Nenhuma venda pendente de ação no momento',
+                      description: 'Vendas concluídas, recusadas ou canceladas não aparecem aqui.',
                     }
               }
             />
@@ -719,11 +719,11 @@ export function StorefrontSaleManagementPage() {
 
       <WorkflowTimelineDialog
         open={selectedTimelineSaleUuid !== null}
-        title="Histórico operacional do pedido"
-        subjectLabel={selectedTimelineSaleUuid ? `pedido ${selectedTimelineSaleUuid}` : 'pedido'}
+        title="Histórico operacional da venda"
+        subjectLabel={selectedTimelineSaleUuid ? `venda ${selectedTimelineSaleUuid}` : 'venda'}
         loader={() =>
           selectedTimelineSaleUuid
-            ? workflowService.getStorefrontOrderWorkflowTimeline(selectedTimelineSaleUuid)
+            ? workflowService.getStorefrontSaleWorkflowTimeline(selectedTimelineSaleUuid)
             : Promise.resolve([])
         }
         stageLabel={(stage) => {

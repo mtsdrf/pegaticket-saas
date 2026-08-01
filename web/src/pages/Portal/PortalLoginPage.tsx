@@ -62,7 +62,7 @@ export function PortalLoginPage() {
         try {
           await createPortalLink({ order_uuid: orderToLink })
         } catch (linkError) {
-          navigate('/portal/pedidos', {
+          navigate('/portal/compras', {
             replace: true,
             state: {
               linkError: getApiErrorMessage(
@@ -75,7 +75,7 @@ export function PortalLoginPage() {
         }
       }
 
-      navigate('/portal/pedidos', { replace: true })
+      navigate('/portal/compras', { replace: true })
     } catch (error) {
       if (error instanceof ApiRequestError) {
         setFormError(

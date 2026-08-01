@@ -92,8 +92,8 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { kind: 'link', to: '/portaria', label: 'Portaria', icon: QrCodeScannerOutlinedIcon, access: ACCESS.ticketsCheckin },
-  { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
-  { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/vendas', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/vendas-manuais', label: 'Vendas manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontSalesRead },
   { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
   {
@@ -103,7 +103,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { to: '/analises', label: 'Análises', access: ACCESS.reportsRead },
       { to: '/relatorios/canais', label: 'Resultado por canal', access: ACCESS.reportsRead },
-      { to: '/relatorios/pedidos', label: 'Relatório de pedidos', access: ACCESS.reportsRead },
+      { to: '/relatorios/vendas', label: 'Relatório de vendas', access: ACCESS.reportsRead },
       { to: '/financeiro/conciliacao', label: 'Conciliação financeira', access: ACCESS.financeRead },
     ],
   },
@@ -147,10 +147,10 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 /**
- * `startsWith` puro marcava "/pedidos" como ativo em "/vendas-online" e no
- * alias legado "/pedidos-loja" (prefixo
+ * `startsWith` puro marcava "/vendas" como ativo em "/vendas-online" e no
+ * alias legado "/vendas-loja" (prefixo
  * de string, não de rota) — exige fronteira de segmento (`/` depois do `to`)
- * pra continuar cobrindo sub-rotas reais como "/pedidos/novo".
+ * pra continuar cobrindo sub-rotas reais como "/vendas/nova".
  */
 function isPathActive(to: string, pathname: string, exact?: boolean): boolean {
   return exact ? pathname === to : pathname === to || pathname.startsWith(`${to}/`)

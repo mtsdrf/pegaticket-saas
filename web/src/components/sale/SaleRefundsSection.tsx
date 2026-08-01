@@ -38,7 +38,7 @@ const MAX_RECEIPT_MB = 10
 
 interface SaleRefundsSectionProps {
   sale: Sale
-  /** Chamado depois de registrar um estorno com sucesso — quem monta a seção decide se precisa recarregar o pedido/lista. */
+  /** Chamado depois de registrar um estorno com sucesso — quem monta a seção decide se precisa recarregar a venda/lista. */
   onRefundRegistered?: () => void
 }
 
@@ -46,7 +46,7 @@ interface SaleRefundsSectionProps {
  * Estorno EXTERNO (spec 5.14/11.3): o clube já estornou o pagamento no
  * PagBank fora do sistema — esta seção só REGISTRA o que já aconteceu e
  * aplica os efeitos internos (ingressos invalidados, lugar liberado se
- * escolhido). Só faz sentido quando o pedido tem algum valor pago.
+ * escolhido). Só faz sentido quando a venda tem algum valor pago.
  */
 export function SaleRefundsSection({ sale, onRefundRegistered }: SaleRefundsSectionProps) {
   const { can } = useAccessControl()
@@ -68,7 +68,7 @@ export function SaleRefundsSection({ sale, onRefundRegistered }: SaleRefundsSect
       const result = await saleRefundService.listSaleRefunds(sale.uuid)
       setRefunds(result)
     } catch (err) {
-      setLoadError(getApiErrorMessage(err, 'Não foi possível carregar os estornos deste pedido agora.'))
+      setLoadError(getApiErrorMessage(err, 'Não foi possível carregar os estornos desta venda agora.'))
     } finally {
       setIsLoading(false)
     }
@@ -112,7 +112,7 @@ export function SaleRefundsSection({ sale, onRefundRegistered }: SaleRefundsSect
       {isLoading && !loadError && <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Carregando estornos…</Typography>}
 
       {!isLoading && !loadError && refunds.length === 0 && (
-        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum estorno registrado para este pedido.</Typography>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum estorno registrado para esta venda.</Typography>
       )}
 
       {!isLoading && refunds.length > 0 && (
@@ -234,7 +234,7 @@ function SaleRefundFormDialog({ sale, onClose, onRegistered }: SaleRefundFormDia
         if (!cancelled) setTickets(result.items)
       })
       .catch((err) => {
-        if (!cancelled) setTicketsError(getApiErrorMessage(err, 'Não foi possível carregar os ingressos deste pedido agora.'))
+        if (!cancelled) setTicketsError(getApiErrorMessage(err, 'Não foi possível carregar os ingressos desta venda agora.'))
       })
       .finally(() => {
         if (!cancelled) setIsLoadingTickets(false)

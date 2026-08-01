@@ -18,7 +18,7 @@ interface PortalShellProps {
 }
 
 /**
- * Layout compartilhado das telas autenticadas do portal (`/portal/pedidos`,
+ * Layout compartilhado das telas autenticadas do portal (`/portal/compras`,
  * `/portal/favoritos`, `/portal/perfil`) — mesma linguagem visual do
  * rastreio público (`SaleTrackingPage`) e do login de staff, mas com
  * navegação simples entre as seções (mobile-first: abas em vez de sidebar).
@@ -79,9 +79,9 @@ export function PortalShell({ title, subtitle, children }: PortalShellProps) {
         >
           <Tab
             component={RouterLink}
-            to="/portal/pedidos"
-            value="/portal/pedidos"
-            label="Meus pedidos"
+            to="/portal/compras"
+            value="/portal/compras"
+            label="Minhas compras"
             icon={<ReceiptLongOutlinedIcon fontSize="small" />}
             iconPosition="start"
           />

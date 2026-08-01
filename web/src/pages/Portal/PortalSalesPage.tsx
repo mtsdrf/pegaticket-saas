@@ -36,8 +36,8 @@ import { PortalShell } from './PortalShell'
  * `localStorage` que `StorefrontCartContext` usa (`readCart`/`writeCart`) —
  * o Provider daquela loja só existe dentro de `/loja/{slug}/*`, então não dá
  * pra chamar `addItem` por contexto React a partir daqui. Substitui
- * (não mescla) o carrinho existente daquela loja, mesmo espírito de "pedir
- * de novo" recriar o pedido do zero.
+ * (não mescla) o carrinho existente daquela loja, no mesmo espírito de
+ * recompra a partir do zero.
  */
 function replaceCartForStore(slug: string, items: PortalReorderItem[]): void {
   const cartItems: StorefrontCartItem[] = items
@@ -88,26 +88,26 @@ function EmptyState() {
       }}
     >
       <Inventory2OutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)', mb: 1.5 }} />
-      <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 0.75 }}>Você ainda não tem pedidos vinculados</Typography>
+      <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 0.75 }}>Você ainda não tem compras vinculadas</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-        Abra o link de rastreio de um pedido e toque em "Ver todos os meus pedidos" para vinculá-lo à sua conta.
+        Abra o link de rastreio de uma compra e toque em "Ver todas as minhas compras" para vinculá-la à sua conta.
       </Typography>
     </Paper>
   )
 }
 
 function SaleCard({
-  order,
+  sale,
   onReorder,
   onRequestCancellation,
 }: {
-  order: PortalSaleSummary
-  onReorder: (order: PortalSaleSummary) => void
-  onRequestCancellation: (order: PortalSaleSummary) => void
+  sale: PortalSaleSummary
+  onReorder: (sale: PortalSaleSummary) => void
+  onRequestCancellation: (sale: PortalSaleSummary) => void
 }) {
-  const status = deriveSaleStatus(order)
+  const status = deriveSaleStatus(sale)
   const colors = STATUS_TONE_COLORS[status.tone]
-  const canCancel = canRequestSaleCancellation(order)
+  const canCancel = canRequestSaleCancellation(sale)
 
   return (
     <Paper
@@ -119,7 +119,7 @@ function SaleCard({
     >
       <Stack
         component={RouterLink}
-        to={`/rastreio/${order.uuid}`}
+        to={`/rastreio/${sale.uuid}`}
         direction="row"
         sx={{
           p: 1.75,
@@ -133,9 +133,9 @@ function SaleCard({
       >
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-            <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14, fontWeight: 700, wordBreak: 'break-word' }}>{order.tenant_name}</Typography>
+            <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: 14, fontWeight: 700, wordBreak: 'break-word' }}>{sale.tenant_name}</Typography>
             <Typography sx={{ fontSize: 15, fontWeight: 700, flexShrink: 0 }}>
-              {formatCurrency(order.total_amount)}
+              {formatCurrency(sale.total_amount)}
             </Typography>
           </Stack>
 
@@ -153,7 +153,7 @@ function SaleCard({
             >
               {status.label}
             </Box>
-            <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{formatDateFromDateTimeBR(order.created_at)}</Typography>
+            <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{formatDateFromDateTimeBR(sale.created_at)}</Typography>
           </Stack>
         </Box>
 
@@ -164,7 +164,7 @@ function SaleCard({
 
       <Button
         component={RouterLink}
-        to={`/loja/${order.tenant_slug}`}
+        to={`/loja/${sale.tenant_slug}`}
         startIcon={<StorefrontOutlinedIcon fontSize="small" />}
         fullWidth
         sx={{ borderRadius: 0, py: 1, fontSize: 13, fontWeight: 600 }}
@@ -176,24 +176,24 @@ function SaleCard({
 
       <Stack direction="row">
         <Button
-          onClick={() => onReorder(order)}
+          onClick={() => onReorder(sale)}
           startIcon={<ReplayOutlinedIcon fontSize="small" />}
           fullWidth
           sx={{ borderRadius: 0, py: 1, fontSize: 13, fontWeight: 600 }}
         >
-          Pedir de novo
+          Comprar novamente
         </Button>
         {canCancel && (
           <>
             <Divider orientation="vertical" flexItem />
             <Button
-              onClick={() => onRequestCancellation(order)}
+              onClick={() => onRequestCancellation(sale)}
               startIcon={<CancelOutlinedIcon fontSize="small" />}
               color="error"
               fullWidth
               sx={{ borderRadius: 0, py: 1, fontSize: 13, fontWeight: 600 }}
             >
-              Cancelar pedido
+              Cancelar compra
             </Button>
           </>
         )}
@@ -204,15 +204,15 @@ function SaleCard({
 
 /**
  * "Solicitar cancelamento" (roadmap A4) — motivo opcional. Ao confirmar,
- * o pedido na lista é atualizado in-place com o `status: 'cancellation_requested'`
+ * a compra na lista é atualizada in-place com o `status: 'cancellation_requested'`
  * devolvido pelo backend (mesmo shape de `listPortalSales`).
  */
 function RequestCancellationDialog({
-  order,
+  sale,
   onClose,
   onRequested,
 }: {
-  order: PortalSaleSummary | null
+  sale: PortalSaleSummary | null
   onClose: () => void
   onRequested: (updated: PortalSaleSummary) => void
 }) {
@@ -221,17 +221,17 @@ function RequestCancellationDialog({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!order) return
+    if (!sale) return
     setReason('')
     setErrorMessage(null)
-  }, [order])
+  }, [sale])
 
   async function handleConfirm() {
-    if (!order) return
+    if (!sale) return
     setIsSubmitting(true)
     setErrorMessage(null)
     try {
-      const updated = await requestSaleCancellation(order.uuid, reason)
+      const updated = await requestSaleCancellation(sale.uuid, reason)
       onRequested(updated)
       onClose()
     } catch (error) {
@@ -242,12 +242,12 @@ function RequestCancellationDialog({
   }
 
   return (
-    <Dialog open={Boolean(order)} onClose={() => !isSubmitting && onClose()} fullWidth maxWidth="xs">
+    <Dialog open={Boolean(sale)} onClose={() => !isSubmitting && onClose()} fullWidth maxWidth="xs">
       <DialogTitle sx={{ fontSize: 17, fontWeight: 700 }}>Solicitar cancelamento</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
           <DialogContentText sx={{ fontSize: 13.5 }}>
-            A loja vai analisar seu pedido de cancelamento antes de confirmá-lo. Você pode explicar o motivo, se quiser.
+            A loja vai analisar sua solicitação de cancelamento antes de confirmá-la. Você pode explicar o motivo, se quiser.
           </DialogContentText>
           <TextField
             label="Motivo (opcional)"
@@ -278,18 +278,18 @@ function RequestCancellationDialog({
 }
 
 /**
- * "Pedir de novo" (Delivery Fase 4) — mostra os itens do pedido antigo com
+ * "Comprar novamente" (Delivery Fase 4) — mostra os itens da compra anterior com
  * preço/disponibilidade atuais e, ao confirmar, substitui o carrinho da loja
- * de origem (`PortalOrderResource.tenant_slug`) e navega pro carrinho dela.
+ * de origem (`PortalSaleResource.tenant_slug`) e navega pro carrinho dela.
  */
-function ReorderDialog({ order, onClose }: { order: PortalSaleSummary | null; onClose: () => void }) {
+function ReorderDialog({ sale, onClose }: { sale: PortalSaleSummary | null; onClose: () => void }) {
   const navigate = useNavigate()
   const [items, setItems] = useState<PortalReorderItem[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!order) {
+    if (!sale) {
       setItems(null)
       setErrorMessage(null)
       return
@@ -298,13 +298,13 @@ function ReorderDialog({ order, onClose }: { order: PortalSaleSummary | null; on
     setIsLoading(true)
     setErrorMessage(null)
     setItems(null)
-    getSaleItemsForReorder(order.uuid)
+    getSaleItemsForReorder(sale.uuid)
       .then((result) => {
         if (!cancelled) setItems(result)
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setErrorMessage(getApiErrorMessage(error, 'Não foi possível carregar os itens deste pedido agora.'))
+          setErrorMessage(getApiErrorMessage(error, 'Não foi possível carregar os itens desta compra agora.'))
         }
       })
       .finally(() => {
@@ -313,21 +313,21 @@ function ReorderDialog({ order, onClose }: { order: PortalSaleSummary | null; on
     return () => {
       cancelled = true
     }
-  }, [order])
+  }, [sale])
 
   const availableItems = items?.filter((item) => item.is_available) ?? []
   const unavailableCount = items ? items.length - availableItems.length : 0
 
   const handleConfirm = () => {
-    if (!order || availableItems.length === 0) return
-    replaceCartForStore(order.tenant_slug, availableItems)
-    navigate(`/loja/${order.tenant_slug}/carrinho`)
+    if (!sale || availableItems.length === 0) return
+    replaceCartForStore(sale.tenant_slug, availableItems)
+    navigate(`/loja/${sale.tenant_slug}/carrinho`)
     onClose()
   }
 
   return (
-    <Dialog open={Boolean(order)} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontSize: 17, fontWeight: 700 }}>Pedir de novo</DialogTitle>
+    <Dialog open={Boolean(sale)} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle sx={{ fontSize: 17, fontWeight: 700 }}>Comprar novamente</DialogTitle>
       <DialogContent>
         {isLoading && (
           <Stack spacing={1}>
@@ -355,7 +355,7 @@ function ReorderDialog({ order, onClose }: { order: PortalSaleSummary | null; on
 
             {availableItems.length === 0 ? (
               <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                Nenhum item deste pedido está disponível no momento.
+                Nenhum item desta compra está disponível no momento.
               </Typography>
             ) : (
               <Stack spacing={1}>
@@ -399,34 +399,34 @@ function ReorderDialog({ order, onClose }: { order: PortalSaleSummary | null; on
 
 export function PortalSalesPage() {
   const location = useLocation()
-  const [orders, setOrders] = useState<PortalSaleSummary[] | null>(null)
+  const [sales, setSales] = useState<PortalSaleSummary[] | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   // Repassado por `PortalLoginPage` quando o vínculo automático (`?vincular=`)
   // falha logo após o login — o login em si deu certo, então não bloqueia a
-  // navegação, só avisa que esse pedido específico não entrou na lista.
+  // navegação, só avisa que essa compra específica não entrou na lista.
   const [linkError, setLinkError] = useState<string | null>(
     (location.state as { linkError?: string } | null)?.linkError ?? null,
   )
-  const [reorderOrder, setReorderOrder] = useState<PortalSaleSummary | null>(null)
-  const [cancellationOrder, setCancellationOrder] = useState<PortalSaleSummary | null>(null)
+  const [reorderSale, setReorderSale] = useState<PortalSaleSummary | null>(null)
+  const [cancellationSale, setCancellationSale] = useState<PortalSaleSummary | null>(null)
 
   useEffect(() => {
     setIsLoading(true)
     setErrorMessage(null)
 
     listPortalSales()
-      .then((result) => setOrders(result))
+      .then((result) => setSales(result))
       .catch((error) => {
         setErrorMessage(
-          getApiErrorMessage(error, 'Não foi possível carregar seus pedidos agora. Verifique sua conexão e tente novamente.'),
+          getApiErrorMessage(error, 'Não foi possível carregar suas compras agora. Verifique sua conexão e tente novamente.'),
         )
       })
       .finally(() => setIsLoading(false))
   }, [])
 
   return (
-    <PortalShell title="Meus pedidos" subtitle="Pedidos de todas as lojas vinculadas à sua conta, mais recentes primeiro.">
+    <PortalShell title="Minhas compras" subtitle="Compras de todas as lojas vinculadas à sua conta, mais recentes primeiro.">
       {linkError && (
         <Alert severity="warning" variant="outlined" onClose={() => setLinkError(null)} sx={{ mb: 2 }}>
           {linkError}
@@ -441,22 +441,22 @@ export function PortalSalesPage() {
         </Alert>
       )}
 
-      {!isLoading && !errorMessage && orders && orders.length === 0 && <EmptyState />}
+      {!isLoading && !errorMessage && sales && sales.length === 0 && <EmptyState />}
 
-      {!isLoading && !errorMessage && orders && orders.length > 0 && (
+      {!isLoading && !errorMessage && sales && sales.length > 0 && (
         <Stack spacing={1.25}>
-          {orders.map((order) => (
-            <SaleCard key={order.uuid} order={order} onReorder={setReorderOrder} onRequestCancellation={setCancellationOrder} />
+          {sales.map((sale) => (
+            <SaleCard key={sale.uuid} sale={sale} onReorder={setReorderSale} onRequestCancellation={setCancellationSale} />
           ))}
         </Stack>
       )}
 
-      <ReorderDialog order={reorderOrder} onClose={() => setReorderOrder(null)} />
+      <ReorderDialog sale={reorderSale} onClose={() => setReorderSale(null)} />
       <RequestCancellationDialog
-        order={cancellationOrder}
-        onClose={() => setCancellationOrder(null)}
+        sale={cancellationSale}
+        onClose={() => setCancellationSale(null)}
         onRequested={(updated) => {
-          setOrders((current) => current?.map((order) => (order.uuid === updated.uuid ? updated : order)) ?? current)
+          setSales((current) => current?.map((sale) => (sale.uuid === updated.uuid ? updated : sale)) ?? current)
         }}
       />
     </PortalShell>

@@ -120,32 +120,4 @@ return [
         'webhook_secret' => env('PAGBANK_WEBHOOK_SECRET'),
     ],
 
-    'ifood' => [
-        'base_url' => env('IFOOD_BASE_URL', 'https://merchant-api.ifood.com.br'),
-        'oauth_token_url' => env('IFOOD_OAUTH_TOKEN_URL', 'https://merchant-api.ifood.com.br/authentication/v1.0/oauth/token'),
-        'timeout_seconds' => (int) env('IFOOD_TIMEOUT_SECONDS', 15),
-        'connect_timeout_seconds' => (int) env('IFOOD_CONNECT_TIMEOUT_SECONDS', 5),
-        'paths' => [
-            'merchant_list' => env('IFOOD_PATH_MERCHANT_LIST', '/merchant/v1.0/merchants'),
-            'merchant_status' => env('IFOOD_PATH_MERCHANT_STATUS', '/merchant/v1.0/merchants/{merchantId}/status'),
-            'merchant_interruptions' => env('IFOOD_PATH_MERCHANT_INTERRUPTIONS', '/merchant/v1.0/merchants/{merchantId}/interruptions'),
-            'merchant_interruption_delete' => env('IFOOD_PATH_MERCHANT_INTERRUPTION_DELETE', '/merchant/v1.0/merchants/{merchantId}/interruptions/{interruptionId}'),
-            'merchant_opening_hours' => env('IFOOD_PATH_MERCHANT_OPENING_HOURS', '/merchant/v1.0/merchants/{merchantId}/opening-hours'),
-            'events_polling' => env('IFOOD_PATH_EVENTS_POLLING', '/events/v1.0/events:polling'),
-            'events_acknowledgment' => env('IFOOD_PATH_EVENTS_ACKNOWLEDGMENT', '/events/v1.0/events/acknowledgment'),
-            'order_details' => env('IFOOD_PATH_ORDER_DETAILS', '/order/v1.0/orders/{id}'),
-            'order_cancellation_reasons' => env('IFOOD_PATH_ORDER_CANCELLATION_REASONS', '/order/v1.0/orders/{id}/cancellationReasons'),
-            'catalog_categories' => env('IFOOD_PATH_CATALOG_CATEGORIES', '/catalog/v2.0/merchants/{merchantId}/categories'),
-            'catalog_items' => env('IFOOD_PATH_CATALOG_ITEMS', '/catalog/v2.0/merchants/{merchantId}/items'),
-            'catalog_batch' => env('IFOOD_PATH_CATALOG_BATCH', '/catalog/v2.0/merchants/{merchantId}/batch/{batchId}'),
-            'actions' => [
-                'confirm' => env('IFOOD_PATH_ACTION_CONFIRM', '/order/v1.0/orders/{id}/confirm'),
-                'startPreparation' => env('IFOOD_PATH_ACTION_START_PREPARATION', '/order/v1.0/orders/{id}/startPreparation'),
-                'readyToPickup' => env('IFOOD_PATH_ACTION_READY_TO_PICKUP', '/order/v1.0/orders/{id}/readyToPickup'),
-                'dispatch' => env('IFOOD_PATH_ACTION_DISPATCH', '/order/v1.0/orders/{id}/dispatch'),
-                'cancel' => env('IFOOD_PATH_ACTION_CANCEL', '/order/v1.0/orders/{id}/cancel'),
-            ],
-        ],
-    ],
-
 ];

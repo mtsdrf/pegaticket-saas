@@ -29,12 +29,12 @@ class SaleInstallmentController extends Controller
     ) {
     }
 
-    public function store(StoreSaleInstallmentRequest $request, Sale $order)
+    public function store(StoreSaleInstallmentRequest $request, Sale $sale)
     {
         $dto = CreateSaleInstallmentDTO::fromArray($request->validated());
 
         try {
-            $installment = $this->service->create($order, $dto);
+            $installment = $this->service->create($sale, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -46,12 +46,12 @@ class SaleInstallmentController extends Controller
         );
     }
 
-    public function update(UpdateSaleInstallmentRequest $request, Sale $order, SaleInstallment $installment)
+    public function update(UpdateSaleInstallmentRequest $request, Sale $sale, SaleInstallment $installment)
     {
         $dto = UpdateSaleInstallmentDTO::fromArray($request->validated());
 
         try {
-            $installment = $this->service->update($order, $installment, $dto);
+            $installment = $this->service->update($sale, $installment, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -62,10 +62,10 @@ class SaleInstallmentController extends Controller
         );
     }
 
-    public function destroy(Sale $order, SaleInstallment $installment)
+    public function destroy(Sale $sale, SaleInstallment $installment)
     {
         try {
-            $this->service->delete($order, $installment);
+            $this->service->delete($sale, $installment);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -84,12 +84,12 @@ class SaleInstallmentController extends Controller
      * chamada isolada, o que torna redistribuição impossível sem 422
      * intermediário). Ver SaleInstallmentService::reallocate().
      */
-    public function reallocate(ReallocateSaleInstallmentsRequest $request, Sale $order)
+    public function reallocate(ReallocateSaleInstallmentsRequest $request, Sale $sale)
     {
         $dto = ReallocateSaleInstallmentsDTO::fromArray($request->validated());
 
         try {
-            $installments = $this->service->reallocate($order, $dto->installments);
+            $installments = $this->service->reallocate($sale, $dto->installments);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }

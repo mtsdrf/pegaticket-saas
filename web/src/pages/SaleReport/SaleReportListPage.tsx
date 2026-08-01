@@ -134,7 +134,7 @@ export function SaleReportListPage() {
     <CrudListPage
       title="Relatório de pedidos"
       subtitle="Consulte os pedidos com foco analítico e operacional."
-      breadcrumbs={[{ label: 'Relatórios', to: '/relatorios/pedidos' }, { label: 'Pedidos' }]}
+      breadcrumbs={[{ label: 'Relatórios', to: '/relatorios/vendas' }, { label: 'Vendas' }]}
       toolbar={
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
           {drillDownOrigin && (

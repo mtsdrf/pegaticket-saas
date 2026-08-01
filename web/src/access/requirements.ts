@@ -92,11 +92,6 @@ export const ACCESS = {
   helpRequestsRead: tenant('support', 'read'),
   helpRequestsCreate: tenant('support', 'create'),
   storefrontUpdate: tenant('storefront', 'update'),
-  /** Integrações — API keys + webhook subscriptions (roadmap A6, item 20), functionality única `api-access` pras duas coisas. */
-  apiAccessRead: tenant('api-access', 'read'),
-  apiAccessCreate: tenant('api-access', 'create'),
-  apiAccessUpdate: tenant('api-access', 'update'),
-  apiAccessDelete: tenant('api-access', 'delete'),
   /** Só `GET /coupons` exige `storefront:read` (diferente do resto da área de bilheteria online, que usa só `update` para leitura e escrita). */
   storefrontRead: tenant('storefront', 'read'),
   adminUsersRead: global('users', 'read'),

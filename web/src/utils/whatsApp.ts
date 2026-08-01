@@ -11,12 +11,12 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 }
 
 /**
- * Resumo completo da compra, enviado na criação do pedido (`SaleFormPage`) — lista de itens, total, entrega
+ * Resumo completo da compra, enviado na criação da venda (`SaleFormPage`) — lista de itens, total, entrega
  * prevista e status de pagamento no momento da criação. `trackingUrl` é opcional (toggle `tenant_settings.
  * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando omitido, a linha do link some
  * e o restante da mensagem sai igual a antes.
  */
-export function buildOrderCreatedWhatsAppMessage(params: {
+export function buildSaleCreatedWhatsAppMessage(params: {
   clientName: string
   items: { name: string; quantity: string; unitPrice: number }[]
   total: number
@@ -31,7 +31,7 @@ export function buildOrderCreatedWhatsAppMessage(params: {
   const statusLine = isPaid ? '✅ *Status:* Pago' : '❗ *Status:* Ainda não pago'
   const deliveryLine = expectedDeliveryDate ? `\n📅 *Entrega prevista:* ${formatDateBR(expectedDeliveryDate)}` : ''
   const paidLine = isPaid && paidAmount !== null ? `\n💵 *Valor pago:* ${formatCurrency(paidAmount)}` : ''
-  const trackingBlock = trackingUrl ? `📦 *Acompanhe seu pedido:* ${trackingUrl}\n\n` : ''
+  const trackingBlock = trackingUrl ? `🎟️ *Acompanhe sua compra:* ${trackingUrl}\n\n` : ''
 
   return (
     `🧾 *Resumo da sua compra, ${clientName}!*\n\n` +
@@ -44,13 +44,11 @@ export function buildOrderCreatedWhatsAppMessage(params: {
 }
 
 /**
- * Resumo do pedido enviado sob demanda (`ClientOrdersPage`) — mensagem idêntica à
- * usada em produção no sistema legado (confirmada com o usuário, exemplo real
- * pedido #12608), sem emoji. `trackingUrl` é opcional (toggle `tenant_settings.
+ * Resumo da compra enviado sob demanda — `trackingUrl` é opcional (toggle `tenant_settings.
  * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando
  * omitido, a mensagem sai igual a antes, sem linha de rastreio.
  */
-export function buildOrderSummaryWhatsAppMessage(params: {
+export function buildSaleSummaryWhatsAppMessage(params: {
   codigo: string
   clientName: string
   isDelivered: boolean
@@ -65,9 +63,9 @@ export function buildOrderSummaryWhatsAppMessage(params: {
 
   const lines: string[] = [
     'Olá, obrigado por comprar em nossa loja!',
-    'Aqui estão os dados do seu pedido.',
+    'Aqui estão os dados da sua compra.',
     '',
-    `Pedido #${codigo}`,
+    `Venda #${codigo}`,
     '',
     `Cliente: ${clientName}`,
     '',
@@ -94,7 +92,7 @@ export function buildOrderSummaryWhatsAppMessage(params: {
   }
 
   if (trackingUrl) {
-    lines.push('', `Acompanhe seu pedido: ${trackingUrl}`)
+    lines.push('', `Acompanhe sua compra: ${trackingUrl}`)
   }
 
   lines.push('', '--Mensagem automática--')

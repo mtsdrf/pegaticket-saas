@@ -190,7 +190,7 @@ function RouteFallback() {
  * `PortalAuthProvider` isolado dessa subárvore de rotas — nunca junto do
  * `AuthProvider` de staff em `App.tsx`. `/rastreio/:uuid` entra aqui junto
  * porque a página de rastreio consulta `usePortalAuth()` pra decidir o
- * destino do CTA "Ver todos os meus pedidos" (ver `SaleTrackingPage.tsx`).
+ * destino do CTA "Ver todas as minhas compras" (ver `SaleTrackingPage.tsx`).
  */
 function PortalLayout() {
   return (
@@ -220,7 +220,7 @@ export function AppRoutes() {
           <Route path="/portal/entrar" element={<PortalLoginPage />} />
 
           <Route element={<PortalProtectedRoute />}>
-            <Route path="/portal/pedidos" element={<PortalSalesPage />} />
+            <Route path="/portal/compras" element={<PortalSalesPage />} />
             <Route path="/portal/favoritos" element={<PortalFavoritesPage />} />
             <Route path="/portal/vouchers" element={<PortalVouchersPage />} />
             <Route path="/portal/perfil" element={<PortalProfilePage />} />
@@ -287,16 +287,16 @@ export function AppRoutes() {
             <Route path="/locais/:venueUuid/assentos/novo" element={<PermissionRoute requirement={ACCESS.seatsCreate}><SeatFormPage /></PermissionRoute>} />
             <Route path="/locais/:venueUuid/assentos/:seatUuid/editar" element={<PermissionRoute requirement={ACCESS.seatsUpdate}><SeatFormPage /></PermissionRoute>} />
 
-            <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
-            <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
-            <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
+            <Route path="/vendas" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
+            <Route path="/vendas-manuais" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
+            <Route path="/vendas/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
-            <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
+            <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/treinamentos" element={<TrainingCenterPage />} />
 
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
-            <Route path="/relatorios/pedidos" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />
+            <Route path="/relatorios/vendas" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />
             <Route path="/financeiro/conciliacao" element={<PermissionRoute requirement={ACCESS.financeRead}><ReconciliationPage /></PermissionRoute>} />
 
             <Route path="/admin/usuarios" element={<PermissionRoute requirement={ACCESS.adminUsersRead}><UserListPage /></PermissionRoute>} />

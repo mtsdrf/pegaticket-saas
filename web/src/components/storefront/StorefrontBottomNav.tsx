@@ -118,7 +118,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
   const storefrontEnabled = tenant?.storefront_enabled !== false
   const menuItems = [
     { key: 'perfil', label: 'Meus dados', icon: <PersonOutlineOutlinedIcon fontSize="small" />, path: '/portal/perfil' },
-    { key: 'pedidos', label: 'Meus pedidos', icon: <ReceiptLongOutlinedIcon fontSize="small" />, path: '/portal/pedidos' },
+    { key: 'compras', label: 'Minhas compras', icon: <ReceiptLongOutlinedIcon fontSize="small" />, path: '/portal/compras' },
     { key: 'vouchers', label: 'Meus vouchers', icon: <ConfirmationNumberOutlinedIcon fontSize="small" />, path: '/portal/vouchers' },
     { key: 'favoritos', label: 'Favoritos', icon: <FavoriteBorderOutlinedIcon fontSize="small" />, path: '/portal/favoritos' },
   ]
