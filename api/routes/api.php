@@ -40,6 +40,7 @@ use App\Http\Controllers\Event\TicketTypeController;
 use App\Http\Controllers\Event\TicketBatchController;
 use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\Event\EventProductController;
+use App\Http\Controllers\Ticket\TicketController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
 use App\Http\Controllers\Onboarding\OnboardingController;
@@ -271,6 +272,12 @@ Route::prefix('v1')->group(function () {
         // antigo com preço/disponibilidade ATUAIS do produto.
         Route::get('/sales/{uuid}/items', [PortalController::class, 'saleItems'])
             ->middleware('throttle:60,1,portal-order-items');
+
+        // "Meus ingressos" do pedido (spec 5.15, área "Meus ingressos") —
+        // endpoint próprio por pedido em vez de listagem achatada global,
+        // ver App\Http\Controllers\Portal\PortalController::saleTickets().
+        Route::get('/sales/{uuid}/tickets', [PortalController::class, 'saleTickets'])
+            ->middleware('throttle:60,1,portal-sale-tickets');
 
         // Avaliação de pedido entregue (roadmap Delivery, Fase 4) — 1
         // avaliação por pedido, ver OrderRatingService::rate().
@@ -843,6 +850,25 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/{order}/workflow-transitions', [WorkflowTransitionLogController::class, 'order'])
                 ->middleware(['tenant', 'perm:sales,read', 'throttle:120,1,orders-workflow-transitions']);
+        });
+
+        // Ticket = ingresso digital emitido (spec 5.15/5.16). Emissão é
+        // automática (TicketIssuanceService, ouvindo SalePaid/SaleCancelled)
+        // — sem rota de create/update manual aqui.
+        Route::prefix('tickets')->group(function () {
+            Route::get('/', [TicketController::class, 'index'])
+                ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-list']);
+
+            // Check-in de portaria (leitura de QR ou busca manual) — path
+            // literal, sem conflito com GET /{ticket} (método diferente).
+            Route::post('/checkin', [TicketController::class, 'checkin'])
+                ->middleware(['tenant', 'perm:tickets,checkin', 'throttle:120,1,tickets-checkin']);
+
+            Route::get('/{ticket}', [TicketController::class, 'show'])
+                ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-show']);
+
+            Route::post('/{ticket}/resend', [TicketController::class, 'resend'])
+                ->middleware(['tenant', 'perm:tickets,resend', 'throttle:20,1,tickets-resend']);
         });
 
         // Tela dedicada de gestão de vendas online (origin=storefront) —

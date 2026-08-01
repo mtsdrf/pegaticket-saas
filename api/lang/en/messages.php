@@ -426,6 +426,23 @@ return [
         'has_sales' => 'This batch already has sales and cannot be deleted.',
     ],
 
+    'ticket' => [
+        'list' => 'Tickets list.',
+        'show' => 'Ticket shown successfully.',
+        'resent' => 'Ticket resend registered successfully.',
+    ],
+
+    'ticket_checkin' => [
+        'valido' => 'Entry granted.',
+        'ja_utilizado' => 'This ticket has already been used.',
+        'cancelado' => 'This ticket was cancelled.',
+        'estornado' => 'This ticket was refunded.',
+        'bloqueado' => 'This ticket is blocked.',
+        'evento_incorreto' => 'Ticket does not belong to this event.',
+        'sessao_incorreta' => 'Ticket does not belong to this session.',
+        'nao_encontrado' => 'Ticket not found.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Event product (add-on/parking)
@@ -1013,6 +1030,7 @@ return [
         'address_updated' => 'Address updated successfully.',
         'coupon_redemptions_listed' => 'Your used coupons.',
         'cancellation_requested' => 'Cancellation requested successfully. Wait for the store to approve it.',
+        'tickets_shown' => 'Your tickets.',
     ],
 
     /*

@@ -26,6 +26,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Locais', 'slug' => 'venues', 'description' => 'Gestão de locais e mapas de evento', 'is_active' => true],
             ['name' => 'Assentos e Mesas', 'slug' => 'seats', 'description' => 'Gestão de assentos, mesas, áreas e camarotes', 'is_active' => true],
             ['name' => 'Pedidos', 'slug' => 'sales', 'description' => 'Gestão de pedidos', 'is_active' => true],
+            ['name' => 'Ingressos', 'slug' => 'tickets', 'description' => 'Ingressos digitais emitidos e controle de acesso/check-in', 'is_active' => true],
             ['name' => 'Compradores', 'slug' => 'customers', 'description' => 'Busca de compradores (FinalCustomer) pelo staff, usada no pedido manual', 'is_active' => true],
             ['name' => 'Vendas Online', 'slug' => 'storefront-sales', 'description' => 'Gestão das vendas geradas pela bilheteria online (aprovar, cancelar, despachar, entregar)', 'is_active' => true],
             ['name' => 'Relatórios', 'slug' => 'reports', 'description' => 'Relatórios, indicadores e painel', 'is_active' => true],

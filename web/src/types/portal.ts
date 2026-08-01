@@ -80,3 +80,17 @@ export interface PortalLink {
   tenant_name: string
   confirmed_at: string
 }
+
+/** Espelha `PortalTicketResource` (`GET /portal/sales/{uuid}/tickets`) — "Meus ingressos", inclui `qr_token` de propósito para renderizar o QR Code. */
+export interface PortalTicket {
+  uuid: string
+  code: string
+  qr_token: string
+  status: string
+  attendee_name: string | null
+  issued_at: string | null
+  ticket_type?: { uuid: string; name: string }
+  event?: { uuid: string; name: string } | null
+  session?: { uuid: string; name: string; starts_at: string | null } | null
+  seat?: { label: string; sector_name: string | null } | null
+}

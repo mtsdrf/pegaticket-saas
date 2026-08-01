@@ -6,6 +6,7 @@ use App\Models\BaseModel;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketBatch;
 use App\Models\Event\TicketType;
+use App\Models\Ticket\Ticket;
 use App\Models\Tenant\Tenant;
 use App\Models\Venue\Seat;
 
@@ -84,5 +85,14 @@ class SaleItem extends BaseModel
     public function ticketBatch()
     {
         return $this->belongsTo(TicketBatch::class);
+    }
+
+    /**
+     * Ingressos digitais emitidos a partir deste item (TicketIssuanceService).
+     * Só populado quando ticket_type_id !== null.
+     */
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'order_item_id');
     }
 }

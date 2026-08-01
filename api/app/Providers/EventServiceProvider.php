@@ -305,6 +305,16 @@ use App\Listeners\Sale\SendPushOnSaleApproved;
 use App\Listeners\Sale\SendPushOnSaleRejected;
 use App\Listeners\Sale\SendPushOnSaleDelivered;
 use App\Listeners\Sale\SendPushOnSaleOutForDelivery;
+use App\Listeners\Sale\IssueTicketsOnSalePaid;
+use App\Listeners\Sale\CancelTicketsOnSaleCancelled;
+use App\Events\Ticket\TicketsIssued;
+use App\Events\Ticket\TicketsCancelled;
+use App\Events\Ticket\TicketResent;
+use App\Events\Ticket\TicketCheckedIn;
+use App\Listeners\Ticket\AuditTicketsIssued;
+use App\Listeners\Ticket\AuditTicketsCancelled;
+use App\Listeners\Ticket\AuditTicketResent;
+use App\Listeners\Ticket\AuditTicketCheckedIn;
 
 /*
 |--------------------------------------------------------------------------
@@ -510,7 +520,7 @@ class EventServiceProvider extends ServiceProvider
         SaleCreated::class => [AuditSaleCreated::class, WriteWorkflowTransitionLog::class],
         SaleDelivered::class => [AuditSaleDelivered::class, SendPushOnSaleDelivered::class, WriteWorkflowTransitionLog::class],
         SaleUndelivered::class => [AuditSaleUndelivered::class],
-        SalePaid::class => [AuditSalePaid::class],
+        SalePaid::class => [AuditSalePaid::class, IssueTicketsOnSalePaid::class],
         SalePartiallyPaid::class => [AuditSalePartiallyPaid::class],
         SaleUnpaid::class => [AuditSaleUnpaid::class],
         SaleInstallmentPaid::class => [AuditSaleInstallmentPaid::class],
@@ -518,7 +528,7 @@ class EventServiceProvider extends ServiceProvider
         SaleInstallmentCreated::class => [AuditSaleInstallmentCreated::class],
         SaleInstallmentUpdated::class => [AuditSaleInstallmentUpdated::class],
         SaleInstallmentDeleted::class => [AuditSaleInstallmentDeleted::class],
-        SaleCancelled::class => [AuditSaleCancelled::class, WriteWorkflowTransitionLog::class],
+        SaleCancelled::class => [AuditSaleCancelled::class, WriteWorkflowTransitionLog::class, CancelTicketsOnSaleCancelled::class],
         SalePaymentCharged::class => [AuditSalePaymentCharged::class],
         SalePaymentRefundRequested::class => [AuditSalePaymentRefundRequested::class],
         SaleItemsUpdated::class => [AuditSaleItemsUpdated::class],
@@ -529,6 +539,16 @@ class EventServiceProvider extends ServiceProvider
         SaleCancellationRequested::class => [AuditSaleCancellationRequested::class],
         SaleCancellationApproved::class => [AuditSaleCancellationApproved::class],
         SaleCancellationRejected::class => [AuditSaleCancellationRejected::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ticket
+        |--------------------------------------------------------------------------
+        */
+        TicketsIssued::class => [AuditTicketsIssued::class],
+        TicketsCancelled::class => [AuditTicketsCancelled::class],
+        TicketResent::class => [AuditTicketResent::class],
+        TicketCheckedIn::class => [AuditTicketCheckedIn::class],
 
         /*
         |--------------------------------------------------------------------------

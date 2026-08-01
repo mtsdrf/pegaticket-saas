@@ -236,7 +236,6 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   event_products: CRUD_ACTION_OPTIONS,
   venues: CRUD_ACTION_OPTIONS,
   seats: CRUD_ACTION_OPTIONS,
-  'api-access': CRUD_ACTION_OPTIONS,
   support: ['read', 'create'],
   dashboard: ['read'],
   analytics: ['read'],
@@ -246,7 +245,7 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   'tenant-profile': ['read', 'update', 'export'],
   storefront: ['read', 'update'],
   subscription: ['read', 'update'],
-  orders: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
+  sales: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
   'storefront-sales': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
 }
 

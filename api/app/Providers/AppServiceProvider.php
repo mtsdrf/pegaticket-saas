@@ -48,6 +48,8 @@ use App\Repositories\Contracts\{
     TenantFeatureOverrideRepositoryInterface,
     IdempotencyRepositoryInterface,
     RefundRepositoryInterface,
+    TicketRepositoryInterface,
+    TicketCheckinRepositoryInterface,
 };
 
 // Repository Implementations
@@ -89,6 +91,8 @@ use App\Repositories\Eloquent\{
     TenantFeatureOverrideRepository,
     IdempotencyRepository,
     RefundRepository,
+    TicketRepository,
+    TicketCheckinRepository,
 };
 
 // Payment provider (cobrança de planos — roadmap 1B)
@@ -284,6 +288,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TicketBatchRepositoryInterface::class,
             TicketBatchRepository::class
+        );
+
+        // Ticket Repository (ingresso digital emitido, spec 5.15)
+        $this->app->bind(
+            TicketRepositoryInterface::class,
+            TicketRepository::class
+        );
+
+        // Ticket Checkin Repository (controle de acesso/portaria, spec 5.16)
+        $this->app->bind(
+            TicketCheckinRepositoryInterface::class,
+            TicketCheckinRepository::class
         );
 
         // Venue Repository

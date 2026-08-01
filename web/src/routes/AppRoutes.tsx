@@ -82,6 +82,12 @@ const TicketBatchListPage = lazy(() =>
 const TicketBatchFormPage = lazy(() =>
   import('../pages/TicketBatch/TicketBatchFormPage').then((m) => ({ default: m.TicketBatchFormPage })),
 )
+const CheckinPage = lazy(() =>
+  import('../pages/Checkin/CheckinPage').then((m) => ({ default: m.CheckinPage })),
+)
+const TicketListPage = lazy(() =>
+  import('../pages/Ticket/TicketListPage').then((m) => ({ default: m.TicketListPage })),
+)
 const EventProductListPage = lazy(() =>
   import('../pages/EventProduct/EventProductListPage').then((m) => ({ default: m.EventProductListPage })),
 )
@@ -267,6 +273,9 @@ export function AppRoutes() {
             <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes" element={<PermissionRoute requirement={ACCESS.ticketBatchesRead}><TicketBatchListPage /></PermissionRoute>} />
             <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes/novo" element={<PermissionRoute requirement={ACCESS.ticketBatchesCreate}><TicketBatchFormPage /></PermissionRoute>} />
             <Route path="/tipos-de-ingresso/:ticketTypeUuid/lotes/:batchUuid/editar" element={<PermissionRoute requirement={ACCESS.ticketBatchesUpdate}><TicketBatchFormPage /></PermissionRoute>} />
+
+            <Route path="/portaria" element={<PermissionRoute requirement={ACCESS.ticketsCheckin}><CheckinPage /></PermissionRoute>} />
+            <Route path="/ingressos" element={<PermissionRoute requirement={ACCESS.ticketsRead}><TicketListPage /></PermissionRoute>} />
 
             <Route path="/adicionais" element={<PermissionRoute requirement={ACCESS.eventProductsRead}><EventProductListPage /></PermissionRoute>} />
             <Route path="/adicionais/novo" element={<PermissionRoute requirement={ACCESS.eventProductsCreate}><EventProductFormPage /></PermissionRoute>} />

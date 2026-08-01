@@ -54,6 +54,10 @@ class ActionsSeeder extends Seeder
             ['key' => 'prep', 'name' => 'Atualizar preparo do item'],
             // Ação de exportação de dados (tenant-profile,export) — roadmap A1.2.
             ['key' => 'export', 'name' => 'Exportar dados'],
+            // Ações de Ingresso (tickets,{action}) — spec 5.15/5.16. 'read'
+            // já existe acima e é reaproveitado por tickets,read.
+            ['key' => 'checkin', 'name' => 'Realizar check-in'],
+            ['key' => 'resend', 'name' => 'Reenviar ingresso'],
         ];
 
         foreach ($actions as $a) {

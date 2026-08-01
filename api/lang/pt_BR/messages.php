@@ -433,6 +433,23 @@ return [
         'has_sales' => 'Este lote já possui vendas registradas e não pode ser removido.',
     ],
 
+    'ticket' => [
+        'list' => 'Lista de ingressos.',
+        'show' => 'Ingresso exibido com sucesso.',
+        'resent' => 'Reenvio do ingresso registrado com sucesso.',
+    ],
+
+    'ticket_checkin' => [
+        'valido' => 'Entrada liberada.',
+        'ja_utilizado' => 'Este ingresso já foi utilizado.',
+        'cancelado' => 'Este ingresso foi cancelado.',
+        'estornado' => 'Este ingresso foi estornado.',
+        'bloqueado' => 'Este ingresso está bloqueado.',
+        'evento_incorreto' => 'Ingresso não pertence a este evento.',
+        'sessao_incorreta' => 'Ingresso não pertence a esta sessão.',
+        'nao_encontrado' => 'Ingresso não encontrado.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Produto do evento (adicional/estacionamento)
@@ -1020,6 +1037,7 @@ return [
         'address_updated' => 'Endereço atualizado com sucesso.',
         'coupon_redemptions_listed' => 'Seus cupons utilizados.',
         'cancellation_requested' => 'Cancelamento solicitado com sucesso. Aguarde a aprovação da loja.',
+        'tickets_shown' => 'Seus ingressos.',
     ],
 
     /*

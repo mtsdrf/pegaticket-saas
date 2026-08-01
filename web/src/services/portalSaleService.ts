@@ -2,7 +2,7 @@ import { unwrap } from './apiClient'
 import { portalApiClient } from './portalApiClient'
 import type { ApiSuccess } from '../types/api'
 import type { SalePayment } from '../types/sale'
-import type { CreatePortalLinkPayload, PortalLink, PortalSaleSummary, PortalReorderItem } from '../types/portal'
+import type { CreatePortalLinkPayload, PortalLink, PortalSaleSummary, PortalReorderItem, PortalTicket } from '../types/portal'
 
 /** Lista agregada de pedidos entre todas as lojas vinculadas, mais recente primeiro (ordenação já vem do backend). */
 export function listPortalSales(): Promise<PortalSaleSummary[]> {
@@ -46,4 +46,9 @@ export function requestSaleCancellation(orderUuid: string, reason?: string): Pro
  */
 export function createSalePixCharge(orderUuid: string): Promise<SalePayment> {
   return unwrap(portalApiClient.post<ApiSuccess<SalePayment>>(`/portal/sales/${orderUuid}/payment-charge`))
+}
+
+/** "Meus ingressos" — ingressos emitidos para um pedido específico do comprador autenticado (`PortalTicketResource`). */
+export function listSaleTickets(orderUuid: string): Promise<PortalTicket[]> {
+  return unwrap(portalApiClient.get<ApiSuccess<PortalTicket[]>>(`/portal/sales/${orderUuid}/tickets`))
 }

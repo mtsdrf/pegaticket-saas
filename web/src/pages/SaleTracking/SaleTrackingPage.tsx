@@ -1,16 +1,20 @@
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
+import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined'
 import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
 import { Alert, Box, Button, Chip, Divider, Paper, Rating, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import { QRCodeCanvas } from 'qrcode.react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Logo } from '../../components/ui/Logo'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
-import { createPortalLink } from '../../services/portalSaleService'
+import { createPortalLink, listSaleTickets } from '../../services/portalSaleService'
 import { getSaleTracking } from '../../services/saleTrackingService'
 import { rateSale, type SaleRatingResult } from '../../services/saleRatingService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
+import type { PortalTicket } from '../../types/portal'
 import type { SaleTracking } from '../../types/saleTracking'
 import { deriveSaleStatus, STATUS_TONE_COLORS } from '../../utils/saleStatus'
 import { formatCurrency, formatDateBR, formatItemQuantity } from '../../utils/format'
@@ -327,6 +331,102 @@ function SaleRatingSection({ saleUuid }: { saleUuid: string }) {
   )
 }
 
+function TicketCard({ ticket }: { ticket: PortalTicket }) {
+  return (
+    <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX, textAlign: 'center' }}>
+      <Box
+        sx={{
+          display: 'inline-flex',
+          p: 1.25,
+          bgcolor: '#fff',
+          borderRadius: 'var(--pt-radius-md)',
+          mb: 1.5,
+        }}
+      >
+        <QRCodeCanvas value={ticket.qr_token} size={148} marginSize={0} />
+      </Box>
+
+      {ticket.event?.name && (
+        <Typography sx={{ fontSize: 15, fontWeight: 700, wordBreak: 'break-word' }}>{ticket.event.name}</Typography>
+      )}
+      {ticket.ticket_type?.name && (
+        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{ticket.ticket_type.name}</Typography>
+      )}
+      {ticket.session?.name && (
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>{ticket.session.name}</Typography>
+      )}
+      {ticket.seat && (
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mt: 0.25 }}>
+          <EventSeatOutlinedIcon sx={{ fontSize: 15 }} />
+          {ticket.seat.label}
+          {ticket.seat.sector_name ? ` — ${ticket.seat.sector_name}` : ''}
+        </Typography>
+      )}
+      {ticket.attendee_name && (
+        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5 }}>{ticket.attendee_name}</Typography>
+      )}
+
+      <Divider sx={{ my: 1.25 }} />
+      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Código: {ticket.code}</Typography>
+    </Paper>
+  )
+}
+
+/**
+ * "Meus ingressos" — só busca quando o comprador está autenticado no Portal
+ * (o endpoint `GET /portal/sales/{uuid}/tickets` exige posse via
+ * `portal_customer()`, indisponível na rota pública de rastreio sem login).
+ * Falha (ex.: pedido ainda não vinculado à conta) não bloqueia o resto da
+ * tela de rastreio — a seção some silenciosamente, sem alerta de erro.
+ */
+function TicketsSection({ saleUuid }: { saleUuid: string }) {
+  const [tickets, setTickets] = useState<PortalTicket[] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    listSaleTickets(saleUuid)
+      .then((result) => {
+        if (!cancelled) setTickets(result)
+      })
+      .catch(() => {
+        if (!cancelled) setTickets(null)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [saleUuid])
+
+  if (isLoading) {
+    return (
+      <Stack spacing={1.5}>
+        <Skeleton variant="rounded" height={20} sx={{ width: '40%' }} />
+        <Skeleton variant="rounded" height={260} sx={{ borderRadius: 'var(--pt-radius-xl)' }} />
+      </Stack>
+    )
+  }
+
+  if (!tickets || tickets.length === 0) return null
+
+  return (
+    <Box>
+      <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <ConfirmationNumberOutlinedIcon sx={{ fontSize: 18 }} />
+        Meus ingressos
+      </Typography>
+      <Stack spacing={1.5}>
+        {tickets.map((ticket) => (
+          <TicketCard key={ticket.uuid} ticket={ticket} />
+        ))}
+      </Stack>
+    </Box>
+  )
+}
+
 export function SaleTrackingPage() {
   const { uuid } = useParams<{ uuid: string }>()
   const { isAuthenticated: isPortalAuthenticated } = usePortalAuth()
@@ -467,6 +567,8 @@ export function SaleTrackingPage() {
                 <InstallmentsList installments={order.installments} />
               </Box>
             )}
+
+            {isPortalAuthenticated && order.is_paid && <TicketsSection saleUuid={order.uuid} />}
 
             {order.is_delivered && isPortalAuthenticated && <SaleRatingSection saleUuid={order.uuid} />}
 

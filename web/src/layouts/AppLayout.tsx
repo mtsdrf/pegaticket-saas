@@ -5,6 +5,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
+import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
@@ -85,10 +86,12 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/eventos/categorias', label: 'Categorias de evento', access: ACCESS.eventCategoriesRead },
       { to: '/eventos', label: 'Eventos', exact: true, access: ACCESS.eventsRead },
       { to: '/tipos-de-ingresso', label: 'Tipos de ingresso', access: ACCESS.ticketTypesRead },
+      { to: '/ingressos', label: 'Ingressos emitidos', access: ACCESS.ticketsRead },
       { to: '/adicionais', label: 'Adicionais', access: ACCESS.eventProductsRead },
       { to: '/locais', label: 'Locais e mapa', access: ACCESS.venuesRead },
     ],
   },
+  { kind: 'link', to: '/portaria', label: 'Portaria', icon: QrCodeScannerOutlinedIcon, access: ACCESS.ticketsCheckin },
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontSalesRead },

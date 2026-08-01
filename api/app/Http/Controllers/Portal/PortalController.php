@@ -13,6 +13,7 @@ use App\Http\Requests\Portal\RequestSaleCancellationRequest;
 use App\Http\Resources\Sale\SalePaymentResource;
 use App\Http\Resources\Portal\PortalMeResource;
 use App\Http\Resources\Portal\PortalSaleResource;
+use App\Http\Resources\Portal\PortalTicketResource;
 use App\Services\APIResponse;
 use App\Services\Sale\SalePaymentService;
 use App\Services\Portal\PortalCustomerService;
@@ -46,6 +47,25 @@ class PortalController extends Controller
         return APIResponse::success(
             new PortalMeResource($customer),
             __('messages.portal.me_shown')
+        );
+    }
+
+    /**
+     * "Meus ingressos" do pedido — endpoint próprio (não embutido em
+     * `sales`/`saleItems`) porque o shape é diferente (QR/status de
+     * check-in por ingresso, não item de pedido). Posse verificada por
+     * findOwnedOrder(), mesma checagem de reorder/avaliação/cancelamento.
+     */
+    public function saleTickets(string $uuid)
+    {
+        $order = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+        $order->load(['items.tickets.ticketType.event', 'items.tickets.ticketType.session', 'items.tickets.seat']);
+
+        $tickets = $order->items->flatMap(fn($item) => $item->tickets);
+
+        return APIResponse::success(
+            PortalTicketResource::collection($tickets),
+            __('messages.portal.tickets_shown')
         );
     }
 

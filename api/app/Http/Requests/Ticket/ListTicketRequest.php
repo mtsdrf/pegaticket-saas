@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Requests\Ticket;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class ListTicketRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort_by' => ['nullable', 'string', 'in:status,issued_at,created_at'],
+            'sort_dir' => ['nullable', 'string', 'in:asc,desc'],
+            'status' => ['nullable', 'string', 'in:pendente,ativo,utilizado,cancelado,estornado,bloqueado,expirado'],
+            'ticket_type_uuid' => ['nullable', 'uuid'],
+            'event_uuid' => ['nullable', 'uuid'],
+            'event_session_uuid' => ['nullable', 'uuid'],
+            'sale_uuid' => ['nullable', 'uuid'],
+            'search' => ['nullable', 'string', 'max:100'],
+        ];
+    }
+}

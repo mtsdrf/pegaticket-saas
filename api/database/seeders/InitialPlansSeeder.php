@@ -32,6 +32,7 @@ class InitialPlansSeeder extends Seeder
                     'venues',
                     'seats',
                     'sales',
+                    'tickets',
                     'customers',
                     'storefront',
                     'reports',
