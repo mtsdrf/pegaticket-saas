@@ -7,8 +7,8 @@ test.describe('Central de treinamento', () => {
       tenantSelectionConfirmed: true,
       activeTenantUuid: 'tenant-training-1',
       isTenantOwner: true,
-      tenantPermissions: ['dashboard:read', 'products:read', 'products:create', 'clients:read', 'orders:read', 'stock:read'],
-      tenantFunctionalities: ['dashboard', 'products', 'clients', 'sales', 'stock', 'subscription'],
+      tenantPermissions: ['dashboard:read', 'events:read', 'events:create', 'sales:read'],
+      tenantFunctionalities: ['dashboard', 'events', 'sales', 'subscription'],
       userName: 'Treinamento QA',
       userEmail: 'training@pegaticket.com',
       tenants: [
@@ -52,23 +52,22 @@ test.describe('Central de treinamento', () => {
     })
 
     await mockPaginatedApiRoute(page, {
-      path: '/products',
+      path: '/events',
       body: [
         {
-          uuid: 'product-qa-1',
-          name: 'Produto Escola',
-          sku: 'ESC-001',
-          price: 14.9,
-          is_available: true,
-          image_url: null,
-          unit: 'un',
-          product_type: {
-            uuid: 'product-type-1',
-            name: 'Bebidas',
-            product_category: {
-              uuid: 'product-category-1',
-              name: 'Consumo',
-            },
+          uuid: 'event-qa-1',
+          name: 'Festival Escola',
+          slug: 'festival-escola',
+          type: 'ingresso',
+          status: 'publicado',
+          location_name: 'Arena Escola',
+          location_address: 'Rua do Evento, 100',
+          starts_at: '2026-08-20 20:00:00',
+          ends_at: '2026-08-21 02:00:00',
+          cover_image_url: null,
+          category: {
+            uuid: 'event-category-1',
+            name: 'Festival',
           },
         },
       ],
@@ -89,9 +88,9 @@ test.describe('Central de treinamento', () => {
     await expect(page.getByText('40%')).toBeVisible()
     await expect(page.getByText('Implantação guiada da empresa', { exact: true }).first()).toBeVisible()
 
-    await page.getByText('Produtos e catálogo').first().click()
+    await page.getByText('Eventos e catálogo').first().click()
     await expect(page.getByRole('link', { name: 'Abrir área real' })).toBeVisible()
-    await expect(page.getByText('Cadastrar produto operacional')).toBeVisible()
+    await expect(page.getByText('Cadastrar evento operacional')).toBeVisible()
 
     await page.getByRole('button', { name: 'Marcar como concluído' }).click()
     await expect(page.getByText('Concluído por você')).toBeVisible()
@@ -107,9 +106,9 @@ test.describe('Central de treinamento', () => {
 
     await page.getByRole('link', { name: 'Abrir área real' }).click()
 
-    await expect(page).toHaveURL(/\/produtos$/)
-    await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible()
-    await expect(page.getByText('Produto Escola')).toBeVisible()
+    await expect(page).toHaveURL(/\/eventos$/)
+    await expect(page.getByRole('heading', { name: 'Eventos' })).toBeVisible()
+    await expect(page.getByText('Festival Escola')).toBeVisible()
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pegaticket.active_tenant_uuid')))
       .toBe('tenant-training-1')
@@ -117,7 +116,7 @@ test.describe('Central de treinamento', () => {
     await page.goto('/treinamentos')
 
     await expect(page.getByRole('heading', { name: 'Central de Treinamento' })).toBeVisible()
-    await expect(page.getByText('Produtos e catálogo').first()).toBeVisible()
+    await expect(page.getByText('Eventos e catálogo').first()).toBeVisible()
     await expect(page.getByText('Concluído por você')).toBeVisible()
   })
 })

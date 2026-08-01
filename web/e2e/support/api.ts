@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test'
 import { STORAGE_KEYS } from '../../src/constants/storage'
-import type { Sale } from '../../src/types/order'
+import type { Sale } from '../../src/types/sale'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -463,9 +463,9 @@ export async function mockAccountingShell(page: Page, options: AccountingShellMo
   })
 }
 
-export function makeOrder(overrides: Partial<Sale> = {}): Sale {
+export function makeSale(overrides: Partial<Sale> = {}): Sale {
   return {
-    uuid: overrides.uuid ?? 'order-qa-1',
+    uuid: overrides.uuid ?? 'sale-qa-1',
     codigo: overrides.codigo ?? '1000',
     is_installment: overrides.is_installment ?? false,
     total_amount: overrides.total_amount ?? 149.9,
@@ -487,11 +487,10 @@ export function makeOrder(overrides: Partial<Sale> = {}): Sale {
     origin: overrides.origin ?? 'staff',
     is_out_for_delivery: overrides.is_out_for_delivery ?? false,
     out_for_delivery_at: overrides.out_for_delivery_at ?? null,
-    client: overrides.client ?? {
-      uuid: 'client-qa-1',
-      name: 'Cliente QA',
+    final_customer: overrides.final_customer ?? {
+      uuid: 'final-customer-qa-1',
+      name: 'Comprador QA',
     },
-    stock_location: overrides.stock_location ?? null,
     items: overrides.items ?? [],
     installments: overrides.installments ?? [],
     created_at: overrides.created_at ?? '2026-07-28T12:00:00Z',

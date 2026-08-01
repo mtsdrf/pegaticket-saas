@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { makeOrder, mockAuthenticatedShell, mockPaginatedApiRoute } from './support/api'
+import { makeSale, mockAuthenticatedShell, mockPaginatedApiRoute } from './support/api'
 
 test.describe('Vendas online', () => {
   test('mostra fila online com board e grid sem depender da central manual', async ({ page }) => {
@@ -12,14 +12,14 @@ test.describe('Vendas online', () => {
     await mockPaginatedApiRoute(page, {
       path: '/storefront-sales',
       body: [
-        makeOrder({
+        makeSale({
           uuid: 'storefront-order-1',
           codigo: '2001',
           status: 'pending_approval',
           origin: 'storefront',
           total_amount: 89.9,
-          client: {
-            uuid: 'client-storefront-1',
+          final_customer: {
+            uuid: 'final-customer-storefront-1',
             name: 'Cliente Online QA',
           },
         }),
@@ -51,25 +51,25 @@ test.describe('Vendas online', () => {
     })
 
     let boardOrders = [
-      makeOrder({
+      makeSale({
         uuid: 'storefront-order-approval-1',
         codigo: '2101',
         status: 'pending_approval',
         origin: 'storefront',
         total_amount: 64.9,
-        client: {
-          uuid: 'client-storefront-1',
+        final_customer: {
+          uuid: 'final-customer-storefront-1',
           name: 'Cliente Aprovação',
         },
       }),
-      makeOrder({
+      makeSale({
         uuid: 'storefront-order-production-1',
         codigo: '2102',
         status: 'confirmed',
         origin: 'storefront',
         total_amount: 84.5,
-        client: {
-          uuid: 'client-storefront-2',
+        final_customer: {
+          uuid: 'final-customer-storefront-2',
           name: 'Cliente Produção',
         },
       }),
@@ -207,27 +207,27 @@ test.describe('Vendas online', () => {
     })
 
     let storefrontOrders = [
-      makeOrder({
+      makeSale({
         uuid: 'storefront-cancel-approve-1',
         codigo: '2201',
         status: 'cancellation_requested',
         origin: 'storefront',
         total_amount: 54.9,
         cancellation_reason: 'Cliente desistiu da compra',
-        client: {
-          uuid: 'client-storefront-approve-1',
+        final_customer: {
+          uuid: 'final-customer-storefront-approve-1',
           name: 'Cliente Aprovar Cancelamento',
         },
       }),
-      makeOrder({
+      makeSale({
         uuid: 'storefront-cancel-reject-1',
         codigo: '2202',
         status: 'cancellation_requested',
         origin: 'storefront',
         total_amount: 74.9,
         cancellation_reason: 'Vai buscar mais tarde',
-        client: {
-          uuid: 'client-storefront-reject-1',
+        final_customer: {
+          uuid: 'final-customer-storefront-reject-1',
           name: 'Cliente Rejeitar Cancelamento',
         },
       }),
