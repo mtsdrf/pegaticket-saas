@@ -113,6 +113,15 @@ jobs:
       # segundo build cai no fallback hardcoded de src/services/apiClient.ts
       # (https://api.pegaticket.com/api/v1), que pode divergir do secret e
       # quebrar silenciosamente o smoke de login (fica preso em /login).
+      # "autentica com credenciais reais..." (postdeploy-smoke.spec.ts) exige
+      # a API de produção real via CORS (CORS_ALLOWED_ORIGINS só libera
+      # https://pegaticket.kleuza.com) e código já deployado — nenhuma das
+      # duas coisas é verdade aqui: este passo builda+testa localmente
+      # (127.0.0.1:4173) ANTES do deploy. SMOKE_LOGIN_EMAIL/PASSWORD são env
+      # de job (não deste step) e por isso vazam pra cá, then unskip-am o
+      # teste no contexto errado — ele já roda certo, com PLAYWRIGHT_BASE_URL
+      # apontando pro domínio real, no step "Smoke autenticado pós-deploy"
+      # mais abaixo (depois do deploy). Excluído daqui pra não falhar sempre.
       - name: Rodar E2E do frontend (web/)
         working-directory: web
         env:
@@ -122,7 +131,7 @@ jobs:
           VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
           VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
           VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
-        run: npm run test:e2e
+        run: npm run test:e2e -- --grep-invert "autentica com credenciais reais"
 
       # SSH: chave dedicada ao deploy (não a pessoal do usuário), pública
       # cadastrada em ~/.ssh/authorized_keys no servidor Hostinger.
