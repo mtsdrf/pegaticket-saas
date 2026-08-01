@@ -106,10 +106,22 @@ jobs:
         working-directory: web
         run: npx playwright install chromium
 
+      # playwright.config.ts builda o frontend de novo internamente
+      # (webServer.command roda `npm run build && npm run preview`, e
+      # reuseExistingServer é false em CI — nunca reaproveita o dist/ do
+      # passo "Build web" acima). Sem repassar os mesmos VITE_* aqui, esse
+      # segundo build cai no fallback hardcoded de src/services/apiClient.ts
+      # (https://api.pegaticket.com/api/v1), que pode divergir do secret e
+      # quebrar silenciosamente o smoke de login (fica preso em /login).
       - name: Rodar E2E do frontend (web/)
         working-directory: web
         env:
           CI: '1'
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
         run: npm run test:e2e
 
       # SSH: chave dedicada ao deploy (não a pessoal do usuário), pública
