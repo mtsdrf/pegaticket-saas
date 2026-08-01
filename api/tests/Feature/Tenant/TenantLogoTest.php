@@ -179,13 +179,24 @@ class TenantLogoTest extends TestCase
         $tenant = Tenant::where('uuid', $created['uuid'])->first();
 
         $response = $this->get('/api/v1/tenants/' . $tenant->uuid . '/logo');
-
-        $response->assertRedirect(Storage::disk((string) config('media.public_disks.tenant'))->url($tenant->logo_path));
-
         $cacheControl = (string) $response->headers->get('Cache-Control');
         $this->assertStringContainsString('public', $cacheControl);
         $this->assertStringContainsString('max-age=' . config('media.public_cache_seconds', 31536000), $cacheControl);
         $this->assertStringContainsString('immutable', $cacheControl);
+
+        $disk = Storage::disk((string) config('media.public_disks.tenant'));
+        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', true);
+        $usesRemoteDisk = config('filesystems.disks.' . config('media.public_disks.tenant') . '.driver') === 's3';
+
+        if ($usesDirectPublicUrls && $usesRemoteDisk) {
+            $response->assertRedirect($disk->url($tenant->logo_path));
+
+            return;
+        }
+
+        $response->assertOk();
+        $this->assertEquals($tenant->logo_mime, $response->headers->get('Content-Type'));
+        $this->assertEquals($disk->get($tenant->logo_path), $response->getContent());
     }
 
     #[Test]

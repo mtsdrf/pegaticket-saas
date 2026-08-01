@@ -168,13 +168,24 @@ class ProfileTest extends TestCase
         $user = User::find($this->user->id);
 
         $response = $this->get('/api/v1/users/' . $user->uuid . '/avatar');
-
-        $response->assertRedirect(Storage::disk((string) config('media.public_disks.avatar'))->url($user->avatar_path));
-
         $cacheControl = (string) $response->headers->get('Cache-Control');
         $this->assertStringContainsString('public', $cacheControl);
         $this->assertStringContainsString('max-age=' . config('media.public_cache_seconds', 31536000), $cacheControl);
         $this->assertStringContainsString('immutable', $cacheControl);
+
+        $disk = Storage::disk((string) config('media.public_disks.avatar'));
+        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', true);
+        $usesRemoteDisk = config('filesystems.disks.' . config('media.public_disks.avatar') . '.driver') === 's3';
+
+        if ($usesDirectPublicUrls && $usesRemoteDisk) {
+            $response->assertRedirect($disk->url($user->avatar_path));
+
+            return;
+        }
+
+        $response->assertOk();
+        $this->assertEquals($user->avatar_mime, $response->headers->get('Content-Type'));
+        $this->assertEquals($disk->get($user->avatar_path), $response->getContent());
     }
 
     #[Test]
