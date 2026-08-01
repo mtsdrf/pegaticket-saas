@@ -41,7 +41,7 @@ interface PendingAction {
 }
 
 /**
- * Modal único de gestão de um pedido da loja (/pedidos-loja): mostra itens,
+ * Modal único de gestão de um pedido online (`/vendas-online`): mostra itens,
  * telefone, endereço e cupom + badge do status atual, e no rodapé
  * exatamente 2 (ou 0) botões de ação escolhidos dinamicamente pelo status
  * via `getOrderActionButtons`. Ação com motivo abre um sub-diálogo de motivo;

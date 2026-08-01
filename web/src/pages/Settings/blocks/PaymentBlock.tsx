@@ -97,7 +97,7 @@ export function PaymentBlock() {
       )}
 
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Exibidas no perfil público da loja online para o cliente saber como pode pagar.
+        Exibidas no perfil público da bilheteria online para o cliente saber como pode pagar.
       </Typography>
       <FormGroup>
         {PAYMENT_METHODS.map((method) => (

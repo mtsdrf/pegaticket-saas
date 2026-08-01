@@ -476,63 +476,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Estado
-    |--------------------------------------------------------------------------
-    */
-    'estado' => [
-        'list' => 'Lista de estados.',
-        'created' => 'Estado criado com sucesso.',
-        'updated' => 'Estado atualizado com sucesso.',
-        'deleted' => 'Estado removido com sucesso.',
-        'uf_exists' => 'Já existe um estado com esta UF.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cidade
-    |--------------------------------------------------------------------------
-    */
-    'cidade' => [
-        'list' => 'Lista de cidades.',
-        'created' => 'Cidade criada com sucesso.',
-        'updated' => 'Cidade atualizada com sucesso.',
-        'deleted' => 'Cidade removida com sucesso.',
-        'name_exists' => 'Já existe uma cidade com este nome neste estado.',
-        'invalid_estado' => 'Estado inválido.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Bairro
-    |--------------------------------------------------------------------------
-    */
-    'bairro' => [
-        'list' => 'Lista de bairros.',
-        'created' => 'Bairro criado com sucesso.',
-        'updated' => 'Bairro atualizado com sucesso.',
-        'deleted' => 'Bairro removido com sucesso.',
-        'name_exists' => 'Já existe um bairro com este nome nesta cidade.',
-        'invalid_cidade' => 'Cidade inválida.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Endereço
-    |--------------------------------------------------------------------------
-    */
-    'endereco' => [
-        'list' => 'Lista de endereços.',
-        'created' => 'Endereço criado com sucesso.',
-        'updated' => 'Endereço atualizado com sucesso.',
-        'deleted' => 'Endereço removido com sucesso.',
-        'invalid_estado' => 'Estado inválido.',
-        'invalid_cidade' => 'Cidade inválida.',
-        'invalid_bairro' => 'Bairro inválido.',
-        'invalid_chain' => 'O bairro informado não pertence à cidade/estado informados.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Localização (utilitários gerais, não específicos de Endereço)
     |--------------------------------------------------------------------------
     */
@@ -565,7 +508,7 @@ return [
     'tenant_settings' => [
         'show' => 'Configurações da empresa.',
         'updated' => 'Configurações da empresa atualizadas com sucesso.',
-        'no_fulfillment_method_enabled' => 'A loja precisa aceitar pelo menos uma forma de entrega: retirada no local ou entrega.',
+        'no_fulfillment_method_enabled' => 'A empresa precisa aceitar pelo menos uma forma de atendimento: retirada presencial ou entrega.',
     ],
 
     /*
@@ -715,28 +658,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Loja pública (Delivery Fase 1)
+    | Bilheteria pública
     |--------------------------------------------------------------------------
     */
     'storefront' => [
-        'tenant_shown' => 'Loja exibida com sucesso.',
-        'products_listed' => 'Catálogo de produtos listado com sucesso.',
+        'tenant_shown' => 'Bilheteria exibida com sucesso.',
+        'products_listed' => 'Catálogo público listado com sucesso.',
         'categories_listed' => 'Categorias listadas com sucesso.',
-        'checkout_created' => 'Pedido realizado com sucesso. Aguarde a aprovação da loja.',
-        'storefront_disabled' => 'A loja online desta empresa está desativada no momento.',
-        'store_closed' => 'A loja está fechada no momento. Confira o horário de funcionamento.',
+        'checkout_created' => 'Pedido realizado com sucesso. Aguarde a confirmação da bilheteria.',
+        'storefront_disabled' => 'A bilheteria online desta empresa está desativada no momento.',
+        'store_closed' => 'A bilheteria está fechada no momento. Confira o horário de funcionamento.',
         'below_minimum_order' => 'Pedido abaixo do valor mínimo. Faltam R$ :missing para atingir o mínimo.',
         'delivery_area_not_served' => 'Ainda não entregamos neste bairro.',
         'delivery_fee_shown' => 'Taxa de entrega exibida com sucesso.',
-        'favorite_added' => 'Produto adicionado aos favoritos.',
-        'favorite_removed' => 'Produto removido dos favoritos.',
-        'favorites_listed' => 'Lista de produtos favoritos.',
+        'favorite_added' => 'Evento adicionado aos favoritos.',
+        'favorite_removed' => 'Evento removido dos favoritos.',
+        'favorites_listed' => 'Lista de eventos favoritos.',
         'order_rated' => 'Avaliação registrada com sucesso.',
         'order_already_rated' => 'Este pedido já foi avaliado.',
         'cart_event_recorded' => 'Evento de carrinho registrado com sucesso.',
-        'store_pickup_not_enabled' => 'Esta loja ainda não aceita retirada no local.',
-        'store_pickup_address_missing' => 'A loja ainda não configurou seu endereço, então não é possível retirar o pedido no local no momento.',
-        'delivery_not_enabled' => 'Esta loja não está aceitando entregas no momento.',
+        'store_pickup_not_enabled' => 'Esta empresa ainda não aceita retirada presencial.',
+        'store_pickup_address_missing' => 'A empresa ainda não configurou o ponto de retirada, então não é possível retirar o pedido no momento.',
+        'delivery_not_enabled' => 'Esta empresa não está aceitando entregas no momento.',
         'availability_shown' => 'Disponibilidade exibida com sucesso.',
     ],
 
@@ -791,7 +734,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Horário de funcionamento da loja (Delivery Fase 2)
+    | Horário de funcionamento da bilheteria
     |--------------------------------------------------------------------------
     */
     'store_business_hours' => [
@@ -803,25 +746,9 @@ return [
         'overlapping_shifts' => 'Os turnos deste dia não podem se sobrepor.',
     ],
 
-    'store_address' => [
-        'show' => 'Endereço da loja exibido com sucesso.',
-        'updated' => 'Endereço da loja salvo com sucesso.',
-    ],
-
     /*
     |--------------------------------------------------------------------------
-    | Taxa de entrega por bairro (Delivery Fase 2)
-    |--------------------------------------------------------------------------
-    */
-    'store_delivery_fee' => [
-        'list' => 'Lista de taxas de entrega.',
-        'upserted' => 'Taxa de entrega salva com sucesso.',
-        'deleted' => 'Taxa de entrega removida com sucesso.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cupons de desconto (Delivery Fase 3)
+    | Cupons de desconto
     |--------------------------------------------------------------------------
     */
     'coupon' => [

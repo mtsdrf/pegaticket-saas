@@ -109,7 +109,7 @@ function PublicLinkCard({
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <QrCode2OutlinedIcon fontSize="small" sx={{ color: 'var(--pt-muted)' }} />
                 <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                  Compartilhe este QR Code para clientes acessarem sua loja online direto pelo celular.
+                  Compartilhe este QR Code para clientes acessarem sua bilheteria online direto pelo celular.
                 </Typography>
               </Stack>
 
@@ -268,7 +268,7 @@ export function CompanyBlock() {
       )}
 
       <Alert severity="info" sx={{ mb: 2.5 }}>
-        Compartilhe os links públicos da sua empresa por WhatsApp, Instagram, bio ou campanhas. O link de reservas pode ser usado mesmo sem a loja online, desde que a empresa esteja operando reservas com mesas cadastradas.
+        Compartilhe os links públicos da sua empresa por WhatsApp, Instagram, bio ou campanhas. O link de reservas pode ser usado mesmo sem a bilheteria online, desde que a empresa esteja operando reservas com mesas cadastradas.
       </Alert>
 
       <Stack spacing={1.5} sx={{ mb: 2.5 }}>
@@ -276,7 +276,7 @@ export function CompanyBlock() {
         <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1.5}>
           <PublicLinkCard
             icon={<StorefrontOutlinedIcon fontSize="small" />}
-            title="Loja online"
+            title="Bilheteria online"
             description="Use este endereço para divulgar o catálogo e receber pedidos pela vitrine pública."
             url={storefrontUrl}
             onCopy={handleCopyLink}

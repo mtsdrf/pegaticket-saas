@@ -281,7 +281,7 @@ export function StorefrontCatalogPage() {
             ) : tenant ? (
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
                 <StoreStatusBadge tenant={tenant} />
-                {!tenant.storefront_enabled && <Chip size="small" label="Loja online desativada" variant="outlined" />}
+                {!tenant.storefront_enabled && <Chip size="small" label="Bilheteria online desativada" variant="outlined" />}
                 {tenant.ratings_count > 0 && tenant.average_rating !== null && (
                   <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
                     <StarIcon sx={{ fontSize: 15, color: 'var(--pt-warning, #a15c00)' }} />

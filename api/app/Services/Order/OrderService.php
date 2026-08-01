@@ -188,7 +188,7 @@ class OrderService
             $query->where('orders.status', $filters['status']);
         }
 
-        // Tela dedicada de gestão de pedidos da loja (storefront-orders,*)
+        // Tela dedicada de gestão de vendas online (storefront-orders,*)
         // força origin=storefront no controller, nunca lido cru do request.
         if (!empty($filters['origin'])) {
             $normalizedOrigin = Order::normalizeOrigin((string) $filters['origin']);
@@ -227,7 +227,7 @@ class OrderService
             };
         }
 
-        // "Somente ativos" (grid de gestão de pedidos da loja) — filtro
+        // "Somente ativos" (grid de gestão de vendas online) — filtro
         // aditivo: exclui cancelado, recusado e pedido concluído (pago E
         // entregue ao mesmo tempo), deixando só o que ainda demanda ação.
         // Quando ligado, ordena por urgência (pendentes de aprovação

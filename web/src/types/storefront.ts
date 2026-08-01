@@ -30,10 +30,10 @@ export interface StorefrontTenant {
   address_lng: number | null
   /** Formas de pagamento aceitas no checkout (`tenant_settings.accepted_payment_methods`). */
   accepted_payment_methods: PaymentMethod[]
-  /** Roadmap retirada na loja — `true` só quando o tenant habilitou `allow_store_pickup`; a UI de checkout só oferece a opção "retirar na loja" quando este campo vem `true`. */
+  /** Retirada presencial — `true` só quando o tenant habilitou `allow_store_pickup`; a UI de checkout só oferece a opção de retirada quando este campo vem `true`. */
   allow_store_pickup: boolean
   storefront_enabled: boolean
-  /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos (migração PegaTicket, ver `.claude/memory`) usa sempre 1 cartão por evento, sem alternância grid/lista. */
+  /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos usa sempre 1 cartão por evento, sem alternância grid/lista. */
   catalog_layout: StorefrontCatalogLayout
 }
 

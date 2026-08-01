@@ -308,37 +308,37 @@ const TRAINING_MODULES: TrainingModule[] = [
   },
   {
     id: 'loja',
-    name: 'Loja online e pedidos da loja',
-    summary: 'Explica a jornada pública do cliente e o que a empresa precisa configurar para vender online.',
+    name: 'Bilheteria online e vendas digitais',
+    summary: 'Explica a jornada pública do cliente e o que a empresa precisa configurar para vender ingressos online.',
     status: 'implemented',
-    route: '/configuracoes/loja-online',
+    route: '/configuracoes/pedidos',
     audience: ['Proprietário', 'Marketing', 'Operação digital'],
     functionality: 'storefront',
     requirement: ACCESS.storefrontUpdate,
-    whoUses: 'Quem mantém a loja digital e quem opera pedidos vindos dela.',
+    whoUses: 'Quem mantém a bilheteria digital e quem opera vendas vindas dela.',
     dependencies: ['empresa', 'catalogo', 'clientes'],
     connectsTo: ['pedidos', 'portal', 'financeiro', 'delivery'],
     teaches: [
-      'Como ativar catálogo, horários, taxa e cupom',
-      'Quando o pedido entra na fila da loja',
+      'Como ativar catálogo, horários e cupom',
+      'Quando a venda entra na fila operacional',
       'Como rastreio e portal aumentam a autonomia do cliente final',
     ],
     risks: [
-      'Loja sem horários coerentes gera expectativa errada no cliente',
-      'Cupom e taxa mal configurados distorcem margem',
+      'Bilheteria com horários incoerentes gera expectativa errada no cliente',
+      'Cupom mal configurado distorce margem',
     ],
     operations: [
       {
-        title: 'Configurar loja para primeira venda',
+        title: 'Configurar bilheteria para primeira venda',
         purpose: 'Publicar uma operação mínima confiável para o cliente final.',
-        when: 'Na implantação da loja ou ao reabrir o canal digital.',
+        when: 'Na implantação da bilheteria ou ao reabrir o canal digital.',
         actor: 'Proprietário ou responsável digital',
-        route: '/configuracoes/loja-online',
+        route: '/configuracoes/pedidos',
         permissionLabel: 'storefront:update',
         requirements: ['Produtos ativos', 'Horários definidos', 'Checkout testado'],
-        effects: ['Habilita leitura pública da loja e a jornada de checkout'],
+        effects: ['Habilita leitura pública da bilheteria e a jornada de checkout'],
         commonErrors: ['Horário incoerente com a operação real', 'Produto indisponível ainda publicado'],
-        goodPractices: ['Testar carrinho e checkout antes de divulgar o link da loja'],
+        goodPractices: ['Testar carrinho e checkout antes de divulgar o link da bilheteria'],
       },
     ],
   },
@@ -545,7 +545,7 @@ const TRAINING_QUIZZES: Record<string, TrainingQuiz> = {
     explanation: 'Pedido é um agregado central: ele conversa com estoque, financeiro, cliente e depois pode conversar com analytics.',
   },
   loja: {
-    question: 'Qual combinação é mais importante antes de divulgar a loja online?',
+    question: 'Qual combinação é mais importante antes de divulgar a bilheteria online?',
     options: [
       'Endereço, horários, taxa e produtos válidos',
       'Somente o logotipo',
@@ -1148,7 +1148,7 @@ export function TrainingCenterPage() {
                       {[
                         ['Produto inicial cadastrado', checklist.has_product],
                         ['Cliente inicial cadastrado', checklist.has_client],
-                        ['Loja online configurada', checklist.storefront_configured],
+                        ['Bilheteria online configurada', checklist.storefront_configured],
                         ['Primeiro pedido concluído', checklist.has_first_order],
                       ].map(([label, done]) => (
                         <Stack key={String(label)} direction="row" spacing={1} sx={{ alignItems: 'center' }}>

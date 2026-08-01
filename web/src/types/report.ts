@@ -134,7 +134,7 @@ export interface OperationHealthSummary {
 /** Rótulo em português de cada `orders.origin` — usado no relatório "Resultado por canal" e no drill-down até o relatório de pedidos. */
 export const CHANNEL_LABELS: Record<string, string> = {
   staff: 'Lançado internamente',
-  storefront: 'Loja online',
+  storefront: 'Bilheteria online',
 }
 
 export interface ReportCharts {

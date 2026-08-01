@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Storefront\Concerns;
 
-use App\Models\Location\Bairro;
 use App\Models\Plan\Plan;
 use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Tenant\Tenant;
@@ -34,7 +33,7 @@ trait CreatesStorefrontFixtures
         }
     }
 
-    protected function createDeliveryFeeForBairro(int $tenantId, Bairro $bairro, float $fee = 0.0): void
+    protected function createDeliveryFeeForBairro(int $tenantId, mixed $bairro = null, float $fee = 0.0): void
     {
     }
     protected function storefrontFunctionalityId(): int
@@ -47,7 +46,7 @@ trait CreatesStorefrontFixtures
 
         return DB::table('functionalities')->insertGetId([
             'uuid' => (string) Str::uuid(),
-            'name' => 'Loja Online',
+            'name' => 'Bilheteria Online',
             'slug' => 'storefront',
             'created_at' => now(),
             'updated_at' => now(),
@@ -76,7 +75,7 @@ trait CreatesStorefrontFixtures
 
         return Tenant::create(array_merge([
             'uuid' => (string) Str::uuid(),
-            'name' => 'Loja ' . Str::random(6),
+            'name' => 'Bilheteria ' . Str::random(6),
             'slug' => 'loja-' . Str::random(8),
             'plan_id' => $plan->id,
             'is_active' => true,

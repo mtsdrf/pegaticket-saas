@@ -469,63 +469,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Estado
-    |--------------------------------------------------------------------------
-    */
-    'estado' => [
-        'list' => 'Estados list.',
-        'created' => 'Estado created successfully.',
-        'updated' => 'Estado updated successfully.',
-        'deleted' => 'Estado deleted successfully.',
-        'uf_exists' => 'An estado with this UF already exists.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cidade
-    |--------------------------------------------------------------------------
-    */
-    'cidade' => [
-        'list' => 'Cidades list.',
-        'created' => 'Cidade created successfully.',
-        'updated' => 'Cidade updated successfully.',
-        'deleted' => 'Cidade deleted successfully.',
-        'name_exists' => 'A cidade with this name already exists in this estado.',
-        'invalid_estado' => 'Invalid estado.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Bairro
-    |--------------------------------------------------------------------------
-    */
-    'bairro' => [
-        'list' => 'Bairros list.',
-        'created' => 'Bairro created successfully.',
-        'updated' => 'Bairro updated successfully.',
-        'deleted' => 'Bairro deleted successfully.',
-        'name_exists' => 'A bairro with this name already exists in this cidade.',
-        'invalid_cidade' => 'Invalid cidade.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Endereco
-    |--------------------------------------------------------------------------
-    */
-    'endereco' => [
-        'list' => 'Enderecos list.',
-        'created' => 'Endereco created successfully.',
-        'updated' => 'Endereco updated successfully.',
-        'deleted' => 'Endereco deleted successfully.',
-        'invalid_estado' => 'Invalid estado.',
-        'invalid_cidade' => 'Invalid cidade.',
-        'invalid_bairro' => 'Invalid bairro.',
-        'invalid_chain' => 'The given bairro does not belong to the given cidade/estado.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Location (general utilities, not Endereco-specific)
     |--------------------------------------------------------------------------
     */
@@ -558,7 +501,7 @@ return [
     'tenant_settings' => [
         'show' => 'Company settings.',
         'updated' => 'Company settings updated successfully.',
-        'no_fulfillment_method_enabled' => 'The store must accept at least one fulfillment method: in-store pickup or delivery.',
+        'no_fulfillment_method_enabled' => 'The company must accept at least one fulfillment method: on-site pickup or delivery.',
     ],
 
     /*
@@ -708,28 +651,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Public storefront (Delivery Phase 1)
+    | Public ticketing
     |--------------------------------------------------------------------------
     */
     'storefront' => [
-        'tenant_shown' => 'Store shown successfully.',
-        'products_listed' => 'Product catalog listed successfully.',
+        'tenant_shown' => 'Ticketing page shown successfully.',
+        'products_listed' => 'Public catalog listed successfully.',
         'categories_listed' => 'Categories listed successfully.',
-        'checkout_created' => 'Order placed successfully. Awaiting store approval.',
+        'checkout_created' => 'Order placed successfully. Awaiting ticketing confirmation.',
         'storefront_disabled' => 'This company storefront is currently disabled.',
-        'store_closed' => 'The store is currently closed. Check the business hours.',
+        'store_closed' => 'This ticketing page is currently closed. Check the business hours.',
         'below_minimum_order' => 'Order below the minimum value. Missing R$ :missing to reach the minimum.',
         'delivery_area_not_served' => 'We do not deliver to this neighborhood yet.',
         'delivery_fee_shown' => 'Delivery fee shown successfully.',
-        'favorite_added' => 'Product added to favorites.',
-        'favorite_removed' => 'Product removed from favorites.',
-        'favorites_listed' => 'Favorite products list.',
+        'favorite_added' => 'Event added to favorites.',
+        'favorite_removed' => 'Event removed from favorites.',
+        'favorites_listed' => 'Favorite events list.',
         'order_rated' => 'Rating submitted successfully.',
         'order_already_rated' => 'This order has already been rated.',
         'cart_event_recorded' => 'Cart event recorded successfully.',
-        'store_pickup_not_enabled' => 'This store does not accept in-store pickup yet.',
-        'store_pickup_address_missing' => 'The store has not set up its address yet, so in-store pickup is not available right now.',
-        'delivery_not_enabled' => 'This store is not accepting deliveries right now.',
+        'store_pickup_not_enabled' => 'This company does not accept on-site pickup yet.',
+        'store_pickup_address_missing' => 'The company has not configured its pickup point yet, so on-site pickup is not available right now.',
+        'delivery_not_enabled' => 'This company is not accepting deliveries right now.',
         'availability_shown' => 'Availability shown successfully.',
     ],
 
@@ -784,7 +727,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Store business hours (Delivery Phase 2)
+    | Ticketing business hours
     |--------------------------------------------------------------------------
     */
     'store_business_hours' => [
@@ -796,25 +739,9 @@ return [
         'overlapping_shifts' => 'Shifts on the same day cannot overlap.',
     ],
 
-    'store_address' => [
-        'show' => 'Store address shown successfully.',
-        'updated' => 'Store address saved successfully.',
-    ],
-
     /*
     |--------------------------------------------------------------------------
-    | Delivery fee by neighborhood (Delivery Phase 2)
-    |--------------------------------------------------------------------------
-    */
-    'store_delivery_fee' => [
-        'list' => 'Delivery fee list.',
-        'upserted' => 'Delivery fee saved successfully.',
-        'deleted' => 'Delivery fee deleted successfully.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Discount coupons (Delivery Phase 3)
+    | Discount coupons
     |--------------------------------------------------------------------------
     */
     'coupon' => [

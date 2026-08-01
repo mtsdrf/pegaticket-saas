@@ -1,6 +1,6 @@
 import type { PaginationMeta } from './pagination'
 
-/** Bloco de endereço aditivo do `OrderResource` (roadmap Loja) — presente no detalhe do pedido da loja e na tela pública de preparo. */
+/** Bloco de endereço aditivo do `OrderResource` — presente no detalhe do pedido online e na tela pública de preparo. */
 export interface OrderFinalCustomerAddress {
   logradouro: string | null
   numero: string | null
@@ -14,7 +14,7 @@ export interface OrderFinalCustomerAddress {
 export interface OrderFinalCustomerRef {
   uuid: string
   name: string
-  /** Sobrenome informado no checkout da loja — `null`/ausente para pedidos staff/sem informação. */
+  /** Sobrenome informado no checkout online — `null`/ausente para pedidos staff/sem informação. */
   last_name?: string | null
   /** Aditivos do `OrderResource` (roadmap Loja) — só presentes quando o pedido é carregado com o detalhe completo. */
   phone_primary?: string | null
@@ -60,7 +60,8 @@ export interface OrderInstallment {
 }
 
 /**
- * Delivery Fase 1: todo pedido staff é sempre `status: 'confirmed'`/`origin: 'staff'` — só a loja (`origin: 'storefront'`) nasce `pending_approval`.
+ * Todo pedido staff é sempre `status: 'confirmed'`/`origin: 'staff'` — só o
+ * canal online (`origin: 'storefront'`) nasce `pending_approval`.
  * `cancellation_requested` (roadmap A4) é transitório — só pedido `origin: 'storefront'` chega nele, via solicitação do cliente final no Portal; volta pro status anterior ao aprovar/rejeitar.
  */
 export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
@@ -72,11 +73,11 @@ export interface Order {
   codigo: string
   is_installment: boolean
   total_amount: number
-  /** Delivery Fase 2 — já somado ao `total_amount`; pedidos staff (sem loja) ficam com `0`. */
+  /** Já somado ao `total_amount`; pedidos staff (sem canal online) ficam com `0`. */
   delivery_fee: number
   /** Taxa de serviço, já somada ao `total_amount`; nos canais atuais costuma permanecer `0`. */
   service_fee: number
-  /** Delivery Fase 3 — já subtraído do `total_amount`; pedidos staff/sem cupom ficam com `0`. */
+  /** Já subtraído do `total_amount`; pedidos staff/sem cupom ficam com `0`. */
   discount_amount: number
   /** Código do cupom aplicado, se houver (via relação `coupon`) — `null` quando nenhum cupom foi usado. */
   coupon_code: string | null
@@ -99,7 +100,7 @@ export interface Order {
   change_for_amount?: number | null
   status: OrderStatus
   origin: OrderOrigin
-  /** "Saiu para entrega" (tela dedicada de gestão de pedidos da loja) — etapa opcional entre aprovado e entregue. */
+  /** "Saiu para entrega" (tela dedicada de vendas online) — etapa opcional entre aprovado e entregue. */
   is_out_for_delivery: boolean
   out_for_delivery_at: string | null
   final_customer?: OrderFinalCustomerRef
@@ -121,7 +122,7 @@ export interface OrderFilters {
   status?: OrderStatus
   origin?: OrderOrigin
   stage?: OrderOperationStage
-  /** Gestão de pedidos da loja (/pedidos-loja): exclui cancelados/recusados/concluídos e força ordenação fixa (pendentes primeiro, depois mais antigo). Ignora `sort_by`/`sort_dir`. */
+  /** Gestão de vendas online (`/vendas-online`): exclui cancelados/recusados/concluídos e força ordenação fixa (pendentes primeiro, depois mais antigo). Ignora `sort_by`/`sort_dir`. */
   active_only?: boolean
   sort_by?: string
   sort_dir?: 'asc' | 'desc'

@@ -72,7 +72,7 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     key: 'pagamento',
     path: 'pagamento',
     label: 'Pagamento',
-    description: 'Formas de pagamento aceitas na loja online.',
+    description: 'Formas de pagamento aceitas na bilheteria online.',
     icon: PaymentsOutlinedIcon,
     permission: ACCESS.tenantSettingsRead,
     Component: PaymentBlock,

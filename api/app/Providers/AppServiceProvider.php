@@ -29,9 +29,6 @@ use App\Repositories\Contracts\{
     TicketBatchRepositoryInterface,
     VenueRepositoryInterface,
     SeatRepositoryInterface,
-    EstadoRepositoryInterface,
-    CidadeRepositoryInterface,
-    BairroRepositoryInterface,
     StockLocationRepositoryInterface,
     StockBalanceRepositoryInterface,
     StockMovementRepositoryInterface,
@@ -77,9 +74,6 @@ use App\Repositories\Eloquent\{
     TicketBatchRepository,
     VenueRepository,
     SeatRepository,
-    EstadoRepository,
-    CidadeRepository,
-    BairroRepository,
     StockLocationRepository,
     StockBalanceRepository,
     StockMovementRepository,
@@ -312,24 +306,6 @@ class AppServiceProvider extends ServiceProvider
             SeatRepository::class
         );
 
-        // Estado Repository
-        $this->app->bind(
-            EstadoRepositoryInterface::class,
-            EstadoRepository::class
-        );
-
-        // Cidade Repository
-        $this->app->bind(
-            CidadeRepositoryInterface::class,
-            CidadeRepository::class
-        );
-
-        // Bairro Repository
-        $this->app->bind(
-            BairroRepositoryInterface::class,
-            BairroRepository::class
-        );
-
         // Stock Location Repository
         $this->app->bind(
             StockLocationRepositoryInterface::class,
@@ -413,7 +389,7 @@ class AppServiceProvider extends ServiceProvider
             ReleaseNoteRepository::class
         );
 
-        // Telemetria de carrinho da loja online (roadmap A3.14)
+        // Telemetria de carrinho da bilheteria online (roadmap A3.14)
         $this->app->bind(
             CartEventRepositoryInterface::class,
             CartEventRepository::class

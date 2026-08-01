@@ -38,13 +38,13 @@ import { deriveOrderStatus, STATUS_TONE_COLORS } from '../../utils/orderStatus'
 const ORIGIN_FILTERS: Array<{ value: 'all' | OrderOrigin; label: string }> = [
   { value: 'all', label: 'Todos os canais' },
   { value: 'staff', label: 'Manual' },
-  { value: 'storefront', label: 'Loja' },
+  { value: 'storefront', label: 'Online' },
   { value: 'ifood', label: 'iFood' },
 ]
 
 const ORIGIN_META: Record<OrderOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Pedido manual', shortLabel: 'Manual' },
-  storefront: { label: 'Loja online', shortLabel: 'Loja' },
+  storefront: { label: 'Bilheteria online', shortLabel: 'Online' },
   ifood: { label: 'iFood importado', shortLabel: 'iFood' },
 }
 
@@ -212,7 +212,7 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
       label: 'Atendimento da loja',
       caption: 'Confirma e libera pedidos recebidos do canal online.',
       accent: 'var(--pt-warning)',
-      to: '/pedidos-loja',
+      to: '/vendas-online',
     }
   }
   if (owner === 'operations') {
@@ -455,7 +455,7 @@ function QueueOrderCard({
  * permanece `/pedidos`, mas a experiência deixa de ser "só pedidos manuais"
  * e passa a reunir o pedido canônico do sistema por origem (`staff`,
  * `storefront`, `ifood` e canais legados ainda presentes em histórico),
- * mantendo `/pedidos-loja` e `/pedidos-ifood` como filas especializadas
+ * mantendo `/vendas-online` e `/pedidos-ifood` como filas especializadas
  * complementares.
  */
 export function OrderListPage() {
@@ -1242,12 +1242,12 @@ export function OrderListPage() {
         <OperationMetricCard
           label="Aguardando aprovação"
           value={snapshot.storefrontPendingApproval === null ? '—' : String(snapshot.storefrontPendingApproval)}
-          caption="Pedidos da loja pública esperando aceite da empresa."
+          caption="Vendas da bilheteria online esperando aceite da empresa."
           accent="var(--pt-warning)"
           action={
             canReadStorefrontQueue ? (
-              <Button component={RouterLink} to="/pedidos-loja" size="small" variant="text">
-                Abrir fila da loja
+              <Button component={RouterLink} to="/vendas-online" size="small" variant="text">
+                Abrir fila online
               </Button>
             ) : undefined
           }
@@ -1427,8 +1427,8 @@ export function OrderListPage() {
           }}
           headerAction={
             canReadStorefrontQueue ? (
-              <Button component={RouterLink} to="/pedidos-loja" size="small" variant="text" sx={{ px: 0 }}>
-                Abrir gestão da loja
+              <Button component={RouterLink} to="/vendas-online" size="small" variant="text" sx={{ px: 0 }}>
+                Abrir gestão online
               </Button>
             ) : undefined
           }
@@ -1662,7 +1662,7 @@ export function OrderListPage() {
               />
               <Chip
                 size="small"
-                label={`Loja: ${snapshot.byOrigin.storefront ?? 0}`}
+                label={`Online: ${snapshot.byOrigin.storefront ?? 0}`}
                 icon={<LanguageOutlinedIcon fontSize="small" />}
                 variant="outlined"
               />

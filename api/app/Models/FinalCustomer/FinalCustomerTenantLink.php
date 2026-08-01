@@ -2,7 +2,6 @@
 
 namespace App\Models\FinalCustomer;
 
-use App\Models\Location\Endereco;
 use App\Models\Tenant\Tenant;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Vínculo explícito entre FinalCustomer e uma loja (tenant) — é o registro
  * POR-TENANT do cliente final (absorveu os campos de App\Models\Client\Client
- * descontinuado em 2026-07-31: endereco/documento/telefone/notes/flags).
+ * descontinuado em 2026-07-31: documento/telefone/notes/flags).
  * Sem BaseModel de propósito (mesmo desvio de FinalCustomer).
  */
 class FinalCustomerTenantLink extends Model
@@ -24,7 +23,6 @@ class FinalCustomerTenantLink extends Model
         'uuid',
         'final_customer_id',
         'tenant_id',
-        'endereco_id',
         'cpf_cnpj',
         'ie',
         'ie_indicator',
@@ -55,10 +53,5 @@ class FinalCustomerTenantLink extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
-    }
-
-    public function endereco(): BelongsTo
-    {
-        return $this->belongsTo(Endereco::class);
     }
 }

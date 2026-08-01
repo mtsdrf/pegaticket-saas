@@ -48,9 +48,9 @@ export const ACCESS = {
   seatsDelete: tenant('seats', 'delete'),
   ordersRead: tenant('orders', 'read'),
   ordersCreate: tenant('orders', 'create'),
-  /** Reaproveitada pelo backend em várias ações (edição de itens/parcelas, aprovar/recusar fila da loja) — ver `.claude/memory/api-patterns.md`. */
+  /** Reaproveitada pelo backend em várias ações (edição de itens/parcelas, aprovar/recusar fila online) — ver `.claude/memory/api-patterns.md`. */
   ordersUpdate: tenant('orders', 'update'),
-  /** Tela dedicada de gestão de pedidos da loja (/pedidos-loja) — permissão própria, independente de orders,*. */
+  /** Tela dedicada de vendas online (`/vendas-online`) — permissão própria, independente de `orders,*`. */
   storefrontOrdersRead: tenant('storefront-orders', 'read'),
   storefrontOrdersApprove: tenant('storefront-orders', 'approve'),
   storefrontOrdersCancel: tenant('storefront-orders', 'cancel'),
@@ -96,7 +96,7 @@ export const ACCESS = {
   apiAccessCreate: tenant('api-access', 'create'),
   apiAccessUpdate: tenant('api-access', 'update'),
   apiAccessDelete: tenant('api-access', 'delete'),
-  /** Delivery Fase 3 — só `GET /coupons` exige `storefront:read` (diferente do resto da área "Loja online", que usa só `update` p/ leitura e escrita desde a Fase 2). */
+  /** Só `GET /coupons` exige `storefront:read` (diferente do resto da área de bilheteria online, que usa só `update` para leitura e escrita). */
   storefrontRead: tenant('storefront', 'read'),
   adminUsersRead: global('users', 'read'),
   adminUsersCreate: global('users', 'create'),

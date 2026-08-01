@@ -12,8 +12,8 @@ use App\Services\Permission\PermissionService;
 /**
  * Checklist de implantação (roadmap A2, dores #4/#15) — leitura pura sobre
  * entidades já existentes, sem tabela nova. No contexto atual de ingressos,
- * a loja online é considerada configurada quando o tenant já definiu seus
- * horários de funcionamento.
+ * a bilheteria online é considerada configurada quando o tenant já definiu
+ * seus horários de funcionamento.
  */
 class OnboardingService
 {
@@ -59,9 +59,9 @@ class OnboardingService
 
             $steps[] = [
                 'key' => 'storefront_configured',
-                'label' => 'Configure sua loja online',
-                'to' => '/configuracoes/loja-online',
-                'link_label' => 'Configurar loja',
+                'label' => 'Configure sua bilheteria online',
+                'to' => '/configuracoes/pedidos',
+                'link_label' => 'Configurar bilheteria',
                 'completed' => $items['storefront_configured'],
             ];
         }

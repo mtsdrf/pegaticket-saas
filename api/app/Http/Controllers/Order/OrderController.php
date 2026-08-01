@@ -186,7 +186,7 @@ class OrderController extends Controller
 
     /**
      * "Saiu para entrega" — só usado pelas rotas /storefront-orders/*
-     * (tela dedicada de gestão de pedidos da loja).
+     * (tela dedicada de gestão de vendas online).
      */
     public function dispatch(Order $order)
     {
@@ -206,7 +206,7 @@ class OrderController extends Controller
 
     /**
      * Desfaz "saiu para entrega" — só usado pelas rotas
-     * /storefront-orders/* (tela dedicada de gestão de pedidos da loja).
+     * /storefront-orders/* (tela dedicada de gestão de vendas online).
      */
     public function undispatch(Order $order)
     {
@@ -226,7 +226,7 @@ class OrderController extends Controller
 
     /**
      * Igual a index(), mas força origin=storefront (nunca lido do
-     * request) — usado só pela tela dedicada de gestão de pedidos da loja
+     * request) — usado só pela tela dedicada de gestão de vendas online
      * (perm:storefront-orders,read), independente da permissão orders,read.
      */
     public function indexStorefront(Request $request)
@@ -402,7 +402,7 @@ class OrderController extends Controller
     /**
      * Gera um link temporário de preparo (roadmap Loja) — token curto que
      * expira em 15 min, aberto sem login pelo celular via QR code. Só a
-     * tela de gestão de pedidos da loja usa (perm:storefront-orders,read).
+     * tela de gestão de vendas online usa (perm:storefront-orders,read).
      * Devolve o token cru (o único momento em que ele existe em claro pro
      * frontend montar a URL do QR).
      */

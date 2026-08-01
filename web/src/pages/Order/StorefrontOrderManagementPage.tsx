@@ -81,7 +81,7 @@ const BOARD_STAGE_FILTER_OPTIONS: Array<{ value: 'all' | OrderOperationStage; la
 ]
 
 /**
- * Gestão de pedidos vindos da loja pública (/pedidos-loja, permissão própria
+ * Gestão de pedidos vindos do canal público (`/vendas-online`, permissão própria
  * storefront-orders,*). Grid enxuto (código/cliente/ação) no mesmo padrão de
  * /pedidos; toda a gestão fica no modal por pedido (`StorefrontOrderActionDialog`),
  * que mostra sempre 2 botões de ação escolhidos pelo status atual.

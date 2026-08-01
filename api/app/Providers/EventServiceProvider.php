@@ -237,54 +237,6 @@ use App\Listeners\Venue\AuditSeatDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Estado
-|--------------------------------------------------------------------------
-*/
-use App\Events\Location\EstadoCreated;
-use App\Events\Location\EstadoUpdated;
-use App\Events\Location\EstadoDeleted;
-use App\Listeners\Location\AuditEstadoCreated;
-use App\Listeners\Location\AuditEstadoUpdated;
-use App\Listeners\Location\AuditEstadoDeleted;
-
-/*
-|--------------------------------------------------------------------------
-| Cidade
-|--------------------------------------------------------------------------
-*/
-use App\Events\Location\CidadeCreated;
-use App\Events\Location\CidadeUpdated;
-use App\Events\Location\CidadeDeleted;
-use App\Listeners\Location\AuditCidadeCreated;
-use App\Listeners\Location\AuditCidadeUpdated;
-use App\Listeners\Location\AuditCidadeDeleted;
-
-/*
-|--------------------------------------------------------------------------
-| Bairro
-|--------------------------------------------------------------------------
-*/
-use App\Events\Location\BairroCreated;
-use App\Events\Location\BairroUpdated;
-use App\Events\Location\BairroDeleted;
-use App\Listeners\Location\AuditBairroCreated;
-use App\Listeners\Location\AuditBairroUpdated;
-use App\Listeners\Location\AuditBairroDeleted;
-
-/*
-|--------------------------------------------------------------------------
-| Endereco
-|--------------------------------------------------------------------------
-*/
-use App\Events\Location\EnderecoCreated;
-use App\Events\Location\EnderecoUpdated;
-use App\Events\Location\EnderecoDeleted;
-use App\Listeners\Location\AuditEnderecoCreated;
-use App\Listeners\Location\AuditEnderecoUpdated;
-use App\Listeners\Location\AuditEnderecoDeleted;
-
-/*
-|--------------------------------------------------------------------------
 | Tenant Settings
 |--------------------------------------------------------------------------
 */
@@ -572,42 +524,6 @@ class EventServiceProvider extends ServiceProvider
         SeatCreated::class => [AuditSeatCreated::class],
         SeatUpdated::class => [AuditSeatUpdated::class],
         SeatDeleted::class => [AuditSeatDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Estado
-        |--------------------------------------------------------------------------
-        */
-        EstadoCreated::class => [AuditEstadoCreated::class],
-        EstadoUpdated::class => [AuditEstadoUpdated::class],
-        EstadoDeleted::class => [AuditEstadoDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cidade
-        |--------------------------------------------------------------------------
-        */
-        CidadeCreated::class => [AuditCidadeCreated::class],
-        CidadeUpdated::class => [AuditCidadeUpdated::class],
-        CidadeDeleted::class => [AuditCidadeDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Bairro
-        |--------------------------------------------------------------------------
-        */
-        BairroCreated::class => [AuditBairroCreated::class],
-        BairroUpdated::class => [AuditBairroUpdated::class],
-        BairroDeleted::class => [AuditBairroDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Endereco
-        |--------------------------------------------------------------------------
-        */
-        EnderecoCreated::class => [AuditEnderecoCreated::class],
-        EnderecoUpdated::class => [AuditEnderecoUpdated::class],
-        EnderecoDeleted::class => [AuditEnderecoDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

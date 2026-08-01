@@ -68,7 +68,7 @@ export function TicketTypeStatusToggle({ ticketType, onToggled }: TicketTypeStat
         <Box sx={{ p: 2, maxWidth: 260 }}>
           <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>Pausar vendas?</Typography>
           <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
-            "{ticketType.name}" deixa de aparecer na venda e na loja online até ser reativado.
+            "{ticketType.name}" deixa de aparecer na venda e na bilheteria online até ser reativado.
           </Typography>
           {error ? (
             <Alert severity="error" sx={{ mb: 1.5 }}>

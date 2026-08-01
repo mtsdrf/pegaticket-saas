@@ -489,25 +489,25 @@ export function DashboardPage() {
                 <Stack spacing={1.25}>
                   <Box>
                     <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
-                      Loja online
+                      Bilheteria online
                     </Typography>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
                       {operationHealth ? operationHealth.internal.approval.total : 0} pedido(s) aguardando aprovação
                     </Typography>
                   </Box>
                   <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                    Acompanhe os pedidos recebidos pela loja que ainda dependem de aprovação manual.
+                    Acompanhe os pedidos recebidos pela bilheteria online que ainda dependem de aprovação manual.
                   </Typography>
                   {canOpenStorefrontQueue ? (
                     <Box>
                       <Button
                         component={RouterLink}
-                        to="/pedidos-loja?stage=approval&source=dashboard"
+                        to="/vendas-online?stage=approval&source=dashboard"
                         size="small"
                         variant="text"
                         endIcon={<ArrowOutwardOutlinedIcon sx={{ fontSize: 16 }} />}
                       >
-                        Abrir board da loja
+                        Abrir board online
                       </Button>
                     </Box>
                   ) : null}

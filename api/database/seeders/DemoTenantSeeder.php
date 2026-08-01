@@ -334,7 +334,7 @@ class DemoTenantSeeder extends Seeder
             ]);
         }
 
-        // 3 pedidos vindos "da loja online", parados na fila de aprovação —
+        // 3 pedidos vindos da bilheteria online, parados na fila de aprovação —
         // mostra a tela de aprovação de pedidos com dado de verdade.
         for ($i = 0; $i < 3; $i++) {
             $client = $clients[array_rand($clients)];

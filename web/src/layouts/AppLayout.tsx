@@ -91,7 +91,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
   { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
-  { kind: 'link', to: '/pedidos-loja', label: 'Pedidos da Loja', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontOrdersRead },
+  { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontOrdersRead },
   { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
   {
     kind: 'group',
@@ -122,7 +122,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     // Único ponto de entrada de nível 1 pra tudo que é configuração —
-    // Loja online/Assinatura/Contadores/Integrações deixaram de ser itens
+    // Bilheteria online/Assinatura/Contadores/Integrações deixaram de ser itens
     // próprios de menu (2026-07-24, hub `/configuracoes`) e viraram entradas
     // do índice do hub (ver `pages/Settings/blocks/registry.tsx`). Sem
     // `access`: a própria página decide o que exibir por bloco/entrada —

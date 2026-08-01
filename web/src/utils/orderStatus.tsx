@@ -48,8 +48,10 @@ export interface OrderStatusSource {
   delivered_at?: string | null
   paid_at?: string | null
   /**
-   * Fila de aprovação da loja (Delivery Fase 1) — ausente em respostas antigas, tratado como "confirmed" (comportamento anterior).
-   * `cancellation_requested` (roadmap A4) — cliente solicitou cancelamento, aguardando aprovação da loja.
+   * Fila de aprovação online — ausente em respostas antigas, tratado como
+   * "confirmed" (comportamento anterior).
+   * `cancellation_requested` (roadmap A4) — cliente solicitou cancelamento,
+   * aguardando aprovação da operação.
    */
   status?: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
   is_out_for_delivery?: boolean
@@ -59,7 +61,7 @@ export interface OrderStatusSource {
  * Não existe campo pronto de "status" na API — é derivado de
  * `is_cancelled`/`is_paid`/`is_delivered`/`is_installment`/`status`/
  * `is_out_for_delivery`, nessa ordem de prioridade (contrato acordado com o
- * backend da Fase 5.1, estendido pela tela de gestão de pedidos da loja).
+ * backend da Fase 5.1, estendido pela tela de gestão de vendas online).
  * Único lugar dessa lógica no frontend — reaproveitada por
  * `OrderTrackingPage` (Fase 5.1) e `PortalOrdersPage` (Fase 5.2), nunca
  * reimplementada.
@@ -68,7 +70,7 @@ export function deriveOrderStatus(order: OrderStatusSource): StatusInfo {
   if (order.is_cancelled) {
     return {
       label: 'Pedido cancelado',
-      caption: 'Fale com a loja se tiver dúvidas sobre este pedido.',
+      caption: 'Fale com a equipe responsável se tiver dúvidas sobre este pedido.',
       tone: 'warning',
       icon: <CancelOutlinedIcon />,
     }
@@ -81,7 +83,7 @@ export function deriveOrderStatus(order: OrderStatusSource): StatusInfo {
   if (order.status === 'rejected') {
     return {
       label: 'Pedido recusado',
-      caption: 'A loja não conseguiu confirmar este pedido. Fale com a loja se tiver dúvidas.',
+      caption: 'A equipe não conseguiu confirmar este pedido. Fale com a empresa se tiver dúvidas.',
       tone: 'warning',
       icon: <CancelOutlinedIcon />,
     }
@@ -93,7 +95,7 @@ export function deriveOrderStatus(order: OrderStatusSource): StatusInfo {
   if (order.status === 'cancellation_requested') {
     return {
       label: 'Cancelamento solicitado, aguardando aprovação',
-      caption: 'Você pediu o cancelamento deste pedido. A loja ainda vai analisar.',
+      caption: 'Você pediu o cancelamento deste pedido. A equipe ainda vai analisar.',
       tone: 'warning',
       icon: <CancelOutlinedIcon />,
     }
@@ -101,8 +103,8 @@ export function deriveOrderStatus(order: OrderStatusSource): StatusInfo {
 
   if (order.status === 'pending_approval') {
     return {
-      label: 'Aguardando confirmação da loja',
-      caption: 'Assim que a loja confirmar seu pedido, o preparo começa.',
+      label: 'Aguardando confirmação',
+      caption: 'Assim que a empresa confirmar seu pedido, o preparo começa.',
       tone: 'neutral',
       icon: <HourglassEmptyIcon />,
     }
@@ -155,7 +157,7 @@ export function deriveOrderStatus(order: OrderStatusSource): StatusInfo {
 
   return {
     label: 'Pedido em preparação',
-    caption: 'Seu pedido ainda está sendo preparado pela loja.',
+    caption: 'Seu pedido ainda está sendo preparado pela empresa.',
     tone: 'neutral',
     icon: <HourglassEmptyIcon />,
   }
@@ -194,8 +196,8 @@ export function canRequestOrderCancellation(order: OrderStatusSource): boolean {
 }
 
 /**
- * Mapa único de "status atual do pedido da loja → exatamente 2 (ou 0) botões
- * de ação", conforme fluxo confirmado com o usuário (gestão de /pedidos-loja).
+ * Mapa único de "status atual do pedido online -> exatamente 2 (ou 0) botões
+ * de ação", conforme fluxo confirmado com o usuário (gestão de /vendas-online).
  * Ordem do array = ordem visual (esquerda→direita). Estados terminais
  * (concluído/recusado/cancelado) retornam `[]` — o modal só mostra o badge de
  * status read-only. Fonte única dessa regra; não reimplementar por tela.

@@ -221,11 +221,18 @@ export function AppRoutes() {
           </Route>
         </Route>
 
-        {/* Loja pública do tenant (Delivery Fase 1) — 100% pública, sem
+        {/* Bilheteria pública do tenant — 100% pública, sem
             ProtectedRoute/PermissionRoute. `StorefrontLayout` monta seu
             próprio `PortalAuthProvider` (mesma identidade OTP do Portal,
             reaproveitada) + `StorefrontCartProvider` (carrinho por slug). */}
         <Route path="/loja/:slug" element={<StorefrontLayout />}>
+          <Route index element={<StorefrontCatalogPage />} />
+          <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
+          <Route path="perfil" element={<StorefrontProfilePage />} />
+          <Route path="carrinho" element={<StorefrontCartPage />} />
+          <Route path="checkout" element={<StorefrontCheckoutPage />} />
+        </Route>
+        <Route path="/bilheteria/:slug" element={<StorefrontLayout />}>
           <Route index element={<StorefrontCatalogPage />} />
           <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
           <Route path="perfil" element={<StorefrontProfilePage />} />
@@ -275,6 +282,7 @@ export function AppRoutes() {
             <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
             <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.ordersCreate}><OrderFormPage /></PermissionRoute>} />
             <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
+            <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
             <Route path="/treinamentos" element={<TrainingCenterPage />} />
 
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />

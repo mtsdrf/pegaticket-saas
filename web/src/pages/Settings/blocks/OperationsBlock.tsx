@@ -114,7 +114,7 @@ export function OperationsBlock() {
 
       <FormControlLabel
         control={<Switch checked={storefrontEnabled} onChange={(event) => setStorefrontEnabled(event.target.checked)} />}
-        label="Ativar loja online"
+        label="Ativar bilheteria online"
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando desligado, a página pública continua acessível apenas como vitrine institucional; o catálogo e o checkout deixam de aparecer.

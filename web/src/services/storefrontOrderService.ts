@@ -5,7 +5,7 @@ import type { PaginatedResult } from '../types/pagination'
 import type { Order, OrderFilters } from '../types/order'
 
 /**
- * Tela dedicada de gestão de pedidos da loja (/pedidos-loja) — mesmo
+ * Tela dedicada de gestão de vendas online (`/vendas-online`) — mesmo
  * contrato de `orderService.ts`, mas contra `/storefront-orders/...`
  * (permissão `storefront-orders,*`, independente de `orders,*`). O
  * backend já força `origin=storefront` no servidor — nenhum filtro de
@@ -15,7 +15,7 @@ export function listStorefrontOrders(filters: OrderFilters): Promise<PaginatedRe
   return listPaginated<Order>('/storefront-orders', filters)
 }
 
-/** Detalhe completo de UM pedido da loja (itens/telefone/endereço/cupom) — usado no accordion "Ver detalhes" (roadmap Loja). */
+/** Detalhe completo de um pedido do canal online (itens/telefone/endereço/cupom). */
 export function getStorefrontOrder(uuid: string): Promise<Order> {
   return unwrap(apiClient.get<ApiSuccess<Order>>(`/storefront-orders/${uuid}`))
 }
@@ -51,17 +51,17 @@ export function deliverStorefrontOrder(uuid: string): Promise<Order> {
   return unwrap(apiClient.patch<ApiSuccess<Order>>(`/storefront-orders/${uuid}/deliver`))
 }
 
-/** Reverte "saiu para entrega" de volta pra "em preparação" (`is_out_for_delivery` → false). */
+/** Reverte "saiu para entrega" de volta pra "em preparação" (`is_out_for_delivery` -> false). */
 export function undispatchStorefrontOrder(uuid: string): Promise<Order> {
   return unwrap(apiClient.patch<ApiSuccess<Order>>(`/storefront-orders/${uuid}/undispatch`))
 }
 
-/** Reverte "entregue" de volta pra "saiu para entrega" (`is_delivered` → false). */
+/** Reverte "entregue" de volta pra "saiu para entrega" (`is_delivered` -> false). */
 export function undeliverStorefrontOrder(uuid: string): Promise<Order> {
   return unwrap(apiClient.patch<ApiSuccess<Order>>(`/storefront-orders/${uuid}/undeliver`))
 }
 
-/** Conclui o pedido marcando-o como PAGO (`is_paid` → true) — ação financeira real. */
+/** Conclui o pedido marcando-o como PAGO (`is_paid` -> true) — ação financeira real. */
 export function payStorefrontOrder(uuid: string): Promise<Order> {
   return unwrap(apiClient.patch<ApiSuccess<Order>>(`/storefront-orders/${uuid}/pay`))
 }

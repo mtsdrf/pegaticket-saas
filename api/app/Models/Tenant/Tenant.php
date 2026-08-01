@@ -3,7 +3,6 @@
 namespace App\Models\Tenant;
 
 use App\Models\BaseModel;
-use App\Models\Location\Endereco;
 
 class Tenant extends BaseModel
 {
@@ -22,7 +21,6 @@ class Tenant extends BaseModel
         'logo_data',
         'logo_mime',
         'logo_updated_at',
-        'endereco_id',
         // Contato do estabelecimento (migração de dados legados)
         'email',
         'phone',
@@ -50,10 +48,5 @@ class Tenant extends BaseModel
     public function plan()
     {
         return $this->belongsTo(\App\Models\Plan\Plan::class, 'plan_id');
-    }
-
-    public function endereco()
-    {
-        return $this->belongsTo(Endereco::class);
     }
 }

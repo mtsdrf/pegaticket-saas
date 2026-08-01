@@ -5,7 +5,7 @@ namespace App\Http\Requests\Storefront;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Público (loja online) — mesmo espírito de StorefrontValidateCouponRequest:
+ * Público (bilheteria online) — mesmo espírito de StorefrontValidateCouponRequest:
  * sem `authorize()` ligado a usuário/staff, o "escopo" é o slug do tenant na
  * rota. `event_type` restrito a uma lista fechada para não virar um sumidouro
  * de dado arbitrário do cliente.

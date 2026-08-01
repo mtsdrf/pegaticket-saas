@@ -290,7 +290,7 @@ class DemoPlansPresentationSeeder extends Seeder
     /**
      * 5-8 pedidos com mix de origem/status, o suficiente pra dashboard e
      * relatórios não ficarem vazios: 4 entregues+pagos (staff, histórico),
-     * 2 vindos "da loja online" parados na fila de aprovação, 1 confirmado
+     * 2 vindos da bilheteria online parados na fila de aprovação, 1 confirmado
      * ainda não entregue (candidato à tela de Rotas).
      *
      * @param array<int, array{model: Product, price: float}> $products

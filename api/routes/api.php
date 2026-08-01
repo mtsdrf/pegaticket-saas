@@ -159,6 +159,8 @@ Route::prefix('v1')->group(function () {
     // App\Services\Storefront\StorefrontCatalogService.
     Route::get('/loja/{slug}', [StorefrontController::class, 'show'])
         ->middleware('throttle:100,1,storefront-show');
+    Route::get('/bilheteria/{slug}', [StorefrontController::class, 'show'])
+        ->middleware('throttle:100,1,storefront-show');
 
     // customer.jwt.optional (roadmap Delivery, Fase 4 — retenção): rota
     // continua 100% pública, mas quando o cliente final está autenticado o
@@ -167,33 +169,51 @@ Route::prefix('v1')->group(function () {
     // App\Http\Middleware\OptionalCustomerJwtMiddleware.
     Route::get('/loja/{slug}/eventos', [StorefrontController::class, 'events'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-products']);
+    Route::get('/bilheteria/{slug}/eventos', [StorefrontController::class, 'events'])
+        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-products']);
 
     // Detalhe público de um evento, com ticket_types/event_products
     // aninhados (NOVO — não existia equivalente no catálogo de comércio).
     Route::get('/loja/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
         ->middleware('throttle:100,1,storefront-event-show');
+    Route::get('/bilheteria/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
+        ->middleware('throttle:100,1,storefront-event-show');
 
     Route::get('/loja/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
+        ->middleware('throttle:100,1,storefront-event-availability');
+    Route::get('/bilheteria/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
         ->middleware('throttle:100,1,storefront-event-availability');
 
     Route::post('/loja/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
+    Route::post('/bilheteria/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
 
     Route::get('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
+        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
+    Route::get('/bilheteria/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
 
     Route::post('/loja/{slug}/holds/{holdUuid}/renovar', [StorefrontHoldController::class, 'renew'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-renew']);
+    Route::post('/bilheteria/{slug}/holds/{holdUuid}/renovar', [StorefrontHoldController::class, 'renew'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-renew']);
 
     Route::delete('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'destroy'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-destroy']);
+    Route::delete('/bilheteria/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'destroy'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-destroy']);
 
     // Categorias com evento disponível (vitrine) — mesmo espírito de
     // /loja/{slug}/eventos.
     Route::get('/loja/{slug}/categorias', [StorefrontController::class, 'categories'])
         ->middleware('throttle:100,1,storefront-categories');
+    Route::get('/bilheteria/{slug}/categorias', [StorefrontController::class, 'categories'])
+        ->middleware('throttle:100,1,storefront-categories');
 
     Route::get('/loja/{slug}/manifest.webmanifest', [StorefrontManifestController::class, 'show'])
+        ->middleware('throttle:100,1,storefront-manifest');
+    Route::get('/bilheteria/{slug}/manifest.webmanifest', [StorefrontManifestController::class, 'show'])
         ->middleware('throttle:100,1,storefront-manifest');
 
     // Prévia pública de cupom — o frontend chama ao digitar o código no
@@ -203,12 +223,16 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Storefront\StorefrontController::validateCoupon().
     Route::post('/loja/{slug}/cupons/validar', [StorefrontController::class, 'validateCoupon'])
         ->middleware('throttle:100,1,storefront-coupon-validate');
+    Route::post('/bilheteria/{slug}/cupons/validar', [StorefrontController::class, 'validateCoupon'])
+        ->middleware('throttle:100,1,storefront-coupon-validate');
 
     // Telemetria de abandono de carrinho (roadmap A3.14) — 100% público,
     // mesmo espírito de /loja/{slug}/cupons/validar. Captura client-side no
     // checkout da loja; sem tela de leitura ainda, só o registro. Ver
     // App\Http\Controllers\Storefront\CartEventController.
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
+        ->middleware('throttle:60,1,storefront-cart-events');
+    Route::post('/bilheteria/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
     // Portal do cliente final (roadmap 5.2) — login sem senha por OTP de
     // e-mail. Identidade própria (App\Models\FinalCustomer\FinalCustomer),
@@ -281,6 +305,8 @@ Route::prefix('v1')->group(function () {
     // escopada por slug de tenant (loja), não pela identidade global do
     // portal. Ver App\Services\Storefront\StorefrontCheckoutService.
     Route::post('/loja/{slug}/checkout', [StorefrontCheckoutController::class, 'store'])
+        ->middleware(['customer.jwt', 'throttle:20,1,storefront-checkout']);
+    Route::post('/bilheteria/{slug}/checkout', [StorefrontCheckoutController::class, 'store'])
         ->middleware(['customer.jwt', 'throttle:20,1,storefront-checkout']);
 
     Route::middleware(['jwt'])->group(function () {
@@ -819,7 +845,7 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:orders,read', 'throttle:120,1,orders-workflow-transitions']);
         });
 
-        // Tela dedicada de gestão de pedidos da loja (origin=storefront) —
+        // Tela dedicada de gestão de vendas online (origin=storefront) —
         // permissão própria (storefront-orders,*), independente de
         // perm:orders,*. Reaproveita os MESMOS métodos de OrderController
         // onde a regra de negócio já existe (approve/reject/cancel/deliver);
