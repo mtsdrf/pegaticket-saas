@@ -11,6 +11,7 @@ use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
 use App\Models\Venue\Seat;
+use App\Services\Tenant\TenantSettingsService;
 use App\Support\MediaUrl;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -18,12 +19,24 @@ use Illuminate\Support\Facades\DB;
 
 class StorefrontHoldService
 {
-    private const HOLD_TTL_MINUTES = 15;
+    private const DEFAULT_HOLD_TTL_MINUTES = 15;
 
     public function __construct(
         private StorefrontCatalogService $catalogService,
         private ProductPromotionService $productPromotionService,
+        private TenantSettingsService $tenantSettingsService,
     ) {
+    }
+
+    /**
+     * Prazo de reserva (spec 5.9): configurável por tenant via
+     * tenant_settings.hold_duration_minutes, default 15 quando ausente.
+     */
+    private function holdTtlMinutes(int $tenantId): int
+    {
+        $configured = $this->tenantSettingsService->getForTenant($tenantId)->hold_duration_minutes;
+
+        return $configured !== null && $configured > 0 ? $configured : self::DEFAULT_HOLD_TTL_MINUTES;
     }
 
     public function availability(string $slug, string $eventSlug, ?string $sessionUuid = null): array
@@ -42,7 +55,7 @@ class StorefrontHoldService
 
         return [
             'server_time' => now(),
-            'default_hold_seconds' => self::HOLD_TTL_MINUTES * 60,
+            'default_hold_seconds' => $this->holdTtlMinutes($tenant->id) * 60,
             'event' => [
                 'uuid' => $event->uuid,
                 'name' => $event->name,
@@ -93,7 +106,7 @@ class StorefrontHoldService
             $this->expireHolds($tenant->id, $event->id);
 
             $session = $this->resolveRequestedSession($event, $payload['session_uuid'] ?? null);
-            $expiresAt = now()->addMinutes(self::HOLD_TTL_MINUTES);
+            $expiresAt = now()->addMinutes($this->holdTtlMinutes($tenant->id));
             $items = collect($payload['items']);
 
             $this->assertNoDuplicateSeats($items);
@@ -168,7 +181,7 @@ class StorefrontHoldService
             }
 
             $hold->forceFill([
-                'expires_at' => now()->addMinutes(self::HOLD_TTL_MINUTES),
+                'expires_at' => now()->addMinutes($this->holdTtlMinutes($tenant->id)),
             ])->save();
 
             return $this->loadHold($hold->fresh());

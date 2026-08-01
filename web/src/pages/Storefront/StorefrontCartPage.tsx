@@ -4,8 +4,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import RemoveIcon from '@mui/icons-material/Remove'
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
-import { Avatar, Box, Button, IconButton, Paper, Stack, TextField, Typography } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Alert, Avatar, Box, Button, IconButton, Paper, Stack, TextField, Typography } from '@mui/material'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '../../components/layout/EmptyState'
 import { Logo } from '../../components/ui/Logo'
 import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelemetry'
@@ -23,8 +23,14 @@ function isExclusiveSeatKind(kind: string | null | undefined): boolean {
 export function StorefrontCartPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { items, totalAmount, updateQuantity, removeItem, setItemNotes } = useStorefrontCart()
   useCartAbandonmentTelemetry(slug)
+
+  // Redirecionado de volta pelo checkout quando a reserva temporária expirou
+  // antes da finalização (ver StorefrontCheckoutPage) — os itens do carrinho
+  // continuam intactos, só o hold do servidor morreu.
+  const holdExpiredMessage = (location.state as { holdExpiredMessage?: string } | null)?.holdExpiredMessage ?? null
 
   function canIncreaseQuantity(item: (typeof items)[number]) {
     if (!item.seat_uuid) {
@@ -59,6 +65,12 @@ export function StorefrontCartPage() {
         </Button>
 
         <Typography sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 700, mb: 3 }}>Seu carrinho</Typography>
+
+        {holdExpiredMessage && (
+          <Alert severity="warning" variant="outlined" sx={{ mb: 3 }}>
+            {holdExpiredMessage}
+          </Alert>
+        )}
 
         {items.length === 0 ? (
           <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4 }}>

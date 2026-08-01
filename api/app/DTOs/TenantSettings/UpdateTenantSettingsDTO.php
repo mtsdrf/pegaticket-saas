@@ -14,6 +14,7 @@ class UpdateTenantSettingsDTO
         public readonly bool $allowStorePickup = false,
         public readonly bool $storefrontEnabled = true,
         public readonly string $catalogLayout = 'list',
+        public readonly ?int $holdDurationMinutes = null,
     ) {
     }
 
@@ -37,6 +38,7 @@ class UpdateTenantSettingsDTO
             allowStorePickup: (bool) ($data['allow_store_pickup'] ?? false),
             storefrontEnabled: (bool) ($data['storefront_enabled'] ?? true),
             catalogLayout: isset($data['catalog_layout']) ? (string) $data['catalog_layout'] : 'list',
+            holdDurationMinutes: isset($data['hold_duration_minutes']) ? (int) $data['hold_duration_minutes'] : null,
         );
     }
 }

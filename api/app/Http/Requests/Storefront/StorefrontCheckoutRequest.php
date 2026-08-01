@@ -56,6 +56,14 @@ class StorefrontCheckoutRequest extends FormRequest
             // inteiro, abaixo).
             'items.*.notes' => ['nullable', 'string', 'max:200'],
 
+            // Participantes (spec 5.10 Etapa 2) — opcional; quando ausente,
+            // os Tickets emitidos ficam com attendee_name/document nulos
+            // (SIMPLIFICAÇÃO DOCUMENTADA: participante = comprador nesta
+            // rodada). Só faz sentido pra item de ticket_type_uuid.
+            'items.*.participants' => ['nullable', 'array'],
+            'items.*.participants.*.name' => ['nullable', 'string', 'max:255'],
+            'items.*.participants.*.document' => ['nullable', 'string', 'max:30'],
+
             'client_name' => ['required', 'string', 'max:255'],
             'client_last_name' => ['required', 'string', 'max:255'],
             'client_phone' => ['required', 'string', 'max:30'],

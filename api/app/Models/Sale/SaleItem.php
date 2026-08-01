@@ -35,12 +35,14 @@ class SaleItem extends BaseModel
         'unit_price',
         'line_total',
         'notes',
+        'attendee_data',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:3',
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
+        'attendee_data' => 'array',
     ];
 
     protected $hidden = [

@@ -37,6 +37,7 @@ import {
   COUPON_USAGE_LIMIT_REACHED_CODE,
   INVALID_COUPON_CODE,
   STORE_PICKUP_UNAVAILABLE_CODE,
+  type StorefrontCartItem,
   type StorefrontCheckoutPayload,
   type StorefrontCreateHoldPayload,
   type StorefrontInventoryHold,
@@ -45,6 +46,25 @@ import { formatCurrency } from '../../utils/format'
 type CouponStatus = 'idle' | 'loading' | 'applied' | 'invalid'
 
 const HOLD_RENEW_INTERVAL_MS = 60_000
+/** Avisos visuais de expiração da reserva (spec: aviso a 5min e a 1min). */
+const HOLD_WARNING_SECONDS = 5 * 60
+const HOLD_CRITICAL_SECONDS = 60
+
+/**
+ * O backend nunca devolve um `code` específico para hold inválido no submit
+ * do checkout (sempre `HTTP_ERROR` genérico, ver `bootstrap/app.php` —
+ * `abort(422, __('messages.inventory_hold.*'))` cai no handler de
+ * HttpException, que não tem código próprio). A mensagem já vem traduzida do
+ * backend; detectamos pelo texto pra saber quando vale a pena limpar o hold
+ * indireto e oferecer nova reserva em vez de erro genérico de topo de tela.
+ */
+function isHoldInvalidMessage(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('reserva temporária não está mais ativa') ||
+    normalized.includes('não correspondem mais à reserva temporária')
+  )
+}
 
 function buildHoldSignature(eventSlug: string | null, sessionToken: string, items: StorefrontCreateHoldPayload['items']): string {
   return JSON.stringify({ eventSlug, sessionToken, items })
@@ -307,6 +327,31 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   // permitir digitação livre, convertido só no payload do checkout.
   const [needsChange, setNeedsChange] = useState(false)
   const [changeForAmount, setChangeForAmount] = useState('')
+  // Participantes por item de ingresso (spec 5.10 Etapa 2) — opcional,
+  // "participante 1, 2, 3..." conforme a quantidade de cada ticket_type no
+  // carrinho. Só faz sentido para ticket_type_uuid (adicional/estacionamento
+  // não tem participante). Chave = StorefrontCartItem.id.
+  const [participantsByItem, setParticipantsByItem] = useState<
+    Record<string, Array<{ name: string; document: string }>>
+  >({})
+  const ticketParticipantItems = useMemo(
+    () => items.filter((item): item is StorefrontCartItem & { ticket_type_uuid: string } => Boolean(item.ticket_type_uuid)),
+    [items],
+  )
+
+  function getParticipant(itemId: string, index: number): { name: string; document: string } {
+    return participantsByItem[itemId]?.[index] ?? { name: '', document: '' }
+  }
+
+  function setParticipant(itemId: string, index: number, quantity: number, field: 'name' | 'document', value: string) {
+    setParticipantsByItem((current) => {
+      const existing = current[itemId] ?? []
+      const next = Array.from({ length: quantity }, (_, i) => existing[i] ?? { name: '', document: '' })
+      next[index] = { ...next[index], [field]: value }
+      return { ...current, [itemId]: next }
+    })
+  }
+
   const [hold, setHold] = useState<StorefrontInventoryHold | null>(null)
   const [holdSecondsLeft, setHoldSecondsLeft] = useState(0)
   const [isPreparingHold, setIsPreparingHold] = useState(false)
@@ -501,9 +546,18 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     if (!hold?.uuid) return
     if (holdSecondsLeft > 0) return
 
+    // Reserva expirou de fato (não só erro de rede) — invalida o checkout e
+    // leva o cliente de volta pro carrinho com aviso claro, em vez de deixar
+    // a tela de checkout "viva" com um hold morto (spec item 2).
+    shouldReleaseHoldRef.current = false
     setHold(null)
-    setHoldError('Sua reserva temporária expirou. Gere uma nova reserva para concluir o pedido.')
-  }, [hold?.uuid, holdSecondsLeft])
+    navigate(`/loja/${slug}/carrinho`, {
+      state: {
+        holdExpiredMessage:
+          'Sua reserva temporária expirou antes da finalização. Revise seus itens e tente novamente.',
+      },
+    })
+  }, [hold?.uuid, holdSecondsLeft, navigate, slug])
 
   // Prévia pública de cupom (Delivery Fase 3) — não checa limite por
   // cliente nem calcula frete grátis de verdade (ver
@@ -576,12 +630,23 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     setIsSubmitting(true)
 
     const payload: StorefrontCheckoutPayload = {
-      items: items.map((item) => ({
-        ticket_type_uuid: item.ticket_type_uuid,
-        event_product_uuid: item.event_product_uuid,
-        quantity: item.quantity,
-        notes: item.notes?.trim() || undefined,
-      })),
+      items: items.map((item) => {
+        const rawParticipants = item.ticket_type_uuid ? participantsByItem[item.id] : undefined
+        const participants = rawParticipants
+          ?.map((participant) => ({
+            name: participant.name.trim() || undefined,
+            document: participant.document.trim() || undefined,
+          }))
+          .filter((participant) => participant.name || participant.document)
+
+        return {
+          ticket_type_uuid: item.ticket_type_uuid,
+          event_product_uuid: item.event_product_uuid,
+          quantity: item.quantity,
+          notes: item.notes?.trim() || undefined,
+          participants: participants && participants.length > 0 ? participants : undefined,
+        }
+      }),
       hold_uuid: holdContext.eligible ? hold?.uuid : undefined,
       session_token: holdContext.eligible ? sessionId : undefined,
       client_name: clientName.trim(),
@@ -633,6 +698,16 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           // travar o cliente tentando de novo com o mesmo código.
           handleRemoveCoupon()
         }
+      } else if (error instanceof ApiRequestError && error.status === 422 && isHoldInvalidMessage(error.message)) {
+        // Hold expirou/ficou desatualizado exatamente no submit (422
+        // `inventory_hold.not_active`/`checkout_mismatch`) — mensagem já
+        // amigável e traduzida do backend; limpamos o hold local (já morto
+        // no servidor, nada a liberar) e deixamos o botão "Gerar nova
+        // reserva" pronto para o cliente tentar de novo sem sair da tela.
+        setHold(null)
+        setHoldSecondsLeft(0)
+        setHoldError(error.message)
+        setFormError(error.message)
       } else {
         setFormError(getApiErrorMessage(error, 'Não foi possível confirmar seu pedido agora. Tente novamente.'))
         if (error instanceof ApiRequestError) setFieldErrors(error.errors)
@@ -656,8 +731,21 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           {holdContext.eligible ? (
             <>
               {hasActiveHold && hold ? (
-                <Alert severity="success" variant="outlined">
-                  Seus itens estão reservados por mais {formatCountdown(holdSecondsLeft)}.
+                <Alert
+                  severity={
+                    holdSecondsLeft <= HOLD_CRITICAL_SECONDS
+                      ? 'error'
+                      : holdSecondsLeft <= HOLD_WARNING_SECONDS
+                        ? 'warning'
+                        : 'success'
+                  }
+                  variant="outlined"
+                >
+                  {holdSecondsLeft <= HOLD_CRITICAL_SECONDS
+                    ? `Sua reserva expira em menos de 1 minuto (${formatCountdown(holdSecondsLeft)})! Finalize agora ou seus itens serão liberados.`
+                    : holdSecondsLeft <= HOLD_WARNING_SECONDS
+                      ? `Sua reserva expira em ${formatCountdown(holdSecondsLeft)}. Finalize o quanto antes.`
+                      : `Seus itens estão reservados por mais ${formatCountdown(holdSecondsLeft)}.`}
                 </Alert>
               ) : isPreparingHold ? (
                 <Alert severity="info" variant="outlined">
@@ -827,6 +915,48 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               </Box>
             )}
           </Box>
+        </Paper>
+      )}
+
+      {ticketParticipantItems.length > 0 && (
+        <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 0.5 }}>Participantes (opcional)</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 2 }}>
+            Informe nome e documento de quem vai usar cada ingresso. Deixe em branco para usar os dados do comprador.
+          </Typography>
+          <Stack spacing={2.5}>
+            {ticketParticipantItems.map((item) => (
+              <Box key={item.id}>
+                <Typography sx={{ fontSize: 13.5, fontWeight: 600, mb: 1 }}>
+                  {item.name}
+                  {item.seat_label ? ` — ${item.seat_label}` : ''}
+                </Typography>
+                <Stack spacing={1.25}>
+                  {Array.from({ length: item.quantity }, (_, index) => {
+                    const participant = getParticipant(item.id, index)
+                    return (
+                      <Stack key={index} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        <TextField
+                          label={`Participante ${index + 1} — nome`}
+                          value={participant.name}
+                          onChange={(event) => setParticipant(item.id, index, item.quantity, 'name', event.target.value)}
+                          size="small"
+                          fullWidth
+                        />
+                        <TextField
+                          label="Documento"
+                          value={participant.document}
+                          onChange={(event) => setParticipant(item.id, index, item.quantity, 'document', event.target.value)}
+                          size="small"
+                          fullWidth
+                        />
+                      </Stack>
+                    )
+                  })}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
         </Paper>
       )}
 

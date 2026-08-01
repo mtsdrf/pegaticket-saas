@@ -5,7 +5,7 @@ namespace App\DTOs\Storefront;
 class StorefrontCheckoutDTO
 {
     /**
-     * @param array<int, array{product_uuid: string, quantity: float, notes?: string, options?: array<int, array{product_option_uuid: string, quantity?: int}>}> $items
+     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string, participants?: array<int, array{name?: string, document?: string}>}> $items
      */
     public function __construct(
         public readonly array $items,

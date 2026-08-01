@@ -151,6 +151,26 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         });
 
+        // HttpException genérica (abort($code, $message) sem Exception
+        // dedicada) — achado ao cobrir o checkout de ingresso com hold
+        // expirado (roadmap PegaTicket 5.9/5.10, 2026-08-01):
+        // StorefrontHoldService/StorefrontCheckoutService (e outros
+        // services que usam abort(422, ...) direto, ex: EventService,
+        // SeatService, TicketBatchService) não têm Exception própria pra
+        // esses guards, e sem este handler o Throwable genérico abaixo
+        // capturava a HttpException ANTES do Symfony conseguir preservar o
+        // status code, sempre respondendo 500/"erro interno" mesmo para
+        // guard de validação (422/409/...) — cliente nunca via a mensagem
+        // real. Preserva status code e mensagem (sempre um __('messages...')
+        // controlado pelo próprio backend, nunca input cru do cliente).
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
+            return \App\Services\APIResponse::error(
+                $e->getMessage() ?: __('messages.http.server_error'),
+                $e->getStatusCode(),
+                'HTTP_ERROR'
+            );
+        });
+
         // Generic Exception (SEMPRE POR ÚLTIMO)
         $exceptions->render(function (\Throwable $e, Request $request) {
             ApplicationLogger::exception($e);

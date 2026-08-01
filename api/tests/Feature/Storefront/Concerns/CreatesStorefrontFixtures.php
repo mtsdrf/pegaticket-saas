@@ -14,9 +14,6 @@ use Illuminate\Support\Str;
  */
 trait CreatesStorefrontFixtures
 {
-    protected function createDeliveryFeeForBairro(int $tenantId, mixed $bairro = null, float $fee = 0.0): void
-    {
-    }
     protected function storefrontFunctionalityId(): int
     {
         $existing = DB::table('functionalities')->where('slug', 'storefront')->value('id');

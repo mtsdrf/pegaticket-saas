@@ -19,6 +19,7 @@ class TenantSettingsResource extends JsonResource
             'allow_store_pickup' => $this->allow_store_pickup,
             'storefront_enabled' => $this->storefront_enabled,
             'catalog_layout' => $this->catalog_layout ?? 'list',
+            'hold_duration_minutes' => $this->hold_duration_minutes,
         ];
     }
 }

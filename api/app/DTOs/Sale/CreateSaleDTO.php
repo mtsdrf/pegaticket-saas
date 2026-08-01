@@ -5,7 +5,10 @@ namespace App\DTOs\Sale;
 class CreateSaleDTO
 {
     /**
-     * @param array<int, array{product_uuid: string, quantity: float, unit_price?: float, notes?: string}> $items
+     * @param array<int, array{product_uuid: string, quantity: float, unit_price?: float, notes?: string, attendee_data?: array<int, array{name?: string, document?: string}>}> $items
+     *   attendee_data (spec 5.10 Etapa 2) é opcional e só considerado para
+     *   item de ticket_type — TicketIssuanceService consome 1 registro por
+     *   Ticket emitido, na ordem informada.
      *   unit_price é opcional — quando ausente, SaleService::create() usa
      *   o Product.price atual (comportamento padrão, nunca confia no
      *   request); quando presente, sobrescreve o preço praticado do item.

@@ -21,6 +21,7 @@ class TenantSettings extends BaseModel
         'allow_store_pickup',
         'storefront_enabled',
         'catalog_layout',
+        'hold_duration_minutes',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class TenantSettings extends BaseModel
         'service_fee_mandatory' => 'boolean',
         'allow_store_pickup' => 'boolean',
         'storefront_enabled' => 'boolean',
+        'hold_duration_minutes' => 'integer',
     ];
 
     protected $hidden = [

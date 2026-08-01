@@ -38,6 +38,7 @@ class TenantSettingsService
                 'allow_store_pickup' => $dto->allowStorePickup,
                 'storefront_enabled' => $dto->storefrontEnabled,
                 'catalog_layout' => $dto->catalogLayout,
+                'hold_duration_minutes' => $dto->holdDurationMinutes,
             ]);
 
             $changes = array_diff_assoc($settings->getAttributes(), $original);

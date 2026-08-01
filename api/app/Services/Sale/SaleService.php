@@ -343,6 +343,7 @@ class SaleService
                     'unit_price' => $this->centsToDecimal($line['unit_price_cents']),
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
+                    'attendee_data' => $line['attendee_data'],
                 ]);
             }
 
@@ -1274,7 +1275,8 @@ class SaleService
      *   quantity: float,
      *   unit_price_cents: int,
      *   line_total_cents: int,
-     *   notes: ?string
+     *   notes: ?string,
+     *   attendee_data: ?array
      * }
      */
     private function resolveOrderItemLine(
@@ -1310,6 +1312,10 @@ class SaleService
             'unit_price_cents' => $unitPriceCents,
             'line_total_cents' => $lineTotalCents,
             'notes' => isset($item['notes']) && trim((string) $item['notes']) !== '' ? trim((string) $item['notes']) : null,
+            // Participantes do checkout (spec 5.10) — só faz sentido para
+            // item de TicketType, consumido por TicketIssuanceService na
+            // emissão. array vazio normalizado para null.
+            'attendee_data' => $isTicketType && !empty($item['attendee_data']) ? array_values($item['attendee_data']) : null,
         ];
     }
 

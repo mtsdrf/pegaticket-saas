@@ -7,7 +7,6 @@ use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\CouponUsageLimitReachedException;
 use App\Exceptions\InvalidCouponException;
 use App\Exceptions\StorefrontDisabledException;
-use App\Exceptions\StorePickupUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\StorefrontCheckoutRequest;
 use App\Services\APIResponse;
@@ -34,8 +33,6 @@ class StorefrontCheckoutController extends Controller
             return APIResponse::error($e->getMessage(), 422, 'INVALID_COUPON');
         } catch (CouponUsageLimitReachedException $e) {
             return APIResponse::error($e->getMessage(), 422, 'COUPON_USAGE_LIMIT_REACHED');
-        } catch (StorePickupUnavailableException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'STORE_PICKUP_UNAVAILABLE');
         }
 
         return APIResponse::success(

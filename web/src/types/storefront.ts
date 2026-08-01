@@ -162,6 +162,17 @@ export interface StorefrontCartItem {
   notes?: string | null
 }
 
+/**
+ * Participante opcional de um item de `ticket_type_uuid` (spec 5.10 Etapa 2)
+ * — quando ausente/omitido, o Ticket emitido fica com attendee_name/document
+ * nulos (comprador é o participante implícito). Não se aplica a
+ * `event_product_uuid` (adicional/estacionamento não tem participante).
+ */
+export interface StorefrontCheckoutParticipantPayload {
+  name?: string
+  document?: string
+}
+
 /** Exatamente um de `ticket_type_uuid`/`event_product_uuid` por item — mesma regra do backend. */
 export interface StorefrontCheckoutItemPayload {
   ticket_type_uuid?: string
@@ -169,6 +180,8 @@ export interface StorefrontCheckoutItemPayload {
   quantity: number
   /** Observação por item, até 200 caracteres, distinta do `notes` geral do pedido. */
   notes?: string
+  /** Só enviado para itens de `ticket_type_uuid` com ao menos um participante preenchido. */
+  participants?: StorefrontCheckoutParticipantPayload[]
 }
 
 export interface StorefrontCheckoutPayload {

@@ -45,12 +45,25 @@ class TicketIssuanceService
                     continue;
                 }
 
+                // Participantes informados no checkout (spec 5.10 Etapa 2),
+                // consumidos na ordem informada — a partir do índice de
+                // tickets já existentes (idempotente em reprocessamento).
+                // SIMPLIFICAÇÃO DOCUMENTADA: quando ausentes/insuficientes,
+                // o Ticket é emitido com attendee_name/attendee_document
+                // nulos (equivalente a "participante = comprador",
+                // preenchimento posterior fora de escopo desta rodada).
+                $attendees = $item->attendee_data ?? [];
+
                 for ($i = 0; $i < $needed; $i++) {
+                    $attendee = $attendees[$existing + $i] ?? null;
+
                     $ticket = Ticket::create([
                         'tenant_id' => $order->tenant_id,
                         'order_item_id' => $item->id,
                         'ticket_type_id' => $item->ticket_type_id,
                         'seat_id' => $item->seat_id,
+                        'attendee_name' => $attendee['name'] ?? null,
+                        'attendee_document' => $attendee['document'] ?? null,
                         'status' => 'ativo',
                         'issued_at' => now(),
                     ]);

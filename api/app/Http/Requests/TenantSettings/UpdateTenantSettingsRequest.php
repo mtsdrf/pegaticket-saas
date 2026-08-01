@@ -23,6 +23,7 @@ class UpdateTenantSettingsRequest extends FormRequest
             'allow_store_pickup' => ['nullable', 'boolean'],
             'storefront_enabled' => ['nullable', 'boolean'],
             'catalog_layout' => ['nullable', 'string', 'in:grid,list'],
+            'hold_duration_minutes' => ['nullable', 'integer', 'min:1', 'max:120'],
         ];
     }
 }

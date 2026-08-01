@@ -6,7 +6,6 @@ use App\DTOs\Sale\CreateSaleDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\StorefrontDisabledException;
-use App\Exceptions\StorePickupUnavailableException;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Sale\Sale;
@@ -73,14 +72,13 @@ class StorefrontCheckoutService
             // Guards (roadmap Delivery, Fase 2), sempre ANTES de
             // resolver/criar Client+Endereco+Link e montar o CreateSaleDTO
             // — nenhum efeito colateral acontece se qualquer um bloquear.
-
-            // Guard 1B: retirada na loja (roadmap Delivery) — tenant precisa
-            // ter habilitado explicitamente tenant_settings.allow_store_pickup
-            // (default false, mesmo espírito de nunca frete grátis/pickup
-            // implícito por omissão do guard 3 de entrega).
-            if (!$settings->allow_store_pickup) {
-                throw new StorePickupUnavailableException(__('messages.storefront.store_pickup_not_enabled'));
-            }
+            //
+            // Guard 1B (retirada na loja física / tenant_settings.allow_store_pickup)
+            // REMOVIDO em 2026-08-01 (roadmap PegaTicket, MVP compra de
+            // ingresso) — resquício de checkout de loja física sem
+            // equivalente no domínio de ingresso (não existe "retirada" de
+            // Ticket digital). Coluna allow_store_pickup mantida na tabela
+            // por ora (limpeza de schema fora do escopo desta rodada).
 
             // Calculado incondicionalmente (não só quando há mínimo
             // configurado) — Guard 4 (cupom) também precisa deste mesmo
@@ -312,6 +310,10 @@ class StorefrontCheckoutService
                 'quantity' => $item['quantity'],
                 'unit_price' => $this->resolveEffectiveUnitPrice($sellable, (float) $item['quantity']),
                 'notes' => isset($item['notes']) && trim((string) $item['notes']) !== '' ? trim((string) $item['notes']) : null,
+                // Participantes (spec 5.10 Etapa 2) — repassados como estão,
+                // SaleService::resolveOrderItemLine() já normaliza/descarta
+                // pra item de event_product.
+                'attendee_data' => $item['participants'] ?? null,
             ];
         }, $items);
     }
