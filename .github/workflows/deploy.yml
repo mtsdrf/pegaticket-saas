@@ -102,6 +102,19 @@ jobs:
           VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
         run: npm run build
 
+      # O smoke público pós-deploy depende do fallback de SPA do Apache:
+      # rota inexistente precisa cair em index.html para o React Router então
+      # redirecionar ao /login. Se o .htaccess sumir do artefato/publicação,
+      # o subdomínio responde 404/landing do servidor e o teste fica parado
+      # na própria URL inexistente (falha observada em 2026-08-01).
+      - name: Garantir fallback SPA no artefato (web/)
+        working-directory: web
+        run: |
+          test -f public/.htaccess
+          test -f dist/index.html
+          cp public/.htaccess dist/.htaccess
+          test -f dist/.htaccess
+
       - name: Instalar Chromium do Playwright (web/)
         working-directory: web
         run: npx playwright install chromium
@@ -216,6 +229,29 @@ jobs:
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
             web/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/"
+
+      # Shared hosting costuma tratar dotfile de forma menos previsível em
+      # alguns painéis/sincronizações. Reforçamos o .htaccess explicitamente
+      # para não depender só do rsync recursivo do diretório.
+      - name: Reforçar .htaccess do web publicado
+        run: |
+          scp -P "${{ secrets.DEPLOY_SSH_PORT }}" \
+            -o StrictHostKeyChecking=accept-new \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            web/public/.htaccess \
+            "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
+
+      - name: Validar fallback SPA remoto (web/)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            test -f "${{ secrets.DEPLOY_WEB_PATH }}/index.html"
+            test -f "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
+            grep -q "RewriteRule \\^ index\\.html \\[L\\]" "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
 
       # .env.example nunca tem valor real de segredo (só nome de chave +
       # placeholder vazio/default público, disciplina já seguida no
