@@ -1,3 +1,6 @@
+Options -MultiViews
+DirectoryIndex index.html
+
 <IfModule mod_headers.c>
     # Bundle JS/CSS/fontes do Vite (nome com hash de conteúdo, ex: index-BQXDW7TA.js)
     # podem cachear por muito tempo: a URL muda sozinha a cada build novo, nunca
@@ -24,6 +27,8 @@
     </FilesMatch>
 </IfModule>
 
+ErrorDocument 404 /index.html
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
@@ -33,5 +38,5 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    RewriteRule ^ index.html [L]
+    RewriteRule . /index.html [L]
 </IfModule>

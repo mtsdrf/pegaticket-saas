@@ -251,7 +251,8 @@ jobs:
           script: |
             test -f "${{ secrets.DEPLOY_WEB_PATH }}/index.html"
             test -f "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
-            grep -q "RewriteRule \\^ index\\.html \\[L\\]" "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
+            grep -q "ErrorDocument 404 /index\\.html" "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
+            grep -q "RewriteRule \\. /index\\.html \\[L\\]" "${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
 
       # .env.example nunca tem valor real de segredo (só nome de chave +
       # placeholder vazio/default público, disciplina já seguida no
