@@ -19,6 +19,9 @@ jobs:
     # que a Hostinger já aceita (a mesma de onde o SSH manual já funciona).
     # Setup do runner: ver docs/self-hosted-runner-setup.md.
     runs-on: self-hosted
+    env:
+      SMOKE_LOGIN_EMAIL: ${{ secrets.SMOKE_LOGIN_EMAIL }}
+      SMOKE_LOGIN_PASSWORD: ${{ secrets.SMOKE_LOGIN_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -359,7 +362,7 @@ jobs:
         run: npm run test:e2e:smoke -- --grep "carrega a tela de login"
 
       - name: Smoke autenticado pós-deploy (web/)
-        if: ${{ secrets.SMOKE_LOGIN_EMAIL != '' && secrets.SMOKE_LOGIN_PASSWORD != '' }}
+        if: ${{ env.SMOKE_LOGIN_EMAIL != '' && env.SMOKE_LOGIN_PASSWORD != '' }}
         working-directory: web
         env:
           CI: '1'
