@@ -1962,3 +1962,5 @@
 #66 {main}
 "} 
 [2026-08-01 16:53:33] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-01 17:04:14] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-01 17:04:18] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 

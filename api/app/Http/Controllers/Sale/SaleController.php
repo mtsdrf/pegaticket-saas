@@ -41,10 +41,10 @@ class SaleController extends Controller
      * tenant). Reaproveita perm:sales,update. Rejeita cobrança duplicada
      * ativa, pedido já pago ou cancelado (INVALID_ORDER_STATE / 422).
      */
-    public function paymentCharge(Sale $order)
+    public function paymentCharge(Sale $sale)
     {
         try {
-            $payment = $this->paymentService->createPixChargeForOrder($order);
+            $payment = $this->paymentService->createPixChargeForOrder($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
@@ -102,13 +102,13 @@ class SaleController extends Controller
         );
     }
 
-    public function show(Sale $order)
+    public function show(Sale $sale)
     {
-        $order = $this->service->find($order);
-        $order->load(self::EAGER_RELATIONS);
+        $sale = $this->service->find($sale);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.show')
         );
     }
@@ -118,54 +118,54 @@ class SaleController extends Controller
         $dto = CreateSaleDTO::fromArray($request->validated(), app('tenant_id'));
 
         try {
-            $order = $this->service->create($dto);
+            $sale = $this->service->create($dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (DiscountLimitExceededException $e) {
             return APIResponse::error($e->getMessage(), 422, 'DISCOUNT_LIMIT_EXCEEDED');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.created'),
             201
         );
     }
 
-    public function updateItems(UpdateSaleItemsRequest $request, Sale $order)
+    public function updateItems(UpdateSaleItemsRequest $request, Sale $sale)
     {
         $dto = UpdateSaleItemsDTO::fromArray($request->validated());
 
         try {
-            $order = $this->service->updateItems($order, $dto);
+            $sale = $this->service->updateItems($sale, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (DiscountLimitExceededException $e) {
             return APIResponse::error($e->getMessage(), 422, 'DISCOUNT_LIMIT_EXCEEDED');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.items_updated')
         );
     }
 
-    public function deliver(Sale $order)
+    public function deliver(Sale $sale)
     {
         try {
-            $order = $this->service->deliver($order);
+            $sale = $this->service->deliver($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.delivered')
         );
     }
@@ -174,18 +174,18 @@ class SaleController extends Controller
      * "Saiu para entrega" — só usado pelas rotas /storefront-sales/*
      * (tela dedicada de gestão de vendas online).
      */
-    public function dispatch(Sale $order)
+    public function dispatch(Sale $sale)
     {
         try {
-            $order = $this->service->dispatch($order);
+            $sale = $this->service->dispatch($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.dispatched')
         );
     }
@@ -194,18 +194,18 @@ class SaleController extends Controller
      * Desfaz "saiu para entrega" — só usado pelas rotas
      * /storefront-sales/* (tela dedicada de gestão de vendas online).
      */
-    public function undispatch(Sale $order)
+    public function undispatch(Sale $sale)
     {
         try {
-            $order = $this->service->undispatch($order);
+            $sale = $this->service->undispatch($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.undispatched')
         );
     }
@@ -257,118 +257,118 @@ class SaleController extends Controller
         );
     }
 
-    public function undeliver(Sale $order)
+    public function undeliver(Sale $sale)
     {
         try {
-            $order = $this->service->undeliver($order);
+            $sale = $this->service->undeliver($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.undelivered')
         );
     }
 
-    public function pay(PaySaleRequest $request, Sale $order)
+    public function pay(PaySaleRequest $request, Sale $sale)
     {
         $amount = $request->filled('amount') ? (float) $request->input('amount') : null;
 
         try {
-            $order = $this->service->pay($order, $request->input('paid_at'), $amount);
+            $sale = $this->service->pay($sale, $request->input('paid_at'), $amount);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
-            $order->is_paid ? __('messages.order.paid') : __('messages.order.partially_paid')
+            new SaleResource($sale),
+            $sale->is_paid ? __('messages.order.paid') : __('messages.order.partially_paid')
         );
     }
 
-    public function unpay(Sale $order)
+    public function unpay(Sale $sale)
     {
         try {
-            $order = $this->service->unpay($order);
+            $sale = $this->service->unpay($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.unpaid')
         );
     }
 
-    public function payInstallment(PayInstallmentRequest $request, Sale $order, SaleInstallment $installment)
+    public function payInstallment(PayInstallmentRequest $request, Sale $sale, SaleInstallment $installment)
     {
         try {
-            $order = $this->service->payInstallment($order, $installment, $request->input('paid_at'));
+            $sale = $this->service->payInstallment($sale, $installment, $request->input('paid_at'));
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.installment_paid')
         );
     }
 
-    public function unpayInstallment(Sale $order, SaleInstallment $installment)
+    public function unpayInstallment(Sale $sale, SaleInstallment $installment)
     {
         try {
-            $order = $this->service->unpayInstallment($order, $installment);
+            $sale = $this->service->unpayInstallment($sale, $installment);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.installment_unpaid')
         );
     }
 
-    public function cancel(CancelSaleRequest $request, Sale $order)
+    public function cancel(CancelSaleRequest $request, Sale $sale)
     {
         $dto = CancelSaleDTO::fromArray($request->validated());
 
         try {
-            $order = $this->service->cancel($order, $dto);
+            $sale = $this->service->cancel($sale, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.cancelled')
         );
     }
 
-    public function approve(Sale $order)
+    public function approve(Sale $sale)
     {
         try {
-            $order = $this->service->approve($order);
+            $sale = $this->service->approve($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.approved')
         );
     }
@@ -380,11 +380,11 @@ class SaleController extends Controller
      * Devolve o token cru (o único momento em que ele existe em claro pro
      * frontend montar a URL do QR).
      */
-    public function prepLink(Sale $order)
+    public function prepLink(Sale $sale)
     {
-        $order = $this->service->find($order);
+        $sale = $this->service->find($sale);
 
-        $prepLink = $this->service->generatePrepLink($order);
+        $prepLink = $this->service->generatePrepLink($sale);
 
         return APIResponse::success(
             [
@@ -396,50 +396,50 @@ class SaleController extends Controller
         );
     }
 
-    public function reject(RejectSaleRequest $request, Sale $order)
+    public function reject(RejectSaleRequest $request, Sale $sale)
     {
         try {
-            $order = $this->service->reject($order, $request->input('reason'));
+            $sale = $this->service->reject($sale, $request->input('reason'));
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.rejected')
         );
     }
 
-    public function approveCancellation(Sale $order)
+    public function approveCancellation(Sale $sale)
     {
         try {
-            $order = $this->service->approveCancellationRequest($order);
+            $sale = $this->service->approveCancellationRequest($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.cancellation_approved')
         );
     }
 
-    public function rejectCancellation(Sale $order)
+    public function rejectCancellation(Sale $sale)
     {
         try {
-            $order = $this->service->rejectCancellationRequest($order);
+            $sale = $this->service->rejectCancellationRequest($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
-        $order->load(self::EAGER_RELATIONS);
+        $sale->load(self::EAGER_RELATIONS);
 
         return APIResponse::success(
-            new SaleResource($order),
+            new SaleResource($sale),
             __('messages.order.cancellation_rejected')
         );
     }
