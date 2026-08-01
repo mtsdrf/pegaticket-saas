@@ -23,7 +23,6 @@ class StorefrontHoldService
 
     public function __construct(
         private StorefrontCatalogService $catalogService,
-        private ProductPromotionService $productPromotionService,
         private TenantSettingsService $tenantSettingsService,
     ) {
     }
@@ -658,14 +657,6 @@ class StorefrontHoldService
 
     private function resolveEffectiveUnitPrice(TicketType|EventProduct $sellable): float
     {
-        if ($sellable instanceof TicketType) {
-            $promoPrice = $this->productPromotionService->findActivePromoPrice($sellable);
-
-            if ($promoPrice !== null) {
-                return $promoPrice;
-            }
-        }
-
         return (float) $sellable->price;
     }
 }

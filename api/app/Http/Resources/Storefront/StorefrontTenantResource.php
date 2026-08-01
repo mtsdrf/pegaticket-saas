@@ -24,7 +24,6 @@ class StorefrontTenantResource extends JsonResource
         private ?float $averageRating = null,
         private int $ratingsCount = 0,
         private ?array $acceptedPaymentMethods = null,
-        private bool $allowStorePickup = false,
         private bool $storefrontEnabled = true,
         private string $catalogLayout = 'list',
     ) {
@@ -59,7 +58,6 @@ class StorefrontTenantResource extends JsonResource
             'address_lat' => null,
             'address_lng' => null,
             'accepted_payment_methods' => $this->acceptedPaymentMethods ?? [],
-            'allow_store_pickup' => $this->allowStorePickup,
             'storefront_enabled' => $this->storefrontEnabled,
             'catalog_layout' => $this->catalogLayout,
         ];

@@ -14,8 +14,6 @@ export interface TenantSettings {
   payment_receiving_method: 'manual' | 'pix_key'
   /** Chave Pix da própria empresa, quando ela escolhe receber por Pix direto. */
   payment_pix_key: string | null
-  /** Retirada presencial — desligada por padrão; checkout só aceita `fulfillment_type: 'pickup'` quando ligado. */
-  allow_store_pickup: boolean
   /** Quando desligado, a página pública da empresa continua exibindo contato/reservas, mas o catálogo e o checkout deixam de ficar disponíveis. */
   storefront_enabled: boolean
   /** Layout do catálogo público — `list` (padrão) ou `grid` (cards com foto grande). */
@@ -29,7 +27,6 @@ export interface UpdateTenantSettingsPayload {
   accepted_payment_methods: PaymentMethod[]
   payment_receiving_method: 'manual' | 'pix_key'
   payment_pix_key: string | null
-  allow_store_pickup: boolean
   storefront_enabled: boolean
   catalog_layout: StorefrontCatalogLayout
 }

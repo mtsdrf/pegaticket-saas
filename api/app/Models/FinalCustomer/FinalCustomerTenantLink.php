@@ -24,8 +24,6 @@ class FinalCustomerTenantLink extends Model
         'final_customer_id',
         'tenant_id',
         'cpf_cnpj',
-        'ie',
-        'ie_indicator',
         'phone_primary',
         'phone_secondary',
         'notes',

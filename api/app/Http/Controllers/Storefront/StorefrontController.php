@@ -48,7 +48,6 @@ class StorefrontController extends Controller
                 $ratingSummary['average_rating'],
                 $ratingSummary['ratings_count'],
                 $settings->accepted_payment_methods ?? [],
-                (bool) $settings->allow_store_pickup,
                 (bool) $settings->storefront_enabled,
                 $settings->catalog_layout ?? 'list',
             ),

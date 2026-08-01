@@ -32,13 +32,6 @@ class TicketType extends BaseModel
         'barcode',
         'brand',
         'unit',
-        'is_lot_controlled',
-        'is_expiry_controlled',
-        'is_serial_controlled',
-        'min_stock',
-        'max_stock',
-        'reorder_point',
-        'reorder_qty',
         'last_purchase_cost',
     ];
 
@@ -50,13 +43,6 @@ class TicketType extends BaseModel
         'max_per_order' => 'integer',
         'sales_start_at' => 'datetime',
         'sales_end_at' => 'datetime',
-        'is_lot_controlled' => 'boolean',
-        'is_expiry_controlled' => 'boolean',
-        'is_serial_controlled' => 'boolean',
-        'min_stock' => 'decimal:3',
-        'max_stock' => 'decimal:3',
-        'reorder_point' => 'decimal:3',
-        'reorder_qty' => 'decimal:3',
         'last_purchase_cost' => 'decimal:2',
     ];
 

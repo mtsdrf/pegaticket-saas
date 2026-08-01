@@ -18,7 +18,6 @@ class TenantSettings extends BaseModel
         'payment_pix_key',
         'service_fee_percent',
         'service_fee_mandatory',
-        'allow_store_pickup',
         'storefront_enabled',
         'catalog_layout',
         'hold_duration_minutes',
@@ -34,7 +33,6 @@ class TenantSettings extends BaseModel
         'payment_pix_key' => 'encrypted',
         'service_fee_percent' => 'float',
         'service_fee_mandatory' => 'boolean',
-        'allow_store_pickup' => 'boolean',
         'storefront_enabled' => 'boolean',
         'hold_duration_minutes' => 'integer',
     ];

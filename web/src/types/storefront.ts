@@ -24,8 +24,6 @@ export interface StorefrontTenant {
   address_lng: number | null
   /** Formas de pagamento aceitas no checkout (`tenant_settings.accepted_payment_methods`). */
   accepted_payment_methods: PaymentMethod[]
-  /** Retirada presencial — `true` só quando o tenant habilitou `allow_store_pickup`; a UI de checkout só oferece a opção de retirada quando este campo vem `true`. */
-  allow_store_pickup: boolean
   storefront_enabled: boolean
   /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos usa sempre 1 cartão por evento, sem alternância grid/lista. */
   catalog_layout: StorefrontCatalogLayout
@@ -354,9 +352,6 @@ export interface StorefrontCreateHoldPayload {
 /** Delivery Fase 2 — códigos de erro do checkout (`StorefrontCheckoutController`). */
 export const BELOW_MINIMUM_ORDER_CODE = 'BELOW_MINIMUM_ORDER'
 export const DELIVERY_AREA_NOT_SERVED_CODE = 'DELIVERY_AREA_NOT_SERVED'
-
-/** Roadmap retirada na loja — cliente pediu `fulfillment_type: 'pickup'` mas o tenant não habilitou ou não tem endereço de loja cadastrado. */
-export const STORE_PICKUP_UNAVAILABLE_CODE = 'STORE_PICKUP_UNAVAILABLE'
 
 /** Delivery Fase 3 — códigos de erro de cupom, retornados tanto pela prévia (`POST /loja/{slug}/cupons/validar`) quanto pelo submit final do checkout. */
 export const INVALID_COUPON_CODE = 'INVALID_COUPON'

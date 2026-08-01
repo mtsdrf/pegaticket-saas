@@ -64,7 +64,6 @@ use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontHoldController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
 use App\Http\Controllers\Storefront\CouponController;
-use App\Http\Controllers\Storefront\ProductPromotionController;
 use App\Http\Controllers\Support\HelpRequestController;
 use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
 use App\Http\Controllers\Venue\SeatController;
@@ -615,20 +614,6 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{uuid}', [CouponController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,coupons-delete']);
-        });
-
-        // Preço promocional "de/por" por tipo de ingresso — upsert 1 por
-        // ticket type, mesmo shape de store-delivery-fees. Ver
-        // App\Services\Storefront\ProductPromotionService.
-        Route::prefix('product-promotions')->group(function () {
-            Route::get('/', [ProductPromotionController::class, 'index'])
-                ->middleware(['tenant', 'perm:storefront,read', 'throttle:100,1,product-promotions-list']);
-
-            Route::post('/', [ProductPromotionController::class, 'store'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:30,1,product-promotions-create']);
-
-            Route::delete('/{uuid}', [ProductPromotionController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:storefront,update', 'throttle:10,1,product-promotions-delete']);
         });
 
         Route::prefix('events')->group(function () {

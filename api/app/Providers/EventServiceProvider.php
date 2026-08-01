@@ -238,19 +238,15 @@ use App\Listeners\Tenant\AuditTenantFeatureOverridesSynced;
 
 /*
 |--------------------------------------------------------------------------
-| Storefront (Delivery Fase 3) — cupons / promoções de produto
+| Storefront (Delivery Fase 3) — cupons
 |--------------------------------------------------------------------------
 */
 use App\Events\Storefront\CouponCreated;
 use App\Events\Storefront\CouponUpdated;
 use App\Events\Storefront\CouponDeleted;
-use App\Events\Storefront\ProductPromotionUpserted;
-use App\Events\Storefront\ProductPromotionDeleted;
 use App\Listeners\Storefront\AuditCouponCreated;
 use App\Listeners\Storefront\AuditCouponUpdated;
 use App\Listeners\Storefront\AuditCouponDeleted;
-use App\Listeners\Storefront\AuditProductPromotionUpserted;
-use App\Listeners\Storefront\AuditProductPromotionDeleted;
 
 /*
 |--------------------------------------------------------------------------
@@ -576,8 +572,6 @@ class EventServiceProvider extends ServiceProvider
         CouponCreated::class => [AuditCouponCreated::class],
         CouponUpdated::class => [AuditCouponUpdated::class],
         CouponDeleted::class => [AuditCouponDeleted::class],
-        ProductPromotionUpserted::class => [AuditProductPromotionUpserted::class],
-        ProductPromotionDeleted::class => [AuditProductPromotionDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

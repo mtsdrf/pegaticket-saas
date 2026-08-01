@@ -41,7 +41,6 @@ class StorefrontCheckoutService
         private TenantSettingsService $tenantSettingsService,
         private SaleService $orderService,
         private PermissionService $permissionService,
-        private ProductPromotionService $productPromotionService,
         private CouponService $couponService,
         private StorefrontHoldService $holdService,
         private TenantExecutionContext $tenantExecutionContext,
@@ -77,8 +76,8 @@ class StorefrontCheckoutService
             // REMOVIDO em 2026-08-01 (roadmap PegaTicket, MVP compra de
             // ingresso) — resquício de checkout de loja física sem
             // equivalente no domínio de ingresso (não existe "retirada" de
-            // Ticket digital). Coluna allow_store_pickup mantida na tabela
-            // por ora (limpeza de schema fora do escopo desta rodada).
+            // Ticket digital). Coluna allow_store_pickup dropada em
+            // 2026-08-04 (migration drop_allow_store_pickup_from_tenant_settings_table).
 
             // Calculado incondicionalmente (não só quando há mínimo
             // configurado) — Guard 4 (cupom) também precisa deste mesmo
@@ -136,10 +135,9 @@ class StorefrontCheckoutService
 
             // unit_price explícito por item (prioridade máxima sobre a
             // resolução interna de SaleService::create(), já documentado no
-            // DTO desde a Fase 1) — garante que promoção/atacado resolvidos
-            // AQUI (resolveEffectiveUnitPrice()) sejam exatamente os
-            // praticados no pedido criado, sem depender de SaleService
-            // recalcular (ele nem sabe de ProductPromotion).
+            // DTO desde a Fase 1) — garante que o preço resolvido AQUI
+            // (resolveEffectiveUnitPrice()) seja exatamente o praticado no
+            // pedido criado, sem depender de SaleService recalcular.
             $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
 
             $orderDto = new CreateSaleDTO(
@@ -249,7 +247,7 @@ class StorefrontCheckoutService
 
     /**
      * Soma dos itens do carrinho em centavos, já usando o preço EFETIVO
-     * (resolveEffectiveUnitPrice() — promoção sempre vence, senão base).
+     * (resolveEffectiveUnitPrice() — preço base do item).
      * Mesmo cuidado de centavos/arredondamento de SaleService::create() —
      * evita erro de ponto flutuante na soma. SIMPLIFICAÇÃO DOCUMENTADA:
      * atacado por quantidade e adicionais (product_options) foram
@@ -319,23 +317,12 @@ class StorefrontCheckoutService
     }
 
     /**
-     * Preço efetivo de venda pro público:
-     * 1. Promoção ativa (ProductPromotionService::findActivePromoPrice())
-     *    SEMPRE vence, quando existir e o item for um TicketType — é o
-     *    preço de venda público que o tenant decidiu. EventProduct não tem
-     *    promoção (fora do MVP).
-     * 2. Senão, preço base do item.
+     * Preço efetivo de venda pro público — preço base do item. Promoção
+     * "de/por" (ProductPromotion) removida em 2026-08-04: resíduo do
+     * produto antigo "Maskats", sem consumidor no frontend PegaTicket.
      */
     public function resolveEffectiveUnitPrice(TicketType|EventProduct $sellable, float $quantity): float
     {
-        if ($sellable instanceof TicketType) {
-            $promoPrice = $this->productPromotionService->findActivePromoPrice($sellable);
-
-            if ($promoPrice !== null) {
-                return $promoPrice;
-            }
-        }
-
         return (float) $sellable->price;
     }
 

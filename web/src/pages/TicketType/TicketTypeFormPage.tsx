@@ -4,10 +4,8 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  FormControlLabel,
   InputAdornment,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material'
@@ -38,13 +36,6 @@ interface TicketTypeFormState {
   barcode: string
   brand: string
   unit: string
-  is_lot_controlled: boolean
-  is_expiry_controlled: boolean
-  is_serial_controlled: boolean
-  min_stock: string
-  max_stock: string
-  reorder_point: string
-  reorder_qty: string
   last_purchase_cost: string
 }
 
@@ -63,13 +54,6 @@ const EMPTY_FORM: TicketTypeFormState = {
   barcode: '',
   brand: '',
   unit: '',
-  is_lot_controlled: false,
-  is_expiry_controlled: false,
-  is_serial_controlled: false,
-  min_stock: '',
-  max_stock: '',
-  reorder_point: '',
-  reorder_qty: '',
   last_purchase_cost: '',
 }
 
@@ -125,16 +109,6 @@ export function TicketTypeFormPage() {
             barcode: record.barcode ?? '',
             brand: record.brand ?? '',
             unit: record.unit ?? '',
-            is_lot_controlled: record.is_lot_controlled,
-            is_expiry_controlled: record.is_expiry_controlled,
-            is_serial_controlled: record.is_serial_controlled,
-            // decimal:3 no backend chega como string com 3 casas fixas
-            // (ex. "5.000") — Number()+String() normaliza pro campo editável
-            // sem o ".000" que confundia.
-            min_stock: record.min_stock === null ? '' : String(Number(record.min_stock)),
-            max_stock: record.max_stock === null ? '' : String(Number(record.max_stock)),
-            reorder_point: record.reorder_point === null ? '' : String(Number(record.reorder_point)),
-            reorder_qty: record.reorder_qty === null ? '' : String(Number(record.reorder_qty)),
             last_purchase_cost: record.last_purchase_cost == null ? '' : String(record.last_purchase_cost),
           })
           setExistingImageUrl(record.image_url)
@@ -169,13 +143,6 @@ export function TicketTypeFormPage() {
       barcode: form.barcode.trim() || undefined,
       brand: form.brand.trim() || undefined,
       unit: form.unit.trim() || undefined,
-      is_lot_controlled: form.is_lot_controlled,
-      is_expiry_controlled: form.is_expiry_controlled,
-      is_serial_controlled: form.is_serial_controlled,
-      min_stock: toOptionalNumber(form.min_stock),
-      max_stock: toOptionalNumber(form.max_stock),
-      reorder_point: toOptionalNumber(form.reorder_point),
-      reorder_qty: toOptionalNumber(form.reorder_qty),
       last_purchase_cost: toOptionalNumber(form.last_purchase_cost),
     }
 
@@ -367,75 +334,6 @@ export function TicketTypeFormPage() {
               sx={{ maxWidth: { sm: 240 } }}
               slotProps={{ htmlInput: { maxLength: 50 } }}
             />
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.is_lot_controlled}
-                    onChange={(event) => updateField('is_lot_controlled', event.target.checked)}
-                  />
-                }
-                label="Controla lote"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.is_expiry_controlled}
-                    onChange={(event) => updateField('is_expiry_controlled', event.target.checked)}
-                  />
-                }
-                label="Controla validade"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.is_serial_controlled}
-                    onChange={(event) => updateField('is_serial_controlled', event.target.checked)}
-                  />
-                }
-                label="Controla série"
-              />
-            </Stack>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 2 }}>
-              <TextField
-                label="Disponibilidade mínima"
-                type="number"
-                value={form.min_stock}
-                onChange={(event) => updateField('min_stock', event.target.value)}
-                error={Boolean(fieldErrors.min_stock)}
-                helperText={fieldErrors.min_stock?.[0]}
-                slotProps={{ htmlInput: { min: 0, step: '0.001' } }}
-              />
-              <TextField
-                label="Disponibilidade máxima"
-                type="number"
-                value={form.max_stock}
-                onChange={(event) => updateField('max_stock', event.target.value)}
-                error={Boolean(fieldErrors.max_stock)}
-                helperText={fieldErrors.max_stock?.[0]}
-                slotProps={{ htmlInput: { min: 0, step: '0.001' } }}
-              />
-              <TextField
-                label="Ponto de reposição"
-                type="number"
-                value={form.reorder_point}
-                onChange={(event) => updateField('reorder_point', event.target.value)}
-                error={Boolean(fieldErrors.reorder_point)}
-                helperText={fieldErrors.reorder_point?.[0]}
-                slotProps={{ htmlInput: { min: 0, step: '0.001' } }}
-              />
-              <TextField
-                label="Qtd. de reposição"
-                type="number"
-                value={form.reorder_qty}
-                onChange={(event) => updateField('reorder_qty', event.target.value)}
-                error={Boolean(fieldErrors.reorder_qty)}
-                helperText={fieldErrors.reorder_qty?.[0]}
-                slotProps={{ htmlInput: { min: 0, step: '0.001' } }}
-              />
-            </Box>
 
             <TextField
               label="Último custo de compra"

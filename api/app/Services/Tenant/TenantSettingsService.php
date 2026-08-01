@@ -35,7 +35,6 @@ class TenantSettingsService
                 'accepted_payment_methods' => $dto->acceptedPaymentMethods,
                 'payment_receiving_method' => $dto->paymentReceivingMethod,
                 'payment_pix_key' => $dto->paymentPixKey,
-                'allow_store_pickup' => $dto->allowStorePickup,
                 'storefront_enabled' => $dto->storefrontEnabled,
                 'catalog_layout' => $dto->catalogLayout,
                 'hold_duration_minutes' => $dto->holdDurationMinutes,

@@ -33,13 +33,6 @@ class TicketTypeResource extends JsonResource
             'barcode' => $this->barcode,
             'brand' => $this->brand,
             'unit' => $this->unit,
-            'is_lot_controlled' => $this->is_lot_controlled,
-            'is_expiry_controlled' => $this->is_expiry_controlled,
-            'is_serial_controlled' => $this->is_serial_controlled,
-            'min_stock' => $this->min_stock !== null ? (float) $this->min_stock : null,
-            'max_stock' => $this->max_stock !== null ? (float) $this->max_stock : null,
-            'reorder_point' => $this->reorder_point !== null ? (float) $this->reorder_point : null,
-            'reorder_qty' => $this->reorder_qty !== null ? (float) $this->reorder_qty : null,
             'event' => $this->whenLoaded('event', fn() => [
                 'uuid' => $this->event->uuid,
                 'name' => $this->event->name,

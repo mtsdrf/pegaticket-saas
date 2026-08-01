@@ -44,7 +44,6 @@ export function PaymentBlock() {
         send_tracking_link_whatsapp: settings.send_tracking_link_whatsapp,
         minimum_order_value: settings.minimum_order_value,
         estimated_preparation_minutes: settings.estimated_preparation_minutes,
-        allow_store_pickup: settings.allow_store_pickup,
         storefront_enabled: settings.storefront_enabled,
         catalog_layout: settings.catalog_layout,
         accepted_payment_methods: acceptedPaymentMethods,

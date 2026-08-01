@@ -20,7 +20,6 @@ class UpdateTenantSettingsRequest extends FormRequest
             'accepted_payment_methods.*' => ['string', 'in:cash,pix,credit_card,debit_card'],
             'payment_receiving_method' => ['nullable', 'string', 'in:manual,pix_key'],
             'payment_pix_key' => ['nullable', 'string', 'max:140'],
-            'allow_store_pickup' => ['nullable', 'boolean'],
             'storefront_enabled' => ['nullable', 'boolean'],
             'catalog_layout' => ['nullable', 'string', 'in:grid,list'],
             'hold_duration_minutes' => ['nullable', 'integer', 'min:1', 'max:120'],

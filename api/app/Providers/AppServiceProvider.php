@@ -35,7 +35,6 @@ use App\Repositories\Contracts\{
     FinalCustomerTenantLinkRepositoryInterface,
     TenantSettingsRepositoryInterface,
     CouponRepositoryInterface,
-    ProductPromotionRepositoryInterface,
     LegalDocumentRepositoryInterface,
     PrivacyRequestRepositoryInterface,
     SubscriptionRepositoryInterface,
@@ -78,7 +77,6 @@ use App\Repositories\Eloquent\{
     FinalCustomerTenantLinkRepository,
     TenantSettingsRepository,
     CouponRepository,
-    ProductPromotionRepository,
     LegalDocumentRepository,
     PrivacyRequestRepository,
     SubscriptionRepository,
@@ -350,12 +348,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             CouponRepositoryInterface::class,
             CouponRepository::class
-        );
-
-        // Product Promotion Repository (Delivery Fase 3)
-        $this->app->bind(
-            ProductPromotionRepositoryInterface::class,
-            ProductPromotionRepository::class
         );
 
         // Legal Document Repository (roadmap 1A — ToS/Privacidade)

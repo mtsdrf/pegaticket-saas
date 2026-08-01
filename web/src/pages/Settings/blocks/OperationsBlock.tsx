@@ -29,7 +29,6 @@ export function OperationsBlock() {
   const [sendTrackingLink, setSendTrackingLink] = useState(false)
   const [minimumOrderValue, setMinimumOrderValue] = useState('')
   const [estimatedPreparationMinutes, setEstimatedPreparationMinutes] = useState('')
-  const [allowStorePickup, setAllowStorePickup] = useState(false)
   const [storefrontEnabled, setStorefrontEnabled] = useState(true)
   const [catalogLayout, setCatalogLayout] = useState<StorefrontCatalogLayout>('list')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,7 +42,6 @@ export function OperationsBlock() {
     setEstimatedPreparationMinutes(
       settings.estimated_preparation_minutes !== null ? String(settings.estimated_preparation_minutes) : '',
     )
-    setAllowStorePickup(settings.allow_store_pickup)
     setStorefrontEnabled(settings.storefront_enabled)
     setCatalogLayout(settings.catalog_layout)
   }, [settings])
@@ -59,7 +57,6 @@ export function OperationsBlock() {
         send_tracking_link_whatsapp: sendTrackingLink,
         minimum_order_value: minimumOrderValue.trim() ? Number(minimumOrderValue) : null,
         estimated_preparation_minutes: estimatedPreparationMinutes.trim() ? Number(estimatedPreparationMinutes) : null,
-        allow_store_pickup: allowStorePickup,
         storefront_enabled: storefrontEnabled,
         catalog_layout: catalogLayout,
         accepted_payment_methods: settings.accepted_payment_methods,
@@ -152,20 +149,6 @@ export function OperationsBlock() {
           }}
         />
       </Stack>
-
-      <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Retirada presencial</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Permite que o comprador escolha retirada presencial em vez de entrega.
-      </Typography>
-      <FormControlLabel
-        control={<Switch checked={allowStorePickup} onChange={(event) => setAllowStorePickup(event.target.checked)} />}
-        label="Permitir retirada presencial"
-      />
-      {allowStorePickup && (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-          Garanta que o ponto de retirada esteja corretamente configurado para o comprador conseguir concluir essa opção.
-        </Typography>
-      )}
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Layout do catálogo</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>

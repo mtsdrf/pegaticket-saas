@@ -36,7 +36,6 @@ import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
   INVALID_COUPON_CODE,
-  STORE_PICKUP_UNAVAILABLE_CODE,
   type StorefrontCartItem,
   type StorefrontCheckoutPayload,
   type StorefrontCreateHoldPayload,
@@ -686,8 +685,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       } else if (
         error instanceof ApiRequestError &&
         (error.code === BELOW_MINIMUM_ORDER_CODE ||
-          error.code === COUPON_USAGE_LIMIT_REACHED_CODE ||
-          error.code === STORE_PICKUP_UNAVAILABLE_CODE)
+          error.code === COUPON_USAGE_LIMIT_REACHED_CODE)
       ) {
         // Mensagem já pronta pra exibir direto (traduzida no backend),
         // sem reformular.

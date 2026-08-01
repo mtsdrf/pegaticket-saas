@@ -20,7 +20,6 @@ class Invoice extends BaseModel
         'amount_net',
         'status',
         'dispute_deadline_at',
-        'fiscal_document_id',
     ];
 
     protected $casts = [

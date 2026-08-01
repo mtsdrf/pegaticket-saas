@@ -30,13 +30,6 @@ export interface TicketType {
   brand: string | null
   unit: string | null
   stock_quantity: number
-  is_lot_controlled: boolean
-  is_expiry_controlled: boolean
-  is_serial_controlled: boolean
-  min_stock: number | null
-  max_stock: number | null
-  reorder_point: number | null
-  reorder_qty: number | null
   event: TicketTypeEventRef | null
   created_at: string
   /** Só presente se o usuário tiver a permissão `stock.view_costs` — a chave some, não vem `null`. */
@@ -58,13 +51,6 @@ export interface TicketTypePayload {
   barcode?: string
   brand?: string
   unit?: string
-  is_lot_controlled?: boolean
-  is_expiry_controlled?: boolean
-  is_serial_controlled?: boolean
-  min_stock?: number | null
-  max_stock?: number | null
-  reorder_point?: number | null
-  reorder_qty?: number | null
   last_purchase_cost?: number | null
 }
 
