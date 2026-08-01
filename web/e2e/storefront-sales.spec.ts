@@ -361,9 +361,9 @@ test.describe('Vendas online', () => {
     await expect(page.getByRole('gridcell', { name: 'Cliente Rejeitar Cancelamento', exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: /Gerenciar pedido do cliente Cliente Aprovar Cancelamento/ }).click()
-    await expect(page.getByText('O cliente solicitou o cancelamento deste pedido: "Cliente desistiu da compra"')).toBeVisible()
+    await expect(page.getByText('O cliente solicitou o cancelamento desta venda: "Cliente desistiu da compra"')).toBeVisible()
     await page.getByRole('button', { name: 'Aprovar cancelamento' }).click()
-    await expect(page.getByText('Ao aprovar, o pedido é cancelado de verdade agora')).toBeVisible()
+    await expect(page.getByText('Ao aprovar, a venda é cancelada de verdade agora')).toBeVisible()
     const approveResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/sales/storefront-cancel-approve-1/approve-cancellation')
@@ -377,7 +377,7 @@ test.describe('Vendas online', () => {
     await expect(page.locator('div[draggable="true"]').filter({ hasText: '2201' })).toHaveCount(0)
 
     await page.getByRole('button', { name: /Gerenciar pedido do cliente Cliente Rejeitar Cancelamento/ }).click()
-    await expect(page.getByText('O cliente solicitou o cancelamento deste pedido: "Vai buscar mais tarde"')).toBeVisible()
+    await expect(page.getByText('O cliente solicitou o cancelamento desta venda: "Vai buscar mais tarde"')).toBeVisible()
     const rejectResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/sales/storefront-cancel-reject-1/reject-cancellation')
@@ -388,7 +388,7 @@ test.describe('Vendas online', () => {
     await rejectResponse
 
     await expect(page.getByText('Cancelamento solicitado', { exact: true })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Cancelar pedido' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Cancelar venda' })).toBeVisible()
     await page.mouse.click(10, 10)
     await expect(page.getByRole('dialog')).toHaveCount(0)
 

@@ -10,7 +10,7 @@ test.describe('Vendas manuais', () => {
     })
 
     await mockPaginatedApiRoute(page, {
-      path: '/orders',
+      path: '/sales',
       body: [],
       pagination: {
         current_page: 1,
@@ -22,11 +22,11 @@ test.describe('Vendas manuais', () => {
 
     await page.goto('/vendas-manuais')
 
-    await expect(page.getByRole('heading', { name: 'Pedidos manuais' })).toBeVisible()
-    await expect(page.getByText('Gerencie os pedidos lançados manualmente pela equipe.')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Novo pedido' })).toBeVisible()
-    await expect(page.getByText('Nenhum pedido manual encontrado')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Criar primeiro pedido' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Vendas manuais' })).toBeVisible()
+    await expect(page.getByText('Gerencie as vendas lançadas manualmente pela equipe.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Nova venda' })).toBeVisible()
+    await expect(page.getByText('Nenhuma venda manual encontrada')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Criar primeira venda' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Central de operação' })).toHaveCount(0)
     await expect(page.getByText('Ativos apenas')).toHaveCount(0)
     await expect(page.getByText('Aguardando aprovação')).toHaveCount(0)
@@ -40,7 +40,7 @@ test.describe('Vendas manuais', () => {
     })
 
     await mockPaginatedApiRoute(page, {
-      path: '/orders',
+      path: '/sales',
       body: [
         makeSale({
           uuid: 'order-qa-manual-1',
@@ -63,12 +63,12 @@ test.describe('Vendas manuais', () => {
 
     await page.goto('/vendas-manuais')
 
-    await expect(page.getByRole('heading', { name: 'Pedidos manuais' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Vendas manuais' })).toBeVisible()
     await expect(page.getByText('Maria da Silva')).toBeVisible()
     await expect(page.getByText('1042')).toBeVisible()
     await expect(page.getByText('Manual')).toBeVisible()
     await expect(page.getByText('Central de operação')).toHaveCount(0)
-    await expect(page.getByText('Nenhum pedido manual encontrado')).toHaveCount(0)
+    await expect(page.getByText('Nenhuma venda manual encontrada')).toHaveCount(0)
   })
 
   test('cria um novo pedido manual com cliente e produto e volta para a lista geral', async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('Vendas manuais', () => {
     })
 
     await mockPaginatedApiRoute(page, {
-      path: '/orders',
+      path: '/sales',
       body: [
         makeSale({
           uuid: 'order-manual-created-1',
@@ -196,7 +196,7 @@ test.describe('Vendas manuais', () => {
       },
     })
 
-    await page.route('**/api/v1/orders', async (route) => {
+    await page.route('**/api/v1/sales', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.fallback()
         return
@@ -239,7 +239,7 @@ test.describe('Vendas manuais', () => {
 
     await page.goto('/vendas/nova')
 
-    await expect(page.getByRole('heading', { name: 'Novo pedido' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Nova venda' })).toBeVisible()
 
     await page.getByRole('combobox', { name: 'Cliente' }).click()
     await page.getByRole('combobox', { name: 'Cliente' }).fill('Comprador Venda')
