@@ -127,7 +127,7 @@ Route::prefix('v1')->group(function () {
     // jwt/tenant/perm, protegido só pelo uuid do pedido ser imprevisível
     // (link enviado por WhatsApp na criação do pedido). Ver
     // App\Http\Controllers\Sale\SaleTrackingController.
-    Route::get('/rastreio/{sale:uuid}', [SaleTrackingController::class, 'show'])
+    Route::get('/rastreio/{order:uuid}', [SaleTrackingController::class, 'show'])
         ->middleware('throttle:60,1,sale-tracking-public');
 
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
@@ -918,11 +918,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/by-channel', [ReportController::class, 'byChannel'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-by-channel']);
 
-            // CMV real (roadmap A3.13) — custo médio ponderado a partir das
-            // entradas de estoque com unit_cost preenchido.
-            Route::get('/cmv', [ReportController::class, 'cmv'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-cmv']);
-
             Route::post('/sales/pdf', [ReportController::class, 'salesPdf'])
                 ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-sales-pdf']);
 
@@ -968,12 +963,6 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('/churn-clients', [AnalyticsController::class, 'churnClients'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-churn-clients']);
-
-                Route::get('/stalled-products', [AnalyticsController::class, 'stalledProducts'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-stalled-products']);
-
-                Route::get('/stock-ruptures', [AnalyticsController::class, 'stockRuptures'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-stock-ruptures']);
 
                 Route::get('/sales-by-hour', [AnalyticsController::class, 'salesByHour'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-by-hour']);

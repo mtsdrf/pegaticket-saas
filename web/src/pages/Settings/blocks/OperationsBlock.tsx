@@ -27,7 +27,6 @@ export function OperationsBlock() {
   const { settings, setSettings, isLoading, loadError, reload } = useTenantSettingsData()
 
   const [sendTrackingLink, setSendTrackingLink] = useState(false)
-  const [blockOrderWithoutStock, setBlockOrderWithoutStock] = useState(false)
   const [minimumOrderValue, setMinimumOrderValue] = useState('')
   const [estimatedPreparationMinutes, setEstimatedPreparationMinutes] = useState('')
   const [allowStorePickup, setAllowStorePickup] = useState(false)
@@ -40,7 +39,6 @@ export function OperationsBlock() {
   useEffect(() => {
     if (!settings) return
     setSendTrackingLink(settings.send_tracking_link_whatsapp)
-    setBlockOrderWithoutStock(settings.block_order_without_stock)
     setMinimumOrderValue(settings.minimum_order_value !== null ? String(settings.minimum_order_value) : '')
     setEstimatedPreparationMinutes(
       settings.estimated_preparation_minutes !== null ? String(settings.estimated_preparation_minutes) : '',
@@ -59,7 +57,6 @@ export function OperationsBlock() {
     try {
       const updated = await tenantSettingsService.updateTenantSettings({
         send_tracking_link_whatsapp: sendTrackingLink,
-        block_order_without_stock: blockOrderWithoutStock,
         minimum_order_value: minimumOrderValue.trim() ? Number(minimumOrderValue) : null,
         estimated_preparation_minutes: estimatedPreparationMinutes.trim() ? Number(estimatedPreparationMinutes) : null,
         allow_store_pickup: allowStorePickup,
@@ -127,17 +124,6 @@ export function OperationsBlock() {
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando ativado, as mensagens de WhatsApp incluem um link para o comprador acompanhar a evolução do pedido.
-      </Typography>
-
-      <FormControlLabel
-        control={
-          <Switch checked={blockOrderWithoutStock} onChange={(event) => setBlockOrderWithoutStock(event.target.checked)} />
-        }
-        label="Bloquear pedido quando não há disponibilidade suficiente"
-        sx={{ mt: 2.5 }}
-      />
-      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando ativado, um pedido não pode ser criado se algum item não tiver disponibilidade suficiente para reserva no servidor.
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>

@@ -6,7 +6,6 @@ use App\DTOs\Sale\CreateSaleDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\StorefrontDisabledException;
-use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
@@ -30,8 +29,8 @@ use Illuminate\Support\Facades\DB;
  * criar. O que este service resolve/cria é o FinalCustomerTenantLink (o
  * registro POR-TENANT do cliente já autenticado via OTP), sem
  * tocar em PortalLinkService::link() (caminho de vínculo por order_uuid
- * pré-existente, continua intocado). Toda a lógica de preço/estoque/
- * criação de pedido é 100% reaproveitada de SaleService::create() — este
+ * pré-existente, continua intocado). Toda a lógica de preço/criação de
+ * pedido é 100% reaproveitada de SaleService::create() — este
  * service só garante o link e monta o CreateSaleDTO com
  * origin='storefront'/status='pending_approval'.
  */
@@ -43,7 +42,6 @@ class StorefrontCheckoutService
         private TenantSettingsService $tenantSettingsService,
         private SaleService $orderService,
         private PermissionService $permissionService,
-        private StoreBusinessHoursService $businessHoursService,
         private ProductPromotionService $productPromotionService,
         private CouponService $couponService,
         private StorefrontHoldService $holdService,
@@ -72,14 +70,9 @@ class StorefrontCheckoutService
 
                 $hold = $dto->holdUuid ? $this->resolveCheckoutHold($tenant->id, $dto->holdUuid, $dto->sessionToken, $customer) : null;
 
-            // 3 guards novos (roadmap Delivery, Fase 2), sempre ANTES de
+            // Guards (roadmap Delivery, Fase 2), sempre ANTES de
             // resolver/criar Client+Endereco+Link e montar o CreateSaleDTO
             // — nenhum efeito colateral acontece se qualquer um bloquear.
-
-            // Guard 1: horário de funcionamento.
-            if (!$this->businessHoursService->isOpenNow($tenant->id)) {
-                throw new StoreClosedException(__('messages.storefront.store_closed'));
-            }
 
             // Guard 1B: retirada na loja (roadmap Delivery) — tenant precisa
             // ter habilitado explicitamente tenant_settings.allow_store_pickup
@@ -154,7 +147,6 @@ class StorefrontCheckoutService
             $orderDto = new CreateSaleDTO(
                 tenantId: $tenant->id,
                 finalCustomerUuid: $customer->uuid,
-                stockLocationUuid: null,
                 isInstallment: false,
                 installmentsCount: null,
                 notes: $dto->notes,
@@ -164,7 +156,6 @@ class StorefrontCheckoutService
                 items: $items,
                 origin: 'storefront',
                 status: 'pending_approval',
-                reserveStock: false,
                 deliveryFee: $deliveryFee,
                 couponId: $couponId,
                 discountAmount: $discountAmountCents / 100,

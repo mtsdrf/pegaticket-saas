@@ -689,7 +689,7 @@ export function StorefrontSaleManagementPage() {
       </CrudListPage>
 
       <StorefrontSaleActionDialog
-        orderUuid={selectedSaleUuid}
+        saleUuid={selectedSaleUuid}
         canManageCancellation={canManageCancellation}
         open={selectedSaleUuid !== null}
         onClose={() => setSelectedOrderUuid(null)}

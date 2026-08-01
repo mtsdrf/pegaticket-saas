@@ -6,7 +6,7 @@ import type {
   SaleReportFilters,
   SaleReportSummary,
 } from '../types/reportDetail'
-import type { Sale } from '../types/order'
+import type { Sale } from '../types/sale'
 
 async function listPaginatedMeta<T>(url: string, params: object): Promise<PaginatedResult<T>> {
   const response = await apiClient.get<ApiSuccess<T[]>>(url, { params })

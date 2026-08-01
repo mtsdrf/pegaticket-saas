@@ -7,8 +7,6 @@ use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
 use App\Models\Event\TicketType;
-use App\Models\Storefront\StoreBusinessHour;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -107,54 +105,6 @@ class OnboardingChecklistTest extends TestCase
         $this->assertTrue($data['has_client']);
         $this->assertFalse($data['has_first_order']);
         $this->assertEquals(2, $data['completed']);
-    }
-
-    #[Test]
-    public function checklist_includes_storefront_steps_when_the_plan_allows_storefront(): void
-    {
-        $planId = DB::table('plans')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Plano Storefront',
-            'slug' => 'plano-storefront-' . Str::random(6),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $functionalityId = DB::table('functionalities')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Bilheteria online',
-            'slug' => 'storefront',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('plan_functionalities')->insert([
-            'uuid' => (string) Str::uuid(),
-            'plan_id' => $planId,
-            'functionality_id' => $functionalityId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->tenant->update(['plan_id' => $planId]);
-
-        StoreBusinessHour::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'day_of_week' => 1,
-            'opens_at' => '08:00',
-            'closes_at' => '18:00',
-            'is_closed' => false,
-        ]);
-
-        $data = $this->auth()
-            ->getJson('/api/v1/onboarding/checklist')
-            ->assertStatus(200)
-            ->json('data');
-
-        $this->assertTrue($data['storefront_configured']);
-        $this->assertContains('storefront_configured', array_column($data['steps'], 'key'));
     }
 
     #[Test]

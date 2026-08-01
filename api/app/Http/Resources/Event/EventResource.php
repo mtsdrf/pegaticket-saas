@@ -25,6 +25,8 @@ class EventResource extends JsonResource
             'type' => $this->type,
             'location_name' => $this->location_name,
             'location_address' => $this->location_address,
+            'location_lat' => $this->location_lat !== null ? (float) $this->location_lat : null,
+            'location_lng' => $this->location_lng !== null ? (float) $this->location_lng : null,
             'starts_at' => $this->starts_at,
             'ends_at' => $this->ends_at,
             'visibility' => $this->visibility,

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
@@ -9,7 +9,7 @@ use App\Services\Storefront\PushNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -25,7 +25,7 @@ class SalePushNotificationTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -45,21 +45,18 @@ class SalePushNotificationTest extends TestCase
 
     private function createPendingApprovalOrder(FinalCustomer $client, array $overrides = []): Sale
     {
-        $location = $this->createLocation($this->tenant->id);
         $product = $this->createProduct($this->tenant->id);
 
         $order = Sale::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,
             'is_paid' => false,
             'is_delivered' => false,
             'status' => 'pending_approval',
             'origin' => 'storefront',
-            'stock_reserved' => false,
         ], $overrides));
 
         SaleItem::create([
@@ -85,13 +82,10 @@ class SalePushNotificationTest extends TestCase
      */
     private function createPendingApprovalOrderWithRealReservation(FinalCustomer $client): Sale
     {
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
@@ -109,7 +103,7 @@ class SalePushNotificationTest extends TestCase
     #[Test]
     public function approving_a_storefront_order_with_a_confirmed_link_sends_a_push(): void
     {
-        // createClient() (CreatesOrderFixtures) já cria o FinalCustomer com
+        // createClient() (CreatesSaleFixtures) já cria o FinalCustomer com
         // um FinalCustomerTenantLink CONFIRMADO pra este tenant — desde que
         // FinalCustomer absorveu Client (2026-07-31), o "cliente" do pedido
         // JÁ É o customer notificável, sem indireção por um Client
@@ -223,7 +217,7 @@ class SalePushNotificationTest extends TestCase
     public function stays_silent_when_there_is_no_confirmed_link(): void
     {
         // FinalCustomer SEM FinalCustomerTenantLink pra este tenant —
-        // diferente de createClient() (CreatesOrderFixtures), que sempre
+        // diferente de createClient() (CreatesSaleFixtures), que sempre
         // cria o link já confirmado.
         $client = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),

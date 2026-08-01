@@ -33,9 +33,6 @@ class TicketTypeResource extends JsonResource
             'barcode' => $this->barcode,
             'brand' => $this->brand,
             'unit' => $this->unit,
-            // Derivado da soma de StockBalance.quantity_on_hand — mesmo
-            // padrão de ProductResource (campo legado, não fonte de verdade).
-            'stock_quantity' => (float) ($this->stock_balances_sum_quantity_on_hand ?? 0),
             'is_lot_controlled' => $this->is_lot_controlled,
             'is_expiry_controlled' => $this->is_expiry_controlled,
             'is_serial_controlled' => $this->is_serial_controlled,

@@ -46,6 +46,8 @@ class UpdateEventRequest extends FormRequest
             'type' => ['sometimes', 'string', Rule::in(['ingresso', 'inscricao', 'mesa', 'assento', 'misto'])],
             'location_name' => ['nullable', 'string', 'max:255'],
             'location_address' => ['nullable', 'string', 'max:255'],
+            'location_lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'location_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'starts_at' => ['sometimes', 'date'],
             'ends_at' => ['sometimes', 'date', 'after_or_equal:starts_at'],
             'visibility' => ['sometimes', 'string', Rule::in(['public', 'hidden', 'private', 'exclusive'])],

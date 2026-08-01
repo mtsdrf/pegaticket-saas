@@ -4,7 +4,6 @@ namespace App\Http\Resources\Storefront;
 
 use App\Support\MediaUrl;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Collection;
 
 /**
  * Rota pública GET /loja/{slug} — allow-list deliberada, mesmo espírito de
@@ -12,17 +11,15 @@ use Illuminate\Support\Collection;
  * plan_id, next_order_code, etc.) sem confirmação explícita — é rota
  * pública, todo campo extra é superfície de vazamento.
  *
- * business_hours/estimated_preparation_minutes (roadmap Delivery, Fase 2)
- * não são atributos do Model Tenant — vêm de StoreBusinessHoursService/
- * TenantSettings e são passados explicitamente pelo Controller via
- * construtor, para o catálogo já exibir "aberto agora"/tempo estimado sem
- * round-trip extra.
+ * estimated_preparation_minutes (roadmap Delivery, Fase 2) não é atributo
+ * do Model Tenant — vem de TenantSettings e é passado explicitamente pelo
+ * Controller via construtor, para o catálogo já exibir o tempo estimado
+ * sem round-trip extra.
  */
 class StorefrontTenantResource extends JsonResource
 {
     public function __construct(
         $resource,
-        private ?Collection $businessHours = null,
         private ?int $estimatedPreparationMinutes = null,
         private ?float $averageRating = null,
         private int $ratingsCount = 0,
@@ -46,9 +43,6 @@ class StorefrontTenantResource extends JsonResource
                 $this->logo_updated_at,
                 'tenant'
             ),
-            'business_hours' => $this->businessHours !== null
-                ? StoreBusinessHourResource::collection($this->businessHours)
-                : [],
             'estimated_preparation_minutes' => $this->estimatedPreparationMinutes,
             // Agregado de SaleRatingService::tenantSummary() (Delivery Fase
             // 4) — average_rating null quando o tenant ainda não tem

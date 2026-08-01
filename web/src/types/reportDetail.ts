@@ -1,8 +1,6 @@
 export interface SaleReportFilters {
   client_uuid?: string
   client_name?: string
-  cidade_uuid?: string
-  bairro_uuid?: string
   is_paid?: boolean
   is_delivered?: boolean
   date_from?: string

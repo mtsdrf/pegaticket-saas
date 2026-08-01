@@ -1,13 +1,12 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
-use App\Models\Stock\StockBalance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -20,7 +19,7 @@ class SaleCancellationApprovalTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -45,13 +44,10 @@ class SaleCancellationApprovalTest extends TestCase
     private function createOrderWithCancellationRequested(): Sale
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
@@ -114,13 +110,10 @@ class SaleCancellationApprovalTest extends TestCase
     public function approving_cancellation_fails_when_no_request_is_open(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],

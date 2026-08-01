@@ -4,14 +4,13 @@ namespace Tests\Feature\Finance;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
-use App\Models\Stock\StockLocation;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
 use App\Models\Subscription\WebhookEvent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -23,7 +22,7 @@ class ReconciliationTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -41,13 +40,11 @@ class ReconciliationTest extends TestCase
     protected function createOrderForTenant(int $tenantId): Sale
     {
         $client = $this->createClient($tenantId);
-        $location = $this->createLocation($tenantId);
 
         return Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'codigo' => 'PED-' . Str::random(6),
             'total_amount' => 100.0,
             'is_paid' => false,

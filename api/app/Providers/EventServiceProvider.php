@@ -69,21 +69,6 @@ use App\Events\Tenant\TenantDeleted;
 use App\Listeners\Tenant\AuditTenantCreated;
 use App\Listeners\Tenant\AuditTenantUpdated;
 use App\Listeners\Tenant\AuditTenantDeleted;
-use App\Listeners\Tenant\CreateDefaultStockLocation;
-
-/*
-|--------------------------------------------------------------------------
-| Stock
-|--------------------------------------------------------------------------
-*/
-use App\Events\Stock\StockLocationCreated;
-use App\Events\Stock\StockLocationUpdated;
-use App\Events\Stock\StockLocationDeleted;
-use App\Events\Stock\StockMovementCreated;
-use App\Listeners\Stock\AuditStockLocationCreated;
-use App\Listeners\Stock\AuditStockLocationUpdated;
-use App\Listeners\Stock\AuditStockLocationDeleted;
-use App\Listeners\Stock\AuditStockMovementCreated;
 
 /*
 |--------------------------------------------------------------------------
@@ -253,14 +238,6 @@ use App\Listeners\Tenant\AuditTenantFeatureOverridesSynced;
 
 /*
 |--------------------------------------------------------------------------
-| Storefront — horário de funcionamento
-|--------------------------------------------------------------------------
-*/
-use App\Events\Storefront\StoreBusinessHoursUpdated;
-use App\Listeners\Storefront\AuditStoreBusinessHoursUpdated;
-
-/*
-|--------------------------------------------------------------------------
 | Storefront (Delivery Fase 3) — cupons / promoções de produto
 |--------------------------------------------------------------------------
 */
@@ -407,7 +384,7 @@ class EventServiceProvider extends ServiceProvider
         | Tenants
         |--------------------------------------------------------------------------
         */
-        TenantCreated::class => [AuditTenantCreated::class, CreateDefaultStockLocation::class],
+        TenantCreated::class => [AuditTenantCreated::class],
         TenantUpdated::class => [AuditTenantUpdated::class],
         TenantDeleted::class => [AuditTenantDeleted::class],
 
@@ -527,22 +504,6 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Stock Location
-        |--------------------------------------------------------------------------
-        */
-        StockLocationCreated::class => [AuditStockLocationCreated::class],
-        StockLocationUpdated::class => [AuditStockLocationUpdated::class],
-        StockLocationDeleted::class => [AuditStockLocationDeleted::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Stock Movement
-        |--------------------------------------------------------------------------
-        */
-        StockMovementCreated::class => [AuditStockMovementCreated::class],
-
-        /*
-        |--------------------------------------------------------------------------
         | Sale
         |--------------------------------------------------------------------------
         */
@@ -586,13 +547,6 @@ class EventServiceProvider extends ServiceProvider
         |--------------------------------------------------------------------------
         */
         TenantSettingsUpdated::class => [AuditTenantSettingsUpdated::class],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Storefront
-        |--------------------------------------------------------------------------
-        */
-        StoreBusinessHoursUpdated::class => [AuditStoreBusinessHoursUpdated::class],
 
         /*
         |--------------------------------------------------------------------------

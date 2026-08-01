@@ -7,9 +7,7 @@ use App\DTOs\Sale\CreateSaleDTO;
 use App\Exceptions\DiscountLimitExceededException;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
-use App\Exceptions\InsufficientStockException;
 use App\Exceptions\InvalidSaleStateException;
-use App\Exceptions\InvalidStockMovementException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\PayInstallmentRequest;
@@ -121,12 +119,8 @@ class SaleController extends Controller
 
         try {
             $order = $this->service->create($dto);
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         } catch (DiscountLimitExceededException $e) {
             return APIResponse::error($e->getMessage(), 422, 'DISCOUNT_LIMIT_EXCEEDED');
         }
@@ -148,10 +142,6 @@ class SaleController extends Controller
             $order = $this->service->updateItems($order, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         } catch (DiscountLimitExceededException $e) {
             return APIResponse::error($e->getMessage(), 422, 'DISCOUNT_LIMIT_EXCEEDED');
         }
@@ -170,10 +160,6 @@ class SaleController extends Controller
             $order = $this->service->deliver($order);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);
@@ -277,10 +263,6 @@ class SaleController extends Controller
             $order = $this->service->undeliver($order);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);
@@ -331,10 +313,6 @@ class SaleController extends Controller
             $order = $this->service->payInstallment($order, $installment, $request->input('paid_at'));
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);
@@ -369,10 +347,6 @@ class SaleController extends Controller
             $order = $this->service->cancel($order, $dto);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);
@@ -428,10 +402,6 @@ class SaleController extends Controller
             $order = $this->service->reject($order, $request->input('reason'));
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);
@@ -448,10 +418,6 @@ class SaleController extends Controller
             $order = $this->service->approveCancellationRequest($order);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (InvalidStockMovementException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_STOCK_MOVEMENT');
         }
 
         $order->load(self::EAGER_RELATIONS);

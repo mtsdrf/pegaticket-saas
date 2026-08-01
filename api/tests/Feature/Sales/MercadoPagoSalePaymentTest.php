@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Sale\Sale;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -23,7 +23,7 @@ class MercadoPagoSalePaymentTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -46,14 +46,11 @@ class MercadoPagoSalePaymentTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         return $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => $qty],
@@ -216,13 +213,10 @@ class MercadoPagoSalePaymentTest extends TestCase
         $client = $this->createClient($this->tenant->id);
         $client->update(['email' => 'cliente.final@example.com']);
 
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 40]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 1]],
         ])->json('data');
@@ -260,13 +254,10 @@ class MercadoPagoSalePaymentTest extends TestCase
             ->where('tenant_id', $this->tenant->id)
             ->update(['cpf_cnpj' => '12345678901']);
 
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 40]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [['ticket_type_uuid' => $product->uuid, 'quantity' => 1]],
         ])->json('data');

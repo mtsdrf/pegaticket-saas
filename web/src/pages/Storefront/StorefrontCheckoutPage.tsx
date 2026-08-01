@@ -22,7 +22,7 @@ import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelem
 import { formatCountdown } from '../../hooks/useCountdown'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
-import { getSaleTracking } from '../../services/orderTrackingService'
+import { getSaleTracking } from '../../services/saleTrackingService'
 import * as portalSaleService from '../../services/portalSaleService'
 import * as storefrontCheckoutService from '../../services/storefrontCheckoutService'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
@@ -31,13 +31,11 @@ import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
-import type { SalePayment } from '../../types/order'
+import type { SalePayment } from '../../types/sale'
 import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
-  INSUFFICIENT_STOCK_CODE,
   INVALID_COUPON_CODE,
-  STORE_CLOSED_CODE,
   STORE_PICKUP_UNAVAILABLE_CODE,
   type StorefrontCheckoutPayload,
   type StorefrontCreateHoldPayload,
@@ -120,7 +118,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     setErrorMessage(null)
     setCheckMessage(null)
     portalSaleService
-      .createOrderPixCharge(orderUuid)
+      .createSalePixCharge(orderUuid)
       .then((result) => {
         setPayment(result)
         setStatus('ready')
@@ -298,8 +296,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const paymentMethod: 'delivery' | 'pix' = 'delivery'
   const [paidOrderUuid, setPaidOrderUuid] = useState<string | null>(null)
 
-  const [allowStorePickup, setAllowStorePickup] = useState(false)
-
   // Meio de pagamento pretendido (roadmap cupom por meio de pagamento) —
   // distinto do `paymentMethod` acima (que só decide "pagar Pix agora" vs
   // "combinar na entrega"): este campo é enviado ao backend pra validar
@@ -390,9 +386,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       .getStorefront(slug)
       .then((tenant) => {
         if (!cancelled) {
-          const tenantAllowStorePickup = tenant.allow_store_pickup ?? false
           setAcceptedPaymentMethods(tenant.accepted_payment_methods)
-          setAllowStorePickup(tenantAllowStorePickup)
         }
       })
       .catch(() => undefined)
@@ -615,9 +609,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         navigate(`/rastreio/${result.order.uuid}`)
       }
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === INSUFFICIENT_STOCK_CODE) {
-        setFormError('Item sem estoque suficiente no momento. Ajuste as quantidades e tente novamente.')
-      } else if (error instanceof ApiRequestError && error.code === INVALID_COUPON_CODE) {
+      if (error instanceof ApiRequestError && error.code === INVALID_COUPON_CODE) {
         // Mesmo `code` cobre tanto "cupom inválido" quanto "cupom exige um
         // meio de pagamento específico" (coupon.payment_method_not_allowed)
         // — a mensagem já vem pronta e traduzida do backend. Mostrada perto
@@ -628,13 +620,12 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         setCouponMessage(error.message)
       } else if (
         error instanceof ApiRequestError &&
-        (error.code === STORE_CLOSED_CODE ||
-          error.code === BELOW_MINIMUM_ORDER_CODE ||
+        (error.code === BELOW_MINIMUM_ORDER_CODE ||
           error.code === COUPON_USAGE_LIMIT_REACHED_CODE ||
           error.code === STORE_PICKUP_UNAVAILABLE_CODE)
       ) {
-        // Mensagem já pronta pra exibir direto (traduzida no backend) —
-        // mesmo padrão do INSUFFICIENT_STOCK_CODE acima, sem reformular.
+        // Mensagem já pronta pra exibir direto (traduzida no backend),
+        // sem reformular.
         setFormError(error.message)
         if (error.code === COUPON_USAGE_LIMIT_REACHED_CODE) {
           // Cupom válido na prévia mas rejeitado no submit final (ex.:

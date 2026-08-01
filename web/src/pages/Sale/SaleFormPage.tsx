@@ -17,18 +17,15 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { useNavigate } from 'react-router-dom'
 import { AsyncAutocomplete } from '../../components/crud/AsyncAutocomplete'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
-import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
 import { useAuth } from '../../hooks/useAuth'
 import * as eventProductService from '../../services/eventProductService'
 import * as finalCustomerService from '../../services/finalCustomerService'
 import * as saleService from '../../services/saleService'
-import * as stockLocationService from '../../services/stockLocationService'
 import * as ticketTypeService from '../../services/ticketTypeService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type { FinalCustomerSearchResult } from '../../types/finalCustomer'
 import type { Sale, SaleCreateItemPayload, SaleFinalCustomerRef } from '../../types/sale'
-import type { StockLocation } from '../../types/stockLocation'
 import { formatCurrency } from '../../utils/format'
 import { buildOrderCreatedWhatsAppMessage, buildWhatsAppUrl, isDigitsOnlyPhone } from '../../utils/whatsApp'
 
@@ -102,8 +99,6 @@ export function SaleFormPage() {
         phone_primary: customerOption.phone_primary,
       }
     : null
-  const [locations, setLocations] = useState<StockLocation[]>([])
-  const [stockLocationUuid, setStockLocationUuid] = useState('')
   const [isInstallment, setIsInstallment] = useState(false)
   const [installmentsCount, setInstallmentsCount] = useState('2')
   const [notes, setNotes] = useState('')
@@ -113,23 +108,9 @@ export function SaleFormPage() {
   const [markAsPaid, setMarkAsPaid] = useState(false)
   const [paidAmount, setPaidAmount] = useState('')
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const whatsAppWindowRef = useRef<Window | null>(null)
-
-  useEffect(() => {
-    if (!activeTenantUuid) return
-    setIsLoading(true)
-    setLoadError(null)
-
-    stockLocationService
-      .listStockLocations({ per_page: 100 })
-      .then((result) => setLocations(result.items))
-      .catch((error) => setLoadError(getApiErrorMessage(error, 'Não foi possível carregar os dados do pedido agora.')))
-      .finally(() => setIsLoading(false))
-  }, [activeTenantUuid])
 
   // "Pago" não existe pra pedido parcelado (backend rejeita com 422) — some
   // junto se o usuário ligar "parcelado" depois de já ter marcado "pago".
@@ -217,7 +198,6 @@ export function SaleFormPage() {
     try {
       const order: Sale = await saleService.createSale({
         final_customer_uuid: client.uuid,
-        stock_location_uuid: stockLocationUuid || undefined,
         is_installment: isInstallment,
         installments_count: isInstallment ? Number(installmentsCount) : null,
         notes: notes.trim() || undefined,
@@ -262,40 +242,25 @@ export function SaleFormPage() {
       title="Novo pedido"
       subtitle="Monte os itens, defina a forma de pagamento e confirme a venda."
       breadcrumbs={[{ label: 'Pedidos', to: '/pedidos' }, { label: 'Novo' }]}
-      loadError={loadError}
-      isLoadingRecord={isLoading}
       formError={formError}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
     >
       <Stack spacing={2.2}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <Box>
-            <AsyncAutocomplete
-              label="Cliente"
-              required
-              value={customerOption}
-              onChange={setCustomerOption}
-              fetchOptions={fetchClientOptions}
-              getOptionLabel={(option) => {
-                const fullName = [option.final_customer.name, option.final_customer.last_name].filter(Boolean).join(' ')
-                const identifier = option.cpf_cnpj || option.phone_primary
-                return identifier ? `${fullName} (${identifier})` : fullName
-              }}
-              getOptionKey={(option) => option.uuid}
-              placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
-            />
-          </Box>
-
-          <LocalAutocomplete
-            label="Local de estoque"
-            placeholder="Padrão da empresa"
-            fullWidth
-            options={locations}
-            value={locations.find((location) => location.uuid === stockLocationUuid) ?? null}
-            onChange={(location) => setStockLocationUuid(location?.uuid ?? '')}
-            getOptionLabel={(location) => location.name}
-            getOptionKey={(location) => location.uuid}
+        <Box sx={{ maxWidth: { md: '50%' } }}>
+          <AsyncAutocomplete
+            label="Cliente"
+            required
+            value={customerOption}
+            onChange={setCustomerOption}
+            fetchOptions={fetchClientOptions}
+            getOptionLabel={(option) => {
+              const fullName = [option.final_customer.name, option.final_customer.last_name].filter(Boolean).join(' ')
+              const identifier = option.cpf_cnpj || option.phone_primary
+              return identifier ? `${fullName} (${identifier})` : fullName
+            }}
+            getOptionKey={(option) => option.uuid}
+            placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
           />
         </Box>
 

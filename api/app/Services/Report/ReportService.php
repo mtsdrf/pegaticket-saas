@@ -930,7 +930,7 @@ class ReportService
             // comentário em SaleService::EAGER_RELATIONS (relation
             // depende de tenant_id da instância real, quebra em eager
             // load).
-            ->with(['finalCustomer', 'stockLocation']);
+            ->with(['finalCustomer']);
 
         if (!empty($filters['client_uuid'])) {
             $query->whereHas('finalCustomer', fn($q) => $q->where('uuid', $filters['client_uuid']));
@@ -976,37 +976,4 @@ class ReportService
         return number_format($value, 2, '.', '');
     }
 
-    /**
-     * CMV real (roadmap A3.13): custo médio ponderado por produto a
-     * partir das entradas de estoque (`stock_movements.type=entry`) que
-     * tiverem `unit_cost` preenchido — SUM(unit_cost*quantity)/SUM(quantity).
-     * Entrada sem custo informado é ignorada no cálculo, nunca tratada
-     * como zero. Produto sem nenhuma entrada com custo vem com `cmv=null`
-     * (não há retroatividade, decisão registrada em
-     * architecture-decisions.md) — a formatação final (cmv/margin_percent/
-     * has_cost_data) fica no CmvResource.
-     */
-    public function cmv(int $tenantId): Collection
-    {
-        $costSubquery = DB::table('stock_movements')
-            ->select('ticket_type_id', DB::raw('SUM(unit_cost * quantity) / SUM(quantity) as weighted_cost'))
-            ->where('tenant_id', $tenantId)
-            ->where('type', 'entry')
-            ->whereNotNull('unit_cost')
-            ->whereNull('deleted_at')
-            ->groupBy('ticket_type_id');
-
-        return DB::table('ticket_types')
-            ->leftJoinSub($costSubquery, 'cmv_data', 'cmv_data.ticket_type_id', '=', 'ticket_types.id')
-            ->where('ticket_types.tenant_id', $tenantId)
-            ->whereNull('ticket_types.deleted_at')
-            ->orderBy('ticket_types.name')
-            ->select([
-                'ticket_types.uuid as ticket_type_uuid',
-                'ticket_types.name as ticket_type_name',
-                'ticket_types.price as sale_price',
-                'cmv_data.weighted_cost as cmv',
-            ])
-            ->get();
-    }
 }

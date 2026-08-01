@@ -34,12 +34,6 @@ class AnalyticsService
     private const CHURN_INACTIVITY_DAYS = 60;
 
     /**
-     * Dias sem venda a partir dos quais um produto com saldo em estoque é
-     * considerado "encalhado" em stalledTicketTypes().
-     */
-    private const STALLED_INACTIVITY_DAYS = 60;
-
-    /**
      * Por bucket (dia ou mês): qtd de pedidos, faturamento e ticket
      * médio, mais o período imediatamente anterior de mesma duração no
      * mesmo shape (comparativo).
@@ -558,107 +552,6 @@ class AnalyticsService
             'churned_clients_count' => $clients->count(),
             'estimated_monthly_revenue_at_risk' => $this->formatMoney((float) $rows->sum('monthly_revenue_at_risk')),
             'top_clients' => $topClients,
-        ];
-    }
-
-    /**
-     * Produtos encalhados: saldo em estoque (> 0, somado entre locais) sem
-     * nenhuma venda nos últimos STALLED_INACTIVITY_DAYS dias. value_tied_up
-     * usa last_purchase_cost; quando ausente cai no price (cost_is_estimated
-     * = true).
-     */
-    public function stalledTicketTypes(int $tenantId): array
-    {
-        $since = now()->subDays(self::STALLED_INACTIVITY_DAYS)->startOfDay();
-
-        $soldProductIds = $this->orderItemsQuery($tenantId, $since, null)
-            ->distinct()
-            ->pluck('order_items.ticket_type_id')
-            ->all();
-
-        $rows = DB::table('stock_balances')
-            ->join('ticket_types', 'ticket_types.id', '=', 'stock_balances.ticket_type_id')
-            ->where('stock_balances.tenant_id', $tenantId)
-            ->whereNull('stock_balances.deleted_at')
-            ->whereNull('ticket_types.deleted_at')
-            ->when($soldProductIds, fn($q) => $q->whereNotIn('stock_balances.ticket_type_id', $soldProductIds))
-            ->groupBy('ticket_types.id', 'ticket_types.name', 'ticket_types.last_purchase_cost', 'ticket_types.price')
-            ->havingRaw('SUM(stock_balances.quantity_on_hand) > 0')
-            ->selectRaw('ticket_types.name as ticket_type_name, ticket_types.last_purchase_cost as last_purchase_cost, ticket_types.price as price, SUM(stock_balances.quantity_on_hand) as quantity_on_hand')
-            ->get();
-
-        $items = $rows->map(function ($row) {
-            $quantityOnHand = (float) $row->quantity_on_hand;
-            $costIsEstimated = $row->last_purchase_cost === null;
-            $unitCost = $costIsEstimated ? (float) $row->price : (float) $row->last_purchase_cost;
-
-            return [
-                'ticket_type_name' => $row->ticket_type_name,
-                'quantity_on_hand' => $quantityOnHand,
-                'value_tied_up' => $quantityOnHand * $unitCost,
-                'cost_is_estimated' => $costIsEstimated,
-            ];
-        });
-
-        return [
-            'items' => $items->sortByDesc('value_tied_up')
-                ->take(15)
-                ->map(fn($item) => [
-                    'ticket_type_name' => $item['ticket_type_name'],
-                    'quantity_on_hand' => $item['quantity_on_hand'],
-                    'value_tied_up' => $this->formatMoney($item['value_tied_up']),
-                    'cost_is_estimated' => $item['cost_is_estimated'],
-                ])
-                ->values()
-                ->all(),
-            'total_value_tied_up' => $this->formatMoney((float) $items->sum('value_tied_up')),
-            'count' => $items->count(),
-        ];
-    }
-
-    /**
-     * Rupturas de estoque: produtos com saldo disponível (on_hand -
-     * reserved - blocked, somado entre locais) <= 0 que tiveram ao menos
-     * uma venda nos últimos 90 dias — ou seja, produto que vende e está
-     * zerado. Ordenado pelas unidades vendidas nos 90 dias (mais crítico
-     * primeiro).
-     */
-    public function stockRuptures(int $tenantId): array
-    {
-        $since = now()->subDays(90)->startOfDay();
-
-        $sold = $this->orderItemsQuery($tenantId, $since, null)
-            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
-            ->whereNull('ticket_types.deleted_at')
-            ->groupBy('ticket_types.id', 'ticket_types.name')
-            ->selectRaw('ticket_types.id as ticket_type_id, ticket_types.name as ticket_type_name, SUM(order_items.quantity) as units_sold')
-            ->get();
-
-        if ($sold->isEmpty()) {
-            return ['items' => [], 'count' => 0];
-        }
-
-        $available = DB::table('stock_balances')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->whereIn('ticket_type_id', $sold->pluck('ticket_type_id')->all())
-            ->groupBy('ticket_type_id')
-            ->selectRaw('ticket_type_id, SUM(quantity_on_hand - quantity_reserved - quantity_blocked) as available')
-            ->pluck('available', 'ticket_type_id');
-
-        $items = $sold
-            ->filter(fn($row) => (float) ($available[$row->ticket_type_id] ?? 0) <= 0)
-            ->sortByDesc(fn($row) => (float) $row->units_sold)
-            ->map(fn($row) => [
-                'ticket_type_name' => $row->ticket_type_name,
-                'units_sold_last_90_days' => (float) $row->units_sold,
-            ])
-            ->values()
-            ->all();
-
-        return [
-            'items' => $items,
-            'count' => count($items),
         ];
     }
 

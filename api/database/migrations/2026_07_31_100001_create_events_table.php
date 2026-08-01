@@ -31,6 +31,8 @@ return new class extends Migration {
             $table->string('type')->default('ingresso');
             $table->string('location_name')->nullable();
             $table->string('location_address')->nullable();
+            $table->decimal('location_lat', 10, 7)->nullable();
+            $table->decimal('location_lng', 10, 7)->nullable();
 
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');

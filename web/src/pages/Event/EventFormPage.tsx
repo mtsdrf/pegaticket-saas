@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
+import { StoreLocationMap } from '../../components/storefront/StoreLocationMap'
 import * as eventCategoryService from '../../services/eventCategoryService'
 import * as eventService from '../../services/eventService'
 import * as venueService from '../../services/venueService'
@@ -21,6 +22,8 @@ interface EventFormState {
   type: EventType
   location_name: string
   location_address: string
+  location_lat: string
+  location_lng: string
   starts_at: string
   ends_at: string
   visibility: EventVisibility
@@ -37,6 +40,8 @@ const EMPTY_FORM: EventFormState = {
   type: 'ingresso',
   location_name: '',
   location_address: '',
+  location_lat: '',
+  location_lng: '',
   starts_at: '',
   ends_at: '',
   visibility: 'public',
@@ -108,6 +113,8 @@ export function EventFormPage() {
             type: record.type,
             location_name: record.location_name ?? '',
             location_address: record.location_address ?? '',
+            location_lat: record.location_lat !== null ? String(record.location_lat) : '',
+            location_lng: record.location_lng !== null ? String(record.location_lng) : '',
             starts_at: toDateTimeLocal(record.starts_at),
             ends_at: toDateTimeLocal(record.ends_at),
             visibility: record.visibility,
@@ -146,6 +153,8 @@ export function EventFormPage() {
       type: form.type,
       location_name: form.location_name.trim() || undefined,
       location_address: form.location_address.trim() || undefined,
+      location_lat: form.location_lat.trim() ? Number(form.location_lat) : null,
+      location_lng: form.location_lng.trim() ? Number(form.location_lng) : null,
       starts_at: form.starts_at ? form.starts_at.replace('T', ' ') : '',
       ends_at: form.ends_at ? form.ends_at.replace('T', ' ') : '',
       visibility: form.visibility,
@@ -306,6 +315,37 @@ export function EventFormPage() {
           helperText={fieldErrors.location_address?.[0]}
         />
       </Box>
+
+      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+        <TextField
+          label="Latitude"
+          type="number"
+          value={form.location_lat}
+          onChange={(event) => updateField('location_lat', event.target.value)}
+          error={Boolean(fieldErrors.location_lat)}
+          helperText={fieldErrors.location_lat?.[0] ?? 'Opcional. Entre -90 e 90.'}
+          slotProps={{ htmlInput: { min: -90, max: 90, step: 'any' } }}
+        />
+        <TextField
+          label="Longitude"
+          type="number"
+          value={form.location_lng}
+          onChange={(event) => updateField('location_lng', event.target.value)}
+          error={Boolean(fieldErrors.location_lng)}
+          helperText={fieldErrors.location_lng?.[0] ?? 'Opcional. Entre -180 e 180.'}
+          slotProps={{ htmlInput: { min: -180, max: 180, step: 'any' } }}
+        />
+      </Box>
+
+      {form.location_lat.trim() && form.location_lng.trim() && !Number.isNaN(Number(form.location_lat)) && !Number.isNaN(Number(form.location_lng)) && (
+        <Box sx={{ mb: 2 }}>
+          <StoreLocationMap
+            lat={Number(form.location_lat)}
+            lng={Number(form.location_lng)}
+            label={form.location_name || form.name}
+          />
+        </Box>
+      )}
 
       <TextField
         label="Descrição curta"

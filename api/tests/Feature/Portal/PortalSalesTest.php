@@ -9,7 +9,7 @@ use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -19,7 +19,7 @@ use Tests\TestCase;
 class PortalSalesTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     private function createTenant(?string $name = null): Tenant
     {
@@ -39,13 +39,11 @@ class PortalSalesTest extends TestCase
      */
     private function createOrder(Tenant $tenant, FinalCustomer $owner, array $overrides = []): Sale
     {
-        $location = $this->createLocation($tenant->id);
 
         return Sale::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $owner->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,

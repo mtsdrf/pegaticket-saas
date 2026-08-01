@@ -1,39 +1,29 @@
 <?php
 
-namespace Tests\Feature\Orders\Concerns;
+namespace Tests\Feature\Sales\Concerns;
 
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
 use App\Models\Event\TicketType;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Stock\StockBalance;
-use App\Models\Stock\StockLocation;
 use Illuminate\Support\Str;
 
 /**
  * Extraído de SaleTest.php (2026-07-12) pra ser reaproveitado também por
- * SaleInstallmentTest.php, sem duplicar os ~80 linhas de fixture de
- * Client/Product/StockLocation — mesma ideia de SetsUpTenantScopedUser,
- * só que específico da árvore de fixtures de Pedido.
+ * SaleInstallmentTest.php, sem duplicar os ~60 linhas de fixture de
+ * Client/Product — mesma ideia de SetsUpTenantScopedUser, só que
+ * específico da árvore de fixtures de Pedido.
  *
  * Migrado de Product para TicketType (roadmap PegaTicket seção 4A,
  * 2026-07-31) — createProduct() mantido como NOME (chamado por dezenas de
  * testes) mas agora cria Event/EventCategory/TicketType por baixo, e
- * retorna um TicketType.
+ * retorna um TicketType. Estoque (StockLocation/StockBalance) removido do
+ * domínio (roadmap seção 7/8, 2026-08-01) — controle de quantidade vendida
+ * passa a ser só TicketType.quantity_available/TicketBatch.quantity_sold.
  */
-trait CreatesOrderFixtures
+trait CreatesSaleFixtures
 {
-    protected function createLocation(int $tenantId, array $overrides = []): StockLocation
-    {
-        return StockLocation::create(array_merge([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $tenantId,
-            'name' => 'Location ' . Str::random(6),
-            'is_active' => true,
-        ], $overrides));
-    }
-
     protected function createProduct(int $tenantId, array $overrides = []): TicketType
     {
         $category = EventCategory::create([
@@ -93,21 +83,5 @@ trait CreatesOrderFixtures
         ]);
 
         return $finalCustomer;
-    }
-
-    protected function stockEntry(int $tenantId, TicketType $ticketType, StockLocation $location, int $quantity): void
-    {
-        StockBalance::updateOrCreate(
-            [
-                'tenant_id' => $tenantId,
-                'ticket_type_id' => $ticketType->id,
-                'location_id' => $location->id,
-            ],
-            [
-                'quantity_on_hand' => $quantity,
-                'quantity_reserved' => 0,
-                'quantity_blocked' => 0,
-            ]
-        );
     }
 }

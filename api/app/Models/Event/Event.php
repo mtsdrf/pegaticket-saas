@@ -27,6 +27,8 @@ class Event extends BaseModel
         'type',
         'location_name',
         'location_address',
+        'location_lat',
+        'location_lng',
         'starts_at',
         'ends_at',
         'visibility',

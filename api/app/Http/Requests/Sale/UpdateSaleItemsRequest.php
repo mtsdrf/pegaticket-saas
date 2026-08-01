@@ -16,13 +16,6 @@ class UpdateSaleItemsRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:500'],
-            'stock_location_uuid' => [
-                'nullable',
-                'uuid',
-                Rule::exists('stock_locations', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
             'expected_delivery_date' => ['nullable', 'date'],
 
             'items' => ['required', 'array', 'min:1'],
@@ -54,7 +47,6 @@ class UpdateSaleItemsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'stock_location_uuid.exists' => __('messages.order.invalid_stock_location'),
             'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
             'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
         ];

@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -23,7 +23,7 @@ use Tests\TestCase;
 class PortalAddressAndVouchersTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -61,13 +61,11 @@ class PortalAddressAndVouchersTest extends TestCase
 
         $tenant = $this->createTenant('Loja do Cupom');
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
 
         $order = Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 50,
             'is_paid' => false,

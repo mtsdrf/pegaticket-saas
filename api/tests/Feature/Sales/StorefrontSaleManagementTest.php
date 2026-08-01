@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -22,7 +22,7 @@ class StorefrontSaleManagementTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -49,13 +49,10 @@ class StorefrontSaleManagementTest extends TestCase
     private function createPendingApprovalOrder(string $origin = 'storefront'): Sale
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],

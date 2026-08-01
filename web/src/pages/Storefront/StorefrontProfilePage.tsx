@@ -8,7 +8,6 @@ import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import PixIcon from '@mui/icons-material/Pix'
 import PaymentOutlinedIcon from '@mui/icons-material/PaymentOutlined'
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined'
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
 import StarIcon from '@mui/icons-material/Star'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
@@ -24,11 +23,7 @@ import { PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type { StorefrontTenant } from '../../types/storefront'
-import { WEEKDAY_LABELS, type DayOfWeek } from '../../types/storeBusinessHours'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
-import { formatBusinessHoursLine, isStoreOpenNow } from '../../utils/businessHours'
-
-const WEEKDAY_ORDER: DayOfWeek[] = [0, 1, 2, 3, 4, 5, 6]
 
 const PAYMENT_METHOD_ICONS: Record<PaymentMethod, ReactElement> = {
   cash: <PaymentsOutlinedIcon fontSize="small" />,
@@ -62,8 +57,6 @@ function ProfileSkeleton() {
 }
 
 function StoreHeader({ tenant }: { tenant: StorefrontTenant }) {
-  const isOpen = isStoreOpenNow(tenant.business_hours)
-
   return (
     <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
       <Avatar
@@ -78,18 +71,6 @@ function StoreHeader({ tenant }: { tenant: StorefrontTenant }) {
           {tenant.name}
         </Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5, mt: 0.5 }}>
-          <Chip
-            size="small"
-            label={isOpen ? 'Aberto agora' : 'Fechado no momento'}
-            sx={{
-              fontWeight: 700,
-              fontSize: 12,
-              color: isOpen ? 'var(--pt-success, #1b7a3d)' : 'var(--pt-warning, #a15c00)',
-              bgcolor: isOpen
-                ? 'color-mix(in srgb, #1b7a3d 14%, transparent)'
-                : 'color-mix(in srgb, #a15c00 14%, transparent)',
-            }}
-          />
           {tenant.ratings_count > 0 && tenant.average_rating !== null && (
             <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
               <StarIcon sx={{ fontSize: 15, color: 'var(--pt-warning, #a15c00)' }} />
@@ -131,48 +112,6 @@ function LocationSection({ tenant }: { tenant: StorefrontTenant }) {
   )
 }
 
-function BusinessHoursSection({ tenant }: { tenant: StorefrontTenant }) {
-  const todayIndex = new Date().getDay()
-
-  return (
-    <Paper elevation={0} sx={SECTION_SX}>
-      <SectionTitle icon={<ScheduleOutlinedIcon fontSize="small" />}>Horário de funcionamento</SectionTitle>
-      <Stack divider={<Box sx={{ borderBottom: '1px solid var(--pt-border)' }} />}>
-        {WEEKDAY_ORDER.map((day) => {
-          const shifts = tenant.business_hours.filter((entry) => entry.day_of_week === day)
-          const line = formatBusinessHoursLine(shifts)
-          const isToday = day === todayIndex
-          return (
-            <Stack
-              key={day}
-              direction="row"
-              sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1.5, py: 1 }}
-            >
-              <Typography sx={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: 'var(--pt-text)' }}>
-                {WEEKDAY_LABELS[day]}
-                {isToday && (
-                  <Box component="span" sx={{ fontSize: 11.5, color: 'var(--pt-primary)', ml: 0.75, fontWeight: 700 }}>
-                    hoje
-                  </Box>
-                )}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 13.5,
-                  fontWeight: isToday ? 600 : 500,
-                  color: line === 'Fechado' ? 'var(--pt-muted)' : 'var(--pt-text)',
-                  textAlign: 'right',
-                }}
-              >
-                {line}
-              </Typography>
-            </Stack>
-          )
-        })}
-      </Stack>
-    </Paper>
-  )
-}
 
 function PaymentMethodsSection({ tenant }: { tenant: StorefrontTenant }) {
   const methods = PAYMENT_METHODS.filter((method) => tenant.accepted_payment_methods.includes(method))
@@ -293,7 +232,6 @@ export function StorefrontProfilePage() {
             <StoreHeader tenant={tenant} />
             <ContactSection tenant={tenant} />
             <LocationSection tenant={tenant} />
-            <BusinessHoursSection tenant={tenant} />
             {tenant.storefront_enabled ? <PaymentMethodsSection tenant={tenant} /> : null}
           </Stack>
         )}

@@ -31,7 +31,6 @@ class InitialPlansSeeder extends Seeder
                     'event_products',
                     'venues',
                     'seats',
-                    'stock',
                     'sales',
                     'customers',
                     'storefront',

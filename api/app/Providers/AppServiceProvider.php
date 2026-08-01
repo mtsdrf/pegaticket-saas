@@ -29,15 +29,11 @@ use App\Repositories\Contracts\{
     TicketBatchRepositoryInterface,
     VenueRepositoryInterface,
     SeatRepositoryInterface,
-    StockLocationRepositoryInterface,
-    StockBalanceRepositoryInterface,
-    StockMovementRepositoryInterface,
     SaleRepositoryInterface,
     AuditLogRepositoryInterface,
     FinalCustomerRepositoryInterface,
     FinalCustomerTenantLinkRepositoryInterface,
     TenantSettingsRepositoryInterface,
-    StoreBusinessHourRepositoryInterface,
     CouponRepositoryInterface,
     ProductPromotionRepositoryInterface,
     LegalDocumentRepositoryInterface,
@@ -74,15 +70,11 @@ use App\Repositories\Eloquent\{
     TicketBatchRepository,
     VenueRepository,
     SeatRepository,
-    StockLocationRepository,
-    StockBalanceRepository,
-    StockMovementRepository,
     SaleRepository,
     AuditLogRepository,
     FinalCustomerRepository,
     FinalCustomerTenantLinkRepository,
     TenantSettingsRepository,
-    StoreBusinessHourRepository,
     CouponRepository,
     ProductPromotionRepository,
     LegalDocumentRepository,
@@ -306,24 +298,6 @@ class AppServiceProvider extends ServiceProvider
             SeatRepository::class
         );
 
-        // Stock Location Repository
-        $this->app->bind(
-            StockLocationRepositoryInterface::class,
-            StockLocationRepository::class
-        );
-
-        // Stock Balance Repository
-        $this->app->bind(
-            StockBalanceRepositoryInterface::class,
-            StockBalanceRepository::class
-        );
-
-        // Stock Movement Repository
-        $this->app->bind(
-            StockMovementRepositoryInterface::class,
-            StockMovementRepository::class
-        );
-
         // Sale Repository
         $this->app->bind(
             SaleRepositoryInterface::class,
@@ -352,12 +326,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TenantSettingsRepositoryInterface::class,
             TenantSettingsRepository::class
-        );
-
-        // Store Business Hour Repository
-        $this->app->bind(
-            StoreBusinessHourRepositoryInterface::class,
-            StoreBusinessHourRepository::class
         );
 
         // Coupon Repository (Delivery Fase 3)

@@ -193,20 +193,6 @@ class AnalyticsController extends Controller
         return APIResponse::success($data, __('messages.analytics.churn_clients'));
     }
 
-    public function stalledProducts()
-    {
-        $data = $this->service->stalledTicketTypes(app('tenant_id'));
-
-        return APIResponse::success($data, __('messages.analytics.stalled_products'));
-    }
-
-    public function stockRuptures()
-    {
-        $data = $this->service->stockRuptures(app('tenant_id'));
-
-        return APIResponse::success($data, __('messages.analytics.stock_ruptures'));
-    }
-
     public function salesByHour(AnalyticsPeriodRequest $request)
     {
         $validated = $request->validated();

@@ -6,7 +6,7 @@ use App\Models\Sale\Sale;
 use App\Models\Workflow\WorkflowTransitionLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -14,7 +14,7 @@ class WorkflowTransitionLogTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -38,13 +38,10 @@ class WorkflowTransitionLogTest extends TestCase
     public function order_approval_creates_operational_transition_log(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25]);
-        $this->stockEntry($this->tenant->id, $product, $location, 30);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'origin' => 'storefront',
             'status' => 'pending_approval',
@@ -81,13 +78,10 @@ class WorkflowTransitionLogTest extends TestCase
     public function order_timeline_endpoint_returns_operational_history(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 32]);
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],

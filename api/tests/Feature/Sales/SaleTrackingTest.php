@@ -1,18 +1,17 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleInstallment;
 use App\Models\Sale\SaleItem;
 use App\Models\Event\TicketType;
-use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -23,7 +22,7 @@ use Tests\TestCase;
 class SaleTrackingTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     private function createTenant(): Tenant
     {
@@ -36,13 +35,12 @@ class SaleTrackingTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, FinalCustomer $client, StockLocation $location, array $overrides = []): Sale
+    private function createOrder(Tenant $tenant, FinalCustomer $client, array $overrides = []): Sale
     {
         return Sale::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,
@@ -82,8 +80,7 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
-        $order = $this->createOrder($tenant, $client, $location);
+        $order = $this->createOrder($tenant, $client);
 
         $response = $this->getJson('/api/v1/rastreio/' . $order->uuid);
 
@@ -99,9 +96,8 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
         $product = $this->createProduct($tenant->id, ['name' => 'Queijo Meia Cura']);
-        $order = $this->createOrder($tenant, $client, $location, ['is_installment' => false]);
+        $order = $this->createOrder($tenant, $client, ['is_installment' => false]);
         $this->createOrderItem($tenant, $order, $product);
 
         $response = $this->getJson('/api/v1/rastreio/' . $order->uuid);
@@ -119,9 +115,8 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
         $product = $this->createProduct($tenant->id);
-        $order = $this->createOrder($tenant, $client, $location, ['is_installment' => true]);
+        $order = $this->createOrder($tenant, $client, ['is_installment' => true]);
         $this->createOrderItem($tenant, $order, $product);
         $this->createInstallment($tenant, $order, ['installment_number' => 1, 'amount' => 60]);
         $this->createInstallment($tenant, $order, ['installment_number' => 2, 'amount' => 60, 'is_paid' => true, 'paid_at' => now()]);
@@ -142,10 +137,9 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
 
-        $activeOrder = $this->createOrder($tenant, $client, $location);
-        $cancelledOrder = $this->createOrder($tenant, $client, $location, [
+        $activeOrder = $this->createOrder($tenant, $client);
+        $cancelledOrder = $this->createOrder($tenant, $client, [
             'cancelled_at' => now(),
             'cancellation_reason' => 'Cliente desistiu.',
         ]);
@@ -162,8 +156,7 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
-        $order = $this->createOrder($tenant, $client, $location, [
+        $order = $this->createOrder($tenant, $client, [
             'notes' => 'Segredo interno da equipe.',
             'cancelled_at' => now(),
             'cancellation_reason' => 'Motivo interno sensível.',
@@ -181,13 +174,11 @@ class SaleTrackingTest extends TestCase
     {
         $tenantA = $this->createTenant();
         $clientA = $this->createClient($tenantA->id);
-        $locationA = $this->createLocation($tenantA->id);
-        $orderA = $this->createOrder($tenantA, $clientA, $locationA);
+        $orderA = $this->createOrder($tenantA, $clientA);
 
         $tenantB = $this->createTenant();
         $clientB = $this->createClient($tenantB->id);
-        $locationB = $this->createLocation($tenantB->id);
-        $orderB = $this->createOrder($tenantB, $clientB, $locationB);
+        $orderB = $this->createOrder($tenantB, $clientB);
 
         $this->getJson('/api/v1/rastreio/' . $orderA->uuid)
             ->assertStatus(200)
@@ -212,8 +203,7 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $location = $this->createLocation($tenant->id);
-        $order = $this->createOrder($tenant, $client, $location);
+        $order = $this->createOrder($tenant, $client);
 
         $order->delete();
 

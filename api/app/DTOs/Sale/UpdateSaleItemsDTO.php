@@ -12,7 +12,6 @@ class UpdateSaleItemsDTO
      */
     public function __construct(
         public readonly ?string $notes,
-        public readonly ?string $stockLocationUuid,
         public readonly ?string $expectedDeliveryDate,
         public readonly array $items,
     ) {
@@ -22,7 +21,6 @@ class UpdateSaleItemsDTO
     {
         return new self(
             notes: $data['notes'] ?? null,
-            stockLocationUuid: $data['stock_location_uuid'] ?? null,
             expectedDeliveryDate: $data['expected_delivery_date'] ?? null,
             items: $data['items'],
         );

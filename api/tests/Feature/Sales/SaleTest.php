@@ -1,17 +1,16 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleInstallment;
-use App\Models\Stock\StockBalance;
 use App\Models\Tenant\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -19,7 +18,7 @@ class SaleTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -40,14 +39,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 // total_amount não é um campo de item válido (só
@@ -66,10 +62,6 @@ class SaleTest extends TestCase
 
         $this->assertNotNull($response->json('data.due_date'));
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(100, $balance->quantity_on_hand);
-        $this->assertEquals(3, $balance->quantity_reserved);
-        $this->assertEquals(97, $balance->quantity_available);
     }
 
     #[Test]
@@ -77,14 +69,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'notes' => 'Sem cebola'],
@@ -114,14 +103,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3, 'unit_price' => 20],
@@ -134,8 +120,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.items.0.line_total', '60.00');
 
         // Estoque reservado usa a quantidade, não o preço — não muda.
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(3, $balance->quantity_reserved);
     }
 
     /**
@@ -147,14 +131,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25.50]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 5.00],
@@ -177,14 +158,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 50.00]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 10);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 0.5],
@@ -197,9 +175,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.items.0.unit_price', '50.00')
             ->assertJsonPath('data.items.0.line_total', '25.00');
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEqualsWithDelta(0.5, (float) $balance->quantity_reserved, 0.0001);
-        $this->assertEqualsWithDelta(9.5, $balance->quantity_available, 0.0001);
     }
 
     #[Test]
@@ -207,12 +182,9 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productA = $this->createProduct($this->tenant->id, ['price' => 33.33]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 12.99]);
 
-        $this->stockEntry($this->tenant->id, $productA, $location, 10);
-        $this->stockEntry($this->tenant->id, $productB, $location, 10);
 
         // 33.33 * 0.333 = 11.09889 -> arredonda para 11.10
         // 12.99 * 0.7   = 9.093    -> arredonda para 9.09
@@ -220,7 +192,6 @@ class SaleTest extends TestCase
         // um recálculo independente sobre a soma das quantidades/preços.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 0.333],
@@ -233,38 +204,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.items.1.line_total', '9.09')
             ->assertJsonPath('data.total_amount', '20.19');
 
-        $balanceA = StockBalance::where('ticket_type_id', $productA->id)->where('location_id', $location->id)->first();
-        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
-        $this->assertEqualsWithDelta(0.333, (float) $balanceA->quantity_reserved, 0.0001);
-        $this->assertEqualsWithDelta(0.7, (float) $balanceB->quantity_reserved, 0.0001);
-    }
-
-    #[Test]
-    public function creating_an_order_fails_and_persists_nothing_when_stock_is_insufficient(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-        $this->stockEntry($this->tenant->id, $product, $location, 2);
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ]);
-
-        $response->assertStatus(422)->assertJsonPath('code', 'INSUFFICIENT_STOCK');
-
-        $this->assertDatabaseCount('sales', 0);
-        $this->assertDatabaseCount('order_items', 0);
-
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(0, $balance->quantity_reserved);
     }
 
     #[Test]
@@ -272,15 +211,12 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 33.33]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 10);
 
         // total = 33.33 * 3 = 99.99 dividido em 3 parcelas -> 33.33 cada, bate exato.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 3,
             'items' => [
@@ -297,11 +233,9 @@ class SaleTest extends TestCase
 
         // Caso não divida igualmente: 100 / 3 = 33.33 + 33.33 + 33.34
         $product2 = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product2, $location, 10);
 
         $response2 = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 3,
             'items' => [
@@ -323,33 +257,22 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
-        $balanceBefore = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(20, $balanceBefore->quantity_on_hand);
-        $this->assertEquals(5, $balanceBefore->quantity_reserved);
-        $this->assertEquals(15, $balanceBefore->quantity_available);
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")
             ->assertStatus(200)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balanceAfter = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(15, $balanceAfter->quantity_on_hand);
-        $this->assertEquals(0, $balanceAfter->quantity_reserved);
-        $this->assertEquals(15, $balanceAfter->quantity_available);
     }
 
     #[Test]
@@ -358,14 +281,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -387,9 +307,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.is_paid', true)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(18, $balance->quantity_on_hand);
-        $this->assertEquals(0, $balance->quantity_reserved);
     }
 
     /**
@@ -404,14 +321,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -432,14 +346,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -462,14 +373,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -493,14 +401,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -535,14 +440,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'pay');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -566,14 +468,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -584,10 +483,6 @@ class SaleTest extends TestCase
             'cancellation_reason' => 'Cliente desistiu',
         ])->assertStatus(200)->assertJsonPath('data.cancellation_reason', 'Cliente desistiu');
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(20, $balance->quantity_on_hand);
-        $this->assertEquals(0, $balance->quantity_reserved);
-        $this->assertEquals(20, $balance->quantity_available);
     }
 
     #[Test]
@@ -597,14 +492,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'deliver');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -613,16 +505,11 @@ class SaleTest extends TestCase
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
 
-        $balanceAfterDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(15, $balanceAfterDeliver->quantity_on_hand);
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
             'cancellation_reason' => 'Produto com defeito',
         ])->assertStatus(200);
 
-        $balanceAfterCancel = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(20, $balanceAfterCancel->quantity_on_hand);
-        $this->assertEquals(0, $balanceAfterCancel->quantity_reserved);
     }
 
     #[Test]
@@ -632,14 +519,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'deliver');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -661,14 +545,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -691,14 +572,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -727,24 +605,17 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ])->json('data');
 
-        $balanceBeforeDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(20, $balanceBeforeDeliver->quantity_on_hand);
-        $this->assertEquals(5, $balanceBeforeDeliver->quantity_reserved);
-        $this->assertEquals(15, $balanceBeforeDeliver->quantity_available);
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
 
@@ -754,10 +625,6 @@ class SaleTest extends TestCase
 
         $this->assertNull(Sale::where('uuid', $order['uuid'])->first()->delivered_at);
 
-        $balanceAfterUndeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals($balanceBeforeDeliver->quantity_on_hand, $balanceAfterUndeliver->quantity_on_hand);
-        $this->assertEquals($balanceBeforeDeliver->quantity_reserved, $balanceAfterUndeliver->quantity_reserved);
-        $this->assertEquals($balanceBeforeDeliver->quantity_available, $balanceAfterUndeliver->quantity_available);
 
         // Prova que a reserva foi recriada corretamente: um segundo
         // deliver() funciona sem cair em "reserva não encontrada".
@@ -765,9 +632,6 @@ class SaleTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.is_delivered', true);
 
-        $balanceAfterSecondDeliver = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(15, $balanceAfterSecondDeliver->quantity_on_hand);
-        $this->assertEquals(0, $balanceAfterSecondDeliver->quantity_reserved);
     }
 
     #[Test]
@@ -776,14 +640,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -803,14 +664,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'pay');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -833,14 +691,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -864,14 +719,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -890,14 +742,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -923,14 +772,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -973,14 +819,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -1000,14 +843,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -1026,14 +866,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'read');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -1049,28 +886,6 @@ class SaleTest extends TestCase
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(404);
     }
 
-    #[Test]
-    public function creating_order_without_stock_location_uses_tenant_default(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $default = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-        $this->stockEntry($this->tenant->id, $product, $default, 20);
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.stock_location.uuid', $default->uuid);
-    }
-
     /**
      * mark_as_delivered ecoa o default "entregue" (true) do formulário
      * legado sem reabrir update genérico: dispara a mesma lógica de
@@ -1083,14 +898,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_delivered' => true,
             'items' => [
@@ -1103,10 +915,6 @@ class SaleTest extends TestCase
 
         $this->assertNotNull($response->json('data.delivered_at'));
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(15, $balance->quantity_on_hand);
-        $this->assertEquals(0, $balance->quantity_reserved);
-        $this->assertEquals(15, $balance->quantity_available);
     }
 
     /**
@@ -1120,14 +928,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_paid' => true,
             'items' => [
@@ -1154,14 +959,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'mark_as_delivered' => true,
             'mark_as_paid' => true,
@@ -1174,9 +976,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.is_delivered', true)
             ->assertJsonPath('data.is_paid', true);
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(15, $balance->quantity_on_hand);
-        $this->assertEquals(0, $balance->quantity_reserved);
     }
 
     #[Test]
@@ -1184,14 +983,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 30]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'mark_as_paid' => true,
@@ -1203,7 +999,7 @@ class SaleTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
         $this->assertArrayHasKey('mark_as_paid', $response->json('errors'));
 
-        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('orders', 0);
     }
 
     #[Test]
@@ -1211,14 +1007,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'expected_delivery_date' => '2026-08-01',
             'items' => [
@@ -1229,7 +1022,7 @@ class SaleTest extends TestCase
         $response->assertStatus(201);
         $this->assertStringStartsWith('2026-08-01', $response->json('data.expected_delivery_date'));
 
-        $this->assertDatabaseHas('sales', [
+        $this->assertDatabaseHas('orders', [
             'uuid' => $response->json('data.uuid'),
             'expected_delivery_date' => '2026-08-01 00:00:00',
         ]);
@@ -1240,14 +1033,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'notes' => str_repeat('a', 501),
             'items' => [
@@ -1258,7 +1048,7 @@ class SaleTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
         $this->assertArrayHasKey('notes', $response->json('errors'));
 
-        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('orders', 0);
     }
 
     /**
@@ -1273,12 +1063,10 @@ class SaleTest extends TestCase
     public function saving_delivered_or_paid_without_a_date_backfills_it_to_now(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
 
         $order = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => true,
@@ -1305,16 +1093,12 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productA = $this->createProduct($this->tenant->id, ['price' => 10]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 5]);
 
-        $this->stockEntry($this->tenant->id, $productA, $location, 20);
-        $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 3],
@@ -1332,8 +1116,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.total_amount', '40.00')
             ->assertJsonCount(2, 'data.items');
 
-        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(2, $balanceB->quantity_reserved);
     }
 
     #[Test]
@@ -1342,16 +1124,12 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productA = $this->createProduct($this->tenant->id, ['price' => 10]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 5]);
 
-        $this->stockEntry($this->tenant->id, $productA, $location, 20);
-        $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
@@ -1371,9 +1149,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.total_amount', '20.00')
             ->assertJsonCount(1, 'data.items');
 
-        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(0, $balanceB->quantity_reserved);
-        $this->assertEquals(20, $balanceB->quantity_available);
     }
 
     #[Test]
@@ -1382,14 +1157,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1406,9 +1178,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.total_amount', '50.00')
             ->assertJsonPath('data.items.0.quantity', '5.000');
 
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(5, $balance->quantity_reserved);
-        $this->assertEquals(15, $balance->quantity_available);
     }
 
     #[Test]
@@ -1417,16 +1186,12 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productA = $this->createProduct($this->tenant->id, ['price' => 10]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 8]);
 
-        $this->stockEntry($this->tenant->id, $productA, $location, 20);
-        $this->stockEntry($this->tenant->id, $productB, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
@@ -1443,10 +1208,6 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.total_amount', '16.00')
             ->assertJsonPath('data.items.0.ticket_type.uuid', $productB->uuid);
 
-        $balanceA = StockBalance::where('ticket_type_id', $productA->id)->where('location_id', $location->id)->first();
-        $balanceB = StockBalance::where('ticket_type_id', $productB->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(0, $balanceA->quantity_reserved);
-        $this->assertEquals(2, $balanceB->quantity_reserved);
     }
 
     #[Test]
@@ -1455,15 +1216,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
-        $otherLocation = $this->createLocation($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1472,7 +1229,6 @@ class SaleTest extends TestCase
 
         $response = $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
             'notes' => 'Entregar após 18h',
-            'stock_location_uuid' => $otherLocation->uuid,
             'expected_delivery_date' => '2026-09-01',
             'items' => [
                 ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1481,15 +1237,12 @@ class SaleTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.notes', 'Entregar após 18h')
-            ->assertJsonPath('data.stock_location.uuid', $otherLocation->uuid)
             ->assertJsonPath('data.total_amount', '20.00');
 
         $this->assertStringStartsWith('2026-09-01', $response->json('data.expected_delivery_date'));
 
         // Item não mudou (mesmo produto/quantidade) — reserva original
         // continua intacta, nenhum movimento de estoque ruído.
-        $balance = StockBalance::where('ticket_type_id', $product->id)->where('location_id', $location->id)->first();
-        $this->assertEquals(2, $balance->quantity_reserved);
     }
 
     #[Test]
@@ -1499,14 +1252,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'update');
         $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1529,14 +1279,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'update');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1559,14 +1306,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'update');
         $this->grantPermission('sales', 'cancel');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1591,14 +1335,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'update');
         $this->grantPermission('sales', 'read');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 40);
 
         $orderA = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1607,7 +1348,6 @@ class SaleTest extends TestCase
 
         $orderB = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
@@ -1634,14 +1374,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1664,14 +1401,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
@@ -1703,14 +1437,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => true,
             'installments_count' => 2,
             'items' => [
@@ -1751,14 +1482,11 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $payload = [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
@@ -1779,22 +1507,17 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $clientA = $this->createClient($this->tenant->id);
-        $locationA = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productA = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $productA, $locationA, 20);
         $tokenA = $this->token;
 
         $this->setUpTenantScopedUser('order-codigo-tenant-b@test.com');
         $this->grantPermission('sales', 'create');
         $clientB = $this->createClient($this->tenant->id);
-        $locationB = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $productB, $locationB, 20);
         $tokenB = $this->token;
 
         $orderA = $this->withHeader('Authorization', 'Bearer ' . $tokenA)->postJson('/api/v1/sales', [
             'final_customer_uuid' => $clientA->uuid,
-            'stock_location_uuid' => $locationA->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 1],
@@ -1803,7 +1526,6 @@ class SaleTest extends TestCase
 
         $orderB = $this->withHeader('Authorization', 'Bearer ' . $tokenB)->postJson('/api/v1/sales', [
             'final_customer_uuid' => $clientB->uuid,
-            'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
@@ -1818,14 +1540,12 @@ class SaleTest extends TestCase
     public function direct_order_model_creation_also_assigns_sequential_codigo(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
 
         DB::table('tenants')->where('id', $this->tenant->id)->update(['next_order_code' => 999]);
 
         $firstOrder = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
@@ -1833,13 +1553,11 @@ class SaleTest extends TestCase
             'notes' => 'Pedido direto 1',
             'status' => 'confirmed',
             'origin' => 'staff',
-            'stock_reserved' => false,
         ]);
 
         $secondOrder = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 20,
             'is_paid' => false,
@@ -1847,7 +1565,6 @@ class SaleTest extends TestCase
             'notes' => 'Pedido direto 2',
             'status' => 'confirmed',
             'origin' => 'staff',
-            'stock_reserved' => false,
         ]);
 
         $this->assertSame('1000', $firstOrder->fresh()->codigo);
@@ -1865,14 +1582,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -1903,14 +1617,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 10],
@@ -1940,14 +1651,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -1968,14 +1676,11 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 20);
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -2003,16 +1708,13 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $tenantA = $this->tenant;
 
         for ($i = 0; $i < 2; $i++) {
             $this->auth()->postJson('/api/v1/sales', [
                 'final_customer_uuid' => $client->uuid,
-                'stock_location_uuid' => $location->uuid,
                 'is_installment' => false,
                 'items' => [
                     ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
@@ -2027,15 +1729,12 @@ class SaleTest extends TestCase
         $this->setUpTenantScopedUser('order-codigo-backfill-b@test.com');
         $this->grantPermission('sales', 'create');
         $clientB = $this->createClient($this->tenant->id);
-        $locationB = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $productB = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $productB, $locationB, 100);
 
         $tenantB = $this->tenant;
 
         $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $clientB->uuid,
-            'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
@@ -2066,7 +1765,6 @@ class SaleTest extends TestCase
         // recém-atribuídos.
         $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $clientB->uuid,
-            'stock_location_uuid' => $locationB->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
@@ -2086,17 +1784,14 @@ class SaleTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 25]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 10);
 
         // Nenhum StoreBusinessHour ou minimum_order_value configurado pra
         // este tenant — se algum guard do checkout vazasse pro fluxo staff,
         // este pedido seria bloqueado.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],

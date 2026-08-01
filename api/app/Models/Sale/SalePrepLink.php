@@ -36,6 +36,6 @@ class SalePrepLink extends Model
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(Sale::class, 'order_id');
     }
 }

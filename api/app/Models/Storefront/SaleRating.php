@@ -41,7 +41,7 @@ class SaleRating extends Model
 
     public function order()
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(Sale::class, 'order_id');
     }
 
     public function finalCustomer()

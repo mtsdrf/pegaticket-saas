@@ -1,14 +1,13 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleItem;
-use App\Models\Stock\StockBalance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -22,7 +21,7 @@ class SaleApprovalQueueTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -45,19 +44,15 @@ class SaleApprovalQueueTest extends TestCase
      * origin=staff/status=confirmed por default) e simula que ele "nasceu"
      * da loja, virando pending_approval — mesmo estado que
      * StorefrontCheckoutService produz, só que aqui com uma reserva real
-     * de StockMovement já ligada ao item, pra exercitar reserveCancel() de
      * verdade em reject().
      */
     private function createPendingApprovalOrderWithRealReservation(): Sale
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-        $this->stockEntry($this->tenant->id, $product, $location, 50);
 
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
@@ -75,21 +70,18 @@ class SaleApprovalQueueTest extends TestCase
     private function createPendingApprovalOrderWithoutReservation(): Sale
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id);
         $product = $this->createProduct($this->tenant->id);
 
         $order = Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,
             'is_paid' => false,
             'is_delivered' => false,
             'status' => 'pending_approval',
             'origin' => 'storefront',
-            'stock_reserved' => false,
         ]);
 
         SaleItem::create([
@@ -152,29 +144,7 @@ class SaleApprovalQueueTest extends TestCase
     }
 
     #[Test]
-    public function reject_releases_stock_reservation_when_order_had_one(): void
-    {
-        $order = $this->createPendingApprovalOrderWithRealReservation();
-        $order->load('items', 'stockLocation');
-        $item = $order->items->first();
-
-        $before = StockBalance::where('ticket_type_id', $item->ticket_type_id)
-            ->where('location_id', $order->stock_location_id)
-            ->firstOrFail();
-        $this->assertEquals(3, $before->quantity_reserved);
-
-        $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/reject', [
-            'reason' => 'Estoque redirecionado.',
-        ])->assertStatus(200);
-
-        $after = StockBalance::where('ticket_type_id', $item->ticket_type_id)
-            ->where('location_id', $order->stock_location_id)
-            ->firstOrFail();
-        $this->assertEquals(0, $after->quantity_reserved);
-    }
-
-    #[Test]
-    public function reject_does_not_touch_stock_when_stock_reserved_is_false(): void
+    public function reject_changes_status_when_order_is_pending_approval(): void
     {
         $order = $this->createPendingApprovalOrderWithoutReservation();
 

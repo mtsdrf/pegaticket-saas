@@ -49,7 +49,6 @@ class SaleResource extends JsonResource
                     'endereco' => null,
                 ];
             }),
-            'stock_location' => null,
             'operator' => $this->whenLoaded('operator', fn() => $this->operator ? [
                 'uuid' => $this->operator->uuid,
                 'name' => $this->operator->name,

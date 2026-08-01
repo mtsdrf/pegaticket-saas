@@ -6,7 +6,6 @@ class UpdateTenantSettingsDTO
 {
     public function __construct(
         public readonly bool $sendTrackingLinkWhatsapp,
-        public readonly bool $blockOrderWithoutStock,
         public readonly ?float $minimumOrderValue = null,
         public readonly ?int $estimatedPreparationMinutes = null,
         public readonly ?array $acceptedPaymentMethods = null,
@@ -22,7 +21,6 @@ class UpdateTenantSettingsDTO
     {
         return new self(
             sendTrackingLinkWhatsapp: (bool) $data['send_tracking_link_whatsapp'],
-            blockOrderWithoutStock: (bool) $data['block_order_without_stock'],
             minimumOrderValue: isset($data['minimum_order_value']) ? (float) $data['minimum_order_value'] : null,
             estimatedPreparationMinutes: isset($data['estimated_preparation_minutes'])
                 ? (int) $data['estimated_preparation_minutes']

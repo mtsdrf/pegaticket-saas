@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Storefront;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\CouponUsageLimitReachedException;
-use App\Exceptions\InsufficientStockException;
 use App\Exceptions\InvalidCouponException;
 use App\Exceptions\StorefrontDisabledException;
-use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\StorefrontCheckoutRequest;
@@ -28,10 +26,6 @@ class StorefrontCheckoutController extends Controller
 
         try {
             $order = $this->service->checkout($slug, portal_customer(), $dto);
-        } catch (InsufficientStockException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_STOCK');
-        } catch (StoreClosedException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'STORE_CLOSED');
         } catch (StorefrontDisabledException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
         } catch (BelowMinimumSaleException $e) {

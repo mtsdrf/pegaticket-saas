@@ -9,7 +9,7 @@ use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -20,7 +20,7 @@ use Tests\TestCase;
 class PortalLinkTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     private function createTenant(): Tenant
     {
@@ -35,13 +35,11 @@ class PortalLinkTest extends TestCase
 
     private function createOrder(Tenant $tenant, FinalCustomer $client, array $overrides = []): Sale
     {
-        $location = $this->createLocation($tenant->id);
 
         return Sale::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,
@@ -78,7 +76,7 @@ class PortalLinkTest extends TestCase
         ]);
 
         // 2 linhas no total: a do próprio $client (criada por
-        // createClient(), CreatesOrderFixtures — já confirmada de
+        // createClient(), CreatesSaleFixtures — já confirmada de
         // fábrica) + a nova, do $customer autenticado que acabou de
         // vincular via order_uuid.
         $this->assertDatabaseCount('final_customer_tenant_links', 2);

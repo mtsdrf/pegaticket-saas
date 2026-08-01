@@ -5,23 +5,14 @@ namespace App\Services\Onboarding;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Sale\Sale;
 use App\Models\Event\TicketType;
-use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Tenant\TenantUser;
-use App\Services\Permission\PermissionService;
 
 /**
  * Checklist de implantação (roadmap A2, dores #4/#15) — leitura pura sobre
- * entidades já existentes, sem tabela nova. No contexto atual de ingressos,
- * a bilheteria online é considerada configurada quando o tenant já definiu
- * seus horários de funcionamento.
+ * entidades já existentes, sem tabela nova.
  */
 class OnboardingService
 {
-    public function __construct(
-        private PermissionService $permissionService
-    ) {
-    }
-
     public function checklist(int $tenantId, TenantUser $tenantUser): array
     {
         $items = [
@@ -46,25 +37,6 @@ class OnboardingService
                 'completed' => $items['has_client'],
             ],
         ];
-
-        $allowedFunctionalities = array_fill_keys(
-            $this->permissionService->resolveTenantAllowedFunctionalities($tenantId),
-            true
-        );
-
-        if (isset($allowedFunctionalities['storefront'])) {
-            $items['storefront_configured'] = StoreBusinessHour::where('tenant_id', $tenantId)
-                ->whereNull('deleted_at')
-                ->exists();
-
-            $steps[] = [
-                'key' => 'storefront_configured',
-                'label' => 'Configure sua bilheteria online',
-                'to' => '/configuracoes/pedidos',
-                'link_label' => 'Configurar bilheteria',
-                'completed' => $items['storefront_configured'],
-            ];
-        }
 
         $steps[] = [
             'key' => 'has_first_order',

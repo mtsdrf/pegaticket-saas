@@ -44,6 +44,8 @@ class StoreEventRequest extends FormRequest
             'type' => ['nullable', 'string', Rule::in(['ingresso', 'inscricao', 'mesa', 'assento', 'misto'])],
             'location_name' => ['nullable', 'string', 'max:255'],
             'location_address' => ['nullable', 'string', 'max:255'],
+            'location_lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'location_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
             'visibility' => ['nullable', 'string', Rule::in(['public', 'hidden', 'private', 'exclusive'])],

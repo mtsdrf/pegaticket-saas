@@ -68,6 +68,10 @@ export interface Event {
   type: EventType
   location_name: string | null
   location_address: string | null
+  /** Latitude do local do evento — opcional, usada para exibir o pin no mapa. */
+  location_lat: number | null
+  /** Longitude do local do evento — opcional, usada para exibir o pin no mapa. */
+  location_lng: number | null
   starts_at: string
   ends_at: string
   visibility: EventVisibility
@@ -91,6 +95,8 @@ export interface EventPayload {
   type?: EventType
   location_name?: string
   location_address?: string
+  location_lat?: number | null
+  location_lng?: number | null
   starts_at: string
   ends_at: string
   visibility?: EventVisibility

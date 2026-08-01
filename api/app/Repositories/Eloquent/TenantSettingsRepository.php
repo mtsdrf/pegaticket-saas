@@ -28,7 +28,6 @@ class TenantSettingsRepository extends BaseRepository implements TenantSettingsR
             return $this->model->create([
                 'tenant_id' => $tenantId,
                 'send_tracking_link_whatsapp' => false,
-                'block_order_without_stock' => false,
                 'storefront_enabled' => true,
             ]);
         } catch (QueryException $e) {

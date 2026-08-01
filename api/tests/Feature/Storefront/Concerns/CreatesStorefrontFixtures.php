@@ -3,7 +3,6 @@
 namespace Tests\Feature\Storefront\Concerns;
 
 use App\Models\Plan\Plan;
-use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Tenant\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,24 +14,6 @@ use Illuminate\Support\Str;
  */
 trait CreatesStorefrontFixtures
 {
-    /**
-     * Guards novos do checkout (Delivery Fase 2) são fail-safe fechado por
-     * padrão — testes de Fase 1 que esperam checkout bem-sucedido precisam
-     * simular uma loja aberta 24h para não colidir com STORE_CLOSED.
-     */
-    protected function makeStoreOpenAllDay(int $tenantId): void
-    {
-        for ($day = 0; $day <= 6; $day++) {
-            StoreBusinessHour::create([
-                'tenant_id' => $tenantId,
-                'day_of_week' => $day,
-                'opens_at' => '00:00:00',
-                'closes_at' => '23:59:59',
-                'is_closed' => false,
-            ]);
-        }
-    }
-
     protected function createDeliveryFeeForBairro(int $tenantId, mixed $bairro = null, float $fee = 0.0): void
     {
     }

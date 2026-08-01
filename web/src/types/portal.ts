@@ -62,40 +62,6 @@ export interface PortalReorderItem {
   is_available: boolean
 }
 
-/** Endereço serializado do perfil do cliente final. */
-export interface PortalAddressEndereco {
-  logradouro: string | null
-  numero: string | null
-  complemento: string | null
-  cep: string | null
-  estado_uuid: string | null
-  estado_name: string | null
-  cidade_uuid: string | null
-  cidade_name: string | null
-  bairro_uuid: string | null
-  bairro_name: string | null
-}
-
-/** Item de `GET /portal/addresses` — 1 por loja com vínculo confirmado (edita `Client.endereco`, não um book global). */
-export interface PortalAddress {
-  client_uuid: string
-  tenant_name: string
-  tenant_slug: string
-  /** Nome/telefone já cadastrados nessa loja — usados pelo checkout público pra pré-preencher no 2º pedido. */
-  client_name: string | null
-  client_phone: string | null
-  endereco: PortalAddressEndereco | null
-}
-
-/** `PUT /portal/addresses/{client_uuid}` — cidade/estado são derivados do bairro no backend, só o bairro é enviado. */
-export interface UpdatePortalAddressPayload {
-  logradouro: string
-  numero?: string | null
-  complemento?: string | null
-  cep?: string | null
-  bairro_uuid: string
-}
-
 /** Item de `GET /portal/coupon-redemptions` — histórico read-only de cupons já usados ("Meus vouchers"). */
 export interface PortalCouponRedemption {
   coupon_code: string | null

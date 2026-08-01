@@ -70,7 +70,6 @@ class DashboardPermissionsTest extends TestCase
 
         $this->auth()->getJson('/api/v1/reports/sales')->assertStatus(403);
         $this->auth()->getJson('/api/v1/reports/by-channel')->assertStatus(403);
-        $this->auth()->getJson('/api/v1/reports/cmv')->assertStatus(403);
     }
 
     #[Test]

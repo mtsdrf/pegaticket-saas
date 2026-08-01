@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Sale\SaleResource;
-use App\Http\Resources\Report\CmvResource;
 use App\Services\APIResponse;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
@@ -107,13 +106,6 @@ class ReportController extends Controller
         );
 
         return APIResponse::success($data, __('messages.report.by_channel'));
-    }
-
-    public function cmv()
-    {
-        $data = $this->service->cmv(app('tenant_id'));
-
-        return APIResponse::success(CmvResource::collection($data), __('messages.report.cmv'));
     }
 
     public function salesPdf(Request $request)

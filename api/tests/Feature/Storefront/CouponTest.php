@@ -13,7 +13,7 @@ use App\Services\Storefront\CouponService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -28,7 +28,7 @@ class CouponTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -332,13 +332,11 @@ class CouponTest extends TestCase
         ]);
 
         $this->grantPermission('storefront', 'update');
-        $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id);
         $client = $this->createClient($this->tenant->id);
         $order = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $this->createLocation($this->tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,
             'total_amount' => 10,
@@ -346,7 +344,6 @@ class CouponTest extends TestCase
             'is_delivered' => false,
             'origin' => 'storefront',
             'status' => 'confirmed',
-            'stock_reserved' => false,
         ]);
 
         $customer = $this->customer();
@@ -382,7 +379,6 @@ class CouponTest extends TestCase
         $order = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $this->createLocation($this->tenant->id)->id,
             'codigo' => '1',
             'is_installment' => false,
             'total_amount' => 10,
@@ -390,7 +386,6 @@ class CouponTest extends TestCase
             'is_delivered' => false,
             'origin' => 'storefront',
             'status' => 'confirmed',
-            'stock_reserved' => false,
         ]);
 
         $customer = $this->customer();

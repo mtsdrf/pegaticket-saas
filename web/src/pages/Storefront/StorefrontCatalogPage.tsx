@@ -38,30 +38,15 @@ import { UI_RADIUS, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type { StorefrontCategory, StorefrontEvent, StorefrontTenant } from '../../types/storefront'
-import { isStoreOpenNow } from '../../utils/businessHours'
 
-/** Badge "Aberto agora"/"Fechado no momento" + tempo estimado — calculado client-side a partir de `tenant.business_hours` (ver `utils/businessHours.ts`). */
-function StoreStatusBadge({ tenant }: { tenant: StorefrontTenant }) {
-  const isOpen = isStoreOpenNow(tenant.business_hours)
+/** Tempo estimado de preparo, quando o tenant informou. Badge "Aberto agora"/"Fechado no momento" foi removido (roadmap Fase B — `StoreBusinessHour` saiu do backend, não há mais `business_hours` na resposta). */
+function StorePrepBadge({ tenant }: { tenant: StorefrontTenant }) {
+  if (tenant.estimated_preparation_minutes === null) return null
 
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-      <Chip
-        size="small"
-        label={isOpen ? 'Aberto agora' : 'Fechado no momento'}
-        sx={{
-          fontWeight: 700,
-          fontSize: 12,
-          color: isOpen ? 'var(--pt-success, #1b7a3d)' : 'var(--pt-warning, #a15c00)',
-          bgcolor: isOpen ? 'color-mix(in srgb, #1b7a3d 14%, transparent)' : 'color-mix(in srgb, #a15c00 14%, transparent)',
-        }}
-      />
-      {tenant.estimated_preparation_minutes !== null && (
-        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-          ~{tenant.estimated_preparation_minutes} min
-        </Typography>
-      )}
-    </Stack>
+    <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
+      ~{tenant.estimated_preparation_minutes} min
+    </Typography>
   )
 }
 
@@ -280,7 +265,7 @@ export function StorefrontCatalogPage() {
               <Skeleton variant="text" width={100} height={20} />
             ) : tenant ? (
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-                <StoreStatusBadge tenant={tenant} />
+                <StorePrepBadge tenant={tenant} />
                 {!tenant.storefront_enabled && <Chip size="small" label="Bilheteria online desativada" variant="outlined" />}
                 {tenant.ratings_count > 0 && tenant.average_rating !== null && (
                   <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>

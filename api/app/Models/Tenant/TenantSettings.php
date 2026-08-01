@@ -11,7 +11,6 @@ class TenantSettings extends BaseModel
     protected $fillable = [
         'tenant_id',
         'send_tracking_link_whatsapp',
-        'block_order_without_stock',
         'minimum_order_value',
         'estimated_preparation_minutes',
         'accepted_payment_methods',
@@ -26,7 +25,6 @@ class TenantSettings extends BaseModel
 
     protected $casts = [
         'send_tracking_link_whatsapp' => 'boolean',
-        'block_order_without_stock' => 'boolean',
         'minimum_order_value' => 'float',
         'estimated_preparation_minutes' => 'integer',
         'accepted_payment_methods' => 'array',

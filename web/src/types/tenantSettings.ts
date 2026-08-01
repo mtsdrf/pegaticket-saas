@@ -4,8 +4,6 @@ import type { StorefrontCatalogLayout } from './storefront'
 export interface TenantSettings {
   uuid: string
   send_tracking_link_whatsapp: boolean
-  /** Quando ligado, `SaleService::create()` bloqueia (422 `INSUFFICIENT_STOCK`) pedido sem disponibilidade suficiente; hoje só tem efeito prático nas vendas do canal online. */
-  block_order_without_stock: boolean
   /** `null` = sem valor mínimo configurado (não bloqueia nada no checkout online). */
   minimum_order_value: number | null
   /** `null` = sem estimativa configurada. */
@@ -26,7 +24,6 @@ export interface TenantSettings {
 
 export interface UpdateTenantSettingsPayload {
   send_tracking_link_whatsapp: boolean
-  block_order_without_stock: boolean
   minimum_order_value: number | null
   estimated_preparation_minutes: number | null
   accepted_payment_methods: PaymentMethod[]

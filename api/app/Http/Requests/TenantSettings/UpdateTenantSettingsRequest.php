@@ -14,7 +14,6 @@ class UpdateTenantSettingsRequest extends FormRequest
     {
         return [
             'send_tracking_link_whatsapp' => ['required', 'boolean'],
-            'block_order_without_stock' => ['required', 'boolean'],
             'minimum_order_value' => ['nullable', 'numeric', 'min:0'],
             'estimated_preparation_minutes' => ['nullable', 'integer', 'min:1'],
             'accepted_payment_methods' => ['nullable', 'array'],

@@ -3,7 +3,6 @@
 namespace App\Models\Event;
 
 use App\Models\BaseModel;
-use App\Models\Stock\StockBalance;
 use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -91,10 +90,5 @@ class TicketType extends BaseModel
     public function batches(): HasMany
     {
         return $this->hasMany(TicketBatch::class);
-    }
-
-    public function stockBalances(): HasMany
-    {
-        return $this->hasMany(StockBalance::class, 'ticket_type_id');
     }
 }

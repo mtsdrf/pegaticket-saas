@@ -64,7 +64,6 @@ class TicketTypeController extends Controller
     {
         $ticketType = $this->service->find($ticketType);
         $ticketType->load(self::DETAIL_RELATIONS);
-        $ticketType->loadSum('stockBalances', 'quantity_on_hand');
 
         return APIResponse::success(
             new TicketTypeResource($ticketType),
@@ -81,7 +80,6 @@ class TicketTypeController extends Controller
 
         $ticketType = $this->service->create($dto);
         $ticketType->load(self::DETAIL_RELATIONS);
-        $ticketType->loadSum('stockBalances', 'quantity_on_hand');
 
         return APIResponse::success(
             new TicketTypeResource($ticketType),
@@ -96,7 +94,6 @@ class TicketTypeController extends Controller
 
         $ticketType = $this->service->update($ticketType, $dto);
         $ticketType->load(self::DETAIL_RELATIONS);
-        $ticketType->loadSum('stockBalances', 'quantity_on_hand');
 
         return APIResponse::success(
             new TicketTypeResource($ticketType),
@@ -108,7 +105,6 @@ class TicketTypeController extends Controller
     {
         $ticketType = $this->service->toggleStatus($ticketType, $request->input('status'));
         $ticketType->load(self::DETAIL_RELATIONS);
-        $ticketType->loadSum('stockBalances', 'quantity_on_hand');
 
         return APIResponse::success(
             new TicketTypeResource($ticketType),

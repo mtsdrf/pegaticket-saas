@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Tenant\TenantRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -25,7 +25,7 @@ class SaleDiscountLimitTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -90,15 +90,12 @@ class SaleDiscountLimitTest extends TestCase
         $this->setDiscountLimit(10);
 
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         // 15% de desconto (unit_price 85 sobre um preço de 100) excede o
         // limite de 10% configurado.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 85],
@@ -107,7 +104,7 @@ class SaleDiscountLimitTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonPath('code', 'DISCOUNT_LIMIT_EXCEEDED');
-        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('orders', 0);
     }
 
     #[Test]
@@ -116,14 +113,11 @@ class SaleDiscountLimitTest extends TestCase
         $this->setDiscountLimit(10);
 
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         // 8% de desconto, dentro do limite de 10%.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 92],
@@ -139,15 +133,12 @@ class SaleDiscountLimitTest extends TestCase
         $this->setDiscountLimit(5);
 
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         // unit_price maior que o preço de catálogo é acréscimo, não
         // desconto — nunca bloqueado por discount_limit_percent.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 150],
@@ -161,15 +152,12 @@ class SaleDiscountLimitTest extends TestCase
     public function no_discount_limit_configured_preserves_unrestricted_behavior(): void
     {
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         // Sem discount_limit_percent configurado (default), qualquer
         // desconto manual continua livre — comportamento anterior à feature.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1, 'unit_price' => 1],
@@ -185,13 +173,10 @@ class SaleDiscountLimitTest extends TestCase
         $this->setDiscountLimit(10);
 
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 100]);
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $created = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],

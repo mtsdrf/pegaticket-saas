@@ -15,7 +15,6 @@ class CreateSaleDTO
     public function __construct(
         public readonly int $tenantId,
         public readonly string $finalCustomerUuid,
-        public readonly ?string $stockLocationUuid,
         public readonly bool $isInstallment,
         public readonly ?int $installmentsCount,
         public readonly ?string $notes,
@@ -25,7 +24,6 @@ class CreateSaleDTO
         public readonly array $items,
         public readonly string $origin = 'staff',
         public readonly string $status = 'confirmed',
-        public readonly bool $reserveStock = true,
         public readonly float $deliveryFee = 0.0,
         public readonly float $serviceFee = 0.0,
         public readonly ?int $couponId = null,
@@ -52,7 +50,6 @@ class CreateSaleDTO
         return new self(
             tenantId: $tenantId,
             finalCustomerUuid: $data['final_customer_uuid'],
-            stockLocationUuid: $data['stock_location_uuid'] ?? null,
             isInstallment: (bool) ($data['is_installment'] ?? false),
             installmentsCount: isset($data['installments_count']) ? (int) $data['installments_count'] : null,
             notes: $data['notes'] ?? null,
@@ -62,7 +59,6 @@ class CreateSaleDTO
             items: $data['items'],
             origin: $data['origin'] ?? 'staff',
             status: $data['status'] ?? 'confirmed',
-            reserveStock: (bool) ($data['reserve_stock'] ?? true),
             deliveryFee: (float) ($data['delivery_fee'] ?? 0.0),
             serviceFee: (float) ($data['service_fee'] ?? 0.0),
             couponId: isset($data['coupon_id']) ? (int) $data['coupon_id'] : null,

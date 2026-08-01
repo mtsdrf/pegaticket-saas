@@ -30,13 +30,6 @@ class StoreSaleRequest extends FormRequest
                     }
                 },
             ],
-            'stock_location_uuid' => [
-                'nullable',
-                'uuid',
-                Rule::exists('stock_locations', 'uuid')->where(function ($query) {
-                    $query->where('tenant_id', app('tenant_id'))->whereNull('deleted_at');
-                }),
-            ],
             'is_installment' => ['required', 'boolean'],
             'installments_count' => ['required_if:is_installment,true', 'nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -56,7 +49,7 @@ class StoreSaleRequest extends FormRequest
 
             // Retirada na loja (roadmap Delivery) — mesma semântica do
             // checkout público, mas sem guard próprio aqui: staff já
-            // escolhe manualmente final_customer_uuid/stock_location_uuid, não há
+            // escolhe manualmente final_customer_uuid, não há
             // conceito de endereço de entrega obrigatório neste fluxo.
             // Omitido = 'delivery' (comportamento atual).
             'fulfillment_type' => ['nullable', 'string', Rule::in(['delivery', 'pickup'])],
@@ -102,7 +95,6 @@ class StoreSaleRequest extends FormRequest
     {
         return [
             'final_customer_uuid.exists' => __('messages.order.invalid_client'),
-            'stock_location_uuid.exists' => __('messages.order.invalid_stock_location'),
             'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
             'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
             'installments_count.required_if' => __('messages.order.installments_count_required'),

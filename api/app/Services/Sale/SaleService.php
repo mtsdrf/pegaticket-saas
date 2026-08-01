@@ -32,14 +32,10 @@ use App\Models\Sale\SaleItem;
 use App\Models\Sale\SalePrepLink;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
-use App\Models\Stock\StockLocation;
-use App\Models\Stock\StockMovement;
 use App\Models\Storefront\CouponRedemption;
 use App\Exceptions\DiscountLimitExceededException;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Permission\PermissionService;
-use App\Services\Event\TicketTypeService;
-use App\Services\Stock\StockService;
 use App\Services\Workflow\WorkflowTransitionLogger;
 use App\Support\GridQuery;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -48,9 +44,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Módulo mais complexo do projeto: Pedido, integrado com Estoque desde a
- * criação (reserva por item) e com cascata de quitação (última parcela
- * paga marca o pedido inteiro como pago+entregue). Ver
+ * Módulo mais complexo do projeto: Pedido/Venda, com cascata de quitação
+ * (última parcela paga marca o pedido inteiro como pago+entregue).
+ * Controle de quantidade de ingresso vendida é responsabilidade de
+ * TicketType/TicketBatch (quantity_available/quantity_sold), não deste
+ * service — não há mais integração com estoque físico. Ver
  * `.claude/memory/architecture-decisions.md` para o desenho completo.
  */
 class SaleService
@@ -68,7 +66,6 @@ class SaleService
 
     public function __construct(
         private SaleRepositoryInterface $repository,
-        private StockService $stockService,
         private ParcelaVencimentoCalculator $vencimentoCalculator,
         private SalePaymentService $paymentService,
         private PermissionService $permissionService,
@@ -267,13 +264,6 @@ class SaleService
                 ->where('tenant_id', $dto->tenantId)
                 ->firstOrFail();
 
-            $stockLocation = $dto->stockLocationUuid
-                ? StockLocation::where('uuid', $dto->stockLocationUuid)
-                    ->where('tenant_id', $dto->tenantId)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                : ($dto->reserveStock ? $this->resolveDefaultStockLocation($dto->tenantId) : null);
-
             $lines = [];
             $totalCents = 0;
 
@@ -323,7 +313,6 @@ class SaleService
             $order = $this->repository->create([
                 'tenant_id' => $dto->tenantId,
                 'final_customer_id' => $client->id,
-                'stock_location_id' => $stockLocation?->id,
                 'codigo' => $codigo,
                 'is_installment' => $dto->isInstallment,
                 'total_amount' => $this->centsToDecimal($totalCents),
@@ -341,7 +330,6 @@ class SaleService
                 'change_for_amount' => $dto->changeForAmount,
                 'status' => $dto->status,
                 'origin' => $dto->origin,
-                'stock_reserved' => $dto->reserveStock,
                 'fulfillment_type' => $dto->fulfillmentType,
             ]);
 
@@ -356,17 +344,6 @@ class SaleService
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
                 ]);
-
-                if ($dto->reserveStock && $line['is_ticket_type']) {
-                    $this->stockService->reserve(
-                        ticketType: $line['sellable'],
-                        location: $stockLocation,
-                        quantity: $line['quantity'],
-                        reason: "Reserva do pedido {$order->uuid}",
-                        sourceType: SaleItem::class,
-                        sourceId: $orderItem->id,
-                    );
-                }
             }
 
             if ($dto->isInstallment) {
@@ -405,8 +382,7 @@ class SaleService
      * ver architecture-decisions.md), só permitida enquanto o pedido não
      * está entregue/pago/cancelado. Estruturalmente análogo a
      * SaleInstallmentService::reallocate() (diff do array inteiro contra
-     * o estado atual via uuid), com a diferença de que cada item também
-     * mexe em reserva de estoque (StockService), não só valor.
+     * o estado atual via uuid).
      *
      * Pedido parcelado: total_amount muda mas as installments NÃO são
      * recalculadas automaticamente aqui (decisão intencional — usuário
@@ -421,15 +397,8 @@ class SaleService
 
             $this->assertOrderItemsEditable($order);
 
-            $order->loadMissing('finalCustomer', 'stockLocation');
+            $order->loadMissing('finalCustomer');
             $client = $order->finalCustomer;
-
-            $stockLocation = $dto->stockLocationUuid
-                ? StockLocation::where('uuid', $dto->stockLocationUuid)
-                    ->where('tenant_id', $order->tenant_id)
-                    ->whereNull('deleted_at')
-                    ->firstOrFail()
-                : $order->stockLocation;
 
             $currentItems = SaleItem::where('order_id', $order->id)
                 ->whereNull('deleted_at')
@@ -457,7 +426,7 @@ class SaleService
                 }
             }
 
-            // Itens novos (sem uuid): cria + reserva, igual a create().
+            // Itens novos (sem uuid): cria, igual a create().
             foreach ($dto->items as $item) {
                 if (($item['uuid'] ?? null) !== null) {
                     continue;
@@ -466,7 +435,7 @@ class SaleService
                 $sellable = $this->resolveSellable($item, $order->tenant_id);
                 $line = $this->resolveOrderItemLine($sellable, $client, $item);
 
-                $newItem = SaleItem::create([
+                SaleItem::create([
                     'tenant_id' => $order->tenant_id,
                     'order_id' => $order->id,
                     'ticket_type_id' => $line['is_ticket_type'] ? $sellable->id : null,
@@ -476,17 +445,6 @@ class SaleService
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
                 ]);
-
-                if ($order->stock_reserved && $line['is_ticket_type']) {
-                    $this->stockService->reserve(
-                        ticketType: $sellable,
-                        location: $stockLocation,
-                        quantity: $line['quantity'],
-                        reason: "Atualização de itens do pedido {$order->uuid}",
-                        sourceType: SaleItem::class,
-                        sourceId: $newItem->id,
-                    );
-                }
             }
 
             // Itens existentes referenciados no payload (com uuid): atualiza.
@@ -505,34 +463,6 @@ class SaleService
                 $line = $this->resolveOrderItemLine($sellable, $client, $item, $existing);
                 $quantity = $line['quantity'];
 
-                $existingWasTicketType = $existing->ticket_type_id !== null;
-                $sellableChanged = $isTicketType
-                    ? (!$existingWasTicketType || (int) $existing->ticket_type_id !== (int) $sellable->id)
-                    : ($existingWasTicketType || (int) $existing->event_product_id !== (int) $sellable->id);
-                $quantityChanged = abs(round((float) $existing->quantity, 3) - round($quantity, 3)) > 0.0001;
-
-                if (($sellableChanged || $quantityChanged) && $order->stock_reserved) {
-                    if ($existingWasTicketType) {
-                        $reserveMovement = $this->findReserveMovement($order, $existing);
-
-                        $this->stockService->reserveCancel(
-                            originalReserve: $reserveMovement,
-                            notes: "Atualização de itens do pedido {$order->uuid}",
-                        );
-                    }
-
-                    if ($isTicketType) {
-                        $this->stockService->reserve(
-                            ticketType: $sellable,
-                            location: $stockLocation,
-                            quantity: $quantity,
-                            reason: "Atualização de itens do pedido {$order->uuid}",
-                            sourceType: SaleItem::class,
-                            sourceId: $existing->id,
-                        );
-                    }
-                }
-
                 $existing->ticket_type_id = $isTicketType ? $sellable->id : null;
                 $existing->event_product_id = $isTicketType ? null : $sellable->id;
                 $existing->quantity = $quantity;
@@ -548,15 +478,6 @@ class SaleService
                     continue;
                 }
 
-                if ($order->stock_reserved && $existing->ticket_type_id !== null) {
-                    $reserveMovement = $this->findReserveMovement($order, $existing);
-
-                    $this->stockService->reserveCancel(
-                        originalReserve: $reserveMovement,
-                        notes: "Atualização de itens do pedido {$order->uuid}",
-                    );
-                }
-
                 $existing->delete();
             }
 
@@ -568,10 +489,6 @@ class SaleService
 
             if ($dto->notes !== null) {
                 $order->notes = $dto->notes;
-            }
-
-            if ($dto->stockLocationUuid) {
-                $order->stock_location_id = $stockLocation->id;
             }
 
             if ($dto->expectedDeliveryDate !== null) {
@@ -702,8 +619,7 @@ class SaleService
      * `confirmed`) — sem essa checagem, deliver()/pay()/payInstallment()
      * contornam a fila de aprovação por completo (achado de code review:
      * um pedido nunca aprovado, ou explicitamente `rejected`, podia ser
-     * entregue/pago normalmente, causando inclusive saída física de
-     * estoque para um pedido `stock_reserved=false` nunca aprovado).
+     * entregue/pago normalmente sem nunca ter passado pela aprovação).
      */
     private function assertOrderIsApproved(Sale $order): void
     {
@@ -922,8 +838,7 @@ class SaleService
 
     /**
      * Pedido inteiro, não item a item. Bloqueado se qualquer parcela (ou
-     * o pedido não parcelado) já estiver paga. Efeito no estoque depende
-     * de já ter sido entregue (returnStock) ou não (reserveCancel).
+     * o pedido não parcelado) já estiver paga.
      */
     public function cancel(Sale $order, CancelSaleDTO $dto): Sale
     {
@@ -953,47 +868,6 @@ class SaleService
 
             if ($hasPaidAmount && $paidPixCharge === null) {
                 throw new InvalidSaleStateException(__('messages.order.cannot_cancel_paid'));
-            }
-
-            // select() exclui image_data — ver convertReservationsToExit().
-            $order->loadMissing([
-                'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
-                'stockLocation',
-            ]);
-
-            // Saída física (entrega) já aconteceu de forma incondicional em
-            // performDelivery() (ver convertReservationsToExit()), mesmo
-            // para pedido com stock_reserved=false — por isso a devolução
-            // aqui também é incondicional. Só a liberação de RESERVA (pedido
-            // ainda não entregue) depende de reserva ter existido. Itens de
-            // event_product não têm estoque físico (fora do módulo Estoque
-            // nesta rodada) — pulados aqui.
-            foreach ($order->items as $item) {
-                if ($item->ticket_type_id === null) {
-                    continue;
-                }
-
-                if ($order->is_delivered) {
-                    $this->stockService->returnStock(
-                        ticketType: $item->ticketType,
-                        location: $order->stockLocation,
-                        quantity: (float) $item->quantity,
-                        reason: "Cancelamento do pedido {$order->uuid}",
-                    );
-
-                    continue;
-                }
-
-                if (!$order->stock_reserved) {
-                    continue;
-                }
-
-                $reserveMovement = $this->findReserveMovement($order, $item);
-
-                $this->stockService->reserveCancel(
-                    originalReserve: $reserveMovement,
-                    notes: "Cancelamento do pedido {$order->uuid}",
-                );
             }
 
             $order->cancelled_at = now();
@@ -1053,13 +927,10 @@ class SaleService
     }
 
     /**
-     * Recusa um pedido pendente de aprovação. Se houve reserva de estoque
-     * na criação (stock_reserved=true), libera por item — mesmo formato de
-     * liberação de reserva já usado em cancel() pro caminho "ainda não
-     * entregue" (pedido pending_approval nunca chega a ser entregue antes
-     * de passar por aqui). NÃO seta cancelled_at (fica null) — a distinção
-     * "recusado" fica só no campo status, pra não colidir com relatórios
-     * que hoje derivam "foi cancelado" de cancelled_at !== null.
+     * Recusa um pedido pendente de aprovação. NÃO seta cancelled_at (fica
+     * null) — a distinção "recusado" fica só no campo status, pra não
+     * colidir com relatórios que hoje derivam "foi cancelado" de
+     * cancelled_at !== null.
      */
     public function reject(Sale $order, ?string $reason): Sale
     {
@@ -1072,30 +943,8 @@ class SaleService
                 throw new InvalidSaleStateException(__('messages.order.not_pending_approval'));
             }
 
-            if ($order->stock_reserved) {
-                // select() exclui image_data — ver convertReservationsToExit().
-                $order->loadMissing([
-                    'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
-                    'stockLocation',
-                ]);
-
-                foreach ($order->items as $item) {
-                    if ($item->ticket_type_id === null) {
-                        continue;
-                    }
-
-                    $reserveMovement = $this->findReserveMovement($order, $item);
-
-                    $this->stockService->reserveCancel(
-                        originalReserve: $reserveMovement,
-                        notes: "Recusa do pedido {$order->uuid}",
-                    );
-                }
-            }
-
             // Pedido recusado nunca deve consumir o limite de uso do
-            // cliente sobre um cupom (mesmo espírito de liberar a reserva
-            // de estoque acima) — roadmap Delivery, Fase 3.
+            // cliente sobre um cupom — roadmap Delivery, Fase 3.
             if ($order->coupon_id !== null) {
                 CouponRedemption::where('order_id', $order->id)->delete();
             }
@@ -1253,18 +1102,15 @@ class SaleService
     }
 
     /**
-     * Converte reserva em saída real de estoque e marca o pedido como
-     * entregue. Sem guard/lock/transação próprios — quem chama já garantiu
-     * a validade da transição (deliver() valida cancelled_at/is_delivered
-     * e trava a linha; create() está criando a linha agora, sem
-     * concorrência possível; a cascata de payInstallment() já trava a
-     * linha e checa is_delivered antes de chamar). Reaproveitado nos 3
-     * lugares para não duplicar a integração com Estoque.
+     * Marca o pedido como entregue. Sem guard/lock/transação próprios —
+     * quem chama já garantiu a validade da transição (deliver() valida
+     * cancelled_at/is_delivered e trava a linha; create() está criando a
+     * linha agora, sem concorrência possível; a cascata de
+     * payInstallment() já trava a linha e checa is_delivered antes de
+     * chamar). Reaproveitado nos 3 lugares.
      */
     private function performDelivery(Sale $order): Sale
     {
-        $this->convertReservationsToExit($order);
-
         $fromStage = $order->is_out_for_delivery ? 'dispatch' : 'production';
         $order->is_delivered = true;
         $order->delivered_at = now();
@@ -1282,15 +1128,11 @@ class SaleService
     }
 
     /**
-     * Inverso de performDelivery(): reverte a saída real de volta para
-     * reserva (ver revertReservationsFromExit() para o porquê dos dois
-     * passos por item) e desmarca o pedido como entregue. Sem
+     * Inverso de performDelivery(): desmarca o pedido como entregue. Sem
      * guard/lock/transação próprios — mesma convenção de performDelivery().
      */
     private function performUndelivery(Sale $order): Sale
     {
-        $this->revertReservationsFromExit($order);
-
         $order->is_delivered = false;
         $order->delivered_at = null;
         $order->save();
@@ -1396,127 +1238,6 @@ class SaleService
     }
 
     /**
-     * Para cada item: cancela a reserva original e registra a saída real
-     * — dois movimentos, dois registros no ledger. Reaproveitado tanto
-     * por deliver() quanto pela cascata de quitação em payInstallment().
-     */
-    private function convertReservationsToExit(Sale $order): void
-    {
-        // select() exclui image_data (BLOB, ~1MB/ingresso) — sem isso, um
-        // pedido com vários itens de ticket types com foto grande pode
-        // estourar memory_limit só pra registrar a saída de estoque, que
-        // nunca usa a imagem. Mesmo padrão de whitelist de
-        // TicketTypeService::listColumns(). Itens de event_product não têm
-        // estoque físico (fora do módulo Estoque nesta rodada) — pulados.
-        $order->loadMissing([
-            'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
-            'stockLocation',
-        ]);
-
-        foreach ($order->items as $item) {
-            if ($item->ticket_type_id === null) {
-                continue;
-            }
-
-            if ($order->stock_reserved) {
-                $reserveMovement = $this->findReserveMovement($order, $item);
-
-                $this->stockService->reserveCancel(
-                    originalReserve: $reserveMovement,
-                    notes: "Entrega do pedido {$order->uuid}",
-                );
-            }
-
-            $this->stockService->exit(
-                ticketType: $item->ticketType,
-                location: $order->stockLocation,
-                quantity: (float) $item->quantity,
-                reason: "Entrega do pedido {$order->uuid}",
-            );
-        }
-    }
-
-    /**
-     * Inverso de convertReservationsToExit(): para cada item, credita de
-     * volta o saldo disponível (returnStock(), mesma chamada que cancel()
-     * já faz para pedido entregue) e IMEDIATAMENTE recria a reserva
-     * (reserve(), mesma chamada que create() faz na criação do pedido) —
-     * sem o segundo passo, o saldo voltaria só para "disponível" em vez
-     * de "reservado", e um deliver() seguinte quebraria em
-     * findReserveMovement() (nenhum StockMovement tipo 'reserve' ativo
-     * apontando para este SaleItem). Reaproveitado só por
-     * performUndelivery().
-     */
-    private function revertReservationsFromExit(Sale $order): void
-    {
-        // Mesmo motivo do select() em convertReservationsToExit() — evitar
-        // carregar image_data (BLOB) à toa.
-        $order->loadMissing([
-            'items.ticketType' => fn($query) => $query->select(TicketTypeService::listColumns()),
-            'stockLocation',
-        ]);
-
-        foreach ($order->items as $item) {
-            if ($item->ticket_type_id === null) {
-                continue;
-            }
-
-            $this->stockService->returnStock(
-                ticketType: $item->ticketType,
-                location: $order->stockLocation,
-                quantity: (float) $item->quantity,
-                reason: "Reversão de entrega do pedido {$order->uuid}",
-            );
-
-            if ($order->stock_reserved) {
-                $this->stockService->reserve(
-                    ticketType: $item->ticketType,
-                    location: $order->stockLocation,
-                    quantity: (float) $item->quantity,
-                    reason: "Reversão de entrega do pedido {$order->uuid}",
-                    sourceType: SaleItem::class,
-                    sourceId: $item->id,
-                );
-            }
-        }
-    }
-
-    /**
-     * Busca a reserva ATIVA (ainda não cancelada) de um item — não basta
-     * "a primeira reserve encontrada", porque undeliver() pode recriar
-     * uma nova reserva para o mesmo SaleItem depois que a original já
-     * foi cancelada (convertida em saída na entrega). Sem o filtro
-     * whereNotExists, um SEGUNDO deliver()/cancel() depois de undeliver()
-     * podia reencontrar a reserva ORIGINAL (já cancelada) em vez da nova,
-     * e reserveCancel() rejeitaria com "reserva já cancelada" — achado
-     * durante a implementação de undeliver() (2026-07-14), documentado em
-     * .claude/memory/api-patterns.md.
-     */
-    private function findReserveMovement(Sale $order, SaleItem $item): StockMovement
-    {
-        $movement = StockMovement::where('tenant_id', $order->tenant_id)
-            ->where('source_type', SaleItem::class)
-            ->where('source_id', $item->id)
-            ->where('type', 'reserve')
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('stock_movements as reserve_cancels')
-                    ->whereColumn('reserve_cancels.source_id', 'stock_movements.id')
-                    ->where('reserve_cancels.source_type', StockMovement::class)
-                    ->where('reserve_cancels.type', 'reserve_cancel')
-                    ->whereNull('reserve_cancels.deleted_at');
-            })
-            ->orderByDesc('id')
-            ->first();
-
-        if (!$movement) {
-            throw new InvalidSaleStateException(__('messages.order.missing_reservation'));
-        }
-
-        return $movement;
-    }
-
-    /**
      * Resolve o item vendável (ingresso OU adicional/estacionamento) a
      * partir do payload — exatamente um de ticket_type_uuid/
      * event_product_uuid deve estar presente (garantido pelo Request, mas
@@ -1592,20 +1313,6 @@ class SaleService
         ];
     }
 
-    private function resolveDefaultStockLocation(int $tenantId): StockLocation
-    {
-        $default = StockLocation::where('tenant_id', $tenantId)
-            ->where('is_default', true)
-            ->whereNull('deleted_at')
-            ->first();
-
-        if (!$default) {
-            throw new InvalidSaleStateException(__('messages.order.no_default_stock_location'));
-        }
-
-        return $default;
-    }
-
     private function centsToDecimal(int $cents): string
     {
         return number_format($cents / 100, 2, '.', '');
@@ -1670,10 +1377,7 @@ class SaleService
      * payInstallment/cancel — sem isso, duas ações concorrentes no mesmo
      * pedido (ex.: deliver() e a cascata de payInstallment() ao mesmo
      * tempo) podem ambas ler o estado "antigo" antes de qualquer uma
-     * commitar. O saldo de estoque não corrompe de qualquer forma (o
-     * StockService já se protege via lock em StockBalance), mas sem este
-     * lock a segunda chamada cai numa exceção de Estoque não relacionada
-     * ao real motivo (corrida), em vez do 422 limpo de estado inválido.
+     * commitar, causando dupla transição a partir do mesmo estado.
      */
     private function lockOrder(Sale $order): Sale
     {

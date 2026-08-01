@@ -58,7 +58,7 @@ class ReconcileMercadoPagoSalePaymentsCommand extends Command
 
         foreach ($payments as $payment) {
             try {
-                $this->reconciliationService->reconcileSalePayment($payment);
+                $this->reconciliationService->reconcileOrderPayment($payment);
                 $reconciled++;
             } catch (\Throwable $e) {
                 $failed++;

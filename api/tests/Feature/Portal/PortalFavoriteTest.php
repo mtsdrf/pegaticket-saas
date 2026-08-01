@@ -8,7 +8,7 @@ use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Storefront\Concerns\CreatesStorefrontFixtures;
 use Tests\TestCase;
 
@@ -21,7 +21,7 @@ use Tests\TestCase;
 class PortalFavoriteTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
     use CreatesStorefrontFixtures;
 
     private function authenticatedCustomer(string $email): array

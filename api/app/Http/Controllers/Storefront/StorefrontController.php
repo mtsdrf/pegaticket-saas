@@ -15,7 +15,6 @@ use App\Services\Storefront\CouponService;
 use App\Services\Storefront\SaleRatingService;
 use App\Services\Storefront\StorefrontCatalogService;
 use App\Services\Storefront\StorefrontCheckoutService;
-use App\Services\Storefront\StoreBusinessHoursService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Http\Request;
 
@@ -28,7 +27,6 @@ class StorefrontController extends Controller
 {
     public function __construct(
         private StorefrontCatalogService $service,
-        private StoreBusinessHoursService $businessHoursService,
         private TenantSettingsService $tenantSettingsService,
         private StorefrontCheckoutService $checkoutService,
         private CouponService $couponService,
@@ -40,14 +38,12 @@ class StorefrontController extends Controller
     {
         $tenant = $this->service->findTenantBySlug($slug);
 
-        $businessHours = $this->businessHoursService->getForTenant($tenant->id);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
         $ratingSummary = $this->ratingService->tenantSummary($tenant->id);
 
         return APIResponse::success(
             new StorefrontTenantResource(
                 $tenant,
-                $businessHours,
                 $settings->estimated_preparation_minutes,
                 $ratingSummary['average_rating'],
                 $ratingSummary['ratings_count'],

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\Feature\Subscription\Concerns\CreatesSubscriptionFixtures;
 use Tests\TestCase;
@@ -27,7 +27,7 @@ class MercadoPagoWebhookTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
     use CreatesSubscriptionFixtures;
 
     private const SECRET = 'whsec_test_123';
@@ -69,14 +69,11 @@ class MercadoPagoWebhookTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 75.5]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         $orderData = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],

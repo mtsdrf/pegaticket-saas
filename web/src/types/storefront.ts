@@ -1,18 +1,12 @@
 import type { CouponType } from './coupon'
 import type { PaginationMeta } from './pagination'
 import type { PaymentMethod } from '../constants/paymentMethods'
-import type { StoreBusinessHourDay } from './storeBusinessHours'
 
 /** `GET /loja/{slug}` — allow-list estrita do backend (`StorefrontTenantResource`). */
 export interface StorefrontTenant {
   slug: string
   name: string
   logo_url: string | null
-  /**
-   * Delivery Fase 2 — pode trazer MÚLTIPLOS turnos no mesmo `day_of_week`
-   * (manhã + tarde, até 4). Dia sem nenhuma linha é considerado fechado.
-   */
-  business_hours: StoreBusinessHourDay[]
   estimated_preparation_minutes: number | null
   /** Delivery Fase 4 — agregado de `SaleRatingService::tenantSummary()`; `null` quando `ratings_count === 0` (nunca `0.0`). */
   average_rating: number | null
@@ -344,11 +338,7 @@ export interface StorefrontCreateHoldPayload {
   }>
 }
 
-/** Código de erro específico quando `tenant_settings.block_order_without_stock` está ligado e falta estoque. */
-export const INSUFFICIENT_STOCK_CODE = 'INSUFFICIENT_STOCK'
-
-/** Delivery Fase 2 — 3 códigos novos de erro do checkout (`StorefrontCheckoutController`), mesma família do `INSUFFICIENT_STOCK_CODE` acima. */
-export const STORE_CLOSED_CODE = 'STORE_CLOSED'
+/** Delivery Fase 2 — códigos de erro do checkout (`StorefrontCheckoutController`). */
 export const BELOW_MINIMUM_ORDER_CODE = 'BELOW_MINIMUM_ORDER'
 export const DELIVERY_AREA_NOT_SERVED_CODE = 'DELIVERY_AREA_NOT_SERVED'
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -20,7 +20,7 @@ class SalePrepLinkTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -42,13 +42,11 @@ class SalePrepLinkTest extends TestCase
             ->where('tenant_id', $this->tenant->id)
             ->update(['phone_primary' => '11988887777']);
 
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
 
         return Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,

@@ -145,6 +145,47 @@ Editor visual de mapa (setores/mesas/assentos/camarotes), motor de lotes com vir
 - ~~Colisão de nome "Ticket" com suporte~~ **Decidido 2026-07-31: `SupportTicketController`/`SupportTicket` → `HelpRequestController`/`HelpRequest`.** "Ticket" fica livre pro domínio de ingresso.
 - Trabalho recente de comércio (promoção %, badges, notes por item) — mantido por ora, reavaliado durante o split `Product`→`TicketType`/`EventProduct`.
 
+## 7. Mapeamento geral — estado real em 2026-08-01 (pausa a pedido do usuário)
+
+Auditado direto no disco (sem git). Ordem de leitura: o que está sólido → o que está quebrado agora → o que falta.
+
+### ✅ Sólido (testado, ambos os lados, build/test verdes na última verificação)
+- Limpeza completa: Fiscal, Accounting, Marketplace, Route, ApiKey/Webhook 3º, SocialMedia, Balcão/PDV/Stock órfão — tudo fora.
+- Renomeações concluídas: `SupportTicket→HelpRequest`, `Client→FinalCustomer` (+ endpoint de busca pro staff), `Product/ProductCategory→TicketType/EventCategory`, `EventProduct` novo.
+- Domínio de catálogo (`Event`, `EventCategory`, `TicketType`, `EventProduct`) com CRUD completo nos dois lados, storefront público simplificado listando eventos.
+- `EventSession`, `TicketBatch` (lote com validação de limite), `Venue`/`VenueMapVersion`/`Seat` (dados — **sem editor visual drag-and-drop**, isso é tarefa de frontend própria, não iniciada).
+- `InventoryHold`/`InventoryHoldItem` (reserva) + `StorefrontHoldController`/`StorefrontHoldService` — criados, ainda não verificados nesta auditoria (suite de teste não roda pra confirmar).
+
+### 🔴 Quebrado agora (não é "pendente", é regressão ativa)
+- **Frontend**: `npm run build` falha com 6 erros de TypeScript, todos no mesmo eixo do rename `Order→Sale`:
+  - `StorefrontSaleActionDialogProps` não tem mais `orderUuid` (prop renomeada, uso não atualizado em `StorefrontSaleManagementPage.tsx:692`).
+  - `../../services/orderTrackingService` e `../../types/order` não existem mais (`StorefrontCheckoutPage.tsx`, `reportDetailService.ts`) — foram renomeados/removidos sem atualizar quem importava.
+  - `portalSaleService.createOrderPixCharge` não existe, virou `createSalePixCharge` (`StorefrontCheckoutPage.tsx:123`).
+  - Ainda não consertado nesta rodada (2026-08-02) — escopo desta rodada foi só backend.
+
+### ✅ Consertado em 2026-08-02 (backend)
+- **Regressão do rename `Order→Sale`**: causa raiz eram três classes com namespace/nome de classe divergente do caminho do arquivo (PSR-4 quebrado) — `CreatesSaleFixtures` (ainda declarada como `Tests\Feature\Orders\Concerns\CreatesOrderFixtures`), 10 arquivos de teste em `tests/Feature/Sales/*Test.php` ainda com `namespace Tests\Feature\Orders`, e `tests/Unit/Services/Sale/SaleInstallmentDueDateCalculatorTest.php` cujo conteúdo real era a classe `ParcelaVencimentoCalculatorTest` (arquivo renomeado sem renomear a classe). Também achado durante a correção: `Sale::items()/installments()/rating()` e todo `belongsTo(Sale::class)` (SaleItem, SaleInstallment, SaleRating, SalePrepLink, CouponRedemption, CashbackEarning, CashbackRedemption) dependiam da FK default por convenção Eloquent (`sale_id`), que nunca existiu — a coluna real sempre foi `order_id` (tabela `orders`/`order_items` não foi renomeada, só o Model). Toda relation precisou de FK explícita. Rota pública `/rastreio/{sale:uuid}` também não batia com o parâmetro `Sale $order` do controller (implicit binding por nome), causando resposta 200 com todos os campos `null`. `php artisan test`: **570 passed** (era 0, suite não rodava).
+- **Domínio `Stock` removido por completo** (armazém físico sem equivalente em venda de ingresso — controle de quantidade agora é só `TicketType.quantity_available`/`TicketBatch.quantity_sold`): `Models/Stock`, `Services/Stock`, `Repositories/{Contracts,Eloquent}/Stock*`, `DTOs/Stock`, `Events/Stock`, `Listeners/Stock` + `Listeners/Tenant/CreateDefaultStockLocation`, exceptions `InsufficientStockException`/`InvalidStockMovementException`. `SaleService` inteiro decoplado de `StockService` (reserva/saída/estorno removidos de create/updateItems/deliver/undeliver/cancel/reject — métodos `convertReservationsToExit`/`revertReservationsFromExit`/`findReserveMovement`/`resolveDefaultStockLocation` excluídos). Colunas `orders.stock_location_id`/`orders.stock_reserved`/`tenant_settings.block_order_without_stock` dropadas (migration `2026_08_02_100000`). Relatório CMV (`ReportService::cmv`, `/reports/cmv`) e analytics `stalled-products`/`stock-ruptures` removidos por completo — dependiam 100% de `stock_movements`/`stock_balances`. Functionality `stock` removida do `FunctionalitiesSeeder`/`InitialPlansSeeder`.
+- **`StoreBusinessHour` removido por completo** (horário de loja física sem equivalente em evento, que tem `starts_at`/`ends_at` próprio): Model/Service/Repository/Request/DTO/Resource/Event/Listener + exceptions `InvalidStoreBusinessHoursException`/`StoreClosedException`. Guard "loja fechada" removido de `StorefrontCheckoutService::checkout()` (Guard 1, `isOpenNow()`). `StorefrontTenantResource` perdeu o campo `business_hours`. `OnboardingService` perdeu o step `storefront_configured` (não tinha mais dado pra calcular). Tabela `store_business_hours` dropada na mesma migration acima.
+- **`Location` (Estado/Cidade/Bairro/Endereço)**: já estava 100% removido do código (`app/Models/Location` etc. eram diretórios vazios, deletados agora); achado nesta rodada: `DatabaseSeeder` ainda chamava `EstadosSeeder::class`, um seeder que não existe mais no disco — quebrava `php artisan db:seed`/testes que chamam `->seed()`. Removido da lista.
+- Achados fora do escopo original mas bloqueantes, corrigidos: `database/seeders/{DemoTenantSeeder,DemoPlansPresentationSeeder,StoreCatalogDemoSeeder}.php` eram seeders órfãos (não chamados por `DatabaseSeeder` nem por nenhum teste) já quebrados desde o split `Product→TicketType/EventProduct` (referenciavam `App\Models\Product\Product`, inexistente) — deletados.
+
+### ❌ Não iniciado
+- `Ticket` (emissão + QR Code) + `CheckinService`/PWA de portaria.
+- Reescrita do checkout do comprador final pro fluxo de ingresso (seleção de assento no mapa, participantes, confirmação com hold ativo).
+- Editor visual de mapa (drag-and-drop de mesas/assentos) — só o backend de dados existe.
+- Integração PagBank real (hoje só existe `MercadoPagoPaymentProvider`, que é a assinatura clube→PegaTicket, não o pagamento comprador→clube).
+- Estorno externo formal (`ExternalRefundService`).
+- Fase 7 "de verdade" (brand-guidelines.md/design-system.md ainda descrevem produto genérico, não ingressos).
+
+## 8. Próximos passos recomendados (em ordem)
+
+1. ~~Consertar a regressão do rename `Order→Sale` (backend)~~ **Feito 2026-08-02** — `php artisan test` verde (570 passed). `Stock`/`StoreBusinessHour`/`Location` removidos por completo do backend.
+2. Consertar o build do frontend (`npm run build`, 6 erros TS listados acima) — ainda não tocado nesta rodada.
+3. Decidir conscientemente se o rename `Order→Sale` é uma decisão válida (pode fazer sentido — "Sale" pode ser mais preciso que "Order" pra venda de ingresso) ou se deve ser revertido pra `Order` — **isso não estava no roadmap combinado, foi decisão tomada sem alinhamento**, precisa de confirmação explícita antes de prosseguir.
+4. Verificar se o frontend também precisa de limpeza de `Stock`/`StoreBusinessHour` (telas/serviços que consumiam `stock_location_uuid`, `business_hours`, `stock_quantity`, CMV) — não auditado nesta rodada (backend only).
+5. Só então seguir pro que falta: `Ticket`+QR+Checkin → checkout de comprador → editor visual de mapa → PagBank → estorno externo → Fase 7 de rebrand de conteúdo.
+
 ## 6. Execução autônoma (2026-07-31, a partir daqui)
 
 Usuário autorizou execução completa e contínua ("inicie toda reestruturação e só pare quando tudo estiver finalizado"). Ordem de execução real, registrada conforme progride — ver commits/relatórios de agente pra detalhe por etapa:

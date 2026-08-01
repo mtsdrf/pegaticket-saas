@@ -1,15 +1,5 @@
 import type { PaginationMeta } from './pagination'
 
-/** Bloco de endereço aditivo do `SaleResource` — presente no detalhe do pedido online e na tela pública de preparo. */
-export interface SaleFinalCustomerAddress {
-  logradouro: string | null
-  numero: string | null
-  complemento: string | null
-  cep: string | null
-  bairro_name: string | null
-  cidade_name: string | null
-}
-
 /** `final_customer` do `SaleResource`/`SaleListResource` — comprador (`FinalCustomer`), não mais `Client` (CRUD descontinuado, migração 2026-07-31). */
 export interface SaleFinalCustomerRef {
   uuid: string
@@ -18,12 +8,6 @@ export interface SaleFinalCustomerRef {
   last_name?: string | null
   /** Aditivos do `SaleResource` (roadmap Loja) — só presentes quando o pedido é carregado com o detalhe completo. */
   phone_primary?: string | null
-  endereco?: SaleFinalCustomerAddress | null
-}
-
-export interface SaleStockLocationRef {
-  uuid: string
-  name: string
 }
 
 /** Espelha `items[]` de `SaleResource` — exatamente um de `ticket_type`/`event_product` vem não-nulo por item. */
@@ -104,7 +88,6 @@ export interface Sale {
   is_out_for_delivery: boolean
   out_for_delivery_at: string | null
   final_customer?: SaleFinalCustomerRef
-  stock_location?: SaleStockLocationRef | null
   items?: SaleItem[]
   installments?: SaleInstallment[]
   created_at: string
@@ -143,7 +126,6 @@ export interface SaleCreateItemPayload {
 
 export interface SalePayload {
   final_customer_uuid: string
-  stock_location_uuid?: string
   is_installment: boolean
   installments_count?: number | null
   /** Backend limita a 500 caracteres. */
@@ -196,7 +178,6 @@ export interface SaleUpdateItemDraft {
 
 export interface SaleUpdateItemsPayload {
   notes?: string
-  stock_location_uuid?: string
   expected_delivery_date?: string
   items: SaleUpdateItemDraft[]
 }

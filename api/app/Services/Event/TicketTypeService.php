@@ -68,8 +68,7 @@ class TicketTypeService
             ->select(self::listColumns())
             ->where('ticket_types.tenant_id', $tenantId)
             ->whereNull('ticket_types.deleted_at')
-            ->with(self::EAGER_RELATIONS)
-            ->withSum('stockBalances', 'quantity_on_hand');
+            ->with(self::EAGER_RELATIONS);
 
         if (!empty($filters['name'])) {
             $query->where('ticket_types.name', 'like', '%' . $filters['name'] . '%');

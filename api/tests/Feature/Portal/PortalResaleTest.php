@@ -10,7 +10,7 @@ use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -18,10 +18,10 @@ use Tests\TestCase;
  * GET /portal/sales/{uuid}/items, preço/disponibilidade ATUAIS do produto,
  * nunca o preço congelado no pedido antigo.
  */
-class PortalReorderTest extends TestCase
+class PortalResaleTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     private function authenticatedCustomer(string $email): array
     {
@@ -44,13 +44,11 @@ class PortalReorderTest extends TestCase
 
     private function createOrderWithItem(Tenant $tenant, FinalCustomer $owner, $product, float $quantity = 2, float $unitPrice = 5): Sale
     {
-        $location = $this->createLocation($tenant->id);
 
         $order = Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $owner->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => $quantity * $unitPrice,
             'is_paid' => false,

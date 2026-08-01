@@ -5,7 +5,6 @@ namespace App\Models\Sale;
 use App\Models\BaseModel;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Stock\StockLocation;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\SaleRating;
 use App\Models\Tenant\Tenant;
@@ -22,7 +21,6 @@ class Sale extends BaseModel
     protected $fillable = [
         'tenant_id',
         'final_customer_id',
-        'stock_location_id',
         'codigo',
         'is_installment',
         'total_amount',
@@ -47,7 +45,6 @@ class Sale extends BaseModel
         'status_before_cancellation_request',
         'origin',
         'fulfillment_type',
-        'stock_reserved',
         'is_out_for_delivery',
         'out_for_delivery_at',
         'operated_by',
@@ -70,7 +67,6 @@ class Sale extends BaseModel
         'due_date' => 'date',
         'expected_delivery_date' => 'date',
         'cancelled_at' => 'datetime',
-        'stock_reserved' => 'boolean',
         'is_out_for_delivery' => 'boolean',
         'out_for_delivery_at' => 'datetime',
     ];
@@ -79,7 +75,6 @@ class Sale extends BaseModel
         'id',
         'tenant_id',
         'final_customer_id',
-        'stock_location_id',
         'coupon_id',
         'operated_by',
         'client_sale_uuid',
@@ -158,11 +153,6 @@ class Sale extends BaseModel
             ->where('tenant_id', $this->tenant_id);
     }
 
-    public function stockLocation()
-    {
-        return $this->belongsTo(StockLocation::class, 'stock_location_id');
-    }
-
     public function coupon()
     {
         return $this->belongsTo(Coupon::class);
@@ -179,17 +169,17 @@ class Sale extends BaseModel
 
     public function items()
     {
-        return $this->hasMany(SaleItem::class);
+        return $this->hasMany(SaleItem::class, 'order_id');
     }
 
     public function installments()
     {
-        return $this->hasMany(SaleInstallment::class);
+        return $this->hasMany(SaleInstallment::class, 'order_id');
     }
 
     public function rating()
     {
-        return $this->hasOne(SaleRating::class);
+        return $this->hasOne(SaleRating::class, 'order_id');
     }
 
     /**

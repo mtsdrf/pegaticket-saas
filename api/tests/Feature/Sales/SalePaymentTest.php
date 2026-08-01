@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Orders;
+namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
@@ -10,7 +10,7 @@ use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Orders\Concerns\CreatesOrderFixtures;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
@@ -24,7 +24,7 @@ class SalePaymentTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesOrderFixtures;
+    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -44,14 +44,11 @@ class SalePaymentTest extends TestCase
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
-        $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
 
-        $this->stockEntry($this->tenant->id, $product, $location, 100);
 
         return $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => $qty],
@@ -166,12 +163,10 @@ class SalePaymentTest extends TestCase
         ]);
 
         $client = $this->createClient($otherTenant->id);
-        $location = $this->createLocation($otherTenant->id, ['is_default' => true]);
 
         $foreignOrder = Sale::create([
             'tenant_id' => $otherTenant->id,
             'final_customer_id' => $client->id,
-            'stock_location_id' => $location->id,
             'is_installment' => false,
             'total_amount' => 30,
             'status' => 'confirmed',

@@ -21,15 +21,12 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AsyncAutocomplete } from '../crud/AsyncAutocomplete'
-import { LocalAutocomplete } from '../crud/LocalAutocomplete'
 import * as eventProductService from '../../services/eventProductService'
 import * as saleService from '../../services/saleService'
-import * as stockLocationService from '../../services/stockLocationService'
 import * as ticketTypeService from '../../services/ticketTypeService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
 import type { Sale, SaleInstallmentsReallocatePayload, SaleUpdateItemsPayload } from '../../types/sale'
-import type { StockLocation } from '../../types/stockLocation'
 import { formatCurrency, formatDateBR, formatItemQuantity, toDateOnly } from '../../utils/format'
 
 const NOTES_MAX_LENGTH = 500
@@ -125,10 +122,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
   const [itemsFieldErrors, setItemsFieldErrors] = useState<Record<string, string[]>>({})
   const [isSavingItems, setIsSavingItems] = useState(false)
   const [headerNotesDraft, setHeaderNotesDraft] = useState('')
-  const [headerStockLocationDraft, setHeaderStockLocationDraft] = useState('')
   const [headerExpectedDeliveryDraft, setHeaderExpectedDeliveryDraft] = useState('')
-  const [locations, setLocations] = useState<StockLocation[]>([])
-  const [isLoadingLocations, setIsLoadingLocations] = useState(false)
 
   useEffect(() => {
     if (!open || !orderUuid) return
@@ -313,20 +307,10 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
     }))
     setItemDrafts(drafts.length > 0 ? drafts : [createEmptyItemDraft()])
     setHeaderNotesDraft(selectedSale.notes ?? '')
-    setHeaderStockLocationDraft(selectedSale.stock_location?.uuid ?? '')
     setHeaderExpectedDeliveryDraft(selectedSale.expected_delivery_date ? toDateOnly(selectedSale.expected_delivery_date) : '')
     setItemsEditorError(null)
     setItemsFieldErrors({})
     setItemsEditorOpen(true)
-
-    if (locations.length === 0 && !isLoadingLocations) {
-      setIsLoadingLocations(true)
-      stockLocationService
-        .listStockLocations({ per_page: 100 })
-        .then((result) => setLocations(result.items))
-        .catch(() => undefined)
-        .finally(() => setIsLoadingLocations(false))
-    }
   }
 
   function closeItemsEditor() {
@@ -365,7 +349,6 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
     try {
       const payload: SaleUpdateItemsPayload = {
         notes: headerNotesDraft.trim() || undefined,
-        stock_location_uuid: headerStockLocationDraft || undefined,
         expected_delivery_date: headerExpectedDeliveryDraft || undefined,
         items: itemDrafts.map((row) => ({
           ...(row.uuid ? { uuid: row.uuid } : {}),
@@ -409,7 +392,6 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
               )}
               {!itemsEditorOpen && (
                 <>
-                  <Typography><strong>Local de estoque:</strong> {selectedSale.stock_location?.name ?? 'Padrão da empresa'}</Typography>
                   {selectedSale.payment_method && (
                     <Typography>
                       <strong>Pagamento:</strong> {PAYMENT_METHOD_LABELS[selectedSale.payment_method as PaymentMethod] ?? selectedSale.payment_method}
@@ -449,33 +431,18 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
                   <Stack spacing={2}>
                     {itemsEditorError && <Alert severity="error">{itemsEditorError}</Alert>}
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
-                      <LocalAutocomplete
-                        label="Local de estoque"
-                        placeholder="Padrão da empresa"
-                        fullWidth
-                        size="small"
-                        loading={isLoadingLocations}
-                        options={locations}
-                        value={locations.find((location) => location.uuid === headerStockLocationDraft) ?? null}
-                        onChange={(location) => setHeaderStockLocationDraft(location?.uuid ?? '')}
-                        getOptionLabel={(location) => location.name}
-                        getOptionKey={(location) => location.uuid}
-                        error={Boolean(itemsFieldErrors.stock_location_uuid?.[0])}
-                        helperText={itemsFieldErrors.stock_location_uuid?.[0]}
-                      />
-
-                      <TextField
-                        label="Previsão de entrega"
-                        type="date"
-                        size="small"
-                        value={headerExpectedDeliveryDraft}
-                        onChange={(event) => setHeaderExpectedDeliveryDraft(event.target.value)}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        error={Boolean(itemsFieldErrors.expected_delivery_date?.[0])}
-                        helperText={itemsFieldErrors.expected_delivery_date?.[0]}
-                      />
-                    </Box>
+                    <TextField
+                      label="Previsão de entrega"
+                      type="date"
+                      size="small"
+                      fullWidth
+                      value={headerExpectedDeliveryDraft}
+                      onChange={(event) => setHeaderExpectedDeliveryDraft(event.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      error={Boolean(itemsFieldErrors.expected_delivery_date?.[0])}
+                      helperText={itemsFieldErrors.expected_delivery_date?.[0]}
+                      sx={{ maxWidth: { md: '50%' } }}
+                    />
 
                     <TextField
                       label="Observações"
@@ -715,7 +682,7 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
         <DialogTitle>Aprovar cancelamento</DialogTitle>
         <DialogContent>
           <Alert severity="warning">
-            Ao aprovar, o pedido é cancelado de verdade agora (estoque reservado é liberado). Esta ação não pode ser desfeita.
+            Ao aprovar, o pedido é cancelado de verdade agora. Esta ação não pode ser desfeita.
           </Alert>
         </DialogContent>
         <DialogActions>
