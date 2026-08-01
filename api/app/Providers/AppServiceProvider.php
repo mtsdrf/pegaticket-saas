@@ -99,6 +99,8 @@ use App\Repositories\Eloquent\{
 use App\Contracts\Payment\PaymentProviderInterface;
 use App\Services\Payment\ManualPaymentProvider;
 use App\Services\Payment\MercadoPagoPaymentProvider;
+use App\Services\Payment\PagBankPaymentProvider;
+use App\Services\Sale\SalePaymentService;
 
 /**
  * Class AppServiceProvider
@@ -400,19 +402,38 @@ class AppServiceProvider extends ServiceProvider
             PaymentRepository::class
         );
 
-        // Provedor de pagamento — resolvido por config('services.payments.provider')
-        // (env PAYMENT_PROVIDER, default 'manual'). 'manual' preserva o
-        // comportamento no-op original (fatura/pedido fica pending até
+        // Provedor de pagamento (rail Clube->PegaTicket / assinatura) —
+        // resolvido por config('services.payments.provider') (env
+        // PAYMENT_PROVIDER, default 'manual'). 'manual' preserva o
+        // comportamento no-op original (fatura fica pending até
         // conciliação manual). 'mercadopago' liga o PSP real (roadmap Fase
         // B, item 1) assim que as credenciais em .env forem preenchidas —
-        // domínio (SubscriptionService/InvoiceService/SalePaymentService)
-        // depende só da interface, nunca do adapter concreto.
+        // domínio (SubscriptionService/InvoicePaymentService) depende só da
+        // interface, nunca do adapter concreto. Binding GLOBAL — NÃO tocar
+        // aqui para o rail de venda de ingresso, ver bind contextual de
+        // SalePaymentService logo abaixo.
         $this->app->bind(PaymentProviderInterface::class, function ($app) {
-            return match (config('services.payments.provider')) {
-                'mercadopago' => $app->make(MercadoPagoPaymentProvider::class),
-                default => $app->make(ManualPaymentProvider::class),
-            };
+            return $this->resolvePaymentProvider($app, (string) config('services.payments.provider'));
         });
+
+        // Provedor de pagamento (rail comprador->clube / venda de ingresso)
+        // — SÓ para SalePaymentService, via config('services.payments.
+        // sale_provider') (env SALE_PAYMENT_PROVIDER). Sem valor definido,
+        // herda 'services.payments.provider' (comportamento de hoje, os
+        // dois rails compartilhando o mesmo adapter). Definir
+        // SALE_PAYMENT_PROVIDER=pagbank liga PagBankPaymentProvider (roadmap
+        // seção 2.1) SEM afetar o binding global acima usado pela
+        // assinatura.
+        $this->app->when(SalePaymentService::class)
+            ->needs(PaymentProviderInterface::class)
+            ->give(function ($app) {
+                $saleProvider = config('services.payments.sale_provider');
+                $provider = $saleProvider !== null && $saleProvider !== ''
+                    ? (string) $saleProvider
+                    : (string) config('services.payments.provider');
+
+                return $this->resolvePaymentProvider($app, $provider);
+            });
 
         // Central de chamados (roadmap A4, item 17)
         $this->app->bind(
@@ -437,5 +458,21 @@ class AppServiceProvider extends ServiceProvider
             RefundRepository::class
         );
 
+    }
+
+    /**
+     * Resolve o adapter concreto de PaymentProviderInterface a partir do
+     * nome de provider configurado — reaproveitado tanto pelo binding
+     * global (assinatura) quanto pelo binding contextual de
+     * SalePaymentService (venda de ingresso), para as duas listas de
+     * providers ficarem sempre em sincronia num único lugar.
+     */
+    private function resolvePaymentProvider($app, string $provider): PaymentProviderInterface
+    {
+        return match ($provider) {
+            'mercadopago' => $app->make(MercadoPagoPaymentProvider::class),
+            'pagbank' => $app->make(PagBankPaymentProvider::class),
+            default => $app->make(ManualPaymentProvider::class),
+        };
     }
 }

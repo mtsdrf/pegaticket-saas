@@ -47,12 +47,23 @@ return [
     |--------------------------------------------------------------------------
     |
     | 'provider' escolhe o adapter ligado em PaymentProviderInterface (ver
-    | AppServiceProvider). 'manual' (default) preserva o comportamento atual
-    | (sem PSP, conciliação manual). 'mercadopago' liga o adapter real.
+    | AppServiceProvider) para o rail Clube->PegaTicket (assinatura —
+    | SubscriptionService/InvoicePaymentService). 'manual' (default)
+    | preserva o comportamento atual (sem PSP, conciliação manual).
+    | 'mercadopago' liga o adapter real.
+    |
+    | 'sale_provider' é o mesmo tipo de seleção, mas SÓ para o rail
+    | comprador->clube (venda de ingresso — SalePaymentService, binding
+    | contextual em AppServiceProvider). Quando null/vazio (default),
+    | herda o valor de 'provider' acima — mesmo comportamento de hoje,
+    | onde os dois rails compartilhavam um único binding. Definir
+    | SALE_PAYMENT_PROVIDER separadamente permite trocar só o rail de
+    | venda (ex.: 'pagbank') sem tocar a assinatura.
     |
     */
     'payments' => [
         'provider' => env('PAYMENT_PROVIDER', 'manual'),
+        'sale_provider' => env('SALE_PAYMENT_PROVIDER'),
     ],
 
     'mercadopago' => [
@@ -86,6 +97,27 @@ return [
         // o usuário por muito tempo se a tentativa original realmente
         // falhou rápido. Ver IdempotencyRepository::findOrCreatePending.
         'idempotency_lock_seconds' => (int) env('MERCADOPAGO_IDEMPOTENCY_LOCK_SECONDS', 120),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PagBank (rail comprador->clube — venda de ingresso)
+    |--------------------------------------------------------------------------
+    |
+    | Adapter STUB (App\Services\Payment\PagBankPaymentProvider) — sem
+    | credenciais reais nesta onda, a chamada HTTP à API do PagBank ainda
+    | não existe (ver TODO PAGBANK REAL no adapter). Chaves abaixo já
+    | preparadas para quando as credenciais reais existirem; até lá ficam
+    | vazias e o adapter se comporta como o ManualPaymentProvider (cobrança
+    | nasce 'pending', conciliação manual).
+    |
+    */
+    'pagbank' => [
+        'environment' => env('PAGBANK_ENVIRONMENT', 'sandbox'),
+        'token' => env('PAGBANK_ENVIRONMENT', 'sandbox') === 'production'
+            ? env('PAGBANK_TOKEN_PROD')
+            : env('PAGBANK_TOKEN_SANDBOX'),
+        'webhook_secret' => env('PAGBANK_WEBHOOK_SECRET'),
     ],
 
     'ifood' => [

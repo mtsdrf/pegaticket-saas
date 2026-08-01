@@ -178,13 +178,33 @@ Auditado direto no disco (sem git). Ordem de leitura: o que está sólido → o 
 - Estorno externo formal (`ExternalRefundService`).
 - Fase 7 "de verdade" (brand-guidelines.md/design-system.md ainda descrevem produto genérico, não ingressos).
 
-## 8. Próximos passos recomendados (em ordem)
+## 8. Próximos passos recomendados (em ordem) — histórico, ver seção 9 pro status final
 
-1. ~~Consertar a regressão do rename `Order→Sale` (backend)~~ **Feito 2026-08-02** — `php artisan test` verde (570 passed). `Stock`/`StoreBusinessHour`/`Location` removidos por completo do backend.
-2. Consertar o build do frontend (`npm run build`, 6 erros TS listados acima) — ainda não tocado nesta rodada.
-3. Decidir conscientemente se o rename `Order→Sale` é uma decisão válida (pode fazer sentido — "Sale" pode ser mais preciso que "Order" pra venda de ingresso) ou se deve ser revertido pra `Order` — **isso não estava no roadmap combinado, foi decisão tomada sem alinhamento**, precisa de confirmação explícita antes de prosseguir.
-4. Verificar se o frontend também precisa de limpeza de `Stock`/`StoreBusinessHour` (telas/serviços que consumiam `stock_location_uuid`, `business_hours`, `stock_quantity`, CMV) — não auditado nesta rodada (backend only).
-5. Só então seguir pro que falta: `Ticket`+QR+Checkin → checkout de comprador → editor visual de mapa → PagBank → estorno externo → Fase 7 de rebrand de conteúdo.
+1. ~~Consertar a regressão do rename `Order→Sale` (backend)~~ **Feito 2026-08-02.**
+2. ~~Consertar o build do frontend~~ **Feito.**
+3. ~~Decidir sobre `Order→Sale`~~ Mantido — sem reversão pedida pelo usuário.
+4. ~~Limpeza de `Stock`/`StoreBusinessHour` no frontend~~ **Feito.**
+5. ~~`Ticket`+QR+Checkin → checkout de comprador → PagBank~~ **Feito, ver seção 9.**
+
+## 9. Fechamento da rodada de reestruturação (2026-08-01/02)
+
+### ✅ Concluído e verificado
+- Domínio completo de bilheteria: `Event`/`EventCategory`/`EventSession`/`TicketType`/`TicketBatch`/`EventProduct`/`Venue`/`Seat`, com CRUD nos dois lados.
+- `InventoryHold` com duração configurável por tenant (`hold_duration_minutes`), sem cron — expiração é só ausência de contagem em disponibilidade.
+- `Ticket` (emissão por evento de domínio `SalePaid`/`SaleCancelled`, idempotente) + QR (`qr_token` via `Str::random(40)`, `code` de 8 chars sem ambiguidade) + `TicketCheckin` (manual, sem leitor de câmera).
+- Checkout de comprador final reescrito: hold ativo, contagem regressiva com escalonamento 5min/1min, tratamento de hold expirado com nova reserva, captura de participantes (nome/documento opcional por item).
+- Frontend: portaria (`CheckinPage`), "meus ingressos" com QR no rastreio de venda, `admin.ts` corrigido (resíduo `orders`/`api-access` inexistente no backend).
+- `location_lat`/`location_lng` em `Event` (endereço é texto único + coordenadas pro mapa, conforme decidido).
+- **PagBank**: contrato `PaymentProviderInterface` já existia; adicionado binding contextual em `AppServiceProvider` isolando a corrente comprador→clube (`SALE_PAYMENT_PROVIDER`, default herda de `PAYMENT_PROVIDER`) da corrente clube→PegaTicket (assinatura, Mercado Pago, intocada). `PagBankPaymentProvider` implementado com DTOs de request/response e pontos de configuração (`config/services.php: pagbank.*`) — **a chamada HTTP real ao PagBank é stub** (`// TODO PAGBANK REAL:`), retorna `pending` sincronicamente, sem endpoint/payload inventado. Troca de provider é só config, não requer código.
+- **Verificação final (2026-08-02, tudo verde)**: `php artisan test` → 590 passed / 1991 assertions. `npm run build` → sem erros. `npm run lint` (oxlint) → sem erros.
+
+### ❌ Não feito (não fingir concluído)
+- **Editor visual de mapa** (drag-and-drop de mesas/assentos): só o modelo de dados (`Venue`/`VenueMapVersion`/`Seat`) existe, sem UI de edição.
+- **QR por câmera** no check-in: só busca manual/token colado — nenhuma lib de leitura de câmera foi instalada (decisão consciente, fora de escopo sem alinhamento).
+- **PagBank real**: sem credenciais fornecidas, integração HTTP é stub (ver acima). Precisa de token sandbox/prod do PagBank pra sair do estágio placeholder.
+- **Estorno externo formal** (`ExternalRefundService`, spec 5.14): não iniciado.
+- **Fase 7 (rebrand de conteúdo)**: `brand-guidelines.md`/`design-system.md` ainda descrevem o produto genérico antigo, não bilheteria — nunca executado de fato.
+- Simplificação conhecida (não é bug, é limitação assumida pelo agente de frontend): hold é criado só ao entrar no checkout, não no momento da seleção de quantidade na página do evento.
 
 ## 6. Execução autônoma (2026-07-31, a partir daqui)
 
