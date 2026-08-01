@@ -21,9 +21,8 @@ use Tests\Feature\Storefront\Concerns\CreatesStorefrontFixtures;
 use Tests\TestCase;
 
 /**
- * Guards novos do checkout público (Delivery Fase 2): horário de
- * funcionamento, pedido mínimo e taxa de entrega por bairro. Ver
- * App\Services\Storefront\StorefrontCheckoutService::checkout().
+ * Guards do checkout público: horário de funcionamento e pedido mínimo.
+ * Ver App\Services\Storefront\StorefrontCheckoutService::checkout().
  */
 class StorefrontCheckoutGuardsTest extends TestCase
 {
@@ -353,7 +352,7 @@ class StorefrontCheckoutGuardsTest extends TestCase
         [, $token] = $this->authenticatedCustomer();
         $address = $this->createAddressTrio();
 
-        // Nenhuma StoreDeliveryFee cadastrada para este bairro.
+        // Nenhuma configuração legada de entrega cadastrada para este bairro.
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson(
                 '/api/v1/loja/' . $tenant->slug . '/checkout',

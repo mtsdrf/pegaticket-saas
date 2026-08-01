@@ -46,20 +46,10 @@ class OrderResource extends JsonResource
                     'name' => $this->finalCustomer->name,
                     'last_name' => $this->finalCustomer->last_name,
                     'phone_primary' => $link?->phone_primary,
-                    'endereco' => $link?->endereco ? [
-                        'logradouro' => $link->endereco->logradouro,
-                        'numero' => $link->endereco->numero,
-                        'complemento' => $link->endereco->complemento,
-                        'cep' => $link->endereco->cep,
-                        'bairro_name' => $link->endereco->bairro?->name,
-                        'cidade_name' => $link->endereco->cidade?->name,
-                    ] : null,
+                    'endereco' => null,
                 ];
             }),
-            'stock_location' => $this->whenLoaded('stockLocation', fn() => [
-                'uuid' => $this->stockLocation->uuid,
-                'name' => $this->stockLocation->name,
-            ]),
+            'stock_location' => null,
             'operator' => $this->whenLoaded('operator', fn() => $this->operator ? [
                 'uuid' => $this->operator->uuid,
                 'name' => $this->operator->name,
@@ -74,6 +64,12 @@ class OrderResource extends JsonResource
                 'event_product' => $item->eventProduct ? [
                     'uuid' => $item->eventProduct->uuid,
                     'name' => $item->eventProduct->name,
+                ] : null,
+                'seat' => $item->seat ? [
+                    'uuid' => $item->seat->uuid,
+                    'label' => $item->seat->label,
+                    'sector_name' => $item->seat->sector_name,
+                    'kind' => $item->seat->kind,
                 ] : null,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,

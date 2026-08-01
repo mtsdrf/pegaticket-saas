@@ -2,23 +2,21 @@
 
 namespace App\Services\Storefront;
 
-use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Order\CreateOrderDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumOrderException;
-use App\Exceptions\DeliveryAreaNotServedException;
 use App\Exceptions\StorefrontDisabledException;
 use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
-use App\Exceptions\DeliveryUnavailableException;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
+use App\Models\Inventory\InventoryHold;
+use App\Models\Inventory\InventoryHoldItem;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
-use App\Services\Location\EnderecoService;
 use App\Services\Order\OrderService;
 use App\Services\Permission\PermissionService;
 use App\Services\Tenant\TenantSettingsService;
@@ -30,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  * Checkout da loja pública (roadmap Delivery, Fase 1) — desde 2026-07-31,
  * FinalCustomer absorveu Client por completo: não existe mais Client pra
  * criar. O que este service resolve/cria é o FinalCustomerTenantLink (o
- * registro POR-TENANT do cliente já autenticado via OTP) + Endereco, sem
+ * registro POR-TENANT do cliente já autenticado via OTP), sem
  * tocar em PortalLinkService::link() (caminho de vínculo por order_uuid
  * pré-existente, continua intocado). Toda a lógica de preço/estoque/
  * criação de pedido é 100% reaproveitada de OrderService::create() — este
@@ -41,16 +39,14 @@ class StorefrontCheckoutService
 {
     public function __construct(
         private StorefrontCatalogService $catalogService,
-        private EnderecoService $enderecoService,
         private FinalCustomerTenantLinkRepositoryInterface $linkRepository,
         private TenantSettingsService $tenantSettingsService,
         private OrderService $orderService,
         private PermissionService $permissionService,
         private StoreBusinessHoursService $businessHoursService,
-        private StoreDeliveryFeeService $deliveryFeeService,
         private ProductPromotionService $productPromotionService,
         private CouponService $couponService,
-        private StoreAddressService $storeAddressService,
+        private StorefrontHoldService $holdService,
         private TenantExecutionContext $tenantExecutionContext,
     ) {
     }
@@ -74,6 +70,8 @@ class StorefrontCheckoutService
                     throw new StorefrontDisabledException(__('messages.storefront.storefront_disabled'));
                 }
 
+                $hold = $dto->holdUuid ? $this->resolveCheckoutHold($tenant->id, $dto->holdUuid, $dto->sessionToken, $customer) : null;
+
             // 3 guards novos (roadmap Delivery, Fase 2), sempre ANTES de
             // resolver/criar Client+Endereco+Link e montar o CreateOrderDTO
             // — nenhum efeito colateral acontece se qualquer um bloquear.
@@ -87,19 +85,8 @@ class StorefrontCheckoutService
             // ter habilitado explicitamente tenant_settings.allow_store_pickup
             // (default false, mesmo espírito de nunca frete grátis/pickup
             // implícito por omissão do guard 3 de entrega).
-            $isPickup = $dto->fulfillmentType === 'pickup';
-
-            if ($isPickup && !$settings->allow_store_pickup) {
+            if (!$settings->allow_store_pickup) {
                 throw new StorePickupUnavailableException(__('messages.storefront.store_pickup_not_enabled'));
-            }
-
-            // Guard 1C: entrega (configurador de formas de entrega) —
-            // simétrico do guard de pickup acima. allow_delivery default
-            // true preserva o comportamento histórico (entrega sempre foi
-            // implicitamente aceita); só bloqueia quando o tenant desativa
-            // explicitamente.
-            if (!$isPickup && !$settings->allow_delivery) {
-                throw new DeliveryUnavailableException(__('messages.storefront.delivery_not_enabled'));
             }
 
             // Calculado incondicionalmente (não só quando há mínimo
@@ -122,21 +109,7 @@ class StorefrontCheckoutService
                 }
             }
 
-            // Guard 3: taxa de entrega — bairro sem taxa cadastrada bloqueia
-            // a entrega (decisão travada com o usuário: nunca frete
-            // grátis/padrão implícito por omissão). Pulado inteiramente
-            // quando pickup: não há entrega, logo não há taxa de entrega —
-            // $deliveryFee fica 0.0 (não confundir com free_shipping, que é
-            // um desconto de cupom, não a ausência de taxa).
             $deliveryFee = 0.0;
-
-            if (!$isPickup) {
-                $deliveryFee = $this->deliveryFeeService->findFee($tenant->id, $dto->bairroUuid);
-
-                if ($deliveryFee === null) {
-                    throw new DeliveryAreaNotServedException(__('messages.storefront.delivery_area_not_served'));
-                }
-            }
 
             // Guard 4: cupom (roadmap Delivery, Fase 3) — opcional, só roda
             // quando dto->couponCode vem preenchido. $customer->id já é
@@ -166,6 +139,10 @@ class StorefrontCheckoutService
 
             $this->ensureCustomerLink($tenant->id, $customer, $dto);
 
+            if ($hold) {
+                $this->validateHoldMatchesCheckout($hold, $dto->items);
+            }
+
             // unit_price explícito por item (prioridade máxima sobre a
             // resolução interna de OrderService::create(), já documentado no
             // DTO desde a Fase 1) — garante que promoção/atacado resolvidos
@@ -187,17 +164,21 @@ class StorefrontCheckoutService
                 items: $items,
                 origin: 'storefront',
                 status: 'pending_approval',
-                reserveStock: $settings->block_order_without_stock,
+                reserveStock: false,
                 deliveryFee: $deliveryFee,
                 couponId: $couponId,
                 discountAmount: $discountAmountCents / 100,
-                fulfillmentType: $dto->fulfillmentType,
+                fulfillmentType: 'pickup',
                 paymentMethod: $dto->paymentMethod,
                 needsChange: $dto->needsChange,
                 changeForAmount: $dto->changeForAmount,
             );
 
             $order = $this->orderService->create($orderDto);
+
+            if ($hold) {
+                $this->consumeHold($hold, $order);
+            }
 
             // CouponRedemption criado só depois do Order existir com
             // sucesso, na MESMA transação — se qualquer coisa acima falhar
@@ -212,16 +193,16 @@ class StorefrontCheckoutService
                 ]);
             }
 
-                return $order;
+            return $order;
             });
         });
     }
 
     /**
      * Garante que existe um FinalCustomerTenantLink CONFIRMADO pra este
-     * (customer, tenant) — cria na primeira compra dessa loja, com o
-     * endereço/telefone informados no checkout; em compras seguintes só
-     * retorna o link já existente (não sobrescreve dado já capturado).
+     * (customer, tenant) — cria na primeira compra dessa loja com os dados
+     * de contato informados no checkout; em compras seguintes só retorna o
+     * link já existente (não sobrescreve dado já capturado).
      * A prova de posse aqui é o próprio OTP já verificado (customer.jwt),
      * não um order_uuid pré-existente como no fluxo de
      * PortalLinkService::link().
@@ -233,20 +214,6 @@ class StorefrontCheckoutService
         if ($existing) {
             return $existing;
         }
-
-        [$estadoUuid, $cidadeUuid, $bairroUuid, $logradouro] = $this->resolveClientAddress($tenantId, $dto);
-
-        $endereco = $this->enderecoService->create(new CreateEnderecoDTO(
-            tenantId: $tenantId,
-            estadoUuid: $estadoUuid,
-            cidadeUuid: $cidadeUuid,
-            bairroUuid: $bairroUuid,
-            logradouro: $logradouro,
-            numero: $dto->numero,
-            complemento: $dto->complemento,
-            cep: $dto->cep,
-            isActive: true,
-        ));
 
         if ($customer->name === null) {
             $customer->forceFill([
@@ -262,7 +229,6 @@ class StorefrontCheckoutService
             return $this->linkRepository->create([
                 'final_customer_id' => $customer->id,
                 'tenant_id' => $tenantId,
-                'endereco_id' => $endereco->id,
                 'phone_primary' => $dto->clientPhone,
                 'is_trusted' => false,
                 'is_active' => true,
@@ -273,45 +239,10 @@ class StorefrontCheckoutService
                 throw $e;
             }
 
-            // Perdemos a corrida: outra requisição concorrente já criou o
-            // link pra esse (final_customer_id, tenant_id) entre o SELECT
-            // acima e este INSERT. Descarta o Endereco órfão que acabamos
-            // de criar (sem link nenhum apontando pra ele, seguro de
-            // remover) e reaproveita o link da vencedora.
-            $endereco->delete();
-
             return FinalCustomerTenantLink::where('final_customer_id', $customer->id)
                 ->where('tenant_id', $tenantId)
                 ->firstOrFail();
         }
-    }
-
-    /**
-     * Resolve o endereço a persistir num FinalCustomerTenantLink NOVO —
-     * quando o checkout é pickup e o cliente não informou endereço (fluxo
-     * esperado do frontend nesse caso), reaproveita o endereço da própria
-     * loja (StoreAddressService) em vez de um endereço de entrega que não
-     * existe. Loja com pickup habilitado mas sem endereço próprio
-     * configurado ainda bloqueia com mensagem clara, nunca quebra com erro
-     * de FK.
-     *
-     * @return array{0: string, 1: string, 2: string, 3: string} [estado_uuid, cidade_uuid, bairro_uuid, logradouro]
-     */
-    private function resolveClientAddress(int $tenantId, StorefrontCheckoutDTO $dto): array
-    {
-        if ($dto->estadoUuid !== null && $dto->cidadeUuid !== null && $dto->bairroUuid !== null && $dto->logradouro !== null) {
-            return [$dto->estadoUuid, $dto->cidadeUuid, $dto->bairroUuid, $dto->logradouro];
-        }
-
-        $storeAddress = $this->storeAddressService->getForTenant($tenantId);
-
-        if ($storeAddress === null) {
-            throw new StorePickupUnavailableException(__('messages.storefront.store_pickup_address_missing'));
-        }
-
-        $storeAddress->loadMissing(['estado', 'cidade', 'bairro']);
-
-        return [$storeAddress->estado->uuid, $storeAddress->cidade->uuid, $storeAddress->bairro->uuid, $storeAddress->logradouro];
     }
 
     /**
@@ -413,5 +344,98 @@ class StorefrontCheckoutService
         }
 
         return (float) $sellable->price;
+    }
+
+    private function resolveCheckoutHold(int $tenantId, string $holdUuid, ?string $sessionToken, FinalCustomer $customer): InventoryHold
+    {
+        $hold = InventoryHold::query()
+            ->where('tenant_id', $tenantId)
+            ->where('uuid', $holdUuid)
+            ->whereNull('deleted_at')
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $customerMatches = (int) $hold->final_customer_id === (int) $customer->id;
+        $sessionMatches = $sessionToken !== null && $hold->session_token === $sessionToken;
+
+        if (!$customerMatches && !$sessionMatches) {
+            abort(404);
+        }
+
+        if ($hold->status === InventoryHold::STATUS_RESERVED && $hold->expires_at?->isPast()) {
+            $hold->forceFill(['status' => InventoryHold::STATUS_EXPIRED])->save();
+        }
+
+        if ($hold->status !== InventoryHold::STATUS_RESERVED) {
+            abort(422, __('messages.inventory_hold.not_active'));
+        }
+
+        return $hold->load([
+            'items.ticketType',
+            'items.eventProduct',
+            'items.ticketBatch',
+            'items.seat',
+        ]);
+    }
+
+    private function validateHoldMatchesCheckout(InventoryHold $hold, array $items): void
+    {
+        $holdItems = $hold->items->sortBy('id')->values();
+        $payloadItems = collect($items)->values();
+
+        if ($holdItems->count() !== $payloadItems->count()) {
+            abort(422, __('messages.inventory_hold.checkout_mismatch'));
+        }
+
+        foreach ($holdItems as $index => $holdItem) {
+            $payloadItem = $payloadItems[$index];
+            $payloadTicketTypeUuid = $payloadItem['ticket_type_uuid'] ?? null;
+            $payloadEventProductUuid = $payloadItem['event_product_uuid'] ?? null;
+            $payloadQuantity = (int) round((float) $payloadItem['quantity']);
+
+            $sameTicketType = $holdItem->ticketType?->uuid === $payloadTicketTypeUuid;
+            $sameEventProduct = $holdItem->eventProduct?->uuid === $payloadEventProductUuid;
+            $sameQuantity = (int) $holdItem->quantity === $payloadQuantity;
+
+            if (!$sameQuantity || (!$sameTicketType && !$sameEventProduct)) {
+                abort(422, __('messages.inventory_hold.checkout_mismatch'));
+            }
+        }
+    }
+
+    private function consumeHold(InventoryHold $hold, Order $order): void
+    {
+        $order->loadMissing('items');
+
+        $holdItems = $hold->items->sortBy('id')->values();
+        $orderItems = $order->items->sortBy('id')->values();
+
+        foreach ($holdItems as $index => $holdItem) {
+            $orderItem = $orderItems[$index] ?? null;
+
+            if (!$orderItem) {
+                abort(422, __('messages.inventory_hold.checkout_mismatch'));
+            }
+
+            if ($holdItem->ticket_batch_id !== null) {
+                $orderItem->ticket_batch_id = $holdItem->ticket_batch_id;
+            }
+
+            if ($holdItem->seat_id !== null) {
+                $orderItem->seat_id = $holdItem->seat_id;
+            }
+
+            $orderItem->save();
+
+            if ($holdItem->ticketBatch) {
+                $holdItem->ticketBatch->increment('quantity_sold', (int) $holdItem->quantity);
+            }
+        }
+
+        $hold->forceFill([
+            'final_customer_id' => $order->final_customer_id,
+            'converted_order_id' => $order->id,
+            'status' => InventoryHold::STATUS_CONVERTED,
+        ])->save();
     }
 }

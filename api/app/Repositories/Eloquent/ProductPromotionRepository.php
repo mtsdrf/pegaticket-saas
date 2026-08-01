@@ -37,7 +37,7 @@ class ProductPromotionRepository extends BaseRepository implements ProductPromot
         // quando a promoção deste produto já foi removida (soft delete) e
         // está sendo recadastrada — restaura a linha em vez de tentar
         // inserir uma segunda. Mesmo cuidado de
-        // StoreDeliveryFeeRepository::upsertForTenant().
+        // padrão de upsert 1-por-chave.
         $existing = $this->model->withTrashed()
             ->where('tenant_id', $tenantId)
             ->where('ticket_type_id', $ticketTypeId)
@@ -75,7 +75,7 @@ class ProductPromotionRepository extends BaseRepository implements ProductPromot
                 throw $e;
             }
 
-            // Achado de code review da Fase 2 (StoreDeliveryFeeRepository),
+            // Achado de code review anterior,
             // aplicado aqui desde o início: 2 POSTs concorrentes cadastrando
             // promoção pro mesmo produto pela primeira vez podiam colidir na
             // unique (tenant_id, ticket_type_id). A requisição perdedora só

@@ -17,12 +17,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Cupom de desconto sobre o carrinho todo (roadmap Delivery, Fase 3) — CRUD
- * normal, diferente de StoreDeliveryFeeService (não é upsert 1-por-chave,
- * um tenant pode ter vários cupons ativos ao mesmo tempo, cada um com seu
- * próprio código). validateForCheckout() é usado só pra montar/validar o
- * cupom nesta fatia — a integração real no guard 4 do checkout (consumo de
- * CouponRedemption) é a PRÓXIMA fatia do roadmap.
+ * Cupom de desconto sobre o carrinho todo — CRUD normal. Um tenant pode ter
+ * vários cupons ativos ao mesmo tempo, cada um com seu próprio código.
+ * validateForCheckout() monta/valida a prévia e o consumo real segue no
+ * submit final do checkout via CouponRedemption.
  */
 class CouponService
 {

@@ -324,7 +324,7 @@ const TRAINING_MODULES: TrainingModule[] = [
       'Como rastreio e portal aumentam a autonomia do cliente final',
     ],
     risks: [
-      'Loja sem endereço/horário coerente gera expectativa errada no cliente',
+      'Loja sem horários coerentes gera expectativa errada no cliente',
       'Cupom e taxa mal configurados distorcem margem',
     ],
     operations: [
@@ -335,9 +335,9 @@ const TRAINING_MODULES: TrainingModule[] = [
         actor: 'Proprietário ou responsável digital',
         route: '/configuracoes/loja-online',
         permissionLabel: 'storefront:update',
-        requirements: ['Produtos ativos', 'Endereço da loja', 'Horários e taxa definidos'],
+        requirements: ['Produtos ativos', 'Horários definidos', 'Checkout testado'],
         effects: ['Habilita leitura pública da loja e a jornada de checkout'],
-        commonErrors: ['Taxa sem bairro configurado', 'Produto indisponível ainda publicado'],
+        commonErrors: ['Horário incoerente com a operação real', 'Produto indisponível ainda publicado'],
         goodPractices: ['Testar carrinho e checkout antes de divulgar o link da loja'],
       },
     ],
@@ -1148,7 +1148,6 @@ export function TrainingCenterPage() {
                       {[
                         ['Produto inicial cadastrado', checklist.has_product],
                         ['Cliente inicial cadastrado', checklist.has_client],
-                        ['Endereço da loja configurado', checklist.has_store_address],
                         ['Loja online configurada', checklist.storefront_configured],
                         ['Primeiro pedido concluído', checklist.has_first_order],
                       ].map(([label, done]) => (

@@ -429,38 +429,4 @@ class StorefrontCheckoutTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
     }
 
-    /**
-     * Configurador de formas de entrega — simétrico dos testes de pickup
-     * em StorefrontCheckoutPickupTest: tenant desabilitou explicitamente
-     * tenant_settings.allow_delivery, checkout com fulfillment_type=
-     * delivery (default) deve ser bloqueado.
-     */
-    #[Test]
-    public function checkout_with_delivery_is_blocked_when_tenant_disabled_it(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-        $this->makeStoreOpenAllDay($tenant->id);
-        $this->createLocation($tenant->id, ['is_default' => true]);
-        $product = $this->createProduct($tenant->id, ['price' => 10]);
-        [, $token] = $this->authenticatedCustomer();
-        $address = $this->createAddressTrio();
-        $this->createDeliveryFeeForBairro($tenant->id, $address[2]);
-
-        TenantSettings::create([
-            'tenant_id' => $tenant->id,
-            'send_tracking_link_whatsapp' => false,
-            'block_order_without_stock' => false,
-            'allow_store_pickup' => true,
-            'allow_delivery' => false,
-        ]);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson(
-                '/api/v1/loja/' . $tenant->slug . '/checkout',
-                $this->checkoutPayload($product->uuid, $address, ['fulfillment_type' => 'delivery'])
-            );
-
-        $response->assertStatus(422)->assertJsonPath('code', 'DELIVERY_UNAVAILABLE');
-        $this->assertDatabaseCount('orders', 0);
-    }
 }

@@ -6,25 +6,14 @@ use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Order\Order;
 use App\Models\Event\TicketType;
 use App\Models\Storefront\StoreBusinessHour;
-use App\Models\Storefront\StoreDeliveryFee;
-use App\Models\Tenant\Tenant;
 use App\Models\Tenant\TenantUser;
 use App\Services\Permission\PermissionService;
 
 /**
  * Checklist de implantação (roadmap A2, dores #4/#15) — leitura pura sobre
- * entidades já existentes, sem tabela nova. `storefront_configured` usa
- * `StoreBusinessHour` OU `StoreDeliveryFee`: qualquer um dos dois já é um
- * sinal de que o tenant configurou a loja online (horário de
- * funcionamento OU taxa de entrega por bairro), sem exigir os dois juntos
- * — nem todo tenant usa entrega paga (retirada no local não tem taxa).
- *
- * `has_store_address` (2026-07-24, auditoria de dados de cliente) — passo
- * obrigatório separado: `tenants.endereco_id` é nullable e não fazia parte
- * do checklist, então a origem da rota de entrega podia ficar sem
- * referência geográfica sem nenhum aviso (achado "Silencioso/Degradado"
- * na auditoria). Reaproveita o mesmo endereço de `StoreAddressController`
- * (`App\Services\Storefront\StoreAddressService`), não cria dado novo.
+ * entidades já existentes, sem tabela nova. No contexto atual de ingressos,
+ * a loja online é considerada configurada quando o tenant já definiu seus
+ * horários de funcionamento.
  */
 class OnboardingService
 {
@@ -64,17 +53,10 @@ class OnboardingService
         );
 
         if (isset($allowedFunctionalities['storefront'])) {
-            $items['has_store_address'] = Tenant::whereKey($tenantId)->whereNotNull('endereco_id')->exists();
-            $items['storefront_configured'] = StoreBusinessHour::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists()
-                || StoreDeliveryFee::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists();
+            $items['storefront_configured'] = StoreBusinessHour::where('tenant_id', $tenantId)
+                ->whereNull('deleted_at')
+                ->exists();
 
-            $steps[] = [
-                'key' => 'has_store_address',
-                'label' => 'Cadastre o endereço da sua loja',
-                'to' => '/configuracoes/loja-online',
-                'link_label' => 'Cadastrar endereço',
-                'completed' => $items['has_store_address'],
-            ];
             $steps[] = [
                 'key' => 'storefront_configured',
                 'label' => 'Configure sua loja online',

@@ -63,7 +63,7 @@ class OrderService
     // resultado pra todo pedido. Resources acessam
     // $order->finalCustomerLink diretamente (lazy, 1 query por pedido),
     // nunca via este array.
-    public const EAGER_RELATIONS = ['finalCustomer', 'stockLocation', 'items.ticketType', 'items.eventProduct', 'installments', 'coupon', 'rating'];
+    public const EAGER_RELATIONS = ['finalCustomer', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon', 'rating'];
     public const LIST_EAGER_RELATIONS = ['finalCustomer'];
 
     public function __construct(
@@ -272,7 +272,7 @@ class OrderService
                     ->where('tenant_id', $dto->tenantId)
                     ->whereNull('deleted_at')
                     ->firstOrFail()
-                : $this->resolveDefaultStockLocation($dto->tenantId);
+                : ($dto->reserveStock ? $this->resolveDefaultStockLocation($dto->tenantId) : null);
 
             $lines = [];
             $totalCents = 0;
@@ -323,7 +323,7 @@ class OrderService
             $order = $this->repository->create([
                 'tenant_id' => $dto->tenantId,
                 'final_customer_id' => $client->id,
-                'stock_location_id' => $stockLocation->id,
+                'stock_location_id' => $stockLocation?->id,
                 'codigo' => $codigo,
                 'is_installment' => $dto->isInstallment,
                 'total_amount' => $this->centsToDecimal($totalCents),

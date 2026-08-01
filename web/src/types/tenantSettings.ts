@@ -18,8 +18,6 @@ export interface TenantSettings {
   payment_pix_key: string | null
   /** Roadmap retirada na loja — desligado por padrão; checkout só aceita `fulfillment_type: 'pickup'` quando ligado E o tenant tem endereço de loja cadastrado. */
   allow_store_pickup: boolean
-  /** Par de `allow_store_pickup` — desligar impede o cliente de escolher "receber em casa" no checkout da loja. */
-  allow_delivery: boolean
   /** Quando desligado, a página pública da empresa continua exibindo contato/reservas, mas o catálogo e o checkout deixam de ficar disponíveis. */
   storefront_enabled: boolean
   /** Layout do catálogo da loja pública — `list` (padrão) ou `grid` (cards com foto grande). */
@@ -35,7 +33,6 @@ export interface UpdateTenantSettingsPayload {
   payment_receiving_method: 'manual' | 'pix_key'
   payment_pix_key: string | null
   allow_store_pickup: boolean
-  allow_delivery: boolean
   storefront_enabled: boolean
   catalog_layout: StorefrontCatalogLayout
 }

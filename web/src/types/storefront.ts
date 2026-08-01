@@ -28,12 +28,10 @@ export interface StorefrontTenant {
   /** Coordenadas do geocoding assíncrono do endereço — `null` enquanto não geocodificado (mapa read-only só renderiza quando ambos existem). */
   address_lat: number | null
   address_lng: number | null
-  /** Formas de pagamento aceitas na entrega/retirada (`tenant_settings.accepted_payment_methods`). */
+  /** Formas de pagamento aceitas no checkout (`tenant_settings.accepted_payment_methods`). */
   accepted_payment_methods: PaymentMethod[]
   /** Roadmap retirada na loja — `true` só quando o tenant habilitou `allow_store_pickup`; a UI de checkout só oferece a opção "retirar na loja" quando este campo vem `true`. */
   allow_store_pickup: boolean
-  /** Par de `allow_store_pickup` — `true` só quando o tenant habilitou `allow_delivery`; a UI de checkout só oferece a opção "receber em casa" quando este campo vem `true`. */
-  allow_delivery: boolean
   storefront_enabled: boolean
   /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos (migração PegaTicket, ver `.claude/memory`) usa sempre 1 cartão por evento, sem alternância grid/lista. */
   catalog_layout: StorefrontCatalogLayout
@@ -155,28 +153,19 @@ export interface StorefrontCartItem {
   event_product_uuid?: string
   name: string
   event_name: string
+  event_slug?: string | null
+  session_uuid?: string | null
+  session_name?: string | null
+  seat_uuid?: string | null
+  seat_label?: string | null
+  seat_sector_name?: string | null
+  seat_kind?: string | null
+  seat_capacity?: number | null
   unit_price: number
   image_url: string | null
   quantity: number
   /** Observação livre do cliente sobre este item (ex: "meia-entrada") — até 200 caracteres, enviada como `items[].notes` no checkout. */
   notes?: string | null
-}
-
-/**
- * Mesmo shape de endereço já usado por `ClientAddressFields`/`ClientPayload`
- * — ver `.claude/memory` e `StorefrontCheckoutRequest` do backend. Campos
- * opcionais aqui porque `fulfillment_type: 'pickup'` dispensa endereço
- * (`required_if:fulfillment_type,delivery` no backend); quem monta o
- * payload garante que vêm preenchidos quando `fulfillment_type: 'delivery'`.
- */
-export interface StorefrontCheckoutAddress {
-  estado_uuid?: string
-  cidade_uuid?: string
-  bairro_uuid?: string
-  logradouro?: string
-  numero?: string
-  complemento?: string
-  cep?: string
 }
 
 /** Exatamente um de `ticket_type_uuid`/`event_product_uuid` por item — mesma regra do backend. */
@@ -188,19 +177,16 @@ export interface StorefrontCheckoutItemPayload {
   notes?: string
 }
 
-/** Roadmap retirada na loja — `delivery` (padrão, retrocompatível) entrega no endereço; `pickup` dispensa endereço, cliente busca na loja. */
-export type StorefrontFulfillmentType = 'delivery' | 'pickup'
-
-export interface StorefrontCheckoutPayload extends StorefrontCheckoutAddress {
+export interface StorefrontCheckoutPayload {
   items: StorefrontCheckoutItemPayload[]
+  hold_uuid?: string
+  session_token?: string
   client_name: string
   client_last_name: string
   client_phone: string
   notes?: string
   /** Delivery Fase 3 — código do cupom aplicado com sucesso na prévia (`validateStorefrontCoupon`); omitido = sem cupom. */
   coupon_code?: string
-  /** Omitido = tratado como `'delivery'` no backend (retrocompatível). */
-  fulfillment_type?: StorefrontFulfillmentType
   /** Meio de pagamento pretendido — só formato validado no backend; usado sobretudo para checar cupom restrito por meio de pagamento (`allowed_payment_methods`). */
   payment_method?: PaymentMethod
   /** Só relevante quando `payment_method: 'cash'` — cliente vai pagar em dinheiro e precisa de troco. */
@@ -212,6 +198,150 @@ export interface StorefrontCheckoutPayload extends StorefrontCheckoutAddress {
 /** `POST /loja/{slug}/checkout` devolve só `{ order: { uuid } }` — o frontend redireciona pro rastreio público, não cria tela de status própria. */
 export interface StorefrontCheckoutResult {
   order: { uuid: string }
+}
+
+export interface StorefrontAvailabilityTicketType {
+  uuid: string
+  name: string
+  description: string | null
+  session_uuid: string | null
+  base_price: number
+  effective_price: number
+  available_quantity: number
+  min_per_order: number | null
+  max_per_order: number | null
+  sales_start_at: string | null
+  sales_end_at: string | null
+  active_batch: {
+    uuid: string
+    name: string
+    price: number
+    quantity_available: number
+  } | null
+  requires_seat_selection: boolean
+}
+
+export interface StorefrontAvailabilityEventProduct {
+  uuid: string
+  name: string
+  description: string | null
+  kind: 'addon' | 'parking'
+  price: number
+  available_quantity: number
+  max_per_order: number | null
+  sales_start_at: string | null
+  sales_end_at: string | null
+}
+
+export interface StorefrontAvailabilitySeat {
+  uuid: string
+  sector_name: string
+  label: string
+  kind: string
+  capacity: number | null
+  available_quantity: number
+  pos_x: number | null
+  pos_y: number | null
+  is_accessible: boolean
+  status: string
+  availability_status: 'disponivel' | 'reservado' | 'indisponivel'
+}
+
+export interface StorefrontAvailabilitySession {
+  uuid: string
+  name: string
+  starts_at: string | null
+  ends_at: string | null
+  gate_opens_at: string | null
+  capacity: number | null
+  status: string
+  sales_start_at: string | null
+  sales_end_at: string | null
+}
+
+export interface StorefrontAvailabilityResult {
+  server_time: string
+  default_hold_seconds: number
+  event: {
+    uuid: string
+    name: string
+    slug: string
+    venue: {
+      uuid: string
+      name: string
+      map_version_uuid: string
+      map_version_number: number
+      background_image_url: string | null
+      width: number | null
+      height: number | null
+    } | null
+  }
+  requires_session_selection: boolean
+  selected_session_uuid: string | null
+  sessions: StorefrontAvailabilitySession[]
+  ticket_types: StorefrontAvailabilityTicketType[]
+  event_products: StorefrontAvailabilityEventProduct[]
+  seats: StorefrontAvailabilitySeat[]
+}
+
+export interface StorefrontInventoryHoldItem {
+  uuid: string
+  quantity: number
+  unit_price: number | null
+  ticket_type: {
+    uuid: string
+    name: string
+  } | null
+  event_product: {
+    uuid: string
+    name: string
+  } | null
+  seat: {
+    uuid: string
+    label: string
+    sector_name: string
+    kind: string
+  } | null
+  ticket_batch: {
+    uuid: string
+    name: string
+    price: number
+  } | null
+  meta: Record<string, unknown> | null
+}
+
+export interface StorefrontInventoryHold {
+  uuid: string
+  status: string
+  origin: string
+  session_token: string
+  expires_at: string | null
+  server_time: string
+  remaining_seconds: number
+  event?: {
+    uuid: string
+    name: string
+    slug: string
+  }
+  session?: {
+    uuid: string
+    name: string
+    starts_at: string | null
+    ends_at: string | null
+  } | null
+  items: StorefrontInventoryHoldItem[]
+  created_at: string
+}
+
+export interface StorefrontCreateHoldPayload {
+  session_token: string
+  session_uuid?: string
+  items: Array<{
+    ticket_type_uuid?: string
+    event_product_uuid?: string
+    seat_uuid?: string
+    quantity: number
+  }>
 }
 
 /** Código de erro específico quando `tenant_settings.block_order_without_stock` está ligado e falta estoque. */

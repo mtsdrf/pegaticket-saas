@@ -46,7 +46,6 @@ export function PaymentBlock() {
         minimum_order_value: settings.minimum_order_value,
         estimated_preparation_minutes: settings.estimated_preparation_minutes,
         allow_store_pickup: settings.allow_store_pickup,
-        allow_delivery: settings.allow_delivery,
         storefront_enabled: settings.storefront_enabled,
         catalog_layout: settings.catalog_layout,
         accepted_payment_methods: acceptedPaymentMethods,

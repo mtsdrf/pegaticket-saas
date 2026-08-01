@@ -7,6 +7,7 @@ use App\Models\Event\EventProduct;
 use App\Models\Event\TicketBatch;
 use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
+use App\Models\Venue\Seat;
 
 /**
  * Sem Repository/Service próprios: OrderItem é um objeto de valor
@@ -27,6 +28,7 @@ class OrderItem extends BaseModel
         'order_id',
         'ticket_type_id',
         'event_product_id',
+        'seat_id',
         'ticket_batch_id',
         'quantity',
         'unit_price',
@@ -46,6 +48,7 @@ class OrderItem extends BaseModel
         'order_id',
         'ticket_type_id',
         'event_product_id',
+        'seat_id',
         'ticket_batch_id',
         'deleted_at',
         'created_by',
@@ -71,6 +74,11 @@ class OrderItem extends BaseModel
     public function eventProduct()
     {
         return $this->belongsTo(EventProduct::class);
+    }
+
+    public function seat()
+    {
+        return $this->belongsTo(Seat::class);
     }
 
     public function ticketBatch()

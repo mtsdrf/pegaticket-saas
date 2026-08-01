@@ -301,15 +301,11 @@ use App\Listeners\Tenant\AuditTenantFeatureOverridesSynced;
 
 /*
 |--------------------------------------------------------------------------
-| Storefront (Delivery Fase 2) — horário de funcionamento / taxa de entrega
+| Storefront — horário de funcionamento
 |--------------------------------------------------------------------------
 */
 use App\Events\Storefront\StoreBusinessHoursUpdated;
-use App\Events\Storefront\StoreDeliveryFeeUpserted;
-use App\Events\Storefront\StoreDeliveryFeeDeleted;
 use App\Listeners\Storefront\AuditStoreBusinessHoursUpdated;
-use App\Listeners\Storefront\AuditStoreDeliveryFeeUpserted;
-use App\Listeners\Storefront\AuditStoreDeliveryFeeDeleted;
 
 /*
 |--------------------------------------------------------------------------
@@ -677,12 +673,10 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Storefront (Delivery Fase 2)
+        | Storefront
         |--------------------------------------------------------------------------
         */
         StoreBusinessHoursUpdated::class => [AuditStoreBusinessHoursUpdated::class],
-        StoreDeliveryFeeUpserted::class => [AuditStoreDeliveryFeeUpserted::class],
-        StoreDeliveryFeeDeleted::class => [AuditStoreDeliveryFeeDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

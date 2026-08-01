@@ -30,7 +30,6 @@ class StorefrontTenantResource extends JsonResource
         private bool $allowStorePickup = false,
         private bool $storefrontEnabled = true,
         private string $catalogLayout = 'list',
-        private bool $allowDelivery = true,
     ) {
         parent::__construct($resource);
     }
@@ -62,40 +61,13 @@ class StorefrontTenantResource extends JsonResource
             'whatsapp' => $this->resource->whatsapp,
             'instagram' => $this->resource->instagram,
             'facebook' => $this->resource->facebook,
-            // Endereço da empresa (reforma da loja) — string formatada a
-            // partir do Endereco vinculado (null se o tenant não tem
-            // endereço). lat/lng vêm do geocoding assíncrono, podem ainda ser
-            // null se o GeocodeEnderecoJob não rodou.
-            'address' => $this->formatAddress(),
-            'address_lat' => $this->resource->endereco?->lat,
-            'address_lng' => $this->resource->endereco?->lng,
+            'address' => null,
+            'address_lat' => null,
+            'address_lng' => null,
             'accepted_payment_methods' => $this->acceptedPaymentMethods ?? [],
             'allow_store_pickup' => $this->allowStorePickup,
             'storefront_enabled' => $this->storefrontEnabled,
             'catalog_layout' => $this->catalogLayout,
-            'allow_delivery' => $this->allowDelivery,
         ];
-    }
-
-    private function formatAddress(): ?string
-    {
-        $endereco = $this->resource->endereco;
-
-        if (!$endereco) {
-            return null;
-        }
-
-        $street = $endereco->logradouro;
-
-        if ($endereco->numero) {
-            $street .= ', ' . $endereco->numero;
-        }
-
-        $locality = array_filter([
-            $endereco->bairro?->name,
-            $endereco->cidade?->name,
-        ]);
-
-        return $locality ? $street . ' - ' . implode(', ', $locality) : $street;
     }
 }

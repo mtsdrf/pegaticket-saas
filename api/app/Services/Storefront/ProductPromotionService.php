@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Preço promocional "de/por" por produto (roadmap Delivery, Fase 3) — mesmo
- * shape de StoreDeliveryFeeService: upsert 1 por chave (aqui, por
+ * Preço promocional "de/por" por produto — upsert 1 por chave (aqui, por
  * ticket_type_id), nunca duplica.
  */
 class ProductPromotionService

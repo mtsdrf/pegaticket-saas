@@ -38,6 +38,12 @@ export interface OrderItem {
     uuid: string
     name: string
   } | null
+  seat: {
+    uuid: string
+    label: string
+    sector_name: string | null
+    kind: string
+  } | null
   quantity: number
   unit_price: number
   line_total: number

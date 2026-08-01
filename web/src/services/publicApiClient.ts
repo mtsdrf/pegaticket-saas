@@ -6,8 +6,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com
 /**
  * Instância axios 100% anônima — sem interceptor de auth/refresh/redirect
  * nenhum. Usada só para os GETs públicos do catálogo da loja
- * (`storefrontService.ts`) e para os endpoints públicos de localização
- * (`storefrontLocationService.ts`).
+ * (`storefrontService.ts`).
  *
  * NUNCA reaproveitar `portalApiClient` aqui: seu interceptor de 401 faz
  * `window.location.assign('/portal/entrar?...')`, correto pra uma sessão do

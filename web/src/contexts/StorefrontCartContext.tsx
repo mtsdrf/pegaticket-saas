@@ -14,7 +14,21 @@ function readCart(slug: string): StorefrontCartItem[] {
     const raw = localStorage.getItem(storefrontCartStorageKey(slug))
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
-    return Array.isArray(parsed) ? (parsed as StorefrontCartItem[]) : []
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((item): item is StorefrontCartItem => typeof item === 'object' && item !== null)
+      .map((item) => ({
+        ...item,
+        event_slug: typeof item.event_slug === 'string' && item.event_slug.trim() ? item.event_slug : null,
+        session_uuid: typeof item.session_uuid === 'string' && item.session_uuid.trim() ? item.session_uuid : null,
+        session_name: typeof item.session_name === 'string' && item.session_name.trim() ? item.session_name : null,
+        seat_uuid: typeof item.seat_uuid === 'string' && item.seat_uuid.trim() ? item.seat_uuid : null,
+        seat_label: typeof item.seat_label === 'string' && item.seat_label.trim() ? item.seat_label : null,
+        seat_sector_name:
+          typeof item.seat_sector_name === 'string' && item.seat_sector_name.trim() ? item.seat_sector_name : null,
+        seat_kind: typeof item.seat_kind === 'string' && item.seat_kind.trim() ? item.seat_kind : null,
+        seat_capacity: typeof item.seat_capacity === 'number' && Number.isFinite(item.seat_capacity) ? item.seat_capacity : null,
+      }))
   } catch {
     // JSON corrompido/manipulado manualmente — carrinho vazio é mais seguro que travar a tela.
     return []
@@ -23,6 +37,10 @@ function readCart(slug: string): StorefrontCartItem[] {
 
 function writeCart(slug: string, items: StorefrontCartItem[]): void {
   localStorage.setItem(storefrontCartStorageKey(slug), JSON.stringify(items))
+}
+
+function isExclusiveSeatKind(kind: string | null | undefined): boolean {
+  return kind === 'mesa' || kind === 'camarote'
 }
 
 /**
@@ -104,12 +122,35 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedItems])
 
-  const addTicketType = useCallback((event: StorefrontEvent, ticketType: StorefrontTicketType, quantity = 1) => {
+  const addTicketType = useCallback((
+    event: StorefrontEvent,
+    ticketType: StorefrontTicketType,
+    quantity = 1,
+    session?: { uuid: string; name: string } | null,
+    seat?: { uuid: string; label: string; sector_name?: string | null; kind: string; capacity?: number | null } | null,
+  ) => {
     setItems((current) => {
-      const existing = current.find((item) => item.ticket_type_uuid === ticketType.uuid)
+      const normalizedSessionUuid = session?.uuid ?? null
+      const normalizedSeatUuid = seat?.uuid ?? null
+      const seatCapacity = Math.max(1, seat?.capacity ?? 1)
+      const existing = current.find(
+        (item) =>
+          item.ticket_type_uuid === ticketType.uuid &&
+          (item.session_uuid ?? null) === normalizedSessionUuid &&
+          (item.seat_uuid ?? null) === normalizedSeatUuid,
+      )
       if (existing) {
         return current.map((item) =>
-          item.ticket_type_uuid === ticketType.uuid ? { ...item, quantity: item.quantity + quantity } : item,
+          item.id === existing.id
+            ? {
+                ...item,
+                quantity: existing.seat_uuid
+                  ? isExclusiveSeatKind(existing.seat_kind)
+                    ? Math.max(1, existing.seat_capacity ?? 1)
+                    : Math.min(existing.quantity + quantity, Math.max(1, existing.seat_capacity ?? 1))
+                  : item.quantity + quantity,
+              }
+            : item,
         )
       }
       return [
@@ -119,20 +160,40 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
           ticket_type_uuid: ticketType.uuid,
           name: ticketType.name,
           event_name: event.name,
+          event_slug: event.slug,
+          session_uuid: session?.uuid ?? null,
+          session_name: session?.name ?? null,
+          seat_uuid: seat?.uuid ?? null,
+          seat_label: seat?.label ?? null,
+          seat_sector_name: seat?.sector_name ?? null,
+          seat_kind: seat?.kind ?? null,
+          seat_capacity: seat?.capacity ?? null,
           unit_price: ticketType.price,
           image_url: ticketType.image_url,
-          quantity,
+          quantity: seat
+            ? isExclusiveSeatKind(seat.kind)
+              ? seatCapacity
+              : Math.min(quantity, seatCapacity)
+            : quantity,
         },
       ]
     })
   }, [])
 
-  const addEventProduct = useCallback((event: StorefrontEvent, eventProduct: StorefrontEventProduct, quantity = 1) => {
+  const addEventProduct = useCallback((
+    event: StorefrontEvent,
+    eventProduct: StorefrontEventProduct,
+    quantity = 1,
+    session?: { uuid: string; name: string } | null,
+  ) => {
     setItems((current) => {
-      const existing = current.find((item) => item.event_product_uuid === eventProduct.uuid)
+      const normalizedSessionUuid = session?.uuid ?? null
+      const existing = current.find(
+        (item) => item.event_product_uuid === eventProduct.uuid && (item.session_uuid ?? null) === normalizedSessionUuid,
+      )
       if (existing) {
         return current.map((item) =>
-          item.event_product_uuid === eventProduct.uuid ? { ...item, quantity: item.quantity + quantity } : item,
+          item.id === existing.id ? { ...item, quantity: item.quantity + quantity } : item,
         )
       }
       return [
@@ -142,6 +203,14 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
           event_product_uuid: eventProduct.uuid,
           name: eventProduct.name,
           event_name: event.name,
+          event_slug: event.slug,
+          session_uuid: session?.uuid ?? null,
+          session_name: session?.name ?? null,
+          seat_uuid: null,
+          seat_label: null,
+          seat_sector_name: null,
+          seat_kind: null,
+          seat_capacity: null,
           unit_price: eventProduct.price,
           image_url: null,
           quantity,
@@ -166,11 +235,20 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       const matches = (item: StorefrontCartItem) =>
         hasDirectId ? item.id === itemId : item.ticket_type_uuid === itemId || item.event_product_uuid === itemId
 
-      if (quantity <= 0) {
+      const matchedItem = current.find((item) => matches(item))
+      const normalizedQuantity = matchedItem?.seat_uuid
+        ? isExclusiveSeatKind(matchedItem.seat_kind)
+          ? quantity <= 0
+            ? 0
+            : Math.max(1, matchedItem.seat_capacity ?? 1)
+          : Math.max(0, Math.min(quantity, Math.max(1, matchedItem.seat_capacity ?? 1)))
+        : quantity
+
+      if (normalizedQuantity <= 0) {
         return current.filter((item) => !matches(item))
       }
 
-      return current.map((item) => (matches(item) ? { ...item, quantity } : item))
+      return current.map((item) => (matches(item) ? { ...item, quantity: normalizedQuantity } : item))
     })
   }, [])
 

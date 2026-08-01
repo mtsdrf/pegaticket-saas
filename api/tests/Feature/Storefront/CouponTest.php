@@ -19,7 +19,7 @@ use Tests\TestCase;
 
 /**
  * GET/POST/PUT/DELETE /coupons (Delivery Fase 3) — CRUD completo, diferente
- * do upsert de StoreDeliveryFeeTest. validateForCheckout() é testado aqui
+ * de catálogo promocional. validateForCheckout() é testado aqui
  * diretamente via o Service (guard 4 do checkout/consumo de
  * CouponRedemption é a PRÓXIMA fatia do roadmap, ainda não integrado em
  * StorefrontCheckoutService::checkout()).

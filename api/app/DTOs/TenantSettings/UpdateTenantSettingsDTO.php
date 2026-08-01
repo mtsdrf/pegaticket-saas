@@ -13,7 +13,6 @@ class UpdateTenantSettingsDTO
         public readonly string $paymentReceivingMethod = 'manual',
         public readonly ?string $paymentPixKey = null,
         public readonly bool $allowStorePickup = false,
-        public readonly bool $allowDelivery = true,
         public readonly bool $storefrontEnabled = true,
         public readonly string $catalogLayout = 'list',
     ) {
@@ -38,7 +37,6 @@ class UpdateTenantSettingsDTO
                 ? (string) $data['payment_pix_key']
                 : null,
             allowStorePickup: (bool) ($data['allow_store_pickup'] ?? false),
-            allowDelivery: (bool) ($data['allow_delivery'] ?? true),
             storefrontEnabled: (bool) ($data['storefront_enabled'] ?? true),
             catalogLayout: isset($data['catalog_layout']) ? (string) $data['catalog_layout'] : 'list',
         );

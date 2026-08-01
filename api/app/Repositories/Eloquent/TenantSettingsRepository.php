@@ -30,7 +30,6 @@ class TenantSettingsRepository extends BaseRepository implements TenantSettingsR
                 'send_tracking_link_whatsapp' => false,
                 'block_order_without_stock' => false,
                 'storefront_enabled' => true,
-                'allow_delivery' => true,
             ]);
         } catch (QueryException $e) {
             // Corrida entre duas primeiras leituras concorrentes — a

@@ -31,7 +31,6 @@ export function OperationsBlock() {
   const [minimumOrderValue, setMinimumOrderValue] = useState('')
   const [estimatedPreparationMinutes, setEstimatedPreparationMinutes] = useState('')
   const [allowStorePickup, setAllowStorePickup] = useState(false)
-  const [allowDelivery, setAllowDelivery] = useState(true)
   const [storefrontEnabled, setStorefrontEnabled] = useState(true)
   const [catalogLayout, setCatalogLayout] = useState<StorefrontCatalogLayout>('list')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -47,7 +46,6 @@ export function OperationsBlock() {
       settings.estimated_preparation_minutes !== null ? String(settings.estimated_preparation_minutes) : '',
     )
     setAllowStorePickup(settings.allow_store_pickup)
-    setAllowDelivery(settings.allow_delivery)
     setStorefrontEnabled(settings.storefront_enabled)
     setCatalogLayout(settings.catalog_layout)
   }, [settings])
@@ -65,7 +63,6 @@ export function OperationsBlock() {
         minimum_order_value: minimumOrderValue.trim() ? Number(minimumOrderValue) : null,
         estimated_preparation_minutes: estimatedPreparationMinutes.trim() ? Number(estimatedPreparationMinutes) : null,
         allow_store_pickup: allowStorePickup,
-        allow_delivery: allowDelivery,
         storefront_enabled: storefrontEnabled,
         catalog_layout: catalogLayout,
         accepted_payment_methods: settings.accepted_payment_methods,
@@ -183,15 +180,6 @@ export function OperationsBlock() {
           Garanta que o ponto de retirada esteja corretamente configurado para o comprador conseguir concluir essa opção.
         </Typography>
       )}
-
-      <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Entrega</Typography>
-      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>
-        Permite que o comprador escolha receber o pedido em vez de retirar presencialmente.
-      </Typography>
-      <FormControlLabel
-        control={<Switch checked={allowDelivery} onChange={(event) => setAllowDelivery(event.target.checked)} />}
-        label="Aceita entrega"
-      />
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Layout do catálogo</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>

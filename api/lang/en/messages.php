@@ -730,6 +730,26 @@ return [
         'store_pickup_not_enabled' => 'This store does not accept in-store pickup yet.',
         'store_pickup_address_missing' => 'The store has not set up its address yet, so in-store pickup is not available right now.',
         'delivery_not_enabled' => 'This store is not accepting deliveries right now.',
+        'availability_shown' => 'Availability shown successfully.',
+    ],
+
+    'inventory_hold' => [
+        'created' => 'Temporary hold created successfully.',
+        'show' => 'Temporary hold shown successfully.',
+        'renewed' => 'Temporary hold renewed successfully.',
+        'released' => 'Temporary hold released successfully.',
+        'invalid_item' => 'Each hold item must inform either a ticket or an add-on, but not both.',
+        'session_required' => 'Select a session before reserving items for this event.',
+        'seat_requires_ticket_type' => 'Seat selection must be linked to a ticket type.',
+        'seat_quantity_invalid' => 'Individual seats can only be reserved once per item.',
+        'seat_capacity_exceeded' => 'The requested quantity exceeds the available capacity for this place.',
+        'invalid_seat' => 'Invalid seat for this event.',
+        'duplicate_seat' => 'The same seat cannot be reserved twice in the same operation.',
+        'ticket_type_session_mismatch' => 'The selected ticket type does not belong to the informed session.',
+        'max_per_order_exceeded' => 'The requested quantity exceeds the per-order limit.',
+        'insufficient_availability' => 'There is not enough availability for one or more selected items.',
+        'not_active' => 'This temporary hold is no longer active.',
+        'checkout_mismatch' => 'The checkout items no longer match the active temporary hold.',
     ],
 
     'table_reservation' => [

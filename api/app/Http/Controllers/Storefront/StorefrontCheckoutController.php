@@ -5,13 +5,11 @@ namespace App\Http\Controllers\Storefront;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumOrderException;
 use App\Exceptions\CouponUsageLimitReachedException;
-use App\Exceptions\DeliveryAreaNotServedException;
 use App\Exceptions\InsufficientStockException;
 use App\Exceptions\InvalidCouponException;
 use App\Exceptions\StorefrontDisabledException;
 use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
-use App\Exceptions\DeliveryUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\StorefrontCheckoutRequest;
 use App\Services\APIResponse;
@@ -38,16 +36,12 @@ class StorefrontCheckoutController extends Controller
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
         } catch (BelowMinimumOrderException $e) {
             return APIResponse::error($e->getMessage(), 422, 'BELOW_MINIMUM_ORDER');
-        } catch (DeliveryAreaNotServedException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'DELIVERY_AREA_NOT_SERVED');
         } catch (InvalidCouponException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_COUPON');
         } catch (CouponUsageLimitReachedException $e) {
             return APIResponse::error($e->getMessage(), 422, 'COUPON_USAGE_LIMIT_REACHED');
         } catch (StorePickupUnavailableException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STORE_PICKUP_UNAVAILABLE');
-        } catch (DeliveryUnavailableException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'DELIVERY_UNAVAILABLE');
         }
 
         return APIResponse::success(

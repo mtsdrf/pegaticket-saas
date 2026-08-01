@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Location\CreateBairroDTO;
-use App\DTOs\Location\CreateCidadeDTO;
-use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Order\CreateOrderDTO;
 use App\DTOs\Product\CreateProductCategoryDTO;
 use App\DTOs\Product\CreateProductDTO;
@@ -13,24 +10,17 @@ use App\DTOs\Tenant\CreateTenantDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Location\Bairro;
-use App\Models\Location\Cidade;
-use App\Models\Location\Estado;
 use App\Models\Plan\Plan;
 use App\Models\Product\Product;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Location\BairroService;
-use App\Services\Location\CidadeService;
-use App\Services\Location\EnderecoService;
 use App\Services\Order\OrderService;
 use App\Services\Product\ProductCategoryService;
 use App\Services\Product\ProductService;
 use App\Services\Product\ProductTypeService;
 use App\Services\Stock\StockService;
 use App\Services\Storefront\StoreBusinessHoursService;
-use App\Services\Storefront\StoreDeliveryFeeService;
 use App\Services\Tenant\TenantService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Database\Seeder;
@@ -49,7 +39,7 @@ use RuntimeException;
  *
  * Cria uma empresa fictícia completa (distribuidora de bebidas) com
  * clientes, produtos com foto real, estoque, histórico de pedidos e loja
- * online configurada, pronta pra apresentar a prospects. NÃO é idempotente
+ * online pronta pra apresentar a prospects. NÃO é idempotente
  * de propósito além do guard inicial — rodar duas vezes aborta cedo (ver
  * `run()`) em vez de duplicar dados, porque diferente da carga inicial
  * (grupos/permissões/planos, que fazem sentido existir uma vez só e
@@ -87,22 +77,13 @@ class DemoTenantSeeder extends Seeder
         ['name' => 'Água Mineral sem Gás 500 ml', 'image' => 'agua500ml.png', 'price' => 3.50, 'type' => 'agua', 'sku' => 'AGUA-500', 'brand' => 'Fonte Pura', 'stock' => 450, 'order_qty' => [6, 30]],
     ];
 
-    /** Bairros reais de Araraquara/SP (confirmados via busca), coordenadas aproximadas do centro de cada região. */
-    private array $bairros = [
-        ['name' => 'Centro', 'cep' => '14801-320', 'lat' => -21.7919, 'lng' => -48.1811],
-        ['name' => 'Vila Xavier', 'cep' => '14810-020', 'lat' => -21.7705, 'lng' => -48.2015],
-        ['name' => 'São Geraldo', 'cep' => '14805-100', 'lat' => -21.8015, 'lng' => -48.1720],
-        ['name' => 'Jardim América', 'cep' => '14802-060', 'lat' => -21.7850, 'lng' => -48.1650],
-        ['name' => 'Vila Melhado', 'cep' => '14808-045', 'lat' => -21.7770, 'lng' => -48.1890],
-    ];
-
-    /** 1 cliente por bairro, endereço/telefone fake com DDD real de Araraquara (16). */
+    /** Clientes demo com telefone fake e DDD real de Araraquara (16). */
     private array $clients = [
-        ['name' => 'Mercadinho Bom Preço', 'bairro' => 'Centro', 'logradouro' => 'Rua São Bento', 'numero' => '452', 'phone' => '(16) 99101-2233'],
-        ['name' => 'Bar do Zé', 'bairro' => 'Vila Xavier', 'logradouro' => 'Rua Voluntários da Pátria', 'numero' => '118', 'phone' => '(16) 99202-3344'],
-        ['name' => 'Padaria Pão Dourado', 'bairro' => 'São Geraldo', 'logradouro' => 'Rua Marechal Deodoro', 'numero' => '876', 'phone' => '(16) 99303-4455'],
-        ['name' => 'Restaurante Sabor Caseiro', 'bairro' => 'Jardim América', 'logradouro' => 'Rua Padre Duarte', 'numero' => '305', 'phone' => '(16) 99404-5566'],
-        ['name' => 'Lanchonete Estrela', 'bairro' => 'Vila Melhado', 'logradouro' => 'Rua Gonçalves Dias', 'numero' => '640', 'phone' => '(16) 99505-6677'],
+        ['name' => 'Mercadinho Bom Preço', 'phone' => '(16) 99101-2233'],
+        ['name' => 'Bar do Zé', 'phone' => '(16) 99202-3344'],
+        ['name' => 'Padaria Pão Dourado', 'phone' => '(16) 99303-4455'],
+        ['name' => 'Restaurante Sabor Caseiro', 'phone' => '(16) 99404-5566'],
+        ['name' => 'Lanchonete Estrela', 'phone' => '(16) 99505-6677'],
     ];
 
     public function run(): void
@@ -122,15 +103,12 @@ class DemoTenantSeeder extends Seeder
             app()->instance('tenant', $tenant);
             app()->instance('tenant_id', $tenant->id);
 
-            [$cidade, $bairros] = $this->setupGeography();
-            $estadoSp = Estado::where('uf', 'SP')->firstOrFail();
-
             $products = $this->setupCatalog($tenant);
             $location = $this->resolveDefaultStockLocation($tenant);
             $this->stockUp($products, $location);
 
-            $clients = $this->setupClients($tenant, $estadoSp, $cidade, $bairros);
-            $this->setupStorefront($tenant, $bairros);
+            $clients = $this->setupClients($tenant);
+            $this->setupStorefront($tenant);
             $this->createOrders($tenant, $clients, $products, $location);
         });
 
@@ -193,31 +171,6 @@ class DemoTenantSeeder extends Seeder
         ]);
 
         return app(TenantService::class)->create($dto, $owner->id, $owner->id);
-    }
-
-    /** @return array{0: Cidade, 1: array<string, Bairro>} */
-    private function setupGeography(): array
-    {
-        $estadoSp = Estado::where('uf', 'SP')->firstOrFail();
-
-        $cidade = Cidade::where('estado_id', $estadoSp->id)->where('name', 'Araraquara')->first()
-            ?? app(CidadeService::class)->create(CreateCidadeDTO::fromArray([
-                'name' => 'Araraquara',
-                'estado_uuid' => $estadoSp->uuid,
-                'is_active' => true,
-            ]));
-
-        $bairros = [];
-        foreach ($this->bairros as $b) {
-            $bairros[$b['name']] = Bairro::where('cidade_id', $cidade->id)->where('name', $b['name'])->first()
-                ?? app(BairroService::class)->create(CreateBairroDTO::fromArray([
-                    'name' => $b['name'],
-                    'cidade_uuid' => $cidade->uuid,
-                    'is_active' => true,
-                ]));
-        }
-
-        return [$cidade, $bairros];
     }
 
     /** @return array<int, Product> */
@@ -297,25 +250,11 @@ class DemoTenantSeeder extends Seeder
      *
      * @return array<int, FinalCustomer>
      */
-    private function setupClients(Tenant $tenant, Estado $estado, Cidade $cidade, array $bairros): array
+    private function setupClients(Tenant $tenant): array
     {
         $created = [];
 
         foreach ($this->clients as $c) {
-            $bairro = $bairros[$c['bairro']];
-            $bairroMeta = collect($this->bairros)->firstWhere('name', $c['bairro']);
-
-            $endereco = app(EnderecoService::class)->create(CreateEnderecoDTO::fromArray([
-                'estado_uuid' => $estado->uuid,
-                'cidade_uuid' => $cidade->uuid,
-                'bairro_uuid' => $bairro->uuid,
-                'logradouro' => $c['logradouro'],
-                'numero' => $c['numero'],
-                'cep' => $bairroMeta['cep'],
-                'lat' => $bairroMeta['lat'],
-                'lng' => $bairroMeta['lng'],
-            ], $tenant->id));
-
             $finalCustomer = FinalCustomer::create([
                 'uuid' => (string) Str::uuid(),
                 'name' => $c['name'],
@@ -326,7 +265,6 @@ class DemoTenantSeeder extends Seeder
                 'uuid' => (string) Str::uuid(),
                 'final_customer_id' => $finalCustomer->id,
                 'tenant_id' => $tenant->id,
-                'endereco_id' => $endereco->id,
                 'phone_primary' => $c['phone'],
                 'is_trusted' => true,
                 'is_active' => true,
@@ -339,7 +277,7 @@ class DemoTenantSeeder extends Seeder
         return $created;
     }
 
-    private function setupStorefront(Tenant $tenant, array $bairros): void
+    private function setupStorefront(Tenant $tenant): void
     {
         // Dia inteiro, todos os 7 dias, de propósito: garante que a loja
         // apareça "aberta" na demonstração não importa quando o prospect for
@@ -351,10 +289,6 @@ class DemoTenantSeeder extends Seeder
             $days[] = ['day_of_week' => $day, 'opens_at' => '00:00:00', 'closes_at' => '23:59:59', 'is_closed' => false];
         }
         app(StoreBusinessHoursService::class)->replaceForTenant($tenant->id, $days);
-
-        foreach ($bairros as $bairro) {
-            app(StoreDeliveryFeeService::class)->upsert($tenant->id, $bairro->uuid, 5.00);
-        }
 
         app(TenantSettingsService::class)->update($tenant->id, UpdateTenantSettingsDTO::fromArray([
             'send_tracking_link_whatsapp' => false,

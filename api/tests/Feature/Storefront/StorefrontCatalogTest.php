@@ -327,41 +327,6 @@ class StorefrontCatalogTest extends TestCase
     }
 
     /**
-     * GET /loja/{slug}/taxa-entrega/{bairro_uuid} — consulta prévia de
-     * taxa, mantida por não ter sido removida explicitamente no roadmap
-     * (ver nota em StorefrontController::deliveryFee()).
-     */
-    #[Test]
-    public function delivery_fee_endpoint_returns_fee_when_configured(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-
-        $estado = Estado::create(['name' => 'Estado ' . Str::random(6), 'uf' => $this->nextUf()]);
-        $cidade = Cidade::create(['estado_id' => $estado->id, 'name' => 'Cidade ' . Str::random(6)]);
-        $bairro = Bairro::create(['cidade_id' => $cidade->id, 'name' => 'Bairro ' . Str::random(6)]);
-
-        $this->createDeliveryFeeForBairro($tenant->id, $bairro, 9.9);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/taxa-entrega/' . $bairro->uuid);
-
-        $response->assertStatus(200)->assertJsonPath('data.fee', 9.9);
-    }
-
-    #[Test]
-    public function delivery_fee_endpoint_returns_404_when_bairro_has_no_fee(): void
-    {
-        $tenant = $this->createTenantWithStorefrontPlan(true);
-
-        $estado = Estado::create(['name' => 'Estado ' . Str::random(6), 'uf' => $this->nextUf()]);
-        $cidade = Cidade::create(['estado_id' => $estado->id, 'name' => 'Cidade ' . Str::random(6)]);
-        $bairro = Bairro::create(['cidade_id' => $cidade->id, 'name' => 'Bairro ' . Str::random(6)]);
-
-        $response = $this->getJson('/api/v1/loja/' . $tenant->slug . '/taxa-entrega/' . $bairro->uuid);
-
-        $response->assertStatus(404)->assertJsonPath('code', 'DELIVERY_AREA_NOT_SERVED');
-    }
-
-    /**
      * is_favorited (roadmap Delivery, Fase 4 — retenção, migrado pra
      * EventFavorite): só calculado quando o catálogo é acessado com
      * customer.jwt.optional autenticado (portal_customer() populado).

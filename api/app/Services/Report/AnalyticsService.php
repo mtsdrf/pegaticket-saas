@@ -85,16 +85,14 @@ class AnalyticsService
     }
 
     /**
-     * Vendas por cidade E por bairro (pedido → client → endereco),
-     * qtd + faturamento, ordenado por faturamento desc.
+     * Dimensões geográficas foram removidas do produto atual junto com o
+     * cadastro persistido de endereço do comprador.
      */
     public function salesByLocation(int $tenantId, ?string $from, ?string $to): array
     {
-        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
-
         return [
-            'by_city' => $this->salesByLocationDimension($tenantId, $fromDate, $toDate, 'cidades', 'cidade_id'),
-            'by_neighborhood' => $this->salesByLocationDimension($tenantId, $fromDate, $toDate, 'bairros', 'bairro_id'),
+            'by_city' => [],
+            'by_neighborhood' => [],
         ];
     }
 
@@ -747,28 +745,6 @@ class AnalyticsService
             'average_ticket' => $this->formatMoney($totalOrders > 0 ? $totalRevenue / $totalOrders : 0.0),
             'buckets' => $buckets,
         ];
-    }
-
-    private function salesByLocationDimension(int $tenantId, Carbon $from, Carbon $to, string $table, string $enderecoFk): array
-    {
-        return $this->ordersQuery($tenantId, $from, $to)
-            ->join('final_customer_tenant_links', function ($join) {
-                $join->on('final_customer_tenant_links.final_customer_id', '=', 'orders.final_customer_id')
-                    ->on('final_customer_tenant_links.tenant_id', '=', 'orders.tenant_id');
-            })
-            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-            ->join($table, "{$table}.id", '=', "enderecos.{$enderecoFk}")
-            ->groupBy("{$table}.id", "{$table}.uuid", "{$table}.name")
-            ->selectRaw("{$table}.uuid as uuid, {$table}.name as name, COUNT(*) as order_count, SUM(orders.total_amount) as revenue")
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn($row) => [
-                'uuid' => $row->uuid,
-                'name' => $row->name,
-                'order_count' => (int) $row->order_count,
-                'revenue' => $this->formatMoney((float) $row->revenue),
-            ])
-            ->all();
     }
 
     // ------------------------------------------------------------------

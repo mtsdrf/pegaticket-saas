@@ -62,18 +62,6 @@ const StorefrontCheckoutPage = lazy(() =>
   import('../pages/Storefront/StorefrontCheckoutPage').then((m) => ({ default: m.StorefrontCheckoutPage })),
 )
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
-const EstadoListPage = lazy(() => import('../pages/Location/EstadoListPage').then((m) => ({ default: m.EstadoListPage })))
-const EstadoFormPage = lazy(() => import('../pages/Location/EstadoFormPage').then((m) => ({ default: m.EstadoFormPage })))
-const CidadeListPage = lazy(() => import('../pages/Location/CidadeListPage').then((m) => ({ default: m.CidadeListPage })))
-const CidadeFormPage = lazy(() => import('../pages/Location/CidadeFormPage').then((m) => ({ default: m.CidadeFormPage })))
-const BairroListPage = lazy(() => import('../pages/Location/BairroListPage').then((m) => ({ default: m.BairroListPage })))
-const BairroFormPage = lazy(() => import('../pages/Location/BairroFormPage').then((m) => ({ default: m.BairroFormPage })))
-const EnderecoListPage = lazy(() =>
-  import('../pages/Location/EnderecoListPage').then((m) => ({ default: m.EnderecoListPage })),
-)
-const EnderecoFormPage = lazy(() =>
-  import('../pages/Location/EnderecoFormPage').then((m) => ({ default: m.EnderecoFormPage })),
-)
 const EventListPage = lazy(() => import('../pages/Event/EventListPage').then((m) => ({ default: m.EventListPage })))
 const EventFormPage = lazy(() => import('../pages/Event/EventFormPage').then((m) => ({ default: m.EventFormPage })))
 const EventSessionListPage = lazy(() =>
@@ -255,19 +243,6 @@ export function AppRoutes() {
             <Route path="/" element={<DashboardPage />} />
             {/* Auto-serviço: sem PermissionRoute de propósito — todo usuário logado edita o próprio perfil. */}
             <Route path="/minha-conta" element={<MyAccountPage />} />
-
-            <Route path="/estados" element={<PermissionRoute requirement={ACCESS.estadosRead}><EstadoListPage /></PermissionRoute>} />
-            <Route path="/estados/novo" element={<PermissionRoute requirement={ACCESS.estadosCreate}><EstadoFormPage /></PermissionRoute>} />
-            <Route path="/estados/:uuid/editar" element={<PermissionRoute requirement={ACCESS.estadosUpdate}><EstadoFormPage /></PermissionRoute>} />
-            <Route path="/cidades" element={<PermissionRoute requirement={ACCESS.cidadesRead}><CidadeListPage /></PermissionRoute>} />
-            <Route path="/cidades/novo" element={<PermissionRoute requirement={ACCESS.cidadesCreate}><CidadeFormPage /></PermissionRoute>} />
-            <Route path="/cidades/:uuid/editar" element={<PermissionRoute requirement={ACCESS.cidadesUpdate}><CidadeFormPage /></PermissionRoute>} />
-            <Route path="/bairros" element={<PermissionRoute requirement={ACCESS.bairrosRead}><BairroListPage /></PermissionRoute>} />
-            <Route path="/bairros/novo" element={<PermissionRoute requirement={ACCESS.bairrosCreate}><BairroFormPage /></PermissionRoute>} />
-            <Route path="/bairros/:uuid/editar" element={<PermissionRoute requirement={ACCESS.bairrosUpdate}><BairroFormPage /></PermissionRoute>} />
-            <Route path="/enderecos" element={<PermissionRoute requirement={ACCESS.enderecosRead}><EnderecoListPage /></PermissionRoute>} />
-            <Route path="/enderecos/novo" element={<PermissionRoute requirement={ACCESS.enderecosCreate}><EnderecoFormPage /></PermissionRoute>} />
-            <Route path="/enderecos/:uuid/editar" element={<PermissionRoute requirement={ACCESS.enderecosUpdate}><EnderecoFormPage /></PermissionRoute>} />
 
             <Route path="/eventos" element={<PermissionRoute requirement={ACCESS.eventsRead}><EventListPage /></PermissionRoute>} />
             <Route path="/eventos/novo" element={<PermissionRoute requirement={ACCESS.eventsCreate}><EventFormPage /></PermissionRoute>} />

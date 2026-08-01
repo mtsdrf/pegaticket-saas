@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\DTOs\Location\CreateBairroDTO;
-use App\DTOs\Location\CreateCidadeDTO;
-use App\DTOs\Location\CreateEnderecoDTO;
 use App\DTOs\Order\CreateOrderDTO;
 use App\DTOs\Product\CreateProductCategoryDTO;
 use App\DTOs\Product\CreateProductDTO;
@@ -17,17 +14,11 @@ use App\DTOs\Tenant\SyncTenantRolePermissionsDTO;
 use App\DTOs\TenantSettings\UpdateTenantSettingsDTO;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Location\Bairro;
-use App\Models\Location\Cidade;
-use App\Models\Location\Estado;
 use App\Models\Plan\Plan;
 use App\Models\Product\Product;
 use App\Models\Stock\StockLocation;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
-use App\Services\Location\BairroService;
-use App\Services\Location\CidadeService;
-use App\Services\Location\EnderecoService;
 use App\Services\Order\OrderService;
 use App\Services\Product\ProductCategoryService;
 use App\Services\Product\ProductService;
@@ -36,7 +27,6 @@ use App\Services\Stock\StockService;
 use App\Services\Storefront\CouponService;
 use App\Services\Storefront\ProductPromotionService;
 use App\Services\Storefront\StoreBusinessHoursService;
-use App\Services\Storefront\StoreDeliveryFeeService;
 use App\Services\Subscription\SubscriptionService;
 use App\Services\Tenant\TenantRolePermissionService;
 use App\Services\Tenant\TenantRoleService;
@@ -130,14 +120,12 @@ class DemoPlansPresentationSeeder extends Seeder
         app()->instance('tenant_id', $tenant->id);
         app()->instance('tenant_uuid', $tenant->uuid);
 
-        [$estado, $cidade, $bairros] = $this->setupGeography();
-
         $catalog = $this->setupCatalog($tenant);
         $location = $this->resolveDefaultStockLocation($tenant);
         $this->stockUp($catalog['products'], $location);
 
-        $clients = $this->setupClients($tenant, $estado, $cidade, $bairros);
-        $this->setupStorefront($tenant, $bairros);
+        $clients = $this->setupClients($tenant);
+        $this->setupStorefront($tenant);
         $this->createBaselineOrders($tenant, $clients, $catalog['products'], $location);
 
         $this->setupEmployee($tenant, $cfg);
@@ -150,39 +138,6 @@ class DemoPlansPresentationSeeder extends Seeder
             [$cfg['name'], 'PegaTicket', $cfg['owner_name'], $cfg['owner_email'], self::PASSWORD],
             [$cfg['name'], 'PegaTicket', $cfg['employee_name'], $cfg['employee_email'], self::PASSWORD],
         ];
-    }
-
-    /**
-     * Geografia (Estado/Cidade/Bairro) reaproveitada pela demo via
-     * firstOr, mesmo truque do DemoTenantSeeder — evita colisão de `uf`
-     * (bairros/cidades são globais, não tenant-scoped).
-     *
-     * @return array{0: Estado, 1: Cidade, 2: array<string, Bairro>}
-     */
-    private function setupGeography(): array
-    {
-        $estado = Estado::where('uf', 'SP')->firstOrFail();
-
-        $cidade = Cidade::where('estado_id', $estado->id)->where('name', 'Araraquara')->first()
-            ?? app(CidadeService::class)->create(CreateCidadeDTO::fromArray([
-                'name' => 'Araraquara',
-                'estado_uuid' => $estado->uuid,
-                'is_active' => true,
-            ]));
-
-        $bairroNames = ['Centro' => '14801-320', 'Vila Xavier' => '14810-020', 'Jardim América' => '14802-060'];
-
-        $bairros = [];
-        foreach ($bairroNames as $name => $cep) {
-            $bairros[$name] = Bairro::where('cidade_id', $cidade->id)->where('name', $name)->first()
-                ?? app(BairroService::class)->create(CreateBairroDTO::fromArray([
-                    'name' => $name,
-                    'cidade_uuid' => $cidade->uuid,
-                    'is_active' => true,
-                ]));
-        }
-
-        return [$estado, $cidade, $bairros];
     }
 
     /**
@@ -284,26 +239,16 @@ class DemoPlansPresentationSeeder extends Seeder
      *
      * @return array<int, FinalCustomer>
      */
-    private function setupClients(Tenant $tenant, Estado $estado, Cidade $cidade, array $bairros): array
+    private function setupClients(Tenant $tenant): array
     {
         $spec = [
-            ['name' => 'Mercadinho Bom Preço', 'bairro' => 'Centro', 'logradouro' => 'Rua São Bento', 'numero' => '452', 'phone' => '(16) 99101-2233'],
-            ['name' => 'Bar do Zé', 'bairro' => 'Vila Xavier', 'logradouro' => 'Rua Voluntários da Pátria', 'numero' => '118', 'phone' => '(16) 99202-3344'],
-            ['name' => 'Padaria Pão Dourado', 'bairro' => 'Jardim América', 'logradouro' => 'Rua Padre Duarte', 'numero' => '305', 'phone' => '(16) 99404-5566'],
+            ['name' => 'Mercadinho Bom Preço', 'phone' => '(16) 99101-2233'],
+            ['name' => 'Bar do Zé', 'phone' => '(16) 99202-3344'],
+            ['name' => 'Padaria Pão Dourado', 'phone' => '(16) 99404-5566'],
         ];
 
         $created = [];
         foreach ($spec as $c) {
-            $bairro = $bairros[$c['bairro']];
-
-            $endereco = app(EnderecoService::class)->create(CreateEnderecoDTO::fromArray([
-                'estado_uuid' => $estado->uuid,
-                'cidade_uuid' => $cidade->uuid,
-                'bairro_uuid' => $bairro->uuid,
-                'logradouro' => $c['logradouro'],
-                'numero' => $c['numero'],
-            ], $tenant->id));
-
             $finalCustomer = FinalCustomer::create([
                 'uuid' => (string) Str::uuid(),
                 'name' => $c['name'],
@@ -314,7 +259,6 @@ class DemoPlansPresentationSeeder extends Seeder
                 'uuid' => (string) Str::uuid(),
                 'final_customer_id' => $finalCustomer->id,
                 'tenant_id' => $tenant->id,
-                'endereco_id' => $endereco->id,
                 'phone_primary' => $c['phone'],
                 'is_trusted' => true,
                 'is_active' => true,
@@ -327,17 +271,13 @@ class DemoPlansPresentationSeeder extends Seeder
         return $created;
     }
 
-    private function setupStorefront(Tenant $tenant, array $bairros): void
+    private function setupStorefront(Tenant $tenant): void
     {
         $days = [];
         foreach (range(0, 6) as $day) {
             $days[] = ['day_of_week' => $day, 'opens_at' => '00:00:00', 'closes_at' => '23:59:59', 'is_closed' => false];
         }
         app(StoreBusinessHoursService::class)->replaceForTenant($tenant->id, $days);
-
-        foreach ($bairros as $bairro) {
-            app(StoreDeliveryFeeService::class)->upsert($tenant->id, $bairro->uuid, 5.00);
-        }
 
         app(TenantSettingsService::class)->update($tenant->id, UpdateTenantSettingsDTO::fromArray([
             'send_tracking_link_whatsapp' => false,

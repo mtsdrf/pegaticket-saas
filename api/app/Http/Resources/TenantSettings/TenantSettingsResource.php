@@ -18,7 +18,6 @@ class TenantSettingsResource extends JsonResource
             'payment_receiving_method' => $this->payment_receiving_method ?? 'manual',
             'payment_pix_key' => $this->payment_pix_key,
             'allow_store_pickup' => $this->allow_store_pickup,
-            'allow_delivery' => $this->allow_delivery,
             'storefront_enabled' => $this->storefront_enabled,
             'catalog_layout' => $this->catalog_layout ?? 'list',
         ];

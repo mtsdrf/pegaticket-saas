@@ -17,18 +17,6 @@ class StorefrontCheckoutRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Retirada na loja (roadmap Delivery) — cliente antigo do frontend que
-     * ainda não manda fulfillment_type continua tratado como 'delivery',
-     * preservando 100% a validação de endereço já existente.
-     */
-    protected function prepareForValidation(): void
-    {
-        if (!$this->filled('fulfillment_type')) {
-            $this->merge(['fulfillment_type' => 'delivery']);
-        }
-    }
-
     public function rules(): array
     {
         // Resolve o tenant pelo slug da rota pra escopar items.*.product_uuid
@@ -45,6 +33,8 @@ class StorefrontCheckoutRequest extends FormRequest
 
         return [
             'items' => ['required', 'array', 'min:1'],
+            'hold_uuid' => ['nullable', 'uuid'],
+            'session_token' => ['nullable', 'string', 'max:120'],
             'items.*.ticket_type_uuid' => [
                 'required_without:items.*.event_product_uuid',
                 'nullable',
@@ -70,38 +60,6 @@ class StorefrontCheckoutRequest extends FormRequest
             'client_last_name' => ['required', 'string', 'max:255'],
             'client_phone' => ['required', 'string', 'max:30'],
             'notes' => ['nullable', 'string', 'max:500'],
-
-            // Retirada na loja (roadmap Delivery) — quando pickup, o
-            // endereço de entrega deixa de ser obrigatório (ver Guard de
-            // StorefrontCheckoutService::checkout(), que pula a taxa de
-            // entrega por bairro nesse caso).
-            'fulfillment_type' => ['required', 'string', Rule::in(['delivery', 'pickup'])],
-
-            // Endereço de entrega — mesmo shape de campo já usado por
-            // CreateEnderecoDTO/EnderecoService (estado/cidade/bairro
-            // globais, sem tenant_id). required_if:fulfillment_type,delivery.
-            'estado_uuid' => [
-                'nullable',
-                'required_if:fulfillment_type,delivery',
-                'uuid',
-                Rule::exists('estados', 'uuid')->whereNull('deleted_at'),
-            ],
-            'cidade_uuid' => [
-                'nullable',
-                'required_if:fulfillment_type,delivery',
-                'uuid',
-                Rule::exists('cidades', 'uuid')->whereNull('deleted_at'),
-            ],
-            'bairro_uuid' => [
-                'nullable',
-                'required_if:fulfillment_type,delivery',
-                'uuid',
-                Rule::exists('bairros', 'uuid')->whereNull('deleted_at'),
-            ],
-            'logradouro' => ['nullable', 'required_if:fulfillment_type,delivery', 'string', 'max:255'],
-            'numero' => ['nullable', 'string', 'max:20'],
-            'complemento' => ['nullable', 'string', 'max:255'],
-            'cep' => ['nullable', 'string', 'max:9'],
 
             // Cupom (roadmap Delivery, Fase 3) — só formato aqui;
             // existência/elegibilidade é checada por

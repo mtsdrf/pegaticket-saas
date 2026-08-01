@@ -26,18 +26,6 @@ export function listStorefrontCategories(slug: string): Promise<StorefrontCatego
 }
 
 /**
- * Consulta prévia de taxa de entrega por bairro (Delivery Fase 2) — pública,
- * sem auth. 404 com `code: DELIVERY_AREA_NOT_SERVED` quando o bairro não tem
- * taxa cadastrada pro tenant; quem chama trata esse `ApiRequestError`
- * explicitamente (não é um erro genérico de rede).
- */
-export function getStorefrontDeliveryFee(slug: string, bairroUuid: string): Promise<number> {
-  return publicApiClient
-    .get<ApiSuccess<{ fee: number }>>(`/loja/${slug}/taxa-entrega/${bairroUuid}`)
-    .then((response) => response.data.data.fee)
-}
-
-/**
  * Paginado, mas via `publicApiClient` (não passa por `listPaginated` de
  * `crudService.ts`, que está acoplado ao `apiClient` de staff) — mesmo
  * formato de `meta.pagination` do resto da API.

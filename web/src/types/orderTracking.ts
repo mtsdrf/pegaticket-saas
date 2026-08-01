@@ -1,5 +1,8 @@
 export interface OrderTrackingItem {
   product_name: string
+  seat_label: string | null
+  seat_sector_name: string | null
+  seat_kind: string | null
   quantity: string
   unit: string | null
   unit_price: string

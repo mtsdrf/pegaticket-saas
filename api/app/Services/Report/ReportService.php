@@ -83,8 +83,8 @@ class ReportService
                 'received' => $this->formatMoney($amountReceived),
                 'receivable' => $this->formatMoney($totalAmount - $amountReceived),
             ],
-            'orders_by_city' => $this->ordersByCity($tenantId, $dateFrom, $dateTo),
-            'orders_by_neighborhood' => $this->ordersByNeighborhood($tenantId, $dateFrom, $dateTo),
+            'orders_by_city' => [],
+            'orders_by_neighborhood' => [],
             'seasonality_matrix' => $this->seasonalityMatrix($tenantId),
             'top_ticket_types' => $this->topTicketTypes($tenantId, $dateFrom, $dateTo),
             'top_clients' => $this->topClients($tenantId, $dateFrom, $dateTo),
@@ -405,54 +405,12 @@ class ReportService
 
     private function ordersByCity(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
-        return DB::table('orders')
-            ->join('final_customer_tenant_links', function ($join) {
-                $join->on('final_customer_tenant_links.final_customer_id', '=', 'orders.final_customer_id')
-                    ->on('final_customer_tenant_links.tenant_id', '=', 'orders.tenant_id');
-            })
-            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-            ->join('cidades', 'cidades.id', '=', 'enderecos.cidade_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('cidades.id', 'cidades.name')
-            ->selectRaw('cidades.name as city_name, COUNT(*) as order_count, SUM(orders.total_amount) as total_amount')
-            ->orderByDesc('total_amount')
-            ->get()
-            ->map(fn($row) => [
-                'city_name' => $row->city_name,
-                'count' => (int) $row->order_count,
-                'total_amount' => $this->formatMoney((float) $row->total_amount),
-            ])
-            ->all();
+        return [];
     }
 
     private function ordersByNeighborhood(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
-        return DB::table('orders')
-            ->join('final_customer_tenant_links', function ($join) {
-                $join->on('final_customer_tenant_links.final_customer_id', '=', 'orders.final_customer_id')
-                    ->on('final_customer_tenant_links.tenant_id', '=', 'orders.tenant_id');
-            })
-            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-            ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->groupBy('bairros.id', 'bairros.name')
-            ->selectRaw('bairros.name as neighborhood_name, COUNT(*) as order_count, SUM(orders.total_amount) as total_amount')
-            ->orderByDesc('total_amount')
-            ->get()
-            ->map(fn($row) => [
-                'neighborhood_name' => $row->neighborhood_name,
-                'count' => (int) $row->order_count,
-                'total_amount' => $this->formatMoney((float) $row->total_amount),
-            ])
-            ->all();
+        return [];
     }
 
     private function seasonalityMatrix(int $tenantId): array
@@ -958,7 +916,7 @@ class ReportService
     }
 
     /**
-     * Filtros: client_uuid, cidade_uuid, bairro_uuid, is_paid,
+     * Filtros: client_uuid, client_name, is_paid,
      * is_delivered, date_from, date_to (por created_at). Cancelado
      * sempre excluído — não há filtro para incluir cancelados neste
      * endpoint (ver contrato em routes/api.php).
@@ -971,8 +929,7 @@ class ReportService
             // finalCustomerLink NÃO entra no with() de propósito — ver
             // comentário em OrderService::EAGER_RELATIONS (relation
             // depende de tenant_id da instância real, quebra em eager
-            // load). Endereço/cidade/bairro filtrados abaixo via
-            // whereExists com o $tenantId já conhecido nesta query.
+            // load).
             ->with(['finalCustomer', 'stockLocation']);
 
         if (!empty($filters['client_uuid'])) {
@@ -981,30 +938,6 @@ class ReportService
 
         if (!empty($filters['client_name'])) {
             $query->whereHas('finalCustomer', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
-        }
-
-        if (!empty($filters['cidade_uuid'])) {
-            $query->whereExists(function ($sub) use ($tenantId, $filters) {
-                $sub->selectRaw('1')
-                    ->from('final_customer_tenant_links')
-                    ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-                    ->join('cidades', 'cidades.id', '=', 'enderecos.cidade_id')
-                    ->whereColumn('final_customer_tenant_links.final_customer_id', 'orders.final_customer_id')
-                    ->where('final_customer_tenant_links.tenant_id', $tenantId)
-                    ->where('cidades.uuid', $filters['cidade_uuid']);
-            });
-        }
-
-        if (!empty($filters['bairro_uuid'])) {
-            $query->whereExists(function ($sub) use ($tenantId, $filters) {
-                $sub->selectRaw('1')
-                    ->from('final_customer_tenant_links')
-                    ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-                    ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
-                    ->whereColumn('final_customer_tenant_links.final_customer_id', 'orders.final_customer_id')
-                    ->where('final_customer_tenant_links.tenant_id', $tenantId)
-                    ->where('bairros.uuid', $filters['bairro_uuid']);
-            });
         }
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {

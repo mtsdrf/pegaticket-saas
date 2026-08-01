@@ -5,8 +5,19 @@ export interface StorefrontCartContextValue {
   items: StorefrontCartItem[]
   totalQuantity: number
   totalAmount: number
-  addTicketType: (event: StorefrontEvent, ticketType: StorefrontTicketType, quantity?: number) => void
-  addEventProduct: (event: StorefrontEvent, eventProduct: StorefrontEventProduct, quantity?: number) => void
+  addTicketType: (
+    event: StorefrontEvent,
+    ticketType: StorefrontTicketType,
+    quantity?: number,
+    session?: { uuid: string; name: string } | null,
+    seat?: { uuid: string; label: string; sector_name?: string | null; kind: string; capacity?: number | null } | null,
+  ) => void
+  addEventProduct: (
+    event: StorefrontEvent,
+    eventProduct: StorefrontEventProduct,
+    quantity?: number,
+    session?: { uuid: string; name: string } | null,
+  ) => void
   removeItem: (itemId: string) => void
   updateQuantity: (itemId: string, quantity: number) => void
   /** Observação livre do cliente sobre o item (ex: "meia-entrada") — persistida no carrinho local e enviada como `items[].notes` no checkout. */

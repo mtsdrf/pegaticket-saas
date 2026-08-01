@@ -737,6 +737,26 @@ return [
         'store_pickup_not_enabled' => 'Esta loja ainda não aceita retirada no local.',
         'store_pickup_address_missing' => 'A loja ainda não configurou seu endereço, então não é possível retirar o pedido no local no momento.',
         'delivery_not_enabled' => 'Esta loja não está aceitando entregas no momento.',
+        'availability_shown' => 'Disponibilidade exibida com sucesso.',
+    ],
+
+    'inventory_hold' => [
+        'created' => 'Reserva temporária criada com sucesso.',
+        'show' => 'Reserva temporária exibida com sucesso.',
+        'renewed' => 'Reserva temporária renovada com sucesso.',
+        'released' => 'Reserva temporária liberada com sucesso.',
+        'invalid_item' => 'Cada item da reserva deve informar ingresso ou adicional, mas não ambos.',
+        'session_required' => 'Selecione uma sessão antes de reservar itens deste evento.',
+        'seat_requires_ticket_type' => 'A seleção de assento precisa estar vinculada a um tipo de ingresso.',
+        'seat_quantity_invalid' => 'Assentos individuais só podem ser reservados uma vez por item.',
+        'seat_capacity_exceeded' => 'A quantidade solicitada ultrapassa a capacidade disponível deste lugar.',
+        'invalid_seat' => 'Assento inválido para este evento.',
+        'duplicate_seat' => 'Um mesmo assento não pode ser reservado duas vezes na mesma operação.',
+        'ticket_type_session_mismatch' => 'O tipo de ingresso escolhido não pertence à sessão informada.',
+        'max_per_order_exceeded' => 'A quantidade solicitada ultrapassa o limite permitido por pedido.',
+        'insufficient_availability' => 'Não há disponibilidade suficiente para um ou mais itens selecionados.',
+        'not_active' => 'Esta reserva temporária não está mais ativa.',
+        'checkout_mismatch' => 'Os itens do checkout não correspondem mais à reserva temporária ativa.',
     ],
 
     'table_reservation' => [

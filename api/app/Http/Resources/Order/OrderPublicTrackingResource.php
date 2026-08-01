@@ -45,6 +45,9 @@ class OrderPublicTrackingResource extends JsonResource
             'created_at' => $this->created_at,
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'ticket_type_name' => $item->ticketType?->name ?? $item->eventProduct?->name,
+                'seat_label' => $item->seat?->label,
+                'seat_sector_name' => $item->seat?->sector_name,
+                'seat_kind' => $item->seat?->kind,
                 'quantity' => $item->quantity,
                 // Não sensível (rótulo de exibição, ex. "un"/"kg") — usado
                 // só pra decidir se a quantidade mostra casas decimais.

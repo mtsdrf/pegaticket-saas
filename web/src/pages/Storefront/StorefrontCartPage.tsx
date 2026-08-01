@@ -16,11 +16,27 @@ import { formatCurrency } from '../../utils/format'
 
 const ITEM_NOTES_MAX_LENGTH = 200
 
+function isExclusiveSeatKind(kind: string | null | undefined): boolean {
+  return kind === 'mesa' || kind === 'camarote'
+}
+
 export function StorefrontCartPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { items, totalAmount, updateQuantity, removeItem, setItemNotes } = useStorefrontCart()
   useCartAbandonmentTelemetry(slug)
+
+  function canIncreaseQuantity(item: (typeof items)[number]) {
+    if (!item.seat_uuid) {
+      return true
+    }
+
+    if (isExclusiveSeatKind(item.seat_kind)) {
+      return false
+    }
+
+    return item.quantity < Math.max(1, item.seat_capacity ?? 1)
+  }
 
   return (
     <Box
@@ -84,6 +100,20 @@ export function StorefrontCartPage() {
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ fontSize: 14.5, fontWeight: 600, wordBreak: 'break-word' }}>{item.name}</Typography>
                       <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{item.event_name}</Typography>
+                      {item.session_name && (
+                        <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Sessão: {item.session_name}</Typography>
+                      )}
+                      {item.seat_label && (
+                        <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                          Lugar: {item.seat_label}
+                          {item.seat_sector_name ? ` • ${item.seat_sector_name}` : ''}
+                        </Typography>
+                      )}
+                      {item.seat_uuid && isExclusiveSeatKind(item.seat_kind) && (
+                        <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                          Reserva exclusiva para {Math.max(1, item.seat_capacity ?? item.quantity)} pessoa(s)
+                        </Typography>
+                      )}
                       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>{formatCurrency(item.unit_price)} cada</Typography>
 
                       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mt: 1 }}>
@@ -101,6 +131,7 @@ export function StorefrontCartPage() {
                           aria-label={`Aumentar quantidade de ${item.name}`}
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           sx={{ minWidth: UI_SIZE.compactControl, minHeight: UI_SIZE.compactControl, ...SOFT_PANEL_SX }}
+                          disabled={!canIncreaseQuantity(item)}
                         >
                           <AddIcon fontSize="small" />
                         </IconButton>

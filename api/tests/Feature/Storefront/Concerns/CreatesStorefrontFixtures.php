@@ -5,7 +5,6 @@ namespace Tests\Feature\Storefront\Concerns;
 use App\Models\Location\Bairro;
 use App\Models\Plan\Plan;
 use App\Models\Storefront\StoreBusinessHour;
-use App\Models\Storefront\StoreDeliveryFee;
 use App\Models\Tenant\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,18 +34,8 @@ trait CreatesStorefrontFixtures
         }
     }
 
-    /**
-     * Bairro sem taxa cadastrada bloqueia a entrega (guard 3, Delivery
-     * Fase 2) — fee=0.0 por padrão para não alterar as asserções de
-     * total_amount já existentes nos testes de Fase 1.
-     */
-    protected function createDeliveryFeeForBairro(int $tenantId, Bairro $bairro, float $fee = 0.0): StoreDeliveryFee
+    protected function createDeliveryFeeForBairro(int $tenantId, Bairro $bairro, float $fee = 0.0): void
     {
-        return StoreDeliveryFee::create([
-            'tenant_id' => $tenantId,
-            'bairro_id' => $bairro->id,
-            'fee' => $fee,
-        ]);
     }
     protected function storefrontFunctionalityId(): int
     {

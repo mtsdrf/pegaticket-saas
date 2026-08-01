@@ -41,11 +41,6 @@ use App\Http\Controllers\Event\TicketBatchController;
 use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\Event\EventProductController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
-use App\Http\Controllers\Location\EstadoController;
-use App\Http\Controllers\Location\CidadeController;
-use App\Http\Controllers\Location\BairroController;
-use App\Http\Controllers\Location\EnderecoController;
-use App\Http\Controllers\Location\LocationController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Order\OrderController;
@@ -65,8 +60,8 @@ use App\Http\Controllers\Tenant\TenantLogoController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\CartEventController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
+use App\Http\Controllers\Storefront\StorefrontHoldController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
-use App\Http\Controllers\Storefront\StorefrontLocationController;
 use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\ProductPromotionController;
 use App\Http\Controllers\Support\HelpRequestController;
@@ -178,6 +173,21 @@ Route::prefix('v1')->group(function () {
     Route::get('/loja/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
         ->middleware('throttle:100,1,storefront-event-show');
 
+    Route::get('/loja/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
+        ->middleware('throttle:100,1,storefront-event-availability');
+
+    Route::post('/loja/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
+
+    Route::get('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
+        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
+
+    Route::post('/loja/{slug}/holds/{holdUuid}/renovar', [StorefrontHoldController::class, 'renew'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-renew']);
+
+    Route::delete('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'destroy'])
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-destroy']);
+
     // Categorias com evento disponível (vitrine) — mesmo espírito de
     // /loja/{slug}/eventos.
     Route::get('/loja/{slug}/categorias', [StorefrontController::class, 'categories'])
@@ -186,18 +196,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/loja/{slug}/manifest.webmanifest', [StorefrontManifestController::class, 'show'])
         ->middleware('throttle:100,1,storefront-manifest');
 
-    // Consulta prévia de taxa de entrega (Delivery Fase 2) — o frontend
-    // chama ao escolher o bairro no checkout, antes de confirmar o pedido.
-    // 100% público, mesmo espírito de /loja/{slug}/produtos. Ver
-    // App\Http\Controllers\Storefront\StorefrontController::deliveryFee().
-    Route::get('/loja/{slug}/taxa-entrega/{bairro_uuid}', [StorefrontController::class, 'deliveryFee'])
-        ->middleware('throttle:100,1,storefront-delivery-fee');
-
-    // Prévia pública de cupom (Delivery Fase 3) — o frontend chama ao
-    // digitar o código no checkout, antes do OTP/identificação do cliente
-    // final. Não consome CouponRedemption (só StorefrontCheckoutService::
-    // checkout() consome, no submit final). Mesmo espírito 100% público de
-    // /loja/{slug}/taxa-entrega/{bairro_uuid}. Ver
+    // Prévia pública de cupom — o frontend chama ao digitar o código no
+    // checkout, antes do OTP/identificação do cliente final. Não consome
+    // CouponRedemption (só StorefrontCheckoutService::checkout() consome,
+    // no submit final). Ver
     // App\Http\Controllers\Storefront\StorefrontController::validateCoupon().
     Route::post('/loja/{slug}/cupons/validar', [StorefrontController::class, 'validateCoupon'])
         ->middleware('throttle:100,1,storefront-coupon-validate');
@@ -208,33 +210,6 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Storefront\CartEventController.
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
-
-
-    // Estado/Cidade/Bairro para a cascata de endereço do checkout da loja —
-    // descoberto durante o frontend (2026-07-16) que EstadoController/
-    // CidadeController/BairroController exigem o guard de staff (`jwt`),
-    // que rejeita explicitamente um token `customer.jwt` (FinalCustomer).
-    // Path fixo (não `/loja/{slug}/...`) porque os dados são globais, sem
-    // tenant_id — sem conflito de rota com `/loja/{slug}` (segmentos
-    // diferentes). Ver App\Http\Controllers\Storefront\StorefrontLocationController.
-    Route::get('/loja/localizacoes/estados', [StorefrontLocationController::class, 'estados'])
-        ->middleware('throttle:100,1,storefront-estados');
-
-    Route::get('/loja/localizacoes/cidades', [StorefrontLocationController::class, 'cidades'])
-        ->middleware('throttle:100,1,storefront-cidades');
-
-    Route::get('/loja/localizacoes/bairros', [StorefrontLocationController::class, 'bairros'])
-        ->middleware('throttle:100,1,storefront-bairros');
-
-    // CEP (ViaCEP) + reverse-geocode públicos pro endereço do checkout —
-    // mesmo espírito das rotas acima. Throttle mais baixo (chamam API
-    // externa de terceiro).
-    Route::get('/loja/localizacoes/cep/{cep}', [StorefrontLocationController::class, 'cep'])
-        ->middleware('throttle:60,1,storefront-cep-lookup');
-
-    Route::get('/loja/localizacoes/reverse-geocode', [StorefrontLocationController::class, 'reverseGeocode'])
-        ->middleware('throttle:30,1,storefront-reverse-geocode');
-
     // Portal do cliente final (roadmap 5.2) — login sem senha por OTP de
     // e-mail. Identidade própria (App\Models\FinalCustomer\FinalCustomer),
     // NÃO é App\Models\User\User (staff). Nunca revela se o e-mail já tinha
@@ -326,15 +301,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/auth/access-profile', [AuthAccessController::class, 'show'])
             ->middleware('throttle:60,1,auth-access-profile');
-
-        // Reverse geocoding (lat/lng -> sugestão de estado/cidade/bairro)
-        // pra pré-selecionar os combos em cascata no formulário de cliente
-        // ("usar minha localização atual"). Sem tenant: estados/cidades/
-        // bairros são tabelas globais de referência, sem tenant_id. Sem
-        // perm: qualquer usuário autenticado pode usar, mesmo espírito de
-        // /auth/access-profile. Ver App\Services\Location\ReverseGeocodeService.
-        Route::get('/location/reverse-geocode', [LocationController::class, 'reverseGeocode'])
-            ->middleware('throttle:20,1,location-reverse-geocode');
 
         // "Meus dados" (auto-serviço) — o usuário STAFF logado edita A SI
         // MESMO (nome/foto/senha/e-mail). Sem tenant/perm: mesmo espírito
@@ -554,64 +520,6 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:event_categories,delete', 'throttle:10,1,event-categories-delete']);
         });
 
-        // Global (sem middleware tenant): Estado/Cidade/Bairro são compartilhados entre tenants.
-        Route::prefix('estados')->group(function () {
-            Route::get('/', [EstadoController::class, 'index'])
-                ->middleware(['tenant', 'perm:estados,read', 'throttle:100,1,estados-list']);
-
-            Route::post('/', [EstadoController::class, 'store'])
-                ->middleware(['tenant', 'perm:estados,create', 'throttle:30,1,estados-create']);
-
-            Route::put('/{estado}', [EstadoController::class, 'update'])
-                ->middleware(['tenant', 'perm:estados,update', 'throttle:30,1,estados-update']);
-
-            Route::delete('/{estado}', [EstadoController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:estados,delete', 'throttle:10,1,estados-delete']);
-        });
-
-        Route::prefix('cidades')->group(function () {
-            Route::get('/', [CidadeController::class, 'index'])
-                ->middleware(['tenant', 'perm:cidades,read', 'throttle:100,1,cidades-list']);
-
-            Route::post('/', [CidadeController::class, 'store'])
-                ->middleware(['tenant', 'perm:cidades,create', 'throttle:30,1,cidades-create']);
-
-            Route::put('/{cidade}', [CidadeController::class, 'update'])
-                ->middleware(['tenant', 'perm:cidades,update', 'throttle:30,1,cidades-update']);
-
-            Route::delete('/{cidade}', [CidadeController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:cidades,delete', 'throttle:10,1,cidades-delete']);
-        });
-
-        Route::prefix('bairros')->group(function () {
-            Route::get('/', [BairroController::class, 'index'])
-                ->middleware(['tenant', 'perm:bairros,read', 'throttle:100,1,bairros-list']);
-
-            Route::post('/', [BairroController::class, 'store'])
-                ->middleware(['tenant', 'perm:bairros,create', 'throttle:30,1,bairros-create']);
-
-            Route::put('/{bairro}', [BairroController::class, 'update'])
-                ->middleware(['tenant', 'perm:bairros,update', 'throttle:30,1,bairros-update']);
-
-            Route::delete('/{bairro}', [BairroController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:bairros,delete', 'throttle:10,1,bairros-delete']);
-        });
-
-        // Tenant-scoped: cada tenant cadastra os logradouros do seu próprio cliente.
-        Route::prefix('enderecos')->group(function () {
-            Route::get('/', [EnderecoController::class, 'index'])
-                ->middleware(['tenant', 'perm:enderecos,read', 'throttle:100,1,enderecos-list']);
-
-            Route::post('/', [EnderecoController::class, 'store'])
-                ->middleware(['tenant', 'perm:enderecos,create', 'throttle:30,1,enderecos-create']);
-
-            Route::put('/{endereco}', [EnderecoController::class, 'update'])
-                ->middleware(['tenant', 'perm:enderecos,update', 'throttle:30,1,enderecos-update']);
-
-            Route::delete('/{endereco}', [EnderecoController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:enderecos,delete', 'throttle:10,1,enderecos-delete']);
-        });
-
         Route::prefix('tenant-settings')->group(function () {
             Route::get('/', [TenantSettingsController::class, 'show'])
                 ->middleware(['tenant', 'perm:tenant_settings,read', 'throttle:100,1,tenant-settings-show']);
@@ -660,8 +568,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/tenant-data-export', [TenantDataExportController::class, 'store'])
             ->middleware(['tenant', 'perm:tenant-profile,export', 'throttle:3,60,tenant-data-export']);
 
-        // Cupons de desconto sobre o carrinho todo (Delivery Fase 3) — CRUD
-        // completo (create/update, diferente do upsert de taxa de entrega).
+        // Cupons de desconto sobre o carrinho todo — CRUD completo.
         // Ver App\Services\Storefront\CouponService.
         Route::prefix('coupons')->group(function () {
             Route::get('/', [CouponController::class, 'index'])

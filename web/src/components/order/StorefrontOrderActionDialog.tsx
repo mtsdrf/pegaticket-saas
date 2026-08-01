@@ -35,19 +35,6 @@ interface StorefrontOrderActionDialogProps {
   canManageCancellation?: boolean
 }
 
-function formatOrderAddress(order: Order): string | null {
-  const e = order.final_customer?.endereco
-  if (!e) return null
-  const parts = [
-    [e.logradouro, e.numero].filter(Boolean).join(', '),
-    e.complemento,
-    e.bairro_name,
-    e.cidade_name,
-    e.cep,
-  ].filter((part) => part && part.trim())
-  return parts.length > 0 ? parts.join(' • ') : null
-}
-
 /** Ação pendente de confirmação (com ou sem motivo) — guarda o botão escolhido até o usuário confirmar. */
 interface PendingAction {
   button: OrderActionButton
@@ -165,8 +152,6 @@ export function StorefrontOrderActionDialog({
       })
     : null
   const actions = order ? getOrderActionButtons(order, canManageCancellation) : []
-  const address = order ? formatOrderAddress(order) : null
-
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -246,14 +231,6 @@ export function StorefrontOrderActionDialog({
                       Telefone:{' '}
                     </Box>
                     {order.final_customer.phone_primary}
-                  </Typography>
-                )}
-                {address && (
-                  <Typography sx={{ fontSize: 13, wordBreak: 'break-word' }}>
-                    <Box component="span" sx={{ color: 'var(--pt-muted)' }}>
-                      Endereço:{' '}
-                    </Box>
-                    {address}
                   </Typography>
                 )}
                 {order.coupon_code && (

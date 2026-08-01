@@ -68,23 +68,6 @@ class TenantSettingsTest extends TestCase
     }
 
     #[Test]
-    public function update_rejects_allow_delivery_and_allow_store_pickup_both_false(): void
-    {
-        $this->grantPermission('tenant_settings', 'update');
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => true,
-                'block_order_without_stock' => false,
-                'allow_delivery' => false,
-                'allow_store_pickup' => false,
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['allow_delivery']);
-    }
-
-    #[Test]
     public function update_persists_accepted_payment_methods(): void
     {
         $this->grantPermission('tenant_settings', 'update');

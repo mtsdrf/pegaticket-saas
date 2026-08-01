@@ -9,27 +9,23 @@ import {
   FormControlLabel,
   MenuItem,
   Paper,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import { QRCodeSVG } from 'qrcode.react'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ClientAddressFields, type ClientAddressValues } from '../../components/client/ClientAddressFields'
 import { OtpIdentifyForm } from '../../components/storefront/OtpIdentifyForm'
 import { Logo } from '../../components/ui/Logo'
 import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelemetry'
-import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import { formatCountdown } from '../../hooks/useCountdown'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
 import { getOrderTracking } from '../../services/orderTrackingService'
-import * as portalAddressService from '../../services/portalAddressService'
 import * as portalOrderService from '../../services/portalOrderService'
 import * as storefrontCheckoutService from '../../services/storefrontCheckoutService'
-import * as storefrontLocationService from '../../services/storefrontLocationService'
+import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
@@ -39,45 +35,34 @@ import type { OrderPayment } from '../../types/order'
 import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
-  DELIVERY_AREA_NOT_SERVED_CODE,
   INSUFFICIENT_STOCK_CODE,
   INVALID_COUPON_CODE,
   STORE_CLOSED_CODE,
   STORE_PICKUP_UNAVAILABLE_CODE,
   type StorefrontCheckoutPayload,
+  type StorefrontCreateHoldPayload,
+  type StorefrontInventoryHold,
 } from '../../types/storefront'
-import type { Bairro, Cidade, Estado, ReverseGeocodeResult } from '../../types/location'
 import { formatCurrency } from '../../utils/format'
-
-/** Distingue `GeolocationPositionError` (não estende `Error`) de erros de rede/API — mesmo helper de `ClientFormPage.tsx`. */
-function isGeolocationPositionError(error: unknown): error is GeolocationPositionError {
-  return typeof error === 'object' && error !== null && 'code' in error && 'PERMISSION_DENIED' in error
-}
-
-function geolocationErrorMessage(error: unknown): string {
-  if (isGeolocationPositionError(error)) {
-    if (error.code === error.PERMISSION_DENIED) {
-      return 'Permissão de localização negada. Habilite o acesso à localização do navegador para usar este recurso.'
-    }
-    if (error.code === error.TIMEOUT) {
-      return 'Não foi possível obter sua localização a tempo. Tente novamente.'
-    }
-    return 'Não foi possível obter sua localização agora (verifique se o site está em HTTPS). Preencha o endereço manualmente.'
-  }
-  return getApiErrorMessage(error, 'Não foi possível obter sua localização agora. Preencha o endereço manualmente.')
-}
-
-type DeliveryFeeStatus = 'idle' | 'loading' | 'available' | 'not-served' | 'error'
 type CouponStatus = 'idle' | 'loading' | 'applied' | 'invalid'
 
-const EMPTY_ADDRESS: ClientAddressValues = {
-  estado_uuid: '',
-  cidade_uuid: '',
-  bairro_uuid: '',
-  logradouro: '',
-  numero: '',
-  complemento: '',
-  cep: '',
+const HOLD_RENEW_INTERVAL_MS = 60_000
+
+function buildHoldSignature(eventSlug: string | null, sessionToken: string, items: StorefrontCreateHoldPayload['items']): string {
+  return JSON.stringify({ eventSlug, sessionToken, items })
+}
+
+function getHoldSecondsLeft(hold: StorefrontInventoryHold | null): number {
+  if (!hold?.expires_at) {
+    return Math.max(0, hold?.remaining_seconds ?? 0)
+  }
+
+  const expiresAt = Date.parse(hold.expires_at)
+  if (Number.isNaN(expiresAt)) {
+    return Math.max(0, hold.remaining_seconds)
+  }
+
+  return Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
 }
 
 function PageShell({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -279,34 +264,20 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
   )
 }
 
-/** Passo 2: dados de entrega + endereço (`ClientAddressFields` reaproveitado) + resumo + confirmação. */
+/** Passo 2: dados de contato + resumo + confirmação. */
 function DetailsAndReviewStep({ slug }: { slug: string }) {
   const navigate = useNavigate()
-  const { items, totalAmount, clear } = useStorefrontCart()
+  const { items, totalAmount, clear, sessionId } = useStorefrontCart()
   const { markCompleted } = useCartAbandonmentTelemetry(slug)
 
   const [clientName, setClientName] = useState('')
   const [clientLastName, setClientLastName] = useState('')
   const [clientPhone, setClientPhone] = useState('')
   const [notes, setNotes] = useState('')
-  const [address, setAddress] = useState<ClientAddressValues>(EMPTY_ADDRESS)
-
-  const [estados, setEstados] = useState<Estado[]>([])
-  const [cidades, setCidades] = useState<Cidade[]>([])
-  const [bairros, setBairros] = useState<Bairro[]>([])
-  const [isLoadingEstados, setIsLoadingEstados] = useState(true)
-  const [isLoadingCidades, setIsLoadingCidades] = useState(false)
-  const [isLoadingBairros, setIsLoadingBairros] = useState(false)
-  const [isLocatingGps, setIsLocatingGps] = useState(false)
-  const [isCepLoading, setIsCepLoading] = useState(false)
-  const [cepNotFoundMessage, setCepNotFoundMessage] = useState<string | null>(null)
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const [deliveryFeeStatus, setDeliveryFeeStatus] = useState<DeliveryFeeStatus>('idle')
-  const [deliveryFee, setDeliveryFee] = useState<number | null>(null)
 
   const [couponCode, setCouponCode] = useState('')
   const [couponStatus, setCouponStatus] = useState<CouponStatus>('idle')
@@ -327,12 +298,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const paymentMethod: 'delivery' | 'pix' = 'delivery'
   const [paidOrderUuid, setPaidOrderUuid] = useState<string | null>(null)
 
-  // Retirada na loja / entrega (roadmap Delivery) — só oferecidas quando o
-  // tenant habilitou `allow_store_pickup`/`allow_delivery` (mesma chamada que
-  // já busca accepted_payment_methods acima, sem round-trip extra).
   const [allowStorePickup, setAllowStorePickup] = useState(false)
-  const [allowDelivery, setAllowDelivery] = useState(true)
-  const [fulfillmentType, setFulfillmentType] = useState<'delivery' | 'pickup'>('delivery')
 
   // Meio de pagamento pretendido (roadmap cupom por meio de pagamento) —
   // distinto do `paymentMethod` acima (que só decide "pagar Pix agora" vs
@@ -345,6 +311,78 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   // permitir digitação livre, convertido só no payload do checkout.
   const [needsChange, setNeedsChange] = useState(false)
   const [changeForAmount, setChangeForAmount] = useState('')
+  const [hold, setHold] = useState<StorefrontInventoryHold | null>(null)
+  const [holdSecondsLeft, setHoldSecondsLeft] = useState(0)
+  const [isPreparingHold, setIsPreparingHold] = useState(false)
+  const [holdError, setHoldError] = useState<string | null>(null)
+  const [holdRetryNonce, setHoldRetryNonce] = useState(0)
+  const shouldReleaseHoldRef = useRef(true)
+  const lastReleasedHoldUuidRef = useRef<string | null>(null)
+
+  const holdPayloadItems = useMemo<StorefrontCreateHoldPayload['items']>(
+    () =>
+      items.map((item) => ({
+        ticket_type_uuid: item.ticket_type_uuid,
+        event_product_uuid: item.event_product_uuid,
+        seat_uuid: item.seat_uuid ?? undefined,
+        quantity: item.quantity,
+      })),
+    [items],
+  )
+
+  const holdContext = useMemo(() => {
+    const eventSlugs = Array.from(new Set(items.map((item) => item.event_slug?.trim()).filter(Boolean)))
+    const hasLegacyItems = items.some((item) => !item.event_slug?.trim())
+    const sessionUuids = Array.from(new Set(items.map((item) => item.session_uuid?.trim()).filter(Boolean)))
+    const hasMixedSessionState = items.some((item) => {
+      const normalized = item.session_uuid?.trim() || null
+      return normalized !== sessionUuids[0] && (normalized !== null || sessionUuids.length > 0)
+    })
+
+    if (hasLegacyItems) {
+      return {
+        eligible: false,
+        eventSlug: null,
+        sessionUuid: null,
+        message:
+          'Seu carrinho foi montado com itens de uma versão anterior. Volte ao catálogo, atualize os itens e tente novamente para reservar os ingressos.',
+      }
+    }
+
+    if (eventSlugs.length !== 1) {
+      return {
+        eligible: false,
+        eventSlug: null,
+        sessionUuid: null,
+        message:
+          'A reserva temporária ainda funciona por evento. Para garantir disponibilidade, finalize um evento por vez.',
+      }
+    }
+
+    if (hasMixedSessionState) {
+      return {
+        eligible: false,
+        eventSlug: null,
+        sessionUuid: null,
+        message:
+          'Seu carrinho mistura itens de sessões diferentes. Finalize uma sessão por vez para continuar com a reserva temporária.',
+      }
+    }
+
+    return {
+      eligible: true,
+      eventSlug: eventSlugs[0] ?? null,
+      sessionUuid: sessionUuids[0] ?? null,
+      message: null,
+    }
+  }, [items])
+
+  const holdSignature = useMemo(
+    () => buildHoldSignature(holdContext.eventSlug, sessionId, holdPayloadItems),
+    [holdContext.eventSlug, holdPayloadItems, sessionId],
+  )
+
+  const hasActiveHold = Boolean(hold && hold.status === 'reservado' && holdSecondsLeft > 0)
 
   useEffect(() => {
     let cancelled = false
@@ -352,21 +390,9 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       .getStorefront(slug)
       .then((tenant) => {
         if (!cancelled) {
-          // `allow_delivery` é default true no backend — `?? true` cobre respostas
-          // antigas/mocks sem o campo, pra não forçar retirada indevidamente.
-          const tenantAllowDelivery = tenant.allow_delivery ?? true
           const tenantAllowStorePickup = tenant.allow_store_pickup ?? false
           setAcceptedPaymentMethods(tenant.accepted_payment_methods)
           setAllowStorePickup(tenantAllowStorePickup)
-          setAllowDelivery(tenantAllowDelivery)
-          // Quando só um dos dois métodos está ativo, não há escolha — força
-          // o único método disponível (o RadioGroup abaixo só aparece quando
-          // os dois estão ativos ao mesmo tempo).
-          if (!tenantAllowDelivery) {
-            setFulfillmentType('pickup')
-          } else if (!tenantAllowStorePickup) {
-            setFulfillmentType('delivery')
-          }
         }
       })
       .catch(() => undefined)
@@ -375,55 +401,115 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     }
   }, [slug])
 
-  // Pré-preenchimento a partir do cadastro já existente (roadmap Loja) —
-  // Client/Endereco já vinculados a essa loja no 1º pedido (mesmo e-mail,
-  // ver StorefrontCheckoutService::resolveClientUuid()). Reaproveita o
-  // MESMO endpoint de "Meus endereços" do Portal (GET /portal/addresses),
-  // filtrando pela loja atual — evita criar um endpoint novo só pra isso.
-  // Falha silenciosa: sem cadastro anterior é o caminho normal (1ª
-  // compra), não é erro. Só preenche campo que ainda está vazio — nunca
-  // sobrescreve o que o cliente já digitou.
   useEffect(() => {
+    shouldReleaseHoldRef.current = true
+  }, [])
+
+  useEffect(() => {
+    if (!holdContext.eligible || !holdContext.eventSlug || items.length === 0) {
+      setHold(null)
+      setHoldSecondsLeft(0)
+      setIsPreparingHold(false)
+      setHoldError(holdContext.message)
+      return
+    }
+
     let cancelled = false
-    portalAddressService
-      .listPortalAddresses()
-      .then(async (addresses) => {
-        if (cancelled) return
-        const existing = addresses.find((item) => item.tenant_slug === slug)
-        if (!existing) return
+    let createdHoldUuid: string | null = null
 
-        if (existing.client_name) setClientName((current) => current || existing.client_name!)
-        if (existing.client_phone) setClientPhone((current) => current || existing.client_phone!)
+    async function syncHold() {
+      setIsPreparingHold(true)
+      setHoldError(null)
+      setHold(null)
+      setHoldSecondsLeft(0)
 
-        const endereco = existing.endereco
-        if (!endereco) return
+      try {
+        const createdHold = await storefrontHoldService.createHold(slug, holdContext.eventSlug as string, {
+          session_token: sessionId,
+          session_uuid: holdContext.sessionUuid ?? undefined,
+          items: holdPayloadItems,
+        })
 
-        if (endereco.estado_uuid) {
-          const cidadesList = await handleEstadoChange(endereco.estado_uuid)
-          if (cancelled) return
-          if (endereco.cidade_uuid && cidadesList.some((cidade) => cidade.uuid === endereco.cidade_uuid)) {
-            const bairrosList = await handleCidadeChange(endereco.cidade_uuid)
-            if (cancelled) return
-            if (endereco.bairro_uuid && bairrosList.some((bairro) => bairro.uuid === endereco.bairro_uuid)) {
-              handleBairroChange(endereco.bairro_uuid)
-            }
-          }
+        createdHoldUuid = createdHold.uuid
+
+        if (cancelled) {
+          storefrontHoldService.releaseHoldBestEffort(slug, createdHold.uuid, sessionId)
+          return
         }
 
-        setAddress((current) => ({
-          ...current,
-          logradouro: current.logradouro.trim() ? current.logradouro : endereco.logradouro ?? current.logradouro,
-          numero: current.numero.trim() ? current.numero : endereco.numero ?? current.numero,
-          complemento: current.complemento.trim() ? current.complemento : endereco.complemento ?? current.complemento,
-          cep: current.cep.trim() ? current.cep : endereco.cep ?? current.cep,
-        }))
-      })
-      .catch(() => undefined)
+        setHold(createdHold)
+        setHoldSecondsLeft(getHoldSecondsLeft(createdHold))
+      } catch (error) {
+        if (cancelled) return
+        setHold(null)
+        setHoldSecondsLeft(0)
+        setHoldError(
+          getApiErrorMessage(error, 'Não foi possível reservar seus itens agora. Revise o carrinho e tente novamente.'),
+        )
+      } finally {
+        if (!cancelled) setIsPreparingHold(false)
+      }
+    }
+
+    void syncHold()
+
     return () => {
       cancelled = true
+      if (!createdHoldUuid || !shouldReleaseHoldRef.current || lastReleasedHoldUuidRef.current === createdHoldUuid) return
+      lastReleasedHoldUuidRef.current = createdHoldUuid
+      storefrontHoldService.releaseHoldBestEffort(slug, createdHoldUuid, sessionId)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug])
+  }, [slug, sessionId, items.length, holdContext.eligible, holdContext.eventSlug, holdContext.sessionUuid, holdContext.message, holdPayloadItems, holdRetryNonce, holdSignature])
+
+  useEffect(() => {
+    if (!hold?.uuid) return
+
+    const interval = window.setInterval(() => {
+      setHoldSecondsLeft(getHoldSecondsLeft(hold))
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [hold])
+
+  useEffect(() => {
+    if (!hold?.uuid || !holdContext.eligible || !holdContext.eventSlug) return
+
+    const interval = window.setInterval(() => {
+      storefrontHoldService
+        .renewHold(slug, hold.uuid, sessionId)
+        .then((renewedHold) => {
+          setHold(renewedHold)
+          setHoldSecondsLeft(getHoldSecondsLeft(renewedHold))
+          setHoldError(null)
+        })
+        .catch((error: unknown) => {
+          setHoldError(getApiErrorMessage(error, 'Não foi possível renovar sua reserva temporária.'))
+        })
+    }, HOLD_RENEW_INTERVAL_MS)
+
+    return () => window.clearInterval(interval)
+  }, [slug, sessionId, hold?.uuid, holdContext.eligible, holdContext.eventSlug, holdContext.sessionUuid])
+
+  useEffect(() => {
+    if (!hold?.uuid) return
+
+    const releaseCurrentHold = () => {
+      if (!shouldReleaseHoldRef.current || lastReleasedHoldUuidRef.current === hold.uuid) return
+      lastReleasedHoldUuidRef.current = hold.uuid
+      storefrontHoldService.releaseHoldBestEffort(slug, hold.uuid, sessionId)
+    }
+
+    window.addEventListener('pagehide', releaseCurrentHold)
+    return () => window.removeEventListener('pagehide', releaseCurrentHold)
+  }, [slug, sessionId, hold?.uuid])
+
+  useEffect(() => {
+    if (!hold?.uuid) return
+    if (holdSecondsLeft > 0) return
+
+    setHold(null)
+    setHoldError('Sua reserva temporária expirou. Gere uma nova reserva para concluir o pedido.')
+  }, [hold?.uuid, holdSecondsLeft])
 
   // Prévia pública de cupom (Delivery Fase 3) — não checa limite por
   // cliente nem calcula frete grátis de verdade (ver
@@ -467,194 +553,11 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     setAppliedCouponCode(null)
   }
 
-  // Consulta prévia de taxa por bairro (Delivery Fase 2) — dispara sempre
-  // que o bairro escolhido muda, antes de confirmar o pedido (evita
-  // surpresa/bloqueio só no submit final).
-  useEffect(() => {
-    if (!address.bairro_uuid) {
-      setDeliveryFeeStatus('idle')
-      setDeliveryFee(null)
-      return
-    }
-    let cancelled = false
-    setDeliveryFeeStatus('loading')
-    setDeliveryFee(null)
-    storefrontService
-      .getStorefrontDeliveryFee(slug, address.bairro_uuid)
-      .then((fee) => {
-        if (cancelled) return
-        setDeliveryFee(fee)
-        setDeliveryFeeStatus('available')
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        if (error instanceof ApiRequestError && error.code === DELIVERY_AREA_NOT_SERVED_CODE) {
-          setDeliveryFeeStatus('not-served')
-        } else {
-          setDeliveryFeeStatus('error')
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [slug, address.bairro_uuid])
-
-  useEffect(() => {
-    let cancelled = false
-    storefrontLocationService
-      .getStorefrontEstados()
-      .then((list) => {
-        if (!cancelled) setEstados(list)
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setIsLoadingEstados(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  async function handleEstadoChange(estadoUuid: string): Promise<Cidade[]> {
-    setAddress((current) => ({ ...current, estado_uuid: estadoUuid, cidade_uuid: '', bairro_uuid: '' }))
-    setCidades([])
-    setBairros([])
-    if (!estadoUuid) return []
-    setIsLoadingCidades(true)
-    try {
-      const list = await storefrontLocationService.getStorefrontCidades(estadoUuid)
-      setCidades(list)
-      return list
-    } catch {
-      setCidades([])
-      return []
-    } finally {
-      setIsLoadingCidades(false)
-    }
-  }
-
-  async function handleCidadeChange(cidadeUuid: string): Promise<Bairro[]> {
-    setAddress((current) => ({ ...current, cidade_uuid: cidadeUuid, bairro_uuid: '' }))
-    setBairros([])
-    if (!cidadeUuid) return []
-    setIsLoadingBairros(true)
-    try {
-      const list = await storefrontLocationService.getStorefrontBairros(cidadeUuid)
-      setBairros(list)
-      return list
-    } catch {
-      setBairros([])
-      return []
-    } finally {
-      setIsLoadingBairros(false)
-    }
-  }
-
-  function handleBairroChange(bairroUuid: string) {
-    setAddress((current) => ({ ...current, bairro_uuid: bairroUuid }))
-  }
-
-  function handleAddressTextChange(field: 'logradouro' | 'numero' | 'complemento' | 'cep', value: string) {
-    setAddress((current) => ({ ...current, [field]: value }))
-  }
-
-  /**
-   * Preenchimento em cascata compartilhado por CEP e geolocalização — cada
-   * nível só é aplicado se o anterior bateu na lista recém-carregada
-   * (mesmo padrão de `ClientFormPage::handleUseCurrentLocation`).
-   * `numero`/`complemento` nunca são tocados (são exatamente os dados que
-   * "faltam" pro usuário preencher).
-   */
-  async function applyResolvedAddress(result: ReverseGeocodeResult) {
-    if (result.estado_uuid) {
-      const cidadesList = await handleEstadoChange(result.estado_uuid)
-      if (result.cidade_uuid && cidadesList.some((cidade) => cidade.uuid === result.cidade_uuid)) {
-        const bairrosList = await handleCidadeChange(result.cidade_uuid)
-        if (result.bairro_uuid && bairrosList.some((bairro) => bairro.uuid === result.bairro_uuid)) {
-          handleBairroChange(result.bairro_uuid)
-        }
-      }
-    }
-
-    setAddress((current) => ({
-      ...current,
-      logradouro: !current.logradouro.trim() && result.logradouro ? result.logradouro : current.logradouro,
-      cep: !current.cep.trim() && result.cep ? result.cep : current.cep,
-    }))
-  }
-
-  /** "Não sei meu CEP" → geolocalização do navegador → reverse geocode → cascata. */
-  async function handleUseCurrentLocation() {
-    setFormError(null)
-
-    if (!navigator.geolocation) {
-      setFormError('Seu navegador não oferece suporte a geolocalização.')
-      return
-    }
-
-    setIsLocatingGps(true)
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, enableHighAccuracy: true })
-      })
-      const result = await storefrontLocationService.reverseGeocodeStorefront(position.coords.latitude, position.coords.longitude)
-      await applyResolvedAddress(result)
-    } catch (error) {
-      setFormError(geolocationErrorMessage(error))
-    } finally {
-      setIsLocatingGps(false)
-    }
-  }
-
-  // Consulta automática de CEP (ViaCEP) — dispara ao completar 8 dígitos,
-  // preenche o que faltar via applyResolvedAddress(); não encontrado é um
-  // aviso pequeno e não bloqueante, nunca um Alert de página inteira (o
-  // usuário sempre pode preencher manualmente).
-  const debouncedCep = useDebouncedValue(address.cep, 500)
-
-  useEffect(() => {
-    const digits = debouncedCep.replace(/\D/g, '')
-    if (digits.length !== 8) {
-      setCepNotFoundMessage(null)
-      return
-    }
-
-    let cancelled = false
-    setIsCepLoading(true)
-    setCepNotFoundMessage(null)
-
-    storefrontLocationService
-      .lookupStorefrontCep(digits)
-      .then((result) => {
-        if (!cancelled) return applyResolvedAddress(result)
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        if (error instanceof ApiRequestError && error.code === 'CEP_NOT_FOUND') {
-          setCepNotFoundMessage('CEP não encontrado — preencha o endereço manualmente.')
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsCepLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedCep])
-
   function validate(): Record<string, string[]> {
     const errors: Record<string, string[]> = {}
     if (clientName.trim().length < 2) errors.client_name = ['Informe seu nome.']
     if (clientLastName.trim().length < 1) errors.client_last_name = ['Informe seu sobrenome.']
     if (clientPhone.trim().length < 8) errors.client_phone = ['Informe um telefone válido.']
-    if (fulfillmentType === 'delivery') {
-      if (!address.estado_uuid) errors.estado_uuid = ['Campo obrigatório.']
-      if (!address.cidade_uuid) errors.cidade_uuid = ['Campo obrigatório.']
-      if (!address.bairro_uuid) errors.bairro_uuid = ['Campo obrigatório.']
-      if (!address.logradouro.trim()) errors.logradouro = ['Campo obrigatório.']
-    }
     if (acceptedPaymentMethods.length > 0 && !intendedPaymentMethod) {
       errors.payment_method = ['Selecione uma forma de pagamento.']
     }
@@ -664,6 +567,11 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError(null)
+
+    if (holdContext.eligible && !hasActiveHold) {
+      setFormError('Sua reserva temporária não está ativa no momento. Gere uma nova reserva antes de confirmar o pedido.')
+      return
+    }
 
     const clientErrors = validate()
     if (Object.keys(clientErrors).length > 0) {
@@ -680,22 +588,12 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         quantity: item.quantity,
         notes: item.notes?.trim() || undefined,
       })),
+      hold_uuid: holdContext.eligible ? hold?.uuid : undefined,
+      session_token: holdContext.eligible ? sessionId : undefined,
       client_name: clientName.trim(),
       client_last_name: clientLastName.trim(),
       client_phone: clientPhone.trim(),
       notes: notes.trim() || undefined,
-      fulfillment_type: fulfillmentType,
-      ...(fulfillmentType === 'delivery'
-        ? {
-            estado_uuid: address.estado_uuid,
-            cidade_uuid: address.cidade_uuid,
-            bairro_uuid: address.bairro_uuid,
-            logradouro: address.logradouro.trim(),
-            numero: address.numero.trim() || undefined,
-            complemento: address.complemento.trim() || undefined,
-            cep: address.cep.trim() || undefined,
-          }
-        : {}),
       coupon_code: appliedCouponCode ?? undefined,
       payment_method: intendedPaymentMethod || undefined,
       needs_change: (intendedPaymentMethod === 'cash' && needsChange) || undefined,
@@ -705,6 +603,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
     try {
       const result = await storefrontCheckoutService.checkout(slug, payload)
+      shouldReleaseHoldRef.current = false
       markCompleted()
       clear()
       if ((paymentMethod as string) === 'pix') {
@@ -731,20 +630,12 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         error instanceof ApiRequestError &&
         (error.code === STORE_CLOSED_CODE ||
           error.code === BELOW_MINIMUM_ORDER_CODE ||
-          error.code === DELIVERY_AREA_NOT_SERVED_CODE ||
           error.code === COUPON_USAGE_LIMIT_REACHED_CODE ||
           error.code === STORE_PICKUP_UNAVAILABLE_CODE)
       ) {
         // Mensagem já pronta pra exibir direto (traduzida no backend) —
         // mesmo padrão do INSUFFICIENT_STOCK_CODE acima, sem reformular.
         setFormError(error.message)
-        if (error.code === DELIVERY_AREA_NOT_SERVED_CODE) {
-          // Pode acontecer de novo aqui mesmo com a consulta prévia OK (ex.:
-          // taxa removida entre a consulta e o submit) — reflete no estado
-          // pra desabilitar o botão até o bairro ser reavaliado.
-          setDeliveryFeeStatus('not-served')
-          setDeliveryFee(null)
-        }
         if (error.code === COUPON_USAGE_LIMIT_REACHED_CODE) {
           // Cupom válido na prévia mas rejeitado no submit final (ex.:
           // atingiu o limite entre a prévia e o envio) — remove pra não
@@ -755,6 +646,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         setFormError(getApiErrorMessage(error, 'Não foi possível confirmar seu pedido agora. Tente novamente.'))
         if (error instanceof ApiRequestError) setFieldErrors(error.errors)
       }
+      shouldReleaseHoldRef.current = true
     } finally {
       setIsSubmitting(false)
     }
@@ -767,43 +659,48 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   return (
     <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
       <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
+        <Stack spacing={1.25}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Reserva temporária</Typography>
+
+          {holdContext.eligible ? (
+            <>
+              {hasActiveHold && hold ? (
+                <Alert severity="success" variant="outlined">
+                  Seus itens estão reservados por mais {formatCountdown(holdSecondsLeft)}.
+                </Alert>
+              ) : isPreparingHold ? (
+                <Alert severity="info" variant="outlined">
+                  Reservando seus itens agora. Aguarde alguns instantes antes de confirmar o pedido.
+                </Alert>
+              ) : (
+                <Alert severity="warning" variant="outlined">
+                  {holdError ?? 'Sua reserva temporária não está ativa no momento.'}
+                </Alert>
+              )}
+
+              {(holdError || !hasActiveHold) && (
+                <Button variant="outlined" onClick={() => setHoldRetryNonce((current) => current + 1)} disabled={isPreparingHold}>
+                  {isPreparingHold ? 'Gerando reserva…' : 'Gerar nova reserva'}
+                </Button>
+              )}
+            </>
+          ) : (
+            <Alert severity="info" variant="outlined">
+              {holdContext.message}
+            </Alert>
+          )}
+        </Stack>
+      </Paper>
+
+      <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
         <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 2 }}>
-          {fulfillmentType === 'pickup' ? 'Retirada e contato' : 'Dados de entrega'}
+          Retirada e contato
         </Typography>
 
         {formError && (
           <Alert severity="error" variant="outlined" role="alert" sx={{ mb: 2.5 }}>
             {formError}
           </Alert>
-        )}
-
-        {allowStorePickup && allowDelivery && (
-          <RadioGroup
-            value={fulfillmentType}
-            onChange={(event) => setFulfillmentType(event.target.value as 'delivery' | 'pickup')}
-            sx={{ mb: 2.5 }}
-          >
-            <FormControlLabel
-              value="delivery"
-              control={<Radio />}
-              label={
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Receber em casa</Typography>
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Informe o endereço de entrega abaixo.</Typography>
-                </Box>
-              }
-            />
-            <FormControlLabel
-              value="pickup"
-              control={<Radio />}
-              label={
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Retirar na loja</Typography>
-                  <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>Sem taxa de entrega — busque o pedido no endereço da loja.</Typography>
-                </Box>
-              }
-            />
-          </RadioGroup>
         )}
 
         <Stack spacing={2} sx={{ mb: 2.5 }}>
@@ -837,55 +734,9 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           />
         </Stack>
 
-        {fulfillmentType === 'pickup' ? (
-          <Alert severity="info" variant="outlined">
-            Sem endereço necessário — você vai retirar o pedido diretamente na loja assim que ele estiver pronto.
-          </Alert>
-        ) : isLoadingEstados ? (
-          <Stack sx={{ py: 3, alignItems: 'center' }}>
-            <CircularProgress size={24} />
-          </Stack>
-        ) : (
-          <ClientAddressFields
-            values={address}
-            estados={estados}
-            cidades={cidades}
-            bairros={bairros}
-            isLoadingCidades={isLoadingCidades}
-            isLoadingBairros={isLoadingBairros}
-            fieldErrors={fieldErrors}
-            onEstadoChange={(value) => void handleEstadoChange(value)}
-            onCidadeChange={(value) => void handleCidadeChange(value)}
-            onBairroChange={handleBairroChange}
-            onTextChange={handleAddressTextChange}
-            onUseCurrentLocation={handleUseCurrentLocation}
-            isLocating={isLocatingGps}
-            isCepLoading={isCepLoading}
-            locationButtonLabel="Não sei meu CEP? Usar minha localização"
-            cepFirst
-          />
-        )}
-
-        {fulfillmentType === 'delivery' && cepNotFoundMessage && (
-          <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mt: -1.5, mb: 1.5 }}>{cepNotFoundMessage}</Typography>
-        )}
-
-        {fulfillmentType === 'delivery' && deliveryFeeStatus === 'loading' && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5 }}>
-            <CircularProgress size={16} />
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Calculando taxa de entrega…</Typography>
-          </Stack>
-        )}
-        {fulfillmentType === 'delivery' && deliveryFeeStatus === 'not-served' && (
-          <Alert severity="warning" variant="outlined" sx={{ mt: 1.5 }}>
-            Não entregamos nesse bairro no momento.
-          </Alert>
-        )}
-        {fulfillmentType === 'delivery' && deliveryFeeStatus === 'error' && (
-          <Alert severity="error" variant="outlined" sx={{ mt: 1.5 }}>
-            Não foi possível calcular a taxa de entrega agora. Tente selecionar o bairro novamente.
-          </Alert>
-        )}
+        <Alert severity="info" variant="outlined">
+          Sem endereço necessário. Este checkout registra apenas os dados de contato do comprador e a retirada dos ingressos.
+        </Alert>
 
         <TextField
           label="Observações (opcional)"
@@ -1004,6 +855,15 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               {item.notes && (
                 <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>Obs: {item.notes}</Typography>
               )}
+              {item.session_name && (
+                <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>Sessão: {item.session_name}</Typography>
+              )}
+              {item.seat_label && (
+                <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>
+                  Lugar: {item.seat_label}
+                  {item.seat_sector_name ? ` • ${item.seat_sector_name}` : ''}
+                </Typography>
+              )}
             </Box>
           ))}
         </Stack>
@@ -1012,19 +872,10 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Subtotal</Typography>
             <Typography sx={{ fontSize: 13.5 }}>{formatCurrency(totalAmount)}</Typography>
           </Stack>
-          {fulfillmentType === 'pickup' ? (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Taxa de entrega</Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>Retirada — sem taxa</Typography>
-            </Stack>
-          ) : (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Taxa de entrega</Typography>
-              <Typography sx={{ fontSize: 13.5 }}>
-                {deliveryFeeStatus === 'available' && deliveryFee !== null ? formatCurrency(deliveryFee) : '—'}
-              </Typography>
-            </Stack>
-          )}
+          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Entrega</Typography>
+            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-primary)' }}>Retirada no local</Typography>
+          </Stack>
           {couponStatus === 'applied' && appliedDiscount > 0 && (
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
               <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Desconto</Typography>
@@ -1037,11 +888,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
               {formatCurrency(
                 Math.max(
                   0,
-                  totalAmount +
-                    (fulfillmentType === 'delivery' && deliveryFeeStatus === 'available' && deliveryFee !== null
-                      ? deliveryFee
-                      : 0) -
-                    (couponStatus === 'applied' ? appliedDiscount : 0),
+                  totalAmount - (couponStatus === 'applied' ? appliedDiscount : 0),
                 ),
               )}
             </Typography>
@@ -1054,10 +901,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         variant="contained"
         size="large"
         fullWidth
-        disabled={
-          isSubmitting ||
-          (fulfillmentType === 'delivery' && Boolean(address.bairro_uuid) && deliveryFeeStatus !== 'available')
-        }
+        disabled={isSubmitting || (holdContext.eligible && (isPreparingHold || !hasActiveHold))}
         sx={{ minHeight: UI_SIZE.controlLarge }}
       >
         {isSubmitting ? 'Confirmando…' : (paymentMethod as string) === 'pix' ? 'Confirmar e gerar Pix' : 'Confirmar pedido'}

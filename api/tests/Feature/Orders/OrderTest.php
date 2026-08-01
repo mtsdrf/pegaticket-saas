@@ -2075,14 +2075,11 @@ class OrderTest extends TestCase
     }
 
     /**
-     * Guards novos do checkout público (Delivery Fase 2 — horário de
-     * funcionamento, pedido mínimo, taxa de entrega por bairro) vivem
-     * inteiramente em StorefrontCheckoutService::checkout(), nunca em
-     * OrderService::create(). POST /orders (fluxo staff) não passa por
-     * esse Service, então nenhum tenant_settings novo (mínimo) nem
-     * StoreBusinessHour/StoreDeliveryFee configurados (ou ausentes)
-     * bloqueiam o pedido — delivery_fee sempre nasce 0 por default do
-     * DTO/coluna.
+     * Guards do checkout público (horário de funcionamento e pedido mínimo)
+     * vivem inteiramente em StorefrontCheckoutService::checkout(), nunca em
+     * OrderService::create(). POST /orders (fluxo staff) não passa por esse
+     * Service, então StoreBusinessHour e minimum_order_value não bloqueiam
+     * o pedido manual.
      */
     #[Test]
     public function staff_order_creation_is_unaffected_by_delivery_fee_phase_2_guards(): void
@@ -2094,9 +2091,9 @@ class OrderTest extends TestCase
 
         $this->stockEntry($this->tenant->id, $product, $location, 10);
 
-        // Nenhum StoreBusinessHour, StoreDeliveryFee ou minimum_order_value
-        // configurado pra este tenant — se algum guard novo vazasse pro
-        // fluxo staff, este pedido seria bloqueado.
+        // Nenhum StoreBusinessHour ou minimum_order_value configurado pra
+        // este tenant — se algum guard do checkout vazasse pro fluxo staff,
+        // este pedido seria bloqueado.
         $response = $this->auth()->postJson('/api/v1/orders', [
             'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,

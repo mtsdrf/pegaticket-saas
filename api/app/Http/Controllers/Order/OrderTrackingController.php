@@ -20,7 +20,7 @@ class OrderTrackingController extends Controller
 {
     public function show(Order $order)
     {
-        $order->load(['finalCustomer', 'tenant', 'items.ticketType', 'items.eventProduct', 'installments', 'coupon']);
+        $order->load(['finalCustomer', 'tenant', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon']);
 
         return APIResponse::success(
             new OrderPublicTrackingResource($order),

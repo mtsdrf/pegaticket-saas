@@ -16,7 +16,6 @@ use App\Services\Storefront\OrderRatingService;
 use App\Services\Storefront\StorefrontCatalogService;
 use App\Services\Storefront\StorefrontCheckoutService;
 use App\Services\Storefront\StoreBusinessHoursService;
-use App\Services\Storefront\StoreDeliveryFeeService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Http\Request;
 
@@ -29,7 +28,6 @@ class StorefrontController extends Controller
 {
     public function __construct(
         private StorefrontCatalogService $service,
-        private StoreDeliveryFeeService $deliveryFeeService,
         private StoreBusinessHoursService $businessHoursService,
         private TenantSettingsService $tenantSettingsService,
         private StorefrontCheckoutService $checkoutService,
@@ -41,7 +39,6 @@ class StorefrontController extends Controller
     public function show(string $slug)
     {
         $tenant = $this->service->findTenantBySlug($slug);
-        $tenant->load(['endereco.cidade', 'endereco.bairro']);
 
         $businessHours = $this->businessHoursService->getForTenant($tenant->id);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
@@ -58,7 +55,6 @@ class StorefrontController extends Controller
                 (bool) $settings->allow_store_pickup,
                 (bool) $settings->storefront_enabled,
                 $settings->catalog_layout ?? 'list',
-                (bool) ($settings->allow_delivery ?? true),
             ),
             __('messages.storefront.tenant_shown')
         );
@@ -140,35 +136,6 @@ class StorefrontController extends Controller
             ->values();
 
         return APIResponse::success($categories, __('messages.storefront.categories_listed'));
-    }
-
-    /**
-     * Consulta prévia de taxa de entrega — SIMPLIFICAÇÃO DOCUMENTADA:
-     * mantido por não ter sido removido explicitamente no roadmap, mas taxa
-     * de entrega física não faz sentido pra domínio de ingresso digital;
-     * candidato a remoção quando o checkout novo (roadmap seção 2.8/5.10)
-     * for desenhado.
-     */
-    public function deliveryFee(string $slug, string $bairroUuid)
-    {
-        $tenant = $this->service->findTenantBySlug($slug);
-        $settings = $this->tenantSettingsService->getForTenant($tenant->id);
-
-        if (!$settings->storefront_enabled) {
-            abort(404);
-        }
-
-        $fee = $this->deliveryFeeService->findFee($tenant->id, $bairroUuid);
-
-        if ($fee === null) {
-            return APIResponse::error(
-                __('messages.storefront.delivery_area_not_served'),
-                404,
-                'DELIVERY_AREA_NOT_SERVED'
-            );
-        }
-
-        return APIResponse::success(['fee' => $fee], __('messages.storefront.delivery_fee_shown'));
     }
 
     /**

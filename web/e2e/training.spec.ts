@@ -39,7 +39,6 @@ test.describe('Central de treinamento', () => {
             has_product: false,
             has_client: true,
             has_first_order: false,
-            has_store_address: true,
             storefront_configured: false,
             steps: [],
             is_dismissed: false,

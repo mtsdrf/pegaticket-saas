@@ -12,8 +12,6 @@ use App\Models\User\User;
 use App\Services\Product\ProductService;
 use App\Services\Storefront\CouponService;
 use App\Services\Storefront\ProductPromotionService;
-use App\Services\Storefront\StoreAddressService;
-use App\Services\Storefront\StoreDeliveryFeeService;
 use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -28,8 +26,8 @@ use RuntimeException;
  *
  * NÃO cria tenant novo — só popula/atualiza dados do tenant existente para
  * exercitar as funcionalidades de catálogo/loja que o sistema suporta:
- * formas de pagamento, pedido mínimo, atacado por produto, cupons (3
- * tipos), promoções, taxa de entrega por bairro e endereço da loja.
+ * formas de pagamento, pedido mínimo, atacado por produto, cupons e
+ * promoções.
  *
  * Reaproveita os Services de domínio (não INSERT cru) para que eventos e
  * auditoria fiquem idênticos a uma operação real — replicando o mesmo truque
@@ -46,8 +44,8 @@ use RuntimeException;
  * updated_by do BaseModel) sob o contexto de auth já simulado. Isso não
  * dispara o evento ProductUpdated de auditoria — aceitável para carga.
  *
- * Idempotente onde razoável: promoções/taxa/endereço são upsert por
- * natureza; produtos novos e cupons checam existência antes de criar.
+ * Idempotente onde razoável: promoções são upsert por natureza; produtos
+ * novos e cupons checam existência antes de criar.
  */
 class StoreCatalogDemoSeeder extends Seeder
 {
@@ -105,8 +103,6 @@ class StoreCatalogDemoSeeder extends Seeder
             $this->createRetailOnlyProducts($tenant);
             $this->createCoupons($tenant);
             $this->applyPromotions($tenant);
-            $this->ensureDeliveryFees($tenant);
-            $this->ensureStoreAddress($tenant);
         });
 
         $this->command?->info('StoreCatalogDemoSeeder: OK — catálogo/loja do "' . $tenant->name . '" populado.');
@@ -203,8 +199,9 @@ class StoreCatalogDemoSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'code' => 'FRETEGRATIS',
-                'type' => 'free_shipping',
+                'code' => 'RETIRADA10',
+                'type' => 'fixed',
+                'value' => 10.00,
                 'minimum_order_value' => 120.00,
                 'expires_at' => Carbon::now()->addDays(45)->toDateTimeString(),
                 'is_active' => true,
@@ -227,7 +224,7 @@ class StoreCatalogDemoSeeder extends Seeder
             $created++;
         }
 
-        $this->command?->info('  cupons: ' . $created . ' criados (percentage/fixed/free_shipping).');
+        $this->command?->info('  cupons: ' . $created . ' criados (percentage/fixed).');
     }
 
     private function applyPromotions(Tenant $tenant): void
@@ -250,66 +247,6 @@ class StoreCatalogDemoSeeder extends Seeder
         }
 
         $this->command?->info('  promoções: ' . count($this->promotions) . ' produtos com preço promocional.');
-    }
-
-    private function ensureDeliveryFees(Tenant $tenant): void
-    {
-        $existing = app(StoreDeliveryFeeService::class)->list($tenant->id);
-
-        if ($existing->isNotEmpty()) {
-            $this->command?->info('  taxa de entrega: já configurada (' . $existing->count() . ' bairros) — mantida.');
-
-            return;
-        }
-
-        $bairros = DB::table('final_customer_tenant_links')
-            ->join('enderecos', 'enderecos.id', '=', 'final_customer_tenant_links.endereco_id')
-            ->join('bairros', 'bairros.id', '=', 'enderecos.bairro_id')
-            ->where('final_customer_tenant_links.tenant_id', $tenant->id)
-            ->distinct()
-            ->pluck('bairros.uuid');
-
-        foreach ($bairros as $bairroUuid) {
-            app(StoreDeliveryFeeService::class)->upsert($tenant->id, $bairroUuid, 8.00);
-        }
-
-        $this->command?->info('  taxa de entrega: ' . $bairros->count() . ' bairros a R$8,00.');
-    }
-
-    private function ensureStoreAddress(Tenant $tenant): void
-    {
-        if ($tenant->endereco_id) {
-            $this->command?->info('  endereço da loja: já configurado — mantido.');
-
-            return;
-        }
-
-        $bairro = DB::table('bairros')
-            ->join('cidades', 'cidades.id', '=', 'bairros.cidade_id')
-            ->join('estados', 'estados.id', '=', 'cidades.estado_id')
-            ->where('cidades.name', 'Araraquara')
-            ->where('bairros.name', 'Centro')
-            ->select('bairros.uuid as bairro_uuid', 'cidades.uuid as cidade_uuid', 'estados.uuid as estado_uuid')
-            ->first();
-
-        if (!$bairro) {
-            $this->command?->warn('  endereço da loja: bairro Centro/Araraquara não encontrado — pulado.');
-
-            return;
-        }
-
-        app(StoreAddressService::class)->updateForTenant($tenant->id, [
-            'logradouro' => 'Avenida Portugal',
-            'numero' => '1500',
-            'complemento' => 'Galpão A',
-            'cep' => '14801-320',
-            'is_active' => true,
-            'estado_uuid' => $bairro->estado_uuid,
-            'cidade_uuid' => $bairro->cidade_uuid,
-            'bairro_uuid' => $bairro->bairro_uuid,
-        ]);
-
-        $this->command?->info('  endereço da loja: Avenida Portugal, 1500 — Centro, Araraquara/SP (geocoding disparado).');
     }
 
     private function findProduct(Tenant $tenant, string $name): ?Product

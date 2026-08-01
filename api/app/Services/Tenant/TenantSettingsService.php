@@ -37,7 +37,6 @@ class TenantSettingsService
                 'payment_receiving_method' => $dto->paymentReceivingMethod,
                 'payment_pix_key' => $dto->paymentPixKey,
                 'allow_store_pickup' => $dto->allowStorePickup,
-                'allow_delivery' => $dto->allowDelivery,
                 'storefront_enabled' => $dto->storefrontEnabled,
                 'catalog_layout' => $dto->catalogLayout,
             ]);

@@ -4,10 +4,6 @@ namespace Tests\Feature\Onboarding;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Location\Bairro;
-use App\Models\Location\Cidade;
-use App\Models\Location\Endereco;
-use App\Models\Location\Estado;
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
 use App\Models\Event\TicketType;
@@ -157,63 +153,8 @@ class OnboardingChecklistTest extends TestCase
             ->assertStatus(200)
             ->json('data');
 
-        $this->assertArrayHasKey('has_store_address', $data);
         $this->assertTrue($data['storefront_configured']);
-        $this->assertContains('has_store_address', array_column($data['steps'], 'key'));
         $this->assertContains('storefront_configured', array_column($data['steps'], 'key'));
-    }
-
-    #[Test]
-    public function checklist_has_store_address_is_true_once_tenant_endereco_id_is_set(): void
-    {
-        $planId = DB::table('plans')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Plano Storefront',
-            'slug' => 'plano-storefront-' . Str::random(6),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $functionalityId = DB::table('functionalities')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Loja online',
-            'slug' => 'storefront',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('plan_functionalities')->insert([
-            'uuid' => (string) Str::uuid(),
-            'plan_id' => $planId,
-            'functionality_id' => $functionalityId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->tenant->update(['plan_id' => $planId]);
-
-        $estado = Estado::create(['uuid' => (string) Str::uuid(), 'name' => 'São Paulo', 'uf' => 'SP', 'is_active' => true]);
-        $cidade = Cidade::create(['uuid' => (string) Str::uuid(), 'estado_id' => $estado->id, 'name' => 'Campinas', 'is_active' => true]);
-        $bairro = Bairro::create(['uuid' => (string) Str::uuid(), 'cidade_id' => $cidade->id, 'name' => 'Cambuí', 'is_active' => true]);
-
-        $endereco = Endereco::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'estado_id' => $estado->id,
-            'cidade_id' => $cidade->id,
-            'bairro_id' => $bairro->id,
-            'logradouro' => 'Rua da Loja',
-            'is_active' => true,
-        ]);
-        $this->tenant->update(['endereco_id' => $endereco->id]);
-
-        $data = $this->auth()
-            ->getJson('/api/v1/onboarding/checklist')
-            ->assertStatus(200)
-            ->json('data');
-
-        $this->assertTrue($data['has_store_address']);
     }
 
     #[Test]

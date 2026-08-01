@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 /**
  * GET/POST/DELETE /product-promotions (Delivery Fase 3) — upsert 1 por
- * produto, mesmo shape de StoreDeliveryFeeTest.
+ * produto, com fluxo de upsert simples por tipo de ingresso.
  */
 class ProductPromotionTest extends TestCase
 {

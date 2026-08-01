@@ -3,7 +3,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
@@ -53,9 +52,9 @@ interface NavChild {
 
 /**
  * Item flat (link direto) ou grupo expansível (`children`) — mesmo padrão
- * de navegação do sistema legado (`Sidebar.js`: "Endereço"/"Produto" como
+ * de navegação do sistema legado (`Sidebar.js`: "Eventos"/"Relatórios" como
  * dropdown agrupando sub-telas relacionadas). Novos módulos que ainda não
- * existem no `web/` (Pedidos, Endereço, Relatório...) entram como grupo
+ * existem no `web/` (Operação, Relatórios...) entram como grupo
  * aqui quando forem implementados, não como item flat.
  */
 type NavItem =
@@ -78,17 +77,6 @@ const NAV_ITEMS: NavItem[] = [
   // qualquer permissão negada) — a própria página decide o que mostrar
   // conforme a permissão `dashboard:read` do usuário.
   { kind: 'link', to: '/', label: 'Visão geral', icon: DashboardOutlinedIcon, exact: true },
-  {
-    kind: 'group',
-    label: 'Endereço',
-    icon: LocationOnOutlinedIcon,
-    children: [
-      { to: '/estados', label: 'Estados', access: ACCESS.estadosRead },
-      { to: '/cidades', label: 'Cidades', access: ACCESS.cidadesRead },
-      { to: '/bairros', label: 'Bairros', access: ACCESS.bairrosRead },
-      { to: '/enderecos', label: 'Endereços', access: ACCESS.enderecosRead },
-    ],
-  },
   {
     kind: 'group',
     label: 'Eventos',

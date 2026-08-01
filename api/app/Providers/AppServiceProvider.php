@@ -32,7 +32,6 @@ use App\Repositories\Contracts\{
     EstadoRepositoryInterface,
     CidadeRepositoryInterface,
     BairroRepositoryInterface,
-    EnderecoRepositoryInterface,
     StockLocationRepositoryInterface,
     StockBalanceRepositoryInterface,
     StockMovementRepositoryInterface,
@@ -42,7 +41,6 @@ use App\Repositories\Contracts\{
     FinalCustomerTenantLinkRepositoryInterface,
     TenantSettingsRepositoryInterface,
     StoreBusinessHourRepositoryInterface,
-    StoreDeliveryFeeRepositoryInterface,
     CouponRepositoryInterface,
     ProductPromotionRepositoryInterface,
     LegalDocumentRepositoryInterface,
@@ -82,7 +80,6 @@ use App\Repositories\Eloquent\{
     EstadoRepository,
     CidadeRepository,
     BairroRepository,
-    EnderecoRepository,
     StockLocationRepository,
     StockBalanceRepository,
     StockMovementRepository,
@@ -92,7 +89,6 @@ use App\Repositories\Eloquent\{
     FinalCustomerTenantLinkRepository,
     TenantSettingsRepository,
     StoreBusinessHourRepository,
-    StoreDeliveryFeeRepository,
     CouponRepository,
     ProductPromotionRepository,
     LegalDocumentRepository,
@@ -334,12 +330,6 @@ class AppServiceProvider extends ServiceProvider
             BairroRepository::class
         );
 
-        // Endereco Repository
-        $this->app->bind(
-            EnderecoRepositoryInterface::class,
-            EnderecoRepository::class
-        );
-
         // Stock Location Repository
         $this->app->bind(
             StockLocationRepositoryInterface::class,
@@ -388,16 +378,10 @@ class AppServiceProvider extends ServiceProvider
             TenantSettingsRepository::class
         );
 
-        // Store Business Hour Repository (Delivery Fase 2)
+        // Store Business Hour Repository
         $this->app->bind(
             StoreBusinessHourRepositoryInterface::class,
             StoreBusinessHourRepository::class
-        );
-
-        // Store Delivery Fee Repository (Delivery Fase 2)
-        $this->app->bind(
-            StoreDeliveryFeeRepositoryInterface::class,
-            StoreDeliveryFeeRepository::class
         );
 
         // Coupon Repository (Delivery Fase 3)

@@ -8,18 +8,6 @@ class TenantSettings extends BaseModel
 {
     protected $table = 'tenant_settings';
 
-    /**
-     * allow_delivery=true por padrão (migration) precisa também estar
-     * aqui: Eloquent::create() com o campo omitido não repopula o atributo
-     * a partir do default de coluna do banco após o INSERT — o cast
-     * 'boolean' aplicado a null vira false, o oposto do default real.
-     * Mesmo raciocínio não se aplicava a allow_store_pickup (default false
-     * já coincide com null->false).
-     */
-    protected $attributes = [
-        'allow_delivery' => true,
-    ];
-
     protected $fillable = [
         'tenant_id',
         'send_tracking_link_whatsapp',
@@ -32,7 +20,6 @@ class TenantSettings extends BaseModel
         'service_fee_percent',
         'service_fee_mandatory',
         'allow_store_pickup',
-        'allow_delivery',
         'storefront_enabled',
         'catalog_layout',
     ];
@@ -49,7 +36,6 @@ class TenantSettings extends BaseModel
         'service_fee_percent' => 'float',
         'service_fee_mandatory' => 'boolean',
         'allow_store_pickup' => 'boolean',
-        'allow_delivery' => 'boolean',
         'storefront_enabled' => 'boolean',
     ];
 
