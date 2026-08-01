@@ -5,7 +5,7 @@ test.describe('Vendas manuais', () => {
   test('mostra o estado vazio focado em operação manual e sem filtros da central', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['orders:read', 'orders:create'],
+      tenantPermissions: ['sales:read', 'sales:create'],
       tenantFunctionalities: ['sales'],
     })
 
@@ -35,7 +35,7 @@ test.describe('Vendas manuais', () => {
   test('lista pedidos manuais sem depender dos cards operacionais da central', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['orders:read', 'orders:create', 'orders:update'],
+      tenantPermissions: ['sales:read', 'sales:create', 'sales:update'],
       tenantFunctionalities: ['sales'],
     })
 
@@ -74,7 +74,7 @@ test.describe('Vendas manuais', () => {
   test('cria um novo pedido manual com cliente e produto e volta para a lista geral', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['orders:read', 'orders:create'],
+      tenantPermissions: ['sales:read', 'sales:create'],
       tenantFunctionalities: ['sales'],
     })
 

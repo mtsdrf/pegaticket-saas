@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User\User;
 use App\Services\Media\MediaStorageService;
 use Illuminate\Http\Response;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Serve o avatar direto do banco (LONGBLOB) — rota 100% pública, sem
@@ -21,7 +22,7 @@ class UserAvatarController extends Controller
     ) {
     }
 
-    public function show(User $user): Response
+    public function show(User $user): Response|RedirectResponse
     {
         return $this->mediaStorage->publicMediaResponse(
             $user->avatar_path,

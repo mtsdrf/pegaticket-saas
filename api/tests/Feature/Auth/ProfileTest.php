@@ -169,9 +169,12 @@ class ProfileTest extends TestCase
 
         $response = $this->get('/api/v1/users/' . $user->uuid . '/avatar');
 
-        $response->assertStatus(200);
-        $this->assertEquals($user->avatar_mime, $response->headers->get('Content-Type'));
-        $this->assertEquals(Storage::disk((string) config('media.public_disks.avatar'))->get($user->avatar_path), $response->getContent());
+        $response->assertRedirect(Storage::disk((string) config('media.public_disks.avatar'))->url($user->avatar_path));
+
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=' . config('media.public_cache_seconds', 31536000), $cacheControl);
+        $this->assertStringContainsString('immutable', $cacheControl);
     }
 
     #[Test]

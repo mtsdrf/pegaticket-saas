@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Tenant;
 use App\Services\Media\MediaStorageService;
 use Illuminate\Http\Response;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Ver App\Http\Controllers\User\UserAvatarController — mesmo padrão.
@@ -17,7 +18,7 @@ class TenantLogoController extends Controller
     ) {
     }
 
-    public function show(Tenant $tenant): Response
+    public function show(Tenant $tenant): Response|RedirectResponse
     {
         return $this->mediaStorage->publicMediaResponse(
             $tenant->logo_path,

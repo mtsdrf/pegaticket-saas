@@ -5,7 +5,7 @@ test.describe('Vendas online', () => {
   test('mostra fila online com board e grid sem depender da central manual', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['storefront-sales:read', 'orders:update'],
+      tenantPermissions: ['storefront-sales:read', 'sales:update'],
       tenantFunctionalities: ['storefront-sales'],
     })
 
@@ -34,8 +34,8 @@ test.describe('Vendas online', () => {
 
     await page.goto('/vendas-online')
 
-    await expect(page.getByRole('heading', { name: 'Vendas online' })).toBeVisible()
-    await expect(page.getByText('Acompanhe e gerencie os pedidos recebidos pelo canal online.')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Pedidos da loja' })).toBeVisible()
+    await expect(page.getByText('Acompanhe e gerencie os pedidos recebidos pela loja.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Aprovação' })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cliente Online QA', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: '2001', exact: true })).toBeVisible()
@@ -46,7 +46,7 @@ test.describe('Vendas online', () => {
   test('move pedidos no board entre etapas e exige motivo ao cancelar', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['storefront-sales:read', 'orders:update'],
+      tenantPermissions: ['storefront-sales:read', 'sales:update'],
       tenantFunctionalities: ['storefront-sales'],
     })
 
@@ -202,7 +202,7 @@ test.describe('Vendas online', () => {
 
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
-      tenantPermissions: ['storefront-sales:read', 'orders:update'],
+      tenantPermissions: ['storefront-sales:read', 'sales:update'],
       tenantFunctionalities: ['storefront-sales'],
     })
 
@@ -366,7 +366,7 @@ test.describe('Vendas online', () => {
     await expect(page.getByText('Ao aprovar, o pedido é cancelado de verdade agora')).toBeVisible()
     const approveResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/orders/storefront-cancel-approve-1/approve-cancellation')
+        response.url().includes('/sales/storefront-cancel-approve-1/approve-cancellation')
         && response.request().method() === 'POST',
     )
     await page.getByRole('button', { name: 'Confirmar' }).click()
@@ -380,7 +380,7 @@ test.describe('Vendas online', () => {
     await expect(page.getByText('O cliente solicitou o cancelamento deste pedido: "Vai buscar mais tarde"')).toBeVisible()
     const rejectResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/orders/storefront-cancel-reject-1/reject-cancellation')
+        response.url().includes('/sales/storefront-cancel-reject-1/reject-cancellation')
         && response.request().method() === 'POST',
     )
     await page.getByRole('button', { name: 'Rejeitar cancelamento' }).click()
