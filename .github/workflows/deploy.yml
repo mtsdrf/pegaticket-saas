@@ -144,6 +144,17 @@ jobs:
             exit 1
           fi
 
+      - name: Garantir diretórios remotos do deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p "${{ secrets.DEPLOY_API_PATH }}"
+            mkdir -p "${{ secrets.DEPLOY_WEB_PATH }}"
+
       # DEPLOY_API_PATH deve apontar para a RAIZ do projeto Laravel no
       # servidor (ex.: /home/.../pegaticket/api), nunca para api/public,
       # porque os passos seguintes entram nessa pasta para rodar artisan.
@@ -216,16 +227,21 @@ jobs:
           PAYMENT_PROVIDER: ${{ secrets.PAYMENT_PROVIDER }}
           R2_ENABLED: ${{ secrets.R2_ENABLED }}
           MEDIA_AVATARS_DISK: ${{ secrets.MEDIA_AVATARS_DISK }}
-          MEDIA_PRODUCTS_DISK: ${{ secrets.MEDIA_PRODUCTS_DISK }}
+          MEDIA_TICKET_TYPES_DISK: ${{ secrets.MEDIA_TICKET_TYPES_DISK }}
+          MEDIA_EVENTS_DISK: ${{ secrets.MEDIA_EVENTS_DISK }}
           MEDIA_TENANTS_DISK: ${{ secrets.MEDIA_TENANTS_DISK }}
+          MEDIA_VENUES_DISK: ${{ secrets.MEDIA_VENUES_DISK }}
           MEDIA_USE_DIRECT_PUBLIC_URLS: ${{ secrets.MEDIA_USE_DIRECT_PUBLIC_URLS }}
           MEDIA_PUBLIC_CACHE_SECONDS: ${{ secrets.MEDIA_PUBLIC_CACHE_SECONDS }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_AVATARS: ${{ secrets.R2_BUCKET_AVATARS }}
-          R2_BUCKET_PRODUCTS: ${{ secrets.R2_BUCKET_PRODUCTS }}
-          R2_BUCKET_TENANTS: ${{ secrets.R2_BUCKET_TENANTS }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PREFIX_AVATARS: ${{ secrets.R2_PREFIX_AVATARS }}
+          R2_PREFIX_EVENTS: ${{ secrets.R2_PREFIX_EVENTS }}
+          R2_PREFIX_TENANTS: ${{ secrets.R2_PREFIX_TENANTS }}
+          R2_PREFIX_TICKET_TYPES: ${{ secrets.R2_PREFIX_TICKET_TYPES }}
+          R2_PREFIX_VENUES: ${{ secrets.R2_PREFIX_VENUES }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_REGION: ${{ secrets.R2_REGION }}
           R2_USE_PATH_STYLE_ENDPOINT: ${{ secrets.R2_USE_PATH_STYLE_ENDPOINT }}
@@ -246,7 +262,7 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          envs: PAYMENT_PROVIDER,R2_ENABLED,MEDIA_AVATARS_DISK,MEDIA_PRODUCTS_DISK,MEDIA_TENANTS_DISK,MEDIA_USE_DIRECT_PUBLIC_URLS,MEDIA_PUBLIC_CACHE_SECONDS,R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET_AVATARS,R2_BUCKET_PRODUCTS,R2_BUCKET_TENANTS,R2_ENDPOINT,R2_REGION,R2_USE_PATH_STYLE_ENDPOINT,FRONTEND_URL,MERCADOPAGO_ENVIRONMENT,MERCADOPAGO_ACCESS_TOKEN_TEST,MERCADOPAGO_PUBLIC_KEY_TEST,MERCADOPAGO_TEST_PAYER_EMAIL,MERCADOPAGO_ACCESS_TOKEN_PROD,MERCADOPAGO_PUBLIC_KEY_PROD,MERCADOPAGO_WEBHOOK_SECRET
+          envs: PAYMENT_PROVIDER,R2_ENABLED,MEDIA_AVATARS_DISK,MEDIA_TICKET_TYPES_DISK,MEDIA_EVENTS_DISK,MEDIA_TENANTS_DISK,MEDIA_VENUES_DISK,MEDIA_USE_DIRECT_PUBLIC_URLS,MEDIA_PUBLIC_CACHE_SECONDS,R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET,R2_PREFIX_AVATARS,R2_PREFIX_EVENTS,R2_PREFIX_TENANTS,R2_PREFIX_TICKET_TYPES,R2_PREFIX_VENUES,R2_ENDPOINT,R2_REGION,R2_USE_PATH_STYLE_ENDPOINT,FRONTEND_URL,MERCADOPAGO_ENVIRONMENT,MERCADOPAGO_ACCESS_TOKEN_TEST,MERCADOPAGO_PUBLIC_KEY_TEST,MERCADOPAGO_TEST_PAYER_EMAIL,MERCADOPAGO_ACCESS_TOKEN_PROD,MERCADOPAGO_PUBLIC_KEY_PROD,MERCADOPAGO_WEBHOOK_SECRET
           script: |
             cd "${{ secrets.DEPLOY_API_PATH }}"
             /opt/alt/php85/usr/bin/php <<'PHP'
@@ -263,16 +279,21 @@ jobs:
                 'PAYMENT_PROVIDER' => getenv('PAYMENT_PROVIDER') ?: null,
                 'R2_ENABLED' => getenv('R2_ENABLED') ?: null,
                 'MEDIA_AVATARS_DISK' => getenv('MEDIA_AVATARS_DISK') ?: null,
-                'MEDIA_PRODUCTS_DISK' => getenv('MEDIA_PRODUCTS_DISK') ?: null,
+                'MEDIA_TICKET_TYPES_DISK' => getenv('MEDIA_TICKET_TYPES_DISK') ?: null,
+                'MEDIA_EVENTS_DISK' => getenv('MEDIA_EVENTS_DISK') ?: null,
                 'MEDIA_TENANTS_DISK' => getenv('MEDIA_TENANTS_DISK') ?: null,
+                'MEDIA_VENUES_DISK' => getenv('MEDIA_VENUES_DISK') ?: null,
                 'MEDIA_USE_DIRECT_PUBLIC_URLS' => getenv('MEDIA_USE_DIRECT_PUBLIC_URLS') ?: null,
                 'MEDIA_PUBLIC_CACHE_SECONDS' => getenv('MEDIA_PUBLIC_CACHE_SECONDS') ?: null,
                 'R2_ACCOUNT_ID' => getenv('R2_ACCOUNT_ID') ?: null,
                 'R2_ACCESS_KEY_ID' => getenv('R2_ACCESS_KEY_ID') ?: null,
                 'R2_SECRET_ACCESS_KEY' => getenv('R2_SECRET_ACCESS_KEY') ?: null,
-                'R2_BUCKET_AVATARS' => getenv('R2_BUCKET_AVATARS') ?: null,
-                'R2_BUCKET_PRODUCTS' => getenv('R2_BUCKET_PRODUCTS') ?: null,
-                'R2_BUCKET_TENANTS' => getenv('R2_BUCKET_TENANTS') ?: null,
+                'R2_BUCKET' => getenv('R2_BUCKET') ?: null,
+                'R2_PREFIX_AVATARS' => getenv('R2_PREFIX_AVATARS') ?: null,
+                'R2_PREFIX_EVENTS' => getenv('R2_PREFIX_EVENTS') ?: null,
+                'R2_PREFIX_TENANTS' => getenv('R2_PREFIX_TENANTS') ?: null,
+                'R2_PREFIX_TICKET_TYPES' => getenv('R2_PREFIX_TICKET_TYPES') ?: null,
+                'R2_PREFIX_VENUES' => getenv('R2_PREFIX_VENUES') ?: null,
                 'R2_ENDPOINT' => getenv('R2_ENDPOINT') ?: null,
                 'R2_REGION' => getenv('R2_REGION') ?: null,
                 'R2_USE_PATH_STYLE_ENDPOINT' => getenv('R2_USE_PATH_STYLE_ENDPOINT') ?: null,
