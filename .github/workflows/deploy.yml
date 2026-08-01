@@ -115,6 +115,25 @@ jobs:
           cp public/.htaccess dist/.htaccess
           test -f dist/.htaccess
 
+      - name: Validar artefato web antes do deploy
+        working-directory: web
+        run: |
+          test -f dist/index.html
+          test -f dist/.htaccess
+          test -d dist/assets
+          file_count="$(find dist -type f | wc -l | tr -d ' ')"
+          asset_count="$(find dist/assets -type f | wc -l | tr -d ' ')"
+          echo "Arquivos no dist/: $file_count"
+          echo "Arquivos em dist/assets/: $asset_count"
+          if [ "$file_count" -lt 20 ]; then
+            echo "::error::Artefato web inesperadamente pequeno ($file_count arquivos). Abortando deploy para não esvaziar produção."
+            exit 1
+          fi
+          if [ "$asset_count" -lt 10 ]; then
+            echo "::error::Pasta dist/assets inesperadamente pequena ($asset_count arquivos). Abortando deploy para não publicar frontend incompleto."
+            exit 1
+          fi
+
       - name: Instalar Chromium do Playwright (web/)
         working-directory: web
         run: npx playwright install chromium
@@ -193,8 +212,16 @@ jobs:
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           script: |
+            case "${{ secrets.DEPLOY_WEB_PATH }}" in
+              */pegaticket/web) ;;
+              *)
+                echo "DEPLOY_WEB_PATH suspeito: ${{ secrets.DEPLOY_WEB_PATH }}"
+                exit 1
+                ;;
+            esac
             mkdir -p "${{ secrets.DEPLOY_API_PATH }}"
             mkdir -p "${{ secrets.DEPLOY_WEB_PATH }}"
+            mkdir -p "${{ secrets.DEPLOY_WEB_PATH }}.__incoming"
 
       # DEPLOY_API_PATH deve apontar para a RAIZ do projeto Laravel no
       # servidor (ex.: /home/.../pegaticket/api), nunca para api/public,
@@ -224,22 +251,59 @@ jobs:
       # index.html/Service Worker (web/public/.htaccess + reload automático
       # em web/src/main.tsx) já assume que chunk antigo pode sumir do
       # servidor a qualquer deploy.
-      - name: Deploy Web via rsync
+      - name: Publicar Web em staging remoto
         run: |
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
-            web/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/"
+            web/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}.__incoming/"
 
       # Shared hosting costuma tratar dotfile de forma menos previsível em
       # alguns painéis/sincronizações. Reforçamos o .htaccess explicitamente
       # para não depender só do rsync recursivo do diretório.
-      - name: Reforçar .htaccess do web publicado
+      - name: Reforçar .htaccess do web em staging
         run: |
           scp -P "${{ secrets.DEPLOY_SSH_PORT }}" \
             -o StrictHostKeyChecking=accept-new \
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             web/public/.htaccess \
-            "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/.htaccess"
+            "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}.__incoming/.htaccess"
+
+      - name: Validar staging e promover web para produção
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            LIVE="${{ secrets.DEPLOY_WEB_PATH }}"
+            STAGING="${{ secrets.DEPLOY_WEB_PATH }}.__incoming"
+            BACKUP="${{ secrets.DEPLOY_WEB_PATH }}.__backup"
+
+            test -d "$STAGING"
+            test -f "$STAGING/index.html"
+            test -f "$STAGING/.htaccess"
+            test -d "$STAGING/assets"
+
+            file_count="$(find "$STAGING" -type f | wc -l | tr -d ' ')"
+            asset_count="$(find "$STAGING/assets" -type f | wc -l | tr -d ' ')"
+            echo "Arquivos no staging web: $file_count"
+            echo "Arquivos em staging/assets: $asset_count"
+
+            if [ "$file_count" -lt 20 ] || [ "$asset_count" -lt 10 ]; then
+              echo "Staging web inválido ou incompleto. Abortando promoção."
+              exit 1
+            fi
+
+            rm -rf "$BACKUP"
+            if [ -d "$LIVE" ] && [ "$(find "$LIVE" -mindepth 1 | head -n 1)" ]; then
+              mkdir -p "$BACKUP"
+              rsync -a "$LIVE"/ "$BACKUP"/
+            fi
+
+            mkdir -p "$LIVE"
+            rsync -av --delete "$STAGING"/ "$LIVE"/
 
       - name: Validar fallback SPA remoto (web/)
         uses: appleboy/ssh-action@v1.2.0
