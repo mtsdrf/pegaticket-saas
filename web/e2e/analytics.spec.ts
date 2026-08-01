@@ -183,39 +183,6 @@ test.describe('Análises', () => {
       })
     })
 
-    await page.route('**/api/v1/reports/analytics/stalled-products*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: {
-            total_value_tied_up: '420.00',
-            items: [
-              { product_name: 'Suco Verde', quantity_on_hand: 14, value_tied_up: 210, cost_is_estimated: true },
-            ],
-          },
-          meta: {},
-        }),
-      })
-    })
-
-    await page.route('**/api/v1/reports/analytics/stock-ruptures*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: {
-            items: [{ product_name: 'Água com gás', units_sold_last_90_days: 27 }],
-          },
-          meta: {},
-        }),
-      })
-    })
-
     await page.route('**/api/v1/reports/analytics/sales-by-location*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -366,14 +333,11 @@ test.describe('Análises', () => {
     await expect(page.getByRole('heading', { name: 'Análises' })).toBeVisible()
     await expect(page.getByText('Margem bruta (aprox.)')).toBeVisible()
     await expect(page.getByText('59,99%')).toBeVisible()
-    await expect(page.getByText('Cashback em aberto')).toBeVisible()
-    await expect(page.getByText('R$ 128,30')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Produtos' }).click()
     await expect(page.getByText('Produtos mais vendidos')).toBeVisible()
     await expect(page.getByText('Pizza Calabresa').first()).toBeVisible()
     await expect(page.getByText('Curva ABC de produtos')).toBeVisible()
-    await expect(page.getByText('Ruptura de estoque')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Locais' }).click()
     await expect(page.getByText('Vendas por cidade')).toBeVisible()

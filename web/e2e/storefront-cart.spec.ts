@@ -356,7 +356,7 @@ test.describe('Carrinho público da loja', () => {
 
     await page.goto('/loja/loja-a')
 
-    await expect(page.getByText('Loja A')).toBeVisible()
+    await expect(page.getByText('Loja A', { exact: true })).toBeVisible()
     await expect(page.getByText('Festival de Inverno').first()).toBeVisible()
 
     await page.getByText('Festival de Inverno').first().click()

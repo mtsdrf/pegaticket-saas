@@ -1,12 +1,11 @@
-import { Box, Tooltip } from '@mui/material'
+import { Box } from '@mui/material'
 import { useEffect } from 'react'
 import { AbcTableCard } from '../../../components/analytics/AbcTableCard'
 import { AnalyticsErrorAlert } from '../../../components/analytics/AnalyticsErrorAlert'
 import { RankingListCard } from '../../../components/dashboard/RankingListCard'
 import { useAnalyticsData } from '../../../hooks/useAnalyticsData'
 import * as analyticsService from '../../../services/analyticsService'
-import { FORM_GRID_2_SX } from '../../../styles/layoutStandards'
-import { formatCurrency, formatQuantity } from '../../../utils/format'
+import { formatCurrency } from '../../../utils/format'
 import type { AnalyticsTabProps } from './types'
 
 const TOP_LIMIT = 10
@@ -20,10 +19,8 @@ export function ProductsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     () => analyticsService.getAbcAnalysis({ from, to, dimension: 'products' }),
     `${from}|${to}`,
   )
-  // Foto operacional atual, não filtrada por período.
-  const stalled = useAnalyticsData(() => analyticsService.getStalledProducts(), 'stalled-products')
 
-  const sources = [topProducts, abc, stalled]
+  const sources = [topProducts, abc]
 
   const planLocked = sources.some((source) => source.planLocked)
   useEffect(() => {
@@ -60,34 +57,6 @@ export function ProductsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
           items={abc.data}
           emptyTitle="Sem dados para a curva ABC"
           emptyDescription="A análise ABC aparece assim que houver vendas no período selecionado."
-        />
-      </Box>
-
-      <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5, alignItems: 'start' }}>
-        <RankingListCard
-          title="Itens sem giro recente"
-          subtitle={
-            stalled.data
-              ? `Sem venda recente e com disponibilidade parada — ${formatCurrency(stalled.data.total_value_tied_up)} imobilizados. * valor estimado pelo preço de venda.`
-              : 'Itens com baixa rotação recente e capital imobilizado.'
-          }
-          isLoading={stalled.isLoading}
-          items={
-            stalled.data?.items.map((item) => ({
-              title: item.product_name,
-              value: formatCurrency(item.value_tied_up),
-              meta: `${formatQuantity(item.quantity_on_hand)} em disponibilidade`,
-              badge: item.cost_is_estimated ? (
-                <Tooltip title="Valor estimado pelo preço de venda, sem custo de compra cadastrado.">
-                  <Box component="span" sx={{ color: 'var(--pt-warning)', fontWeight: 700, cursor: 'help' }} aria-label="valor estimado">
-                    *
-                  </Box>
-                </Tooltip>
-              ) : undefined,
-            })) ?? null
-          }
-          emptyTitle="Nenhum item parado"
-          emptyDescription="Os itens com disponibilidade tiveram movimentação recente."
         />
       </Box>
     </Box>

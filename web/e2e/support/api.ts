@@ -1,5 +1,4 @@
 import type { Page, Route } from '@playwright/test'
-import { STORAGE_KEYS } from '../../src/constants/storage'
 import type { Sale } from '../../src/types/sale'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -44,39 +43,6 @@ interface ShellMockOptions {
     plan_name?: string | null
     send_tracking_link_whatsapp?: boolean
     logo_url?: string | null
-  }>
-}
-
-interface AccountingShellMockOptions {
-  office?: {
-    uuid: string
-    cnpj: string
-    company_name: string
-    responsible_name: string
-    email: string
-    totp_enabled: boolean
-    totp_enabled_at: string | null
-    created_at: string | null
-  }
-  links?: Array<{
-    uuid: string
-    status: 'pending' | 'approved' | 'revoked'
-    scopes: Array<'financial.read' | 'fiscal.read' | 'fiscal.write' | 'reports.read'>
-    requested_at: string | null
-    approved_at: string | null
-    revoked_at: string | null
-    tenant?: {
-      uuid: string
-      name: string
-      cnpj: string | null
-    }
-    accounting_office?: {
-      uuid: string
-      cnpj: string
-      company_name: string
-      responsible_name: string
-      email: string
-    }
   }>
 }
 
@@ -406,61 +372,6 @@ export async function mockAuthenticatedShell(page: Page, options: ShellMockOptio
   )
 
   await mockAuthenticatedApiBootstrap(page, options)
-}
-
-export async function mockAccountingShell(page: Page, options: AccountingShellMockOptions = {}): Promise<void> {
-  const office =
-    options.office ?? {
-      uuid: 'office-qa-1',
-      cnpj: '12345678000190',
-      company_name: 'Contabilidade QA',
-      responsible_name: 'Maria QA',
-      email: 'contador.qa@pegaticket.com',
-      totp_enabled: true,
-      totp_enabled_at: '2026-07-28T10:00:00Z',
-      created_at: '2026-07-01T10:00:00Z',
-    }
-
-  const links =
-    options.links ?? [
-      {
-        uuid: 'accounting-link-1',
-        status: 'approved' as const,
-        scopes: ['financial.read', 'fiscal.read', 'fiscal.write', 'reports.read'] as const,
-        requested_at: '2026-07-20T10:00:00Z',
-        approved_at: '2026-07-21T10:00:00Z',
-        revoked_at: null,
-        tenant: {
-          uuid: 'tenant-qa-1',
-          name: 'Empresa QA',
-          cnpj: '11222333000144',
-        },
-      },
-    ]
-
-  await page.addInitScript((storageKey) => {
-    localStorage.setItem(storageKey, 'playwright-accounting-token')
-  }, STORAGE_KEYS.accountingAccessToken)
-
-  await page.route('**/api/v1/accounting/me*', async (route) => {
-    if (route.request().method() !== 'GET') {
-      await route.fallback()
-      return
-    }
-
-    await fulfillJson(route, 200, apiSuccess(office))
-  })
-
-  await page.route('**/api/v1/accounting/access-requests*', async (route) => {
-    const method = route.request().method()
-
-    if (method === 'GET') {
-      await fulfillJson(route, 200, apiSuccess(links))
-      return
-    }
-
-    await route.fallback()
-  })
 }
 
 export function makeSale(overrides: Partial<Sale> = {}): Sale {

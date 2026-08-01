@@ -414,42 +414,6 @@ const TRAINING_MODULES: TrainingModule[] = [
       },
     ],
   },
-  {
-    id: 'contador',
-    name: 'Contador e pendências fiscais',
-    summary: 'Apresenta o fluxo segregado do escritório contábil e a troca estruturada de pendências com a empresa.',
-    status: 'implemented',
-    route: '/configuracoes/contadores',
-    audience: ['Proprietário', 'Contador'],
-    functionality: 'accounting-access',
-    requirement: ACCESS.accountingAccessRead,
-    whoUses: 'Proprietário da empresa e escritório contábil.',
-    dependencies: ['empresa'],
-    connectsTo: ['financeiro', 'clientes', 'catalogo'],
-    teaches: [
-      'Como aprovar o escritório de contabilidade',
-      'Como a central de pendências organiza pedidos de documentação',
-      'Quais dados contábeis o contador pode complementar',
-    ],
-    risks: [
-      'Aprovar acesso sem revisar escopo desejado',
-      'Trabalhar por e-mail fora da central perde rastreabilidade',
-    ],
-    operations: [
-      {
-        title: 'Aprovar acesso do contador',
-        purpose: 'Habilitar o escritório para operar dados autorizados da empresa.',
-        when: 'Após validar o pedido de acesso e o vínculo correto.',
-        actor: 'Proprietário',
-        route: '/configuracoes/contadores',
-        permissionLabel: 'accounting-access:approve',
-        requirements: ['Solicitação de acesso existente', 'Empresa correta em contexto'],
-        effects: ['Libera relatórios e central de pendências para o escritório'],
-        commonErrors: ['Aprovar empresa errada', 'Não orientar o contador a usar a central de mensagens'],
-        goodPractices: ['Manter comunicação contábil dentro da central para preservar histórico'],
-      },
-    ],
-  },
 ]
 
 const TRAINING_TRACKS: TrainingTrack[] = [
@@ -629,9 +593,7 @@ export function TrainingCenterPage() {
 
   const onboardingPercent = checklist ? Math.round((checklist.completed / Math.max(checklist.total, 1)) * 100) : null
   const accessibleFunctionalitySet = useMemo(() => new Set(accessProfile?.tenant_functionalities ?? []), [accessProfile?.tenant_functionalities])
-  const hasAdvancedBackofficeTrack =
-    accessibleFunctionalitySet.has('accounting-access') ||
-    accessibleFunctionalitySet.has('subscription')
+  const hasAdvancedBackofficeTrack = accessibleFunctionalitySet.has('subscription')
 
   const recommendedTrackId = useMemo(() => {
     if (checklist && !checklist.has_product) return 'implantacao'

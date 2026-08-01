@@ -91,11 +91,6 @@ export const ACCESS = {
   /** Central de chamados nativa (roadmap A4, item 17) — functionality `support`, reaproveita actions `read`/`create` já existentes. */
   helpRequestsRead: tenant('support', 'read'),
   helpRequestsCreate: tenant('support', 'create'),
-  /** Módulo do contador (lado do tenant) — functionality slug com hífen no backend (`accounting-access`). */
-  accountingAccessRead: tenant('accounting-access', 'read'),
-  accountingAccessCreate: tenant('accounting-access', 'create'),
-  accountingAccessApprove: tenant('accounting-access', 'approve'),
-  accountingAccessRevoke: tenant('accounting-access', 'revoke'),
   storefrontUpdate: tenant('storefront', 'update'),
   /** Integrações — API keys + webhook subscriptions (roadmap A6, item 20), functionality única `api-access` pras duas coisas. */
   apiAccessRead: tenant('api-access', 'read'),

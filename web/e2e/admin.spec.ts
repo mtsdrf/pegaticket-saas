@@ -94,7 +94,7 @@ test.describe('Administração global', () => {
     await expect(page.getByText('Gerencie as empresas da plataforma.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Nova empresa' })).toBeVisible()
     await expect(page.getByText('Empresa Alpha')).toBeVisible()
-    await expect(page.getByText('PegaTicket')).toBeVisible()
+    await expect(page.getByRole('gridcell', { name: 'PegaTicket' })).toBeVisible()
   })
 
   test('abre os detalhes da auditoria administrativa', async ({ page }) => {

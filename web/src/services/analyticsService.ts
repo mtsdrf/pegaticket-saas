@@ -20,7 +20,6 @@ import type {
   SalesSummary,
   SalesSummaryBucket,
   SalesSummaryTotals,
-  StalledProducts,
   TopClient,
   TopProduct,
 } from '../types/analytics'
@@ -290,11 +289,6 @@ export async function getCouponRoi(params: AnalyticsPeriodParams): Promise<Coupo
 
 export async function getChurnClients(): Promise<ChurnClients> {
   const response = await apiClient.get<ApiSuccess<ChurnClients>>('/reports/analytics/churn-clients')
-  return response.data.data
-}
-
-export async function getStalledProducts(): Promise<StalledProducts> {
-  const response = await apiClient.get<ApiSuccess<StalledProducts>>('/reports/analytics/stalled-products')
   return response.data.data
 }
 

@@ -141,23 +141,6 @@ export interface ChurnClients {
 }
 
 // ---------------------------------------------------------------------------
-// Produtos parados / ruptura de estoque (aba Produtos).
-// ---------------------------------------------------------------------------
-
-export interface StalledProduct {
-  product_name: string
-  quantity_on_hand: number
-  value_tied_up: string
-  cost_is_estimated: boolean
-}
-
-export interface StalledProducts {
-  items: StalledProduct[]
-  total_value_tied_up: string
-  count: number
-}
-
-// ---------------------------------------------------------------------------
 // Mapa de calor dia da semana × hora (aba Sazonalidade).
 // ---------------------------------------------------------------------------
 
