@@ -11,7 +11,7 @@ export function formatCountdown(secondsLeft: number): string {
 /**
  * Contagem regressiva em segundos (validade do código OTP) — decrementa a
  * cada 1s via `setInterval`, limpo no cleanup do efeito (mesmo padrão de
- * `clearInterval` usado no polling de `OrderTrackingPage`). `restart` reseta
+ * `clearInterval` usado no polling de `SaleTrackingPage`). `restart` reseta
  * a contagem com um novo total, usado ao reenviar o código.
  */
 export function useCountdown(totalSeconds: number) {

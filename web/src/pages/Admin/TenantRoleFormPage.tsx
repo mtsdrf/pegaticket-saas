@@ -19,7 +19,7 @@ export function TenantRoleFormPage() {
   const [selected, setSelected] = useState<Record<string, string[]>>({})
   // Limite percentual de desconto do perfil (roadmap A1.5) — string no estado
   // pra permitir input vazio sem virar `0`/`NaN` durante a digitação; vazio =
-  // sem limite. Só faz sentido pra functionality 'orders' (aplicado a todas
+  // sem limite. Só faz sentido pra functionality 'sales' (aplicado a todas
   // as linhas dela no payload de sync, ver handleSubmit).
   const [discountLimitPercent, setDiscountLimitPercent] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -48,7 +48,7 @@ export function TenantRoleFormPage() {
         permissions.forEach((permission) => {
           next[permission.functionality] = [...(next[permission.functionality] ?? []), permission.action]
           if (
-            permission.functionality === 'orders' &&
+            permission.functionality === 'sales' &&
             permission.discount_limit_percent !== null &&
             permission.discount_limit_percent !== undefined
           ) {
@@ -73,7 +73,7 @@ export function TenantRoleFormPage() {
       actions.map((action) => ({
         functionality,
         action,
-        ...(functionality === 'orders' ? { discount_limit_percent: limitValue } : {}),
+        ...(functionality === 'sales' ? { discount_limit_percent: limitValue } : {}),
       })),
     )
   }, [selected, discountLimitPercent])

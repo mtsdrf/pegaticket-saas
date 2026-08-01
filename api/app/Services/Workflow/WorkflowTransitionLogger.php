@@ -2,14 +2,14 @@
 
 namespace App\Services\Workflow;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Workflow\WorkflowTransitionLog;
 use Carbon\CarbonInterface;
 
 class WorkflowTransitionLogger
 {
     public function recordOrderTransition(
-        Order $order,
+        Sale $order,
         ?string $fromStage,
         ?string $toStage = null,
         string $transitionType = 'move',
@@ -35,7 +35,7 @@ class WorkflowTransitionLogger
         );
     }
 
-    public function resolveOrderStage(Order $order): string
+    public function resolveOrderStage(Sale $order): string
     {
         if ($order->cancelled_at !== null) {
             return 'cancelled';

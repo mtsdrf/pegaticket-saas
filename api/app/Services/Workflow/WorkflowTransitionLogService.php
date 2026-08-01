@@ -2,7 +2,7 @@
 
 namespace App\Services\Workflow;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Workflow\WorkflowTransitionLog;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -11,7 +11,7 @@ class WorkflowTransitionLogService
 {
     private const DEFAULT_LIMIT = 30;
 
-    public function listOrderTimeline(Order $order, int $limit = self::DEFAULT_LIMIT): Collection
+    public function listOrderTimeline(Sale $order, int $limit = self::DEFAULT_LIMIT): Collection
     {
         $this->assertTenantOwnership((int) $order->tenant_id);
 
@@ -29,7 +29,7 @@ class WorkflowTransitionLogService
     private function assertTenantOwnership(int $tenantId): void
     {
         if ($tenantId !== (int) app('tenant_id')) {
-            throw (new ModelNotFoundException())->setModel(Order::class);
+            throw (new ModelNotFoundException())->setModel(Sale::class);
         }
     }
 

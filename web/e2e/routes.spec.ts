@@ -135,7 +135,7 @@ test.describe('Planejamento de rotas', () => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['routes:read', 'orders:update', 'dashboard:read'],
-      tenantFunctionalities: ['routes', 'orders', 'dashboard'],
+      tenantFunctionalities: ['routes', 'sales', 'dashboard'],
     })
 
     const deliveryCandidates = makeDeliveryCandidates()
@@ -200,7 +200,7 @@ test.describe('Planejamento de rotas', () => {
       })
     })
 
-    await page.route('**/api/v1/orders/route-order-1/deliver', async (route) => {
+    await page.route('**/api/v1/sales/route-order-1/deliver', async (route) => {
       if (route.request().method() !== 'PATCH') {
         await route.fallback()
         return
@@ -218,7 +218,7 @@ test.describe('Planejamento de rotas', () => {
       })
     })
 
-    await page.route('**/api/v1/orders/route-order-1/pay', async (route) => {
+    await page.route('**/api/v1/sales/route-order-1/pay', async (route) => {
       if (route.request().method() !== 'PATCH') {
         await route.fallback()
         return
@@ -269,7 +269,7 @@ test.describe('Planejamento de rotas', () => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['routes:read', 'orders:update', 'dashboard:read'],
-      tenantFunctionalities: ['routes', 'orders', 'dashboard'],
+      tenantFunctionalities: ['routes', 'sales', 'dashboard'],
     })
 
     await page.route('**/api/v1/routes/candidates*', async (route) => {
@@ -327,7 +327,7 @@ test.describe('Planejamento de rotas', () => {
       })
     })
 
-    await page.route('**/api/v1/orders/collection-order-1/installments/installment-1/pay', async (route) => {
+    await page.route('**/api/v1/sales/collection-order-1/installments/installment-1/pay', async (route) => {
       if (route.request().method() !== 'PATCH') {
         await route.fallback()
         return

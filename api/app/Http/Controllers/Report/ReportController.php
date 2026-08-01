@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Order\OrderResource;
+use App\Http\Resources\Sale\SaleResource;
 use App\Http\Resources\Report\CmvResource;
 use App\Services\APIResponse;
 use App\Services\Report\ReportService;
@@ -57,7 +57,7 @@ class ReportController extends Controller
         return APIResponse::success($data, __('messages.report.operation_health'));
     }
 
-    public function orders(Request $request)
+    public function sales(Request $request)
     {
         $list = $this->service->filteredOrders(
             app('tenant_id'),
@@ -68,7 +68,7 @@ class ReportController extends Controller
         );
 
         return APIResponse::success(
-            OrderResource::collection($list),
+            SaleResource::collection($list),
             __('messages.report.orders_list'),
             200,
             [
@@ -82,7 +82,7 @@ class ReportController extends Controller
         );
     }
 
-    public function ordersSummary(Request $request)
+    public function salesSummary(Request $request)
     {
         $data = $this->service->ordersFilteredSummary(
             app('tenant_id'),
@@ -116,9 +116,9 @@ class ReportController extends Controller
         return APIResponse::success(CmvResource::collection($data), __('messages.report.cmv'));
     }
 
-    public function ordersPdf(Request $request)
+    public function salesPdf(Request $request)
     {
-        $pdf = $this->service->generateOrdersPdf(
+        $pdf = $this->service->generateSalesPdf(
             app('tenant_id'),
             $request->only(self::ORDER_FILTERS)
         );

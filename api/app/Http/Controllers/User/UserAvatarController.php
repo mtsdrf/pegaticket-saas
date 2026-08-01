@@ -12,7 +12,7 @@ use Illuminate\Http\Response;
  * jwt/tenant/perm, mesmo espírito de /rastreio (route-model-binding via
  * uuid já resolve 404 pra usuário inexistente/soft-deletado). Sem
  * Service/Repository: leitura simples de um Model já resolvido, mesmo
- * precedente de OrderTrackingController. Ver architecture-decisions.md.
+ * precedente de SaleTrackingController. Ver architecture-decisions.md.
  */
 class UserAvatarController extends Controller
 {

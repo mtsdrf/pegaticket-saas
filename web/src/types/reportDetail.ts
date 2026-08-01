@@ -1,4 +1,4 @@
-export interface OrderReportFilters {
+export interface SaleReportFilters {
   client_uuid?: string
   client_name?: string
   cidade_uuid?: string
@@ -15,7 +15,7 @@ export interface OrderReportFilters {
   page?: number
 }
 
-export interface OrderReportSummary {
+export interface SaleReportSummary {
   total: number
   delivered_percentage: number
   paid_percentage: number

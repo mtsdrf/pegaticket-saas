@@ -4,7 +4,7 @@ namespace App\Services\Payment;
 
 use App\Exceptions\Payment\PaymentIssueNotFoundException;
 use App\Exceptions\Payment\PaymentIssueNotReprocessableException;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
@@ -122,7 +122,7 @@ class PaymentIssueService
         return $payments->map(function (Payment $payment) use ($tenants) {
             $tenantId = $payment->payable?->tenant_id;
             $reprocessable = $payment->provider === 'mercadopago'
-                && $payment->payable_type === Order::class
+                && $payment->payable_type === Sale::class
                 && $payment->provider_charge_id !== null;
 
             return new PaymentIssueEntry(
@@ -136,7 +136,7 @@ class PaymentIssueService
                 detail: [
                     'provider' => $payment->provider,
                     'provider_charge_id' => $payment->provider_charge_id,
-                    'payable_type' => $payment->payable_type === Order::class ? 'order' : 'invoice',
+                    'payable_type' => $payment->payable_type === Sale::class ? 'order' : 'invoice',
                     'method' => $payment->method,
                 ],
             );
@@ -272,7 +272,7 @@ class PaymentIssueService
             $payment === null
             || $payment->status !== 'divergent'
             || $payment->provider !== 'mercadopago'
-            || $payment->payable_type !== Order::class
+            || $payment->payable_type !== Sale::class
             || $payment->provider_charge_id === null
         ) {
             throw new PaymentIssueNotFoundException("payment issue not found or not reprocessable: {$reference}");

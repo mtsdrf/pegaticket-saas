@@ -2,7 +2,7 @@
 
 namespace App\Services\Report;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Support\GridQuery;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Leitura agregada de Order/Client, sem tabela própria. Pedido cancelado
+ * Leitura agregada de Sale/Client, sem tabela própria. Pedido cancelado
  * (cancelled_at preenchido) nunca conta em nenhum indicador/gráfico/
  * relatório — decisão registrada em `.claude/memory/architecture-decisions.md`.
  * Toda query aqui filtra `tenant_id` explicitamente (sem exceção) e usa
@@ -230,7 +230,7 @@ class ReportService
             $averageTicket = $orderCount > 0 ? $totalAmount / $orderCount : 0.0;
 
             return [
-                'origin' => Order::normalizeOrigin((string) $row->origin),
+                'origin' => Sale::normalizeOrigin((string) $row->origin),
                 'order_count' => $orderCount,
                 'total_amount' => $this->formatMoney($totalAmount),
                 'average_ticket' => $this->formatMoney($averageTicket),
@@ -241,11 +241,11 @@ class ReportService
     /**
      * @return array{content: string, filename: string}
      */
-    public function generateOrdersPdf(int $tenantId, array $filters): array
+    public function generateSalesPdf(int $tenantId, array $filters): array
     {
         $orders = $this->ordersEloquentQuery($tenantId, $filters)->orderByDesc('id')->get();
 
-        $pdf = Pdf::loadView('reports.orders-pdf', [
+        $pdf = Pdf::loadView('reports.sales-pdf', [
             'orders' => $orders,
             'tenantName' => tenant()?->name,
             'generatedAt' => now(),
@@ -923,11 +923,11 @@ class ReportService
      */
     private function ordersEloquentQuery(int $tenantId, array $filters): Builder
     {
-        $query = Order::where('tenant_id', $tenantId)
+        $query = Sale::where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->whereNull('cancelled_at')
             // finalCustomerLink NÃO entra no with() de propósito — ver
-            // comentário em OrderService::EAGER_RELATIONS (relation
+            // comentário em SaleService::EAGER_RELATIONS (relation
             // depende de tenant_id da instância real, quebra em eager
             // load).
             ->with(['finalCustomer', 'stockLocation']);
@@ -957,9 +957,9 @@ class ReportService
         }
 
         // Filtro por canal (roadmap A1.3) — drill-down do by-channel:
-        // GET /reports/orders?origin=X&date_from=Y&date_to=Z.
+        // GET /reports/sales?origin=X&date_from=Y&date_to=Z.
         if (!empty($filters['origin'])) {
-            $normalizedOrigin = Order::normalizeOrigin((string) $filters['origin']);
+            $normalizedOrigin = Sale::normalizeOrigin((string) $filters['origin']);
 
             if ($normalizedOrigin === 'staff') {
                 $query->whereIn('orders.origin', ['staff', 'counter']);

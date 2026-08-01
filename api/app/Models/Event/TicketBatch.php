@@ -3,7 +3,7 @@
 namespace App\Models\Event;
 
 use App\Models\BaseModel;
-use App\Models\Order\OrderItem;
+use App\Models\Sale\SaleItem;
 use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,6 +58,6 @@ class TicketBatch extends BaseModel
 
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(SaleItem::class);
     }
 }

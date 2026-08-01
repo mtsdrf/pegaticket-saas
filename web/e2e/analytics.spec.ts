@@ -311,7 +311,7 @@ test.describe('Análises', () => {
       })
     })
 
-    await page.route('**/api/v1/reports/analytics/overdue-orders*', async (route) => {
+    await page.route('**/api/v1/reports/analytics/overdue-sales*', async (route) => {
       const url = new URL(route.request().url())
       const pageNumber = Number(url.searchParams.get('page') ?? '1')
       const rows =

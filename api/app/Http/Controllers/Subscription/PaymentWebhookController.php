@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Subscription;
 
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Http\Controllers\Controller;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
 use App\Models\Subscription\WebhookEvent;
 use App\Services\APIResponse;
 use App\Services\Logging\ApplicationLogger;
-use App\Services\Order\OrderPaymentService;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Payment\MercadoPagoPaymentProvider;
 use App\Services\Subscription\InvoicePaymentService;
 use App\Services\Subscription\SubscriptionService;
@@ -31,7 +31,7 @@ use Illuminate\Http\Request;
  * (x-signature HMAC) e processamento efetivo: o ramo de PEDIDO (cliente
  * final → tenant, API de Orders — `type=order`, `data.id` é o id da order,
  * ex. "ORD01JQ...") é dirigido por `data.id`/`provider_charge_id` casando
- * com um Payment já existente (OrderPaymentService). O `action` da
+ * com um Payment já existente (SalePaymentService). O `action` da
  * notificação (`order.action_required`, `order.processed`, etc.) NUNCA é
  * ramificado diretamente — a doc pública não enumera todos os valores
  * possíveis; em vez disso, para qualquer evento que não seja
@@ -47,7 +47,7 @@ use Illuminate\Http\Request;
 class PaymentWebhookController extends Controller
 {
     public function __construct(
-        private OrderPaymentService $orderPaymentService,
+        private SalePaymentService $orderPaymentService,
         private SubscriptionService $subscriptionService,
         private InvoicePaymentService $invoicePaymentService,
     ) {
@@ -180,7 +180,7 @@ class PaymentWebhookController extends Controller
                         ->where('provider_charge_id', (string) $orderId)
                         ->first();
 
-                    if ($payment !== null && $payment->payable_type === Order::class) {
+                    if ($payment !== null && $payment->payable_type === Sale::class) {
                         $this->reconcileOrderPayment($mercadoPago, $payment, (string) $orderId);
                     }
                 }
@@ -301,7 +301,7 @@ class PaymentWebhookController extends Controller
      * associa pelo transaction_id salvo em `payments.metadata.transaction_id`.
      * O efeito local é conservador: pagamento vira `divergent` e um Refund
      * append-only é aberto para revisão. Cobre tanto pagamento de PEDIDO
-     * (`payable_type=Order`) quanto de FATURA de assinatura
+     * (`payable_type=Sale`) quanto de FATURA de assinatura
      * (`payable_type=Invoice` — cobrança recorrente contestada pelo titular
      * do cartão), reaproveitando o mesmo Refund idempotente por
      * `provider_refund_id` nos dois casos.
@@ -338,7 +338,7 @@ class PaymentWebhookController extends Controller
     /**
      * Efeito de contestação (chargeback/claim) para um Payment já
      * resolvido, decidindo pelo `payable_type` se o efeito é o de PEDIDO
-     * (OrderPaymentService) ou o de FATURA de assinatura
+     * (SalePaymentService) ou o de FATURA de assinatura
      * (InvoicePaymentService — soma o flag `disputed`/`dispute_deadline_at`
      * na fatura e audita a assinatura). Qualquer outro payable é ignorado
      * defensivamente (evento fica auditado em `webhook_events` mesmo assim).
@@ -354,7 +354,7 @@ class PaymentWebhookController extends Controller
             return;
         }
 
-        if ($payment->payable_type === Order::class) {
+        if ($payment->payable_type === Sale::class) {
             $this->orderPaymentService->registerExternalReview($payment, $reason, $externalReference, $amount);
 
             return;
@@ -427,7 +427,7 @@ class PaymentWebhookController extends Controller
             ->where('provider_charge_id', $providerChargeId)
             ->first();
 
-        if ($payment === null || $payment->payable_type !== Order::class) {
+        if ($payment === null || $payment->payable_type !== Sale::class) {
             return;
         }
 

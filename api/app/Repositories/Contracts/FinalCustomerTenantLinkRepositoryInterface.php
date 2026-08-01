@@ -18,7 +18,7 @@ interface FinalCustomerTenantLinkRepositoryInterface
 
     /**
      * Reverse lookup (roadmap Delivery, Fase 4 — Web Push): a partir de
-     * tenant_id+final_customer_id de um Order, resolve o vínculo
+     * tenant_id+final_customer_id de um Sale, resolve o vínculo
      * CONFIRMADO (se existir). Silencioso (null) quando não há vínculo
      * confirmado — não é erro.
      */
@@ -35,7 +35,7 @@ interface FinalCustomerTenantLinkRepositoryInterface
 
     /**
      * Busca paginada de compradores ativos do tenant pro staff (fluxo de
-     * pedido manual, OrderFormPage). $search casa por LIKE contra nome/
+     * pedido manual, SaleFormPage). $search casa por LIKE contra nome/
      * email do FinalCustomer relacionado e cpf_cnpj/phone_primary do link.
      */
     public function searchActiveForTenant(int $tenantId, ?string $search, int $perPage): LengthAwarePaginator;

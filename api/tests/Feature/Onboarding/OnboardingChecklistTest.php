@@ -123,7 +123,7 @@ class OnboardingChecklistTest extends TestCase
 
         $functionalityId = DB::table('functionalities')->insertGetId([
             'uuid' => (string) Str::uuid(),
-            'name' => 'Loja online',
+            'name' => 'Bilheteria online',
             'slug' => 'storefront',
             'created_at' => now(),
             'updated_at' => now(),

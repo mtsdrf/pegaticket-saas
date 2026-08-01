@@ -30,9 +30,9 @@ class ActionsSeeder extends Seeder
             ['key' => 'deliver', 'name' => 'Entregar'],
             ['key' => 'pay', 'name' => 'Pagar'],
             ['key' => 'cancel', 'name' => 'Cancelar'],
-            // Ações da tela dedicada de vendas online (storefront-orders,{action}).
+            // Ações da tela dedicada de vendas online (storefront-sales,{action}).
             // 'pay'/'deliver'/'cancel' já existem acima (Ações de Pedido) e
-            // são reaproveitadas por storefront-orders,{pay,deliver,cancel}.
+            // são reaproveitadas por storefront-sales,{pay,deliver,cancel}.
             ['key' => 'approve', 'name' => 'Aprovar'],
             ['key' => 'dispatch', 'name' => 'Despachar (saiu para entrega)'],
             ['key' => 'undispatch', 'name' => 'Desfazer saiu para entrega'],

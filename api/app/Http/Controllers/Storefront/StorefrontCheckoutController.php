@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
-use App\Exceptions\BelowMinimumOrderException;
+use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\CouponUsageLimitReachedException;
 use App\Exceptions\InsufficientStockException;
 use App\Exceptions\InvalidCouponException;
@@ -34,7 +34,7 @@ class StorefrontCheckoutController extends Controller
             return APIResponse::error($e->getMessage(), 422, 'STORE_CLOSED');
         } catch (StorefrontDisabledException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
-        } catch (BelowMinimumOrderException $e) {
+        } catch (BelowMinimumSaleException $e) {
             return APIResponse::error($e->getMessage(), 422, 'BELOW_MINIMUM_ORDER');
         } catch (InvalidCouponException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_COUPON');

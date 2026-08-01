@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 /**
  * Núcleo compartilhado de "sinalizar pagamento para revisão externa"
  * (chargeback/claim/alerta antifraude do Mercado Pago), usado tanto para
- * pagamentos de PEDIDO (OrderPaymentService::registerExternalReview) quanto
+ * pagamentos de PEDIDO (SalePaymentService::registerExternalReview) quanto
  * de FATURA de assinatura (InvoicePaymentService::registerDisputedPayment) —
  * mesma tabela `payments`/`refunds`, mesmo estado conservador (`divergent` +
  * Refund append-only), sem duplicar a lógica de idempotência do Refund por

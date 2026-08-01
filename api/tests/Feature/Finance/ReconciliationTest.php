@@ -3,7 +3,7 @@
 namespace Tests\Feature\Finance;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Stock\StockLocation;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 /**
  * GET /finance/reconciliation (roadmap A3.12) — leitura agregada de
- * payments/refunds/webhook_events, tenant-scoped via payments.payable=Order.
+ * payments/refunds/webhook_events, tenant-scoped via payments.payable=Sale.
  */
 class ReconciliationTest extends TestCase
 {
@@ -38,12 +38,12 @@ class ReconciliationTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function createOrderForTenant(int $tenantId): Order
+    protected function createOrderForTenant(int $tenantId): Sale
     {
         $client = $this->createClient($tenantId);
         $location = $this->createLocation($tenantId);
 
-        return Order::create([
+        return Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'final_customer_id' => $client->id,
@@ -55,11 +55,11 @@ class ReconciliationTest extends TestCase
         ]);
     }
 
-    protected function createPaymentForOrder(Order $order, array $overrides = []): Payment
+    protected function createPaymentForOrder(Sale $order, array $overrides = []): Payment
     {
         return Payment::create(array_merge([
             'uuid' => (string) Str::uuid(),
-            'payable_type' => Order::class,
+            'payable_type' => Sale::class,
             'payable_id' => $order->id,
             'provider' => 'manual',
             'provider_charge_id' => 'charge-' . Str::random(8),

@@ -35,7 +35,7 @@ class PlanGatePermissionsTest extends TestCase
         $ordersFunctionalityId = DB::table('functionalities')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'name' => 'Orders',
-            'slug' => 'orders',
+            'slug' => 'sales',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -125,7 +125,7 @@ class PlanGatePermissionsTest extends TestCase
     public function tenant_user_receives_upgrade_required_when_permission_exists_but_plan_does_not_allow_feature(): void
     {
         $this->withHeader('Authorization', 'Bearer ' . $this->accessToken)
-            ->getJson('/api/v1/orders')
+            ->getJson('/api/v1/sales')
             ->assertStatus(403)
             ->assertJson([
                 'success' => false,

@@ -2,7 +2,7 @@
 
 namespace App\Services\Finance;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\WebhookEvent;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\DB;
  * entidade própria (padrão já estabelecido nos módulos de relatório deste
  * projeto).
  *
- * Escopo por tenant: `payments` é polimórfico (payable_type=Order|Invoice).
+ * Escopo por tenant: `payments` é polimórfico (payable_type=Sale|Invoice).
  * Conciliação do tenant enxerga só pagamentos de PEDIDO (cliente final →
  * tenant), nunca fatura de assinatura (PegaTicket → tenant, sem tenant_id
  * direto em `payments`) — por isso o filtro é sempre
- * `payable_type=Order::class` + `orders.tenant_id`.
+ * `payable_type=Sale::class` + `orders.tenant_id`.
  *
  * Casamento com webhook_events é best-effort em PHP (não em SQL): a tabela
  * não tem FK pra `payments`, só (provider, external_id) — o vínculo real é
@@ -36,7 +36,7 @@ class ReconciliationService
     {
         $query = Payment::query()
             ->whereNull('deleted_at')
-            ->where('payable_type', Order::class)
+            ->where('payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
                     ->from('orders')
@@ -111,7 +111,7 @@ class ReconciliationService
     {
         $base = Payment::query()
             ->whereNull('payments.deleted_at')
-            ->where('payable_type', Order::class)
+            ->where('payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
                     ->from('orders')

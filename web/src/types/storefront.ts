@@ -14,7 +14,7 @@ export interface StorefrontTenant {
    */
   business_hours: StoreBusinessHourDay[]
   estimated_preparation_minutes: number | null
-  /** Delivery Fase 4 — agregado de `OrderRatingService::tenantSummary()`; `null` quando `ratings_count === 0` (nunca `0.0`). */
+  /** Delivery Fase 4 — agregado de `SaleRatingService::tenantSummary()`; `null` quando `ratings_count === 0` (nunca `0.0`). */
   average_rating: number | null
   ratings_count: number
   email: string | null

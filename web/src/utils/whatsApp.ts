@@ -5,13 +5,13 @@ export function isDigitsOnlyPhone(phone: string | null | undefined): phone is st
   return typeof phone === 'string' && /^\d+$/.test(phone)
 }
 
-/** Monta a URL de envio do WhatsApp Web/App a partir de um telefone já validado por `isDigitsOnlyPhone` (DDI 55 fixo, mesmo padrão do legado) — centraliza o que antes estava duplicado inline em `OrderFormPage`/`ReceivableReportListPage`. */
+/** Monta a URL de envio do WhatsApp Web/App a partir de um telefone já validado por `isDigitsOnlyPhone` (DDI 55 fixo, mesmo padrão do legado) — centraliza o que antes estava duplicado inline em `SaleFormPage`/`ReceivableReportListPage`. */
 export function buildWhatsAppUrl(phone: string, message: string): string {
   return `https://api.whatsapp.com/send?phone=${encodeURIComponent('55' + phone)}&text=${encodeURIComponent(message)}`
 }
 
 /**
- * Resumo completo da compra, enviado na criação do pedido (`OrderFormPage`) — lista de itens, total, entrega
+ * Resumo completo da compra, enviado na criação do pedido (`SaleFormPage`) — lista de itens, total, entrega
  * prevista e status de pagamento no momento da criação. `trackingUrl` é opcional (toggle `tenant_settings.
  * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando omitido, a linha do link some
  * e o restante da mensagem sai igual a antes.

@@ -3,10 +3,10 @@ import type { ApiSuccess } from '../types/api'
 import type { PaginatedResult, PaginationMeta } from '../types/pagination'
 import { extractFilenameFromContentDisposition, triggerBlobDownload } from '../utils/fileDownload'
 import type {
-  OrderReportFilters,
-  OrderReportSummary,
+  SaleReportFilters,
+  SaleReportSummary,
 } from '../types/reportDetail'
-import type { Order } from '../types/order'
+import type { Sale } from '../types/order'
 
 async function listPaginatedMeta<T>(url: string, params: object): Promise<PaginatedResult<T>> {
   const response = await apiClient.get<ApiSuccess<T[]>>(url, { params })
@@ -24,12 +24,12 @@ async function listPaginatedMeta<T>(url: string, params: object): Promise<Pagina
   }
 }
 
-export function listOrderReports(filters: OrderReportFilters): Promise<PaginatedResult<Order>> {
-  return listPaginatedMeta<Order>('/reports/orders', filters)
+export function listOrderReports(filters: SaleReportFilters): Promise<PaginatedResult<Sale>> {
+  return listPaginatedMeta<Sale>('/reports/sales', filters)
 }
 
-export async function getOrdersSummary(filters: OrderReportFilters): Promise<OrderReportSummary> {
-  const response = await apiClient.get<ApiSuccess<OrderReportSummary>>('/reports/orders/summary', { params: filters })
+export async function getOrdersSummary(filters: SaleReportFilters): Promise<SaleReportSummary> {
+  const response = await apiClient.get<ApiSuccess<SaleReportSummary>>('/reports/sales/summary', { params: filters })
   return response.data.data
 }
 
@@ -39,6 +39,6 @@ async function exportPdf(url: string, payload: object, fallbackFilename: string)
   triggerBlobDownload(response.data, filename)
 }
 
-export function exportOrderReportsPdf(filters: OrderReportFilters): Promise<void> {
-  return exportPdf('/reports/orders/pdf', filters, 'relatorio-pedidos.pdf')
+export function exportOrderReportsPdf(filters: SaleReportFilters): Promise<void> {
+  return exportPdf('/reports/sales/pdf', filters, 'relatorio-pedidos.pdf')
 }

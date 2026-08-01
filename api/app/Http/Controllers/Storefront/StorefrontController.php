@@ -12,7 +12,7 @@ use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
 use App\Services\APIResponse;
 use App\Services\Storefront\CouponService;
-use App\Services\Storefront\OrderRatingService;
+use App\Services\Storefront\SaleRatingService;
 use App\Services\Storefront\StorefrontCatalogService;
 use App\Services\Storefront\StorefrontCheckoutService;
 use App\Services\Storefront\StoreBusinessHoursService;
@@ -32,7 +32,7 @@ class StorefrontController extends Controller
         private TenantSettingsService $tenantSettingsService,
         private StorefrontCheckoutService $checkoutService,
         private CouponService $couponService,
-        private OrderRatingService $ratingService,
+        private SaleRatingService $ratingService,
     ) {
     }
 

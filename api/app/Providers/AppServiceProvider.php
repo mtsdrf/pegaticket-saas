@@ -32,7 +32,7 @@ use App\Repositories\Contracts\{
     StockLocationRepositoryInterface,
     StockBalanceRepositoryInterface,
     StockMovementRepositoryInterface,
-    OrderRepositoryInterface,
+    SaleRepositoryInterface,
     AuditLogRepositoryInterface,
     FinalCustomerRepositoryInterface,
     FinalCustomerTenantLinkRepositoryInterface,
@@ -77,7 +77,7 @@ use App\Repositories\Eloquent\{
     StockLocationRepository,
     StockBalanceRepository,
     StockMovementRepository,
-    OrderRepository,
+    SaleRepository,
     AuditLogRepository,
     FinalCustomerRepository,
     FinalCustomerTenantLinkRepository,
@@ -324,10 +324,10 @@ class AppServiceProvider extends ServiceProvider
             StockMovementRepository::class
         );
 
-        // Order Repository
+        // Sale Repository
         $this->app->bind(
-            OrderRepositoryInterface::class,
-            OrderRepository::class
+            SaleRepositoryInterface::class,
+            SaleRepository::class
         );
 
         // Audit Log Repository
@@ -421,7 +421,7 @@ class AppServiceProvider extends ServiceProvider
         // comportamento no-op original (fatura/pedido fica pending até
         // conciliação manual). 'mercadopago' liga o PSP real (roadmap Fase
         // B, item 1) assim que as credenciais em .env forem preenchidas —
-        // domínio (SubscriptionService/InvoiceService/OrderPaymentService)
+        // domínio (SubscriptionService/InvoiceService/SalePaymentService)
         // depende só da interface, nunca do adapter concreto.
         $this->app->bind(PaymentProviderInterface::class, function ($app) {
             return match (config('services.payments.provider')) {

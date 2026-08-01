@@ -5,7 +5,7 @@ namespace App\Services\Payment;
 use App\Contracts\Payment\PaymentProviderInterface;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
@@ -65,7 +65,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         ], $this->resolveTenantPayer((int) $invoice->tenant_id));
     }
 
-    public function createPixChargeForOrder(Order $order): array
+    public function createPixChargeForOrder(Sale $order): array
     {
         return $this->createOrder($order, (string) $order->total_amount, 'pix', [
             'id' => 'pix',
@@ -574,7 +574,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
     /**
      * Consulta uma order (GET /v1/orders/{id}) — mantém o nome getPayment()
      * por compatibilidade com a interface/callers existentes (webhook,
-     * reconciliação), mas o recurso consultado agora é a Order, não mais um
+     * reconciliação), mas o recurso consultado agora é a Sale, não mais um
      * Payment legado.
      *
      * @return array<string, mixed>
@@ -615,9 +615,9 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
 
         // Identidade lógica estável da operação: order_charge/invoice_charge
         // + uuid do payable (já persistido antes desta chamada em ambos os
-        // casos — Order/Invoice sempre existem antes de uma cobrança ser
+        // casos — Sale/Invoice sempre existem antes de uma cobrança ser
         // tentada), nunca uma chave aleatória nova a cada tentativa.
-        $operationPrefix = $payable instanceof Order ? 'order_charge' : 'invoice_charge';
+        $operationPrefix = $payable instanceof Sale ? 'order_charge' : 'invoice_charge';
         $operation = $operationPrefix . ':' . $payable->uuid;
         $idempotency = $this->acquireIdempotency((int) $payable->tenant_id, $operation);
 
@@ -680,10 +680,10 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
      *
      * @return array<string, mixed>
      */
-    private function resolveOrderPayer(Order $order): array
+    private function resolveOrderPayer(Sale $order): array
     {
         // finalCustomerLink NÃO entra em loadMissing() de propósito (ver
-        // OrderService::EAGER_RELATIONS) — acesso abaixo via
+        // SaleService::EAGER_RELATIONS) — acesso abaixo via
         // $order->finalCustomerLink é lazy sobre a instância REAL de
         // $order, o único jeito correto de resolver essa relation.
         $order->loadMissing('finalCustomer');

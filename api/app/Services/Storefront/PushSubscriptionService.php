@@ -8,7 +8,7 @@ use Illuminate\Database\QueryException;
 /**
  * Inscrição de Web Push do cliente final (roadmap Delivery, Fase 4 — Web
  * Push real). Sem Repository dedicado — mesma decisão já usada para
- * ProductFavorite/OrderRating: tabela auxiliar simples, sem
+ * ProductFavorite/SaleRating: tabela auxiliar simples, sem
  * BaseModel/soft delete, Service acessa o Model direto.
  */
 class PushSubscriptionService

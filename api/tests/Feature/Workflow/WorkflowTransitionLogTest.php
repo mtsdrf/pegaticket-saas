@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Workflow;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Workflow\WorkflowTransitionLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,11 +21,11 @@ class WorkflowTransitionLogTest extends TestCase
         parent::setUp();
 
         $this->setUpTenantScopedUser('workflow-user@test.com');
-        $this->grantPermission('orders', 'read');
-        $this->grantPermission('orders', 'create');
-        $this->grantPermission('orders', 'update');
-        $this->grantPermission('orders', 'deliver');
-        $this->grantPermission('storefront-orders', 'read');
+        $this->grantPermission('sales', 'read');
+        $this->grantPermission('sales', 'create');
+        $this->grantPermission('sales', 'update');
+        $this->grantPermission('sales', 'deliver');
+        $this->grantPermission('storefront-sales', 'read');
         $this->grantPermission('stock', 'entry');
     }
 
@@ -42,7 +42,7 @@ class WorkflowTransitionLogTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 25]);
         $this->stockEntry($this->tenant->id, $product, $location, 30);
 
-        $response = $this->auth()->postJson('/api/v1/orders', [
+        $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
@@ -54,12 +54,12 @@ class WorkflowTransitionLogTest extends TestCase
         ])->assertStatus(201);
 
         $orderUuid = $response->json('data.uuid');
-        $order = Order::query()->where('uuid', $orderUuid)->firstOrFail();
+        $order = Sale::query()->where('uuid', $orderUuid)->firstOrFail();
         $order->status = 'pending_approval';
         $order->origin = 'storefront';
         $order->save();
 
-        $this->auth()->postJson("/api/v1/orders/{$orderUuid}/approve")
+        $this->auth()->postJson("/api/v1/sales/{$orderUuid}/approve")
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed');
 
@@ -85,7 +85,7 @@ class WorkflowTransitionLogTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => 32]);
         $this->stockEntry($this->tenant->id, $product, $location, 20);
 
-        $response = $this->auth()->postJson('/api/v1/orders', [
+        $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
@@ -96,10 +96,10 @@ class WorkflowTransitionLogTest extends TestCase
 
         $orderUuid = $response->json('data.uuid');
 
-        $this->auth()->patchJson("/api/v1/orders/{$orderUuid}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$orderUuid}/deliver")
             ->assertStatus(200);
 
-        $timeline = $this->auth()->getJson("/api/v1/orders/{$orderUuid}/workflow-transitions")
+        $timeline = $this->auth()->getJson("/api/v1/sales/{$orderUuid}/workflow-transitions")
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', __('messages.workflow.timeline_list'));

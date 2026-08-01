@@ -89,21 +89,21 @@ class PermissionService
     /**
      * Limite percentual de desconto do perfil (roadmap A1.5, ver
      * architecture-decisions.md pro mapeamento dos pontos de entrada reais
-     * que chamam isto: OrderService::create()/updateItems(), via override
+     * que chamam isto: SaleService::create()/updateItems(), via override
      * manual de items[].unit_price). `discount_limit_percent` é armazenado
      * por LINHA de tenant_role_permissions (tenant_role_id+functionality+
      * action), não por perfil inteiro — lê-se a menor configuração não-nula
-     * entre TODAS as linhas do perfil pra functionality 'orders' (defensivo:
+     * entre TODAS as linhas do perfil pra functionality 'sales' (defensivo:
      * se o admin configurar em mais de uma action por engano, a mais
      * restritiva vence). null = sem limite configurado = sem restrição
      * (comportamento anterior a esta feature, preservado).
      */
-    public function resolveOrderDiscountLimitPercent(int $tenantRoleId): ?float
+    public function resolveSaleDiscountLimitPercent(int $tenantRoleId): ?float
     {
         $limit = DB::table('tenant_role_permissions')
             ->join('functionalities', 'functionalities.id', '=', 'tenant_role_permissions.functionality_id')
             ->where('tenant_role_permissions.tenant_role_id', $tenantRoleId)
-            ->where('functionalities.slug', 'orders')
+            ->where('functionalities.slug', 'sales')
             ->whereNull('tenant_role_permissions.deleted_at')
             ->whereNotNull('tenant_role_permissions.discount_limit_percent')
             ->min('tenant_role_permissions.discount_limit_percent');

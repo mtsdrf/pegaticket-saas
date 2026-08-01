@@ -3,7 +3,7 @@
 namespace Tests\Feature\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\CouponRedemption;
 use App\Models\Tenant\Tenant;
@@ -63,7 +63,7 @@ class PortalAddressAndVouchersTest extends TestCase
         $client = $this->createClient($tenant->id);
         $location = $this->createLocation($tenant->id);
 
-        $order = Order::create([
+        $order = Sale::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $client->id,

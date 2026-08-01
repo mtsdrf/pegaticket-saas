@@ -16,19 +16,19 @@ export interface ReportIndicators {
   overdue_orders_count: number
 }
 
-export interface OrdersByMonthPoint {
+export interface SalesByMonthPoint {
   month: string
   count: number
   total_amount: string
 }
 
-export interface OrdersByCityPoint {
+export interface SalesByCityPoint {
   city_name: string
   count: number
   total_amount: string
 }
 
-export interface OrdersByNeighborhoodPoint {
+export interface SalesByNeighborhoodPoint {
   neighborhood_name: string
   count: number
   total_amount: string
@@ -60,7 +60,7 @@ export interface LatePaymentClientPoint {
   paid_orders_count: number
 }
 
-export interface OverdueOrderPoint {
+export interface OverdueSalePoint {
   order_uuid: string
   client_name: string
   amount: string
@@ -103,7 +103,7 @@ export interface SeasonalityYearRow {
   months: SeasonalityMonthPoint[]
 }
 
-export type OrderOrigin = 'staff' | 'storefront'
+export type SaleOrigin = 'staff' | 'storefront'
 
 export interface ChannelResultPoint {
   origin: string
@@ -138,20 +138,20 @@ export const CHANNEL_LABELS: Record<string, string> = {
 }
 
 export interface ReportCharts {
-  orders_by_month: OrdersByMonthPoint[]
+  orders_by_month: SalesByMonthPoint[]
   paid_vs_unpaid: { paid: number; unpaid: number }
   delivered_vs_undelivered: { delivered: number; undelivered: number }
   received_vs_receivable: { received: string; receivable: string }
-  orders_by_city: OrdersByCityPoint[]
-  orders_by_neighborhood: OrdersByNeighborhoodPoint[]
+  orders_by_city: SalesByCityPoint[]
+  orders_by_neighborhood: SalesByNeighborhoodPoint[]
   seasonality_matrix: SeasonalityYearRow[]
   top_products: TopProductPoint[]
   top_clients: TopClientPoint[]
   rfm_clients: RfmClientPoint[]
   late_payment_clients: LatePaymentClientPoint[]
-  overdue_orders: OverdueOrderPoint[]
+  overdue_orders: OverdueSalePoint[]
   receivables_aging: ReceivablesAgingPoint[]
-  receivables_forecast_by_month: OrdersByMonthPoint[]
+  receivables_forecast_by_month: SalesByMonthPoint[]
   abc_products: AbcProductPoint[]
   abc_clients: AbcClientPoint[]
 }

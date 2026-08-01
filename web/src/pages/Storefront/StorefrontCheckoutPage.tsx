@@ -22,8 +22,8 @@ import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelem
 import { formatCountdown } from '../../hooks/useCountdown'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
-import { getOrderTracking } from '../../services/orderTrackingService'
-import * as portalOrderService from '../../services/portalOrderService'
+import { getSaleTracking } from '../../services/orderTrackingService'
+import * as portalSaleService from '../../services/portalSaleService'
 import * as storefrontCheckoutService from '../../services/storefrontCheckoutService'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
@@ -31,7 +31,7 @@ import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
-import type { OrderPayment } from '../../types/order'
+import type { SalePayment } from '../../types/order'
 import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
@@ -109,7 +109,7 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
 function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [payment, setPayment] = useState<OrderPayment | null>(null)
+  const [payment, setPayment] = useState<SalePayment | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [isCheckingPayment, setIsCheckingPayment] = useState(false)
@@ -119,7 +119,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     setStatus('loading')
     setErrorMessage(null)
     setCheckMessage(null)
-    portalOrderService
+    portalSaleService
       .createOrderPixCharge(orderUuid)
       .then((result) => {
         setPayment(result)
@@ -151,7 +151,7 @@ function PixPaymentPanel({ orderUuid }: { orderUuid: string }) {
     setIsCheckingPayment(true)
     setCheckMessage(null)
     try {
-      const tracking = await getOrderTracking(orderUuid)
+      const tracking = await getSaleTracking(orderUuid)
       if (tracking.is_paid) {
         navigate(`/rastreio/${orderUuid}`)
         return

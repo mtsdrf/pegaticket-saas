@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\AnalyticsAbcRequest;
-use App\Http\Requests\Report\AnalyticsOverdueOrdersRequest;
+use App\Http\Requests\Report\AnalyticsOverdueSalesRequest;
 use App\Http\Requests\Report\AnalyticsPeriodRequest;
 use App\Http\Requests\Report\AnalyticsSalesSummaryRequest;
 use App\Http\Requests\Report\AnalyticsTopRequest;
@@ -94,7 +94,7 @@ class AnalyticsController extends Controller
         return APIResponse::success($data, __('messages.analytics.payment_delays'));
     }
 
-    public function overdueOrders(AnalyticsOverdueOrdersRequest $request)
+    public function overdueOrders(AnalyticsOverdueSalesRequest $request)
     {
         $validated = $request->validated();
 

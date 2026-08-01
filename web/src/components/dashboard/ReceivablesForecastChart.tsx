@@ -10,13 +10,13 @@ import {
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { pegaticketTokens } from '../../theme'
-import type { OrdersByMonthPoint } from '../../types/report'
+import type { SalesByMonthPoint } from '../../types/report'
 import { formatCurrency, formatMonthLabel } from '../../utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTooltip)
 
 interface ReceivablesForecastChartProps {
-  data: OrdersByMonthPoint[] | null
+  data: SalesByMonthPoint[] | null
   isLoading: boolean
 }
 

@@ -7,7 +7,7 @@ namespace App\Exceptions;
  * mínimo exigido pelo cupom (roadmap Delivery, Fase 3) —
  * CouponService::validateForCheckout(). Distinta de
  * CouponUsageLimitReachedException (mesmo espírito de
- * StoreClosedException/BelowMinimumOrderException: nunca capturada por
+ * StoreClosedException/BelowMinimumSaleException: nunca capturada por
  * engano junto de \RuntimeException genérica/exceções HTTP do Symfony).
  */
 class InvalidCouponException extends \RuntimeException

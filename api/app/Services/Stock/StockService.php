@@ -329,7 +329,7 @@ class StockService
 
     /**
      * $sourceType/$sourceId (opcionais) apontam para a origem da reserva —
-     * usado pelo Pedido (Fase 5) para marcar o OrderItem que gerou esta
+     * usado pelo Pedido (Fase 5) para marcar o SaleItem que gerou esta
      * reserva, reaproveitando a mesma coluna polimórfica já usada por
      * reserve_cancel para apontar para o reserve original.
      */

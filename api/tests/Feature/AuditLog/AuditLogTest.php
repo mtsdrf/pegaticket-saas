@@ -78,16 +78,16 @@ class AuditLogTest extends TestCase
     #[Test]
     public function it_filters_by_auditable_type_contains(): void
     {
-        $this->createLog(['auditable_type' => 'App\\Models\\Order\\Order']);
+        $this->createLog(['auditable_type' => 'App\\Models\\Sale\\Sale']);
         $this->createLog(['auditable_type' => 'App\\Models\\Plan\\Plan']);
 
         $response = $this
             ->withHeader('Authorization', 'Bearer ' . $this->accessToken)
-            ->getJson('/api/v1/audit-logs?auditable_type=Order')
+            ->getJson('/api/v1/audit-logs?auditable_type=Sale')
             ->assertStatus(200)
             ->assertJsonCount(1, 'data');
 
-        $this->assertSame('App\\Models\\Order\\Order', $response->json('data.0.auditable_type'));
+        $this->assertSame('App\\Models\\Sale\\Sale', $response->json('data.0.auditable_type'));
     }
 
     #[Test]

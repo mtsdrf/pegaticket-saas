@@ -2,14 +2,14 @@
 
 namespace App\Listeners\Workflow;
 
-use App\Events\Order\OrderApproved;
-use App\Events\Order\OrderCancelled;
-use App\Events\Order\OrderCreated;
-use App\Events\Order\OrderDelivered;
-use App\Events\Order\OrderOutForDelivery;
-use App\Events\Order\OrderRejected;
-use App\Events\Order\OrderUndispatched;
-use App\Models\Order\Order;
+use App\Events\Sale\SaleApproved;
+use App\Events\Sale\SaleCancelled;
+use App\Events\Sale\SaleCreated;
+use App\Events\Sale\SaleDelivered;
+use App\Events\Sale\SaleOutForDelivery;
+use App\Events\Sale\SaleRejected;
+use App\Events\Sale\SaleUndispatched;
+use App\Models\Sale\Sale;
 use App\Services\Workflow\WorkflowTransitionLogger;
 
 class WriteWorkflowTransitionLog
@@ -22,20 +22,20 @@ class WriteWorkflowTransitionLog
     public function handle(object $event): void
     {
         match (true) {
-            $event instanceof OrderCreated => $this->handleOrderCreated($event),
-            $event instanceof OrderApproved => $this->handleOrderApproved($event),
-            $event instanceof OrderRejected => $this->handleOrderRejected($event),
-            $event instanceof OrderOutForDelivery => $this->handleOrderOutForDelivery($event),
-            $event instanceof OrderUndispatched => $this->handleOrderUndispatched($event),
-            $event instanceof OrderDelivered => $this->handleOrderDelivered($event),
-            $event instanceof OrderCancelled => $this->handleOrderCancelled($event),
+            $event instanceof SaleCreated => $this->handleOrderCreated($event),
+            $event instanceof SaleApproved => $this->handleOrderApproved($event),
+            $event instanceof SaleRejected => $this->handleOrderRejected($event),
+            $event instanceof SaleOutForDelivery => $this->handleOrderOutForDelivery($event),
+            $event instanceof SaleUndispatched => $this->handleOrderUndispatched($event),
+            $event instanceof SaleDelivered => $this->handleOrderDelivered($event),
+            $event instanceof SaleCancelled => $this->handleOrderCancelled($event),
             default => null,
         };
     }
 
-    private function handleOrderCreated(OrderCreated $event): void
+    private function handleOrderCreated(SaleCreated $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -53,9 +53,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderApproved(OrderApproved $event): void
+    private function handleOrderApproved(SaleApproved $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -70,9 +70,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderRejected(OrderRejected $event): void
+    private function handleOrderRejected(SaleRejected $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -88,9 +88,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderOutForDelivery(OrderOutForDelivery $event): void
+    private function handleOrderOutForDelivery(SaleOutForDelivery $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -105,9 +105,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderUndispatched(OrderUndispatched $event): void
+    private function handleOrderUndispatched(SaleUndispatched $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -122,9 +122,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderDelivered(OrderDelivered $event): void
+    private function handleOrderDelivered(SaleDelivered $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;
@@ -139,9 +139,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderCancelled(OrderCancelled $event): void
+    private function handleOrderCancelled(SaleCancelled $event): void
     {
-        $order = Order::query()->find($event->orderId);
+        $order = Sale::query()->find($event->orderId);
 
         if ($order === null) {
             return;

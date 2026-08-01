@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Analytics de vendas (Fase 1 do roadmap) — leitura agregada de
- * Order/OrderItem/OrderInstallment/Client, sem tabela própria.
+ * Sale/SaleItem/SaleInstallment/Client, sem tabela própria.
  *
  * Regras fixas deste módulo:
  * - Pedido cancelado (cancelled_at preenchido) NUNCA conta em nenhuma

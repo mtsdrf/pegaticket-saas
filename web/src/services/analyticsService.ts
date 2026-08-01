@@ -9,7 +9,7 @@ import type {
   DeliveryOtif,
   LocationSales,
   MarginSummary,
-  OverdueOrder,
+  OverdueSale,
   OverdueType,
   PaymentDelayClient,
   RevenueConcentration,
@@ -211,12 +211,12 @@ const OVERDUE_TYPES = ['pagamento', 'entrega'] as const
  */
 export async function listOverdueOrders(
   params: AnalyticsPeriodParams & { page: number; per_page: number },
-): Promise<PaginatedResult<OverdueOrder>> {
-  const response = await apiClient.get<ApiSuccess<unknown>>('/reports/analytics/overdue-orders', { params })
+): Promise<PaginatedResult<OverdueSale>> {
+  const response = await apiClient.get<ApiSuccess<unknown>>('/reports/analytics/overdue-sales', { params })
   const meta = response.data.meta as { pagination?: PaginationMeta }
   const items = Array.isArray(response.data.data)
     ? (response.data.data as Raw[])
-    : asArray(pick(response.data.data as Raw, ['items', 'orders']))
+    : asArray(pick(response.data.data as Raw, ['items', 'sales']))
 
   const rows = items.map((raw) => {
     const type = toText(pick(raw, ['type', 'tipo', 'source'])).toLowerCase()

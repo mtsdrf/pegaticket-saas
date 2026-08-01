@@ -277,57 +277,57 @@ use App\Listeners\Storefront\AuditProductPromotionDeleted;
 
 /*
 |--------------------------------------------------------------------------
-| Order
+| Sale
 |--------------------------------------------------------------------------
 */
-use App\Events\Order\OrderCreated;
-use App\Events\Order\OrderDelivered;
-use App\Events\Order\OrderUndelivered;
-use App\Events\Order\OrderPaid;
-use App\Events\Order\OrderPartiallyPaid;
-use App\Events\Order\OrderUnpaid;
-use App\Events\Order\OrderInstallmentPaid;
-use App\Events\Order\OrderInstallmentUnpaid;
-use App\Events\Order\OrderInstallmentCreated;
-use App\Events\Order\OrderInstallmentUpdated;
-use App\Events\Order\OrderInstallmentDeleted;
-use App\Events\Order\OrderCancelled;
-use App\Events\Order\OrderItemsUpdated;
-use App\Events\Order\OrderApproved;
-use App\Events\Order\OrderRejected;
-use App\Events\Order\OrderOutForDelivery;
-use App\Events\Order\OrderUndispatched;
-use App\Events\Order\OrderPaymentCharged;
-use App\Events\Order\OrderPaymentRefundRequested;
-use App\Events\Order\OrderCancellationRequested;
-use App\Events\Order\OrderCancellationApproved;
-use App\Events\Order\OrderCancellationRejected;
-use App\Listeners\Order\AuditOrderPaymentCharged;
-use App\Listeners\Order\AuditOrderPaymentRefundRequested;
-use App\Listeners\Order\AuditOrderCreated;
-use App\Listeners\Order\AuditOrderDelivered;
-use App\Listeners\Order\AuditOrderUndelivered;
-use App\Listeners\Order\AuditOrderPaid;
-use App\Listeners\Order\AuditOrderPartiallyPaid;
-use App\Listeners\Order\AuditOrderUnpaid;
-use App\Listeners\Order\AuditOrderInstallmentPaid;
-use App\Listeners\Order\AuditOrderInstallmentUnpaid;
-use App\Listeners\Order\AuditOrderInstallmentCreated;
-use App\Listeners\Order\AuditOrderInstallmentUpdated;
-use App\Listeners\Order\AuditOrderInstallmentDeleted;
-use App\Listeners\Order\AuditOrderCancelled;
-use App\Listeners\Order\AuditOrderItemsUpdated;
-use App\Listeners\Order\AuditOrderApproved;
-use App\Listeners\Order\AuditOrderRejected;
-use App\Listeners\Order\AuditOrderOutForDelivery;
-use App\Listeners\Order\AuditOrderUndispatched;
-use App\Listeners\Order\AuditOrderCancellationRequested;
-use App\Listeners\Order\AuditOrderCancellationApproved;
-use App\Listeners\Order\AuditOrderCancellationRejected;
-use App\Listeners\Order\SendPushOnOrderApproved;
-use App\Listeners\Order\SendPushOnOrderRejected;
-use App\Listeners\Order\SendPushOnOrderDelivered;
-use App\Listeners\Order\SendPushOnOrderOutForDelivery;
+use App\Events\Sale\SaleCreated;
+use App\Events\Sale\SaleDelivered;
+use App\Events\Sale\SaleUndelivered;
+use App\Events\Sale\SalePaid;
+use App\Events\Sale\SalePartiallyPaid;
+use App\Events\Sale\SaleUnpaid;
+use App\Events\Sale\SaleInstallmentPaid;
+use App\Events\Sale\SaleInstallmentUnpaid;
+use App\Events\Sale\SaleInstallmentCreated;
+use App\Events\Sale\SaleInstallmentUpdated;
+use App\Events\Sale\SaleInstallmentDeleted;
+use App\Events\Sale\SaleCancelled;
+use App\Events\Sale\SaleItemsUpdated;
+use App\Events\Sale\SaleApproved;
+use App\Events\Sale\SaleRejected;
+use App\Events\Sale\SaleOutForDelivery;
+use App\Events\Sale\SaleUndispatched;
+use App\Events\Sale\SalePaymentCharged;
+use App\Events\Sale\SalePaymentRefundRequested;
+use App\Events\Sale\SaleCancellationRequested;
+use App\Events\Sale\SaleCancellationApproved;
+use App\Events\Sale\SaleCancellationRejected;
+use App\Listeners\Sale\AuditSalePaymentCharged;
+use App\Listeners\Sale\AuditSalePaymentRefundRequested;
+use App\Listeners\Sale\AuditSaleCreated;
+use App\Listeners\Sale\AuditSaleDelivered;
+use App\Listeners\Sale\AuditSaleUndelivered;
+use App\Listeners\Sale\AuditSalePaid;
+use App\Listeners\Sale\AuditSalePartiallyPaid;
+use App\Listeners\Sale\AuditSaleUnpaid;
+use App\Listeners\Sale\AuditSaleInstallmentPaid;
+use App\Listeners\Sale\AuditSaleInstallmentUnpaid;
+use App\Listeners\Sale\AuditSaleInstallmentCreated;
+use App\Listeners\Sale\AuditSaleInstallmentUpdated;
+use App\Listeners\Sale\AuditSaleInstallmentDeleted;
+use App\Listeners\Sale\AuditSaleCancelled;
+use App\Listeners\Sale\AuditSaleItemsUpdated;
+use App\Listeners\Sale\AuditSaleApproved;
+use App\Listeners\Sale\AuditSaleRejected;
+use App\Listeners\Sale\AuditSaleOutForDelivery;
+use App\Listeners\Sale\AuditSaleUndispatched;
+use App\Listeners\Sale\AuditSaleCancellationRequested;
+use App\Listeners\Sale\AuditSaleCancellationApproved;
+use App\Listeners\Sale\AuditSaleCancellationRejected;
+use App\Listeners\Sale\SendPushOnSaleApproved;
+use App\Listeners\Sale\SendPushOnSaleRejected;
+use App\Listeners\Sale\SendPushOnSaleDelivered;
+use App\Listeners\Sale\SendPushOnSaleOutForDelivery;
 
 /*
 |--------------------------------------------------------------------------
@@ -543,31 +543,31 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | Order
+        | Sale
         |--------------------------------------------------------------------------
         */
-        OrderCreated::class => [AuditOrderCreated::class, WriteWorkflowTransitionLog::class],
-        OrderDelivered::class => [AuditOrderDelivered::class, SendPushOnOrderDelivered::class, WriteWorkflowTransitionLog::class],
-        OrderUndelivered::class => [AuditOrderUndelivered::class],
-        OrderPaid::class => [AuditOrderPaid::class],
-        OrderPartiallyPaid::class => [AuditOrderPartiallyPaid::class],
-        OrderUnpaid::class => [AuditOrderUnpaid::class],
-        OrderInstallmentPaid::class => [AuditOrderInstallmentPaid::class],
-        OrderInstallmentUnpaid::class => [AuditOrderInstallmentUnpaid::class],
-        OrderInstallmentCreated::class => [AuditOrderInstallmentCreated::class],
-        OrderInstallmentUpdated::class => [AuditOrderInstallmentUpdated::class],
-        OrderInstallmentDeleted::class => [AuditOrderInstallmentDeleted::class],
-        OrderCancelled::class => [AuditOrderCancelled::class, WriteWorkflowTransitionLog::class],
-        OrderPaymentCharged::class => [AuditOrderPaymentCharged::class],
-        OrderPaymentRefundRequested::class => [AuditOrderPaymentRefundRequested::class],
-        OrderItemsUpdated::class => [AuditOrderItemsUpdated::class],
-        OrderApproved::class => [AuditOrderApproved::class, SendPushOnOrderApproved::class, WriteWorkflowTransitionLog::class],
-        OrderRejected::class => [AuditOrderRejected::class, SendPushOnOrderRejected::class, WriteWorkflowTransitionLog::class],
-        OrderOutForDelivery::class => [AuditOrderOutForDelivery::class, SendPushOnOrderOutForDelivery::class, WriteWorkflowTransitionLog::class],
-        OrderUndispatched::class => [AuditOrderUndispatched::class, WriteWorkflowTransitionLog::class],
-        OrderCancellationRequested::class => [AuditOrderCancellationRequested::class],
-        OrderCancellationApproved::class => [AuditOrderCancellationApproved::class],
-        OrderCancellationRejected::class => [AuditOrderCancellationRejected::class],
+        SaleCreated::class => [AuditSaleCreated::class, WriteWorkflowTransitionLog::class],
+        SaleDelivered::class => [AuditSaleDelivered::class, SendPushOnSaleDelivered::class, WriteWorkflowTransitionLog::class],
+        SaleUndelivered::class => [AuditSaleUndelivered::class],
+        SalePaid::class => [AuditSalePaid::class],
+        SalePartiallyPaid::class => [AuditSalePartiallyPaid::class],
+        SaleUnpaid::class => [AuditSaleUnpaid::class],
+        SaleInstallmentPaid::class => [AuditSaleInstallmentPaid::class],
+        SaleInstallmentUnpaid::class => [AuditSaleInstallmentUnpaid::class],
+        SaleInstallmentCreated::class => [AuditSaleInstallmentCreated::class],
+        SaleInstallmentUpdated::class => [AuditSaleInstallmentUpdated::class],
+        SaleInstallmentDeleted::class => [AuditSaleInstallmentDeleted::class],
+        SaleCancelled::class => [AuditSaleCancelled::class, WriteWorkflowTransitionLog::class],
+        SalePaymentCharged::class => [AuditSalePaymentCharged::class],
+        SalePaymentRefundRequested::class => [AuditSalePaymentRefundRequested::class],
+        SaleItemsUpdated::class => [AuditSaleItemsUpdated::class],
+        SaleApproved::class => [AuditSaleApproved::class, SendPushOnSaleApproved::class, WriteWorkflowTransitionLog::class],
+        SaleRejected::class => [AuditSaleRejected::class, SendPushOnSaleRejected::class, WriteWorkflowTransitionLog::class],
+        SaleOutForDelivery::class => [AuditSaleOutForDelivery::class, SendPushOnSaleOutForDelivery::class, WriteWorkflowTransitionLog::class],
+        SaleUndispatched::class => [AuditSaleUndispatched::class, WriteWorkflowTransitionLog::class],
+        SaleCancellationRequested::class => [AuditSaleCancellationRequested::class],
+        SaleCancellationApproved::class => [AuditSaleCancellationApproved::class],
+        SaleCancellationRejected::class => [AuditSaleCancellationRejected::class],
 
         /*
         |--------------------------------------------------------------------------

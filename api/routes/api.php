@@ -43,9 +43,9 @@ use App\Http\Controllers\Event\EventProductController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
 use App\Http\Controllers\Onboarding\OnboardingController;
-use App\Http\Controllers\Order\OrderController;
-use App\Http\Controllers\Order\OrderInstallmentController;
-use App\Http\Controllers\Order\OrderTrackingController;
+use App\Http\Controllers\Sale\SaleController;
+use App\Http\Controllers\Sale\SaleInstallmentController;
+use App\Http\Controllers\Sale\SaleTrackingController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Finance\ReconciliationController;
@@ -126,9 +126,9 @@ Route::prefix('v1')->group(function () {
     // Acompanhamento de pedido (roadmap 5.1) — 100% público, sem
     // jwt/tenant/perm, protegido só pelo uuid do pedido ser imprevisível
     // (link enviado por WhatsApp na criação do pedido). Ver
-    // App\Http\Controllers\Order\OrderTrackingController.
-    Route::get('/rastreio/{order:uuid}', [OrderTrackingController::class, 'show'])
-        ->middleware('throttle:60,1,order-tracking-public');
+    // App\Http\Controllers\Sale\SaleTrackingController.
+    Route::get('/rastreio/{sale:uuid}', [SaleTrackingController::class, 'show'])
+        ->middleware('throttle:60,1,sale-tracking-public');
 
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
     // arquivo estático em /storage/*, sem passar por middleware nenhum;
@@ -253,8 +253,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/links', [PortalLinkController::class, 'store'])
             ->middleware('throttle:30,1,portal-links-create');
 
-        Route::get('/orders', [PortalController::class, 'orders'])
-            ->middleware('throttle:60,1,portal-orders-list');
+        Route::get('/sales', [PortalController::class, 'sales'])
+            ->middleware('throttle:60,1,portal-sales-list');
 
         Route::get('/me', [PortalController::class, 'me'])
             ->middleware('throttle:60,1,portal-me');
@@ -269,26 +269,26 @@ Route::prefix('v1')->group(function () {
 
         // "Pedir de novo" (roadmap Delivery, Fase 4) — itens do pedido
         // antigo com preço/disponibilidade ATUAIS do produto.
-        Route::get('/orders/{uuid}/items', [PortalController::class, 'orderItems'])
+        Route::get('/sales/{uuid}/items', [PortalController::class, 'saleItems'])
             ->middleware('throttle:60,1,portal-order-items');
 
         // Avaliação de pedido entregue (roadmap Delivery, Fase 4) — 1
         // avaliação por pedido, ver OrderRatingService::rate().
-        Route::post('/orders/{uuid}/rating', [PortalController::class, 'rate'])
-            ->middleware('throttle:30,1,portal-orders-rate');
+        Route::post('/sales/{uuid}/rating', [PortalController::class, 'rate'])
+            ->middleware('throttle:30,1,portal-sales-rate');
 
         // Solicitação de cancelamento (roadmap A4) — só pedido
         // origin=storefront, só enquanto não saiu para entrega/entregue.
-        // Não muda estoque/pagamento ainda, ver OrderService::requestCancellation().
-        Route::post('/orders/{uuid}/request-cancellation', [PortalController::class, 'requestCancellation'])
-            ->middleware('throttle:30,1,portal-orders-request-cancellation');
+        // Não muda estoque/pagamento ainda, ver SaleService::requestCancellation().
+        Route::post('/sales/{uuid}/request-cancellation', [PortalController::class, 'requestCancellation'])
+            ->middleware('throttle:30,1,portal-sales-request-cancellation');
 
         // Cobrança Pix do próprio pedido (roadmap Fase B, item 1 — checkout
-        // Pix na loja pública). Reaproveita OrderPaymentService (mesma regra
+        // Pix na loja pública). Reaproveita SalePaymentService (mesma regra
         // de negócio do endpoint de staff), posse verificada via
         // PortalCustomerService::findOwnedOrder(), ver PortalController.
-        Route::post('/orders/{uuid}/payment-charge', [PortalController::class, 'paymentCharge'])
-            ->middleware('throttle:20,1,portal-orders-payment-charge');
+        Route::post('/sales/{uuid}/payment-charge', [PortalController::class, 'paymentCharge'])
+            ->middleware('throttle:20,1,portal-sales-payment-charge');
 
         // Web Push (VAPID) real (roadmap Delivery, Fase 4 — última fatia).
         // Ver App\Services\Storefront\PushSubscriptionService::subscribe().
@@ -754,147 +754,147 @@ Route::prefix('v1')->group(function () {
         Route::get('/final-customers', [FinalCustomerController::class, 'index'])
             ->middleware(['tenant', 'perm:customers,read', 'throttle:100,1,final-customers-list']);
 
-        Route::prefix('orders')->group(function () {
-            Route::get('/', [OrderController::class, 'index'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:100,1,orders-list']);
+        Route::prefix('sales')->group(function () {
+            Route::get('/', [SaleController::class, 'index'])
+                ->middleware(['tenant', 'perm:sales,read', 'throttle:100,1,orders-list']);
 
-            Route::post('/', [OrderController::class, 'store'])
-                ->middleware(['tenant', 'perm:orders,create', 'throttle:30,1,orders-create']);
+            Route::post('/', [SaleController::class, 'store'])
+                ->middleware(['tenant', 'perm:sales,create', 'throttle:30,1,orders-create']);
 
-            Route::get('/{order}', [OrderController::class, 'show'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:100,1,orders-show']);
+            Route::get('/{order}', [SaleController::class, 'show'])
+                ->middleware(['tenant', 'perm:sales,read', 'throttle:100,1,orders-show']);
 
             // Edição de itens/cabeçalho de pedido já criado — escopo
             // limitado (não altera client_uuid/is_installment), só
             // permitida enquanto o pedido não está entregue/pago/cancelado.
-            // Reaproveita perm:orders,update (mesma permissão já usada na
+            // Reaproveita perm:sales,update (mesma permissão já usada na
             // gestão manual de parcela).
-            Route::put('/{order}/items', [OrderController::class, 'updateItems'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:30,1,orders-update-items']);
+            Route::put('/{order}/items', [SaleController::class, 'updateItems'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,orders-update-items']);
 
-            Route::patch('/{order}/deliver', [OrderController::class, 'deliver'])
-                ->middleware(['tenant', 'perm:orders,deliver', 'throttle:30,1,orders-deliver']);
+            Route::patch('/{order}/deliver', [SaleController::class, 'deliver'])
+                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,orders-deliver']);
 
-            Route::patch('/{order}/undeliver', [OrderController::class, 'undeliver'])
-                ->middleware(['tenant', 'perm:orders,deliver', 'throttle:30,1,orders-undeliver']);
+            Route::patch('/{order}/undeliver', [SaleController::class, 'undeliver'])
+                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,orders-undeliver']);
 
-            Route::patch('/{order}/pay', [OrderController::class, 'pay'])
-                ->middleware(['tenant', 'perm:orders,pay', 'throttle:30,1,orders-pay']);
+            Route::patch('/{order}/pay', [SaleController::class, 'pay'])
+                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,orders-pay']);
 
-            Route::patch('/{order}/unpay', [OrderController::class, 'unpay'])
-                ->middleware(['tenant', 'perm:orders,pay', 'throttle:30,1,orders-unpay']);
+            Route::patch('/{order}/unpay', [SaleController::class, 'unpay'])
+                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,orders-unpay']);
 
             // Cobrança Pix de pagamento do pedido (roadmap 2A — recebimento
-            // do tenant). Reaproveita perm:orders,update (mesma permissão já
+            // do tenant). Reaproveita perm:sales,update (mesma permissão já
             // usada na gestão manual de parcela/itens), sem nova
             // Functionality.
-            Route::post('/{order}/payment-charge', [OrderController::class, 'paymentCharge'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:30,1,orders-payment-charge']);
+            Route::post('/{order}/payment-charge', [SaleController::class, 'paymentCharge'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,orders-payment-charge']);
 
-            Route::patch('/{order}/installments/{installment}/pay', [OrderController::class, 'payInstallment'])
-                ->middleware(['tenant', 'perm:orders,pay', 'throttle:30,1,orders-installments-pay']);
+            Route::patch('/{order}/installments/{installment}/pay', [SaleController::class, 'payInstallment'])
+                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,orders-installments-pay']);
 
-            Route::patch('/{order}/installments/{installment}/unpay', [OrderController::class, 'unpayInstallment'])
-                ->middleware(['tenant', 'perm:orders,pay', 'throttle:30,1,orders-installments-unpay']);
+            Route::patch('/{order}/installments/{installment}/unpay', [SaleController::class, 'unpayInstallment'])
+                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,orders-installments-unpay']);
 
             // Gestão manual de parcela (correção/paridade com o legado) —
-            // controller/service próprios (OrderInstallmentController/
-            // OrderInstallmentService), ver architecture-decisions.md.
-            Route::post('/{order}/installments', [OrderInstallmentController::class, 'store'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:30,1,orders-installments-create']);
+            // controller/service próprios (SaleInstallmentController/
+            // SaleInstallmentService), ver architecture-decisions.md.
+            Route::post('/{order}/installments', [SaleInstallmentController::class, 'store'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,orders-installments-create']);
 
-            Route::put('/{order}/installments/{installment}', [OrderInstallmentController::class, 'update'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:30,1,orders-installments-update']);
+            Route::put('/{order}/installments/{installment}', [SaleInstallmentController::class, 'update'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,orders-installments-update']);
 
-            Route::delete('/{order}/installments/{installment}', [OrderInstallmentController::class, 'destroy'])
-                ->middleware(['tenant', 'perm:orders,delete', 'throttle:10,1,orders-installments-delete']);
+            Route::delete('/{order}/installments/{installment}', [SaleInstallmentController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:sales,delete', 'throttle:10,1,orders-installments-delete']);
 
             // Substituição em lote das parcelas não pagas — resolve a
             // limitação matemática dos 3 endpoints individuais acima
             // (soma validada a cada chamada isolada torna redistribuição
             // entre parcelas impossível sem 422 intermediário). Caminho
             // recomendado pro frontend pra qualquer edição de valor.
-            Route::put('/{order}/installments', [OrderInstallmentController::class, 'reallocate'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:30,1,orders-installments-reallocate']);
+            Route::put('/{order}/installments', [SaleInstallmentController::class, 'reallocate'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,orders-installments-reallocate']);
 
-            Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])
-                ->middleware(['tenant', 'perm:orders,cancel', 'throttle:30,1,orders-cancel']);
+            Route::patch('/{order}/cancel', [SaleController::class, 'cancel'])
+                ->middleware(['tenant', 'perm:sales,cancel', 'throttle:30,1,orders-cancel']);
 
             // Fila de aprovação do staff (Delivery Fase 1) — todo pedido da
             // loja (origin=storefront) nasce pending_approval e precisa
-            // passar por aqui. Reaproveita perm:orders,update (mesma
+            // passar por aqui. Reaproveita perm:sales,update (mesma
             // permissão já usada na gestão manual de parcela/itens).
-            Route::post('/{order}/approve', [OrderController::class, 'approve'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:60,1,orders-approve']);
+            Route::post('/{order}/approve', [SaleController::class, 'approve'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:60,1,orders-approve']);
 
-            Route::post('/{order}/reject', [OrderController::class, 'reject'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:60,1,orders-reject']);
+            Route::post('/{order}/reject', [SaleController::class, 'reject'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:60,1,orders-reject']);
 
             // Aprovação/rejeição da solicitação de cancelamento feita pelo
             // cliente final via Portal (roadmap A4) — reaproveita
-            // perm:orders,update (mesma permissão já usada em approve/reject
+            // perm:sales,update (mesma permissão já usada em approve/reject
             // acima). approve executa cancel() de fato (estoque/estorno);
             // reject só reverte o status, nada foi executado ainda.
-            Route::post('/{order}/approve-cancellation', [OrderController::class, 'approveCancellation'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:60,1,orders-approve-cancellation']);
+            Route::post('/{order}/approve-cancellation', [SaleController::class, 'approveCancellation'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:60,1,orders-approve-cancellation']);
 
-            Route::post('/{order}/reject-cancellation', [OrderController::class, 'rejectCancellation'])
-                ->middleware(['tenant', 'perm:orders,update', 'throttle:60,1,orders-reject-cancellation']);
+            Route::post('/{order}/reject-cancellation', [SaleController::class, 'rejectCancellation'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:60,1,orders-reject-cancellation']);
 
             Route::get('/{order}/workflow-transitions', [WorkflowTransitionLogController::class, 'order'])
-                ->middleware(['tenant', 'perm:orders,read', 'throttle:120,1,orders-workflow-transitions']);
+                ->middleware(['tenant', 'perm:sales,read', 'throttle:120,1,orders-workflow-transitions']);
         });
 
         // Tela dedicada de gestão de vendas online (origin=storefront) —
-        // permissão própria (storefront-orders,*), independente de
-        // perm:orders,*. Reaproveita os MESMOS métodos de OrderController
+        // permissão própria (storefront-sales,*), independente de
+        // perm:sales,*. Reaproveita os MESMOS métodos de SaleController
         // onde a regra de negócio já existe (approve/reject/cancel/deliver);
         // dispatch()/indexStorefront() são os únicos métodos novos. Ver
         // .claude/memory/architecture-decisions.md.
-        Route::prefix('storefront-orders')->group(function () {
-            Route::get('/', [OrderController::class, 'indexStorefront'])
-                ->middleware(['tenant', 'perm:storefront-orders,read', 'throttle:100,1,storefront-orders-list']);
+        Route::prefix('storefront-sales')->group(function () {
+            Route::get('/', [SaleController::class, 'indexStorefront'])
+                ->middleware(['tenant', 'perm:storefront-sales,read', 'throttle:100,1,storefront-sales-list']);
 
-            Route::get('/{order}', [OrderController::class, 'show'])
-                ->middleware(['tenant', 'perm:storefront-orders,read', 'throttle:100,1,storefront-orders-show']);
+            Route::get('/{order}', [SaleController::class, 'show'])
+                ->middleware(['tenant', 'perm:storefront-sales,read', 'throttle:100,1,storefront-sales-show']);
 
             // Gera o link temporário de preparo (QR code) — mesma permissão
             // de leitura (só quem vê o pedido gera o link).
-            Route::post('/{order}/prep-link', [OrderController::class, 'prepLink'])
-                ->middleware(['tenant', 'perm:storefront-orders,read', 'throttle:20,1,storefront-orders-prep-link']);
+            Route::post('/{order}/prep-link', [SaleController::class, 'prepLink'])
+                ->middleware(['tenant', 'perm:storefront-sales,read', 'throttle:20,1,storefront-sales-prep-link']);
 
-            Route::post('/{order}/approve', [OrderController::class, 'approve'])
-                ->middleware(['tenant', 'perm:storefront-orders,approve', 'throttle:60,1,storefront-orders-approve']);
+            Route::post('/{order}/approve', [SaleController::class, 'approve'])
+                ->middleware(['tenant', 'perm:storefront-sales,approve', 'throttle:60,1,storefront-sales-approve']);
 
-            Route::post('/{order}/reject', [OrderController::class, 'reject'])
-                ->middleware(['tenant', 'perm:storefront-orders,approve', 'throttle:60,1,storefront-orders-reject']);
+            Route::post('/{order}/reject', [SaleController::class, 'reject'])
+                ->middleware(['tenant', 'perm:storefront-sales,approve', 'throttle:60,1,storefront-sales-reject']);
 
-            Route::patch('/{order}/cancel', [OrderController::class, 'cancel'])
-                ->middleware(['tenant', 'perm:storefront-orders,cancel', 'throttle:30,1,storefront-orders-cancel']);
+            Route::patch('/{order}/cancel', [SaleController::class, 'cancel'])
+                ->middleware(['tenant', 'perm:storefront-sales,cancel', 'throttle:30,1,storefront-sales-cancel']);
 
-            Route::patch('/{order}/dispatch', [OrderController::class, 'dispatch'])
-                ->middleware(['tenant', 'perm:storefront-orders,dispatch', 'throttle:30,1,storefront-orders-dispatch']);
+            Route::patch('/{order}/dispatch', [SaleController::class, 'dispatch'])
+                ->middleware(['tenant', 'perm:storefront-sales,dispatch', 'throttle:30,1,storefront-sales-dispatch']);
 
             // Desfaz "saiu para entrega" — método novo (undispatch), só
             // exposto aqui na tela da loja.
-            Route::patch('/{order}/undispatch', [OrderController::class, 'undispatch'])
-                ->middleware(['tenant', 'perm:storefront-orders,undispatch', 'throttle:30,1,storefront-orders-undispatch']);
+            Route::patch('/{order}/undispatch', [SaleController::class, 'undispatch'])
+                ->middleware(['tenant', 'perm:storefront-sales,undispatch', 'throttle:30,1,storefront-sales-undispatch']);
 
-            Route::patch('/{order}/deliver', [OrderController::class, 'deliver'])
-                ->middleware(['tenant', 'perm:storefront-orders,deliver', 'throttle:30,1,storefront-orders-deliver']);
+            Route::patch('/{order}/deliver', [SaleController::class, 'deliver'])
+                ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-deliver']);
 
-            // Reaproveitam os MESMOS métodos de OrderController (undeliver/
+            // Reaproveitam os MESMOS métodos de SaleController (undeliver/
             // pay) já usados pelas rotas /orders/*, só com a permissão
             // isolada da tela da loja. pay sem `amount` no body = pagamento
             // integral (a tela da loja nunca faz pagamento parcial).
-            Route::patch('/{order}/undeliver', [OrderController::class, 'undeliver'])
-                ->middleware(['tenant', 'perm:storefront-orders,undeliver', 'throttle:30,1,storefront-orders-undeliver']);
+            Route::patch('/{order}/undeliver', [SaleController::class, 'undeliver'])
+                ->middleware(['tenant', 'perm:storefront-sales,undeliver', 'throttle:30,1,storefront-sales-undeliver']);
 
-            Route::patch('/{order}/pay', [OrderController::class, 'pay'])
-                ->middleware(['tenant', 'perm:storefront-orders,pay', 'throttle:30,1,storefront-orders-pay']);
+            Route::patch('/{order}/pay', [SaleController::class, 'pay'])
+                ->middleware(['tenant', 'perm:storefront-sales,pay', 'throttle:30,1,storefront-sales-pay']);
 
             Route::get('/{order}/workflow-transitions', [WorkflowTransitionLogController::class, 'order'])
-                ->middleware(['tenant', 'perm:storefront-orders,read', 'throttle:120,1,storefront-orders-workflow-transitions']);
+                ->middleware(['tenant', 'perm:storefront-sales,read', 'throttle:120,1,storefront-sales-workflow-transitions']);
         });
 
         Route::prefix('reports')->group(function () {
@@ -907,11 +907,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/operation-health', [ReportController::class, 'operationHealth'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-operation-health']);
 
-            Route::get('/orders', [ReportController::class, 'orders'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-orders']);
+            Route::get('/sales', [ReportController::class, 'sales'])
+                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales']);
 
-            Route::get('/orders/summary', [ReportController::class, 'ordersSummary'])
-                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-orders-summary']);
+            Route::get('/sales/summary', [ReportController::class, 'salesSummary'])
+                ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales-summary']);
 
             // Resultado por canal (roadmap A1.3) — drill-down até o pedido
             // via GET /orders?origin=X&date_from=Y&date_to=Z (já existente).
@@ -923,8 +923,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/cmv', [ReportController::class, 'cmv'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-cmv']);
 
-            Route::post('/orders/pdf', [ReportController::class, 'ordersPdf'])
-                ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-orders-pdf']);
+            Route::post('/sales/pdf', [ReportController::class, 'salesPdf'])
+                ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-sales-pdf']);
 
             // Analytics (Fase 1 do roadmap) — Functionality própria
             // `analytics`, presente só nos planos professional/premium;
@@ -948,8 +948,8 @@ Route::prefix('v1')->group(function () {
                 Route::get('/payment-delays', [AnalyticsController::class, 'paymentDelays'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-payment-delays']);
 
-                Route::get('/overdue-orders', [AnalyticsController::class, 'overdueOrders'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-overdue-orders']);
+                Route::get('/overdue-sales', [AnalyticsController::class, 'overdueOrders'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-overdue-sales']);
 
                 Route::get('/abc-analysis', [AnalyticsController::class, 'abcAnalysis'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-abc-analysis']);

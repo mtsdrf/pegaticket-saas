@@ -2,14 +2,14 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
 use App\Repositories\Contracts\IdempotencyRepositoryInterface;
 use App\Services\Logging\ApplicationLogger;
-use App\Services\Order\OrderPaymentService;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Subscription\SubscriptionService;
 
 /**
@@ -26,7 +26,7 @@ class PaymentReconciliationService
 {
     public function __construct(
         private MercadoPagoPaymentProvider $provider,
-        private OrderPaymentService $orderPaymentService,
+        private SalePaymentService $orderPaymentService,
         private SubscriptionService $subscriptionService,
         private IdempotencyRepositoryInterface $idempotencyRepository,
     ) {
@@ -120,7 +120,7 @@ class PaymentReconciliationService
         }
 
         $payable = $prefix === 'order_charge'
-            ? Order::where('uuid', $payableUuid)->first()
+            ? Sale::where('uuid', $payableUuid)->first()
             : Invoice::where('uuid', $payableUuid)->first();
 
         if ($payable === null) {

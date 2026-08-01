@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Inscrição de Web Push (VAPID) do cliente final — sem BaseModel de
- * propósito (mesmo desvio de ProductFavorite/OrderRating): sempre
+ * propósito (mesmo desvio de ProductFavorite/SaleRating): sempre
  * criada/atualizada pelo próprio cliente final via subscribe(), nunca por
  * staff, sem soft delete/created_by. Só created_at faz sentido (subscribe é
  * upsert por endpoint, não update parcial) — UPDATED_AT desligado, mesmo

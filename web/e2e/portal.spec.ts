@@ -71,7 +71,7 @@ test.describe('Portal do cliente final', () => {
       })
     })
 
-    await page.route('**/api/v1/portal/orders*', async (route) => {
+    await page.route('**/api/v1/portal/sales*', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.fallback()
         return

@@ -41,7 +41,7 @@ class Payment extends BaseModel
 
     /**
      * Polimórfico (roadmap 2A): uma fatura de assinatura (Invoice, cobrança
-     * da PegaTicket) OU um pedido (Order, recebimento do tenant).
+     * da PegaTicket) OU um pedido (Sale, recebimento do tenant).
      */
     public function payable(): MorphTo
     {

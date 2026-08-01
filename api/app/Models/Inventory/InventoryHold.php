@@ -6,7 +6,7 @@ use App\Models\BaseModel;
 use App\Models\Event\Event;
 use App\Models\Event\EventSession;
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -71,7 +71,7 @@ class InventoryHold extends BaseModel
 
     public function convertedOrder(): BelongsTo
     {
-        return $this->belongsTo(Order::class, 'converted_order_id');
+        return $this->belongsTo(Sale::class, 'converted_order_id');
     }
 
     public function items(): HasMany

@@ -12,7 +12,7 @@ export function formatCurrency(value: string | number): string {
  * Quantidade de item de pedido: só mostra casas decimais quando o produto é
  * vendido por peso (`unit === 'kg'`) — caso contrário exibe como inteiro,
  * sem o `.000` de `decimal(12,3)` que confundia (lido como "2 mil" em vez de
- * "2 unidades" no padrão de milhar pt-BR). Aceita string porque `OrderItem`
+ * "2 unidades" no padrão de milhar pt-BR). Aceita string porque `SaleItem`
  * chega da API já serializado pelo cast `decimal:3` do Laravel (sempre
  * string, ex. `"7.000"`), nunca um `number` de fato.
  */
@@ -46,7 +46,7 @@ export function formatPercentage(value: number): string {
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 /**
- * Alguns recursos (ex. `OrderInstallment.due_date`) vêm da API como datetime
+ * Alguns recursos (ex. `SaleInstallment.due_date`) vêm da API como datetime
  * ISO completo (`2026-08-10T00:00:00.000000Z`, serialização padrão do Carbon
  * pra uma coluna `date`), não só `YYYY-MM-DD` — pega só os 10 primeiros
  * caracteres pra usar em `<input type="date">` (que rejeita silenciosamente
@@ -69,7 +69,7 @@ export function formatDateBR(value: string): string {
 }
 
 /**
- * "dd/mm/aaaa" a partir de um datetime ISO COMPLETO (ex.: `Order.created_at`,
+ * "dd/mm/aaaa" a partir de um datetime ISO COMPLETO (ex.: `Sale.created_at`,
  * timestamp real com timezone) — diferente de `formatDateBR`, que é pra
  * colunas `date` puras e força meia-noite local; aqui o valor já traz o
  * instante certo (UTC ou com offset), então `new Date(value)` sozinho já

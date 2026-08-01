@@ -2,22 +2,22 @@
 
 namespace App\Services\Storefront;
 
-use App\DTOs\Order\CreateOrderDTO;
+use App\DTOs\Sale\CreateSaleDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
-use App\Exceptions\BelowMinimumOrderException;
+use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\StorefrontDisabledException;
 use App\Exceptions\StoreClosedException;
 use App\Exceptions\StorePickupUnavailableException;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
 use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
-use App\Services\Order\OrderService;
+use App\Services\Sale\SaleService;
 use App\Services\Permission\PermissionService;
 use App\Services\Tenant\TenantSettingsService;
 use App\Services\Tenant\TenantExecutionContext;
@@ -31,8 +31,8 @@ use Illuminate\Support\Facades\DB;
  * registro POR-TENANT do cliente já autenticado via OTP), sem
  * tocar em PortalLinkService::link() (caminho de vínculo por order_uuid
  * pré-existente, continua intocado). Toda a lógica de preço/estoque/
- * criação de pedido é 100% reaproveitada de OrderService::create() — este
- * service só garante o link e monta o CreateOrderDTO com
+ * criação de pedido é 100% reaproveitada de SaleService::create() — este
+ * service só garante o link e monta o CreateSaleDTO com
  * origin='storefront'/status='pending_approval'.
  */
 class StorefrontCheckoutService
@@ -41,7 +41,7 @@ class StorefrontCheckoutService
         private StorefrontCatalogService $catalogService,
         private FinalCustomerTenantLinkRepositoryInterface $linkRepository,
         private TenantSettingsService $tenantSettingsService,
-        private OrderService $orderService,
+        private SaleService $orderService,
         private PermissionService $permissionService,
         private StoreBusinessHoursService $businessHoursService,
         private ProductPromotionService $productPromotionService,
@@ -51,7 +51,7 @@ class StorefrontCheckoutService
     ) {
     }
 
-    public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto): Order
+    public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto): Sale
     {
         $tenant = $this->catalogService->findTenantBySlug($slug);
 
@@ -73,7 +73,7 @@ class StorefrontCheckoutService
                 $hold = $dto->holdUuid ? $this->resolveCheckoutHold($tenant->id, $dto->holdUuid, $dto->sessionToken, $customer) : null;
 
             // 3 guards novos (roadmap Delivery, Fase 2), sempre ANTES de
-            // resolver/criar Client+Endereco+Link e montar o CreateOrderDTO
+            // resolver/criar Client+Endereco+Link e montar o CreateSaleDTO
             // — nenhum efeito colateral acontece se qualquer um bloquear.
 
             // Guard 1: horário de funcionamento.
@@ -103,7 +103,7 @@ class StorefrontCheckoutService
                 if ($subtotalCents < $minimumCents) {
                     $missing = number_format(($minimumCents - $subtotalCents) / 100, 2, ',', '.');
 
-                    throw new BelowMinimumOrderException(
+                    throw new BelowMinimumSaleException(
                         __('messages.storefront.below_minimum_order', ['missing' => $missing])
                     );
                 }
@@ -144,14 +144,14 @@ class StorefrontCheckoutService
             }
 
             // unit_price explícito por item (prioridade máxima sobre a
-            // resolução interna de OrderService::create(), já documentado no
+            // resolução interna de SaleService::create(), já documentado no
             // DTO desde a Fase 1) — garante que promoção/atacado resolvidos
             // AQUI (resolveEffectiveUnitPrice()) sejam exatamente os
-            // praticados no pedido criado, sem depender de OrderService
+            // praticados no pedido criado, sem depender de SaleService
             // recalcular (ele nem sabe de ProductPromotion).
             $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
 
-            $orderDto = new CreateOrderDTO(
+            $orderDto = new CreateSaleDTO(
                 tenantId: $tenant->id,
                 finalCustomerUuid: $customer->uuid,
                 stockLocationUuid: null,
@@ -180,7 +180,7 @@ class StorefrontCheckoutService
                 $this->consumeHold($hold, $order);
             }
 
-            // CouponRedemption criado só depois do Order existir com
+            // CouponRedemption criado só depois do Sale existir com
             // sucesso, na MESMA transação — se qualquer coisa acima falhar
             // (ex: estoque insuficiente), nada de cupom é consumido.
             if ($orderDto->couponId !== null) {
@@ -261,7 +261,7 @@ class StorefrontCheckoutService
     /**
      * Soma dos itens do carrinho em centavos, já usando o preço EFETIVO
      * (resolveEffectiveUnitPrice() — promoção sempre vence, senão base).
-     * Mesmo cuidado de centavos/arredondamento de OrderService::create() —
+     * Mesmo cuidado de centavos/arredondamento de SaleService::create() —
      * evita erro de ponto flutuante na soma. SIMPLIFICAÇÃO DOCUMENTADA:
      * atacado por quantidade e adicionais (product_options) foram
      * descartados junto com o split Product -> TicketType/EventProduct
@@ -302,8 +302,8 @@ class StorefrontCheckoutService
 
     /**
      * Reaproveita resolveEffectiveUnitPrice() para montar o array de itens
-     * do CreateOrderDTO com unit_price explícito por item — garante que o
-     * pedido criado por OrderService::create() pratique exatamente o mesmo
+     * do CreateSaleDTO com unit_price explícito por item — garante que o
+     * pedido criado por SaleService::create() pratique exatamente o mesmo
      * preço que passou pelo guard de mínimo acima, sem duplicar a
      * resolução de preço numa segunda camada.
      *
@@ -403,7 +403,7 @@ class StorefrontCheckoutService
         }
     }
 
-    private function consumeHold(InventoryHold $hold, Order $order): void
+    private function consumeHold(InventoryHold $hold, Sale $order): void
     {
         $order->loadMissing('items');
 

@@ -314,7 +314,7 @@ class DemoPlansPresentationSeeder extends Seeder
             ], $tenant->id));
 
             $createdAt = Carbon::now()->subDays(random_int(2, 30))->subHours(random_int(0, 10));
-            DB::table('orders')->where('id', $order->id)->update([
+            DB::table('sales')->where('id', $order->id)->update([
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
                 'delivered_at' => $createdAt,
@@ -367,11 +367,11 @@ class DemoPlansPresentationSeeder extends Seeder
     private function setupEmployee(Tenant $tenant, array $cfg): void
     {
         $permissions = [
-            ['functionality' => 'orders', 'action' => 'read'],
-            ['functionality' => 'orders', 'action' => 'create'],
+            ['functionality' => 'sales', 'action' => 'read'],
+            ['functionality' => 'sales', 'action' => 'create'],
             ['functionality' => 'products', 'action' => 'read'],
             ['functionality' => 'dashboard', 'action' => 'read'],
-            ['functionality' => 'storefront-orders', 'action' => 'read'],
+            ['functionality' => 'storefront-sales', 'action' => 'read'],
             ['functionality' => 'stock', 'action' => 'read'],
         ];
 

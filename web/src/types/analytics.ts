@@ -64,7 +64,7 @@ export interface PaymentDelayClient {
 
 export type OverdueType = 'pagamento' | 'entrega'
 
-export interface OverdueOrder {
+export interface OverdueSale {
   order_uuid: string
   client_name: string
   amount: number

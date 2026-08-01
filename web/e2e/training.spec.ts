@@ -8,7 +8,7 @@ test.describe('Central de treinamento', () => {
       activeTenantUuid: 'tenant-training-1',
       isTenantOwner: true,
       tenantPermissions: ['dashboard:read', 'products:read', 'products:create', 'clients:read', 'orders:read', 'stock:read'],
-      tenantFunctionalities: ['dashboard', 'products', 'clients', 'orders', 'stock', 'subscription'],
+      tenantFunctionalities: ['dashboard', 'products', 'clients', 'sales', 'stock', 'subscription'],
       userName: 'Treinamento QA',
       userEmail: 'training@pegaticket.com',
       tenants: [

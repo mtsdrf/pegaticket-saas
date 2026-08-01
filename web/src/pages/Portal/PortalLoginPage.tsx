@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../../components/ui/Logo'
 import { formatCountdown, useCountdown } from '../../hooks/useCountdown'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
-import { createPortalLink } from '../../services/portalOrderService'
+import { createPortalLink } from '../../services/portalSaleService'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 

@@ -16,7 +16,7 @@ import { PeriodFilter } from '../../components/analytics/PeriodFilter'
 import { MetricCard } from '../../components/dashboard/MetricCard'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { OnboardingChecklistCard } from '../../components/dashboard/OnboardingChecklistCard'
-import { OrdersByMonthChart } from '../../components/dashboard/OrdersByMonthChart'
+import { SalesByMonthChart } from '../../components/dashboard/SalesByMonthChart'
 import { QuickActionCard } from '../../components/dashboard/QuickActionCard'
 import { RankingListCard } from '../../components/dashboard/RankingListCard'
 import { ReceivablesAgingCard } from '../../components/dashboard/ReceivablesAgingCard'
@@ -146,8 +146,8 @@ export function DashboardPage() {
   const { can } = useAccessControl()
   const { isAccessProfileLoading } = useAuth()
   const canViewStats = can(ACCESS.dashboard)
-  const canOpenOrdersQueue = can(ACCESS.ordersRead)
-  const canOpenStorefrontQueue = can(ACCESS.storefrontOrdersRead)
+  const canOpenOrdersQueue = can(ACCESS.salesRead)
+  const canOpenStorefrontQueue = can(ACCESS.storefrontSalesRead)
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
   const { indicators, charts, operationHealth, isLoading, error } = useDashboardReport(from, to, canViewStats)
@@ -160,7 +160,7 @@ export function DashboardPage() {
     : null
   const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_orders === 0
   const quickActions = QUICK_ACTIONS.filter((action) => {
-    if (action.to === '/pedidos/novo') return can(ACCESS.ordersCreate)
+    if (action.to === '/pedidos/novo') return can(ACCESS.salesCreate)
     if (action.to === '/eventos/novo') return can(ACCESS.eventsCreate)
     return true
   })
@@ -303,7 +303,7 @@ export function DashboardPage() {
               </Box>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
-                {can(ACCESS.ordersCreate) ? (
+                {can(ACCESS.salesCreate) ? (
                   <Button component={RouterLink} to="/pedidos/novo" variant="contained">
                     Fazer primeiro pedido
                   </Button>
@@ -536,7 +536,7 @@ export function DashboardPage() {
             Volume de pedidos criados em cada mês.
           </Typography>
 
-          <OrdersByMonthChart data={charts?.orders_by_month ?? null} isLoading={isLoading} />
+          <SalesByMonthChart data={charts?.orders_by_month ?? null} isLoading={isLoading} />
         </Paper>
 
         <Box

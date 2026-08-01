@@ -3,7 +3,7 @@
 namespace App\Models\Storefront;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Tenant\Tenant;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -46,7 +46,7 @@ class CashbackRedemption extends Model
 
     public function order()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Sale::class);
     }
 
     public function cashbackEarning()

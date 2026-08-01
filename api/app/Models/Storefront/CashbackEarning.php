@@ -4,7 +4,7 @@ namespace App\Models\Storefront;
 
 use App\Models\BaseModel;
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Tenant\Tenant;
 
 class CashbackEarning extends BaseModel
@@ -50,7 +50,7 @@ class CashbackEarning extends BaseModel
 
     public function order()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Sale::class);
     }
 
     public function redemptions()

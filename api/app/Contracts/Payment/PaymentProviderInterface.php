@@ -2,7 +2,7 @@
 
 namespace App\Contracts\Payment;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
@@ -30,11 +30,11 @@ interface PaymentProviderInterface
      * Cria uma cobrança Pix para um PEDIDO (roadmap 2A — recebimento do
      * tenant, cliente final → tenant, Modelo A sem custódia) via API de
      * Orders do PSP. Simétrico a createPixCharge(Invoice), mas o payable é
-     * um Order. Retorna metadados do PSP (payment uuid, status, etc.).
+     * um Sale. Retorna metadados do PSP (payment uuid, status, etc.).
      *
      * @return array<string, mixed>
      */
-    public function createPixChargeForOrder(Order $order): array;
+    public function createPixChargeForOrder(Sale $order): array;
 
     /**
      * Cria uma cobrança de cartão para a fatura via API de Orders do PSP.

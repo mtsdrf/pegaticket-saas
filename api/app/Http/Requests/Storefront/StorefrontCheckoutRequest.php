@@ -20,11 +20,11 @@ class StorefrontCheckoutRequest extends FormRequest
     public function rules(): array
     {
         // Resolve o tenant pelo slug da rota pra escopar items.*.product_uuid
-        // — mesmo espírito de StoreOrderRequest (Rule::exists()->where
+        // — mesmo espírito de StoreSaleRequest (Rule::exists()->where
         // tenant_id), só que aqui o tenant vem do slug público, não de
         // app('tenant_id') (não há middleware `tenant` nesta rota). Sem esse
         // escopo, um product_uuid de OUTRO tenant passaria a validação e só
-        // falharia dentro da transação de OrderService::create() com um 404
+        // falharia dentro da transação de SaleService::create() com um 404
         // cru, em vez de um 422 de validação limpo.
         $tenantId = DB::table('tenants')
             ->where('slug', $this->route('slug'))

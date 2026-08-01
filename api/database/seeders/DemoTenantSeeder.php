@@ -322,7 +322,7 @@ class DemoTenantSeeder extends Seeder
             $deliveredAt = (clone $createdAt)->addDays(random_int(0, 2))->addHours(random_int(1, 10));
             $paidAt = (clone $deliveredAt)->addDays(random_int(0, 4))->addHours(random_int(0, 8));
 
-            DB::table('orders')->where('id', $order->id)->update([
+            DB::table('sales')->where('id', $order->id)->update([
                 'created_at' => $createdAt,
                 'updated_at' => $paidAt,
                 'delivered_at' => $deliveredAt,
@@ -349,7 +349,7 @@ class DemoTenantSeeder extends Seeder
             ], $tenant->id));
 
             $createdAt = Carbon::now()->subHours(random_int(2, 60));
-            DB::table('orders')->where('id', $order->id)->update(['created_at' => $createdAt, 'updated_at' => $createdAt]);
+            DB::table('sales')->where('id', $order->id)->update(['created_at' => $createdAt, 'updated_at' => $createdAt]);
             DB::table('order_items')->where('order_id', $order->id)->update(['created_at' => $createdAt, 'updated_at' => $createdAt]);
         }
 

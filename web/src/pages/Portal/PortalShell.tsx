@@ -20,7 +20,7 @@ interface PortalShellProps {
 /**
  * Layout compartilhado das telas autenticadas do portal (`/portal/pedidos`,
  * `/portal/favoritos`, `/portal/perfil`) — mesma linguagem visual do
- * rastreio público (`OrderTrackingPage`) e do login de staff, mas com
+ * rastreio público (`SaleTrackingPage`) e do login de staff, mas com
  * navegação simples entre as seções (mobile-first: abas em vez de sidebar).
  */
 export function PortalShell({ title, subtitle, children }: PortalShellProps) {

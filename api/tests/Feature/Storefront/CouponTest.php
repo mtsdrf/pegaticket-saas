@@ -5,7 +5,7 @@ namespace Tests\Feature\Storefront;
 use App\Exceptions\CouponUsageLimitReachedException;
 use App\Exceptions\InvalidCouponException;
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\CouponRedemption;
 use App\Models\Tenant\Tenant;
@@ -335,7 +335,7 @@ class CouponTest extends TestCase
         $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id);
         $client = $this->createClient($this->tenant->id);
-        $order = Order::create([
+        $order = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
             'stock_location_id' => $this->createLocation($this->tenant->id)->id,
@@ -379,7 +379,7 @@ class CouponTest extends TestCase
         ]);
 
         $client = $this->createClient($this->tenant->id);
-        $order = Order::create([
+        $order = Sale::create([
             'tenant_id' => $this->tenant->id,
             'final_customer_id' => $client->id,
             'stock_location_id' => $this->createLocation($this->tenant->id)->id,

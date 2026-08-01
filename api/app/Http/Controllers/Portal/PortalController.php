@@ -2,39 +2,39 @@
 
 namespace App\Http\Controllers\Portal;
 
-use App\DTOs\Order\RequestOrderCancellationDTO;
-use App\Exceptions\InvalidOrderStateException;
-use App\Exceptions\OrderAlreadyRatedException;
+use App\DTOs\Sale\RequestSaleCancellationDTO;
+use App\Exceptions\InvalidSaleStateException;
+use App\Exceptions\SaleAlreadyRatedException;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Portal\RateOrderRequest;
-use App\Http\Requests\Portal\RequestOrderCancellationRequest;
-use App\Http\Resources\Order\OrderPaymentResource;
+use App\Http\Requests\Portal\RateSaleRequest;
+use App\Http\Requests\Portal\RequestSaleCancellationRequest;
+use App\Http\Resources\Sale\SalePaymentResource;
 use App\Http\Resources\Portal\PortalMeResource;
-use App\Http\Resources\Portal\PortalOrderResource;
+use App\Http\Resources\Portal\PortalSaleResource;
 use App\Services\APIResponse;
-use App\Services\Order\OrderPaymentService;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Portal\PortalCustomerService;
-use App\Services\Portal\PortalOrderCancellationService;
-use App\Services\Storefront\OrderRatingService;
+use App\Services\Portal\PortalSaleCancellationService;
+use App\Services\Storefront\SaleRatingService;
 
 class PortalController extends Controller
 {
     public function __construct(
         private PortalCustomerService $service,
-        private OrderRatingService $ratingService,
-        private PortalOrderCancellationService $cancellationService,
-        private OrderPaymentService $paymentService,
+        private SaleRatingService $ratingService,
+        private PortalSaleCancellationService $cancellationService,
+        private SalePaymentService $paymentService,
     ) {
     }
 
-    public function orders()
+    public function sales()
     {
         $orders = $this->service->listOrders(portal_customer());
 
         return APIResponse::success(
-            PortalOrderResource::collection($orders),
+            PortalSaleResource::collection($orders),
             __('messages.portal.orders_shown')
         );
     }
@@ -49,7 +49,7 @@ class PortalController extends Controller
         );
     }
 
-    public function orderItems(string $uuid)
+    public function saleItems(string $uuid)
     {
         $items = $this->service->getOrderItemsForReorder(portal_customer(), $uuid);
 
@@ -59,7 +59,7 @@ class PortalController extends Controller
         );
     }
 
-    public function rate(RateOrderRequest $request, string $uuid)
+    public function rate(RateSaleRequest $request, string $uuid)
     {
         $data = $request->validated();
 
@@ -70,9 +70,9 @@ class PortalController extends Controller
                 (int) $data['rating'],
                 $data['comment'] ?? null
             );
-        } catch (InvalidOrderStateException $e) {
+        } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        } catch (OrderAlreadyRatedException $e) {
+        } catch (SaleAlreadyRatedException $e) {
             return APIResponse::error($e->getMessage(), 422, 'ORDER_ALREADY_RATED');
         }
 
@@ -85,11 +85,11 @@ class PortalController extends Controller
 
     /**
      * Cobrança Pix do PRÓPRIO pedido (Fase B, item 1 — checkout Pix na loja
-     * pública). Reaproveita `OrderPaymentService::createPixChargeForOrder`
+     * pública). Reaproveita `SalePaymentService::createPixChargeForOrder`
      * (mesmo caminho do endpoint de staff `POST /orders/{order}/payment-
      * charge`), mas com posse verificada via `findOwnedOrder` (mesma
      * checagem de "meu pedido" do reorder/avaliação/cancelamento) em vez de
-     * `perm:orders,update` — o cliente final não tem Group/permissão, só
+     * `perm:sales,update` — o cliente final não tem Group/permissão, só
      * pode agir sobre o próprio pedido. `tenant_id` é vinculado manualmente
      * (`app()->instance`) porque a rota do portal não passa pelo middleware
      * `tenant` (o cliente final não pertence a um único tenant) — mesmo
@@ -103,7 +103,7 @@ class PortalController extends Controller
 
         try {
             $payment = $this->paymentService->createPixChargeForOrder($order);
-        } catch (InvalidOrderStateException $e) {
+        } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_OPERATION_IN_PROGRESS');
@@ -112,24 +112,24 @@ class PortalController extends Controller
         }
 
         return APIResponse::success(
-            new OrderPaymentResource($payment),
+            new SalePaymentResource($payment),
             __('messages.order.payment_charge_created'),
             201
         );
     }
 
-    public function requestCancellation(RequestOrderCancellationRequest $request, string $uuid)
+    public function requestCancellation(RequestSaleCancellationRequest $request, string $uuid)
     {
-        $dto = RequestOrderCancellationDTO::fromArray($request->validated());
+        $dto = RequestSaleCancellationDTO::fromArray($request->validated());
 
         try {
             $order = $this->cancellationService->request(portal_customer(), $uuid, $dto);
-        } catch (InvalidOrderStateException $e) {
+        } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
 
         return APIResponse::success(
-            new PortalOrderResource($order),
+            new PortalSaleResource($order),
             __('messages.portal.cancellation_requested')
         );
     }

@@ -67,7 +67,7 @@ class InvoiceService
      * Marca a fatura como paga a partir da confirmação do PSP (webhook).
      * Idempotente: uma fatura já paga não é reprocessada — protege contra
      * reentrega duplicada do mesmo evento de pagamento. Reconciliação de
-     * valor ANTES de confirmar (mesma regra de `OrderPaymentService::
+     * valor ANTES de confirmar (mesma regra de `SalePaymentService::
      * reconcileWebhookPayment`): o valor reportado pelo Mercado Pago
      * precisa bater com `amount_net` em centavos — divergência marca
      * `divergent` em vez de `paid` e não confirma o ciclo sozinho, exige

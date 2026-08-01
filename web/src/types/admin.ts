@@ -133,7 +133,7 @@ export interface TenantRolePermission {
   action: string
   /**
    * Limite percentual de desconto do perfil (roadmap A1.5) — só tem efeito
-   * nas linhas `functionality: 'orders'` (backend lê a menor configuração
+   * nas linhas `functionality: 'sales'` (backend lê a menor configuração
    * não-nula entre elas, ver `PermissionService::resolveOrderDiscountLimitPercent`).
    * `null`/ausente = sem limite.
    */
@@ -260,7 +260,7 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
     'reverse',
   ],
   orders: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
-  'storefront-orders': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
+  'storefront-sales': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
 }
 
 export function getTenantRoleActionOptions(functionalitySlug: string): readonly string[] {

@@ -6,7 +6,7 @@ use App\DTOs\Portal\CreatePortalLinkDTO;
 use App\Events\Portal\PortalLinkConfirmed;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  * padrão de FK cross-tabela do resto do projeto) — o order_uuid é só PROVA
  * de que ele é cliente real dessa loja, não precisa ser um pedido feito
  * por ESTE FinalCustomer (order.final_customer_id não muda aqui: o pedido
- * já nasceu vinculado ao seu comprador original em OrderService::create()
+ * já nasceu vinculado ao seu comprador original em SaleService::create()
  * ou StorefrontCheckoutService::checkout()). Idempotente: chamar de novo
  * para o mesmo tenant não duplica nem dispara evento de novo, só retorna o
  * vínculo já existente.
@@ -32,7 +32,7 @@ class PortalLinkService
     public function link(FinalCustomer $customer, CreatePortalLinkDTO $dto): FinalCustomerTenantLink
     {
         return DB::transaction(function () use ($customer, $dto) {
-            $order = Order::where('uuid', $dto->orderUuid)
+            $order = Sale::where('uuid', $dto->orderUuid)
                 ->whereNull('deleted_at')
                 ->firstOrFail();
 

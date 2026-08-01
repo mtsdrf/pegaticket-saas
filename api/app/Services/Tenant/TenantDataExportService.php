@@ -3,7 +3,7 @@
 namespace App\Services\Tenant;
 
 use App\Events\Tenant\TenantDataExported;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use ZipArchive;
@@ -110,7 +110,7 @@ class TenantDataExportService
             ->get();
 
         $rows->transform(function (object $row) {
-            $row->origin = Order::normalizeOrigin($row->origin);
+            $row->origin = Sale::normalizeOrigin($row->origin);
 
             return $row;
         });

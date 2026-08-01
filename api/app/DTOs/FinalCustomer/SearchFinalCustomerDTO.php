@@ -4,7 +4,7 @@ namespace App\DTOs\FinalCustomer;
 
 /**
  * Filtros da busca de compradores (FinalCustomerTenantLink) pelo staff,
- * usada no fluxo de pedido manual (OrderFormPage). Segue o mesmo padrão de
+ * usada no fluxo de pedido manual (SaleFormPage). Segue o mesmo padrão de
  * DTO de listagem/filtro do restante do projeto (ex.: nenhum outro módulo
  * de listagem usa DTO — ProductType/ProductCategory passam array direto do
  * Request pro Service — mas aqui optamos por DTO por já haver mais de um

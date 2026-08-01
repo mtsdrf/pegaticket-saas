@@ -3,7 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Contracts\Payment\PaymentProviderInterface;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
@@ -27,7 +27,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
         return $this->createPendingPayment($invoice, (string) $invoice->amount_net, 'pix');
     }
 
-    public function createPixChargeForOrder(Order $order): array
+    public function createPixChargeForOrder(Sale $order): array
     {
         return $this->createPendingPayment($order, (string) $order->total_amount, 'pix');
     }
@@ -86,7 +86,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
 
     /**
      * Registra um Payment pending polimórfico — o payable é uma Invoice
-     * (cobrança de assinatura) OU um Order (pagamento de pedido).
+     * (cobrança de assinatura) OU um Sale (pagamento de pedido).
      *
      * @return array<string, mixed>
      */

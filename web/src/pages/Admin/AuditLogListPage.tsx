@@ -19,7 +19,7 @@ const EVENT_LABELS_PT: Record<string, string> = {
   deleted: 'Excluído',
 }
 
-/** `App\Models\Order\Order` -> `Order` — só a última parte do FQCN é útil pra quem lê a tela, o namespace completo só faz sentido em log técnico. */
+/** `App\Models\Sale\Sale` -> `Sale` — só a última parte do FQCN é útil pra quem lê a tela, o namespace completo só faz sentido em log técnico. */
 function shortAuditableType(auditableType: string | null): string {
   if (!auditableType) return '—'
   const segments = auditableType.split('\\')

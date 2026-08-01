@@ -28,14 +28,14 @@ const ConfirmEmailPage = lazy(() =>
 const MyAccountPage = lazy(() =>
   import('../pages/Account/MyAccountPage').then((m) => ({ default: m.MyAccountPage })),
 )
-const OrderTrackingPage = lazy(() =>
-  import('../pages/Tracking/OrderTrackingPage').then((m) => ({ default: m.OrderTrackingPage })),
+const SaleTrackingPage = lazy(() =>
+  import('../pages/SaleTracking/SaleTrackingPage').then((m) => ({ default: m.SaleTrackingPage })),
 )
 const PortalLoginPage = lazy(() =>
   import('../pages/Portal/PortalLoginPage').then((m) => ({ default: m.PortalLoginPage })),
 )
-const PortalOrdersPage = lazy(() =>
-  import('../pages/Portal/PortalOrdersPage').then((m) => ({ default: m.PortalOrdersPage })),
+const PortalSalesPage = lazy(() =>
+  import('../pages/Portal/PortalSalesPage').then((m) => ({ default: m.PortalSalesPage })),
 )
 const PortalFavoritesPage = lazy(() =>
   import('../pages/Portal/PortalFavoritesPage').then((m) => ({ default: m.PortalFavoritesPage })),
@@ -92,19 +92,19 @@ const VenueListPage = lazy(() => import('../pages/Venue/VenueListPage').then((m)
 const VenueFormPage = lazy(() => import('../pages/Venue/VenueFormPage').then((m) => ({ default: m.VenueFormPage })))
 const VenueSeatsPage = lazy(() => import('../pages/Venue/VenueSeatsPage').then((m) => ({ default: m.VenueSeatsPage })))
 const SeatFormPage = lazy(() => import('../pages/Venue/SeatFormPage').then((m) => ({ default: m.SeatFormPage })))
-const OrderListPage = lazy(() => import('../pages/Order/OrderListPage').then((m) => ({ default: m.OrderListPage })))
-const StorefrontOrderManagementPage = lazy(() =>
-  import('../pages/Order/StorefrontOrderManagementPage').then((m) => ({ default: m.StorefrontOrderManagementPage })),
+const SaleListPage = lazy(() => import('../pages/Sale/SaleListPage').then((m) => ({ default: m.SaleListPage })))
+const StorefrontSaleManagementPage = lazy(() =>
+  import('../pages/Sale/StorefrontSaleManagementPage').then((m) => ({ default: m.StorefrontSaleManagementPage })),
 )
-const OrderFormPage = lazy(() => import('../pages/Order/OrderFormPage').then((m) => ({ default: m.OrderFormPage })))
+const SaleFormPage = lazy(() => import('../pages/Sale/SaleFormPage').then((m) => ({ default: m.SaleFormPage })))
 const AnalyticsPage = lazy(() =>
   import('../pages/Analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
 )
-const OrderReportListPage = lazy(() =>
-  import('../pages/Report/OrderReportListPage').then((m) => ({ default: m.OrderReportListPage })),
+const SaleReportListPage = lazy(() =>
+  import('../pages/SaleReport/SaleReportListPage').then((m) => ({ default: m.SaleReportListPage })),
 )
 const ChannelReportPage = lazy(() =>
-  import('../pages/Report/ChannelReportPage').then((m) => ({ default: m.ChannelReportPage })),
+  import('../pages/SaleReport/ChannelReportPage').then((m) => ({ default: m.ChannelReportPage })),
 )
 const ReconciliationPage = lazy(() =>
   import('../pages/Finance/ReconciliationPage').then((m) => ({ default: m.ReconciliationPage })),
@@ -184,7 +184,7 @@ function RouteFallback() {
  * `PortalAuthProvider` isolado dessa subárvore de rotas — nunca junto do
  * `AuthProvider` de staff em `App.tsx`. `/rastreio/:uuid` entra aqui junto
  * porque a página de rastreio consulta `usePortalAuth()` pra decidir o
- * destino do CTA "Ver todos os meus pedidos" (ver `OrderTrackingPage.tsx`).
+ * destino do CTA "Ver todos os meus pedidos" (ver `SaleTrackingPage.tsx`).
  */
 function PortalLayout() {
   return (
@@ -210,11 +210,11 @@ export function AppRoutes() {
         <Route path="/redefinir-senha/:token" element={<ResetPasswordPage />} />
 
         <Route element={<PortalLayout />}>
-          <Route path="/rastreio/:uuid" element={<OrderTrackingPage />} />
+          <Route path="/rastreio/:uuid" element={<SaleTrackingPage />} />
           <Route path="/portal/entrar" element={<PortalLoginPage />} />
 
           <Route element={<PortalProtectedRoute />}>
-            <Route path="/portal/pedidos" element={<PortalOrdersPage />} />
+            <Route path="/portal/pedidos" element={<PortalSalesPage />} />
             <Route path="/portal/favoritos" element={<PortalFavoritesPage />} />
             <Route path="/portal/vouchers" element={<PortalVouchersPage />} />
             <Route path="/portal/perfil" element={<PortalProfilePage />} />
@@ -278,16 +278,16 @@ export function AppRoutes() {
             <Route path="/locais/:venueUuid/assentos/novo" element={<PermissionRoute requirement={ACCESS.seatsCreate}><SeatFormPage /></PermissionRoute>} />
             <Route path="/locais/:venueUuid/assentos/:seatUuid/editar" element={<PermissionRoute requirement={ACCESS.seatsUpdate}><SeatFormPage /></PermissionRoute>} />
 
-            <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
-            <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.ordersRead}><OrderListPage /></PermissionRoute>} />
-            <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.ordersCreate}><OrderFormPage /></PermissionRoute>} />
-            <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
-            <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontOrdersRead}><StorefrontOrderManagementPage /></PermissionRoute>} />
+            <Route path="/pedidos" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
+            <Route path="/pedidos-manuais" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
+            <Route path="/pedidos/novo" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
+            <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
+            <Route path="/pedidos-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/treinamentos" element={<TrainingCenterPage />} />
 
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
-            <Route path="/relatorios/pedidos" element={<PermissionRoute requirement={ACCESS.reportsRead}><OrderReportListPage /></PermissionRoute>} />
+            <Route path="/relatorios/pedidos" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />
             <Route path="/financeiro/conciliacao" element={<PermissionRoute requirement={ACCESS.financeRead}><ReconciliationPage /></PermissionRoute>} />
 
             <Route path="/admin/usuarios" element={<PermissionRoute requirement={ACCESS.adminUsersRead}><UserListPage /></PermissionRoute>} />

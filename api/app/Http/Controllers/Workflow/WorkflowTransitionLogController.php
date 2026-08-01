@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Workflow;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Workflow\WorkflowTransitionLogResource;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Services\APIResponse;
 use App\Services\Workflow\WorkflowTransitionLogService;
 
@@ -15,7 +15,7 @@ class WorkflowTransitionLogController extends Controller
     ) {
     }
 
-    public function order(Order $order)
+    public function order(Sale $order)
     {
         $logs = $this->service->listOrderTimeline($order);
 

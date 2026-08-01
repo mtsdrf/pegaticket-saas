@@ -3,7 +3,7 @@
 namespace App\Services\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
@@ -31,7 +31,7 @@ class PortalCustomerService
 
         $tenantIds = $links->pluck('tenant_id')->all();
 
-        return Order::query()
+        return Sale::query()
             ->whereNull('deleted_at')
             ->where('final_customer_id', $customer->id)
             ->whereIn('tenant_id', $tenantIds)
@@ -57,9 +57,9 @@ class PortalCustomerService
      * para uuid inexistente quanto para pedido de outra loja não vinculada,
      * nunca vazando qual dos dois casos é.
      */
-    public function findOwnedOrder(int $finalCustomerId, string $orderUuid): Order
+    public function findOwnedOrder(int $finalCustomerId, string $orderUuid): Sale
     {
-        $order = Order::where('uuid', $orderUuid)->whereNull('deleted_at')->first();
+        $order = Sale::where('uuid', $orderUuid)->whereNull('deleted_at')->first();
 
         if (!$order || (int) $order->final_customer_id !== $finalCustomerId) {
             abort(404);

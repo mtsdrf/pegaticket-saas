@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Subscription;
 
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
 use App\Models\Subscription\WebhookEvent;
@@ -67,14 +67,14 @@ class MercadoPagoWebhookTest extends TestCase
 
     private function makeOrderPayment(): array
     {
-        $this->grantPermission('orders', 'create');
+        $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => 75.5]);
 
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
-        $orderData = $this->auth()->postJson('/api/v1/orders', [
+        $orderData = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
@@ -83,10 +83,10 @@ class MercadoPagoWebhookTest extends TestCase
             ],
         ])->json('data');
 
-        $order = Order::where('uuid', $orderData['uuid'])->firstOrFail();
+        $order = Sale::where('uuid', $orderData['uuid'])->firstOrFail();
 
         $payment = Payment::create([
-            'payable_type' => Order::class,
+            'payable_type' => Sale::class,
             'payable_id' => $order->id,
             'provider' => 'mercadopago',
             'provider_charge_id' => 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3',

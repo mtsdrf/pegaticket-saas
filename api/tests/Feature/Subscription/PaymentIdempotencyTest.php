@@ -3,7 +3,7 @@
 namespace Tests\Feature\Subscription;
 
 use App\Console\Commands\ReconcilePaymentIdempotencyCommand;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
 use App\Models\Subscription\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,14 +46,14 @@ class PaymentIdempotencyTest extends TestCase
 
     private function createConfirmedOrder(float $price = 40): array
     {
-        $this->grantPermission('orders', 'create');
+        $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
         $location = $this->createLocation($this->tenant->id, ['is_default' => true]);
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
 
         $this->stockEntry($this->tenant->id, $product, $location, 100);
 
-        return $this->auth()->postJson('/api/v1/orders', [
+        return $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'stock_location_uuid' => $location->uuid,
             'is_installment' => false,
@@ -70,15 +70,15 @@ class PaymentIdempotencyTest extends TestCase
             'api.mercadopago.com/v1/orders' => fn () => throw new ConnectionException('Connection timed out'),
         ]);
 
-        $this->grantPermission('orders', 'update');
+        $this->grantPermission('sales', 'update');
         $order = $this->createConfirmedOrder();
 
-        $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
             ->assertStatus(422)
             ->assertJsonPath('code', 'PAYMENT_PROVIDER_UNAVAILABLE');
 
-        $orderId = Order::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(0, Payment::where('payable_type', Order::class)->where('payable_id', $orderId)->count());
+        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
 
         $record = PaymentIdempotencyKey::where('operation', "order_charge:{$order['uuid']}")->firstOrFail();
         $this->assertSame('pending', $record->status);
@@ -88,12 +88,12 @@ class PaymentIdempotencyTest extends TestCase
 
         // Retry rápido (dentro do lock): bloqueado explicitamente, o
         // Mercado Pago NUNCA é chamado de novo.
-        $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
             ->assertStatus(422)
             ->assertJsonPath('code', 'PAYMENT_OPERATION_IN_PROGRESS');
 
         $this->assertSame($firstKey, $record->fresh()->idempotency_key);
-        $this->assertSame(0, Payment::where('payable_type', Order::class)->where('payable_id', $orderId)->count());
+        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
     }
 
     #[Test]
@@ -118,10 +118,10 @@ class PaymentIdempotencyTest extends TestCase
             ], 201);
         });
 
-        $this->grantPermission('orders', 'update');
+        $this->grantPermission('sales', 'update');
         $order = $this->createConfirmedOrder();
 
-        $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
             ->assertStatus(422)
             ->assertJsonPath('code', 'PAYMENT_PROVIDER_UNAVAILABLE');
 
@@ -131,23 +131,23 @@ class PaymentIdempotencyTest extends TestCase
 
         // Retry imediato: como a falha foi DECISIVA (dado inválido), uma
         // chave nova é gerada e a chamada ao PSP é permitida de novo.
-        $this->auth()->postJson("/api/v1/orders/{$order['uuid']}/payment-charge")
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
             ->assertStatus(201);
 
         $this->assertNotSame($firstKey, $record->fresh()->idempotency_key);
         $this->assertSame('succeeded', $record->fresh()->status);
         $this->assertSame(2, Http::recorded()->count());
 
-        $orderId = Order::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(1, Payment::where('payable_type', Order::class)->where('payable_id', $orderId)->count());
+        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
     }
 
     #[Test]
     public function reconciliation_resolves_an_expired_ambiguous_lock_by_creating_the_missing_local_payment(): void
     {
-        $this->grantPermission('orders', 'update');
+        $this->grantPermission('sales', 'update');
         $order = $this->createConfirmedOrder(price: 55);
-        $orderModel = Order::where('uuid', $order['uuid'])->firstOrFail();
+        $orderModel = Sale::where('uuid', $order['uuid'])->firstOrFail();
 
         // Simula o timeout ambíguo já resolvido no PSP (o MP processou,
         // mas nossa resposta nunca chegou) com o lock já expirado, sem
@@ -177,7 +177,7 @@ class PaymentIdempotencyTest extends TestCase
         $this->assertSame('succeeded', $record->status);
 
         $this->assertDatabaseHas('payments', [
-            'payable_type' => Order::class,
+            'payable_type' => Sale::class,
             'payable_id' => $orderModel->id,
             'provider' => 'mercadopago',
             'provider_charge_id' => 'ORD_RECONCILED_1',

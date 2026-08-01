@@ -3,7 +3,7 @@
 namespace App\Services\Onboarding;
 
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Event\TicketType;
 use App\Models\Storefront\StoreBusinessHour;
 use App\Models\Tenant\TenantUser;
@@ -27,7 +27,7 @@ class OnboardingService
         $items = [
             'has_product' => TicketType::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
             'has_client' => FinalCustomerTenantLink::where('tenant_id', $tenantId)->exists(),
-            'has_first_order' => Order::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
+            'has_first_order' => Sale::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
         ];
 
         $steps = [

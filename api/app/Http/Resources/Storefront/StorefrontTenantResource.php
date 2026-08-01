@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Rota pública GET /loja/{slug} — allow-list deliberada, mesmo espírito de
- * OrderPublicTrackingResource: NUNCA adicionar campo novo (uuid interno,
+ * SalePublicTrackingResource: NUNCA adicionar campo novo (uuid interno,
  * plan_id, next_order_code, etc.) sem confirmação explícita — é rota
  * pública, todo campo extra é superfície de vazamento.
  *
@@ -50,7 +50,7 @@ class StorefrontTenantResource extends JsonResource
                 ? StoreBusinessHourResource::collection($this->businessHours)
                 : [],
             'estimated_preparation_minutes' => $this->estimatedPreparationMinutes,
-            // Agregado de OrderRatingService::tenantSummary() (Delivery Fase
+            // Agregado de SaleRatingService::tenantSummary() (Delivery Fase
             // 4) — average_rating null quando o tenant ainda não tem
             // nenhuma avaliação (nunca 0.0).
             'average_rating' => $this->averageRating,

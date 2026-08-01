@@ -3,7 +3,7 @@
 namespace Tests\Feature\Portal;
 
 use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Order\Order;
+use App\Models\Sale\Sale;
 use App\Models\Tenant\Tenant;
 use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,11 +33,11 @@ class PortalLinkTest extends TestCase
         ]);
     }
 
-    private function createOrder(Tenant $tenant, FinalCustomer $client, array $overrides = []): Order
+    private function createOrder(Tenant $tenant, FinalCustomer $client, array $overrides = []): Sale
     {
         $location = $this->createLocation($tenant->id);
 
-        return Order::create(array_merge([
+        return Sale::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
             'final_customer_id' => $client->id,

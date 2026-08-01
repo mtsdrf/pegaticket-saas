@@ -1,5 +1,5 @@
 {{--
-    CSS compartilhado por todo PDF gerado via DomPDF (reports/orders-pdf,
+    CSS compartilhado por todo PDF gerado via DomPDF (reports/sales-pdf,
     products/pdf, clients/pdf). Cores fixas da marca
     PegaTicket — DomPDF não lê custom properties (--pt-*) do app, por isso os
     valores estão hardcoded aqui em vez de referenciar o design system web.

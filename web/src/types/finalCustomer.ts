@@ -1,6 +1,6 @@
 /** Comprador global (`FinalCustomer`) referenciado dentro de um resultado de busca de `GET /final-customers`. */
 export interface FinalCustomerSearchResultRef {
-  /** Uuid GLOBAL do comprador — é ESTE que vai em `OrderPayload.final_customer_uuid`, nunca o `uuid` do nível acima (que é o vínculo tenant×comprador). */
+  /** Uuid GLOBAL do comprador — é ESTE que vai em `SalePayload.final_customer_uuid`, nunca o `uuid` do nível acima (que é o vínculo tenant×comprador). */
   uuid: string
   name: string
   last_name?: string | null

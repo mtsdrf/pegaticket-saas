@@ -293,7 +293,7 @@ class StorefrontHoldService
             ->groupBy('inventory_hold_items.seat_id')
             ->pluck('reserved_quantity', 'seat_id');
 
-        $soldSeatQuantities = \App\Models\Order\OrderItem::query()
+        $soldSeatQuantities = \App\Models\Sale\SaleItem::query()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.tenant_id', $event->tenant_id)
             ->whereNull('orders.deleted_at')
@@ -456,7 +456,7 @@ class StorefrontHoldService
 
     private function soldSeatQuantity(int $seatId): int
     {
-        return (int) \App\Models\Order\OrderItem::query()
+        return (int) \App\Models\Sale\SaleItem::query()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.seat_id', $seatId)
             ->whereNull('order_items.deleted_at')

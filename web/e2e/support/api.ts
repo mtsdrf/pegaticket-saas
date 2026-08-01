@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test'
 import { STORAGE_KEYS } from '../../src/constants/storage'
-import type { Order } from '../../src/types/order'
+import type { Sale } from '../../src/types/order'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -463,7 +463,7 @@ export async function mockAccountingShell(page: Page, options: AccountingShellMo
   })
 }
 
-export function makeOrder(overrides: Partial<Order> = {}): Order {
+export function makeOrder(overrides: Partial<Sale> = {}): Sale {
   return {
     uuid: overrides.uuid ?? 'order-qa-1',
     codigo: overrides.codigo ?? '1000',

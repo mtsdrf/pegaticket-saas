@@ -89,9 +89,9 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/locais', label: 'Locais e mapa', access: ACCESS.venuesRead },
     ],
   },
-  { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
-  { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.ordersRead },
-  { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontOrdersRead },
+  { kind: 'link', to: '/pedidos', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/pedidos-manuais', label: 'Pedidos manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontSalesRead },
   { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
   {
     kind: 'group',
@@ -144,7 +144,8 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 /**
- * `startsWith` puro marcava "/pedidos" como ativo em "/pedidos-loja" (prefixo
+ * `startsWith` puro marcava "/pedidos" como ativo em "/vendas-online" e no
+ * alias legado "/pedidos-loja" (prefixo
  * de string, não de rota) — exige fronteira de segmento (`/` depois do `to`)
  * pra continuar cobrindo sub-rotas reais como "/pedidos/novo".
  */

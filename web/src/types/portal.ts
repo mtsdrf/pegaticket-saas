@@ -29,8 +29,8 @@ export interface PortalCustomer {
   linked_stores: PortalLinkedStore[]
 }
 
-/** Item de `GET /portal/orders` — lista agregada entre todas as lojas vinculadas. */
-export interface PortalOrderSummary {
+/** Item de `GET /portal/sales` — lista agregada entre todas as lojas vinculadas. */
+export interface PortalSaleSummary {
   uuid: string
   tenant_name: string
   tenant_slug: string
@@ -46,7 +46,7 @@ export interface PortalOrderSummary {
 }
 
 /**
- * Item de `GET /portal/orders/{uuid}/items` ("pedir de novo", Delivery Fase
+ * Item de `GET /portal/sales/{uuid}/items` ("pedir de novo", Delivery Fase
  * 4) — preço/disponibilidade sempre ATUAIS do ingresso/adicional, nunca o
  * valor congelado no pedido original. `ticket_type_uuid`/`ticket_type_name`
  * cobrem tanto `TicketType` quanto `EventProduct` (mesmo campo no backend,
