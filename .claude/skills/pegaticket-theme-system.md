@@ -52,28 +52,28 @@ Nenhum componente declara cor/raio/sombra em hex ou valor solto. Sempre `var(--p
 
 ```css
 :root {
-  --pt-bg: #F6F8FB;
+  --pt-bg: #F7FAF9;
   --pt-surface: #FFFFFF;
-  --pt-surface-soft: #EEF3F8;
-  --pt-primary: #0F3D5E;
-  --pt-primary-hover: #0B314C;
-  --pt-secondary: #2563EB;
-  --pt-accent: #22C7A9;
-  --pt-text: #102033;
-  --pt-muted: #64748B;
-  --pt-border: #D8E0EA;
+  --pt-surface-soft: #F0F6F4;
+  --pt-primary: #08CFA7;
+  --pt-primary-hover: #00B995;
+  --pt-secondary: #20D565;
+  --pt-accent: #9BEA00;
+  --pt-text: #10231D;
+  --pt-muted: #49635A;
+  --pt-border: #DCE8E4;
   --pt-success: #16A34A;
   --pt-warning: #F59E0B;
   --pt-danger: #DC2626;
-  --pt-info: #0284C7;
+  --pt-info: #0EA5E9;
   --pt-radius-sm: 6px;
   --pt-radius-md: 10px;
   --pt-radius-lg: 16px;
   --pt-radius-xl: 24px;
-  --pt-shadow-sm: 0 1px 2px rgba(15, 61, 94, 0.06);
-  --pt-shadow-md: 0 4px 12px rgba(15, 61, 94, 0.10);
-  --pt-shadow-lg: 0 12px 32px rgba(15, 61, 94, 0.14);
-  --pt-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --pt-shadow-sm: 0 1px 3px rgba(12, 50, 39, 0.08);
+  --pt-shadow-md: 0 8px 24px rgba(12, 50, 39, 0.10);
+  --pt-shadow-lg: 0 18px 48px rgba(12, 50, 39, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(8, 207, 167, 0.28);
 }
 ```
 
@@ -81,16 +81,16 @@ Nenhum componente declara cor/raio/sombra em hex ou valor solto. Sempre `var(--p
 
 ```css
 [data-theme='dark'] {
-  --pt-bg: #07111F;
-  --pt-surface: #0D1B2E;
-  --pt-surface-soft: #13243A;
-  --pt-primary: #38BDF8;
-  --pt-primary-hover: #7DD3FC;
-  --pt-secondary: #60A5FA;
-  --pt-accent: #2DD4BF;
+  --pt-bg: #07110E;
+  --pt-surface: #101E1A;
+  --pt-surface-soft: #0F1D18;
+  --pt-primary: #19DFC0;
+  --pt-primary-hover: #35E8CD;
+  --pt-secondary: #37DE77;
+  --pt-accent: #A6EE16;
   --pt-text: #F8FAFC;
-  --pt-muted: #94A3B8;
-  --pt-border: #24364D;
+  --pt-muted: #B6CBC3;
+  --pt-border: #233A32;
   --pt-success: #22C55E;
   --pt-warning: #FBBF24;
   --pt-danger: #F87171;
@@ -159,4 +159,5 @@ body {
 - Foco visível (--pt-focus-ring) em todo elemento interativo.
 - Contraste adequado nos dois temas.
 - Preferência de tema persiste entre sessões.
+- A composicao visual deve combinar teal (primary), verde (secondary) e lima (accent), conforme o pacote oficial em `visual/`, sem voltar para a fase anterior azul/coral.
 ```

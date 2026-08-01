@@ -17,7 +17,7 @@ O visual da PegaTicket deve ser:
 
 - Moderno.
 - Limpo.
-- SaaS.
+- Energico.
 - Profissional.
 - Elegante.
 - Levemente premium.
@@ -35,35 +35,35 @@ Inspiração de qualidade (não copiar): Linear, Vercel, Stripe, Notion, Figma, 
 ### Light mode
 
 ```txt
-Background:      #F6F8FB
+Background:      #F7FAF9
 Surface:         #FFFFFF
-Surface Soft:    #EEF3F8
-Primary:         #0F3D5E
-Primary Hover:   #0B314C
-Secondary:       #2563EB
-Accent:          #22C7A9
-Text:            #102033
-Muted Text:      #64748B
-Border:          #D8E0EA
+Surface Soft:    #F0F6F4
+Primary:         #08CFA7
+Primary Hover:   #00B995
+Secondary:       #20D565
+Accent:          #9BEA00
+Text:            #10231D
+Muted Text:      #49635A
+Border:          #DCE8E4
 Success:         #16A34A
 Warning:         #F59E0B
 Danger:          #DC2626
-Info:            #0284C7
+Info:            #0EA5E9
 ```
 
 ### Dark mode
 
 ```txt
-Background:      #07111F
-Surface:         #0D1B2E
-Surface Soft:    #13243A
-Primary:         #38BDF8
-Primary Hover:   #7DD3FC
-Secondary:       #60A5FA
-Accent:          #2DD4BF
+Background:      #07110E
+Surface:         #101E1A
+Surface Soft:    #0F1D18
+Primary:         #19DFC0
+Primary Hover:   #35E8CD
+Secondary:       #37DE77
+Accent:          #A6EE16
 Text:            #F8FAFC
-Muted Text:      #94A3B8
-Border:          #24364D
+Muted Text:      #B6CBC3
+Border:          #233A32
 Success:         #22C55E
 Warning:         #FBBF24
 Danger:          #F87171
@@ -103,8 +103,15 @@ Nunca hardcodar hex de cor em componente — sempre `var(--pt-*)`.
 
 ## Tipografia
 
-- Interface (corpo, labels, botões, tabelas): **Inter**.
-- Marca/logo/wordmark: **Manrope SemiBold**, **Geist SemiBold** ou **Inter SemiBold** (nessa ordem de preferência).
+- Interface (corpo, labels, botoes, tabelas): **Inter**.
+- Marca/logo/wordmark: **Sora SemiBold** como padrao; **Manrope SemiBold** e **Inter SemiBold** como alternativas de apoio.
+
+## Fonte oficial dos assets
+
+Desde 2026-08-01, a pasta raiz `visual/` e a fonte oficial da identidade
+visual do PegaTicket. Novos favicons, logos, manifest icons e pecas de apoio
+devem partir dali. Se houver conflito entre o que esta em `web/public/` e o que
+esta em `visual/`, `visual/` vence e `web/public/` deve ser atualizado.
 
 ## Hierarquia tipográfica
 
@@ -133,7 +140,7 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 ## Botões
 
-- **Primary**: fundo `--pt-primary`, texto claro, hover `--pt-primary-hover`. Ação principal da tela, no máximo uma por contexto.
+- **Primary**: fundo `--pt-primary`, texto claro, hover `--pt-primary-hover`. Acao principal da tela, no maximo uma por contexto.
 - **Secondary**: fundo `--pt-surface-soft` ou borda `--pt-border`, texto `--pt-text`. Ações alternativas.
 - **Ghost/texto**: sem fundo, usado para ações terciárias (ex.: "Atualizar sistema").
 - **Danger**: fundo/texto `--pt-danger`, só para ações destrutivas com confirmação.
@@ -152,7 +159,7 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 - Fundo `--pt-surface` (ou `--pt-surface-soft` para cards de destaque secundário), borda `--pt-border`, `--pt-radius-lg`, `--pt-shadow-sm`.
 - Padding interno confortável (16–24px), título com hierarquia clara (H2/H3), conteúdo com respiro.
-- Card de métrica: número grande + label pequeno + (opcional) indicador de tendência usando `--pt-success`/`--pt-danger` — nunca cor decorativa solta.
+- Card de metrica: numero grande + label pequeno + (opcional) indicador de tendencia usando `--pt-success`/`--pt-danger`. `--pt-secondary` e `--pt-accent` entram como energia visual de apoio, nunca como ruido decorativo solto.
 
 ### Regra obrigatória: foto de produto/entidade em card tem tamanho fixo
 
@@ -175,7 +182,7 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 
 ## Login
 
-- Fundo com gradiente sofisticado usando a paleta oficial (ex.: `--pt-bg` → `--pt-primary` em baixa opacidade), elementos abstratos sutis de movimento — nunca imagem financeira genérica de banco de imagens.
+- Fundo com gradiente sofisticado usando a paleta oficial verde/lima/teal (`--pt-primary` + `--pt-secondary` + `--pt-accent`), elementos abstratos sutis de movimento e celebracao — nunca imagem financeira generica de banco de imagens.
 - Card de login centrado, `--pt-surface`, `--pt-radius-lg`, `--pt-shadow-md`.
 - Logo PegaTicket visível acima do formulário.
 - Textos oficiais: ver [[brand-guidelines]] → "Exemplos de texto → Login".
@@ -183,7 +190,7 @@ Evitar mais de 4 tamanhos distintos numa mesma tela. Peso de fonte consistente: 
 ## Dashboard
 
 - Separação clara de blocos: cabeçalho da página → ações rápidas → métricas → gráfico → navegação (sidebar/navbar já fora do conteúdo).
-- Título "Visão geral" + subtítulo, cards de ação rápida (Novo pedido / Adicionar cliente / Cadastrar produto), cards de métrica (Pedidos entregues / Pedidos pendentes / Valor recebido), gráfico de pedidos por mês dentro de um card.
+- Titulo "Visao geral" + subtitulo, cards de acao rapida alinhados ao contexto de eventos (ex.: Criar evento / Abrir vendas / Acompanhar check-in), cards de metrica (ex.: Ingressos vendidos / Receita do periodo / Check-ins realizados), e graficos que ajudem a entender ritmo de vendas e acesso.
 - Evitar: botões azuis gigantes, cards azuis pesados repetidos, azul chapado em todo bloco, gráfico sem título/contexto, sidebar sem estado ativo evidente.
 
 ## Acessibilidade

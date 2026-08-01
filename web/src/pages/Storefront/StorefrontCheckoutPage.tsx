@@ -107,7 +107,7 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
         {children}
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 4 }}>
           <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
-            Checkout via PegaTicket — gestão clara para empresas em movimento.
+            Checkout via PegaTicket — do acesso a experiencia, tudo em movimento.
           </Typography>
         </Stack>
       </Box>

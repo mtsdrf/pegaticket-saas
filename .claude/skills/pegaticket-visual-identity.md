@@ -10,8 +10,9 @@ Toda vez que uma tarefa envolver: criar tela nova, redesenhar tela existente, cr
 ## Identidade oficial
 
 - **Nome**: PegaTicket (nunca alterar).
-- **Tagline**: "Gestão clara para empresas em movimento."
-- **Conceito**: SaaS de gestão comercial (pedidos, clientes, produtos, indicadores) — claro, moderno, produtivo, inteligente.
+- **Tagline**: "Do acesso a experiencia, tudo em movimento."
+- **Conceito**: "Energia de Evento" — plataforma de eventos e ingressos que comunica movimento, acesso, conexao, experiencia, tecnologia e confianca.
+- **Fonte oficial dos assets**: pasta raiz `visual/`.
 - Detalhamento completo: `.claude/memory/brand-guidelines.md`.
 
 ## Estilo visual
@@ -24,7 +25,7 @@ Ver `.claude/memory/design-system.md` para a paleta completa (light/dark) e `.cl
 
 ## Logo
 
-Símbolo: `M` geométrico com movimento sutil (sugere avanço/organização/crescimento). Nunca usar seta literal, gráfico de barras, gráfico financeiro ou ícone genérico de analytics — isso é exatamente o visual antigo que está sendo substituído. Versões obrigatórias: horizontal (símbolo + wordmark), compacta (só símbolo), favicon, light, dark, monocromática.
+Conceito ideal de simbolo: fita continua que se transforma em ingresso, sugerindo trajeto, acesso e experiencia. Desde 2026-08-01, o pacote oficial entregue pelo usuario esta em `visual/` (logo principal em `visual/logo_pegaticket.png`, favicons e manifest icons no mesmo diretorio) e deve ser considerado a verdade da marca. Nunca usar grafico financeiro, icone generico de analytics ou linguagem visual de ERP.
 
 ## Regras de interface
 
@@ -44,11 +45,11 @@ Tom de voz: claro, objetivo, confiante, humano, profissional, sem jargão nem cl
 
 ## Login
 
-Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (não imagem financeira genérica). Card moderno centrado, logo visível, headline "Bem-vindo ao PegaTicket", subheadline oficial, botão "Entrar no painel", link secundário "Atualizar sistema".
+Fundo com gradiente sofisticado + elementos abstratos sutis de movimento e celebracao (nao imagem financeira generica). Card moderno centrado, logo visivel, headline "Bem-vindo ao PegaTicket", subheadline oficial, botao "Entrar no painel", link secundario "Atualizar sistema".
 
 ## Dashboard
 
-Separar sempre: cabeçalho da página → ações rápidas → métricas → gráfico → navegação. Título "Visão geral", subtítulo "Acompanhe os principais números da operação.". Ações rápidas: Novo pedido / Adicionar cliente / Cadastrar produto. Métricas: Pedidos entregues / Pedidos pendentes / Valor recebido. Evitar azul chapado repetido, cards pesados idênticos, gráfico sem contexto.
+Separar sempre: cabecalho da pagina → acoes rapidas → metricas → grafico → navegacao. Titulo "Visao geral", subtitulo orientado a vendas/acesso/operacao. Preferir exemplos de acao e metricas ligados a eventos, ingressos, publico e check-in. Evitar azul chapado repetido, cards pesados identicos, grafico sem contexto.
 
 ## Checklist
 
@@ -60,5 +61,5 @@ Separar sempre: cabeçalho da página → ações rápidas → métricas → gr�
 - Estados (loading/vazio/erro/sucesso) tratados.
 - Responsivo (mobile/tablet/desktop).
 - Acessível (labels, foco, contraste).
-- Sem elementos proibidos na logo (seta, gráfico financeiro, ícone genérico).
+- Sem elementos proibidos na logo (grafico financeiro, icone generico de analytics, linguagem antiga de ERP).
 ```

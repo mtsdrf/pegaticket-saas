@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 import { Logo } from '../ui/Logo'
 
 const DEFAULT_HIGHLIGHTS = [
-  'Pedidos, clientes e produtos em um só lugar',
-  'Indicadores atualizados em tempo real',
-  'Acesso por empresa com permissões por perfil',
+  'Eventos, lotes e ingressos organizados em um so fluxo',
+  'Vendas, check-in e publico acompanhados em tempo real',
+  'Operacao segura para equipe, produtor e participante',
 ]
 
 interface AuthBrandPanelProps {
@@ -32,7 +32,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
+          'linear-gradient(145deg, color-mix(in srgb, var(--pt-primary) 92%, #05241d) 0%, color-mix(in srgb, var(--pt-secondary) 78%, var(--pt-primary)) 56%, color-mix(in srgb, var(--pt-accent) 48%, var(--pt-secondary)) 100%)',
       }}
     >
       <Box
@@ -45,7 +45,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-primary) 42%, transparent)',
           '@keyframes pt-float-a': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(-24px, 28px)' },
@@ -64,7 +64,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
           bottom: -100,
           left: -80,
           filter: 'blur(80px)',
-          background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-accent) 26%, transparent)',
           '@keyframes pt-float-b': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(20px, -18px)' },
@@ -80,7 +80,7 @@ export function AuthBrandPanel({ headline, subheadline, highlights = DEFAULT_HIG
           inset: 0,
           opacity: 0.5,
           backgroundImage:
-            'radial-gradient(color-mix(in srgb, #FFFFFF 22%, transparent) 1px, transparent 1px)',
+            'radial-gradient(color-mix(in srgb, #FFFFFF 24%, transparent) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
           maskImage: 'linear-gradient(180deg, transparent, black 30%, black 70%, transparent)',
         }}

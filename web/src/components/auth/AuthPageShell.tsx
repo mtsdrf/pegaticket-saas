@@ -47,7 +47,7 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
             left: '-5rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--pt-primary) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-primary) 24%, transparent)',
           }}
         />
         <Box
@@ -61,7 +61,7 @@ export function AuthPageShell({ headline, subheadline, children }: AuthPageShell
             right: '-3rem',
             borderRadius: '50%',
             filter: 'blur(70px)',
-            background: 'color-mix(in srgb, var(--pt-accent) 30%, transparent)',
+            background: 'color-mix(in srgb, var(--pt-accent) 22%, transparent)',
           }}
         />
         <Box

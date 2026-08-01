@@ -23,7 +23,7 @@ function BrandPanel() {
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
+          'linear-gradient(145deg, color-mix(in srgb, var(--pt-primary) 92%, #05241d) 0%, color-mix(in srgb, var(--pt-secondary) 78%, var(--pt-primary)) 56%, color-mix(in srgb, var(--pt-accent) 48%, var(--pt-secondary)) 100%)',
       }}
     >
       <Box
@@ -36,7 +36,7 @@ function BrandPanel() {
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-primary) 42%, transparent)',
           '@keyframes pt-float-a': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(-24px, 28px)' },
@@ -55,7 +55,7 @@ function BrandPanel() {
           bottom: -100,
           left: -80,
           filter: 'blur(80px)',
-          background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-accent) 26%, transparent)',
           '@keyframes pt-float-b': {
             '0%, 100%': { transform: 'translate(0, 0)' },
             '50%': { transform: 'translate(20px, -18px)' },
@@ -71,7 +71,7 @@ function BrandPanel() {
           inset: 0,
           opacity: 0.5,
           backgroundImage:
-            'radial-gradient(color-mix(in srgb, #FFFFFF 22%, transparent) 1px, transparent 1px)',
+            'radial-gradient(color-mix(in srgb, #FFFFFF 24%, transparent) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
           maskImage: 'linear-gradient(180deg, transparent, black 30%, black 70%, transparent)',
         }}
@@ -97,7 +97,7 @@ function BrandPanel() {
           Confirmando seu novo e-mail.
         </Typography>
         <Typography sx={{ fontSize: 15, color: 'color-mix(in srgb, #FFFFFF 78%, transparent)' }}>
-          Só mais um passo pra manter sua conta segura e atualizada.
+          Mais um passo para manter seu acesso seguro e sua operacao pronta.
         </Typography>
       </Box>
 
@@ -157,7 +157,7 @@ export function ConfirmEmailPage() {
           justifyContent: 'center',
           p: { xs: 2, sm: 3 },
           background: {
-            xs: 'linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 16%, var(--pt-bg)) 100%)',
+            xs: 'var(--pt-page-background-soft)',
             md: 'var(--pt-bg)',
           },
         }}

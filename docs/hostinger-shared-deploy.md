@@ -1,36 +1,41 @@
 # Deploy em Hostinger Compartilhada
 
-Data de referência: 2026-07-12 (atualizado 2026-07-17: deploy automático via CI/CD disponível)
+Data de referência: 2026-08-01
 
-> **Deploy automático disponível**: `.github/workflows/deploy.yml` builda `api/`+`web/`+`site/` e publica em produção sozinho a cada push em `main` (ou disparo manual via `workflow_dispatch`), incluindo `php artisan migrate --force`. Requer cadastrar os Secrets do GitHub (chave SSH dedicada, host, caminhos, `VITE_*`) uma única vez em Settings → Secrets and variables → Actions — ver comentários no próprio workflow para a lista completa. O passo a passo manual abaixo continua documentado como referência do que o workflow faz por baixo (e como fallback se o CI/CD não estiver disponível).
+> **Deploy automático disponível**: `.github/workflows/deploy.yml` builda `api/` + `web/` e publica em produção sozinho a cada push em `main` (ou disparo manual via `workflow_dispatch`), incluindo `php artisan migrate --force`. Neste cenário atual do PegaTicket, **não existe deploy do projeto `site/`**. Requer cadastrar os Secrets do GitHub uma única vez em Settings → Secrets and variables → Actions — ver a seção "GitHub Actions: secrets obrigatórios" abaixo.
 
-## Terceiro subdomínio: `site/` (landing institucional/vendas)
+## Cenário oficial atual
 
-Além de `api/` e `web/`, o monorepo tem um terceiro projeto irmão, `site/` (React 19 + Vite, sem autenticação) — a landing de vendas pública, publicada em **`site.pegaticket.com`**, separada do app principal (`sistema.pegaticket.com`, servido por `web/`) e do domínio raiz.
+- Domínio base: `kleuza.com`
+- Frontend web: `https://pegaticket.kleuza.com`
+- API: `https://api-pegaticket.kleuza.com`
 
-Setup manual único (fora do repo, não versionado — mesmo padrão de `api`/`web`):
+Paths já definidos no servidor:
 
-1. No hPanel Hostinger, criar o subdomínio `site.pegaticket.com` apontando o document root para uma pasta dedicada no servidor (ex. `~/site.pegaticket.com/`).
-2. Cadastrar o Secret `DEPLOY_SITE_PATH` no GitHub com esse caminho (mesmo padrão de `DEPLOY_API_PATH`/`DEPLOY_WEB_PATH`).
-3. Opcionalmente, cadastrar o Secret `VITE_APP_URL` (URL do app principal, usada no CTA da landing) — se omitido, o workflow usa o fallback `https://sistema.pegaticket.com`.
+- Web document root: `/home/u452434908/domains/kleuza.com/public_html/pegaticket/web`
+- API document root do subdomínio: `/home/u452434908/domains/kleuza.com/public_html/pegaticket/api/public`
 
-Depois disso, o workflow builda `site/` (`npm ci && npm run build`) e publica `site/dist/` via `rsync` a cada deploy, sem gate de teste (não há suíte automatizada em `site/`, é conteúdo estático).
+Ponto crítico:
+
+- o workflow usa `DEPLOY_API_PATH` apontando para a **raiz** do Laravel:
+  `/home/u452434908/domains/kleuza.com/public_html/pegaticket/api`
+- o hPanel/Hostinger é que deve apontar o subdomínio
+  `api-pegaticket.kleuza.com` para `${DEPLOY_API_PATH}/public`
 
 ## Objetivo
 
-Publicar o PegaTicket em hospedagem compartilhada Hostinger para iniciar testes reais, com:
+Publicar o PegaTicket em hospedagem compartilhada Hostinger com:
 
-- frontend React no domínio principal
+- frontend React em subdomínio dedicado
 - backend Laravel em subdomínio dedicado
-- banco de produção inicializado com os seeders atuais
 - fluxo de login e operação funcionando sem erro de CORS
 
 ## Arquitetura recomendada
 
 ### Domínios
 
-- `https://seudominio.com` → frontend do `web/`
-- `https://api.seudominio.com` → backend do `api/`
+- `https://pegaticket.kleuza.com` → frontend do `web/`
+- `https://api-pegaticket.kleuza.com` → backend do `api/`
 
 ### Motivação
 
@@ -44,8 +49,10 @@ No hPanel da Hostinger:
 
 1. criar o banco MySQL
 2. ativar acesso SSH, se disponível no plano
-3. criar o subdomínio `api.seudominio.com`
-4. apontar o document root do subdomínio para a pasta `api/public`
+3. criar o subdomínio `pegaticket.kleuza.com`
+4. apontar `pegaticket.kleuza.com` para `/home/u452434908/domains/kleuza.com/public_html/pegaticket/web`
+5. criar o subdomínio `api-pegaticket.kleuza.com`
+6. apontar `api-pegaticket.kleuza.com` para `/home/u452434908/domains/kleuza.com/public_html/pegaticket/api/public`
 
 ## Variáveis de ambiente
 
@@ -57,12 +64,13 @@ Usar [api/.env.example](/home/mtsdrf/workspace/pegaticket-saas/api/.env.example)
 APP_NAME=PegaTicket
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://api.seudominio.com
+APP_URL=https://api-pegaticket.kleuza.com
+FRONTEND_URL=https://pegaticket.kleuza.com
 
 APP_LOCALE=pt_BR
 APP_FALLBACK_LOCALE=pt_BR
 
-CORS_ALLOWED_ORIGINS=https://seudominio.com
+CORS_ALLOWED_ORIGINS=https://pegaticket.kleuza.com
 
 DB_CONNECTION=mysql
 DB_HOST=SEU_HOST_MYSQL
@@ -83,7 +91,7 @@ Se for usar e-mail real, preencher também `MAIL_*`.
 ### Frontend `web/.env.production`
 
 ```env
-VITE_API_BASE_URL=https://api.seudominio.com/api/v1
+VITE_API_BASE_URL=https://api-pegaticket.kleuza.com/api/v1
 ```
 
 ## Build local recomendado
@@ -118,11 +126,14 @@ Enviar a pasta `api/` para o servidor, preservando a estrutura do projeto.
 
 Ponto crítico:
 
+- o deploy precisa ir para `/home/u452434908/domains/kleuza.com/public_html/pegaticket/api`
 - o subdomínio da API precisa executar `api/public/index.php`
 
 ### Frontend
 
-Enviar o conteúdo de `web/dist/` para o `public_html/` do domínio principal.
+Enviar o conteúdo de `web/dist/` para:
+
+`/home/u452434908/domains/kleuza.com/public_html/pegaticket/web`
 
 Arquivos esperados na raiz pública:
 
@@ -134,7 +145,7 @@ Arquivos esperados na raiz pública:
 Se houver SSH disponível, rodar no servidor:
 
 ```bash
-cd ~/caminho-do-projeto/api
+cd /home/u452434908/domains/kleuza.com/public_html/pegaticket/api
 php artisan migrate --force
 php artisan db:seed --force
 php artisan tenants:sync-permissions
@@ -172,17 +183,77 @@ Consequência prática:
 
 Se no futuro entrarem jobs/filas reais, o ideal deixa de ser hospedagem compartilhada.
 
+## GitHub Actions: secrets obrigatórios
+
+Cadastrar em `GitHub > Settings > Secrets and variables > Actions > Repository secrets`:
+
+- `DEPLOY_SSH_HOST`
+- `DEPLOY_SSH_PORT`
+- `DEPLOY_SSH_USER`
+- `DEPLOY_SSH_PRIVATE_KEY`
+- `DEPLOY_API_PATH`
+- `DEPLOY_WEB_PATH`
+- `VITE_API_BASE_URL`
+- `FRONTEND_URL`
+- `PAYMENT_PROVIDER`
+- `R2_ENABLED`
+- `MEDIA_AVATARS_DISK`
+- `MEDIA_PRODUCTS_DISK`
+- `MEDIA_TENANTS_DISK`
+- `MEDIA_USE_DIRECT_PUBLIC_URLS`
+- `MEDIA_PUBLIC_CACHE_SECONDS`
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_AVATARS`
+- `R2_BUCKET_PRODUCTS`
+- `R2_BUCKET_TENANTS`
+- `R2_ENDPOINT`
+- `R2_REGION`
+- `R2_USE_PATH_STYLE_ENDPOINT`
+- `VITE_VAPID_PUBLIC_KEY`
+- `MERCADOPAGO_ENVIRONMENT`
+- `MERCADOPAGO_ACCESS_TOKEN_TEST`
+- `MERCADOPAGO_PUBLIC_KEY_TEST`
+- `MERCADOPAGO_TEST_PAYER_EMAIL`
+- `MERCADOPAGO_ACCESS_TOKEN_PROD`
+- `MERCADOPAGO_PUBLIC_KEY_PROD`
+- `MERCADOPAGO_WEBHOOK_SECRET`
+- `VITE_MERCADOPAGO_ENVIRONMENT`
+- `VITE_MERCADOPAGO_PUBLIC_KEY_TEST`
+- `VITE_MERCADOPAGO_PUBLIC_KEY_PROD`
+
+Opcional para smoke autenticado:
+
+- `SMOKE_LOGIN_EMAIL`
+- `SMOKE_LOGIN_PASSWORD`
+
+Valores exatos deste cenário:
+
+```txt
+DEPLOY_API_PATH=/home/u452434908/domains/kleuza.com/public_html/pegaticket/api
+DEPLOY_WEB_PATH=/home/u452434908/domains/kleuza.com/public_html/pegaticket/web
+VITE_API_BASE_URL=https://api-pegaticket.kleuza.com/api/v1
+FRONTEND_URL=https://pegaticket.kleuza.com
+VITE_MERCADOPAGO_ENVIRONMENT=production
+MERCADOPAGO_ENVIRONMENT=production
+```
+
+Se você ainda não tiver R2, VAPID ou Mercado Pago em produção, mantenha os
+secrets correspondentes vazios ou com os valores já usados hoje no ambiente
+real. O workflow não apaga valor existente no `.env` se o secret vier vazio.
+
 ## Checklist de validação pós-publicação
 
 ### API
 
-1. abrir `https://api.seudominio.com/up`
-2. abrir `https://api.seudominio.com/api/v1/auth/signup/plans`
+1. abrir `https://api-pegaticket.kleuza.com/up`
+2. abrir `https://api-pegaticket.kleuza.com/api/v1/auth/signup/plans`
 3. confirmar resposta `200`
 
 ### Frontend
 
-1. abrir `https://seudominio.com`
+1. abrir `https://pegaticket.kleuza.com`
 2. validar carregamento sem erro de CORS no console
 3. validar login
 4. validar troca de empresa
@@ -192,9 +263,9 @@ Se no futuro entrarem jobs/filas reais, o ideal deixa de ser hospedagem comparti
 
 1. criar empresa
 2. criar usuário da empresa
-3. criar cliente
-4. criar produto
-5. criar pedido
+3. criar evento
+4. criar lote/tipo de ingresso
+5. realizar venda
 6. consultar dashboard e relatórios
 
 ## Diagnóstico rápido
@@ -220,8 +291,8 @@ Verificar:
 
 Verificar:
 
-- `php artisan storage:link`
 - `FILESYSTEM_DISK=public`
+- permissões de `storage/` e `bootstrap/cache/`
 
 ## Estratégia recomendada para o primeiro teste
 

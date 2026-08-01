@@ -2,35 +2,35 @@ import { createTheme, type PaletteMode } from '@mui/material/styles'
 import { UI_RADIUS, UI_SIZE } from '../styles/layoutStandards'
 
 const lightTokens = {
-  bg: '#F8F8FA',
+  bg: '#F7FAF9',
   surface: '#FFFFFF',
-  surfaceSoft: '#EEF3F8',
-  primary: '#005BDA',
-  primaryHover: '#004EC0',
-  primarySoft: '#E9F2FF',
-  secondary: '#0A6BFF',
-  accent: '#003F9A',
-  text: '#10213E',
-  muted: '#64748B',
-  border: '#D8E0EA',
+  surfaceSoft: '#F0F6F4',
+  primary: '#08CFA7',
+  primaryHover: '#00B995',
+  primarySoft: '#D9FFF6',
+  secondary: '#20D565',
+  accent: '#9BEA00',
+  text: '#10231D',
+  muted: '#49635A',
+  border: '#DCE8E4',
   success: '#16A34A',
   warning: '#F59E0B',
   danger: '#DC2626',
-  info: '#0284C7',
+  info: '#0EA5E9',
 }
 
 const darkTokens = {
-  bg: '#07111F',
-  surface: '#0D1B2E',
-  surfaceSoft: '#13243A',
-  primary: '#0A6BFF',
-  primaryHover: '#3B82FF',
-  primarySoft: '#12325F',
-  secondary: '#005BDA',
-  accent: '#38BDF8',
+  bg: '#07110E',
+  surface: '#101E1A',
+  surfaceSoft: '#0F1D18',
+  primary: '#19DFC0',
+  primaryHover: '#35E8CD',
+  primarySoft: 'rgba(25, 223, 192, 0.14)',
+  secondary: '#37DE77',
+  accent: '#A6EE16',
   text: '#F8FAFC',
-  muted: '#94A3B8',
-  border: '#24364D',
+  muted: '#B6CBC3',
+  border: '#233A32',
   success: '#22C55E',
   warning: '#FBBF24',
   danger: '#F87171',
@@ -46,7 +46,9 @@ export const pegaticketTokens = { light: lightTokens, dark: darkTokens }
 
 /**
  * Tema MUI construído a partir da paleta oficial da PegaTicket
- * (.claude/memory/design-system.md) — nunca as cores default do Material.
+ * (identidade oficial baseada no pacote `visual/`, ver
+ * .claude/memory/design-system.md) — nunca as
+ * cores default do Material.
  */
 export function buildPegaTicketTheme(mode: PaletteMode) {
   const tokens = pegaticketTokens[mode]

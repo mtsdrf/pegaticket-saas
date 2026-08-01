@@ -1,37 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 
 :root {
-  --pt-bg: #F8F8FA;
+  --pt-bg: #F7FAF9;
   --pt-surface: #FFFFFF;
-  --pt-surface-soft: #EEF3F8;
-  --pt-primary: #005BDA;
-  --pt-primary-hover: #004EC0;
-  --pt-primary-soft: #E9F2FF;
-  --pt-secondary: #0A6BFF;
-  --pt-accent: #003F9A;
-  --pt-text: #10213E;
-  --pt-muted: #64748B;
-  --pt-border: #D8E0EA;
+  --pt-surface-soft: #F0F6F4;
+  --pt-primary: #08CFA7;
+  --pt-primary-hover: #00B995;
+  --pt-primary-soft: #D9FFF6;
+  --pt-secondary: #20D565;
+  --pt-accent: #9BEA00;
+  --pt-text: #10231D;
+  --pt-muted: #49635A;
+  --pt-border: #DCE8E4;
   --pt-success: #16A34A;
   --pt-warning: #F59E0B;
   --pt-danger: #DC2626;
-  --pt-info: #0284C7;
+  --pt-info: #0EA5E9;
 
   --pt-radius-sm: 8px;
   --pt-radius-md: 12px;
   --pt-radius-lg: 15px;
   --pt-radius-xl: 15px;
-  --pt-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
-  --pt-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
-  --pt-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
-  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
+  --pt-shadow-sm: 0 1px 3px rgba(12, 50, 39, 0.08);
+  --pt-shadow-md: 0 8px 24px rgba(12, 50, 39, 0.10);
+  --pt-shadow-lg: 0 18px 48px rgba(12, 50, 39, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(8, 207, 167, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
-  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
-  --pt-page-background-soft: linear-gradient(155deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
-  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 88%, white) 0%, var(--pt-bg) 100%);
-  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 72%, white) 100%);
-  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 8%, transparent), transparent 24%);
+  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 88%, white) 38%, color-mix(in srgb, var(--pt-primary) 10%, var(--pt-bg)) 100%);
+  --pt-page-background-soft: linear-gradient(155deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 92%, white) 45%, color-mix(in srgb, var(--pt-secondary) 8%, var(--pt-bg)) 100%);
+  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, var(--pt-bg) 100%);
+  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 100%);
+  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 12%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 10%, transparent), transparent 24%);
 
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -43,17 +43,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --pt-bg: #07111F;
-    --pt-surface: #0D1B2E;
-    --pt-surface-soft: #13243A;
-    --pt-primary: #0A6BFF;
-    --pt-primary-hover: #3B82FF;
-    --pt-primary-soft: #12325F;
-    --pt-secondary: #005BDA;
-    --pt-accent: #38BDF8;
+    --pt-bg: #07110E;
+    --pt-surface: #101E1A;
+    --pt-surface-soft: #0F1D18;
+    --pt-primary: #19DFC0;
+    --pt-primary-hover: #35E8CD;
+    --pt-primary-soft: rgba(25, 223, 192, 0.14);
+    --pt-secondary: #37DE77;
+    --pt-accent: #A6EE16;
     --pt-text: #F8FAFC;
-    --pt-muted: #94A3B8;
-    --pt-border: #24364D;
+    --pt-muted: #B6CBC3;
+    --pt-border: #233A32;
     --pt-success: #22C55E;
     --pt-warning: #FBBF24;
     --pt-danger: #F87171;
@@ -61,7 +61,7 @@
     --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
     --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
     --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-    --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
+    --pt-focus-ring: 0 0 0 3px rgba(25, 223, 192, 0.28);
     --pt-surface-raised-bg: var(--pt-surface);
     --pt-surface-soft-bg: var(--pt-surface-soft);
     --pt-page-background: var(--pt-bg);
@@ -73,17 +73,17 @@
 }
 
 :root[data-theme='dark'] {
-  --pt-bg: #07111F;
-  --pt-surface: #0D1B2E;
-  --pt-surface-soft: #13243A;
-  --pt-primary: #0A6BFF;
-  --pt-primary-hover: #3B82FF;
-  --pt-primary-soft: #12325F;
-  --pt-secondary: #005BDA;
-  --pt-accent: #38BDF8;
+  --pt-bg: #07110E;
+  --pt-surface: #101E1A;
+  --pt-surface-soft: #0F1D18;
+  --pt-primary: #19DFC0;
+  --pt-primary-hover: #35E8CD;
+  --pt-primary-soft: rgba(25, 223, 192, 0.14);
+  --pt-secondary: #37DE77;
+  --pt-accent: #A6EE16;
   --pt-text: #F8FAFC;
-  --pt-muted: #94A3B8;
-  --pt-border: #24364D;
+  --pt-muted: #B6CBC3;
+  --pt-border: #233A32;
   --pt-success: #22C55E;
   --pt-warning: #FBBF24;
   --pt-danger: #F87171;
@@ -91,7 +91,7 @@
   --pt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
   --pt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
   --pt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.35);
+  --pt-focus-ring: 0 0 0 3px rgba(25, 223, 192, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
   --pt-page-background: var(--pt-bg);
@@ -102,32 +102,32 @@
 }
 
 :root[data-theme='light'] {
-  --pt-bg: #F8F8FA;
+  --pt-bg: #F7FAF9;
   --pt-surface: #FFFFFF;
-  --pt-surface-soft: #EEF3F8;
-  --pt-primary: #005BDA;
-  --pt-primary-hover: #004EC0;
-  --pt-primary-soft: #E9F2FF;
-  --pt-secondary: #0A6BFF;
-  --pt-accent: #003F9A;
-  --pt-text: #10213E;
-  --pt-muted: #64748B;
-  --pt-border: #D8E0EA;
+  --pt-surface-soft: #F0F6F4;
+  --pt-primary: #08CFA7;
+  --pt-primary-hover: #00B995;
+  --pt-primary-soft: #D9FFF6;
+  --pt-secondary: #20D565;
+  --pt-accent: #9BEA00;
+  --pt-text: #10231D;
+  --pt-muted: #49635A;
+  --pt-border: #DCE8E4;
   --pt-success: #16A34A;
   --pt-warning: #F59E0B;
   --pt-danger: #DC2626;
-  --pt-info: #0284C7;
-  --pt-shadow-sm: 0 1px 2px rgba(0, 91, 218, 0.05);
-  --pt-shadow-md: 0 10px 24px rgba(0, 63, 154, 0.10);
-  --pt-shadow-lg: 0 22px 54px rgba(0, 42, 120, 0.14);
-  --pt-focus-ring: 0 0 0 3px rgba(10, 107, 255, 0.28);
+  --pt-info: #0EA5E9;
+  --pt-shadow-sm: 0 1px 3px rgba(12, 50, 39, 0.08);
+  --pt-shadow-md: 0 8px 24px rgba(12, 50, 39, 0.10);
+  --pt-shadow-lg: 0 18px 48px rgba(12, 50, 39, 0.14);
+  --pt-focus-ring: 0 0 0 3px rgba(8, 207, 167, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
-  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
-  --pt-page-background-soft: linear-gradient(155deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 40%, color-mix(in srgb, var(--pt-primary) 12%, var(--pt-bg)) 100%);
-  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 88%, white) 0%, var(--pt-bg) 100%);
-  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 72%, white) 100%);
-  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 10%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 8%, transparent), transparent 24%);
+  --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 88%, white) 38%, color-mix(in srgb, var(--pt-primary) 10%, var(--pt-bg)) 100%);
+  --pt-page-background-soft: linear-gradient(155deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 92%, white) 45%, color-mix(in srgb, var(--pt-secondary) 8%, var(--pt-bg)) 100%);
+  --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, var(--pt-bg) 100%);
+  --pt-sidebar-background: linear-gradient(180deg, color-mix(in srgb, var(--pt-surface) 96%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 76%, white) 100%);
+  --pt-decorative-overlay: radial-gradient(circle at top right, color-mix(in srgb, var(--pt-accent) 12%, transparent), transparent 28%), radial-gradient(circle at bottom left, color-mix(in srgb, var(--pt-primary) 10%, transparent), transparent 24%);
 }
 
 * {

@@ -79,9 +79,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            web/package-lock.json
-            site/package-lock.json
+          cache-dependency-path: web/package-lock.json
 
       - name: npm ci (web/)
         working-directory: web
@@ -110,22 +108,6 @@ jobs:
         env:
           CI: '1'
         run: npm run test:e2e
-
-      # Site institucional/landing (site/): mesmo padrão de build do web/,
-      # publicado à parte em site.pegaticket.com (subdomínio próprio, sem
-      # autenticação). VITE_APP_URL é a URL pública do app principal (não é
-      # segredo — é só o link do CTA "Entrar no painel"), mas é obrigatória
-      # no GitHub Actions para manter o deploy explícito e sem fallback
-      # silencioso.
-      - name: npm ci (site/)
-        working-directory: site
-        run: npm ci
-
-      - name: Build site (site/)
-        working-directory: site
-        env:
-          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
-        run: npm run build
 
       # SSH: chave dedicada ao deploy (não a pessoal do usuário), pública
       # cadastrada em ~/.ssh/authorized_keys no servidor Hostinger.
@@ -162,6 +144,12 @@ jobs:
             exit 1
           fi
 
+      # DEPLOY_API_PATH deve apontar para a RAIZ do projeto Laravel no
+      # servidor (ex.: /home/.../pegaticket/api), nunca para api/public,
+      # porque os passos seguintes entram nessa pasta para rodar artisan.
+      # O subdomínio da API continua apontando manualmente para
+      # ${DEPLOY_API_PATH}/public no hPanel.
+      #
       # --delete espelha o servidor com o repo (remove arquivo órfão de algo
       # deletado), mas os --exclude protegem o .env real de produção e os
       # diretórios graváveis em runtime (logs, cache/sessions/views do
@@ -189,17 +177,6 @@ jobs:
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
             web/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_WEB_PATH }}/"
-
-      # Publica site/dist/ no subdomínio site.pegaticket.com — path apontado
-      # por DEPLOY_SITE_PATH precisa ser criado manualmente uma vez (hPanel
-      # Hostinger, document root do subdomínio), mesmo padrão dos outros 2
-      # secrets de path (nenhuma config de vhost é versionada no repo, ver
-      # docs/hostinger-shared-deploy.md).
-      - name: Deploy Site via rsync
-        run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
-            site/dist/ "${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:${{ secrets.DEPLOY_SITE_PATH }}/"
 
       # .env.example nunca tem valor real de segredo (só nome de chave +
       # placeholder vazio/default público, disciplina já seguida no
@@ -361,7 +338,7 @@ jobs:
         run: npm run test:e2e:smoke -- --grep "carrega a tela de login"
 
       - name: Smoke autenticado pós-deploy (web/)
-        if: ${{ env.FRONTEND_URL != '' && env.SMOKE_LOGIN_EMAIL != '' && env.SMOKE_LOGIN_PASSWORD != '' }}
+        if: ${{ secrets.SMOKE_LOGIN_EMAIL != '' && secrets.SMOKE_LOGIN_PASSWORD != '' }}
         working-directory: web
         env:
           CI: '1'

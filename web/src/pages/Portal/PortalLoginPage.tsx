@@ -246,7 +246,7 @@ export function PortalLoginPage() {
         </Paper>
 
         <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)', textAlign: 'center', mt: 3 }}>
-          PegaTicket — gestão clara para empresas em movimento.
+          PegaTicket — do acesso a experiencia, tudo em movimento.
         </Typography>
       </Box>
     </Box>

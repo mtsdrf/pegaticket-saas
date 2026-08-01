@@ -579,7 +579,7 @@ export function SaleTrackingPage() {
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 4, mb: 1 }}>
           <Logo variant="mark" size={20} />
           <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>
-            Rastreio via PegaTicket — gestão clara para empresas em movimento.
+            Rastreio via PegaTicket — do acesso a experiencia, tudo em movimento.
           </Typography>
         </Stack>
       </Box>

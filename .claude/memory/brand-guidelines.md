@@ -8,83 +8,107 @@ O nome deve ser mantido em todas as aplicações.
 
 ## Conceito da marca
 
-PegaTicket é um sistema SaaS de gestão comercial criado para organizar pedidos, clientes, produtos e indicadores de forma clara, moderna e eficiente.
+PegaTicket é uma plataforma de eventos e ingressos. A marca deve comunicar
+energia, movimento, acesso, conexao entre publico e evento, tecnologia e
+confianca operacional.
 
 A marca deve transmitir:
 
+- Energia.
+- Movimento.
+- Acesso.
+- Conexao.
+- Experiencia.
 - Clareza.
-- Controle.
-- Organização.
-- Crescimento.
+- Controle operacional.
 - Movimento.
 - Tecnologia.
-- Confiança.
+- Confianca.
 - Profissionalismo.
-- Agilidade operacional.
+- Fluidez.
 
 ## Posicionamento
 
-Para empresas que precisam controlar pedidos, clientes, produtos e resultados, PegaTicket é uma plataforma de gestão comercial que centraliza a operação em uma experiência clara, visual e inteligente.
+Para produtores e operacoes que precisam vender, controlar acessos e conduzir
+experiencias com confianca, PegaTicket e a plataforma que conecta a gestao do
+evento ao momento em que o publico entra e vive a experiencia.
 
 ## Tagline oficial
 
-Gestão clara para empresas em movimento.
+Do acesso a experiencia, tudo em movimento.
 
 ## Personalidade da marca
 
-A PegaTicket é:
+### Arquétipos prioritarios
 
-- Moderna.
-- Confiável.
+- Explorador.
+- Mago.
+- Governante.
+
+## Personalidade da marca
+
+A PegaTicket e:
+
+- Vibrante.
+- Confiavel.
 - Clara.
-- Inteligente.
+- Tecnologica.
+- Humana.
 - Direta.
-- Produtiva.
-- Tecnológica.
-- Profissional.
+- Organizada.
+- Segura.
 - Levemente premium.
 
-A PegaTicket não é:
+A PegaTicket nao e:
 
-- Genérica.
+- Generica.
 - Infantil.
-- Poluída.
-- Financeira demais.
+- Poluida.
+- Burocratica demais.
 - Fria demais.
 - Antiga.
-- Clichê.
-- Parecida com template comum.
+- Cliche.
+- Parecida com sistema financeiro.
 - Visualmente exagerada.
 
 ## Direção da logo
 
-A logo deve seguir a direção:
+A logo deve seguir a direcao:
 
-**M com movimento**
+**Fita em movimento que se transforma em ingresso**
 
-O símbolo deve ser baseado na letra `M`, com sensação sutil de avanço, evolução e crescimento.
+O simbolo deve representar o caminho entre o publico e o evento: uma faixa
+continua, fluida, com movimento, que pode sugerir dobra, percurso e conversao
+em ticket.
 
 A logo deve parecer:
 
-- Geométrica.
-- Minimalista.
+- Fluida.
+- Memoravel.
 - Moderna.
 - Tecnológica.
-- Memorável.
 - Limpa.
 - Profissional.
-- Legível em tamanhos pequenos.
+- Legivel em tamanhos pequenos.
 
 ## Símbolo
 
-**Atualização 2026-07-13**: o símbolo oficial passou a ser um logo fornecido pelo usuário
-(`M` geométrico em azul-marinho + gráfico de barras ascendente com seta em teal,
-`web/public/logo.png`, aplicado via `web/src/components/ui/Logo.tsx`). Isso **substitui** a
-regra anterior que proibia seta literal e gráfico de barras/financeiro no símbolo — decisão
-consciente do usuário ao fornecer o asset, não um esquecimento. Não reverter para SVG
-geométrico sem seta/barras sem confirmar de novo com o usuário.
+**Atualizacao 2026-08-01**: o pacote oficial de identidade visual foi entregue
+na pasta raiz `visual/` e passou a ser a fonte unica da marca. O logo oficial e
+o simbolo de fita/ingresso em gradiente verde-lima/teal, com arquivos-base em:
 
-O símbolo da PegaTicket deve ser um `M` geométrico com movimento sutil para frente.
+- `visual/logo_pegaticket.png`
+- `visual/favicon.svg`
+- `visual/favicon.ico`
+- `visual/apple-touch-icon.png`
+- `visual/web-app-manifest-192x192.png`
+- `visual/web-app-manifest-512x512.png`
+
+Esses arquivos ja foram promovidos para `web/public/` e substituem a fase
+anterior do rebranding.
+
+O simbolo da PegaTicket deve funcionar como percurso visual entre acesso,
+movimento e experiencia.
 
 Ele deve funcionar como:
 
@@ -99,28 +123,44 @@ Ele deve funcionar como:
 
 Não usar:
 
-- Seta literal.
-- Gráfico de barras comum.
-- Gráfico financeiro.
-- Ícone genérico de analytics.
-- Ícone de relatório comum.
+- Grafico de barras comum.
+- Grafico financeiro.
+- Icone generico de analytics.
+- Icone de relatorio comum.
 - Imagem de banco de imagem.
 - Elementos complexos demais.
 - Muitos detalhes internos.
 - Símbolo que não funcione em favicon.
 - Visual corporativo antigo.
+- Linguagem de ERP/financeiro.
 
 ## Wordmark
 
-O texto `PegaTicket` deve usar uma fonte sans-serif moderna, com peso médio ou semibold.
+O texto `PegaTicket` deve usar uma fonte sans-serif moderna com personalidade,
+ritmo e boa leitura.
 
 Fontes recomendadas:
 
+- Sora SemiBold.
 - Manrope SemiBold.
-- Geist SemiBold.
 - Inter SemiBold.
 
 O wordmark deve ter aparência limpa, tecnológica e confiável.
+
+## Paleta oficial da marca
+
+- Lima: `#9BEA00`
+- Verde: `#20D565`
+- Teal: `#08CFA7`
+- Teal escuro: `#009D80`
+- Verde profundo: `#006B50`
+- Verde escuro: `#004C3C`
+
+Gradiente principal:
+
+```txt
+linear-gradient(135deg, #9BEA00 0%, #20D565 38%, #08CFA7 72%, #009D80 100%)
+```
 
 ## Versões obrigatórias da marca
 
@@ -144,9 +184,9 @@ A PegaTicket fala de forma:
 - Confiante.
 - Humana.
 - Profissional.
-- Simples.
-- Sem jargão desnecessário.
-- Sem frases clichês.
+- Energica sem exagero.
+- Sem jargao desnecessario.
+- Sem frases cliches.
 
 ## Experiência de marca no sistema
 
@@ -154,8 +194,9 @@ A marca não vive só na logo — vive em cada tela. Aplicar de forma consistent
 
 - Tom de voz humano e direto em toda mensagem visível ao usuário (sucesso, erro, vazio, loading).
 - Nunca usar mensagem técnica crua ("Error 500", stack trace) — sempre traduzir para linguagem clara.
-- Estado vazio nunca é "tela quebrada": sempre explica o que fazer a seguir (ex.: "Nenhum pedido ainda. Crie o primeiro pedido para começar.").
-- Cor de destaque (`--pt-accent`) reservada para elementos que indicam progresso/positivo (ex.: métrica em alta, ação concluída) — não usar como cor decorativa aleatória.
+- Estado vazio nunca é "tela quebrada": sempre explica o que fazer a seguir (ex.: "Nenhum evento publicado ainda. Crie o primeiro evento para abrir as vendas.").
+- Cor de destaque (`--pt-accent`) reservada para pontos de celebracao, energia e foco visual controlado — nao usar como cor decorativa aleatoria.
+- O gradiente e os tons lima/verde/teal sao parte da assinatura da marca e podem aparecer em login, manifest, loading visual, onboarding e materiais de destaque, sem voltar para a antiga direcao azul/coral.
 - Loading nunca é só um spinner solto: usar skeleton ou mensagem curta que mantenha o usuário orientado.
 - Toda tela nova deve parecer parte do mesmo produto que o login — mesma paleta, mesma tipografia, mesmo tom.
 
@@ -172,7 +213,7 @@ Bem-vindo ao PegaTicket
 Subheadline:
 
 ```txt
-Gestão clara para empresas em movimento.
+Do acesso a experiencia, tudo em movimento.
 ```
 
 Botão principal:
@@ -198,21 +239,21 @@ Visão geral
 Subtítulo:
 
 ```txt
-Acompanhe os principais números da operação.
+Acompanhe o ritmo do evento e das vendas em um so lugar.
 ```
 
 Ações rápidas:
 
 ```txt
-Novo pedido
-Adicionar cliente
-Cadastrar produto
+Criar evento
+Abrir vendas
+Acompanhar check-in
 ```
 
 Métricas:
 
 ```txt
-Pedidos entregues
-Pedidos pendentes
-Valor recebido
+Ingressos vendidos
+Receita do periodo
+Check-ins realizados
 ```

@@ -48,8 +48,8 @@ Aplicar a nova identidade visual da PegaTicket (ver [[brand-guidelines]] e [[des
 
 Ver [[design-system]] (seções Login e Dashboard) para o detalhamento visual completo. Resumo:
 
-- **Login**: fundo com gradiente sofisticado + elementos abstratos sutis de movimento, card moderno, logo PegaTicket, headline "Bem-vindo ao PegaTicket", subheadline "Gestão clara para empresas em movimento.", botão "Entrar no painel", link secundário "Atualizar sistema".
-- **Dashboard**: título "Visão geral" + subtítulo, cards de ação rápida (Novo pedido / Adicionar cliente / Cadastrar produto), cards de métrica (Pedidos entregues / Pedidos pendentes / Valor recebido), gráfico de pedidos por mês em card, navbar leve, sidebar refinada com estado ativo claro.
+- **Login**: fundo com gradiente sofisticado verde/lima/teal + elementos abstratos sutis de movimento e celebracao, card moderno, logo PegaTicket oficial vindo de `visual/`, headline "Bem-vindo ao PegaTicket", subheadline oficial da fase atual, botao "Entrar no painel", link secundario "Atualizar sistema".
+- **Dashboard**: titulo "Visao geral" + subtitulo, cards de acao rapida ligados ao contexto de eventos (ex.: Criar evento / Abrir vendas / Acompanhar check-in), metricas ligadas a vendas, acessos e publico, grafico em card, navbar leve, sidebar refinada com estado ativo claro.
 - A troca de tenant (funcionalidade real hoje) precisa continuar acessível — mover para navbar/menu de usuário em vez de ocupar a tela inteira do dashboard.
 
 ## Etapas técnicas
@@ -83,10 +83,10 @@ Ver [[design-system]] (seções Login e Dashboard) para o detalhamento visual co
 - Dashboard com header/ações rápidas/métricas/gráfico separados visualmente.
 - Troca de tenant continua funcionando (só mudou de lugar na UI).
 - Autenticação, rotas, permissões, API e banco intocados.
-- Testado primeiro em viewport mobile (não só validado depois do desktop pronto).
+- Testado primeiro em viewport mobile (nao so validado depois do desktop pronto).
 - Alvos de toque ≥44px em botões/inputs/itens clicáveis.
 - Nenhuma ação crítica depende só de `:hover`.
 - Responsividade validada (mobile/tablet/desktop).
 - Acessibilidade básica revisada (labels, foco, contraste).
-- Memória (design-system.md / brand-guidelines.md) atualizada se alguma decisão visual mudar durante a implementação.
+- Memoria (design-system.md / brand-guidelines.md) atualizada se alguma decisao visual mudar durante a implementacao.
 ```

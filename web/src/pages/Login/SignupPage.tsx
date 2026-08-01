@@ -23,9 +23,9 @@ import type { PublicPlan } from '../../types/auth'
 import { PASSWORD_POLICY_HINT, generateStrongPassword } from '../../utils/password'
 
 const HIGHLIGHTS = [
-  'Crie sua empresa e já entre no ambiente inicial',
-  'O teste é liberado automaticamente no primeiro acesso',
-  'A escolha do plano só será necessária quando o período de teste terminar',
+  'Publique seu evento e organize a operacao desde o primeiro acesso',
+  'Ingressos, check-in e equipe ja nascem no mesmo ambiente',
+  'A configuracao inicial respeita a identidade oficial da PegaTicket',
 ]
 
 function normalizeTenantSlug(value: string): string {
@@ -50,7 +50,7 @@ function BrandPanel() {
         p: 6,
         color: '#FFFFFF',
         background:
-          'linear-gradient(155deg, var(--pt-primary) 0%, color-mix(in srgb, var(--pt-primary) 65%, black) 55%, color-mix(in srgb, var(--pt-accent) 45%, black) 100%)',
+          'linear-gradient(145deg, color-mix(in srgb, var(--pt-primary) 92%, #05241d) 0%, color-mix(in srgb, var(--pt-secondary) 78%, var(--pt-primary)) 56%, color-mix(in srgb, var(--pt-accent) 48%, var(--pt-secondary)) 100%)',
       }}
     >
       <Box
@@ -63,7 +63,7 @@ function BrandPanel() {
           top: -140,
           right: -120,
           filter: 'blur(90px)',
-          background: 'color-mix(in srgb, var(--pt-accent) 55%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-primary) 42%, transparent)',
         }}
       />
       <Box
@@ -76,7 +76,7 @@ function BrandPanel() {
           bottom: -100,
           left: -80,
           filter: 'blur(80px)',
-          background: 'color-mix(in srgb, #FFFFFF 20%, transparent)',
+          background: 'color-mix(in srgb, var(--pt-accent) 26%, transparent)',
         }}
       />
       <Box
@@ -86,7 +86,7 @@ function BrandPanel() {
           inset: 0,
           opacity: 0.5,
           backgroundImage:
-            'radial-gradient(color-mix(in srgb, #FFFFFF 22%, transparent) 1px, transparent 1px)',
+            'radial-gradient(color-mix(in srgb, #FFFFFF 24%, transparent) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
           maskImage: 'linear-gradient(180deg, transparent, black 30%, black 70%, transparent)',
         }}
@@ -109,10 +109,10 @@ function BrandPanel() {
 
       <Box sx={{ position: 'relative', maxWidth: 420 }}>
         <Typography sx={{ fontSize: 30, fontWeight: 600, lineHeight: 1.25, mb: 1.5 }}>
-          Comece sua operação sem depender de suporte.
+          Coloque seu evento no ar com uma operacao pronta para crescer.
         </Typography>
         <Typography sx={{ fontSize: 15, color: 'color-mix(in srgb, #FFFFFF 78%, transparent)', mb: 3 }}>
-          Escolha o plano, crie a empresa e já entre com o proprietário inicial pronto para configurar o ambiente.
+          Crie sua empresa, organize vendas e acessos e entre em um ambiente desenhado para experiencias ao vivo.
         </Typography>
 
         <Stack spacing={1.25}>
@@ -239,7 +239,7 @@ export function SignupPage() {
           justifyContent: 'center',
           p: { xs: 2, sm: 3 },
           background: {
-            xs: 'linear-gradient(160deg, var(--pt-bg) 0%, var(--pt-surface-soft) 45%, color-mix(in srgb, var(--pt-primary) 16%, var(--pt-bg)) 100%)',
+            xs: 'var(--pt-page-background-soft)',
             md: 'var(--pt-bg)',
           },
         }}
