@@ -1,8 +1,10 @@
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined'
+import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import {
@@ -13,10 +15,13 @@ import {
   Paper,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { useState, type FormEvent, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react'
 import { PageHeader } from '../../components/layout/PageHeader'
+import { QrCodeScannerPanel } from '../../components/checkin/QrCodeScannerPanel'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import { checkinTicket } from '../../services/ticketService'
@@ -30,6 +35,10 @@ import {
 } from '../../types/ticket'
 
 type SearchMode = 'code' | 'attendee_name' | 'attendee_document' | 'qr_token'
+type InputMode = 'manual' | 'camera'
+
+/** Intervalo de "pausa processando" após um resultado de check-in via câmera, pra não reler o mesmo QR em sequência. */
+const CAMERA_RESCAN_COOLDOWN_MS = 2000
 
 const SEARCH_MODE_OPTIONS: { value: SearchMode; label: string; placeholder: string }[] = [
   { value: 'code', label: 'Código do ingresso', placeholder: 'Ex.: A1B2C3D4' },
@@ -130,41 +139,43 @@ function ResultCard({ result }: { result: CheckinResponse }) {
 }
 
 /**
- * Tela de portaria (check-in) — busca manual por código/nome/documento do
- * ingresso ou colagem do token de QR Code. Leitura de QR Code por câmera
- * não foi incluída nesta rodada: o projeto não tem nenhuma lib de leitura
- * instalada (`jsQR`/`html5-qrcode`/`zxing`) e instalar dependência nova
- * está fora de escopo sem alinhamento prévio — fica documentado como
- * pendência. Quem tiver um leitor externo (app de celular, leitor USB) pode
- * colar o token lido no campo "Token do QR Code".
+ * Tela de portaria (check-in) — dois modos de entrada: leitura de QR Code
+ * pela câmera (`html5-qrcode`, API `Html5Qrcode` de baixo nível) ou busca
+ * manual por código/nome/documento/token colado. A câmera é o caminho
+ * rápido pra fila de entrada; o manual continua como fallback pra quando a
+ * câmera não está disponível (sem permissão, sem hardware) ou o operador
+ * prefere digitar/colar um token lido por leitor externo.
  */
 export function CheckinPage() {
+  const [inputMode, setInputMode] = useState<InputMode>('camera')
   const [searchMode, setSearchMode] = useState<SearchMode>('code')
   const [searchValue, setSearchValue] = useState('')
   const [gateName, setGateName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [result, setResult] = useState<CheckinResponse | null>(null)
+  const [cameraCooldown, setCameraCooldown] = useState(false)
 
   const currentOption = SEARCH_MODE_OPTIONS.find((option) => option.value === searchMode)!
+  const cooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const trimmed = searchValue.trim()
-    if (!trimmed) return
+  useEffect(() => {
+    return () => {
+      if (cooldownTimeoutRef.current) clearTimeout(cooldownTimeoutRef.current)
+    }
+  }, [])
 
+  async function runCheckin(payload: CheckinTicketPayload) {
     setIsSubmitting(true)
     setErrorMessage(null)
     setResult(null)
 
-    const payload: CheckinTicketPayload = {
-      [searchMode]: trimmed,
-      gate_name: gateName.trim() || undefined,
-      device_info: navigator.userAgent,
-    }
-
     try {
-      const response = await checkinTicket(payload)
+      const response = await checkinTicket({
+        ...payload,
+        gate_name: gateName.trim() || undefined,
+        device_info: navigator.userAgent,
+      })
       setResult(response)
       if (response.result === 'valido' || response.result === 'ja_utilizado') {
         setSearchValue('')
@@ -176,85 +187,137 @@ export function CheckinPage() {
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmed = searchValue.trim()
+    if (!trimmed) return
+    await runCheckin({ [searchMode]: trimmed })
+  }
+
+  async function handleQrDetected(decodedText: string) {
+    const trimmed = decodedText.trim()
+    if (!trimmed || isSubmitting || cameraCooldown) return
+
+    await runCheckin({ qr_token: trimmed })
+
+    setCameraCooldown(true)
+    if (cooldownTimeoutRef.current) clearTimeout(cooldownTimeoutRef.current)
+    cooldownTimeoutRef.current = setTimeout(() => setCameraCooldown(false), CAMERA_RESCAN_COOLDOWN_MS)
+  }
+
+  function handleInputModeChange(_event: unknown, next: InputMode | null) {
+    if (!next || next === inputMode) return
+    setInputMode(next)
+    setSearchValue('')
+    setErrorMessage(null)
+  }
+
   return (
     <Box sx={PAGE_CONTAINER_SX}>
       <PageHeader title="Portaria" subtitle="Faça o check-in dos participantes na entrada do evento." />
 
       <Stack spacing={2.5} sx={{ maxWidth: 560 }}>
-        <Alert severity="info" variant="outlined" icon={<QrCodeScannerOutlinedIcon fontSize="small" />}>
-          Leitura de QR Code pela câmera ainda não está disponível nesta tela. Use um leitor externo e cole o token
-          lido no campo "Token do QR Code", ou busque por código/nome/documento.
-        </Alert>
+        <ToggleButtonGroup
+          value={inputMode}
+          exclusive
+          onChange={handleInputModeChange}
+          fullWidth
+          sx={{
+            '& .MuiToggleButton-root': {
+              minHeight: UI_SIZE.control,
+              textTransform: 'none',
+              fontWeight: 600,
+              gap: 0.75,
+            },
+          }}
+        >
+          <ToggleButton value="camera">
+            <CameraAltOutlinedIcon fontSize="small" />
+            Ler QR Code (câmera)
+          </ToggleButton>
+          <ToggleButton value="manual">
+            <KeyboardOutlinedIcon fontSize="small" />
+            Buscar manualmente
+          </ToggleButton>
+        </ToggleButtonGroup>
 
-        <Paper elevation={0} sx={{ p: 2.5, ...ELEVATED_SURFACE_SX }}>
-          <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-            <Stack spacing={2}>
-              <TextField
-                select
-                label="Buscar por"
-                value={searchMode}
-                onChange={(event) => {
-                  setSearchMode(event.target.value as SearchMode)
-                  setSearchValue('')
-                }}
-                fullWidth
-                size="small"
-              >
-                {SEARCH_MODE_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
+        <TextField
+          label="Portão / posto (opcional)"
+          value={gateName}
+          onChange={(event) => setGateName(event.target.value)}
+          fullWidth
+          size="small"
+        />
 
-              <TextField
-                label={currentOption.label}
-                placeholder={currentOption.placeholder}
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                fullWidth
-                autoFocus
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Box sx={{ display: 'flex', mr: 1, color: 'var(--pt-muted)' }}>
-                        {searchMode === 'attendee_name' || searchMode === 'attendee_document' ? (
-                          <BadgeOutlinedIcon fontSize="small" />
-                        ) : (
-                          <QrCodeScannerOutlinedIcon fontSize="small" />
-                        )}
-                      </Box>
-                    ),
-                  },
-                }}
-              />
+        {inputMode === 'camera' ? (
+          <QrCodeScannerPanel
+            paused={isSubmitting || cameraCooldown}
+            onDetected={(text) => void handleQrDetected(text)}
+            onSwitchToManual={() => handleInputModeChange(null, 'manual')}
+          />
+        ) : (
+          <Paper elevation={0} sx={{ p: 2.5, ...ELEVATED_SURFACE_SX }}>
+            <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+              <Stack spacing={2}>
+                <TextField
+                  select
+                  label="Buscar por"
+                  value={searchMode}
+                  onChange={(event) => {
+                    setSearchMode(event.target.value as SearchMode)
+                    setSearchValue('')
+                  }}
+                  fullWidth
+                  size="small"
+                >
+                  {SEARCH_MODE_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-              <TextField
-                label="Portão / posto (opcional)"
-                value={gateName}
-                onChange={(event) => setGateName(event.target.value)}
-                fullWidth
-                size="small"
-              />
+                <TextField
+                  label={currentOption.label}
+                  placeholder={currentOption.placeholder}
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  fullWidth
+                  autoFocus
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ display: 'flex', mr: 1, color: 'var(--pt-muted)' }}>
+                          {searchMode === 'attendee_name' || searchMode === 'attendee_document' ? (
+                            <BadgeOutlinedIcon fontSize="small" />
+                          ) : (
+                            <QrCodeScannerOutlinedIcon fontSize="small" />
+                          )}
+                        </Box>
+                      ),
+                    },
+                  }}
+                />
 
-              {errorMessage && (
-                <Alert severity="error" variant="outlined" role="alert">
-                  {errorMessage}
-                </Alert>
-              )}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={isSubmitting || !searchValue.trim()}
+                  sx={{ minHeight: UI_SIZE.controlLarge }}
+                >
+                  {isSubmitting ? 'Verificando…' : 'Fazer check-in'}
+                </Button>
+              </Stack>
+            </Box>
+          </Paper>
+        )}
 
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isSubmitting || !searchValue.trim()}
-                sx={{ minHeight: UI_SIZE.controlLarge }}
-              >
-                {isSubmitting ? 'Verificando…' : 'Fazer check-in'}
-              </Button>
-            </Stack>
-          </Box>
-        </Paper>
+        {errorMessage && (
+          <Alert severity="error" variant="outlined" role="alert">
+            {errorMessage}
+          </Alert>
+        )}
 
         {result && <ResultCard result={result} />}
 

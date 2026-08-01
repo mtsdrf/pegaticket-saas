@@ -247,6 +247,7 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   subscription: ['read', 'update'],
   sales: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
   'storefront-sales': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
+  sale_refunds: ['read', 'create'],
 }
 
 export function getTenantRoleActionOptions(functionalitySlug: string): readonly string[] {

@@ -46,6 +46,7 @@ use App\Http\Controllers\TenantSettings\TenantSettingsController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\Sale\SaleInstallmentController;
+use App\Http\Controllers\Sale\SaleRefundController;
 use App\Http\Controllers\Sale\SaleTrackingController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\AnalyticsController;
@@ -811,6 +812,20 @@ Route::prefix('v1')->group(function () {
 
             Route::patch('/{order}/cancel', [SaleController::class, 'cancel'])
                 ->middleware(['tenant', 'perm:sales,cancel', 'throttle:30,1,orders-cancel']);
+
+            // Estorno externo (spec 5.14/11.3): o clube já estornou no
+            // PagBank fora do sistema, aqui só se REGISTRA o estorno e os
+            // efeitos internos (tickets invalidados, lugar liberado se
+            // escolhido). Functionality própria (sale_refunds), ações
+            // 'create'/'read' já existentes. Ver SaleRefundController.
+            Route::get('/{order}/refunds', [SaleRefundController::class, 'index'])
+                ->middleware(['tenant', 'perm:sale_refunds,read', 'throttle:60,1,orders-refunds-list']);
+
+            Route::post('/{order}/refunds', [SaleRefundController::class, 'store'])
+                ->middleware(['tenant', 'perm:sale_refunds,create', 'throttle:30,1,orders-refunds-create']);
+
+            Route::get('/{order}/refunds/{refund}/receipt', [SaleRefundController::class, 'receipt'])
+                ->middleware(['tenant', 'perm:sale_refunds,read', 'throttle:60,1,orders-refunds-receipt']);
 
             // Fila de aprovação do staff (Delivery Fase 1) — todo pedido da
             // loja (origin=storefront) nasce pending_approval e precisa

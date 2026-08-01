@@ -297,6 +297,8 @@ use App\Listeners\Sale\AuditSaleUndispatched;
 use App\Listeners\Sale\AuditSaleCancellationRequested;
 use App\Listeners\Sale\AuditSaleCancellationApproved;
 use App\Listeners\Sale\AuditSaleCancellationRejected;
+use App\Events\Sale\SaleRefundCreated;
+use App\Listeners\Sale\AuditSaleRefundCreated;
 use App\Listeners\Sale\SendPushOnSaleApproved;
 use App\Listeners\Sale\SendPushOnSaleRejected;
 use App\Listeners\Sale\SendPushOnSaleDelivered;
@@ -521,6 +523,7 @@ class EventServiceProvider extends ServiceProvider
         SaleUnpaid::class => [AuditSaleUnpaid::class],
         SaleInstallmentPaid::class => [AuditSaleInstallmentPaid::class],
         SaleInstallmentUnpaid::class => [AuditSaleInstallmentUnpaid::class],
+        SaleRefundCreated::class => [AuditSaleRefundCreated::class],
         SaleInstallmentCreated::class => [AuditSaleInstallmentCreated::class],
         SaleInstallmentUpdated::class => [AuditSaleInstallmentUpdated::class],
         SaleInstallmentDeleted::class => [AuditSaleInstallmentDeleted::class],

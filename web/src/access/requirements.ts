@@ -53,6 +53,9 @@ export const ACCESS = {
   salesCreate: tenant('sales', 'create'),
   /** Reaproveitada pelo backend em várias ações (edição de itens/parcelas, aprovar/recusar fila online) — ver `.claude/memory/api-patterns.md`. */
   salesUpdate: tenant('sales', 'update'),
+  /** Estorno externo (spec 5.14) — registro de estorno já feito fora do sistema (PagBank), functionality própria `sale_refunds`. */
+  saleRefundsRead: tenant('sale_refunds', 'read'),
+  saleRefundsCreate: tenant('sale_refunds', 'create'),
   /** Tela dedicada de vendas online (`/vendas-online`) — permissão própria, independente de `orders,*`. */
   storefrontSalesRead: tenant('storefront-sales', 'read'),
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),

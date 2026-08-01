@@ -32,6 +32,17 @@ return [
             'MEDIA_VENUES_DISK',
             env('R2_ENABLED', false) ? 'r2_venues' : 'public'
         ),
+
+        // Comprovante de estorno externo (spec 5.14) — documento
+        // financeiro sensível, NUNCA deve ser servido por URL pública
+        // direta. Sempre 'local' por padrão (storage/app/private, sem
+        // symlink público), diferente de todos os outros mediaKeys acima
+        // que alternam para r2_* quando R2_ENABLED=true — não existe (nem
+        // deve existir sem decisão explícita) um disco r2 PRIVADO
+        // configurado em filesystems.php ainda, então este mediaKey não
+        // segue esse padrão condicional. Só acessível via
+        // SaleRefundController::receipt(), autenticado + tenant + perm.
+        'sale_refund' => env('MEDIA_SALE_REFUNDS_DISK', 'local'),
     ],
 
     /*

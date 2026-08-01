@@ -49,6 +49,7 @@ use App\Repositories\Contracts\{
     RefundRepositoryInterface,
     TicketRepositoryInterface,
     TicketCheckinRepositoryInterface,
+    SaleRefundRepositoryInterface,
 };
 
 // Repository Implementations
@@ -91,6 +92,7 @@ use App\Repositories\Eloquent\{
     RefundRepository,
     TicketRepository,
     TicketCheckinRepository,
+    SaleRefundRepository,
 };
 
 // Payment provider (cobrança de planos — roadmap 1B)
@@ -300,6 +302,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TicketCheckinRepositoryInterface::class,
             TicketCheckinRepository::class
+        );
+
+        // Sale Refund Repository (estorno externo, spec 5.14)
+        $this->app->bind(
+            SaleRefundRepositoryInterface::class,
+            SaleRefundRepository::class
         );
 
         // Venue Repository

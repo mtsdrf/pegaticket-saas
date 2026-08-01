@@ -21,6 +21,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AsyncAutocomplete } from '../crud/AsyncAutocomplete'
+import { SaleRefundsSection } from './SaleRefundsSection'
 import * as eventProductService from '../../services/eventProductService'
 import * as saleService from '../../services/saleService'
 import * as ticketTypeService from '../../services/ticketTypeService'
@@ -542,6 +543,8 @@ export function SaleDetailDialog({ orderUuid, open, onClose, onChanged }: SaleDe
                   </Stack>
                 )}
               </Box>
+
+              <SaleRefundsSection sale={selectedSale} onRefundRegistered={() => void refetchSelectedSale(selectedSale.uuid)} />
 
               {selectedSale.status !== 'cancellation_requested' && !selectedSale.cancelled_at && !selectedSale.is_paid && (
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
