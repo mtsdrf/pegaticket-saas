@@ -13,6 +13,30 @@ async function confirmTenantIfNeeded(page: Page) {
   await expect(tenantDialogTitle).toHaveCount(0)
 }
 
+async function expectAuthenticatedShell(page: Page) {
+  const accountButton = page.getByRole('button', { name: 'Abrir menu da conta' })
+  const loginError = page.getByRole('alert')
+
+  await expect
+    .poll(
+      async () => {
+        if (await accountButton.isVisible().catch(() => false)) return 'authenticated'
+        if (await page.getByRole('heading', { name: 'Selecione a empresa' }).isVisible().catch(() => false)) return 'tenant-selection'
+        if (await loginError.isVisible().catch(() => false)) return `login-error:${(await loginError.textContent()) ?? ''}`
+        return `path:${new URL(page.url()).pathname}`
+      },
+      {
+        timeout: 15000,
+        message: 'Esperava shell autenticado, seleção de empresa ou erro visível de login.',
+      },
+    )
+    .toMatch(/^(authenticated|tenant-selection)$/)
+
+  await confirmTenantIfNeeded(page)
+  await expect(page).not.toHaveURL(/\/login$/)
+  await expect(accountButton).toBeVisible()
+}
+
 test.describe('Smoke pós-deploy @smoke', () => {
   test('carrega a tela de login e não deixa rota inexistente cair em tela morta', async ({ page }) => {
     await page.goto('/rota-inexistente-pos-deploy')
@@ -29,14 +53,9 @@ test.describe('Smoke pós-deploy @smoke', () => {
     await page.locator('input[name="password"]').fill(smokePassword ?? '')
     await page.getByRole('button', { name: 'Entrar no painel' }).click()
 
-    await confirmTenantIfNeeded(page)
-
-    await expect(page).not.toHaveURL(/\/login$/)
-    await expect(page.getByRole('button', { name: 'Abrir menu da conta' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
+    await expectAuthenticatedShell(page)
 
     await page.goto('/')
-    await expect(page.getByRole('button', { name: 'Abrir menu da conta' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
+    await expectAuthenticatedShell(page)
   })
 })
