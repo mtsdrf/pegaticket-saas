@@ -99,7 +99,6 @@ test.describe('Vendas manuais', () => {
       },
     })
 
-    await mockPaginatedApiRoute(page, {
     await page.route('**/api/v1/final-customers*', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.fallback()
