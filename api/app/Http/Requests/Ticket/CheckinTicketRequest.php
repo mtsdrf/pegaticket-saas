@@ -29,6 +29,8 @@ class CheckinTicketRequest extends FormRequest
             'attendee_document' => ['required_without_all:qr_token,code,sale_uuid,attendee_name', 'nullable', 'string', 'max:32'],
             'event_uuid' => ['nullable', 'uuid'],
             'event_session_uuid' => ['nullable', 'uuid'],
+            'allow_reentry' => ['nullable', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:1000'],
             'gate_name' => ['nullable', 'string', 'max:255'],
             'device_info' => ['nullable', 'string', 'max:255'],
         ];

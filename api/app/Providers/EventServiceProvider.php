@@ -148,9 +148,11 @@ use App\Listeners\Event\AuditEventCategoryDeleted;
 use App\Events\Event\EventCreated;
 use App\Events\Event\EventUpdated;
 use App\Events\Event\EventDeleted;
+use App\Events\Event\EventStatusChanged;
 use App\Listeners\Event\AuditEventCreated;
 use App\Listeners\Event\AuditEventUpdated;
 use App\Listeners\Event\AuditEventDeleted;
+use App\Listeners\Event\AuditEventStatusChanged;
 
 /*
 |--------------------------------------------------------------------------
@@ -301,6 +303,8 @@ use App\Listeners\Ticket\AuditTicketsIssued;
 use App\Listeners\Ticket\AuditTicketsCancelled;
 use App\Listeners\Ticket\AuditTicketResent;
 use App\Listeners\Ticket\AuditTicketCheckedIn;
+use App\Listeners\Ticket\SendIssuedTicketsMail;
+use App\Listeners\Ticket\SendResentTicketMail;
 
 /*
 |--------------------------------------------------------------------------
@@ -448,6 +452,7 @@ class EventServiceProvider extends ServiceProvider
         EventCreated::class => [AuditEventCreated::class],
         EventUpdated::class => [AuditEventUpdated::class],
         EventDeleted::class => [AuditEventDeleted::class],
+        EventStatusChanged::class => [AuditEventStatusChanged::class],
 
         /*
         |--------------------------------------------------------------------------
@@ -527,9 +532,9 @@ class EventServiceProvider extends ServiceProvider
         | Ticket
         |--------------------------------------------------------------------------
         */
-        TicketsIssued::class => [AuditTicketsIssued::class],
+        TicketsIssued::class => [AuditTicketsIssued::class, SendIssuedTicketsMail::class],
         TicketsCancelled::class => [AuditTicketsCancelled::class],
-        TicketResent::class => [AuditTicketResent::class],
+        TicketResent::class => [AuditTicketResent::class, SendResentTicketMail::class],
         TicketCheckedIn::class => [AuditTicketCheckedIn::class],
 
         /*

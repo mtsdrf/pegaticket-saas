@@ -24,6 +24,9 @@ class UpdateEventDTO
         public readonly ?string $endsAt,
         public readonly ?string $visibility,
         public readonly ?string $status,
+        public readonly ?bool $reentryEnabled,
+        public readonly ?int $maxReentries,
+        public readonly ?int $reentryCooldownMinutes,
     ) {
     }
 
@@ -47,6 +50,9 @@ class UpdateEventDTO
             endsAt: $data['ends_at'] ?? null,
             visibility: $data['visibility'] ?? null,
             status: $data['status'] ?? null,
+            reentryEnabled: array_key_exists('reentry_enabled', $data) ? (bool) $data['reentry_enabled'] : null,
+            maxReentries: array_key_exists('max_reentries', $data) ? ($data['max_reentries'] !== null ? (int) $data['max_reentries'] : null) : null,
+            reentryCooldownMinutes: array_key_exists('reentry_cooldown_minutes', $data) ? ($data['reentry_cooldown_minutes'] !== null ? (int) $data['reentry_cooldown_minutes'] : null) : null,
         );
     }
 }

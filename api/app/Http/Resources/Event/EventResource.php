@@ -31,6 +31,9 @@ class EventResource extends JsonResource
             'ends_at' => $this->ends_at,
             'visibility' => $this->visibility,
             'status' => $this->status,
+            'reentry_enabled' => (bool) $this->reentry_enabled,
+            'max_reentries' => $this->max_reentries,
+            'reentry_cooldown_minutes' => $this->reentry_cooldown_minutes,
             'category' => $this->whenLoaded('category', fn() => $this->category ? [
                 'uuid' => $this->category->uuid,
                 'name' => $this->category->name,

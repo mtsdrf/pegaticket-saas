@@ -110,4 +110,52 @@ class EventController extends Controller
             204
         );
     }
+
+    public function publish(Event $event)
+    {
+        $event = $this->service->publish($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.published'));
+    }
+
+    public function pauseSales(Event $event)
+    {
+        $event = $this->service->pauseSales($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.sales_paused'));
+    }
+
+    public function resumeSales(Event $event)
+    {
+        $event = $this->service->resumeSales($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.sales_resumed'));
+    }
+
+    public function closeSales(Event $event)
+    {
+        $event = $this->service->closeSales($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.sales_closed'));
+    }
+
+    public function cancel(Event $event)
+    {
+        $event = $this->service->cancel($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.canceled'));
+    }
+
+    public function archive(Event $event)
+    {
+        $event = $this->service->archive($event);
+        $event->load(self::DETAIL_RELATIONS);
+
+        return APIResponse::success(new EventResource($event), __('messages.event.archived'));
+    }
 }

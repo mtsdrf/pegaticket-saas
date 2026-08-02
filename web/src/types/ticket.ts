@@ -80,13 +80,26 @@ export interface CheckinTicketPayload {
   attendee_document?: string
   event_uuid?: string
   event_session_uuid?: string
+  allow_reentry?: boolean
+  reason?: string
   gate_name?: string
   device_info?: string
 }
 
+export interface CheckinSummaryFilters {
+  event_uuid?: string
+  event_session_uuid?: string
+  gate_name?: string
+  limit?: number
+}
+
 export type CheckinResult =
   | 'valido'
+  | 'reentrada_autorizada'
   | 'ja_utilizado'
+  | 'reentrada_nao_permitida'
+  | 'reentrada_limite_excedido'
+  | 'reentrada_intervalo_nao_atingido'
   | 'cancelado'
   | 'estornado'
   | 'bloqueado'
@@ -96,7 +109,11 @@ export type CheckinResult =
 
 export const CHECKIN_RESULT_LABELS: Record<CheckinResult, string> = {
   valido: 'Entrada liberada',
+  reentrada_autorizada: 'Reentrada autorizada',
   ja_utilizado: 'Este ingresso já foi utilizado',
+  reentrada_nao_permitida: 'Este ingresso não permite reentrada',
+  reentrada_limite_excedido: 'O limite de reentradas foi atingido',
+  reentrada_intervalo_nao_atingido: 'Ainda não é possível reentrar',
   cancelado: 'Este ingresso foi cancelado',
   estornado: 'Este ingresso foi estornado',
   bloqueado: 'Este ingresso está bloqueado',
@@ -109,9 +126,21 @@ export const CHECKIN_RESULT_LABELS: Record<CheckinResult, string> = {
 export type CheckinResultTone = 'success' | 'warning' | 'error'
 
 export function checkinResultTone(result: CheckinResult): CheckinResultTone {
-  if (result === 'valido') return 'success'
-  if (result === 'ja_utilizado') return 'warning'
+  if (result === 'valido' || result === 'reentrada_autorizada') return 'success'
+  if (
+    result === 'ja_utilizado'
+    || result === 'reentrada_limite_excedido'
+    || result === 'reentrada_intervalo_nao_atingido'
+  ) return 'warning'
   return 'error'
+}
+
+export type TicketCheckinAccessType = 'entrada' | 'reentrada' | 'tentativa'
+
+export const TICKET_CHECKIN_ACCESS_TYPE_LABELS: Record<TicketCheckinAccessType, string> = {
+  entrada: 'Entrada',
+  reentrada: 'Reentrada',
+  tentativa: 'Tentativa',
 }
 
 export interface TicketCheckinOperatorRef {
@@ -123,6 +152,8 @@ export interface TicketCheckin {
   uuid: string
   gate_name: string | null
   result: CheckinResult
+  access_type: TicketCheckinAccessType
+  reason: string | null
   checked_in_at: string
   device_info: string | null
   operator?: TicketCheckinOperatorRef | null
@@ -132,4 +163,36 @@ export interface CheckinResponse {
   result: CheckinResult
   ticket: Ticket | null
   checkin: TicketCheckin | null
+}
+
+export interface CheckinSummaryEntry {
+  uuid: string
+  gate_name: string | null
+  result: CheckinResult
+  access_type: TicketCheckinAccessType
+  reason: string | null
+  checked_in_at: string
+  operator?: TicketCheckinOperatorRef | null
+  ticket?: {
+    uuid: string
+    code: string
+    attendee_name: string | null
+    event?: TicketEventRef | null
+    session?: TicketSessionRef | null
+  } | null
+}
+
+export interface CheckinSummary {
+  filters: {
+    event_uuid: string | null
+    event_session_uuid: string | null
+    gate_name: string | null
+  }
+  counters: {
+    total: number
+    granted: number
+    warning: number
+    blocked: number
+  }
+  recent: CheckinSummaryEntry[]
 }

@@ -25,6 +25,9 @@ export interface TicketType {
   sales_start_at: string | null
   sales_end_at: string | null
   status: TicketTypeStatus
+  reentry_enabled: boolean | null
+  max_reentries: number | null
+  reentry_cooldown_minutes: number | null
   sku: string | null
   barcode: string | null
   brand: string | null
@@ -47,6 +50,9 @@ export interface TicketTypePayload {
   sales_start_at?: string | null
   sales_end_at?: string | null
   status?: TicketTypeStatus
+  reentry_enabled?: boolean | null
+  max_reentries?: number | null
+  reentry_cooldown_minutes?: number | null
   sku?: string
   barcode?: string
   brand?: string

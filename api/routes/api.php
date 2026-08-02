@@ -629,6 +629,24 @@ Route::prefix('v1')->group(function () {
             Route::put('/{event}', [EventController::class, 'update'])
                 ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-update']);
 
+            Route::post('/{event}/publish', [EventController::class, 'publish'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-publish']);
+
+            Route::post('/{event}/pause-sales', [EventController::class, 'pauseSales'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-pause-sales']);
+
+            Route::post('/{event}/resume-sales', [EventController::class, 'resumeSales'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-resume-sales']);
+
+            Route::post('/{event}/close-sales', [EventController::class, 'closeSales'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-close-sales']);
+
+            Route::post('/{event}/cancel', [EventController::class, 'cancel'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-cancel']);
+
+            Route::post('/{event}/archive', [EventController::class, 'archive'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,events-archive']);
+
             Route::delete('/{event}', [EventController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:events,delete', 'throttle:10,1,events-delete']);
         });
@@ -846,6 +864,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [TicketController::class, 'index'])
                 ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-list']);
 
+            Route::get('/checkin/summary', [TicketController::class, 'checkinSummary'])
+                ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-checkin-summary']);
+
             // Check-in de portaria (leitura de QR ou busca manual) — path
             // literal, sem conflito com GET /{ticket} (método diferente).
             Route::post('/checkin', [TicketController::class, 'checkin'])
@@ -853,6 +874,9 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/{ticket}', [TicketController::class, 'show'])
                 ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-show']);
+
+            Route::get('/{ticket}/checkins', [TicketController::class, 'checkinHistory'])
+                ->middleware(['tenant', 'perm:tickets,read', 'throttle:100,1,tickets-checkin-history']);
 
             Route::post('/{ticket}/resend', [TicketController::class, 'resend'])
                 ->middleware(['tenant', 'perm:tickets,resend', 'throttle:20,1,tickets-resend']);
@@ -952,6 +976,9 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('/sales-by-hour', [AnalyticsController::class, 'salesByHour'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-by-hour']);
+
+                Route::get('/checkin-insights', [AnalyticsController::class, 'checkinInsights'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-checkin-insights']);
             });
         });
 

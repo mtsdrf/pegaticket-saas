@@ -16,6 +16,8 @@ export const STORAGE_KEYS = {
   /** Central de Treinamento — progresso, trilhas e respostas rápidas persistidos por usuário+empresa neste navegador. */
   /** Identificador local estável deste navegador/dispositivo para fluxos offline controlados. */
   offlineDeviceId: 'pegaticket.offline_device_id',
+  /** Último contexto operacional escolhido na portaria neste navegador. */
+  checkinContext: 'pegaticket.checkin_context',
 } as const
 
 /**
@@ -26,4 +28,8 @@ export const STORAGE_KEYS = {
  */
 export function storefrontCartStorageKey(slug: string): string {
   return `pegaticket.storefront_cart.${slug}`
+}
+
+export function checkinContextStorageKey(tenantUuid: string | null | undefined): string {
+  return `${STORAGE_KEYS.checkinContext}.${tenantUuid ?? 'global'}`
 }

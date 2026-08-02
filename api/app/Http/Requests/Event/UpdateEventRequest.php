@@ -52,6 +52,9 @@ class UpdateEventRequest extends FormRequest
             'ends_at' => ['sometimes', 'date', 'after_or_equal:starts_at'],
             'visibility' => ['sometimes', 'string', Rule::in(['public', 'hidden', 'private', 'exclusive'])],
             'status' => ['sometimes', 'string', Rule::in(['rascunho', 'agendado', 'publicado', 'vendas_pausadas', 'esgotado', 'encerrado', 'cancelado', 'arquivado'])],
+            'reentry_enabled' => ['nullable', 'boolean'],
+            'max_reentries' => ['nullable', 'integer', 'min:0'],
+            'reentry_cooldown_minutes' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

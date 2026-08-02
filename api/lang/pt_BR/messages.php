@@ -347,10 +347,18 @@ return [
         'created' => 'Evento criado com sucesso.',
         'updated' => 'Evento atualizado com sucesso.',
         'deleted' => 'Evento removido com sucesso.',
+        'published' => 'Evento publicado com sucesso.',
+        'sales_paused' => 'Vendas do evento pausadas com sucesso.',
+        'sales_resumed' => 'Vendas do evento retomadas com sucesso.',
+        'sales_closed' => 'Vendas do evento encerradas com sucesso.',
+        'canceled' => 'Evento cancelado com sucesso.',
+        'archived' => 'Evento arquivado com sucesso.',
         'invalid_category' => 'Categoria de evento inválida para esta empresa.',
         'invalid_venue' => 'Local inválido para esta empresa.',
         'slug_exists' => 'Já existe um evento com este slug nesta empresa.',
         'venue_requires_published_map' => 'Publique o mapa do local antes de vinculá-lo ao evento.',
+        'invalid_status_transition' => 'A transição de status do evento não é permitida no estado atual.',
+        'publish_requires_sellable_item' => 'Cadastre ao menos um tipo de ingresso ou adicional ativo antes de publicar o evento.',
     ],
 
     'event_session' => [
@@ -392,10 +400,18 @@ return [
         'list' => 'Lista de ingressos.',
         'show' => 'Ingresso exibido com sucesso.',
         'resent' => 'Reenvio do ingresso registrado com sucesso.',
+        'mail_subject_issued' => 'Seus ingressos da venda #:code',
+        'mail_subject_resent' => 'Reenvio dos ingressos da venda #:code',
     ],
 
     'ticket_checkin' => [
+        'history' => 'Histórico de check-ins exibido com sucesso.',
+        'summary' => 'Resumo operacional da portaria exibido com sucesso.',
         'valido' => 'Entrada liberada.',
+        'reentrada_autorizada' => 'Reentrada autorizada.',
+        'reentrada_nao_permitida' => 'Este ingresso não permite reentrada.',
+        'reentrada_limite_excedido' => 'O limite de reentradas deste ingresso foi atingido.',
+        'reentrada_intervalo_nao_atingido' => 'Ainda não é possível reentrar: aguarde o intervalo configurado.',
         'ja_utilizado' => 'Este ingresso já foi utilizado.',
         'cancelado' => 'Este ingresso foi cancelado.',
         'estornado' => 'Este ingresso foi estornado.',
@@ -808,6 +824,7 @@ return [
         'stalled_products' => 'Produtos encalhados obtidos com sucesso.',
         'stock_ruptures' => 'Rupturas de estoque obtidas com sucesso.',
         'sales_by_hour' => 'Vendas por hora obtidas com sucesso.',
+        'checkin_insights' => 'Análises de acesso exibidas com sucesso.',
     ],
 
     'route' => [

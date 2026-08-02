@@ -33,12 +33,18 @@ class Event extends BaseModel
         'ends_at',
         'visibility',
         'status',
+        'reentry_enabled',
+        'max_reentries',
+        'reentry_cooldown_minutes',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'cover_image_updated_at' => 'datetime',
+        'reentry_enabled' => 'boolean',
+        'max_reentries' => 'integer',
+        'reentry_cooldown_minutes' => 'integer',
     ];
 
     protected $hidden = [

@@ -10,13 +10,15 @@ import { LocationsTab } from './tabs/LocationsTab'
 import { OverdueTab } from './tabs/OverdueTab'
 import { OverviewTab } from './tabs/OverviewTab'
 import { ProductsTab } from './tabs/ProductsTab'
+import { AccessTab } from './tabs/AccessTab'
 import { SeasonalityTab } from './tabs/SeasonalityTab'
 
-type AnalyticsTabKey = 'overview' | 'products' | 'locations' | 'seasonality' | 'clients' | 'overdue'
+type AnalyticsTabKey = 'overview' | 'products' | 'access' | 'locations' | 'seasonality' | 'clients' | 'overdue'
 
 const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'overview', label: 'Financeiro' },
   { key: 'products', label: 'Produtos' },
+  { key: 'access', label: 'Acesso' },
   { key: 'locations', label: 'Locais' },
   { key: 'seasonality', label: 'Sazonalidade' },
   { key: 'clients', label: 'Clientes' },
@@ -52,7 +54,7 @@ export function AnalyticsPage() {
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1600 }}>
       <PageHeader
         title="Análises"
-        subtitle="Explore vendas, produtos, locais, clientes e atrasos da operação."
+        subtitle="Explore financeiro, ingressos, acesso, locais, clientes e atrasos da operação."
       />
 
       {planLocked ? (
@@ -97,6 +99,7 @@ export function AnalyticsPage() {
               >
                 {tab.key === 'overview' && <OverviewTab {...tabProps} />}
                 {tab.key === 'products' && <ProductsTab {...tabProps} />}
+                {tab.key === 'access' && <AccessTab {...tabProps} />}
                 {tab.key === 'locations' && <LocationsTab {...tabProps} />}
                 {tab.key === 'seasonality' && <SeasonalityTab onPlanLocked={handlePlanLocked} />}
                 {tab.key === 'clients' && <ClientsTab {...tabProps} />}

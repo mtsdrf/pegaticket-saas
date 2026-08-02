@@ -5,10 +5,13 @@ namespace App\Services\Event;
 use App\DTOs\Event\CreateEventDTO;
 use App\DTOs\Event\UpdateEventDTO;
 use App\Events\Event\EventCreated;
-use App\Events\Event\EventUpdated;
 use App\Events\Event\EventDeleted;
+use App\Events\Event\EventStatusChanged;
+use App\Events\Event\EventUpdated;
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
 use App\Models\Venue\Venue;
 use App\Models\Venue\VenueMapVersion;
@@ -21,6 +24,15 @@ use Illuminate\Support\Facades\Schema;
 
 class EventService
 {
+    private const STATUS_RASCUNHO = 'rascunho';
+    private const STATUS_AGENDADO = 'agendado';
+    private const STATUS_PUBLICADO = 'publicado';
+    private const STATUS_VENDAS_PAUSADAS = 'vendas_pausadas';
+    private const STATUS_ESGOTADO = 'esgotado';
+    private const STATUS_ENCERRADO = 'encerrado';
+    private const STATUS_CANCELADO = 'cancelado';
+    private const STATUS_ARQUIVADO = 'arquivado';
+
     public const EAGER_RELATIONS = ['category', 'venueMapVersion.venue'];
 
     public const DETAIL_RELATIONS = ['category', 'ticketTypes', 'eventProducts', 'venueMapVersion.venue'];
@@ -150,11 +162,14 @@ class EventService
                     'location_address' => $dto->locationAddress,
                     'location_lat' => $dto->locationLat,
                     'location_lng' => $dto->locationLng,
-                    'starts_at' => $dto->startsAt,
-                    'ends_at' => $dto->endsAt,
-                    'visibility' => $dto->visibility,
-                    'status' => $dto->status,
-                ]);
+                'starts_at' => $dto->startsAt,
+                'ends_at' => $dto->endsAt,
+                'visibility' => $dto->visibility,
+                'status' => $dto->status,
+                'reentry_enabled' => $dto->reentryEnabled,
+                'max_reentries' => $dto->maxReentries,
+                'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
+            ]);
 
                 event(new EventCreated(
                     eventUuid: $event->uuid,
@@ -197,11 +212,14 @@ class EventService
                     'location_address' => $dto->locationAddress,
                     'location_lat' => $dto->locationLat,
                     'location_lng' => $dto->locationLng,
-                    'starts_at' => $dto->startsAt,
-                    'ends_at' => $dto->endsAt,
-                    'visibility' => $dto->visibility,
-                    'status' => $dto->status,
-                ], fn($v) => !is_null($v));
+                'starts_at' => $dto->startsAt,
+                'ends_at' => $dto->endsAt,
+                'visibility' => $dto->visibility,
+                'status' => $dto->status,
+                'reentry_enabled' => $dto->reentryEnabled,
+                'max_reentries' => $dto->maxReentries,
+                'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
+            ], fn($v) => !is_null($v));
 
                 if ($dto->eventCategoryUuid) {
                     $data['event_category_id'] = EventCategory::where('uuid', $dto->eventCategoryUuid)
@@ -265,11 +283,142 @@ class EventService
         });
     }
 
+    public function publish(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_PUBLICADO,
+            [self::STATUS_RASCUNHO, self::STATUS_AGENDADO, self::STATUS_VENDAS_PAUSADAS],
+            true
+        );
+    }
+
+    public function pauseSales(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_VENDAS_PAUSADAS,
+            [self::STATUS_PUBLICADO]
+        );
+    }
+
+    public function resumeSales(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_PUBLICADO,
+            [self::STATUS_VENDAS_PAUSADAS]
+        );
+    }
+
+    public function closeSales(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_ENCERRADO,
+            [self::STATUS_PUBLICADO, self::STATUS_VENDAS_PAUSADAS, self::STATUS_ESGOTADO]
+        );
+    }
+
+    public function cancel(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_CANCELADO,
+            [
+                self::STATUS_RASCUNHO,
+                self::STATUS_AGENDADO,
+                self::STATUS_PUBLICADO,
+                self::STATUS_VENDAS_PAUSADAS,
+                self::STATUS_ESGOTADO,
+                self::STATUS_ENCERRADO,
+            ]
+        );
+    }
+
+    public function archive(Event $event): Event
+    {
+        return $this->transitionStatus(
+            $event,
+            self::STATUS_ARQUIVADO,
+            [self::STATUS_CANCELADO, self::STATUS_ENCERRADO]
+        );
+    }
+
     private function assertBelongsToCurrentTenant(Event $event): void
     {
         if ((int) $event->tenant_id !== (int) app('tenant_id')) {
             abort(404);
         }
+    }
+
+    private function transitionStatus(
+        Event $event,
+        string $targetStatus,
+        array $allowedFrom,
+        bool $requiresSellableItem = false
+    ): Event {
+        $this->assertBelongsToCurrentTenant($event);
+
+        return DB::transaction(function () use ($event, $targetStatus, $allowedFrom, $requiresSellableItem) {
+            /** @var Event $locked */
+            $locked = Event::query()
+                ->whereKey($event->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status === $targetStatus) {
+                return $locked;
+            }
+
+            if (!in_array($locked->status, $allowedFrom, true)) {
+                abort(422, __('messages.event.invalid_status_transition'));
+            }
+
+            if ($requiresSellableItem && !$this->hasSellableInventory($locked)) {
+                abort(422, __('messages.event.publish_requires_sellable_item'));
+            }
+
+            $fromStatus = (string) $locked->status;
+            $locked->status = $targetStatus;
+            $locked->save();
+
+            event(new EventStatusChanged(
+                eventUuid: $locked->uuid,
+                actorId: (int) Auth::id(),
+                fromStatus: $fromStatus,
+                toStatus: $targetStatus
+            ));
+
+            event(new EventUpdated(
+                eventUuid: $locked->uuid,
+                actorId: (int) Auth::id(),
+                changes: ['status']
+            ));
+
+            return $locked;
+        });
+    }
+
+    private function hasSellableInventory(Event $event): bool
+    {
+        $hasActiveTicketType = TicketType::query()
+            ->where('event_id', $event->id)
+            ->where('tenant_id', $event->tenant_id)
+            ->whereNull('deleted_at')
+            ->where('status', 'ativo')
+            ->exists();
+
+        if ($hasActiveTicketType) {
+            return true;
+        }
+
+        return EventProduct::query()
+            ->where('event_id', $event->id)
+            ->where('tenant_id', $event->tenant_id)
+            ->whereNull('deleted_at')
+            ->where('status', 'ativo')
+            ->exists();
     }
 
     private function resolveVenueMapVersionId(int $tenantId, ?string $venueUuid): ?int

@@ -130,14 +130,16 @@ class StorefrontHoldService
                 $this->assertValidHoldItem($event, $session, $ticketType, $eventProduct, $seat, $quantity);
 
                 $selectedBatch = $ticketType ? $this->selectBatchForTicketType($ticketType, $quantity) : null;
-                $available = $this->calculateAvailableUnits($ticketType, $eventProduct, $seat, $selectedBatch);
+                $available = $ticketType
+                    ? $this->resolveTicketTypeAvailability($ticketType, $selectedBatch)
+                    : $this->calculateAvailableUnits($ticketType, $eventProduct, $seat, $selectedBatch);
 
                 if ($available < $quantity) {
                     abort(422, __('messages.inventory_hold.insufficient_availability'));
                 }
 
                 $unitPrice = $ticketType
-                    ? ($selectedBatch ? (float) $selectedBatch->price : $this->resolveEffectiveUnitPrice($ticketType))
+                    ? $this->resolveTicketTypeEffectivePrice($ticketType, $selectedBatch)
                     : ($eventProduct ? $this->resolveEffectiveUnitPrice($eventProduct) : null);
 
                 InventoryHoldItem::create([
@@ -244,7 +246,7 @@ class StorefrontHoldService
             })
             ->map(function (TicketType $ticketType) {
                 $batch = $this->findActiveBatch($ticketType);
-                $available = $this->calculateAvailableUnits($ticketType, null, null, $batch);
+                $available = $this->resolveTicketTypeAvailability($ticketType, $batch);
 
                 return [
                     'uuid' => $ticketType->uuid,
@@ -252,7 +254,7 @@ class StorefrontHoldService
                     'description' => $ticketType->description,
                     'session_uuid' => $ticketType->session?->uuid,
                     'base_price' => (float) $ticketType->price,
-                    'effective_price' => $batch ? (float) $batch->price : $this->resolveEffectiveUnitPrice($ticketType),
+                    'effective_price' => $this->resolveTicketTypeEffectivePrice($ticketType, $batch),
                     'available_quantity' => max(0, $available),
                     'min_per_order' => $ticketType->min_per_order,
                     'max_per_order' => $ticketType->max_per_order,
@@ -262,7 +264,7 @@ class StorefrontHoldService
                         'uuid' => $batch->uuid,
                         'name' => $batch->name,
                         'price' => (float) $batch->price,
-                        'quantity_available' => max(0, $this->calculateAvailableUnits($ticketType, null, null, $batch)),
+                        'quantity_available' => max(0, $this->resolveTicketTypeAvailability($ticketType, $batch)),
                     ] : null,
                     'requires_seat_selection' => in_array($ticketType->event?->type, ['assento', 'mesa', 'misto'], true),
                 ];
@@ -355,25 +357,12 @@ class StorefrontHoldService
 
     private function findActiveBatch(TicketType $ticketType): ?TicketBatch
     {
-        return $ticketType->batches
-            ->filter(fn(TicketBatch $batch) => $this->batchIsActive($batch))
-            ->sortBy('priority')
-            ->first();
+        return $this->resolveBatchForStorefront($ticketType);
     }
 
     private function selectBatchForTicketType(TicketType $ticketType, int $quantity): ?TicketBatch
     {
-        if ($ticketType->batches->isEmpty()) {
-            return null;
-        }
-
-        foreach ($ticketType->batches->filter(fn(TicketBatch $batch) => $this->batchIsActive($batch))->sortBy('priority') as $batch) {
-            if ($this->calculateAvailableUnits($ticketType, null, null, $batch) >= $quantity) {
-                return $batch;
-            }
-        }
-
-        return null;
+        return $this->resolveBatchForStorefront($ticketType, $quantity);
     }
 
     private function batchIsActive(TicketBatch $batch): bool
@@ -391,6 +380,59 @@ class StorefrontHoldService
         }
 
         return true;
+    }
+
+    private function resolveBatchForStorefront(TicketType $ticketType, ?int $requiredQuantity = null): ?TicketBatch
+    {
+        $batches = $ticketType->batches
+            ->filter(fn(TicketBatch $batch) => $this->batchIsActive($batch))
+            ->sortBy('priority')
+            ->values();
+
+        if ($batches->isEmpty()) {
+            return null;
+        }
+
+        foreach ($batches as $batch) {
+            $available = $this->calculateAvailableUnits($ticketType, null, null, $batch);
+
+            if ($available > 0 && ($requiredQuantity === null || $available >= $requiredQuantity)) {
+                return $batch;
+            }
+
+            if (!$this->shouldAutoAdvanceBatch($batch, $available)) {
+                return $requiredQuantity === null ? $batch : null;
+            }
+        }
+
+        return null;
+    }
+
+    private function shouldAutoAdvanceBatch(TicketBatch $batch, int $available): bool
+    {
+        return $batch->auto_advance && $available <= 0;
+    }
+
+    private function resolveTicketTypeAvailability(TicketType $ticketType, ?TicketBatch $batch): int
+    {
+        if ($batch) {
+            return $this->calculateAvailableUnits($ticketType, null, null, $batch);
+        }
+
+        if ($ticketType->batches->isNotEmpty()) {
+            return 0;
+        }
+
+        return $this->calculateAvailableUnits($ticketType, null, null, null);
+    }
+
+    private function resolveTicketTypeEffectivePrice(TicketType $ticketType, ?TicketBatch $batch): float
+    {
+        if ($batch) {
+            return (float) $batch->price;
+        }
+
+        return $this->resolveEffectiveUnitPrice($ticketType);
     }
 
     private function calculateAvailableUnits(?TicketType $ticketType, ?EventProduct $eventProduct, ?Seat $seat, ?TicketBatch $ticketBatch): int

@@ -6,69 +6,86 @@
 <br/>
 
 <strong>PegaTicket</strong><br/>
-<sub>Gestão clara para empresas em movimento.</sub>
+<sub>Plataforma SaaS de venda e gestão de ingressos.</sub>
 
 <br/>
 <br/>
 
-[![App](https://img.shields.io/badge/App-SaaS%20multiempresa-0F3D5E?style=for-the-badge)](web/)
-[![Experiência](https://img.shields.io/badge/Experiência-mobile--first-1B4965?style=for-the-badge)](#sobre)
-[![Plano](https://img.shields.io/badge/Plano-%C3%BAnico%20completo-2C7A7B?style=for-the-badge)](#funcionalidades)
-[![Operação](https://img.shields.io/badge/Operação-Loja%20online%20%C2%B7%20Vendas%20%C2%B7%20Estoque-CF7A00?style=for-the-badge)](#funcionalidades)
+[![Produto](https://img.shields.io/badge/Produto-ticketing%20multiempresa-0F3D5E?style=for-the-badge)](web/)
+[![Checkout](https://img.shields.io/badge/Checkout-eventos%20e%20ingressos-1B4965?style=for-the-badge)](#modulos-atuais)
+[![Operação](https://img.shields.io/badge/Operação-vendas%20%C2%B7%20tickets%20%C2%B7%20acesso-CF7A00?style=for-the-badge)](#modulos-atuais)
+[![Status](https://img.shields.io/badge/Status-beta%20controlada-15803D?style=for-the-badge)](#estado-atual)
 
 [![Backend](https://img.shields.io/badge/Backend-Laravel%2013-8B1E3F?style=for-the-badge&logo=laravel&logoColor=white)](api/)
 [![Frontend](https://img.shields.io/badge/Frontend-React%2019-0E7490?style=for-the-badge&logo=react&logoColor=white)](web/)
 [![PHP](https://img.shields.io/badge/PHP-8.3+-4C51BF?style=for-the-badge&logo=php&logoColor=white)](api/composer.json)
 [![Vite](https://img.shields.io/badge/Vite-8-0F766E?style=for-the-badge&logo=vite&logoColor=white)](web/package.json)
-[![Status](https://img.shields.io/badge/Status-beta%20controlada-15803D?style=for-the-badge)](#deploy)
-[![Licença](https://img.shields.io/badge/Licença-Proprietária-475569?style=for-the-badge)](#licença)
+[![Licença](https://img.shields.io/badge/Licen%C3%A7a-Propriet%C3%A1ria-475569?style=for-the-badge)](#licenca)
 
 </div>
 
-<br/>
-
 ## Sobre
 
-**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: vendas, clientes, produtos, estoque, financeiro, loja online e visão analítica, tudo numa experiência clara, direta e mobile-first.
+**PegaTicket** é uma plataforma SaaS multiempresa para **criação, venda, emissão e operação de ingressos**.
 
-Cada empresa opera isolada dentro do SaaS, com:
+O foco atual do produto é cobrir o núcleo operacional de ticketing:
 
-- plano próprio
-- permissões próprias
-- módulos habilitados conforme a contratação
-- contexto operacional separado por empresa
+- cadastro de organizadores e equipes;
+- criação de eventos, sessões, lotes e tipos de ingresso;
+- catálogo público de eventos;
+- carrinho, hold de inventário e checkout;
+- pagamento, confirmação de venda e rastreio público;
+- emissão de ingressos digitais;
+- portal do comprador;
+- check-in e operação de acesso;
+- analytics, reconciliação e administração global.
 
-O foco do produto é servir desde negócios que precisam apenas vender online até operações mais completas, com atendimento interno, fluxo de caixa, contador externo, trilha fiscal e operação offline controlada.
+Este repositório **não deve mais ser lido como um SaaS genérico de comércio/delivery**. Há histórico técnico legado de outras frentes reaproveitadas, mas o produto ativo hoje é PegaTicket.
 
-> Gestão clara para empresas em movimento.
+## Estado Atual
+
+Diagnóstico consolidado em **2 de agosto de 2026**:
+
+- backend com base funcional madura para multiempresa, eventos, vendas, tickets e portal;
+- frontend com operação autenticada, loja pública, checkout, tickets, analytics e administração;
+- pagamentos reais via Mercado Pago;
+- suíte backend verde e base E2E web já implantada;
+- produto em **beta controlada**, ainda em fechamento do núcleo Must Have da plataforma de ticketing.
+
+O mapeamento mais recente do estado do produto está em:
+
+- [docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md](/home/mtsdrf/workspace/pegaticket-saas/docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md)
+- [docs/product-current-map.md](/home/mtsdrf/workspace/pegaticket-saas/docs/product-current-map.md)
 
 ## Sumário
 
 - [Arquitetura](#arquitetura)
 - [Stack](#stack)
-- [Funcionalidades](#funcionalidades)
+- [Módulos Atuais](#modulos-atuais)
 - [Como rodar localmente](#como-rodar-localmente)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Multi-tenancy e permissões](#multi-tenancy-e-permissões)
+- [Multiempresa e permissões](#multiempresa-e-permissoes)
 - [Pagamentos](#pagamentos)
-- [Segurança e LGPD](#segurança-e-lgpd)
+- [Segurança e LGPD](#seguranca-e-lgpd)
 - [Deploy](#deploy)
-- [Documentação interna](#documentação-interna)
-- [Licença](#licença)
+- [Documentação interna](#documentacao-interna)
+- [Licença](#licenca)
 
 ## Arquitetura
 
-Monorepo com projetos irmãos na raiz — cada um é uma aplicação própria, com seu próprio `package.json`/`composer.json`, publicada em um domínio/subdomínio separado da mesma origem:
+Monorepo com dois projetos ativos:
 
-```
+```text
 pegaticket-saas/
-├── api/     Backend Laravel 13 — API REST versionada (v1), fonte única de verdade
-├── web/     App autenticado (React 19 + Vite) — sistema.pegaticket.com
-├── site/    Landing institucional pública, sem autenticação — site.pegaticket.com
-└── app/     App mobile/nativo — reservado para o futuro, ainda não iniciado
+├── api/   Backend Laravel 13 — API REST versionada, regras de negócio e integrações
+└── web/   Frontend React 19 — operação autenticada, storefront público e portal do comprador
 ```
 
-O **Portal do cliente final** e a **Loja online** vivem dentro de `web/`, sob rotas próprias. A estratégia atual privilegia um ecossistema enxuto, com menos superfícies independentes e mais reaproveitamento entre operação autenticada, storefront e portal.
+Observações importantes:
+
+- `web/` concentra tanto a área autenticada quanto as rotas públicas de evento, checkout e portal.
+- `site/` existe no repositório, mas **não é o foco operacional atual do produto**.
+- o contexto oficial do domínio é **ticketing**, não comércio genérico.
 
 ## Stack
 
@@ -76,105 +93,141 @@ O **Portal do cliente final** e a **Loja online** vivem dentro de `web/`, sob ro
 |---|---|
 | Backend | Laravel 13 · PHP 8.3+ · MySQL/MariaDB |
 | Autenticação | JWT (`php-open-source-saver/jwt-auth`) |
-| Documentação de API | L5-Swagger (En/PT-BR) |
-| Frontend (`web/`) | React 19 · TypeScript · Vite · MUI · react-router-dom v7 · axios |
-| Landing (`site/`) | React 19 · Vite (build multi-página) |
-| Pagamentos | Mercado Pago (Orders API + Preapproval) |
-| Infra | Hospedagem compartilhada (Hostinger) · deploy via GitHub Actions + rsync/SSH |
+| Documentação de API | L5-Swagger |
+| Frontend | React 19 · TypeScript · Vite · MUI · react-router-dom v7 · axios |
+| Pagamentos | Mercado Pago |
+| Armazenamento de mídia | Cloudflare R2 + storage público/privado híbrido |
+| Infra atual | Hostinger · GitHub Actions · rsync/SSH |
 
-## Funcionalidades
+## Módulos Atuais
 
-- **Operação comercial** — vendas internos, vendas da loja, clientes, produtos, categorias, estoque, expedição e histórico completo.
-- **Loja online** — catálogo público, checkout, acompanhamento do venda, cashback, favoritos e portal do cliente final.
-- **Financeiro e analytics** — conciliação, relatórios, indicadores, recebíveis e visão gerencial por canal, cliente, produto e local.
-- **Assinatura e planos** — contratação, troca de plano, histórico de cobrança, Pix para faturas elegíveis, cancelamento, renovação e regras de consumidor.
-- **Multiempresa** — isolamento por empresa, plano único `PegaTicket`, permissões e overrides por funcionalidade.
-- **Contador externo** — acesso dedicado com TOTP, empresas aprovadas, relatórios, dados fiscais e canal de pendências.
-- **Integrações** — Mercado Pago, webhooks assinados, chaves de API, operação de marketplace e base pronta para novas integrações.
-- **Auditoria** — registro de mutações relevantes com trilha clara de responsável, horário e contexto.
+Hoje o produto já possui base funcional para:
 
-## Como rodar localmente
+- **Multiempresa**: tenants, usuários da organização, papéis, permissões e contexto ativo.
+- **Onboarding**: cadastro self-service de organização com aceite legal.
+- **Eventos**: categorias, venues, assentos, sessões, lotes, tipos de ingresso e adicionais simples.
+- **Storefront**: catálogo público de eventos, detalhes, favoritos, carrinho, hold e checkout.
+- **Vendas**: vendas manuais, vendas online, parcelas, cancelamento e refund estruturado.
+- **Tickets**: emissão, listagem, QR/token e ciclo básico de check-in.
+- **Portal do comprador**: login OTP, perfil, favoritos, vouchers e minhas vendas.
+- **Analytics**: visão geral, produtos/adicionais, locais, sazonalidade, clientes e atrasos.
+- **Financeiro base**: reconciliação e gestão de pendências de pagamento.
+- **Assinatura SaaS**: planos, invoices, cobrança recorrente e telas administrativas.
+- **Administração global**: usuários, grupos, planos, funcionalidades, tenants e auditoria.
+- **Privacidade e suporte**: documentos legais, solicitações de privacidade e tickets de ajuda.
 
-### Backend (`api/`)
+## Como Rodar Localmente
+
+### Backend
 
 ```bash
 cd api
-composer setup          # install, .env, key:generate, migrate, npm install/build
-php artisan jwt:secret   # gera o segredo JWT (não é criado pelo key:generate)
-composer dev             # serve + queue:listen + pail + vite, tudo junto
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan jwt:secret
+php artisan migrate
+composer dev
+```
+
+Testes:
+
+```bash
+cd api
 composer test
 ```
 
-### Frontend (`web/`)
+### Frontend
 
 ```bash
 cd web
 npm install
-cp .env.example .env     # VITE_API_BASE_URL=http://localhost:8000/api/v1
+cp .env.example .env
 npm run dev
-npm run build             # tsc -b && vite build
-npm run lint               # oxlint
 ```
 
-### Landing institucional (`site/`)
+Build, lint e E2E:
 
 ```bash
-cd site
-npm install
-npm run dev
+cd web
+npm run build
+npm run lint
+npm run test:e2e
 ```
 
-## Estrutura de pastas
+## Estrutura de Pastas
 
-Backend segue um fluxo estrito por feature, sem pular camada:
+No backend, o fluxo principal segue:
 
+```text
+Http/Requests    -> validação de entrada
+Http/Controllers -> orquestração fina
+Services         -> regra de negócio e transações
+Repositories     -> persistência
+Http/Resources   -> saída de API
+DTOs             -> payload tipado de entrada
+Events/Listeners -> auditoria e efeitos assíncronos
+Models           -> entidades de domínio
 ```
-Http/Requests        → validação de entrada
-Http/Controllers     → fino, só orquestra
-Services             → regra de negócio, transações, eventos
-Repositories         → persistência (Contracts + Eloquent)
-Http/Resources        → formato de saída
-DTOs                  → entrada mutável (fromArray a partir do request validado)
-Events/Listeners      → toda mutação relevante audita via Event → Listener
+
+No frontend:
+
+```text
+pages/       -> telas e rotas
+components/  -> blocos reutilizáveis de interface
+services/    -> clientes HTTP e orquestração de dados
+types/       -> contratos do frontend
+hooks/       -> estado local e integração com serviços
+layouts/     -> shells autenticado e público
 ```
 
-Todo Model de domínio estende `BaseModel` (UUID público + PK interna, soft delete, `created_by`/`updated_by`/`deleted_by` automáticos).
+## Multiempresa e Permissões
 
-## Multi-tenancy e permissões
-
-- Middleware `tenant` resolve a empresa ativa a partir do JWT e popula os helpers globais `tenant()`/`tenant_id()`.
-- Permissão sempre via **Grupo** (usuário → Grupo → Permissão de Grupo → Funcionalidade + Ação) para staff interno, e via **Perfil do tenant** (usuário → Perfil → Permissão do Perfil) para usuários da empresa cliente.
-- Gate em duas camadas: **plano** (o que a empresa contratou libera) e **perfil** (o que aquele usuário específico pode fazer dentro do que o plano permite) — com override individual por empresa para liberação ou bloqueio pontual.
+- o backend resolve a organização ativa por middleware de tenant;
+- usuários podem participar de múltiplas organizações;
+- permissões combinam funcionalidade, ação e contexto do usuário;
+- o gate atual combina plano contratado e permissão operacional.
 
 ## Pagamentos
 
-Integração real com **Mercado Pago**:
+Integração principal atual:
 
-- **Venda/fatura avulsa** — API de Orders (`/v1/orders`), Pix com QR code + copia-e-cola, cartão tokenizado no navegador (PCI-safe, PAN/CVV nunca chegam ao backend).
-- **Assinatura recorrente** — Preapproval, cobrança automática por ciclo, período de graça de 7 dias em caso de falha, suspensão de acesso após o prazo.
-- **Webhooks** — assinatura HMAC-SHA256 validada antes de qualquer escrita, idempotência por tipo de evento, nunca confia no payload sem reconsultar a API oficial.
+- **Mercado Pago** para Pix e fluxos de pagamento online;
+- webhooks assinados;
+- reconciliação e tratamento de inconsistências;
+- idempotência nas operações sensíveis.
+
+O contrato `/v1/orders` citado em partes do projeto é do **provedor externo**, não do domínio interno do PegaTicket.
 
 ## Segurança e LGPD
 
-- Nenhum segredo (token, chave de webhook) é logado ou exposto em resposta de API.
-- Segredo irreversível → hash; segredo reversível (necessário ler de volta) → `encrypted` cast, nunca texto puro em banco.
-- Isolamento de tenant validado em toda escrita/leitura de recurso (`assertBelongsToCurrentTenant`).
-- Auditoria com denylist de campos sensíveis — dado de pagamento/senha nunca entra no log de auditoria em texto puro.
+- segredos não são expostos em logs ou respostas;
+- isolamento de tenant é validado nas leituras e escritas;
+- dados sensíveis usam hash ou criptografia conforme o caso;
+- aceite legal é versionado;
+- o produto já possui trilha operacional mínima para privacidade e auditoria.
 
 ## Deploy
 
-CI/CD via GitHub Actions: build de `api/`, `web/` e `site/`, publicação via `rsync`/SSH em hospedagem compartilhada. Segredos de produção (`MERCADOPAGO_*`, `FRONTEND_URL`, etc.) são aplicados automaticamente a cada deploy a partir dos *Secrets* do repositório — nenhum valor sensível trafega em texto puro no versionamento.
+O deploy atual é feito por GitHub Actions com publicação via SSH/rsync.
 
-Hoje o projeto está operando em **beta controlada**, com:
+O ambiente ativo usa:
 
-- suíte backend consolidada
-- suíte E2E web cobrindo fluxos críticos
-- smoke pós-deploy público e autenticado
+- `web/` publicado no subdomínio do frontend;
+- `api/` publicado no subdomínio da API;
+- segredos injetados por GitHub Secrets;
+- smoke tests pós-deploy no pipeline.
 
-## Documentação interna
+## Documentação Interna
 
-Decisões de arquitetura, padrões de código, regras de banco e histórico de aprendizado técnico vivem em `.claude/memory/` — consultada antes de qualquer mudança relevante no projeto.
+Os documentos mais importantes para continuidade do produto são:
 
-## Licença
+- [pegaticket_especificacao_completa.md](/home/mtsdrf/workspace/pegaticket-saas/pegaticket_especificacao_completa.md)
+- [docs/product-current-map.md](/home/mtsdrf/workspace/pegaticket-saas/docs/product-current-map.md)
+- [docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md](/home/mtsdrf/workspace/pegaticket-saas/docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md)
+
+As memórias em `.claude/memory/` ainda incluem histórico técnico de fases anteriores. Elas devem ser lidas com contexto: nem tudo ali representa o produto ativo atual.
+
+## Licenca
 
 Software proprietário. Todos os direitos reservados © PegaTicket.

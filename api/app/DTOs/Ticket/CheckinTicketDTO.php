@@ -21,6 +21,8 @@ class CheckinTicketDTO
         public readonly ?string $attendeeDocument,
         public readonly ?string $eventUuid,
         public readonly ?string $eventSessionUuid,
+        public readonly bool $allowReentry,
+        public readonly ?string $reason,
         public readonly ?string $gateName,
         public readonly ?string $deviceInfo,
     ) {
@@ -36,6 +38,8 @@ class CheckinTicketDTO
             attendeeDocument: $data['attendee_document'] ?? null,
             eventUuid: $data['event_uuid'] ?? null,
             eventSessionUuid: $data['event_session_uuid'] ?? null,
+            allowReentry: (bool) ($data['allow_reentry'] ?? false),
+            reason: $data['reason'] ?? null,
             gateName: $data['gate_name'] ?? null,
             deviceInfo: $data['device_info'] ?? null,
         );

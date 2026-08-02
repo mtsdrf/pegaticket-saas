@@ -7,6 +7,7 @@ use App\DTOs\Ticket\CheckinTicketDTO;
 use App\Events\Ticket\TicketCheckedIn;
 use App\Models\Ticket\Ticket;
 use App\Models\Ticket\TicketCheckin;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,6 +20,10 @@ use Illuminate\Support\Facades\DB;
  */
 class CheckinService
 {
+    private const ACCESS_TYPE_ENTRY = 'entrada';
+    private const ACCESS_TYPE_REENTRY = 'reentrada';
+    private const ACCESS_TYPE_ATTEMPT = 'tentativa';
+
     /**
      * Resultados fora do enum principal (ex.: status futuro fora dos
      * valores hoje emitidos por TicketIssuanceService) caem em `bloqueado`
@@ -28,8 +33,9 @@ class CheckinService
         'cancelado' => 'cancelado',
         'estornado' => 'estornado',
         'bloqueado' => 'bloqueado',
-        'utilizado' => 'ja_utilizado',
     ];
+
+    private const SUCCESSFUL_ACCESS_RESULTS = ['valido', 'reentrada_autorizada'];
 
     public function checkin(int $tenantId, CheckinTicketDTO $dto, int $operatorId): CheckinResultDTO
     {
@@ -47,33 +53,134 @@ class CheckinService
             $ticket->loadMissing('ticketType.event', 'ticketType.session');
 
             if ($dto->eventUuid !== null && optional($ticket->ticketType->event)->uuid !== $dto->eventUuid) {
-                return $this->recordAttempt($ticket, 'evento_incorreto', $dto, $operatorId);
+                return $this->recordAttempt(
+                    $ticket,
+                    'evento_incorreto',
+                    $dto,
+                    $operatorId,
+                    self::ACCESS_TYPE_ATTEMPT,
+                    'evento_incorreto'
+                );
             }
 
             if ($dto->eventSessionUuid !== null && optional($ticket->ticketType->session)->uuid !== $dto->eventSessionUuid) {
-                return $this->recordAttempt($ticket, 'sessao_incorreta', $dto, $operatorId);
+                return $this->recordAttempt(
+                    $ticket,
+                    'sessao_incorreta',
+                    $dto,
+                    $operatorId,
+                    self::ACCESS_TYPE_ATTEMPT,
+                    'sessao_incorreta'
+                );
+            }
+
+            if ($ticket->status === 'utilizado') {
+                if ($dto->allowReentry) {
+                    $policy = $this->resolveReentryPolicy($ticket);
+
+                    if (!$policy['enabled']) {
+                        return $this->recordAttempt(
+                            $ticket,
+                            'reentrada_nao_permitida',
+                            $dto,
+                            $operatorId,
+                            self::ACCESS_TYPE_ATTEMPT,
+                            'reentry_disabled'
+                        );
+                    }
+
+                    $currentReentries = $this->countAuthorizedReentries($ticket);
+
+                    if ($policy['max_reentries'] !== null && $currentReentries >= $policy['max_reentries']) {
+                        return $this->recordAttempt(
+                            $ticket,
+                            'reentrada_limite_excedido',
+                            $dto,
+                            $operatorId,
+                            self::ACCESS_TYPE_ATTEMPT,
+                            'reentry_limit_exceeded'
+                        );
+                    }
+
+                    if ($policy['reentry_cooldown_minutes'] !== null && $policy['reentry_cooldown_minutes'] > 0) {
+                        $lastAccessAt = $this->lastSuccessfulAccessAt($ticket);
+
+                        if (
+                            $lastAccessAt instanceof CarbonInterface
+                            && now()->lt($lastAccessAt->copy()->addMinutes($policy['reentry_cooldown_minutes']))
+                        ) {
+                            return $this->recordAttempt(
+                                $ticket,
+                                'reentrada_intervalo_nao_atingido',
+                                $dto,
+                                $operatorId,
+                                self::ACCESS_TYPE_ATTEMPT,
+                                'reentry_cooldown_active'
+                            );
+                        }
+                    }
+
+                    return $this->recordAttempt(
+                        $ticket,
+                        'reentrada_autorizada',
+                        $dto,
+                        $operatorId,
+                        self::ACCESS_TYPE_REENTRY,
+                        $dto->reason
+                    );
+                }
+
+                return $this->recordAttempt(
+                    $ticket,
+                    'ja_utilizado',
+                    $dto,
+                    $operatorId,
+                    self::ACCESS_TYPE_ATTEMPT,
+                    'ticket_ja_utilizado'
+                );
             }
 
             $blockedResult = self::STATUS_TO_RESULT[$ticket->status] ?? null;
 
             if ($blockedResult !== null) {
-                return $this->recordAttempt($ticket, $blockedResult, $dto, $operatorId);
+                return $this->recordAttempt(
+                    $ticket,
+                    $blockedResult,
+                    $dto,
+                    $operatorId,
+                    self::ACCESS_TYPE_ATTEMPT,
+                    'status_' . $ticket->status
+                );
             }
 
             if ($ticket->status !== 'ativo') {
                 // pendente ou qualquer status futuro fora do enum conhecido
                 // — recusa por segurança, nunca libera entrada.
-                return $this->recordAttempt($ticket, 'bloqueado', $dto, $operatorId);
+                return $this->recordAttempt(
+                    $ticket,
+                    'bloqueado',
+                    $dto,
+                    $operatorId,
+                    self::ACCESS_TYPE_ATTEMPT,
+                    'status_' . $ticket->status
+                );
             }
 
             $ticket->status = 'utilizado';
             $ticket->save();
 
-            return $this->recordAttempt($ticket, 'valido', $dto, $operatorId);
+            return $this->recordAttempt($ticket, 'valido', $dto, $operatorId, self::ACCESS_TYPE_ENTRY, $dto->reason);
         });
     }
 
-    private function recordAttempt(Ticket $ticket, string $result, CheckinTicketDTO $dto, int $operatorId): CheckinResultDTO
+    private function recordAttempt(
+        Ticket $ticket,
+        string $result,
+        CheckinTicketDTO $dto,
+        int $operatorId,
+        string $accessType,
+        ?string $reason
+    ): CheckinResultDTO
     {
         $checkin = TicketCheckin::create([
             'tenant_id' => $ticket->tenant_id,
@@ -82,6 +189,8 @@ class CheckinService
             'operator_id' => $operatorId,
             'checked_in_at' => now(),
             'result' => $result,
+            'access_type' => $accessType,
+            'reason' => $reason,
             'device_info' => $dto->deviceInfo,
         ]);
 
@@ -115,5 +224,40 @@ class CheckinService
         }
 
         return $query->orderByDesc('id')->first();
+    }
+
+    private function resolveReentryPolicy(Ticket $ticket): array
+    {
+        $ticketType = $ticket->ticketType;
+        $event = $ticketType?->event;
+
+        $enabled = $ticketType?->reentry_enabled;
+
+        if ($enabled === null) {
+            $enabled = (bool) ($event?->reentry_enabled ?? false);
+        }
+
+        return [
+            'enabled' => (bool) $enabled,
+            'max_reentries' => $ticketType?->max_reentries ?? $event?->max_reentries,
+            'reentry_cooldown_minutes' => $ticketType?->reentry_cooldown_minutes ?? $event?->reentry_cooldown_minutes,
+        ];
+    }
+
+    private function countAuthorizedReentries(Ticket $ticket): int
+    {
+        return (int) $ticket->checkins()
+            ->where('result', 'reentrada_autorizada')
+            ->count();
+    }
+
+    private function lastSuccessfulAccessAt(Ticket $ticket): ?CarbonInterface
+    {
+        $lastCheckin = $ticket->checkins()
+            ->whereIn('result', self::SUCCESSFUL_ACCESS_RESULTS)
+            ->orderByDesc('checked_in_at')
+            ->first();
+
+        return $lastCheckin?->checked_in_at;
     }
 }

@@ -2,7 +2,15 @@ import { apiClient, unwrap } from './apiClient'
 import { listPaginated } from './crudService'
 import type { ApiSuccess } from '../types/api'
 import type { PaginatedResult } from '../types/pagination'
-import type { CheckinResponse, CheckinTicketPayload, Ticket, TicketFilters } from '../types/ticket'
+import type {
+  CheckinResponse,
+  CheckinSummary,
+  CheckinSummaryFilters,
+  CheckinTicketPayload,
+  Ticket,
+  TicketCheckin,
+  TicketFilters,
+} from '../types/ticket'
 
 export function listTickets(filters: TicketFilters): Promise<PaginatedResult<Ticket>> {
   return listPaginated<Ticket>('/tickets', filters)
@@ -24,4 +32,12 @@ export function resendTicket(uuid: string): Promise<Ticket> {
  */
 export function checkinTicket(payload: CheckinTicketPayload): Promise<CheckinResponse> {
   return unwrap(apiClient.post<ApiSuccess<CheckinResponse>>('/tickets/checkin', payload))
+}
+
+export function getTicketCheckinHistory(uuid: string): Promise<TicketCheckin[]> {
+  return unwrap(apiClient.get<ApiSuccess<TicketCheckin[]>>(`/tickets/${uuid}/checkins`))
+}
+
+export function getCheckinSummary(filters: CheckinSummaryFilters): Promise<CheckinSummary> {
+  return unwrap(apiClient.get<ApiSuccess<CheckinSummary>>('/tickets/checkin/summary', { params: filters }))
 }

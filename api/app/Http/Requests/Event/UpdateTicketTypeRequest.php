@@ -32,6 +32,9 @@ class UpdateTicketTypeRequest extends FormRequest
             'sales_start_at' => ['nullable', 'date'],
             'sales_end_at' => ['nullable', 'date', 'after_or_equal:sales_start_at'],
             'status' => ['sometimes', 'string', Rule::in(['rascunho', 'ativo', 'pausado', 'esgotado', 'encerrado'])],
+            'reentry_enabled' => ['nullable', 'boolean'],
+            'max_reentries' => ['nullable', 'integer', 'min:0'],
+            'reentry_cooldown_minutes' => ['nullable', 'integer', 'min:0'],
             'sku' => [
                 'nullable',
                 'string',

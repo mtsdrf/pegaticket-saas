@@ -32,6 +32,8 @@ class AnalyticsService
      * considerado "churned" (evadido) em churnClients().
      */
     private const CHURN_INACTIVITY_DAYS = 60;
+    private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
+    private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
 
     /**
      * Por bucket (dia ou mês): qtd de pedidos, faturamento e ticket
@@ -537,6 +539,137 @@ class AnalyticsService
         return ['cells' => $cells];
     }
 
+    public function checkinInsights(int $tenantId, ?string $from, ?string $to): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $grantedCase = $this->caseWhenIn('ticket_checkins.result', self::CHECKIN_GRANTED_RESULTS);
+        $warningCase = $this->caseWhenIn('ticket_checkins.result', self::CHECKIN_WARNING_RESULTS);
+        $blockedCase = "CASE WHEN {$grantedCase} = 0 AND {$warningCase} = 0 THEN 1 ELSE 0 END";
+
+        $baseQuery = $this->ticketCheckinsQuery($tenantId, $fromDate, $toDate);
+
+        $totals = (clone $baseQuery)
+            ->selectRaw(
+                "COUNT(ticket_checkins.id) as total_reads,
+                SUM({$grantedCase}) as granted_reads,
+                SUM({$warningCase}) as warning_reads,
+                SUM({$blockedCase}) as blocked_reads,
+                SUM(CASE WHEN ticket_checkins.result = 'reentrada_autorizada' THEN 1 ELSE 0 END) as reentries,
+                COUNT(DISTINCT CASE WHEN {$grantedCase} = 1 THEN ticket_checkins.ticket_id END) as unique_granted_tickets"
+            )
+            ->first();
+
+        $issuedBySession = DB::table('tickets')
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->leftJoin('event_sessions', 'event_sessions.id', '=', 'ticket_types.event_session_id')
+            ->where('tickets.tenant_id', $tenantId)
+            ->whereNull('tickets.deleted_at')
+            ->selectRaw('event_sessions.uuid as session_uuid, COUNT(tickets.id) as issued_count')
+            ->groupBy('event_sessions.uuid')
+            ->pluck('issued_count', 'session_uuid')
+            ->map(fn ($count) => (int) $count)
+            ->all();
+
+        $issuedByTicketType = DB::table('tickets')
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->where('tickets.tenant_id', $tenantId)
+            ->whereNull('tickets.deleted_at')
+            ->selectRaw('ticket_types.uuid as ticket_type_uuid, COUNT(tickets.id) as issued_count')
+            ->groupBy('ticket_types.uuid')
+            ->pluck('issued_count', 'ticket_type_uuid')
+            ->map(fn ($count) => (int) $count)
+            ->all();
+
+        $bySession = (clone $baseQuery)
+            ->selectRaw(
+                "event_sessions.uuid as session_uuid,
+                COALESCE(event_sessions.name, 'Sem sessão') as session_name,
+                events.uuid as event_uuid,
+                events.name as event_name,
+                COUNT(ticket_checkins.id) as total_reads,
+                SUM({$grantedCase}) as granted_reads,
+                SUM({$warningCase}) as warning_reads,
+                SUM({$blockedCase}) as blocked_reads,
+                COUNT(DISTINCT CASE WHEN {$grantedCase} = 1 THEN ticket_checkins.ticket_id END) as unique_granted_tickets"
+            )
+            ->groupBy('event_sessions.uuid', 'event_sessions.name', 'events.uuid', 'events.name')
+            ->orderByDesc('granted_reads')
+            ->orderByDesc('total_reads')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) use ($issuedBySession) {
+                $sessionUuid = $row->session_uuid;
+                $issuedCount = $issuedBySession[$sessionUuid] ?? 0;
+
+                return [
+                    'session_uuid' => $sessionUuid,
+                    'session_name' => $row->session_name,
+                    'event_uuid' => $row->event_uuid,
+                    'event_name' => $row->event_name,
+                    'total_reads' => (int) $row->total_reads,
+                    'granted_reads' => (int) $row->granted_reads,
+                    'warning_reads' => (int) $row->warning_reads,
+                    'blocked_reads' => (int) $row->blocked_reads,
+                    'unique_granted_tickets' => (int) $row->unique_granted_tickets,
+                    'attendance_rate' => $this->percentage((int) $row->unique_granted_tickets, $issuedCount),
+                ];
+            })
+            ->all();
+
+        $byTicketType = (clone $baseQuery)
+            ->selectRaw(
+                "ticket_types.uuid as ticket_type_uuid,
+                ticket_types.name as ticket_type_name,
+                events.uuid as event_uuid,
+                events.name as event_name,
+                COUNT(ticket_checkins.id) as total_reads,
+                SUM({$grantedCase}) as granted_reads,
+                SUM({$warningCase}) as warning_reads,
+                SUM({$blockedCase}) as blocked_reads,
+                COUNT(DISTINCT CASE WHEN {$grantedCase} = 1 THEN ticket_checkins.ticket_id END) as unique_granted_tickets"
+            )
+            ->groupBy('ticket_types.uuid', 'ticket_types.name', 'events.uuid', 'events.name')
+            ->orderByDesc('granted_reads')
+            ->orderByDesc('total_reads')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) use ($issuedByTicketType) {
+                $issuedCount = $issuedByTicketType[$row->ticket_type_uuid] ?? 0;
+
+                return [
+                    'ticket_type_uuid' => $row->ticket_type_uuid,
+                    'ticket_type_name' => $row->ticket_type_name,
+                    'event_uuid' => $row->event_uuid,
+                    'event_name' => $row->event_name,
+                    'total_reads' => (int) $row->total_reads,
+                    'granted_reads' => (int) $row->granted_reads,
+                    'warning_reads' => (int) $row->warning_reads,
+                    'blocked_reads' => (int) $row->blocked_reads,
+                    'unique_granted_tickets' => (int) $row->unique_granted_tickets,
+                    'attendance_rate' => $this->percentage((int) $row->unique_granted_tickets, $issuedCount),
+                ];
+            })
+            ->all();
+
+        return [
+            'totals' => [
+                'total_reads' => (int) ($totals->total_reads ?? 0),
+                'granted_reads' => (int) ($totals->granted_reads ?? 0),
+                'warning_reads' => (int) ($totals->warning_reads ?? 0),
+                'blocked_reads' => (int) ($totals->blocked_reads ?? 0),
+                'reentries' => (int) ($totals->reentries ?? 0),
+                'unique_granted_tickets' => (int) ($totals->unique_granted_tickets ?? 0),
+                'attendance_rate' => $this->percentage(
+                    (int) ($totals->unique_granted_tickets ?? 0),
+                    array_sum($issuedByTicketType)
+                ),
+            ],
+            'by_session' => $bySession,
+            'by_ticket_type' => $byTicketType,
+        ];
+    }
+
     // ------------------------------------------------------------------
     // Bases de query
     // ------------------------------------------------------------------
@@ -561,6 +694,21 @@ class AnalyticsService
             ->whereNull('sale_items.deleted_at')
             ->when($from, fn($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
             ->when($to, fn($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
+    }
+
+    private function ticketCheckinsQuery(int $tenantId, Carbon $from, Carbon $to): QueryBuilder
+    {
+        return DB::table('ticket_checkins')
+            ->join('tickets', 'tickets.id', '=', 'ticket_checkins.ticket_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->leftJoin('event_sessions', 'event_sessions.id', '=', 'ticket_types.event_session_id')
+            ->join('events', 'events.id', '=', 'ticket_types.event_id')
+            ->where('ticket_checkins.tenant_id', $tenantId)
+            ->whereNull('ticket_checkins.deleted_at')
+            ->whereBetween('ticket_checkins.checked_in_at', [
+                $from->copy()->startOfDay(),
+                $to->copy()->endOfDay(),
+            ]);
     }
 
     private function salesSummaryPeriod(int $tenantId, Carbon $from, Carbon $to, string $groupBy): array
@@ -724,5 +872,24 @@ class AnalyticsService
     private function formatMoney(float $value): string
     {
         return number_format($value, 2, '.', '');
+    }
+
+    private function caseWhenIn(string $column, array $values): string
+    {
+        $quoted = implode(', ', array_map(
+            fn(string $value) => DB::getPdo()->quote($value),
+            $values
+        ));
+
+        return "CASE WHEN {$column} IN ({$quoted}) THEN 1 ELSE 0 END";
+    }
+
+    private function percentage(int $value, int $base): float
+    {
+        if ($base <= 0) {
+            return 0.0;
+        }
+
+        return round(($value / $base) * 100, 2);
     }
 }

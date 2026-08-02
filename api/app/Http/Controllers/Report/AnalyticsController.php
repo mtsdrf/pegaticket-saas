@@ -192,4 +192,17 @@ class AnalyticsController extends Controller
 
         return APIResponse::success($data, __('messages.analytics.sales_by_hour'));
     }
+
+    public function checkinInsights(AnalyticsPeriodRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->checkinInsights(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null
+        );
+
+        return APIResponse::success($data, __('messages.analytics.checkin_insights'));
+    }
 }

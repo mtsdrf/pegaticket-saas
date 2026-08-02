@@ -28,6 +28,9 @@ class TicketType extends BaseModel
         'sales_start_at',
         'sales_end_at',
         'status',
+        'reentry_enabled',
+        'max_reentries',
+        'reentry_cooldown_minutes',
         'sku',
         'barcode',
         'brand',
@@ -43,6 +46,9 @@ class TicketType extends BaseModel
         'max_per_order' => 'integer',
         'sales_start_at' => 'datetime',
         'sales_end_at' => 'datetime',
+        'reentry_enabled' => 'boolean',
+        'max_reentries' => 'integer',
+        'reentry_cooldown_minutes' => 'integer',
         'last_purchase_cost' => 'decimal:2',
     ];
 

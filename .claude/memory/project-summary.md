@@ -11,6 +11,27 @@ Nome final do produto: **PegaTicket** (definido pelo usuário em 2026-07-05). A 
 
 **Restrição de produto crítica:** uso majoritário é no celular (usuário enfatizou em 2026-07-05). Todo frontend novo é mobile-first, não adaptação de desktop — ver [[design-system]] e [[ui-redesign-plan]].
 
+## Leitura canônica atual (2026-08-02)
+
+O contexto ativo do produto hoje é:
+
+- **plataforma SaaS de ticketing multiempresa**;
+- foco em **eventos, vendas, tickets, checkout, portal do comprador e acesso**;
+- escopo atual em fechamento do **núcleo Must Have** da especificação completa;
+- estado geral entre **Fase 1 funcional** e **pré-Fase 2** do roadmap consolidado.
+
+Referências canônicas para decisões a partir desta data:
+
+- [pegaticket_especificacao_completa.md](/home/mtsdrf/workspace/pegaticket-saas/pegaticket_especificacao_completa.md)
+- [docs/product-current-map.md](/home/mtsdrf/workspace/pegaticket-saas/docs/product-current-map.md)
+- [docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md](/home/mtsdrf/workspace/pegaticket-saas/docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md)
+
+Importante:
+
+- este arquivo contém muito **histórico técnico acumulado**;
+- parte do conteúdo abaixo descreve fases antigas, módulos herdados ou frentes que **não representam mais o recorte principal do produto**;
+- usar o restante deste documento como contexto histórico, não como roadmap oficial vigente.
+
 ## Estado atual (2026-07-05)
 - Nova passagem global de QA consolidada e fechada em **28 de julho de 2026** com base na skill `testing`, consolidada em:
   - [docs/quality/2026-07-27-production-certification-audit.md](/home/mtsdrf/workspace/pegaticket-saas/docs/quality/2026-07-27-production-certification-audit.md)

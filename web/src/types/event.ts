@@ -76,6 +76,9 @@ export interface Event {
   ends_at: string
   visibility: EventVisibility
   status: EventStatus
+  reentry_enabled: boolean
+  max_reentries: number | null
+  reentry_cooldown_minutes: number | null
   category: EventCategoryRef | null
   venue: EventVenueRef | null
   /** Só presente quando o registro é carregado com o detalhe completo (relação `ticketTypes` carregada). */
@@ -101,6 +104,9 @@ export interface EventPayload {
   ends_at: string
   visibility?: EventVisibility
   status?: EventStatus
+  reentry_enabled?: boolean
+  max_reentries?: number | null
+  reentry_cooldown_minutes?: number | null
 }
 
 export interface EventFilters {

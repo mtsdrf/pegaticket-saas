@@ -340,10 +340,18 @@ return [
         'created' => 'Event created successfully.',
         'updated' => 'Event updated successfully.',
         'deleted' => 'Event deleted successfully.',
+        'published' => 'Event published successfully.',
+        'sales_paused' => 'Event sales paused successfully.',
+        'sales_resumed' => 'Event sales resumed successfully.',
+        'sales_closed' => 'Event sales closed successfully.',
+        'canceled' => 'Event canceled successfully.',
+        'archived' => 'Event archived successfully.',
         'invalid_category' => 'Invalid event category for this company.',
         'invalid_venue' => 'Invalid venue for this company.',
         'slug_exists' => 'An event with this slug already exists for this company.',
         'venue_requires_published_map' => 'Publish the venue map before linking it to the event.',
+        'invalid_status_transition' => 'This event status transition is not allowed from the current state.',
+        'publish_requires_sellable_item' => 'Create at least one active ticket type or add-on before publishing the event.',
     ],
 
     'event_session' => [
@@ -385,10 +393,18 @@ return [
         'list' => 'Tickets list.',
         'show' => 'Ticket shown successfully.',
         'resent' => 'Ticket resend registered successfully.',
+        'mail_subject_issued' => 'Your tickets for sale #:code',
+        'mail_subject_resent' => 'Ticket resend for sale #:code',
     ],
 
     'ticket_checkin' => [
+        'history' => 'Check-in history loaded successfully.',
+        'summary' => 'Operational gate summary loaded successfully.',
         'valido' => 'Entry granted.',
+        'reentrada_autorizada' => 'Re-entry granted.',
+        'reentrada_nao_permitida' => 'This ticket does not allow re-entry.',
+        'reentrada_limite_excedido' => 'This ticket has reached its re-entry limit.',
+        'reentrada_intervalo_nao_atingido' => 'Re-entry is not available yet: wait for the configured interval.',
         'ja_utilizado' => 'This ticket has already been used.',
         'cancelado' => 'This ticket was cancelled.',
         'estornado' => 'This ticket was refunded.',
@@ -801,6 +817,7 @@ return [
         'stalled_products' => 'Stalled products retrieved successfully.',
         'stock_ruptures' => 'Stock ruptures retrieved successfully.',
         'sales_by_hour' => 'Sales by hour retrieved successfully.',
+        'checkin_insights' => 'Access analytics loaded successfully.',
     ],
 
     'route' => [

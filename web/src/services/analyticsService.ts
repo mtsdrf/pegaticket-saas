@@ -5,6 +5,7 @@ import type {
   AbcItem,
   AnalyticsPeriodParams,
   ChurnClients,
+  CheckinInsights,
   CouponRoi,
   LocationSales,
   MarginSummary,
@@ -288,5 +289,10 @@ export async function getChurnClients(): Promise<ChurnClients> {
 
 export async function getSalesByHour(params?: AnalyticsPeriodParams): Promise<SalesByHour> {
   const response = await apiClient.get<ApiSuccess<SalesByHour>>('/reports/analytics/sales-by-hour', { params })
+  return response.data.data
+}
+
+export async function getCheckinInsights(params: AnalyticsPeriodParams): Promise<CheckinInsights> {
+  const response = await apiClient.get<ApiSuccess<CheckinInsights>>('/reports/analytics/checkin-insights', { params })
   return response.data.data
 }

@@ -24,6 +24,9 @@ class CreateEventDTO
         public readonly string $endsAt,
         public readonly string $visibility,
         public readonly string $status,
+        public readonly bool $reentryEnabled,
+        public readonly ?int $maxReentries,
+        public readonly ?int $reentryCooldownMinutes,
     ) {
     }
 
@@ -47,6 +50,9 @@ class CreateEventDTO
             endsAt: $data['ends_at'],
             visibility: $data['visibility'] ?? 'public',
             status: $data['status'] ?? 'rascunho',
+            reentryEnabled: (bool) ($data['reentry_enabled'] ?? false),
+            maxReentries: isset($data['max_reentries']) ? (int) $data['max_reentries'] : null,
+            reentryCooldownMinutes: isset($data['reentry_cooldown_minutes']) ? (int) $data['reentry_cooldown_minutes'] : null,
         );
     }
 }

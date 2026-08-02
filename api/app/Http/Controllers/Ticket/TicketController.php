@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Ticket;
 use App\DTOs\Ticket\CheckinTicketDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ticket\CheckinTicketRequest;
+use App\Http\Requests\Ticket\CheckinSummaryRequest;
 use App\Http\Requests\Ticket\ListTicketRequest;
 use App\Http\Resources\Ticket\CheckinResultResource;
+use App\Http\Resources\Ticket\TicketCheckinResource;
+use App\Http\Resources\Ticket\TicketCheckinSummaryEntryResource;
 use App\Http\Resources\Ticket\TicketResource;
 use App\Models\Ticket\Ticket;
 use App\Services\APIResponse;
@@ -73,6 +76,35 @@ class TicketController extends Controller
         return APIResponse::success(
             new TicketResource($ticket),
             __('messages.ticket.resent')
+        );
+    }
+
+    public function checkinHistory(Ticket $ticket)
+    {
+        $history = $this->service->checkinHistory($ticket);
+
+        return APIResponse::success(
+            TicketCheckinResource::collection($history),
+            __('messages.ticket_checkin.history')
+        );
+    }
+
+    public function checkinSummary(CheckinSummaryRequest $request)
+    {
+        $validated = $request->validated();
+        $summary = $this->service->checkinOperationalSummary(
+            app('tenant_id'),
+            collect($validated)->only(['event_uuid', 'event_session_uuid', 'gate_name'])->all(),
+            (int) ($validated['limit'] ?? 8)
+        );
+
+        return APIResponse::success(
+            [
+                'filters' => $summary['filters'],
+                'counters' => $summary['counters'],
+                'recent' => TicketCheckinSummaryEntryResource::collection($summary['recent']),
+            ],
+            __('messages.ticket_checkin.summary')
         );
     }
 

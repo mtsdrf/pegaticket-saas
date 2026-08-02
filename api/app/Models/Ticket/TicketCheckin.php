@@ -23,6 +23,8 @@ class TicketCheckin extends BaseModel
         'operator_id',
         'checked_in_at',
         'result',
+        'access_type',
+        'reason',
         'device_info',
     ];
 

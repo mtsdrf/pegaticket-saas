@@ -12,6 +12,8 @@ class TicketCheckinResource extends JsonResource
             'uuid' => $this->uuid,
             'gate_name' => $this->gate_name,
             'result' => $this->result,
+            'access_type' => $this->access_type,
+            'reason' => $this->reason,
             'checked_in_at' => $this->checked_in_at,
             'device_info' => $this->device_info,
             'operator' => $this->whenLoaded('operator', fn() => $this->operator ? [

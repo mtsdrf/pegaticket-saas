@@ -1,4 +1,4 @@
-import { Box, TextField } from '@mui/material'
+import { Box, Checkbox, FormControlLabel, FormHelperText, TextField, Typography } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
@@ -28,6 +28,9 @@ interface EventFormState {
   ends_at: string
   visibility: EventVisibility
   status: EventStatus
+  reentry_enabled: boolean
+  max_reentries: string
+  reentry_cooldown_minutes: string
 }
 
 const EMPTY_FORM: EventFormState = {
@@ -46,6 +49,9 @@ const EMPTY_FORM: EventFormState = {
   ends_at: '',
   visibility: 'public',
   status: 'rascunho',
+  reentry_enabled: false,
+  max_reentries: '',
+  reentry_cooldown_minutes: '',
 }
 
 /** Backend guarda `datetime` (`YYYY-MM-DD HH:mm:ss`) — `<input type="datetime-local">` usa `YYYY-MM-DDTHH:mm`. */
@@ -119,6 +125,9 @@ export function EventFormPage() {
             ends_at: toDateTimeLocal(record.ends_at),
             visibility: record.visibility,
             status: record.status,
+            reentry_enabled: record.reentry_enabled,
+            max_reentries: record.max_reentries === null ? '' : String(record.max_reentries),
+            reentry_cooldown_minutes: record.reentry_cooldown_minutes === null ? '' : String(record.reentry_cooldown_minutes),
           })
           setExistingImageUrl(record.cover_image_url)
         }
@@ -159,6 +168,9 @@ export function EventFormPage() {
       ends_at: form.ends_at ? form.ends_at.replace('T', ' ') : '',
       visibility: form.visibility,
       status: form.status,
+      reentry_enabled: form.reentry_enabled,
+      max_reentries: form.max_reentries.trim() ? Number(form.max_reentries) : null,
+      reentry_cooldown_minutes: form.reentry_cooldown_minutes.trim() ? Number(form.reentry_cooldown_minutes) : null,
     }
 
     try {
@@ -297,6 +309,62 @@ export function EventFormPage() {
           required
           slotProps={{ inputLabel: { shrink: true } }}
         />
+      </Box>
+
+      <Box
+        sx={{
+          mb: 2,
+          border: '1px solid var(--pt-divider)',
+          borderRadius: 3,
+          p: 2,
+          backgroundColor: 'var(--pt-surface-soft)',
+        }}
+      >
+        <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Reentrada</Typography>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
+          Define a política padrão de nova entrada depois do primeiro acesso.
+        </Typography>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={form.reentry_enabled}
+              onChange={(event) => updateField('reentry_enabled', event.target.checked)}
+            />
+          }
+          label="Permitir reentrada neste evento"
+          sx={{ mb: form.reentry_enabled ? 1.5 : 0 }}
+        />
+
+        {fieldErrors.reentry_enabled?.[0] && <FormHelperText error sx={{ mb: 1 }}>{fieldErrors.reentry_enabled[0]}</FormHelperText>}
+
+        {form.reentry_enabled && (
+          <Box sx={{ ...FORM_GRID_2_SX }}>
+            <TextField
+              label="Limite de reentradas"
+              type="number"
+              placeholder="Sem limite"
+              value={form.max_reentries}
+              onChange={(event) => updateField('max_reentries', event.target.value)}
+              error={Boolean(fieldErrors.max_reentries)}
+              helperText={fieldErrors.max_reentries?.[0] ?? 'Quantidade maxima de reentradas autorizadas por ingresso.'}
+              slotProps={{ htmlInput: { min: 0, step: '1' } }}
+            />
+            <TextField
+              label="Intervalo minimo (min)"
+              type="number"
+              placeholder="Sem intervalo"
+              value={form.reentry_cooldown_minutes}
+              onChange={(event) => updateField('reentry_cooldown_minutes', event.target.value)}
+              error={Boolean(fieldErrors.reentry_cooldown_minutes)}
+              helperText={
+                fieldErrors.reentry_cooldown_minutes?.[0] ??
+                'Tempo minimo entre um acesso liberado e a proxima reentrada.'
+              }
+              slotProps={{ htmlInput: { min: 0, step: '1' } }}
+            />
+          </Box>
+        )}
       </Box>
 
       <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>

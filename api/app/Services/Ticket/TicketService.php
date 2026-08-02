@@ -4,6 +4,8 @@ namespace App\Services\Ticket;
 
 use App\Events\Ticket\TicketResent;
 use App\Models\Ticket\Ticket;
+use App\Models\Ticket\TicketCheckin;
+use Illuminate\Database\Eloquent\Collection;
 use App\Repositories\Contracts\TicketRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +18,8 @@ use Illuminate\Support\Facades\Auth;
 class TicketService
 {
     public const EAGER_RELATIONS = ['ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale'];
+    private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
+    private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
 
     public function __construct(
         private TicketRepositoryInterface $repository
@@ -77,11 +81,10 @@ class TicketService
     }
 
     /**
-     * "Reenvio pelo administrador" (spec 5.15). Nesta rodada não há
-     * integração de e-mail/PDF real ainda — só registra a intenção
-     * (evento + auditoria) para o frontend confirmar a ação; o disparo
-     * efetivo de e-mail fica como pendência sinalizada, não fabricada como
-     * concluída.
+     * "Reenvio pelo administrador" (spec 5.15). O listener do evento faz
+     * o envio real do e-mail do ingresso quando houver comprador com
+     * e-mail cadastrado; aqui o service só valida escopo e dispara o
+     * evento de domínio.
      */
     public function resend(Ticket $ticket): Ticket
     {
@@ -93,6 +96,62 @@ class TicketService
         ));
 
         return $ticket;
+    }
+
+    public function checkinHistory(Ticket $ticket): Collection
+    {
+        $this->assertBelongsToCurrentTenant($ticket);
+
+        return $ticket->checkins()
+            ->with('operator')
+            ->orderByDesc('checked_in_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    public function checkinOperationalSummary(int $tenantId, array $filters = [], int $limit = 8): array
+    {
+        $baseQuery = TicketCheckin::query()
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->when(
+                !empty($filters['gate_name']),
+                fn ($query) => $query->where('gate_name', trim((string) $filters['gate_name']))
+            )
+            ->when(
+                !empty($filters['event_uuid']),
+                fn ($query) => $query->whereHas('ticket.ticketType.event', fn ($eventQuery) => $eventQuery->where('uuid', $filters['event_uuid']))
+            )
+            ->when(
+                !empty($filters['event_session_uuid']),
+                fn ($query) => $query->whereHas('ticket.ticketType.session', fn ($sessionQuery) => $sessionQuery->where('uuid', $filters['event_session_uuid']))
+            );
+
+        $total = (clone $baseQuery)->count();
+        $granted = (clone $baseQuery)->whereIn('result', self::CHECKIN_GRANTED_RESULTS)->count();
+        $warning = (clone $baseQuery)->whereIn('result', self::CHECKIN_WARNING_RESULTS)->count();
+
+        $recent = (clone $baseQuery)
+            ->with(['operator', 'ticket.ticketType.event', 'ticket.ticketType.session'])
+            ->orderByDesc('checked_in_at')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return [
+            'filters' => [
+                'event_uuid' => $filters['event_uuid'] ?? null,
+                'event_session_uuid' => $filters['event_session_uuid'] ?? null,
+                'gate_name' => $filters['gate_name'] ?? null,
+            ],
+            'counters' => [
+                'total' => $total,
+                'granted' => $granted,
+                'warning' => $warning,
+                'blocked' => max(0, $total - $granted - $warning),
+            ],
+            'recent' => $recent,
+        ];
     }
 
     private function assertBelongsToCurrentTenant(Ticket $ticket): void

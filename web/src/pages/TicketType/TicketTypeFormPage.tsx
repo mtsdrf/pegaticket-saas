@@ -4,6 +4,9 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Checkbox,
+  FormControlLabel,
+  FormHelperText,
   InputAdornment,
   Stack,
   TextField,
@@ -32,6 +35,9 @@ interface TicketTypeFormState {
   sales_start_at: string
   sales_end_at: string
   status: TicketTypeStatus
+  reentry_enabled: 'inherit' | 'enabled' | 'disabled'
+  max_reentries: string
+  reentry_cooldown_minutes: string
   sku: string
   barcode: string
   brand: string
@@ -50,6 +56,9 @@ const EMPTY_FORM: TicketTypeFormState = {
   sales_start_at: '',
   sales_end_at: '',
   status: 'rascunho',
+  reentry_enabled: 'inherit',
+  max_reentries: '',
+  reentry_cooldown_minutes: '',
   sku: '',
   barcode: '',
   brand: '',
@@ -105,6 +114,10 @@ export function TicketTypeFormPage() {
             sales_start_at: toDateTimeLocal(record.sales_start_at),
             sales_end_at: toDateTimeLocal(record.sales_end_at),
             status: record.status,
+            reentry_enabled: record.reentry_enabled === null ? 'inherit' : record.reentry_enabled ? 'enabled' : 'disabled',
+            max_reentries: record.max_reentries === null ? '' : String(record.max_reentries),
+            reentry_cooldown_minutes:
+              record.reentry_cooldown_minutes === null ? '' : String(record.reentry_cooldown_minutes),
             sku: record.sku ?? '',
             barcode: record.barcode ?? '',
             brand: record.brand ?? '',
@@ -139,6 +152,9 @@ export function TicketTypeFormPage() {
       sales_start_at: form.sales_start_at ? form.sales_start_at.replace('T', ' ') : null,
       sales_end_at: form.sales_end_at ? form.sales_end_at.replace('T', ' ') : null,
       status: form.status,
+      reentry_enabled: form.reentry_enabled === 'inherit' ? null : form.reentry_enabled === 'enabled',
+      max_reentries: form.max_reentries.trim() ? Number(form.max_reentries) : null,
+      reentry_cooldown_minutes: form.reentry_cooldown_minutes.trim() ? Number(form.reentry_cooldown_minutes) : null,
       sku: form.sku.trim() || undefined,
       barcode: form.barcode.trim() || undefined,
       brand: form.brand.trim() || undefined,
@@ -276,6 +292,84 @@ export function TicketTypeFormPage() {
         helperText={fieldErrors.status?.[0]}
         sx={{ mb: 2, maxWidth: { sm: 260 } }}
       />
+
+      <Box
+        sx={{
+          mb: 2,
+          border: '1px solid var(--pt-divider)',
+          borderRadius: 3,
+          p: 2,
+          backgroundColor: 'var(--pt-surface-soft)',
+        }}
+      >
+        <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Override de reentrada</Typography>
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
+          Este tipo de ingresso pode herdar a regra do evento ou sobrescreve-la.
+        </Typography>
+
+        <Stack spacing={1.5}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.reentry_enabled === 'inherit'}
+                onChange={(event) => {
+                  if (event.target.checked) updateField('reentry_enabled', 'inherit')
+                }}
+              />
+            }
+            label="Herdar politica de reentrada do evento"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.reentry_enabled === 'enabled'}
+                onChange={(event) => {
+                  updateField('reentry_enabled', event.target.checked ? 'enabled' : 'inherit')
+                }}
+              />
+            }
+            label="Permitir reentrada neste tipo de ingresso"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.reentry_enabled === 'disabled'}
+                onChange={(event) => {
+                  updateField('reentry_enabled', event.target.checked ? 'disabled' : 'inherit')
+                }}
+              />
+            }
+            label="Bloquear reentrada neste tipo de ingresso"
+          />
+        </Stack>
+
+        {fieldErrors.reentry_enabled?.[0] && <FormHelperText error sx={{ mt: 1 }}>{fieldErrors.reentry_enabled[0]}</FormHelperText>}
+
+        {form.reentry_enabled === 'enabled' && (
+          <Box sx={{ ...FORM_GRID_2_SX, mt: 1.5 }}>
+            <TextField
+              label="Limite de reentradas"
+              type="number"
+              placeholder="Sem limite"
+              value={form.max_reentries}
+              onChange={(event) => updateField('max_reentries', event.target.value)}
+              error={Boolean(fieldErrors.max_reentries)}
+              helperText={fieldErrors.max_reentries?.[0] ?? 'Se vazio, usa sem limite dentro desta regra.'}
+              slotProps={{ htmlInput: { min: 0, step: '1' } }}
+            />
+            <TextField
+              label="Intervalo minimo (min)"
+              type="number"
+              placeholder="Sem intervalo"
+              value={form.reentry_cooldown_minutes}
+              onChange={(event) => updateField('reentry_cooldown_minutes', event.target.value)}
+              error={Boolean(fieldErrors.reentry_cooldown_minutes)}
+              helperText={fieldErrors.reentry_cooldown_minutes?.[0] ?? 'Tempo minimo entre acessos autorizados.'}
+              slotProps={{ htmlInput: { min: 0, step: '1' } }}
+            />
+          </Box>
+        )}
+      </Box>
 
       <TextField
         label="Descrição"

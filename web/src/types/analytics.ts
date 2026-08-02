@@ -148,3 +148,45 @@ export interface SalesByHourCell {
 export interface SalesByHour {
   cells: SalesByHourCell[]
 }
+
+export interface CheckinInsightsTotals {
+  total_reads: number
+  granted_reads: number
+  warning_reads: number
+  blocked_reads: number
+  reentries: number
+  unique_granted_tickets: number
+  attendance_rate: number
+}
+
+export interface CheckinInsightsSessionRow {
+  session_uuid: string | null
+  session_name: string
+  event_uuid: string
+  event_name: string
+  total_reads: number
+  granted_reads: number
+  warning_reads: number
+  blocked_reads: number
+  unique_granted_tickets: number
+  attendance_rate: number
+}
+
+export interface CheckinInsightsTicketTypeRow {
+  ticket_type_uuid: string
+  ticket_type_name: string
+  event_uuid: string
+  event_name: string
+  total_reads: number
+  granted_reads: number
+  warning_reads: number
+  blocked_reads: number
+  unique_granted_tickets: number
+  attendance_rate: number
+}
+
+export interface CheckinInsights {
+  totals: CheckinInsightsTotals
+  by_session: CheckinInsightsSessionRow[]
+  by_ticket_type: CheckinInsightsTicketTypeRow[]
+}
