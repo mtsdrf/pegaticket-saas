@@ -60,9 +60,9 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     Component: CompanyBlock,
   },
   {
-    key: 'pedidos',
-    path: 'pedidos',
-    label: 'Pedidos e Operação',
+    key: 'operacao',
+    path: 'operacao',
+    label: 'Vendas e Operação',
     description: 'Disponibilidade, regras do canal público e parâmetros operacionais.',
     icon: TuneOutlinedIcon,
     permission: ACCESS.tenantSettingsRead,

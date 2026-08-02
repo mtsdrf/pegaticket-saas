@@ -620,10 +620,6 @@ return [
         'rejected' => 'Pedido recusado com sucesso.',
         'awaiting_approval' => 'Este pedido ainda está aguardando aprovação. Aprove-o antes de entregar ou registrar pagamento.',
         'order_rejected' => 'Este pedido foi recusado e não pode ser entregue ou pago.',
-        'dispatched' => 'Pedido marcado como saiu para entrega com sucesso.',
-        'already_out_for_delivery' => 'Este pedido já foi marcado como saiu para entrega.',
-        'undispatched' => 'Status "saiu para entrega" desfeito com sucesso.',
-        'not_out_for_delivery' => 'Este pedido não está marcado como saiu para entrega.',
         'prep_link_generated' => 'Link de preparo gerado com sucesso.',
         'prep_shown' => 'Preparo do pedido exibido com sucesso.',
         'cancellation_request_not_storefront' => 'Somente pedidos feitos pela loja podem ter o cancelamento solicitado por este canal.',
@@ -817,7 +813,6 @@ return [
         'margin_summary' => 'Resumo de margem obtido com sucesso.',
         'coupon_roi' => 'Comparação de ticket por cupom obtida com sucesso.',
         'revenue_concentration' => 'Concentração de faturamento obtida com sucesso.',
-        'delivery_otif' => 'OTIF de entrega obtido com sucesso.',
         'churn_clients' => 'Clientes evadidos obtidos com sucesso.',
         'stalled_products' => 'Produtos encalhados obtidos com sucesso.',
         'stock_ruptures' => 'Rupturas de estoque obtidas com sucesso.',
@@ -866,8 +861,6 @@ return [
         'order_rejected_body' => 'Seu pedido foi recusado.',
         'order_delivered_title' => 'Pedido entregue',
         'order_delivered_body' => 'Seu pedido foi entregue!',
-        'order_out_for_delivery_title' => 'Pedido saiu para entrega',
-        'order_out_for_delivery_body' => 'Seu pedido saiu para entrega!',
     ],
 
     /*

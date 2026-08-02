@@ -103,7 +103,6 @@ export function SaleFormPage() {
   const [installmentsCount, setInstallmentsCount] = useState('2')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([createDraftItem()])
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
   const [markAsDelivered, setMarkAsDelivered] = useState(true)
   const [markAsPaid, setMarkAsPaid] = useState(false)
   const [paidAmount, setPaidAmount] = useState('')
@@ -204,7 +203,6 @@ export function SaleFormPage() {
         items: itemsPayload,
         mark_as_delivered: markAsDelivered,
         mark_as_paid: isInstallment ? false : markAsPaid,
-        expected_delivery_date: expectedDeliveryDate || undefined,
       })
 
       if (isDigitsOnlyPhone(client.phone_primary)) {
@@ -216,7 +214,6 @@ export function SaleFormPage() {
             unitPrice: effectiveUnitPrice(item),
           })),
           total: sale.total_amount,
-          expectedDeliveryDate,
           isPaid: markAsPaid && !isInstallment,
           paidAmount: markAsPaid && !isInstallment ? paidAmountNumber : null,
           trackingUrl: activeTenant?.send_tracking_link_whatsapp
@@ -281,7 +278,7 @@ export function SaleFormPage() {
         )}
 
         <Stack spacing={1.5}>
-          <Typography sx={{ fontWeight: 700 }}>Itens do pedido</Typography>
+          <Typography sx={{ fontWeight: 700 }}>Itens da venda</Typography>
 
           {items.map((item) => {
             const discount = item.item && Number(item.quantity) > 0 ? (item.item.price - effectiveUnitPrice(item)) * Number(item.quantity) : 0
@@ -362,16 +359,6 @@ export function SaleFormPage() {
         </Stack>
 
         <TextField
-          label="Previsão de entrega"
-          type="date"
-          value={expectedDeliveryDate}
-          onChange={(event) => setExpectedDeliveryDate(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-          fullWidth
-          sx={{ maxWidth: { xs: '100%', sm: 260 } }}
-        />
-
-        <TextField
           label="Observações"
           value={notes}
           onChange={(event) => setNotes(event.target.value.slice(0, NOTES_MAX_LENGTH))}
@@ -405,7 +392,7 @@ export function SaleFormPage() {
             />
             {isInstallment && (
               <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                Pedido parcelado não pode nascer pago — use "Pagar parcela" depois de criado.
+                Venda parcelada não pode nascer paga — use "Pagar parcela" depois de criada.
               </Typography>
             )}
           </Stack>
@@ -440,7 +427,7 @@ export function SaleFormPage() {
             </Stack>
             <Divider sx={{ my: 0.5 }} />
             <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontWeight: 700 }}>Total do pedido</Typography>
+              <Typography sx={{ fontWeight: 700 }}>Total da venda</Typography>
               <Typography sx={{ fontWeight: 700 }}>{formatCurrency(summary.totalPracticed)}</Typography>
             </Stack>
 
@@ -461,7 +448,7 @@ export function SaleFormPage() {
 
         {!isDigitsOnlyPhone(client?.phone_primary) && client && (
           <Alert severity="info" variant="outlined">
-            Este cliente não tem um telefone válido pra notificação automática por WhatsApp — o pedido é criado normalmente, só o aviso não é enviado.
+            Este cliente não tem um telefone válido pra notificação automática por WhatsApp — a venda é criada normalmente, só o aviso não é enviado.
           </Alert>
         )}
       </Stack>

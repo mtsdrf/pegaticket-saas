@@ -5,7 +5,6 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
@@ -49,8 +48,7 @@ const ORIGIN_META: Record<SaleOrigin, { label: string; shortLabel: string }> = {
 interface OperationSnapshot {
   activeTotal: number | null
   storefrontPendingApproval: number | null
-  productionTotal: number | null
-  dispatchTotal: number | null
+  confirmedTotal: number | null
   financialPendingTotal: number | null
   byOrigin: Partial<Record<SaleOrigin, number>>
 }
@@ -64,7 +62,7 @@ interface QuickQueueAction {
 }
 
 type OperationPriority = 'normal' | 'attention' | 'urgent' | 'critical'
-type OperationOwner = 'store' | 'operations' | 'delivery' | 'finance'
+type OperationOwner = 'store' | 'operations' | 'finance'
 
 type SaleBoardDropTarget = SaleOperationStage | 'cancel' | 'complete'
 
@@ -80,8 +78,7 @@ interface ResolvedSaleBoardAction {
 const STAGE_FILTERS: Array<{ value: 'all' | SaleOperationStage; label: string }> = [
   { value: 'all', label: 'Todas as filas' },
   { value: 'approval', label: 'Aprovação' },
-  { value: 'production', label: 'Produção' },
-  { value: 'dispatch', label: 'Expedição' },
+  { value: 'confirmed', label: 'Confirmado' },
   { value: 'financial_pending', label: 'Financeiro pendente' },
 ]
 
@@ -91,19 +88,14 @@ const STAGE_META: Record<SaleOperationStage, { label: string; caption: string; a
     caption: 'Pedidos aguardando aceite antes de entrar no fluxo operacional.',
     accent: 'var(--pt-warning)',
   },
-  production: {
-    label: 'Produção',
-    caption: 'Pedidos confirmados que ainda precisam ser preparados ou separados.',
+  confirmed: {
+    label: 'Confirmado',
+    caption: 'Pedidos confirmados que ainda não foram concluídos.',
     accent: 'var(--pt-primary)',
-  },
-  dispatch: {
-    label: 'Expedição',
-    caption: 'Pedidos já despachados e ainda não concluídos.',
-    accent: 'var(--pt-info)',
   },
   financial_pending: {
     label: 'Financeiro pendente',
-    caption: 'Pedidos entregues com cobrança ainda em aberto.',
+    caption: 'Pedidos já entregues com cobrança ainda em aberto.',
     accent: 'var(--pt-danger)',
   },
 }
@@ -139,8 +131,7 @@ function deriveOperationStage(order: Sale): SaleOperationStage | null {
   if (order.cancelled_at || order.status === 'rejected') return null
   if (order.status === 'pending_approval') return 'approval'
   if (order.is_delivered && !order.is_paid) return 'financial_pending'
-  if (order.status === 'confirmed' && order.is_out_for_delivery && !order.is_delivered) return 'dispatch'
-  if (order.status === 'confirmed' && !order.is_out_for_delivery && !order.is_delivered) return 'production'
+  if (order.status === 'confirmed' && !order.is_delivered) return 'confirmed'
   return null
 }
 
@@ -171,17 +162,10 @@ function deriveOperationPriority(order: Sale): OperationPriority {
     return 'normal'
   }
 
-  if (stage === 'production') {
+  if (stage === 'confirmed') {
     if (ageInMinutes >= 45) return 'critical'
     if (ageInMinutes >= 25) return 'urgent'
     if (ageInMinutes >= 12) return 'attention'
-    return 'normal'
-  }
-
-  if (stage === 'dispatch') {
-    if (ageInMinutes >= 35) return 'critical'
-    if (ageInMinutes >= 20) return 'urgent'
-    if (ageInMinutes >= 10) return 'attention'
     return 'normal'
   }
 
@@ -198,8 +182,7 @@ function deriveOperationPriority(order: Sale): OperationPriority {
 function deriveOperationOwner(order: Sale): OperationOwner | null {
   const stage = deriveOperationStage(order)
   if (stage === 'approval') return 'store'
-  if (stage === 'production') return 'operations'
-  if (stage === 'dispatch') return 'delivery'
+  if (stage === 'confirmed') return 'operations'
   if (stage === 'financial_pending') return 'finance'
   return null
 }
@@ -208,7 +191,7 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
   if (owner === 'store') {
     return {
       label: 'Atendimento da loja',
-      caption: 'Confirma e libera pedidos recebidos do canal online.',
+      caption: 'Confirma e libera vendas recebidas do canal online.',
       accent: 'var(--pt-warning)',
       to: '/vendas-online',
     }
@@ -216,15 +199,8 @@ function ownerMeta(owner: OperationOwner): { label: string; caption: string; acc
   if (owner === 'operations') {
     return {
       label: 'Operação interna',
-      caption: 'Produz, separa e prepara o pedido para sair.',
+      caption: 'Prepara a venda até a conclusão (entrega/retirada).',
       accent: 'var(--pt-primary)',
-    }
-  }
-  if (owner === 'delivery') {
-    return {
-      label: 'Entrega e rotas',
-      caption: 'Organiza deslocamento, rota e confirmação de entrega.',
-      accent: 'var(--pt-info)',
     }
   }
   return {
@@ -244,7 +220,6 @@ function SaleStatusBadge({ order }: { order: Sale }) {
     delivered_at: order.delivered_at,
     paid_at: order.paid_at,
     status: order.status,
-    is_out_for_delivery: order.is_out_for_delivery,
   })
   const colors = STATUS_TONE_COLORS[derived.tone]
 
@@ -425,7 +400,7 @@ function QueueSaleCard({
             </Typography>
           ) : null}
           <Button size="small" variant="text" onClick={() => onOpen(order.uuid)} sx={{ alignSelf: 'flex-start', px: 0 }}>
-            Abrir pedido
+            Abrir venda
           </Button>
           <Button size="small" variant="text" onClick={() => onOpenTimeline(order.uuid)} sx={{ alignSelf: 'flex-start', px: 0 }}>
             Histórico
@@ -466,8 +441,7 @@ export function SaleListPage() {
   const stageFilterFromQuery = searchParams.get('stage')
   const sourceFromQuery = searchParams.get('source')
   const isStageFilterFromQueryValid = stageFilterFromQuery === 'approval'
-    || stageFilterFromQuery === 'production'
-    || stageFilterFromQuery === 'dispatch'
+    || stageFilterFromQuery === 'confirmed'
     || stageFilterFromQuery === 'financial_pending'
   const openedFromDashboard = sourceFromQuery === 'dashboard'
 
@@ -482,16 +456,14 @@ export function SaleListPage() {
   const [snapshot, setSnapshot] = useState<OperationSnapshot>({
     activeTotal: null,
     storefrontPendingApproval: null,
-    productionTotal: null,
-    dispatchTotal: null,
+    confirmedTotal: null,
     financialPendingTotal: null,
     byOrigin: {},
   })
   const [snapshotError, setSnapshotError] = useState<string | null>(null)
   const [queuePreview, setQueuePreview] = useState<OperationQueuePreview>({
     approval: [],
-    production: [],
-    dispatch: [],
+    confirmed: [],
     financial_pending: [],
   })
   const [queuePreviewError, setQueuePreviewError] = useState<string | null>(null)
@@ -525,8 +497,6 @@ export function SaleListPage() {
   const canReadFinance = can(ACCESS.financeRead)
   const canApproveStorefrontOrder = can(ACCESS.storefrontSalesApprove)
   const canCancelStorefrontOrder = can(ACCESS.storefrontSalesCancel)
-  const canDispatchStorefrontOrder = can(ACCESS.storefrontSalesDispatch)
-  const canUndispatchStorefrontOrder = can(ACCESS.storefrontSalesUndispatch)
   const canDeliverStorefrontOrder = can(ACCESS.storefrontSalesDeliver)
   const canUndeliverStorefrontOrder = can(ACCESS.storefrontSalesUndeliver)
   const canPayStorefrontOrder = can(ACCESS.storefrontSalesPay)
@@ -582,7 +552,6 @@ export function SaleListPage() {
     const base = {
       store: 0,
       operations: 0,
-      delivery: 0,
       finance: 0,
     } satisfies Record<OperationOwner, number>
 
@@ -610,19 +579,17 @@ export function SaleListPage() {
 
     const activeTotalPromise = saleService.listSales({ active_only: true, per_page: 1 })
     const approvalPromise = saleService.listSales({ stage: 'approval', active_only: true, per_page: 5 })
-    const productionPromise = saleService.listSales({ stage: 'production', active_only: true, per_page: 5 })
-    const dispatchPromise = saleService.listSales({ stage: 'dispatch', active_only: true, per_page: 5 })
+    const confirmedPromise = saleService.listSales({ stage: 'confirmed', active_only: true, per_page: 5 })
     const financialPendingPromise = saleService.listSales({ stage: 'financial_pending', active_only: true, per_page: 5 })
     const originPromises = (['staff', 'storefront'] as SaleOrigin[]).map(async (origin) => {
       const page = await saleService.listSales({ origin, active_only: true, per_page: 1 })
       return [origin, page.pagination.total] as const
     })
 
-    const [activeTotalPage, approvalPage, productionPage, dispatchPage, financialPendingPage, originCounts] = await Promise.all([
+    const [activeTotalPage, approvalPage, confirmedPage, financialPendingPage, originCounts] = await Promise.all([
       activeTotalPromise,
       approvalPromise,
-      productionPromise,
-      dispatchPromise,
+      confirmedPromise,
       financialPendingPromise,
       Promise.all(originPromises),
     ])
@@ -630,15 +597,13 @@ export function SaleListPage() {
     setSnapshot({
       activeTotal: activeTotalPage.pagination.total,
       storefrontPendingApproval: approvalPage.pagination.total,
-      productionTotal: productionPage.pagination.total,
-      dispatchTotal: dispatchPage.pagination.total,
+      confirmedTotal: confirmedPage.pagination.total,
       financialPendingTotal: financialPendingPage.pagination.total,
       byOrigin: Object.fromEntries(originCounts),
     })
     setQueuePreview({
       approval: approvalPage.items,
-      production: productionPage.items,
-      dispatch: dispatchPage.items,
+      confirmed: confirmedPage.items,
       financial_pending: financialPendingPage.items,
     })
   }, [activeTenantUuid])
@@ -677,7 +642,7 @@ export function SaleListPage() {
         if (order.origin === 'storefront') {
           if (!canApproveStorefrontOrder) return null
           return {
-            label: 'Aceitar pedido',
+            label: 'Confirmar venda',
             icon: <CheckCircleOutlineOutlinedIcon />,
             run: (currentOrder) => storefrontSaleService.approveStorefrontSale(currentOrder.uuid),
           }
@@ -685,26 +650,13 @@ export function SaleListPage() {
 
         if (!canUpdateOrders) return null
         return {
-          label: 'Aprovar pedido',
+          label: 'Aprovar venda',
           icon: <CheckCircleOutlineOutlinedIcon />,
           run: (currentOrder) => saleService.approveSale(currentOrder.uuid),
         }
       }
 
-      if (stage === 'production') {
-        if (order.origin === 'storefront') {
-          if (!canDispatchStorefrontOrder) return null
-          return {
-            label: 'Saiu para entrega',
-            icon: <LocalShippingOutlinedIcon />,
-            run: (currentOrder) => storefrontSaleService.dispatchStorefrontSale(currentOrder.uuid),
-          }
-        }
-
-        return null
-      }
-
-      if (stage === 'dispatch') {
+      if (stage === 'confirmed') {
         if (order.origin === 'storefront') {
           if (!canDeliverStorefrontOrder) return null
           return {
@@ -726,7 +678,7 @@ export function SaleListPage() {
         if (order.origin === 'storefront') {
           if (!canPayStorefrontOrder) return null
           return {
-            label: 'Concluir pedido',
+            label: 'Concluir venda',
             icon: <PaymentsOutlinedIcon />,
             run: (currentOrder) => storefrontSaleService.payStorefrontSale(currentOrder.uuid),
           }
@@ -745,7 +697,6 @@ export function SaleListPage() {
     [
       canApproveStorefrontOrder,
       canDeliverStorefrontOrder,
-      canDispatchStorefrontOrder,
       canPayStorefrontOrder,
       canUpdateOrders,
     ],
@@ -778,14 +729,14 @@ export function SaleListPage() {
       if (!currentStage) return null
       if (target === currentStage) return null
 
-      if (target === 'production') {
+      if (target === 'confirmed') {
         if (currentStage === 'approval') {
           if (order.origin === 'storefront') {
             if (!canApproveStorefrontOrder) return null
             return {
-              title: 'Aprovar pedido',
-              description: 'O pedido entrará na fila de produção.',
-              confirmLabel: 'Aprovar pedido',
+              title: 'Aprovar venda',
+              description: 'A venda entrará na fila de confirmadas.',
+              confirmLabel: 'Aprovar venda',
               requiresReason: false,
               execute: () => storefrontSaleService.approveStorefrontSale(order.uuid),
             }
@@ -793,57 +744,11 @@ export function SaleListPage() {
 
           if (!canUpdateOrders) return null
           return {
-            title: 'Aprovar pedido',
-            description: 'O pedido entrará na fila de produção.',
-            confirmLabel: 'Aprovar pedido',
+            title: 'Aprovar venda',
+            description: 'A venda entrará na fila de confirmadas.',
+            confirmLabel: 'Aprovar venda',
             requiresReason: false,
             execute: () => saleService.approveSale(order.uuid),
-          }
-        }
-
-        if (currentStage === 'dispatch') {
-          if (order.origin === 'storefront') {
-            if (!canUndispatchStorefrontOrder) return null
-            return {
-              title: 'Voltar para produção',
-              description: 'O pedido sairá da expedição e voltará para a fila de produção.',
-              confirmLabel: 'Voltar para produção',
-              requiresReason: false,
-              execute: () => storefrontSaleService.undispatchStorefrontSale(order.uuid),
-            }
-          }
-
-          if (!canUpdateOrders) return null
-          return {
-            title: 'Voltar para produção',
-            description: 'O pedido sairá da expedição e voltará para a fila de produção.',
-            confirmLabel: 'Voltar para produção',
-            requiresReason: false,
-            execute: () => saleService.undispatchSale(order.uuid),
-          }
-        }
-      }
-
-      if (target === 'dispatch') {
-        if (currentStage === 'production') {
-          if (order.origin === 'storefront') {
-            if (!canDispatchStorefrontOrder) return null
-            return {
-              title: 'Enviar para expedição',
-              description: 'O pedido será marcado como saiu para entrega.',
-              confirmLabel: 'Enviar para expedição',
-              requiresReason: false,
-              execute: () => storefrontSaleService.dispatchStorefrontSale(order.uuid),
-            }
-          }
-
-          if (!canUpdateOrders) return null
-          return {
-            title: 'Enviar para expedição',
-            description: 'O pedido será marcado como saiu para entrega.',
-            confirmLabel: 'Enviar para expedição',
-            requiresReason: false,
-            execute: () => saleService.dispatchSale(order.uuid),
           }
         }
 
@@ -851,9 +756,9 @@ export function SaleListPage() {
           if (order.origin === 'storefront') {
             if (!canUndeliverStorefrontOrder) return null
             return {
-              title: 'Voltar para expedição',
-              description: 'O pedido deixará de constar como entregue e voltará para a etapa de expedição.',
-              confirmLabel: 'Voltar para expedição',
+              title: 'Voltar para confirmado',
+              description: 'A venda deixará de constar como entregue e voltará para a fila de confirmadas.',
+              confirmLabel: 'Voltar para confirmado',
               requiresReason: false,
               execute: () => storefrontSaleService.undeliverStorefrontSale(order.uuid),
             }
@@ -861,21 +766,21 @@ export function SaleListPage() {
 
           if (!canUpdateOrders) return null
           return {
-            title: 'Voltar para expedição',
-            description: 'O pedido deixará de constar como entregue e voltará para a etapa de expedição.',
-            confirmLabel: 'Voltar para expedição',
+            title: 'Voltar para confirmado',
+            description: 'A venda deixará de constar como entregue e voltará para a fila de confirmadas.',
+            confirmLabel: 'Voltar para confirmado',
             requiresReason: false,
             execute: () => saleService.undeliverSale(order.uuid),
           }
         }
       }
 
-      if (target === 'financial_pending' && currentStage === 'dispatch') {
+      if (target === 'financial_pending' && currentStage === 'confirmed') {
         if (order.origin === 'storefront') {
           if (!canDeliverStorefrontOrder) return null
           return {
             title: 'Marcar como entregue',
-            description: 'O pedido será marcado como entregue e seguirá para a fila financeira, se ainda não estiver pago.',
+            description: 'A venda será marcada como entregue e seguirá para a fila financeira, se ainda não estiver paga.',
             confirmLabel: 'Marcar como entregue',
             requiresReason: false,
             execute: () => storefrontSaleService.deliverStorefrontSale(order.uuid),
@@ -885,7 +790,7 @@ export function SaleListPage() {
         if (!canUpdateOrders) return null
         return {
           title: 'Marcar como entregue',
-          description: 'O pedido será marcado como entregue e seguirá para a fila financeira, se ainda não estiver pago.',
+          description: 'A venda será marcada como entregue e seguirá para a fila financeira, se ainda não estiver paga.',
           confirmLabel: 'Marcar como entregue',
           requiresReason: false,
           execute: () => saleService.deliverSale(order.uuid),
@@ -897,9 +802,9 @@ export function SaleListPage() {
           if (order.origin === 'storefront') {
             if (!canApproveStorefrontOrder) return null
             return {
-              title: 'Recusar pedido',
-              description: 'Informe o motivo da recusa. O pedido será retirado da fila operacional.',
-              confirmLabel: 'Recusar pedido',
+              title: 'Recusar venda',
+              description: 'Informe o motivo da recusa. A venda será retirada da fila operacional.',
+              confirmLabel: 'Recusar venda',
               requiresReason: true,
               execute: (reason) => storefrontSaleService.rejectStorefrontSale(order.uuid, reason),
             }
@@ -907,21 +812,21 @@ export function SaleListPage() {
 
           if (!canUpdateOrders) return null
           return {
-            title: 'Recusar pedido',
-            description: 'Informe o motivo da recusa. O pedido será retirado da fila operacional.',
-            confirmLabel: 'Recusar pedido',
+            title: 'Recusar venda',
+            description: 'Informe o motivo da recusa. A venda será retirada da fila operacional.',
+            confirmLabel: 'Recusar venda',
             requiresReason: true,
             execute: (reason) => saleService.rejectSale(order.uuid, reason),
           }
         }
 
-        if (currentStage === 'production' || currentStage === 'dispatch') {
+        if (currentStage === 'confirmed') {
           if (order.origin === 'storefront') {
             if (!canCancelStorefrontOrder) return null
             return {
-              title: 'Cancelar pedido',
+              title: 'Cancelar venda',
               description: 'Informe o motivo do cancelamento. Esse registro ficará salvo no histórico operacional.',
-              confirmLabel: 'Cancelar pedido',
+              confirmLabel: 'Cancelar venda',
               requiresReason: true,
               execute: (reason) => storefrontSaleService.cancelStorefrontSale(order.uuid, reason),
             }
@@ -929,9 +834,9 @@ export function SaleListPage() {
 
           if (!canUpdateOrders) return null
           return {
-            title: 'Cancelar pedido',
+            title: 'Cancelar venda',
             description: 'Informe o motivo do cancelamento. Esse registro ficará salvo no histórico operacional.',
-            confirmLabel: 'Cancelar pedido',
+            confirmLabel: 'Cancelar venda',
             requiresReason: true,
             execute: (reason) => saleService.cancelSale(order.uuid, reason),
           }
@@ -942,9 +847,9 @@ export function SaleListPage() {
         if (order.origin === 'storefront') {
           if (!canPayStorefrontOrder) return null
           return {
-            title: 'Concluir pedido',
-            description: 'O pedido será marcado como pago e sairá da fila operacional.',
-            confirmLabel: 'Concluir pedido',
+            title: 'Concluir venda',
+            description: 'A venda será marcada como paga e sairá da fila operacional.',
+            confirmLabel: 'Concluir venda',
             requiresReason: false,
             execute: () => storefrontSaleService.payStorefrontSale(order.uuid),
           }
@@ -953,7 +858,7 @@ export function SaleListPage() {
         if (!canUpdateOrders) return null
         return {
           title: 'Baixar recebimento',
-          description: 'O pedido será marcado como pago e sairá da fila operacional.',
+          description: 'A venda será marcada como paga e sairá da fila operacional.',
           confirmLabel: 'Baixar recebimento',
           requiresReason: false,
           execute: () => saleService.paySale(order.uuid),
@@ -966,10 +871,8 @@ export function SaleListPage() {
       canApproveStorefrontOrder,
       canCancelStorefrontOrder,
       canDeliverStorefrontOrder,
-      canDispatchStorefrontOrder,
       canPayStorefrontOrder,
       canUndeliverStorefrontOrder,
-      canUndispatchStorefrontOrder,
       canUpdateOrders,
     ],
   )
@@ -1158,7 +1061,6 @@ export function SaleListPage() {
               delivered_at: row.delivered_at,
               paid_at: row.paid_at,
               status: row.status,
-              is_out_for_delivery: row.is_out_for_delivery,
             }).label,
           } satisfies ServerGridColumn<Sale>]
         : []),
@@ -1194,10 +1096,10 @@ export function SaleListPage() {
         exportable: false,
         cellRenderer: (row) => (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Tooltip title="Abrir pedido" arrow>
+            <Tooltip title="Abrir venda" arrow>
               <IconButton
                 size="small"
-                aria-label={`Abrir pedido do cliente ${row.final_customer?.name ?? ''}`}
+                aria-label={`Abrir venda do cliente ${row.final_customer?.name ?? ''}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
@@ -1207,7 +1109,7 @@ export function SaleListPage() {
             <Tooltip title="Histórico operacional" arrow>
               <IconButton
                 size="small"
-                aria-label={`Ver histórico operacional do pedido ${row.codigo}`}
+                aria-label={`Ver histórico operacional da venda ${row.codigo}`}
                 onClick={() => setSelectedTimelineOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
@@ -1226,12 +1128,12 @@ export function SaleListPage() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(7, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(6, 1fr)' },
           gap: 1.25,
         }}
       >
         <OperationMetricCard
-          label="Pedidos em andamento"
+          label="Vendas em andamento"
           value={snapshot.activeTotal === null ? '—' : String(snapshot.activeTotal)}
           caption="Fila canônica com tudo que ainda pede ação operacional."
         />
@@ -1249,47 +1151,28 @@ export function SaleListPage() {
           }
         />
         <OperationMetricCard
-          label="Produção"
-          value={snapshot.productionTotal === null ? '—' : String(snapshot.productionTotal)}
-          caption="Pedidos confirmados que ainda estão dentro da operação interna."
-          accent={STAGE_META.production.accent}
+          label="Confirmado"
+          value={snapshot.confirmedTotal === null ? '—' : String(snapshot.confirmedTotal)}
+          caption="Vendas confirmadas que ainda não foram concluídas."
+          accent={STAGE_META.confirmed.accent}
           action={
             <Button
               size="small"
               variant="text"
               onClick={() => {
-                setStageFilter('production')
+                setStageFilter('confirmed')
                 setStatusFilter('all')
                 gridApiRef.current?.refreshInfiniteCache()
               }}
             >
-              Filtrar produção
-            </Button>
-          }
-        />
-        <OperationMetricCard
-          label="Expedição"
-          value={snapshot.dispatchTotal === null ? '—' : String(snapshot.dispatchTotal)}
-          caption="Pedidos já despachados e ainda não concluídos no cliente."
-          accent={STAGE_META.dispatch.accent}
-          action={
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => {
-                setStageFilter('dispatch')
-                setStatusFilter('all')
-                gridApiRef.current?.refreshInfiniteCache()
-              }}
-            >
-              Filtrar expedição
+              Filtrar confirmados
             </Button>
           }
         />
         <OperationMetricCard
           label="Financeiro pendente"
           value={snapshot.financialPendingTotal === null ? '—' : String(snapshot.financialPendingTotal)}
-          caption="Pedidos já entregues que ainda aguardam recebimento total."
+          caption="Vendas já concluídas que ainda aguardam recebimento total."
           accent={STAGE_META.financial_pending.accent}
           action={
             <Button
@@ -1308,7 +1191,7 @@ export function SaleListPage() {
         <OperationMetricCard
           label="Ação imediata"
           value={String(queuePrioritySummary.critical)}
-          caption="Pedidos nas filas superiores que já passaram do limite mais crítico do recorte."
+          caption="Vendas nas filas superiores que já passaram do limite mais crítico do recorte."
           accent="var(--pt-danger)"
           action={
             <Button
@@ -1326,14 +1209,14 @@ export function SaleListPage() {
         <OperationMetricCard
           label="Prioridade alta"
           value={String(queuePrioritySummary.urgent)}
-          caption="Pedidos que ainda não estouraram, mas já merecem entrar no foco da operação."
+          caption="Vendas que ainda não estouraram, mas já merecem entrar no foco da operação."
           accent="var(--pt-warning)"
         />
       </Box>
 
       {queuePrioritySummary.critical > 0 ? (
         <Alert severity="error" variant="outlined">
-          Existem {queuePrioritySummary.critical} pedido(s) pedindo ação imediata na operação. Priorize os cards destacados em vermelho nas filas acima.
+          Existem {queuePrioritySummary.critical} venda(s) pedindo ação imediata na operação. Priorize os cards destacados em vermelho nas filas acima.
         </Alert>
       ) : null}
 
@@ -1358,11 +1241,11 @@ export function SaleListPage() {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' },
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
               gap: 1,
             }}
           >
-            {(['store', 'operations', 'delivery', 'finance'] as OperationOwner[]).map((owner) => {
+            {(['store', 'operations', 'finance'] as OperationOwner[]).map((owner) => {
               const meta = ownerMeta(owner)
               const count = ownerSummary[owner]
               const extra = meta.caption
@@ -1392,7 +1275,7 @@ export function SaleListPage() {
                         Abrir módulo
                       </Button>
                     ) : (
-                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Atue diretamente pelos pedidos desta fila.</Typography>
+                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Atue diretamente pelas vendas desta fila.</Typography>
                     )}
                   </Stack>
                 </Box>
@@ -1405,7 +1288,7 @@ export function SaleListPage() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 280px' },
+          gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 280px' },
           gap: 1.25,
           alignItems: 'start',
         }}
@@ -1435,7 +1318,7 @@ export function SaleListPage() {
           emptyMessage="Arraste para cá apenas se o card puder voltar para esta etapa."
         >
           {queuePreview.approval.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhuma venda nesta fila agora.</Typography>
           ) : (
             queuePreview.approval.map((order) => (
               <QueueSaleCard
@@ -1456,64 +1339,26 @@ export function SaleListPage() {
         </WorkflowBoardColumn>
 
         <WorkflowBoardColumn
-          title={STAGE_META.production.label}
-          caption={STAGE_META.production.caption}
-          accent={STAGE_META.production.accent}
-          countLabel={snapshot.productionTotal === null ? '—' : `${snapshot.productionTotal} na fila`}
+          title={STAGE_META.confirmed.label}
+          caption={STAGE_META.confirmed.caption}
+          accent={STAGE_META.confirmed.accent}
+          countLabel={snapshot.confirmedTotal === null ? '—' : `${snapshot.confirmedTotal} na fila`}
           onOpenQueue={() => {
-            setStageFilter('production')
+            setStageFilter('confirmed')
             setStatusFilter('all')
             setActiveOnly(true)
             gridApiRef.current?.refreshInfiniteCache()
           }}
-          isActiveDrop={activeSaleDropTarget === 'production'}
-          onDragOver={(event) => markSaleDropTarget(event, 'production')}
+          isActiveDrop={activeSaleDropTarget === 'confirmed'}
+          onDragOver={(event) => markSaleDropTarget(event, 'confirmed')}
           onDragLeave={clearSaleDropTarget}
-          onDrop={(event) => void receiveSaleDrop(event, 'production')}
-          emptyMessage="Use esta coluna para pedidos aprovados que ainda estão sendo preparados."
+          onDrop={(event) => void receiveSaleDrop(event, 'confirmed')}
+          emptyMessage="Use esta coluna para vendas aprovadas que ainda estão sendo preparadas ou aguardando conclusão."
         >
-          {queuePreview.production.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+          {queuePreview.confirmed.length === 0 ? (
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhuma venda nesta fila agora.</Typography>
           ) : (
-            queuePreview.production.map((order) => (
-              <QueueSaleCard
-                key={order.uuid}
-                order={order}
-                onOpen={setSelectedOrderUuid}
-                onOpenTimeline={setSelectedTimelineOrderUuid}
-                quickAction={resolveQuickAction(order)}
-                onQuickAction={(currentOrder) => void handleQuickAction(currentOrder)}
-                isSubmitting={submittingSaleUuid === order.uuid}
-                draggable
-                isDragging={draggedSaleUuid === order.uuid}
-                onDragStart={(event) => handleSaleCardDragStart(order.uuid, event)}
-                onDragEnd={handleSaleCardDragEnd}
-              />
-            ))
-          )}
-        </WorkflowBoardColumn>
-
-        <WorkflowBoardColumn
-          title={STAGE_META.dispatch.label}
-          caption={STAGE_META.dispatch.caption}
-          accent={STAGE_META.dispatch.accent}
-          countLabel={snapshot.dispatchTotal === null ? '—' : `${snapshot.dispatchTotal} na fila`}
-          onOpenQueue={() => {
-            setStageFilter('dispatch')
-            setStatusFilter('all')
-            setActiveOnly(true)
-            gridApiRef.current?.refreshInfiniteCache()
-          }}
-          isActiveDrop={activeSaleDropTarget === 'dispatch'}
-          onDragOver={(event) => markSaleDropTarget(event, 'dispatch')}
-          onDragLeave={clearSaleDropTarget}
-          onDrop={(event) => void receiveSaleDrop(event, 'dispatch')}
-          emptyMessage="Arraste para cá quando o pedido sair para entrega."
-        >
-          {queuePreview.dispatch.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
-          ) : (
-            queuePreview.dispatch.map((order) => (
+            queuePreview.confirmed.map((order) => (
               <QueueSaleCard
                 key={order.uuid}
                 order={order}
@@ -1553,10 +1398,10 @@ export function SaleListPage() {
           onDragOver={(event) => markSaleDropTarget(event, 'financial_pending')}
           onDragLeave={clearSaleDropTarget}
           onDrop={(event) => void receiveSaleDrop(event, 'financial_pending')}
-          emptyMessage="Arraste para cá quando o pedido já estiver entregue e faltar só a baixa financeira."
+          emptyMessage="Arraste para cá quando a venda já estiver concluída e faltar só a baixa financeira."
         >
           {queuePreview.financial_pending.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta fila agora.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhuma venda nesta fila agora.</Typography>
           ) : (
             queuePreview.financial_pending.map((order) => (
               <QueueSaleCard
@@ -1579,7 +1424,7 @@ export function SaleListPage() {
         <Stack spacing={1.25}>
           <WorkflowActionDropZone
             title="Cancelar / recusar"
-            description="Use esta área para recusar pedidos em aprovação ou cancelar pedidos já em operação. O motivo é obrigatório."
+            description="Use esta área para recusar vendas em aprovação ou cancelar vendas já em operação. O motivo é obrigatório."
             accent="var(--pt-danger)"
             icon={<CancelOutlinedIcon fontSize="small" />}
             isActiveDrop={activeSaleDropTarget === 'cancel'}
@@ -1590,7 +1435,7 @@ export function SaleListPage() {
           />
           <WorkflowActionDropZone
             title="Concluir / baixar"
-            description="Solte aqui os pedidos da fila financeira para marcar pagamento e concluir o fluxo operacional."
+            description="Solte aqui as vendas da fila financeira para marcar pagamento e concluir o fluxo operacional."
             accent="var(--pt-success)"
             icon={<PaymentsOutlinedIcon fontSize="small" />}
             isActiveDrop={activeSaleDropTarget === 'complete'}
@@ -1817,8 +1662,7 @@ export function SaleListPage() {
               <strong>
                 {{
                   approval: 'Aguardando aprovação',
-                  production: 'Em produção',
-                  dispatch: 'Em expedição',
+                  confirmed: 'Confirmado',
                   financial_pending: 'Financeiro pendente',
                 }[stageFilterFromQuery]}
               </strong>

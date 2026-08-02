@@ -28,11 +28,8 @@ export interface SaleTracking {
   paid_at: string | null
   is_delivered: boolean
   delivered_at: string | null
-  is_out_for_delivery: boolean
-  out_for_delivery_at: string | null
   /** `cancellation_requested` (roadmap A4) — solicitação feita via Portal autenticado, não por aqui (rota pública sem login). */
   status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
-  expected_delivery_date: string | null
   is_cancelled: boolean
   created_at: string
   items: SaleTrackingItem[]

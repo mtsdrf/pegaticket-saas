@@ -25,8 +25,7 @@ class ReportService
 {
     private const OPERATION_STAGE_THRESHOLDS = [
         'approval' => ['attention' => 3, 'critical' => 15],
-        'production' => ['attention' => 12, 'critical' => 45],
-        'dispatch' => ['attention' => 10, 'critical' => 35],
+        'confirmed' => ['attention' => 12, 'critical' => 45],
         'financial_pending' => ['attention' => 180, 'critical' => 1440],
     ];
 
@@ -102,8 +101,7 @@ class ReportService
     {
         $stageSummary = [
             'approval' => $this->emptyOperationStageSummary('approval', 'Aguardando aprovação'),
-            'production' => $this->emptyOperationStageSummary('production', 'Em produção'),
-            'dispatch' => $this->emptyOperationStageSummary('dispatch', 'Em expedição e entrega'),
+            'confirmed' => $this->emptyOperationStageSummary('confirmed', 'Confirmado'),
             'financial_pending' => $this->emptyOperationStageSummary('financial_pending', 'Pendente financeiro'),
         ];
 
@@ -285,7 +283,6 @@ class ReportService
                 'status',
                 'is_delivered',
                 'is_paid',
-                'is_out_for_delivery',
                 'created_at',
             ])
             ->get();
@@ -311,18 +308,9 @@ class ReportService
 
         if (
             ($order->status ?? null) === 'confirmed'
-            && (bool) ($order->is_out_for_delivery ?? false) === true
             && (bool) ($order->is_delivered ?? false) === false
         ) {
-            return 'dispatch';
-        }
-
-        if (
-            ($order->status ?? null) === 'confirmed'
-            && (bool) ($order->is_out_for_delivery ?? false) === false
-            && (bool) ($order->is_delivered ?? false) === false
-        ) {
-            return 'production';
+            return 'confirmed';
         }
 
         return null;

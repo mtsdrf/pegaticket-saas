@@ -613,10 +613,6 @@ return [
         'rejected' => 'Order rejected successfully.',
         'awaiting_approval' => 'This order is still awaiting approval. Approve it before delivering or registering payment.',
         'order_rejected' => 'This order was rejected and cannot be delivered or paid.',
-        'dispatched' => 'Order marked as out for delivery successfully.',
-        'already_out_for_delivery' => 'This order has already been marked as out for delivery.',
-        'undispatched' => 'Order removed from out for delivery successfully.',
-        'not_out_for_delivery' => 'This order is not marked as out for delivery.',
         'prep_link_generated' => 'Preparation link generated successfully.',
         'prep_shown' => 'Order preparation shown successfully.',
         'cancellation_request_not_storefront' => 'Only orders placed through the store can have cancellation requested through this channel.',
@@ -810,7 +806,6 @@ return [
         'margin_summary' => 'Margin summary retrieved successfully.',
         'coupon_roi' => 'Coupon ticket comparison retrieved successfully.',
         'revenue_concentration' => 'Revenue concentration retrieved successfully.',
-        'delivery_otif' => 'Delivery OTIF retrieved successfully.',
         'churn_clients' => 'Churned clients retrieved successfully.',
         'stalled_products' => 'Stalled products retrieved successfully.',
         'stock_ruptures' => 'Stock ruptures retrieved successfully.',
@@ -859,8 +854,6 @@ return [
         'order_rejected_body' => 'Your order was rejected.',
         'order_delivered_title' => 'Order delivered',
         'order_delivered_body' => 'Your order was delivered!',
-        'order_out_for_delivery_title' => 'Order out for delivery',
-        'order_out_for_delivery_body' => 'Your order is out for delivery!',
     ],
 
     /*

@@ -148,7 +148,6 @@ export function StorefrontSaleActionDialog({
         delivered_at: sale.delivered_at,
         paid_at: sale.paid_at,
         status: sale.status,
-        is_out_for_delivery: sale.is_out_for_delivery,
       })
     : null
   const actions = sale ? getSaleActionButtons(sale, canManageCancellation) : []

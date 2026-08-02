@@ -217,16 +217,11 @@ class AnalyticsService
     }
 
     /**
-     * Pedidos em atraso, paginado, ordenado por dias de atraso desc.
-     * Um pedido gera no máximo uma linha por tipo:
-     * - `pagamento`: parcela vencida não paga (agregado por pedido:
-     *   valor em aberto = soma das parcelas vencidas não pagas, dias =
-     *   maior atraso) OU pedido não parcelado com due_date vencido e
-     *   não pago (valor em aberto = total_amount).
-     * - `entrega`: expected_delivery_date estourado sem entrega; valor
-     *   em aberto = total_amount se ainda não pago, 0 se já pago.
-     * Um pedido atrasado em pagamento E entrega aparece duas vezes, uma
-     * por tipo (decisão: os dois atrasos são acionáveis separadamente).
+     * Pedidos em atraso de pagamento, paginado, ordenado por dias de
+     * atraso desc: parcela vencida não paga (agregado por pedido: valor
+     * em aberto = soma das parcelas vencidas não pagas, dias = maior
+     * atraso) OU pedido não parcelado com due_date vencido e não pago
+     * (valor em aberto = total_amount).
      */
     public function overdueOrders(int $tenantId, ?string $from, ?string $to, int $perPage = 15): LengthAwarePaginator
     {
@@ -260,21 +255,8 @@ class AnalyticsService
                 [$today]
             );
 
-        $overdueDeliveries = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.is_delivered', false)
-            ->whereNotNull('orders.expected_delivery_date')
-            ->whereDate('orders.expected_delivery_date', '<', $today)
-            ->selectRaw(
-                "orders.uuid as order_uuid, final_customers.name as client_name, 'entrega' as type, CASE WHEN orders.is_paid = 1 THEN 0 ELSE orders.total_amount END as open_amount, "
-                . $this->daysSinceExpression('orders.expected_delivery_date')
-                . ' as days_overdue',
-                [$today]
-            );
-
         $union = $overdueInstallments
-            ->unionAll($overduePaymentOrders)
-            ->unionAll($overdueDeliveries);
+            ->unionAll($overduePaymentOrders);
 
         return DB::query()
             ->fromSub($union, 'overdue')
@@ -449,33 +431,6 @@ class AnalyticsService
             'total_revenue' => $this->formatMoney($totalRevenue),
             'top10_revenue' => $this->formatMoney($top10Revenue),
             'concentration_percentage' => $totalRevenue > 0 ? round(($top10Revenue / $totalRevenue) * 100, 2) : 0.0,
-        ];
-    }
-
-    /**
-     * OTIF (On Time In Full) de entrega: dos pedidos entregues com data
-     * prevista, quantos foram entregues até a data prevista.
-     */
-    public function deliveryOtif(int $tenantId, ?string $from, ?string $to): array
-    {
-        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
-
-        $row = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->where('orders.is_delivered', true)
-            ->whereNotNull('orders.expected_delivery_date')
-            ->selectRaw(
-                'COUNT(*) as eligible, '
-                . 'SUM(CASE WHEN DATE(orders.delivered_at) <= orders.expected_delivery_date THEN 1 ELSE 0 END) as on_time'
-            )
-            ->first();
-
-        $eligible = (int) ($row->eligible ?? 0);
-        $onTime = (int) ($row->on_time ?? 0);
-
-        return [
-            'eligible_orders' => $eligible,
-            'on_time_orders' => $onTime,
-            'otif_percentage' => $eligible > 0 ? round(($onTime / $eligible) * 100, 2) : 0.0,
         ];
     }
 

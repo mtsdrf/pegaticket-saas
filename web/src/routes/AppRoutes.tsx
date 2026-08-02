@@ -174,10 +174,6 @@ const LegalDocumentPage = lazy(() =>
 const SupportTicketsPage = lazy(() =>
   import('../pages/Support/SupportTicketsPage').then((m) => ({ default: m.SupportTicketsPage })),
 )
-const TrainingCenterPage = lazy(() =>
-  import('../pages/Training/TrainingCenterPage').then((m) => ({ default: m.TrainingCenterPage })),
-)
-
 function RouteFallback() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
@@ -292,8 +288,6 @@ export function AppRoutes() {
             <Route path="/vendas/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
-            <Route path="/treinamentos" element={<TrainingCenterPage />} />
-
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
             <Route path="/relatorios/vendas" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />

@@ -225,7 +225,7 @@ export function TicketTypeFormPage() {
           slotProps={{ htmlInput: { min: 0, step: '1' } }}
         />
         <TextField
-          label="Mín. por pedido"
+          label="Mín. por compra"
           type="number"
           value={form.min_per_order}
           onChange={(event) => updateField('min_per_order', event.target.value)}
@@ -234,7 +234,7 @@ export function TicketTypeFormPage() {
           slotProps={{ htmlInput: { min: 1, step: '1' } }}
         />
         <TextField
-          label="Máx. por pedido"
+          label="Máx. por compra"
           type="number"
           value={form.max_per_order}
           onChange={(event) => updateField('max_per_order', event.target.value)}

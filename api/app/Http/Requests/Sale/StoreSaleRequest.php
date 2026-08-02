@@ -34,11 +34,6 @@ class StoreSaleRequest extends FormRequest
             'installments_count' => ['required_if:is_installment,true', 'nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:500'],
 
-            // Informativo, capturado só na criação (Sale é imutável depois
-            // — sem update genérico). Distinto de delivered_at, que só
-            // deliver()/a cascata de payInstallment() setam.
-            'expected_delivery_date' => ['nullable', 'date'],
-
             // Ecoam o default do formulário legado ("entregue"/"pago" já
             // marcados na criação) sem reabrir update genérico: disparam a
             // mesma lógica interna de deliver()/pay() dentro da transação
@@ -46,13 +41,6 @@ class StoreSaleRequest extends FormRequest
             // (pagamento é sempre por parcela) — bloqueado via prohibited_if.
             'mark_as_delivered' => ['nullable', 'boolean'],
             'mark_as_paid' => ['nullable', 'boolean', 'prohibited_if:is_installment,true'],
-
-            // Retirada na loja (roadmap Delivery) — mesma semântica do
-            // checkout público, mas sem guard próprio aqui: staff já
-            // escolhe manualmente final_customer_uuid, não há
-            // conceito de endereço de entrega obrigatório neste fluxo.
-            // Omitido = 'delivery' (comportamento atual).
-            'fulfillment_type' => ['nullable', 'string', Rule::in(['delivery', 'pickup'])],
 
             // Meio de pagamento pretendido — só formato aqui, mesmo shape de
             // StorefrontCheckoutRequest. Hoje o fluxo do staff NÃO valida

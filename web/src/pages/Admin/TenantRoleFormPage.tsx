@@ -147,11 +147,11 @@ export function TenantRoleFormPage() {
 
         <Box>
           <TextField
-            label="Limite de desconto em pedidos"
+            label="Limite de desconto em vendas"
             type="number"
             value={discountLimitPercent}
             onChange={(e) => setDiscountLimitPercent(e.target.value)}
-            helperText="Desconto manual máximo (% abaixo do preço de tabela) que este perfil pode aplicar num item de pedido/venda. Deixe em branco para não limitar."
+            helperText="Desconto manual máximo (% abaixo do preço de tabela) que este perfil pode aplicar em um item de venda. Deixe em branco para não limitar."
             sx={{ maxWidth: { sm: 360 } }}
             fullWidth
             slotProps={{
@@ -161,8 +161,8 @@ export function TenantRoleFormPage() {
           />
           {!selected.orders?.length && discountLimitPercent.trim() && (
             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-warning)', mt: 0.5 }}>
-              Este perfil não tem nenhuma permissão de "Pedidos" marcada abaixo — o limite só tem efeito se o
-              perfil puder criar/editar pedidos.
+              Este perfil não tem nenhuma permissão de "Vendas" marcada abaixo — o limite só tem efeito se o
+              perfil puder criar/editar vendas.
             </Typography>
           )}
         </Box>

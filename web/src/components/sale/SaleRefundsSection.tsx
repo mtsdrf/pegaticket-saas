@@ -436,7 +436,7 @@ function SaleRefundFormDialog({ sale, onClose, onRegistered }: SaleRefundFormDia
                 <Divider sx={{ mb: 1.5 }} />
                 <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Ingressos afetados</Typography>
                 <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)', mb: 1 }}>
-                  Selecione os ingressos deste pedido que foram estornados.
+                  Selecione os ingressos desta venda que foram estornados.
                 </Typography>
 
                 {ticketsError && (
@@ -446,7 +446,7 @@ function SaleRefundFormDialog({ sale, onClose, onRegistered }: SaleRefundFormDia
                 )}
                 {isLoadingTickets && <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Carregando ingressos…</Typography>}
                 {!isLoadingTickets && !ticketsError && tickets.length === 0 && (
-                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum ingresso encontrado para este pedido.</Typography>
+                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum ingresso encontrado para esta venda.</Typography>
                 )}
 
                 {!isLoadingTickets && tickets.length > 0 && (

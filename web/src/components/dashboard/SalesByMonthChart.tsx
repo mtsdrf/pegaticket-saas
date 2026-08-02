@@ -63,10 +63,10 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
         }}
       >
         <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
-          Nenhum pedido neste período ainda
+          Nenhuma venda neste período ainda
         </Typography>
         <Typography sx={{ fontSize: 13.5 }}>
-          Assim que os primeiros pedidos forem criados, o histórico mensal aparece aqui.
+          Assim que as primeiras vendas forem criadas, o histórico mensal aparece aqui.
         </Typography>
       </Box>
     )
@@ -93,7 +93,7 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
               displayColors: false,
               callbacks: {
                 label: (item: TooltipItem<'bar'>) =>
-                  `${item.formattedValue} pedido${item.parsed.y === 1 ? '' : 's'} • ${data?.[item.dataIndex]?.total_amount ?? '0,00'}`,
+                  `${item.formattedValue} venda${item.parsed.y === 1 ? '' : 's'} • ${data?.[item.dataIndex]?.total_amount ?? '0,00'}`,
               },
             },
           },

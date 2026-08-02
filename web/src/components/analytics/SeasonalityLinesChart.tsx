@@ -97,7 +97,7 @@ export function SeasonalityLinesChart({ rows }: SeasonalityLinesChartProps) {
                   const row = years[item.datasetIndex]
                   const month = row?.months.find((entry) => entry.month === item.dataIndex + 1)
                   const count = month?.count ?? 0
-                  return `${item.dataset.label}: ${formatCurrency(item.parsed.y ?? 0)} • ${count} pedido${count === 1 ? '' : 's'}`
+                  return `${item.dataset.label}: ${formatCurrency(item.parsed.y ?? 0)} • ${count} venda${count === 1 ? '' : 's'}`
                 },
               },
             },

@@ -19,13 +19,10 @@ class PortalSaleResource extends JsonResource
             'tenant_slug' => $this->whenLoaded('tenant', fn() => $this->tenant->slug),
             'is_paid' => $this->is_paid,
             'is_delivered' => $this->is_delivered,
-            'is_out_for_delivery' => $this->is_out_for_delivery,
             'status' => $this->status,
             'total_amount' => $this->total_amount,
-            'delivery_fee' => (float) $this->delivery_fee,
             'discount_amount' => (float) $this->discount_amount,
             'coupon_code' => $this->whenLoaded('coupon', fn() => $this->coupon?->code),
-            'expected_delivery_date' => $this->expected_delivery_date,
             'is_cancelled' => $this->cancelled_at !== null,
             'created_at' => $this->created_at,
         ];

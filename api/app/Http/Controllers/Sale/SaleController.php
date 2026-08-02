@@ -171,46 +171,6 @@ class SaleController extends Controller
     }
 
     /**
-     * "Saiu para entrega" — só usado pelas rotas /storefront-sales/*
-     * (tela dedicada de gestão de vendas online).
-     */
-    public function dispatch(Sale $sale)
-    {
-        try {
-            $sale = $this->service->dispatch($sale);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            __('messages.order.dispatched')
-        );
-    }
-
-    /**
-     * Desfaz "saiu para entrega" — só usado pelas rotas
-     * /storefront-sales/* (tela dedicada de gestão de vendas online).
-     */
-    public function undispatch(Sale $sale)
-    {
-        try {
-            $sale = $this->service->undispatch($sale);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            __('messages.order.undispatched')
-        );
-    }
-
-    /**
      * Igual a index(), mas força origin=storefront (nunca lido do
      * request) — usado só pela tela dedicada de gestão de vendas online
      * (perm:storefront-sales,read), independente da permissão orders,read.

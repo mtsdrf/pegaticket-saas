@@ -16,7 +16,6 @@ class UpdateSaleItemsRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:500'],
-            'expected_delivery_date' => ['nullable', 'date'],
 
             'items' => ['required', 'array', 'min:1'],
             // uuid presente = item existente (atualiza); ausente = item

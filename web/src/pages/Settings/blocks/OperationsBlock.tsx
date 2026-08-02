@@ -120,12 +120,12 @@ export function OperationsBlock() {
         sx={{ mt: 2.5 }}
       />
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando ativado, as mensagens de WhatsApp incluem um link para o comprador acompanhar a evolução do pedido.
+        Quando ativado, as mensagens de WhatsApp incluem um link para o comprador acompanhar a evolução da compra.
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
         <TextField
-          label="Pedido mínimo do canal público"
+          label="Compra mínima do canal público"
           type="number"
           value={minimumOrderValue}
           onChange={(event) => setMinimumOrderValue(event.target.value)}

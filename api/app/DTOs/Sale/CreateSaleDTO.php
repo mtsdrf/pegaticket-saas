@@ -21,20 +21,14 @@ class CreateSaleDTO
         public readonly bool $isInstallment,
         public readonly ?int $installmentsCount,
         public readonly ?string $notes,
-        public readonly ?string $expectedDeliveryDate,
         public readonly bool $markAsDelivered,
         public readonly bool $markAsPaid,
         public readonly array $items,
         public readonly string $origin = 'staff',
         public readonly string $status = 'confirmed',
-        public readonly float $deliveryFee = 0.0,
         public readonly float $serviceFee = 0.0,
         public readonly ?int $couponId = null,
         public readonly float $discountAmount = 0.0,
-        // Retirada na loja (roadmap Delivery) — 'delivery'|'pickup', persistido
-        // no pedido. default 'delivery' preserva 100% o fluxo staff existente
-        // (sem conceito de retirada/entrega antes desta feature).
-        public readonly string $fulfillmentType = 'delivery',
         // Meio de pagamento pretendido pelo cliente no checkout público
         // (StorefrontCheckoutDTO->paymentMethod) — só informativo, persistido
         // no pedido a partir desta feature. null preserva o fluxo staff, que
@@ -56,17 +50,14 @@ class CreateSaleDTO
             isInstallment: (bool) ($data['is_installment'] ?? false),
             installmentsCount: isset($data['installments_count']) ? (int) $data['installments_count'] : null,
             notes: $data['notes'] ?? null,
-            expectedDeliveryDate: $data['expected_delivery_date'] ?? null,
             markAsDelivered: (bool) ($data['mark_as_delivered'] ?? false),
             markAsPaid: (bool) ($data['mark_as_paid'] ?? false),
             items: $data['items'],
             origin: $data['origin'] ?? 'staff',
             status: $data['status'] ?? 'confirmed',
-            deliveryFee: (float) ($data['delivery_fee'] ?? 0.0),
             serviceFee: (float) ($data['service_fee'] ?? 0.0),
             couponId: isset($data['coupon_id']) ? (int) $data['coupon_id'] : null,
             discountAmount: (float) ($data['discount_amount'] ?? 0.0),
-            fulfillmentType: $data['fulfillment_type'] ?? 'delivery',
             paymentMethod: $data['payment_method'] ?? null,
             needsChange: (bool) ($data['needs_change'] ?? false),
             changeForAmount: isset($data['change_for_amount']) ? (float) $data['change_for_amount'] : null,

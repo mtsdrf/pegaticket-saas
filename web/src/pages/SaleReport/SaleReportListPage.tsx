@@ -132,8 +132,8 @@ export function SaleReportListPage() {
 
   return (
     <CrudListPage
-      title="Relatório de pedidos"
-      subtitle="Consulte os pedidos com foco analítico e operacional."
+      title="Relatório de vendas"
+      subtitle="Consulte as vendas com foco analítico e operacional."
       breadcrumbs={[{ label: 'Relatórios', to: '/relatorios/vendas' }, { label: 'Vendas' }]}
       toolbar={
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
@@ -211,12 +211,12 @@ export function SaleReportListPage() {
             columns={columns}
             fetchPage={fetchPage}
             rowIdField="uuid"
-            exportFileName="relatorio-pedidos"
+            exportFileName="relatorio-vendas"
             onFiltersChange={(next) => setFilters(next as SaleReportFilters)}
             emptyState={{
               icon: <AssessmentOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-              title: 'Nenhum pedido para o relatório',
-              description: 'Os dados aparecerão aqui conforme os pedidos forem registrados.',
+              title: 'Nenhuma venda para o relatório',
+              description: 'Os dados aparecerão aqui conforme as vendas forem registradas.',
             }}
           />
         </Box>

@@ -167,8 +167,7 @@ export function DashboardPage() {
   const operationStages = operationHealth
     ? [
         operationHealth.internal.approval,
-        operationHealth.internal.production,
-        operationHealth.internal.dispatch,
+        operationHealth.internal.confirmed,
         operationHealth.internal.financial_pending,
       ]
     : []
@@ -293,10 +292,10 @@ export function DashboardPage() {
                 </Box>
                 <Box>
                   <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'var(--pt-text)', mb: 0.5 }}>
-                    Seu painel começa a ganhar vida com o primeiro pedido
+                    Seu painel começa a ganhar vida com a primeira venda
                   </Typography>
                   <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', maxWidth: 760 }}>
-                    Ainda não há pedidos cadastrados nesta empresa. Assim que você lançar o primeiro pedido, os
+                    Ainda não há vendas cadastradas nesta empresa. Assim que você lançar a primeira venda, os
                     indicadores, gráficos, rankings e previsões financeiras começam a ser preenchidos automaticamente.
                   </Typography>
                 </Box>
@@ -330,7 +329,7 @@ export function DashboardPage() {
         >
           <MetricCard
             icon={ReceiptLongOutlinedIcon}
-            label="Pedidos no período"
+            label="Vendas no período"
             value={indicators ? String(indicators.total_orders) : null}
             tone="primary"
             isLoading={isLoading}
@@ -349,14 +348,14 @@ export function DashboardPage() {
             icon={AccountBalanceWalletOutlinedIcon}
             label="Valor recebido"
             value={indicators ? formatCurrency(indicators.amount_received) : null}
-            caption={indicators ? `${indicators.paid_orders} pedido${indicators.paid_orders === 1 ? '' : 's'} pago${indicators.paid_orders === 1 ? '' : 's'}` : null}
+            caption={indicators ? `${indicators.paid_orders} venda${indicators.paid_orders === 1 ? '' : 's'} paga${indicators.paid_orders === 1 ? '' : 's'}` : null}
             tone="accent"
             isLoading={isLoading}
             index={2}
           />
           <MetricCard
             icon={LocalShippingOutlinedIcon}
-            label="Pedidos não entregues"
+            label="Vendas não concluídas"
             value={indicators ? String(indicators.undelivered_orders) : null}
             caption={indicators ? `${indicators.delivered_orders} já entregue${indicators.delivered_orders === 1 ? '' : 's'}` : null}
             tone={indicators && indicators.undelivered_orders > 0 ? 'warning' : 'primary'}
@@ -492,11 +491,11 @@ export function DashboardPage() {
                       Bilheteria online
                     </Typography>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                      {operationHealth ? operationHealth.internal.approval.total : 0} pedido(s) aguardando aprovação
+                      {operationHealth ? operationHealth.internal.approval.total : 0} venda(s) aguardando aprovação
                     </Typography>
                   </Box>
                   <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                    Acompanhe os pedidos recebidos pela bilheteria online que ainda dependem de aprovação manual.
+                    Acompanhe as vendas recebidas pela bilheteria online que ainda dependem de aprovação manual.
                   </Typography>
                   {canOpenStorefrontQueue ? (
                     <Box>
@@ -529,11 +528,11 @@ export function DashboardPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
             <AddBusinessOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
             <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
-              Pedidos por mês
+              Vendas por mês
             </Typography>
           </Box>
           <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
-            Volume de pedidos criados em cada mês.
+            Volume de vendas criadas em cada mês.
           </Typography>
 
           <SalesByMonthChart data={charts?.orders_by_month ?? null} isLoading={isLoading} />
@@ -554,11 +553,11 @@ export function DashboardPage() {
               charts?.orders_by_city?.map((item) => ({
                 title: item.city_name,
                 value: formatCurrency(item.total_amount),
-                meta: `${item.count} pedido${item.count === 1 ? '' : 's'}`,
+                meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhuma cidade com vendas ainda"
-            emptyDescription="Quando os pedidos entrarem, o ranking por cidade aparece aqui."
+            emptyDescription="Quando as vendas entrarem, o ranking por cidade aparece aqui."
           />
 
           <RankingListCard
@@ -569,11 +568,11 @@ export function DashboardPage() {
               charts?.orders_by_neighborhood?.map((item) => ({
                 title: item.neighborhood_name,
                 value: formatCurrency(item.total_amount),
-                meta: `${item.count} pedido${item.count === 1 ? '' : 's'}`,
+                meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhum bairro com vendas ainda"
-            emptyDescription="Quando os pedidos entrarem, o ranking por bairro aparece aqui."
+            emptyDescription="Quando as vendas entrarem, o ranking por bairro aparece aqui."
           />
         </Box>
 
@@ -598,7 +597,7 @@ export function DashboardPage() {
               })) ?? null
             }
             emptyTitle="Nenhum produto vendido ainda"
-            emptyDescription="Assim que os pedidos começarem a gerar itens, o ranking aparece aqui."
+            emptyDescription="Assim que as vendas começarem a gerar itens, o ranking aparece aqui."
           />
 
           <RankingListCard
@@ -609,11 +608,11 @@ export function DashboardPage() {
               charts?.top_clients?.map((item) => ({
                 title: item.client_name,
                 value: formatCurrency(item.total_amount),
-                meta: `${item.order_count} pedido${item.order_count === 1 ? '' : 's'}`,
+                meta: `${item.order_count} venda${item.order_count === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhum cliente no ranking ainda"
-            emptyDescription="Quando houver pedidos válidos no período, o ranking financeiro dos clientes aparece aqui."
+            emptyDescription="Quando houver vendas válidas no período, o ranking financeiro dos clientes aparece aqui."
           />
         </Box>
 
@@ -632,7 +631,7 @@ export function DashboardPage() {
               charts?.rfm_clients?.map((item) => ({
                 title: item.client_name,
                 value: formatCurrency(item.monetary),
-                meta: `${item.segment} • ${item.frequency} pedido${item.frequency === 1 ? '' : 's'} • há ${item.recency_days} dia${item.recency_days === 1 ? '' : 's'}`,
+                meta: `${item.segment} • ${item.frequency} venda${item.frequency === 1 ? '' : 's'} • há ${item.recency_days} dia${item.recency_days === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhum cliente ranqueado ainda"
@@ -647,26 +646,26 @@ export function DashboardPage() {
               charts?.late_payment_clients?.map((item) => ({
                 title: item.client_name,
                 value: `${item.avg_days_to_pay} dia${item.avg_days_to_pay === 1 ? '' : 's'}`,
-                meta: `${item.paid_orders_count} pedido${item.paid_orders_count === 1 ? '' : 's'} pagos`,
+                meta: `${item.paid_orders_count} venda${item.paid_orders_count === 1 ? '' : 's'} paga${item.paid_orders_count === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhum prazo de pagamento medido ainda"
-            emptyDescription="Assim que houver pedidos entregues e pagos, o ranking aparece aqui."
+            emptyDescription="Assim que houver vendas concluídas e pagas, o ranking aparece aqui."
           />
 
           <RankingListCard
-            title="Pedidos mais atrasados"
+            title="Vendas mais atrasadas"
             subtitle="Títulos vencidos com maior tempo em aberto."
             isLoading={isLoading}
             items={
               charts?.overdue_orders?.map((item) => ({
                 title: item.client_name,
                 value: `${item.days_overdue} dia${item.days_overdue === 1 ? '' : 's'}`,
-                meta: `${item.source === 'installment' ? 'Parcela' : 'Pedido'} • vence em ${item.due_date} • ${formatCurrency(item.amount)}`,
+                meta: `${item.source === 'installment' ? 'Parcela' : 'Venda'} • vence em ${item.due_date} • ${formatCurrency(item.amount)}`,
               })) ?? null
             }
             emptyTitle="Nenhum atraso financeiro agora"
-            emptyDescription="Quando existir pedido ou parcela vencida, o ranking aparece aqui."
+            emptyDescription="Quando existir venda ou parcela vencida, o ranking aparece aqui."
           />
         </Box>
 

@@ -43,20 +43,11 @@ export function cancelStorefrontSale(uuid: string, cancellation_reason: string):
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/cancel`, { cancellation_reason }))
 }
 
-export function dispatchStorefrontSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/dispatch`))
-}
-
 export function deliverStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/deliver`))
 }
 
-/** Reverte "saiu para entrega" de volta pra "em preparação" (`is_out_for_delivery` -> false). */
-export function undispatchStorefrontSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/undispatch`))
-}
-
-/** Reverte "entregue" de volta pra "saiu para entrega" (`is_delivered` -> false). */
+/** Reverte "entregue" de volta pra "confirmado" (`is_delivered` -> false). */
 export function undeliverStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/undeliver`))
 }

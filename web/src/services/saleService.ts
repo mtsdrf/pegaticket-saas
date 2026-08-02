@@ -37,14 +37,6 @@ export function deliverSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/deliver`))
 }
 
-export function dispatchSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/dispatch`))
-}
-
-export function undispatchSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/undispatch`))
-}
-
 export function undeliverSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/undeliver`))
 }

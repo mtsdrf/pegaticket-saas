@@ -582,7 +582,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       setCouponMessage(
         result.discount_amount > 0
           ? `Cupom aplicado: -${formatCurrency(result.discount_amount)}`
-          : 'Cupom aplicado — o desconto final é confirmado ao concluir o pedido.',
+          : 'Cupom aplicado — o desconto final é confirmado ao concluir a compra.',
       )
     } catch (error) {
       setAppliedDiscount(0)
@@ -616,7 +616,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     setFormError(null)
 
     if (holdContext.eligible && !hasActiveHold) {
-      setFormError('Sua reserva temporária não está ativa no momento. Gere uma nova reserva antes de confirmar o pedido.')
+      setFormError('Sua reserva temporária não está ativa no momento. Gere uma nova reserva antes de confirmar a compra.')
       return
     }
 
@@ -747,7 +747,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
                 </Alert>
               ) : isPreparingHold ? (
                 <Alert severity="info" variant="outlined">
-                  Reservando seus itens agora. Aguarde alguns instantes antes de confirmar o pedido.
+                  Reservando seus itens agora. Aguarde alguns instantes antes de confirmar a compra.
                 </Alert>
               ) : (
                 <Alert severity="warning" variant="outlined">
@@ -959,7 +959,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       )}
 
       <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
-        <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>Resumo do pedido</Typography>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>Resumo da compra</Typography>
         <Stack spacing={1}>
           {items.map((item) => (
             <Box key={item.id}>
@@ -1023,7 +1023,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         disabled={isSubmitting || (holdContext.eligible && (isPreparingHold || !hasActiveHold))}
         sx={{ minHeight: UI_SIZE.controlLarge }}
       >
-        {isSubmitting ? 'Confirmando…' : (paymentMethod as string) === 'pix' ? 'Confirmar e gerar Pix' : 'Confirmar pedido'}
+        {isSubmitting ? 'Confirmando…' : (paymentMethod as string) === 'pix' ? 'Confirmar e gerar Pix' : 'Confirmar compra'}
       </Button>
     </Box>
   )
@@ -1043,7 +1043,7 @@ export function StorefrontCheckoutPage() {
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4, textAlign: 'center' }}>
           <Typography sx={{ fontWeight: 600, fontSize: 17, mb: 1 }}>Seu carrinho está vazio</Typography>
           <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mb: 2.5 }}>
-            Volte ao catálogo e adicione produtos antes de finalizar o pedido.
+            Volte ao catálogo e adicione produtos antes de finalizar a compra.
           </Typography>
           <Button variant="contained" onClick={() => navigate(`/loja/${slug}`)}>
             Ver catálogo

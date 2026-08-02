@@ -154,7 +154,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
         >
           <NavButton
             icon={<RestaurantMenuOutlinedIcon />}
-            label={storefrontEnabled ? 'Cardápio' : 'Empresa'}
+            label={storefrontEnabled ? 'Catálogo' : 'Empresa'}
             active={isCardapio}
             onClick={() => navigate(base)}
           />

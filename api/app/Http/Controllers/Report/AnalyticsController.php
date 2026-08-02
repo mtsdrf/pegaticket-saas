@@ -173,19 +173,6 @@ class AnalyticsController extends Controller
         return APIResponse::success($data, __('messages.analytics.revenue_concentration'));
     }
 
-    public function deliveryOtif(AnalyticsPeriodRequest $request)
-    {
-        $validated = $request->validated();
-
-        $data = $this->service->deliveryOtif(
-            app('tenant_id'),
-            $validated['from'] ?? null,
-            $validated['to'] ?? null
-        );
-
-        return APIResponse::success($data, __('messages.analytics.delivery_otif'));
-    }
-
     public function churnClients()
     {
         $data = $this->service->churnClients(app('tenant_id'));

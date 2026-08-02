@@ -8,7 +8,6 @@ import MenuIcon from '@mui/icons-material/Menu'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
@@ -95,7 +94,6 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/vendas', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-manuais', label: 'Vendas manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontSalesRead },
-  { kind: 'link', to: '/treinamentos', label: 'Central de treinamento', icon: SchoolOutlinedIcon },
   {
     kind: 'group',
     label: 'Relatórios',

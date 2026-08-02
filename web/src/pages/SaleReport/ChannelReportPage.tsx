@@ -65,7 +65,7 @@ export function ChannelReportPage() {
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1200 }}>
       <PageHeader
         title="Resultado por canal"
-        subtitle="Compare pedidos, faturamento e ticket médio por canal de venda."
+        subtitle="Compare vendas, faturamento e ticket médio por canal de venda."
         breadcrumbs={[{ label: 'Relatórios', to: '/relatorios/canais' }, { label: 'Resultado por canal' }]}
       />
 
@@ -148,13 +148,13 @@ export function ChannelReportPage() {
                     {formatCurrency(row.total_amount)}
                   </Typography>
                   <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                    {percentage.toFixed(0)}% dos pedidos
+                    {percentage.toFixed(0)}% das vendas
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                    {row.order_count} {row.order_count === 1 ? 'pedido' : 'pedidos'}
+                    {row.order_count} {row.order_count === 1 ? 'venda' : 'vendas'}
                   </Typography>
                   <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
                     Ticket médio: {formatCurrency(row.average_ticket)}
@@ -168,8 +168,8 @@ export function ChannelReportPage() {
         !loadError && (
           <EmptyState
             icon={<InsightsOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
-            title="Nenhum pedido no período"
-            description="Ajuste o período ou aguarde a operação gerar pedidos para ver o resultado por canal."
+            title="Nenhuma venda no período"
+            description="Ajuste o período ou aguarde a operação gerar vendas para ver o resultado por canal."
           />
         )
       )}

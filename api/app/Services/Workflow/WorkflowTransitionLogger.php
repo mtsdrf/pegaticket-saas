@@ -61,11 +61,7 @@ class WorkflowTransitionLogger
             return 'completed';
         }
 
-        if ($order->is_out_for_delivery) {
-            return 'dispatch';
-        }
-
-        return 'production';
+        return 'confirmed';
     }
 
     private function record(

@@ -34,16 +34,16 @@ test.describe('Vendas online', () => {
 
     await page.goto('/vendas-online')
 
-    await expect(page.getByRole('heading', { name: 'Pedidos da loja' })).toBeVisible()
-    await expect(page.getByText('Acompanhe e gerencie os pedidos recebidos pela loja.')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Vendas da loja' })).toBeVisible()
+    await expect(page.getByText('Acompanhe e gerencie as vendas recebidas pela loja.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Aprovação' })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cliente Online QA', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: '2001', exact: true })).toBeVisible()
-    await expect(page.getByText('Pedidos manuais')).toHaveCount(0)
-    await expect(page.getByText('Nenhum pedido pendente de ação no momento')).toHaveCount(0)
+    await expect(page.getByText('Vendas manuais')).toHaveCount(0)
+    await expect(page.getByText('Nenhuma venda pendente de ação no momento')).toHaveCount(0)
   })
 
-  test('move pedidos no board entre etapas e exige motivo ao cancelar', async ({ page }) => {
+  test('move vendas no board entre etapas e exige motivo ao cancelar', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['storefront-sales:read', 'sales:update'],
@@ -174,8 +174,8 @@ test.describe('Vendas online', () => {
     await approvalCard.dispatchEvent('dragend', { dataTransfer: approvalDragData })
     await approveResponse
 
-    await expect(page.getByText('2 pedido(s)').first()).toBeVisible()
-    await expect(page.getByText('Não foi possível mover o pedido agora.')).toHaveCount(0)
+    await expect(page.getByText('2 venda(s)').first()).toBeVisible()
+    await expect(page.getByText('Não foi possível mover a venda agora.')).toHaveCount(0)
 
     const productionDragData = await page.evaluateHandle(() => new DataTransfer())
     await productionCard.dispatchEvent('dragstart', { dataTransfer: productionDragData })
@@ -190,7 +190,7 @@ test.describe('Vendas online', () => {
         response.url().includes('/storefront-sales/storefront-order-production-1/cancel')
         && response.request().method() === 'PATCH',
     )
-    await page.getByRole('button', { name: 'Cancelar pedido' }).click()
+    await page.getByRole('button', { name: 'Cancelar venda' }).click()
     await cancelResponse
 
     await expect(page.locator('div[draggable="true"]').filter({ hasText: '2102' })).toHaveCount(0)
@@ -360,7 +360,7 @@ test.describe('Vendas online', () => {
     await expect(page.getByRole('gridcell', { name: 'Cliente Aprovar Cancelamento', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cliente Rejeitar Cancelamento', exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: /Gerenciar pedido do cliente Cliente Aprovar Cancelamento/ }).click()
+    await page.getByRole('button', { name: /Gerenciar venda do cliente Cliente Aprovar Cancelamento/ }).click()
     await expect(page.getByText('O cliente solicitou o cancelamento desta venda: "Cliente desistiu da compra"')).toBeVisible()
     await page.getByRole('button', { name: 'Aprovar cancelamento' }).click()
     await expect(page.getByText('Ao aprovar, a venda é cancelada de verdade agora')).toBeVisible()
@@ -376,7 +376,7 @@ test.describe('Vendas online', () => {
     await expect(page.getByRole('gridcell', { name: 'Cliente Aprovar Cancelamento', exact: true })).toHaveCount(0)
     await expect(page.locator('div[draggable="true"]').filter({ hasText: '2201' })).toHaveCount(0)
 
-    await page.getByRole('button', { name: /Gerenciar pedido do cliente Cliente Rejeitar Cancelamento/ }).click()
+    await page.getByRole('button', { name: /Gerenciar venda do cliente Cliente Rejeitar Cancelamento/ }).click()
     await expect(page.getByText('O cliente solicitou o cancelamento desta venda: "Vai buscar mais tarde"')).toBeVisible()
     const rejectResponse = page.waitForResponse(
       (response) =>

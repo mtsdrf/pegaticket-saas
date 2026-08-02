@@ -874,7 +874,7 @@ Route::prefix('v1')->group(function () {
         // permissão própria (storefront-sales,*), independente de
         // perm:sales,*. Reaproveita os MESMOS métodos de SaleController
         // onde a regra de negócio já existe (approve/reject/cancel/deliver);
-        // dispatch()/indexStorefront() são os únicos métodos novos. Ver
+        // indexStorefront() é o único método novo. Ver
         // .claude/memory/architecture-decisions.md.
         Route::prefix('storefront-sales')->group(function () {
             Route::get('/', [SaleController::class, 'indexStorefront'])
@@ -896,14 +896,6 @@ Route::prefix('v1')->group(function () {
 
             Route::patch('/{sale}/cancel', [SaleController::class, 'cancel'])
                 ->middleware(['tenant', 'perm:storefront-sales,cancel', 'throttle:30,1,storefront-sales-cancel']);
-
-            Route::patch('/{sale}/dispatch', [SaleController::class, 'dispatch'])
-                ->middleware(['tenant', 'perm:storefront-sales,dispatch', 'throttle:30,1,storefront-sales-dispatch']);
-
-            // Desfaz "saiu para entrega" — método novo (undispatch), só
-            // exposto aqui na tela da loja.
-            Route::patch('/{sale}/undispatch', [SaleController::class, 'undispatch'])
-                ->middleware(['tenant', 'perm:storefront-sales,undispatch', 'throttle:30,1,storefront-sales-undispatch']);
 
             Route::patch('/{sale}/deliver', [SaleController::class, 'deliver'])
                 ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-deliver']);
@@ -982,9 +974,6 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('/revenue-concentration', [AnalyticsController::class, 'revenueConcentration'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-revenue-concentration']);
-
-                Route::get('/delivery-otif', [AnalyticsController::class, 'deliveryOtif'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-delivery-otif']);
 
                 Route::get('/churn-clients', [AnalyticsController::class, 'churnClients'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-churn-clients']);

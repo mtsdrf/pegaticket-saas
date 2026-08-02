@@ -67,7 +67,7 @@ export function PortalLoginPage() {
             state: {
               linkError: getApiErrorMessage(
                 linkError,
-                'Não foi possível vincular automaticamente o pedido que você estava vendo. Você já está logado — tente novamente pela tela de rastreio.',
+                'Não foi possível vincular automaticamente a compra que você estava vendo. Você já está logado — tente novamente pela tela de rastreio.',
               ),
             },
           })
@@ -148,13 +148,13 @@ export function PortalLoginPage() {
           </Typography>
           <Typography sx={{ fontSize: 14.5, color: 'var(--pt-muted)', mb: 3 }}>
             {step === 'email'
-              ? 'Entre com seu e-mail para ver os pedidos de todas as lojas que você confirmar que são suas.'
+              ? 'Entre com seu e-mail para ver as compras de todas as lojas que você confirmar que são suas.'
               : 'Digite o código de 6 dígitos que enviamos para o seu e-mail.'}
           </Typography>
 
           {orderToLink && (
             <Alert severity="info" variant="outlined" sx={{ mb: 2.25 }}>
-              Ao entrar, vamos vincular automaticamente o pedido que você estava vendo à sua conta.
+              Ao entrar, vamos vincular automaticamente a compra que você estava vendo à sua conta.
             </Alert>
           )}
 

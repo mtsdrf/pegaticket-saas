@@ -32,7 +32,7 @@ test.describe('Vendas manuais', () => {
     await expect(page.getByText('Aguardando aprovação')).toHaveCount(0)
   })
 
-  test('lista pedidos manuais sem depender dos cards operacionais da central', async ({ page }) => {
+  test('lista vendas manuais sem depender dos cards operacionais da central', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['sales:read', 'sales:create', 'sales:update'],
@@ -71,7 +71,7 @@ test.describe('Vendas manuais', () => {
     await expect(page.getByText('Nenhuma venda manual encontrada')).toHaveCount(0)
   })
 
-  test('cria um novo pedido manual com cliente e produto e volta para a lista geral', async ({ page }) => {
+  test('cria uma nova venda manual com cliente e ingresso e volta para a lista geral', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['sales:read', 'sales:create'],
@@ -251,7 +251,7 @@ test.describe('Vendas manuais', () => {
 
     await page.getByLabel('Quantidade').fill('2')
 
-    await expect(page.getByText('Total do pedido')).toBeVisible()
+    await expect(page.getByText('Total da venda')).toBeVisible()
     await expect(page.getByText('R$ 39,80')).toHaveCount(2)
 
     await page.getByRole('button', { name: 'Salvar' }).click()

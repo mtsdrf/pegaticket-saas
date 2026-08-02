@@ -6,9 +6,7 @@ use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
 use App\Events\Sale\SaleDelivered;
-use App\Events\Sale\SaleOutForDelivery;
 use App\Events\Sale\SaleRejected;
-use App\Events\Sale\SaleUndispatched;
 use App\Models\Sale\Sale;
 use App\Services\Workflow\WorkflowTransitionLogger;
 
@@ -25,8 +23,6 @@ class WriteWorkflowTransitionLog
             $event instanceof SaleCreated => $this->handleOrderCreated($event),
             $event instanceof SaleApproved => $this->handleOrderApproved($event),
             $event instanceof SaleRejected => $this->handleOrderRejected($event),
-            $event instanceof SaleOutForDelivery => $this->handleOrderOutForDelivery($event),
-            $event instanceof SaleUndispatched => $this->handleOrderUndispatched($event),
             $event instanceof SaleDelivered => $this->handleOrderDelivered($event),
             $event instanceof SaleCancelled => $this->handleOrderCancelled($event),
             default => null,
@@ -84,40 +80,6 @@ class WriteWorkflowTransitionLog
             toStage: $event->toStage,
             transitionType: 'reject',
             reason: $event->reason,
-            actorId: $event->actorId,
-        );
-    }
-
-    private function handleOrderOutForDelivery(SaleOutForDelivery $event): void
-    {
-        $order = Sale::query()->find($event->orderId);
-
-        if ($order === null) {
-            return;
-        }
-
-        $this->logger->recordOrderTransition(
-            order: $order,
-            fromStage: $event->fromStage,
-            toStage: $event->toStage,
-            transitionType: 'move',
-            actorId: $event->actorId,
-        );
-    }
-
-    private function handleOrderUndispatched(SaleUndispatched $event): void
-    {
-        $order = Sale::query()->find($event->orderId);
-
-        if ($order === null) {
-            return;
-        }
-
-        $this->logger->recordOrderTransition(
-            order: $order,
-            fromStage: $event->fromStage,
-            toStage: $event->toStage,
-            transitionType: 'undo',
             actorId: $event->actorId,
         );
     }

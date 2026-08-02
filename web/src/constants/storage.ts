@@ -14,7 +14,6 @@ export const STORAGE_KEYS = {
   /** Roadmap A1.6 — `published_at` (ISO) da release note mais recente já vista pelo usuário neste navegador; usado só pra calcular o badge de "novidades" do sino no `AppLayout`. */
   releaseNotesLastSeenAt: 'pegaticket.release_notes_last_seen_at',
   /** Central de Treinamento — progresso, trilhas e respostas rápidas persistidos por usuário+empresa neste navegador. */
-  trainingCenterProgress: 'pegaticket.training_center_progress',
   /** Identificador local estável deste navegador/dispositivo para fluxos offline controlados. */
   offlineDeviceId: 'pegaticket.offline_device_id',
 } as const

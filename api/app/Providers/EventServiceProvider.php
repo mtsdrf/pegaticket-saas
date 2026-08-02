@@ -268,8 +268,6 @@ use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleItemsUpdated;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleRejected;
-use App\Events\Sale\SaleOutForDelivery;
-use App\Events\Sale\SaleUndispatched;
 use App\Events\Sale\SalePaymentCharged;
 use App\Events\Sale\SalePaymentRefundRequested;
 use App\Events\Sale\SaleCancellationRequested;
@@ -292,8 +290,6 @@ use App\Listeners\Sale\AuditSaleCancelled;
 use App\Listeners\Sale\AuditSaleItemsUpdated;
 use App\Listeners\Sale\AuditSaleApproved;
 use App\Listeners\Sale\AuditSaleRejected;
-use App\Listeners\Sale\AuditSaleOutForDelivery;
-use App\Listeners\Sale\AuditSaleUndispatched;
 use App\Listeners\Sale\AuditSaleCancellationRequested;
 use App\Listeners\Sale\AuditSaleCancellationApproved;
 use App\Listeners\Sale\AuditSaleCancellationRejected;
@@ -302,7 +298,6 @@ use App\Listeners\Sale\AuditSaleRefundCreated;
 use App\Listeners\Sale\SendPushOnSaleApproved;
 use App\Listeners\Sale\SendPushOnSaleRejected;
 use App\Listeners\Sale\SendPushOnSaleDelivered;
-use App\Listeners\Sale\SendPushOnSaleOutForDelivery;
 use App\Listeners\Sale\IssueTicketsOnSalePaid;
 use App\Listeners\Sale\CancelTicketsOnSaleCancelled;
 use App\Events\Ticket\TicketsIssued;
@@ -533,8 +528,6 @@ class EventServiceProvider extends ServiceProvider
         SaleItemsUpdated::class => [AuditSaleItemsUpdated::class],
         SaleApproved::class => [AuditSaleApproved::class, SendPushOnSaleApproved::class, WriteWorkflowTransitionLog::class],
         SaleRejected::class => [AuditSaleRejected::class, SendPushOnSaleRejected::class, WriteWorkflowTransitionLog::class],
-        SaleOutForDelivery::class => [AuditSaleOutForDelivery::class, SendPushOnSaleOutForDelivery::class, WriteWorkflowTransitionLog::class],
-        SaleUndispatched::class => [AuditSaleUndispatched::class, WriteWorkflowTransitionLog::class],
         SaleCancellationRequested::class => [AuditSaleCancellationRequested::class],
         SaleCancellationApproved::class => [AuditSaleCancellationApproved::class],
         SaleCancellationRejected::class => [AuditSaleCancellationRejected::class],

@@ -8,7 +8,7 @@ import { PortalShell } from './PortalShell'
 function LinkedStoresEmpty() {
   return (
     <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-      Nenhuma loja vinculada ainda. Abra o link de rastreio de um pedido para vincular a primeira.
+      Nenhuma loja vinculada ainda. Abra o link de rastreio de uma compra para vincular a primeira.
     </Typography>
   )
 }

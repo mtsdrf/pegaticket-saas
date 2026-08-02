@@ -40,5 +40,5 @@ async function exportPdf(url: string, payload: object, fallbackFilename: string)
 }
 
 export function exportOrderReportsPdf(filters: SaleReportFilters): Promise<void> {
-  return exportPdf('/reports/sales/pdf', filters, 'relatorio-pedidos.pdf')
+  return exportPdf('/reports/sales/pdf', filters, 'relatorio-vendas.pdf')
 }

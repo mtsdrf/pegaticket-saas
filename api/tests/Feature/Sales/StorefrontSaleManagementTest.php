@@ -14,9 +14,8 @@ use Tests\TestCase;
 /**
  * Tela dedicada de gestão de vendas online (/storefront-sales/*),
  * permissão própria `storefront-sales,{action}` — independente de
- * `orders,{action}`. Reaproveita o MESMO SaleService (approve/reject/
- * cancel/deliver); dispatch() ("saiu para entrega") é o único conceito
- * novo. Ver .claude/memory/architecture-decisions.md.
+ * `orders,{action}`. Reaproveita o MESMO SaleService
+ * (approve/reject/cancel/deliver). Ver .claude/memory/architecture-decisions.md.
  */
 class StorefrontSaleManagementTest extends TestCase
 {
@@ -32,8 +31,6 @@ class StorefrontSaleManagementTest extends TestCase
         $this->grantPermission('storefront-sales', 'read');
         $this->grantPermission('storefront-sales', 'approve');
         $this->grantPermission('storefront-sales', 'cancel');
-        $this->grantPermission('storefront-sales', 'dispatch');
-        $this->grantPermission('storefront-sales', 'undispatch');
         $this->grantPermission('storefront-sales', 'deliver');
         $this->grantPermission('storefront-sales', 'undeliver');
         $this->grantPermission('storefront-sales', 'pay');
@@ -81,19 +78,11 @@ class StorefrontSaleManagementTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed');
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_out_for_delivery', true);
-
-        $this->assertNotNull($order->fresh()->out_for_delivery_at);
-
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')
             ->assertStatus(200)
             ->assertJsonPath('data.is_delivered', true);
 
-        $fresh = $order->fresh();
-        $this->assertTrue($fresh->is_out_for_delivery);
-        $this->assertTrue($fresh->is_delivered);
+        $this->assertTrue($order->fresh()->is_delivered);
     }
 
     #[Test]
@@ -119,56 +108,6 @@ class StorefrontSaleManagementTest extends TestCase
         ])->assertStatus(200);
 
         $this->assertNotNull($order->fresh()->cancelled_at);
-    }
-
-    #[Test]
-    public function dispatch_fails_when_order_is_still_pending_approval(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-
-        $this->assertFalse($order->fresh()->is_out_for_delivery);
-    }
-
-    #[Test]
-    public function dispatch_fails_when_already_dispatched(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function dispatch_fails_when_order_already_delivered(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function deliver_does_not_require_dispatch_first(): void
-    {
-        // origin=staff nunca passa por "saiu para entrega" — deliver()
-        // continua indo direto, sem exigir dispatch() antes.
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_out_for_delivery', false);
     }
 
     #[Test]
@@ -233,70 +172,6 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     #[Test]
-    public function undispatch_reverts_out_for_delivery(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undispatch')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_out_for_delivery', false);
-
-        $fresh = $order->fresh();
-        $this->assertFalse($fresh->is_out_for_delivery);
-        $this->assertNull($fresh->out_for_delivery_at);
-    }
-
-    #[Test]
-    public function undispatch_fails_when_order_is_not_out_for_delivery(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE')
-            ->assertJsonPath('message', __('messages.order.not_out_for_delivery'));
-
-        $this->assertFalse($order->fresh()->is_out_for_delivery);
-    }
-
-    #[Test]
-    public function undispatch_fails_when_order_already_delivered(): void
-    {
-        // Dispatch + deliver deixa is_out_for_delivery=true E
-        // is_delivered=true ao mesmo tempo (deliver não reseta o "saiu para
-        // entrega") — é o único caminho que atinge o guard already_delivered.
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')->assertStatus(200);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE')
-            ->assertJsonPath('message', __('messages.order.already_delivered'));
-
-        $this->assertTrue($order->fresh()->is_out_for_delivery);
-    }
-
-    #[Test]
-    public function undispatch_fails_when_order_cancelled(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/cancel', [
-            'cancellation_reason' => 'Cliente desistiu.',
-        ])->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undispatch')
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE')
-            ->assertJsonPath('message', __('messages.order.already_cancelled'));
-    }
-
-    #[Test]
     public function undeliver_route_reverts_delivery(): void
     {
         $order = $this->createPendingApprovalOrder();
@@ -335,10 +210,6 @@ class StorefrontSaleManagementTest extends TestCase
         $confirmed = $this->createPendingApprovalOrder();
         $this->approve($confirmed);
 
-        $dispatched = $this->createPendingApprovalOrder();
-        $this->approve($dispatched);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $dispatched->uuid . '/dispatch')->assertStatus(200);
-
         $deliveredUnpaid = $this->createPendingApprovalOrder();
         $this->approve($deliveredUnpaid);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $deliveredUnpaid->uuid . '/deliver')->assertStatus(200);
@@ -367,12 +238,11 @@ class StorefrontSaleManagementTest extends TestCase
 
         $response = $this->auth()->getJson('/api/v1/storefront-sales?active_only=true');
 
-        $response->assertStatus(200)->assertJsonCount(4, 'data');
+        $response->assertStatus(200)->assertJsonCount(3, 'data');
 
         $this->assertSame([
             $pending->uuid,
             $confirmed->uuid,
-            $dispatched->uuid,
             $deliveredUnpaid->uuid,
         ], array_column($response->json('data'), 'uuid'));
     }
@@ -400,19 +270,17 @@ class StorefrontSaleManagementTest extends TestCase
     public function new_routes_require_their_own_permission_action(): void
     {
         // Usuário com as permissões antigas da tela, mas SEM as actions
-        // novas (undispatch/undeliver/pay) — as 3 rotas novas dão 403.
+        // novas (undeliver/pay) — as rotas novas dão 403.
         $this->setUpTenantScopedUser('storefront-partial-perms@test.com');
         $this->grantPermission('storefront-sales', 'read');
         $this->grantPermission('storefront-sales', 'approve');
-        $this->grantPermission('storefront-sales', 'dispatch');
         $this->grantPermission('storefront-sales', 'deliver');
         $this->grantPermission('sales', 'create');
 
         $order = $this->createPendingApprovalOrder();
         $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/dispatch')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')->assertStatus(200);
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undispatch')->assertStatus(403);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undeliver')->assertStatus(403);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/pay')->assertStatus(403);
     }

@@ -189,7 +189,7 @@ export function TicketListPage() {
             emptyState={{
               icon: <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
               title: 'Nenhum ingresso emitido ainda',
-              description: 'Ingressos aparecem aqui automaticamente após a confirmação de um pedido.',
+              description: 'Ingressos aparecem aqui automaticamente após a confirmação de uma venda.',
             }}
           />
         </Box>

@@ -217,7 +217,7 @@ export function EventProductFormPage() {
           slotProps={{ htmlInput: { min: 0, step: '1' } }}
         />
         <TextField
-          label="Máx. por pedido"
+          label="Máx. por compra"
           type="number"
           value={form.max_per_order}
           onChange={(event) => updateField('max_per_order', event.target.value)}

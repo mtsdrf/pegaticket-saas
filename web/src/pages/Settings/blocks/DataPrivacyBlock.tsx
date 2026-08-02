@@ -207,7 +207,7 @@ export function DataPrivacyBlock() {
             <Alert severity="info" variant="outlined">
               A PegaTicket atua como <strong>controladora</strong> dos dados da conta e dos usuários de acesso da sua
               empresa, e como <strong>operadora</strong> dos dados que a sua empresa cadastra no sistema sobre clientes,
-              pedidos e rotinas operacionais.
+              vendas e rotinas operacionais.
             </Alert>
 
             <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
@@ -255,12 +255,12 @@ export function DataPrivacyBlock() {
         <InfoCard
           icon={<TaskAltOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
           title="Atendimento mínimo"
-          body="Valide quem está solicitando, registre o escopo do pedido e responda sempre pelos canais oficiais da operação."
+          body="Valide quem está solicitando, registre o escopo da solicitação e responda sempre pelos canais oficiais da operação."
         />
         <InfoCard
           icon={<DownloadOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
           title="Exportação já disponível"
-          body="Os principais dados da empresa podem ser exportados em pacote único. Use essa base como primeiro passo em pedidos de acesso."
+          body="Os principais dados da empresa podem ser exportados em pacote único. Use essa base como primeiro passo em solicitações de acesso."
         />
         <InfoCard
           icon={<PrivacyTipOutlinedIcon sx={{ color: 'var(--pt-primary)' }} />}
@@ -379,7 +379,7 @@ export function DataPrivacyBlock() {
                   fullWidth
                 />
                 <TextField
-                  label="Descrição do pedido"
+                  label="Descrição da solicitação"
                   value={form.description}
                   onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
                   fullWidth
@@ -443,7 +443,7 @@ export function DataPrivacyBlock() {
               </Box>
             ) : recentPrivacyRequests.length === 0 ? (
               <Alert severity="info" variant="outlined">
-                Nenhuma solicitação registrada ainda. Quando houver um pedido real, registre aqui para manter rastreabilidade mínima.
+                Nenhuma solicitação registrada ainda. Quando houver uma solicitação real, registre aqui para manter rastreabilidade mínima.
               </Alert>
             ) : (
               <Stack spacing={1.25}>
@@ -541,7 +541,7 @@ export function DataPrivacyBlock() {
               Exportar dados da empresa
             </Typography>
             <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-              Baixe um pacote único (.zip) com clientes, produtos e pedidos da sua empresa em CSV. Limite de 3
+              Baixe um pacote único (.zip) com clientes, produtos e vendas da sua empresa em CSV. Limite de 3
               exportações por hora.
             </Typography>
 

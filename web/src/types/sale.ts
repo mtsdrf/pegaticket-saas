@@ -50,15 +50,13 @@ export interface SaleInstallment {
  */
 export type SaleStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
 export type SaleOrigin = 'staff' | 'storefront'
-export type SaleOperationStage = 'approval' | 'production' | 'dispatch' | 'financial_pending'
+export type SaleOperationStage = 'approval' | 'confirmed' | 'financial_pending'
 
 export interface Sale {
   uuid: string
   codigo: string
   is_installment: boolean
   total_amount: number
-  /** Já somado ao `total_amount`; vendas staff (sem canal online) ficam com `0`. */
-  delivery_fee: number
   /** Taxa de serviço, já somada ao `total_amount`; nos canais atuais costuma permanecer `0`. */
   service_fee: number
   /** Já subtraído do `total_amount`; vendas staff/sem cupom ficam com `0`. */
@@ -72,7 +70,6 @@ export interface Sale {
   is_delivered: boolean
   delivered_at: string | null
   due_date: string | null
-  expected_delivery_date: string | null
   cancelled_at: string | null
   cancellation_reason: string | null
   notes: string | null
@@ -84,9 +81,6 @@ export interface Sale {
   change_for_amount?: number | null
   status: SaleStatus
   origin: SaleOrigin
-  /** "Saiu para entrega" (tela dedicada de vendas online) — etapa opcional entre aprovado e entregue. */
-  is_out_for_delivery: boolean
-  out_for_delivery_at: string | null
   final_customer?: SaleFinalCustomerRef
   items?: SaleItem[]
   installments?: SaleInstallment[]
@@ -135,8 +129,6 @@ export interface SalePayload {
   mark_as_delivered?: boolean
   /** Venda já nasce paga — backend rejeita (422) combinado com `is_installment: true`. */
   mark_as_paid?: boolean
-  /** Data prevista de entrega (informativo, `YYYY-MM-DD`) — não é o mesmo campo que `delivered_at`. */
-  expected_delivery_date?: string
 }
 
 export interface SaleInstallmentPayload {
@@ -178,7 +170,6 @@ export interface SaleUpdateItemDraft {
 
 export interface SaleUpdateItemsPayload {
   notes?: string
-  expected_delivery_date?: string
   items: SaleUpdateItemDraft[]
 }
 

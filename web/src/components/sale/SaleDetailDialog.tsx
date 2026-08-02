@@ -123,7 +123,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
   const [itemsFieldErrors, setItemsFieldErrors] = useState<Record<string, string[]>>({})
   const [isSavingItems, setIsSavingItems] = useState(false)
   const [headerNotesDraft, setHeaderNotesDraft] = useState('')
-  const [headerExpectedDeliveryDraft, setHeaderExpectedDeliveryDraft] = useState('')
 
   useEffect(() => {
     if (!open || !saleUuid) return
@@ -308,7 +307,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     }))
     setItemDrafts(drafts.length > 0 ? drafts : [createEmptyItemDraft()])
     setHeaderNotesDraft(selectedSale.notes ?? '')
-    setHeaderExpectedDeliveryDraft(selectedSale.expected_delivery_date ? toDateOnly(selectedSale.expected_delivery_date) : '')
     setItemsEditorError(null)
     setItemsFieldErrors({})
     setItemsEditorOpen(true)
@@ -350,7 +348,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     try {
       const payload: SaleUpdateItemsPayload = {
         notes: headerNotesDraft.trim() || undefined,
-        expected_delivery_date: headerExpectedDeliveryDraft || undefined,
         items: itemDrafts.map((row) => ({
           ...(row.uuid ? { uuid: row.uuid } : {}),
           ...(row.item!.kind === 'ticket_type'
@@ -431,19 +428,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                 ) : (
                   <Stack spacing={2}>
                     {itemsEditorError && <Alert severity="error">{itemsEditorError}</Alert>}
-
-                    <TextField
-                      label="Previsão de entrega"
-                      type="date"
-                      size="small"
-                      fullWidth
-                      value={headerExpectedDeliveryDraft}
-                      onChange={(event) => setHeaderExpectedDeliveryDraft(event.target.value)}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      error={Boolean(itemsFieldErrors.expected_delivery_date?.[0])}
-                      helperText={itemsFieldErrors.expected_delivery_date?.[0]}
-                      sx={{ maxWidth: { md: '50%' } }}
-                    />
 
                     <TextField
                       label="Observações"

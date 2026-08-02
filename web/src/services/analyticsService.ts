@@ -6,7 +6,6 @@ import type {
   AnalyticsPeriodParams,
   ChurnClients,
   CouponRoi,
-  DeliveryOtif,
   LocationSales,
   MarginSummary,
   OverdueSale,
@@ -223,7 +222,7 @@ export async function listOverdueOrders(
       order_uuid: toText(pick(raw, ['order_uuid', 'uuid'])),
       client_name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
       amount: toNumber(pick(raw, ['open_amount', ...AMOUNT_KEYS])),
-      due_date: toText(pick(raw, ['due_date', 'expected_delivery_date', 'date'])) || null,
+      due_date: toText(pick(raw, ['due_date', 'date'])) || null,
       days_overdue: toNumber(pick(raw, ['days_overdue', 'days_late'])),
       type: (OVERDUE_TYPES as readonly string[]).includes(type) ? (type as OverdueType) : null,
     }
@@ -274,11 +273,6 @@ export async function getMarginSummary(params: AnalyticsPeriodParams): Promise<M
 
 export async function getRevenueConcentration(params: AnalyticsPeriodParams): Promise<RevenueConcentration> {
   const response = await apiClient.get<ApiSuccess<RevenueConcentration>>('/reports/analytics/revenue-concentration', { params })
-  return response.data.data
-}
-
-export async function getDeliveryOtif(params: AnalyticsPeriodParams): Promise<DeliveryOtif> {
-  const response = await apiClient.get<ApiSuccess<DeliveryOtif>>('/reports/analytics/delivery-otif', { params })
   return response.data.data
 }
 

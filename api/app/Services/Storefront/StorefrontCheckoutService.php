@@ -99,8 +99,6 @@ class StorefrontCheckoutService
                 }
             }
 
-            $deliveryFee = 0.0;
-
             // Guard 4: cupom (roadmap Delivery, Fase 3) — opcional, só roda
             // quando dto->couponCode vem preenchido. $customer->id já é
             // conhecido desde o início do checkout (identidade resolvida
@@ -118,11 +116,10 @@ class StorefrontCheckoutService
                     $dto->paymentMethod
                 );
 
-                $deliveryFeeCents = (int) round($deliveryFee * 100);
                 $discountAmountCents = $this->couponService->calculateDiscountCents(
                     $coupon,
                     $subtotalCents,
-                    $deliveryFeeCents
+                    0
                 );
                 $couponId = $coupon->id;
             }
@@ -146,16 +143,13 @@ class StorefrontCheckoutService
                 isInstallment: false,
                 installmentsCount: null,
                 notes: $dto->notes,
-                expectedDeliveryDate: null,
                 markAsDelivered: false,
                 markAsPaid: false,
                 items: $items,
                 origin: 'storefront',
                 status: 'pending_approval',
-                deliveryFee: $deliveryFee,
                 couponId: $couponId,
                 discountAmount: $discountAmountCents / 100,
-                fulfillmentType: 'pickup',
                 paymentMethod: $dto->paymentMethod,
                 needsChange: $dto->needsChange,
                 changeForAmount: $dto->changeForAmount,

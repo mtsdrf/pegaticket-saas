@@ -11,8 +11,8 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 }
 
 /**
- * Resumo completo da compra, enviado na criação da venda (`SaleFormPage`) — lista de itens, total, entrega
- * prevista e status de pagamento no momento da criação. `trackingUrl` é opcional (toggle `tenant_settings.
+ * Resumo completo da compra, enviado na criação da venda (`SaleFormPage`) — lista de itens, total
+ * e status de pagamento no momento da criação. `trackingUrl` é opcional (toggle `tenant_settings.
  * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando omitido, a linha do link some
  * e o restante da mensagem sai igual a antes.
  */
@@ -20,23 +20,21 @@ export function buildSaleCreatedWhatsAppMessage(params: {
   clientName: string
   items: { name: string; quantity: string; unitPrice: number }[]
   total: number
-  expectedDeliveryDate: string
   isPaid: boolean
   paidAmount: number | null
   trackingUrl?: string
 }): string {
-  const { clientName, items, total, expectedDeliveryDate, isPaid, paidAmount, trackingUrl } = params
+  const { clientName, items, total, isPaid, paidAmount, trackingUrl } = params
 
   const productLines = items.map((item) => `• ${item.quantity} ${item.name} – ${formatCurrency(item.unitPrice)}`).join('\n')
   const statusLine = isPaid ? '✅ *Status:* Pago' : '❗ *Status:* Ainda não pago'
-  const deliveryLine = expectedDeliveryDate ? `\n📅 *Entrega prevista:* ${formatDateBR(expectedDeliveryDate)}` : ''
   const paidLine = isPaid && paidAmount !== null ? `\n💵 *Valor pago:* ${formatCurrency(paidAmount)}` : ''
   const trackingBlock = trackingUrl ? `🎟️ *Acompanhe sua compra:* ${trackingUrl}\n\n` : ''
 
   return (
     `🧾 *Resumo da sua compra, ${clientName}!*\n\n` +
     `📦 Produtos:\n${productLines}\n\n` +
-    `💰 *Total:* ${formatCurrency(total)}${deliveryLine}\n` +
+    `💰 *Total:* ${formatCurrency(total)}\n` +
     `${statusLine}${paidLine}\n\n` +
     `${trackingBlock}` +
     `Qualquer dúvida, estamos à disposição! 😊`

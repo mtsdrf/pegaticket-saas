@@ -8,11 +8,9 @@ import {
   approveStorefrontSale,
   cancelStorefrontSale,
   deliverStorefrontSale,
-  dispatchStorefrontSale,
   payStorefrontSale,
   rejectStorefrontSale,
   undeliverStorefrontSale,
-  undispatchStorefrontSale,
 } from '../services/storefrontSaleService'
 import { approveSaleCancellationRequest, rejectSaleCancellationRequest } from '../services/saleService'
 import type { Sale } from '../types/sale'
@@ -54,13 +52,12 @@ export interface SaleStatusSource {
    * aguardando aprovação da operação.
    */
   status?: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
-  is_out_for_delivery?: boolean
 }
 
 /**
  * Não existe campo pronto de "status" na API — é derivado de
- * `is_cancelled`/`is_paid`/`is_delivered`/`is_installment`/`status`/
- * `is_out_for_delivery`, nessa ordem de prioridade (contrato acordado com o
+ * `is_cancelled`/`is_paid`/`is_delivered`/`is_installment`/`status`,
+ * nessa ordem de prioridade (contrato acordado com o
  * backend da Fase 5.1, estendido pela tela de gestão de vendas online).
  * Único lugar dessa lógica no frontend — reaproveitada por
  * `SaleTrackingPage` (Fase 5.1) e `PortalSalesPage` (Fase 5.2), nunca
@@ -107,15 +104,6 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
       caption: 'Assim que a empresa confirmar sua compra, o preparo começa.',
       tone: 'neutral',
       icon: <HourglassEmptyIcon />,
-    }
-  }
-
-  if (sale.is_out_for_delivery && !sale.is_delivered) {
-    return {
-      label: 'Saiu para entrega',
-      caption: 'Sua compra está a caminho.',
-      tone: 'info',
-      icon: <LocalShippingOutlinedIcon />,
     }
   }
 
@@ -186,7 +174,6 @@ export interface SaleActionButton {
 export function canRequestSaleCancellation(sale: SaleStatusSource): boolean {
   return (
     !sale.is_cancelled &&
-    !sale.is_out_for_delivery &&
     !sale.is_delivered &&
     sale.status !== 'rejected' &&
     sale.status !== 'cancellation_requested'
@@ -229,23 +216,16 @@ export function getSaleActionButtons(sale: Sale, canManageCancellation = false):
     ]
   }
 
-  if (sale.status === 'confirmed' && !sale.is_out_for_delivery && !sale.is_delivered) {
+  if (sale.status === 'confirmed' && !sale.is_delivered) {
     return [
       { label: 'Cancelar venda', tone: 'back', requiresReason: true, run: (uuid, reason) => cancelStorefrontSale(uuid, reason ?? '') },
-      { label: 'Saiu para entrega', tone: 'forward', requiresReason: false, run: (uuid) => dispatchStorefrontSale(uuid) },
-    ]
-  }
-
-  if (sale.status === 'confirmed' && sale.is_out_for_delivery && !sale.is_delivered) {
-    return [
-      { label: 'Voltar para em preparação', tone: 'back', requiresReason: false, run: (uuid) => undispatchStorefrontSale(uuid) },
       { label: 'Marcar como entregue', tone: 'forward', requiresReason: false, run: (uuid) => deliverStorefrontSale(uuid) },
     ]
   }
 
   if (sale.status === 'confirmed' && sale.is_delivered && !sale.is_paid) {
     return [
-      { label: 'Voltar para "saiu para entrega"', tone: 'back', requiresReason: false, run: (uuid) => undeliverStorefrontSale(uuid) },
+      { label: 'Voltar para confirmado', tone: 'back', requiresReason: false, run: (uuid) => undeliverStorefrontSale(uuid) },
       { label: 'Concluir venda', tone: 'forward', requiresReason: false, run: (uuid) => payStorefrontSale(uuid) },
     ]
   }

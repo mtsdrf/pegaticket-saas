@@ -60,8 +60,6 @@ export const ACCESS = {
   storefrontSalesRead: tenant('storefront-sales', 'read'),
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),
   storefrontSalesCancel: tenant('storefront-sales', 'cancel'),
-  storefrontSalesDispatch: tenant('storefront-sales', 'dispatch'),
-  storefrontSalesUndispatch: tenant('storefront-sales', 'undispatch'),
   storefrontSalesDeliver: tenant('storefront-sales', 'deliver'),
   storefrontSalesUndeliver: tenant('storefront-sales', 'undeliver'),
   storefrontSalesPay: tenant('storefront-sales', 'pay'),

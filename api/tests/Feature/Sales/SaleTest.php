@@ -1003,32 +1003,6 @@ class SaleTest extends TestCase
     }
 
     #[Test]
-    public function expected_delivery_date_is_persisted_and_returned(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'expected_delivery_date' => '2026-08-01',
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ]);
-
-        $response->assertStatus(201);
-        $this->assertStringStartsWith('2026-08-01', $response->json('data.expected_delivery_date'));
-
-        $this->assertDatabaseHas('orders', [
-            'uuid' => $response->json('data.uuid'),
-            'expected_delivery_date' => '2026-08-01 00:00:00',
-        ]);
-    }
-
-    #[Test]
     public function notes_over_500_characters_is_rejected(): void
     {
         $this->grantPermission('sales', 'create');
@@ -1229,7 +1203,6 @@ class SaleTest extends TestCase
 
         $response = $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
             'notes' => 'Entregar após 18h',
-            'expected_delivery_date' => '2026-09-01',
             'items' => [
                 ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1238,8 +1211,6 @@ class SaleTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.notes', 'Entregar após 18h')
             ->assertJsonPath('data.total_amount', '20.00');
-
-        $this->assertStringStartsWith('2026-09-01', $response->json('data.expected_delivery_date'));
 
         // Item não mudou (mesmo produto/quantidade) — reserva original
         // continua intacta, nenhum movimento de estoque ruído.
@@ -1780,7 +1751,7 @@ class SaleTest extends TestCase
      * o pedido manual.
      */
     #[Test]
-    public function staff_order_creation_is_unaffected_by_delivery_fee_phase_2_guards(): void
+    public function staff_order_creation_is_unaffected_by_checkout_phase_2_guards(): void
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
@@ -1800,10 +1771,5 @@ class SaleTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('data.total_amount', '50.00');
-
-        $this->assertEquals(0.0, (float) $response->json('data.delivery_fee'));
-
-        $order = Sale::where('uuid', $response->json('data.uuid'))->firstOrFail();
-        $this->assertEquals(0.0, (float) $order->delivery_fee);
     }
 }

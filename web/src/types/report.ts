@@ -112,7 +112,7 @@ export interface ChannelResultPoint {
   average_ticket: string
 }
 
-export type OperationHealthStageKey = 'approval' | 'production' | 'dispatch' | 'financial_pending'
+export type OperationHealthStageKey = 'approval' | 'confirmed' | 'financial_pending'
 
 export interface OperationHealthStageSummary {
   stage: OperationHealthStageKey

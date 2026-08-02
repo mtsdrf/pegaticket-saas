@@ -530,20 +530,10 @@ export function SaleTrackingPage() {
               <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>
                 {order.final_customer_name}
               </Typography>
-
-              {order.expected_delivery_date && (
-                <>
-                  <Divider sx={{ my: 1.25 }} />
-                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Entrega prevista</Typography>
-                  <Typography sx={{ fontSize: 15, fontWeight: 600 }}>
-                    {formatDateBR(order.expected_delivery_date)}
-                  </Typography>
-                </>
-              )}
             </Paper>
 
             <Box>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Itens do pedido</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Itens da compra</Typography>
               <ItemsList items={order.items} />
             </Box>
 
@@ -557,7 +547,7 @@ export function SaleTrackingPage() {
                 justifyContent: 'space-between',
               }}
             >
-              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Total do pedido</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Total da compra</Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(order.total_amount)}</Typography>
             </Paper>
 

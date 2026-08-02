@@ -58,7 +58,7 @@ export function ReceivablesAgingCard({ buckets, isLoading }: ReceivablesAgingCar
             Nenhum recebível em aberto agora
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
-            Quando houver pedidos ou parcelas abertas, a distribuição aparece aqui.
+            Quando houver vendas ou parcelas abertas, a distribuição aparece aqui.
           </Typography>
         </Box>
       </Paper>

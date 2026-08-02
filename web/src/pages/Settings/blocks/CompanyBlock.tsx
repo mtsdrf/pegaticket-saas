@@ -277,7 +277,7 @@ export function CompanyBlock() {
           <PublicLinkCard
             icon={<StorefrontOutlinedIcon fontSize="small" />}
             title="Bilheteria online"
-            description="Use este endereço para divulgar o catálogo e receber pedidos pela vitrine pública."
+            description="Use este endereço para divulgar o catálogo e receber compras pela vitrine pública."
             url={storefrontUrl}
             onCopy={handleCopyLink}
             qrCodeFileName={`qr-code-loja-${profile?.slug ?? 'pegaticket'}`}

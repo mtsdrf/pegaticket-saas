@@ -46,7 +46,7 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
         Movimento por dia e hora
       </Typography>
       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
-        Concentração de pedidos por dia da semana e hora do dia.
+        Concentração de vendas por dia da semana e hora do dia.
       </Typography>
 
       {isLoading ? (
@@ -65,10 +65,10 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
           }}
         >
           <Typography sx={{ fontWeight: 600, color: 'var(--pt-text)', fontSize: 14.5 }}>
-            Sem pedidos suficientes ainda
+            Sem vendas suficientes ainda
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
-            Assim que os pedidos forem registrados, o mapa de horários aparece aqui.
+            Assim que as vendas forem registradas, o mapa de horários aparece aqui.
           </Typography>
         </Box>
       ) : (
@@ -100,7 +100,7 @@ export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCa
                   return (
                     <Tooltip
                       key={hour}
-                      title={`${DAY_LABELS[dayIndex]} ${String(hour).padStart(2, '0')}h: ${cell.count} pedido${cell.count === 1 ? '' : 's'} • ${formatCurrency(cell.totalAmount)}`}
+                      title={`${DAY_LABELS[dayIndex]} ${String(hour).padStart(2, '0')}h: ${cell.count} venda${cell.count === 1 ? '' : 's'} • ${formatCurrency(cell.totalAmount)}`}
                       arrow
                     >
                       <Box

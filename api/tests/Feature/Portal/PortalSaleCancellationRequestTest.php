@@ -112,29 +112,6 @@ class PortalSaleCancellationRequestTest extends TestCase
     }
 
     #[Test]
-    public function rejects_request_when_order_already_out_for_delivery(): void
-    {
-        [$customer, $token] = $this->authenticatedCustomer('cliente3@test.com');
-        $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customer, [
-            'is_out_for_delivery' => true,
-            'out_for_delivery_at' => now(),
-        ]);
-
-        $this->linkCustomerToOrder($token, $order->uuid);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/sales/' . $order->uuid . '/request-cancellation', []);
-
-        $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
-
-        $this->assertDatabaseHas('orders', [
-            'id' => $order->id,
-            'status' => 'confirmed',
-        ]);
-    }
-
-    #[Test]
     public function rejects_request_when_order_already_delivered(): void
     {
         [$customer, $token] = $this->authenticatedCustomer('cliente4@test.com');

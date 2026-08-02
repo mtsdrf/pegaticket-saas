@@ -14,7 +14,7 @@ function toRankingItems(items: LocationSales[] | undefined) {
   return items.map((location) => ({
     title: location.name || '(sem registro)',
     value: formatCurrency(location.total_amount),
-    meta: `${location.count} pedido${location.count === 1 ? '' : 's'}`,
+    meta: `${location.count} venda${location.count === 1 ? '' : 's'}`,
   }))
 }
 

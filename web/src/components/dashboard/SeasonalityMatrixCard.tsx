@@ -36,7 +36,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
           Sazonalidade
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
-          Histórico mensal de pedidos e faturamento por ano.
+          Histórico mensal de vendas e faturamento por ano.
         </Typography>
         <Box
           sx={{
@@ -54,7 +54,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
             Sem histórico suficiente ainda
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
-            Assim que os pedidos forem acumulando ao longo dos meses, a matriz aparece aqui.
+            Assim que as vendas forem acumulando ao longo dos meses, a matriz aparece aqui.
           </Typography>
         </Box>
       </Paper>
@@ -75,7 +75,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
         Sazonalidade
       </Typography>
       <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
-        Histórico mensal de pedidos e faturamento por ano.
+        Histórico mensal de vendas e faturamento por ano.
       </Typography>
 
       <Box sx={{ overflowX: 'auto' }}>
@@ -117,7 +117,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
                   return (
                     <Box
                       key={`${row.year}-${month.month}`}
-                      title={`${MONTH_LABELS[month.month - 1]} ${row.year}: ${month.count} pedido(s) • ${formatCurrency(month.total_amount)}`}
+                      title={`${MONTH_LABELS[month.month - 1]} ${row.year}: ${month.count} venda(s) • ${formatCurrency(month.total_amount)}`}
                       sx={{
                         minHeight: 68,
                         minWidth: 0,

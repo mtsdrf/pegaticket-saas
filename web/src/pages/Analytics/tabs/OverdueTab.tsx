@@ -84,7 +84,7 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
           Pedidos em atraso
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-          Pagamentos vencidos e entregas atrasadas no período — um pedido atrasado nos dois aparece uma vez por tipo.
+          Pagamentos vencidos e entregas atrasadas no período — uma venda atrasada nos dois aparece uma vez por tipo.
         </Typography>
       </Box>
 
@@ -111,7 +111,7 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
             Nenhum atraso encontrado
           </Typography>
           <Typography sx={{ fontSize: 13.5 }}>
-            Nenhum pedido com pagamento ou entrega em atraso no período selecionado.
+            Nenhuma venda com pagamento ou entrega em atraso no período selecionado.
           </Typography>
         </Box>
       ) : (

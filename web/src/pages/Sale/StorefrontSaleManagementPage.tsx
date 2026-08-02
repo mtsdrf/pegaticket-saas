@@ -32,15 +32,10 @@ const STAGE_META: Record<SaleOperationStage, { label: string; caption: string; a
     caption: 'Pedidos aguardando aceite da loja.',
     accent: 'var(--pt-warning)',
   },
-  production: {
-    label: 'Produção',
-    caption: 'Pedidos confirmados que ainda estão em preparo.',
+  confirmed: {
+    label: 'Confirmado',
+    caption: 'Pedidos confirmados que ainda estão em preparo ou aguardando conclusão.',
     accent: 'var(--pt-primary)',
-  },
-  dispatch: {
-    label: 'Expedição',
-    caption: 'Pedidos que já saíram para entrega.',
-    accent: 'var(--pt-info)',
   },
   financial_pending: {
     label: 'Financeiro pendente',
@@ -64,8 +59,7 @@ function deriveStage(order: Sale): SaleOperationStage | null {
   if (order.cancelled_at || order.status === 'rejected') return null
   if (order.status === 'pending_approval') return 'approval'
   if (order.is_delivered && !order.is_paid) return 'financial_pending'
-  if (order.status === 'confirmed' && order.is_out_for_delivery && !order.is_delivered) return 'dispatch'
-  if (order.status === 'confirmed' && !order.is_out_for_delivery && !order.is_delivered) return 'production'
+  if (order.status === 'confirmed' && !order.is_delivered) return 'confirmed'
   return null
 }
 
@@ -75,8 +69,7 @@ const REFRESH_INTERVAL_MS = 30000
 const BOARD_STAGE_FILTER_OPTIONS: Array<{ value: 'all' | SaleOperationStage; label: string }> = [
   { value: 'all', label: 'Todas as etapas' },
   { value: 'approval', label: 'Aprovação' },
-  { value: 'production', label: 'Produção' },
-  { value: 'dispatch', label: 'Expedição' },
+  { value: 'confirmed', label: 'Confirmado' },
   { value: 'financial_pending', label: 'Financeiro pendente' },
 ]
 
@@ -100,8 +93,7 @@ export function StorefrontSaleManagementPage() {
   const stageFromQuery = searchParams.get('stage')
   const sourceFromQuery = searchParams.get('source')
   const isStageFromQueryValid = stageFromQuery === 'approval'
-    || stageFromQuery === 'production'
-    || stageFromQuery === 'dispatch'
+    || stageFromQuery === 'confirmed'
     || stageFromQuery === 'financial_pending'
   const openedFromDashboard = sourceFromQuery === 'dashboard'
 
@@ -241,10 +233,10 @@ export function StorefrontSaleManagementPage() {
         exportable: false,
         cellRenderer: (row) => (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Tooltip title="Gerenciar pedido" arrow>
+            <Tooltip title="Gerenciar venda" arrow>
               <IconButton
                 size="small"
-                aria-label={`Gerenciar pedido do cliente ${`${row.final_customer?.name ?? ''} ${row.final_customer?.last_name ?? ''}`.trim()}`}
+                aria-label={`Gerenciar venda do cliente ${`${row.final_customer?.name ?? ''} ${row.final_customer?.last_name ?? ''}`.trim()}`}
                 onClick={() => setSelectedOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
@@ -254,7 +246,7 @@ export function StorefrontSaleManagementPage() {
             <Tooltip title="Histórico operacional" arrow>
               <IconButton
                 size="small"
-                aria-label={`Ver histórico operacional do pedido ${row.codigo}`}
+                aria-label={`Ver histórico operacional da venda ${row.codigo}`}
                 onClick={() => setSelectedTimelineOrderUuid(row.uuid)}
                 sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
               >
@@ -271,14 +263,13 @@ export function StorefrontSaleManagementPage() {
   const groupedBoardOrders = useMemo<Record<SaleOperationStage, Sale[]>>(
     () => ({
       approval: boardOrders.filter((order) => deriveStage(order) === 'approval'),
-      production: boardOrders.filter((order) => deriveStage(order) === 'production'),
-      dispatch: boardOrders.filter((order) => deriveStage(order) === 'dispatch'),
+      confirmed: boardOrders.filter((order) => deriveStage(order) === 'confirmed'),
       financial_pending: boardOrders.filter((order) => deriveStage(order) === 'financial_pending'),
     }),
     [boardOrders],
   )
   const visibleBoardStages = useMemo(
-    () => (boardStageFilter === 'all' ? (['approval', 'production', 'dispatch', 'financial_pending'] as SaleOperationStage[]) : [boardStageFilter]),
+    () => (boardStageFilter === 'all' ? (['approval', 'confirmed', 'financial_pending'] as SaleOperationStage[]) : [boardStageFilter]),
     [boardStageFilter],
   )
 
@@ -290,56 +281,34 @@ export function StorefrontSaleManagementPage() {
       const stage = deriveStage(order)
       if (!stage || target === stage) return null
 
-      if (target === 'production' && stage === 'approval') {
+      if (target === 'confirmed' && stage === 'approval') {
         return {
           orderUuid: order.uuid,
-          title: 'Aceitar pedido',
-          description: 'O pedido entrará na etapa de produção.',
-          confirmLabel: 'Aceitar pedido',
+          title: 'Confirmar venda',
+          description: 'A venda entrará na etapa de confirmado.',
+          confirmLabel: 'Confirmar venda',
           requiresReason: false,
           execute: () => storefrontSaleService.approveStorefrontSale(order.uuid),
         }
       }
 
-      if (target === 'dispatch' && stage === 'production') {
-        return {
-          orderUuid: order.uuid,
-          title: 'Enviar para expedição',
-          description: 'O pedido será marcado como saiu para entrega.',
-          confirmLabel: 'Enviar para expedição',
-          requiresReason: false,
-          execute: () => storefrontSaleService.dispatchStorefrontSale(order.uuid),
-        }
-      }
-
-      if (target === 'production' && stage === 'dispatch') {
-        return {
-          orderUuid: order.uuid,
-          title: 'Voltar para produção',
-          description: 'O pedido sairá da expedição e voltará para a etapa de produção.',
-          confirmLabel: 'Voltar para produção',
-          requiresReason: false,
-          execute: () => storefrontSaleService.undispatchStorefrontSale(order.uuid),
-        }
-      }
-
-      if (target === 'financial_pending' && stage === 'dispatch') {
+      if (target === 'financial_pending' && stage === 'confirmed') {
         return {
           orderUuid: order.uuid,
           title: 'Marcar como entregue',
-          description: 'O pedido será marcado como entregue e seguirá para a baixa financeira.',
+          description: 'A venda será marcada como entregue e seguirá para a baixa financeira.',
           confirmLabel: 'Marcar como entregue',
           requiresReason: false,
           execute: () => storefrontSaleService.deliverStorefrontSale(order.uuid),
         }
       }
 
-      if (target === 'dispatch' && stage === 'financial_pending') {
+      if (target === 'confirmed' && stage === 'financial_pending') {
         return {
           orderUuid: order.uuid,
-          title: 'Voltar para expedição',
-          description: 'O pedido deixará de constar como entregue e voltará para a expedição.',
-          confirmLabel: 'Voltar para expedição',
+          title: 'Voltar para confirmado',
+          description: 'A venda deixará de constar como entregue e voltará para a etapa de confirmado.',
+          confirmLabel: 'Voltar para confirmado',
           requiresReason: false,
           execute: () => storefrontSaleService.undeliverStorefrontSale(order.uuid),
         }
@@ -349,20 +318,20 @@ export function StorefrontSaleManagementPage() {
         if (stage === 'approval') {
           return {
             orderUuid: order.uuid,
-            title: 'Recusar pedido',
-            description: 'Informe o motivo da recusa. O pedido sairá da fila da loja.',
-            confirmLabel: 'Recusar pedido',
+            title: 'Recusar venda',
+            description: 'Informe o motivo da recusa. A venda sairá da fila da loja.',
+            confirmLabel: 'Recusar venda',
             requiresReason: true,
             execute: (reason) => storefrontSaleService.rejectStorefrontSale(order.uuid, reason),
           }
         }
 
-        if (stage === 'production' || stage === 'dispatch') {
+        if (stage === 'confirmed') {
           return {
             orderUuid: order.uuid,
-            title: 'Cancelar pedido',
+            title: 'Cancelar venda',
             description: 'Informe o motivo do cancelamento. Esse motivo ficará registrado no histórico operacional.',
-            confirmLabel: 'Cancelar pedido',
+            confirmLabel: 'Cancelar venda',
             requiresReason: true,
             execute: (reason) => storefrontSaleService.cancelStorefrontSale(order.uuid, reason),
           }
@@ -372,9 +341,9 @@ export function StorefrontSaleManagementPage() {
       if (target === 'complete' && stage === 'financial_pending') {
         return {
           orderUuid: order.uuid,
-          title: 'Concluir pedido',
-          description: 'O pedido será marcado como pago e sairá da fila da loja.',
-          confirmLabel: 'Concluir pedido',
+          title: 'Concluir venda',
+          description: 'A venda será marcada como paga e sairá da fila da loja.',
+          confirmLabel: 'Concluir venda',
           requiresReason: false,
           execute: () => storefrontSaleService.payStorefrontSale(order.uuid),
         }
@@ -394,7 +363,7 @@ export function StorefrontSaleManagementPage() {
         await refreshBoard()
         gridApiRef.current?.refreshInfiniteCache()
       } catch (error) {
-        setBoardError(getApiErrorMessage(error, 'Não foi possível mover o pedido agora.'))
+        setBoardError(getApiErrorMessage(error, 'Não foi possível mover a venda agora.'))
       } finally {
         setIsSubmittingBoardAction(false)
         setPendingBoardAction(null)
@@ -468,7 +437,7 @@ export function StorefrontSaleManagementPage() {
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
-            xl: boardStageFilter === 'all' ? 'repeat(4, minmax(0, 1fr)) 280px' : 'minmax(0, 1fr) 280px',
+            xl: boardStageFilter === 'all' ? 'repeat(3, minmax(0, 1fr)) 280px' : 'minmax(0, 1fr) 280px',
           },
           gap: 1.25,
           alignItems: 'start',
@@ -480,7 +449,7 @@ export function StorefrontSaleManagementPage() {
             title={STAGE_META[stage].label}
             caption={STAGE_META[stage].caption}
             accent={STAGE_META[stage].accent}
-            countLabel={`${groupedBoardOrders[stage].length} pedido(s)`}
+            countLabel={`${groupedBoardOrders[stage].length} venda(s)`}
             isActiveDrop={activeDropTarget === stage}
             onDragOver={(event) => onDragOverTarget(event, stage)}
             onDragLeave={onDragLeaveTarget}
@@ -488,7 +457,7 @@ export function StorefrontSaleManagementPage() {
             emptyMessage="Arraste para esta coluna quando a transição for permitida."
           >
             {groupedBoardOrders[stage].length === 0 ? (
-              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhum pedido nesta etapa agora.</Typography>
+              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nenhuma venda nesta etapa agora.</Typography>
             ) : (
               groupedBoardOrders[stage].map((order) => (
                 <Box
@@ -580,7 +549,7 @@ export function StorefrontSaleManagementPage() {
           </Box>
           <WorkflowActionDropZone
             title="Cancelar / recusar"
-            description="Use esta área para recusar pedidos em aprovação ou cancelar pedidos que já estão em operação. O motivo é obrigatório."
+            description="Use esta área para recusar vendas em aprovação ou cancelar vendas que já estão em operação. O motivo é obrigatório."
             accent="var(--pt-danger)"
             icon={<CancelOutlinedIcon fontSize="small" />}
             isActiveDrop={activeDropTarget === 'cancel'}
@@ -590,8 +559,8 @@ export function StorefrontSaleManagementPage() {
             onDrop={(event) => void onDropTarget(event, 'cancel')}
           />
           <WorkflowActionDropZone
-            title="Concluir pedido"
-            description="Solte aqui os pedidos entregues para registrar a baixa do pagamento e encerrar a fila."
+            title="Concluir venda"
+            description="Solte aqui as vendas entregues para registrar a baixa do pagamento e encerrar a fila."
             accent="var(--pt-success)"
             icon={<PaymentsOutlinedIcon fontSize="small" />}
             isActiveDrop={activeDropTarget === 'complete'}
@@ -611,8 +580,8 @@ export function StorefrontSaleManagementPage() {
             <Stack spacing={0.8}>
               <Typography sx={{ fontSize: 14, fontWeight: 800 }}>Board da loja</Typography>
               <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                Arraste os pedidos entre as etapas para acelerar a operação. O modal continua disponível quando você precisar
-                revisar itens, endereço, QR de preparo e detalhes do pedido.
+                Arraste as vendas entre as etapas para acelerar a operação. O modal continua disponível quando você precisar
+                revisar itens, endereço, QR de preparo e detalhes da venda.
               </Typography>
             </Stack>
           </Box>
@@ -630,8 +599,8 @@ export function StorefrontSaleManagementPage() {
   return (
     <>
       <CrudListPage
-        title="Pedidos da loja"
-        subtitle="Acompanhe e gerencie os pedidos recebidos pela loja."
+        title="Vendas da loja"
+        subtitle="Acompanhe e gerencie as vendas recebidas pela loja."
         error={null}
         onRetry={() => undefined}
         isLoading={!activeTenantUuid}

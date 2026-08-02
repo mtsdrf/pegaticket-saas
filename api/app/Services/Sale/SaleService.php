@@ -12,12 +12,10 @@ use App\Events\Sale\SaleDelivered;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
 use App\Events\Sale\SaleItemsUpdated;
-use App\Events\Sale\SaleOutForDelivery;
 use App\Events\Sale\SalePaid;
 use App\Events\Sale\SalePartiallyPaid;
 use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SaleUndelivered;
-use App\Events\Sale\SaleUndispatched;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancellationApproved;
@@ -132,8 +130,6 @@ class SaleService
                 'orders.cancelled_at',
                 'orders.status',
                 'orders.origin',
-                'orders.is_out_for_delivery',
-                'orders.out_for_delivery_at',
                 'orders.created_at',
             ])
             ->where('orders.tenant_id', $tenantId)
@@ -206,15 +202,9 @@ class SaleService
                 'approval' => $query
                     ->whereNull('orders.cancelled_at')
                     ->where('orders.status', 'pending_approval'),
-                'production' => $query
+                'confirmed' => $query
                     ->whereNull('orders.cancelled_at')
                     ->where('orders.status', 'confirmed')
-                    ->where('orders.is_out_for_delivery', false)
-                    ->where('orders.is_delivered', false),
-                'dispatch' => $query
-                    ->whereNull('orders.cancelled_at')
-                    ->where('orders.status', 'confirmed')
-                    ->where('orders.is_out_for_delivery', true)
                     ->where('orders.is_delivered', false),
                 'financial_pending' => $query
                     ->whereNull('orders.cancelled_at')
@@ -276,23 +266,14 @@ class SaleService
                 $lines[] = $line;
             }
 
-            // Taxa de entrega (roadmap Delivery, Fase 2) — somada ao total do
-            // pedido em centavos, mesmo cuidado de arredondamento das linhas
-            // de item, mas persistida também como coluna própria
-            // (delivery_fee) para o cliente ver o breakdown produto x
-            // entrega. default 0.0 preserva 100% o fluxo staff existente.
-            $deliveryFeeCents = (int) round($dto->deliveryFee * 100);
-            $totalCents += $deliveryFeeCents;
-
             // Taxa de serviço do fluxo presencial legado — acréscimo somado
-            // ao total, espelhando delivery_fee: persistida em coluna própria
-            // (service_fee) para o breakdown, distinta de entrega em
-            // relatórios. default 0.0 preserva os fluxos internos e da loja.
+            // ao total, persistida em coluna própria (service_fee) para o
+            // breakdown. default 0.0 preserva os fluxos internos e da loja.
             $serviceFeeCents = (int) round($dto->serviceFee * 100);
             $totalCents += $serviceFeeCents;
 
             // Desconto de cupom (roadmap Delivery, Fase 3) — subtraído
-            // depois da taxa de entrega já somada (mesma ordem do plano:
+            // depois da taxa de serviço já somada (mesma ordem do plano:
             // subtotal + entrega - desconto), max(0, ...) defensivo pra
             // nunca persistir total_amount negativo mesmo num cenário
             // inesperado de desconto maior que o total. default 0.0
@@ -316,21 +297,18 @@ class SaleService
                 'codigo' => $codigo,
                 'is_installment' => $dto->isInstallment,
                 'total_amount' => $this->centsToDecimal($totalCents),
-                'delivery_fee' => $dto->deliveryFee,
                 'service_fee' => $dto->serviceFee,
                 'coupon_id' => $dto->couponId,
                 'discount_amount' => $dto->discountAmount,
                 'is_paid' => false,
                 'is_delivered' => false,
                 'due_date' => $dueDate,
-                'expected_delivery_date' => $dto->expectedDeliveryDate,
                 'notes' => $dto->notes,
                 'payment_method' => $dto->paymentMethod,
                 'needs_change' => $dto->needsChange,
                 'change_for_amount' => $dto->changeForAmount,
                 'status' => $dto->status,
                 'origin' => $dto->origin,
-                'fulfillment_type' => $dto->fulfillmentType,
             ]);
 
             foreach ($lines as $line) {
@@ -492,10 +470,6 @@ class SaleService
                 $order->notes = $dto->notes;
             }
 
-            if ($dto->expectedDeliveryDate !== null) {
-                $order->expected_delivery_date = $dto->expectedDeliveryDate;
-            }
-
             $order->save();
 
             event(new SaleItemsUpdated(
@@ -525,92 +499,6 @@ class SaleService
             }
 
             return $this->performDelivery($order);
-        });
-    }
-
-    /**
-     * "Saiu para entrega" (tela dedicada de gestão de pedidos da loja) —
-     * etapa intermediária opcional entre aprovado e entregue, só faz
-     * sentido pra pedido já aprovado (reaproveita assertOrderIsApproved()).
-     * Não exige dispatch() antes de deliver() — pedido origin='staff' (sem
-     * conceito de "saiu para entrega") continua indo direto pra entregue.
-     */
-    public function dispatch(Sale $order): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        return DB::transaction(function () use ($order) {
-            $order = $this->lockOrder($order);
-
-            $this->assertOrderIsApproved($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
-            }
-
-            if ($order->is_delivered) {
-                throw new InvalidSaleStateException(__('messages.order.already_delivered'));
-            }
-
-            if ($order->is_out_for_delivery) {
-                throw new InvalidSaleStateException(__('messages.order.already_out_for_delivery'));
-            }
-
-            $order->is_out_for_delivery = true;
-            $order->out_for_delivery_at = now();
-            $order->save();
-
-            event(new SaleOutForDelivery(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
-                fromStage: 'production',
-                toStage: 'dispatch',
-                actorId: Auth::id()
-            ));
-
-            return $order;
-        });
-    }
-
-    /**
-     * Desfaz dispatch(): volta o pedido de "saiu para entrega" para o
-     * estado aprovado/confirmado. Só faz sentido para pedido ainda não
-     * entregue (undeliver() é quem desfaz a entrega). Pedido continua
-     * ativo — não mexe em estoque (dispatch() também não mexeu). Mesmo
-     * padrão de transação com lock de dispatch()/undeliver().
-     */
-    public function undispatch(Sale $order): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        return DB::transaction(function () use ($order) {
-            $order = $this->lockOrder($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
-            }
-
-            if (!$order->is_out_for_delivery) {
-                throw new InvalidSaleStateException(__('messages.order.not_out_for_delivery'));
-            }
-
-            if ($order->is_delivered) {
-                throw new InvalidSaleStateException(__('messages.order.already_delivered'));
-            }
-
-            $order->is_out_for_delivery = false;
-            $order->out_for_delivery_at = null;
-            $order->save();
-
-            event(new SaleUndispatched(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
-                fromStage: 'dispatch',
-                toStage: 'production',
-                actorId: Auth::id()
-            ));
-
-            return $order;
         });
     }
 
@@ -1002,9 +890,8 @@ class SaleService
 
     /**
      * Só o cliente final pode solicitar (decisão de produto), e só
-     * enquanto o pedido não passou de "saiu para entrega"/"entregue" —
-     * ambos representados por flags (is_out_for_delivery/is_delivered),
-     * não pelo enum de status. Pedido já `rejected`/já cancelado/já com
+     * enquanto o pedido não passou de "entregue" (flag is_delivered), não
+     * pelo enum de status. Pedido já `rejected`/já cancelado/já com
      * solicitação em aberto também bloqueiam (nada a cancelar/duplicar).
      */
     private function assertCancellationRequestEligible(Sale $order): void
@@ -1023,10 +910,6 @@ class SaleService
 
         if ($order->status === 'rejected') {
             throw new InvalidSaleStateException(__('messages.order.order_rejected'));
-        }
-
-        if ($order->is_out_for_delivery) {
-            throw new InvalidSaleStateException(__('messages.order.already_out_for_delivery'));
         }
 
         if ($order->is_delivered) {
@@ -1112,7 +995,7 @@ class SaleService
      */
     private function performDelivery(Sale $order): Sale
     {
-        $fromStage = $order->is_out_for_delivery ? 'dispatch' : 'production';
+        $fromStage = 'confirmed';
         $order->is_delivered = true;
         $order->delivered_at = now();
         $order->save();

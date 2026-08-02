@@ -57,7 +57,7 @@ export function ClientsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
               title: client.name,
               badge: client.rfm ? <RfmChip segment={client.rfm} /> : undefined,
               value: formatCurrency(client.total_amount),
-              meta: `${client.order_count} pedido${client.order_count === 1 ? '' : 's'}`,
+              meta: `${client.order_count} venda${client.order_count === 1 ? '' : 's'}`,
             })) ?? null
           }
           emptyTitle="Nenhum cliente com compra no período"
@@ -72,7 +72,7 @@ export function ClientsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
             paymentDelays.data?.map((client) => ({
               title: client.name,
               value: `${client.avg_days_to_pay} dia${client.avg_days_to_pay === 1 ? '' : 's'}`,
-              meta: `${client.paid_orders_count} pedido${client.paid_orders_count === 1 ? '' : 's'} pago${client.paid_orders_count === 1 ? '' : 's'}`,
+              meta: `${client.paid_orders_count} venda${client.paid_orders_count === 1 ? '' : 's'} paga${client.paid_orders_count === 1 ? '' : 's'}`,
             })) ?? null
           }
           emptyTitle="Nenhum atraso de pagamento no período"

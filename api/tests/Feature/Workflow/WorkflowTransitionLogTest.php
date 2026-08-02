@@ -71,7 +71,7 @@ class WorkflowTransitionLogTest extends TestCase
         $this->assertSame($this->tenant->id, $log->tenant_id);
         $this->assertSame($this->userId, $log->user_id);
         $this->assertSame('approval', $log->from_stage);
-        $this->assertSame('production', $log->to_stage);
+        $this->assertSame('confirmed', $log->to_stage);
     }
 
     #[Test]

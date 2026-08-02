@@ -24,15 +24,12 @@ class SalePublicTrackingResource extends JsonResource
             'final_customer_name' => $this->whenLoaded('finalCustomer', fn() => $this->finalCustomer->name),
             'is_installment' => $this->is_installment,
             'total_amount' => $this->total_amount,
-            'delivery_fee' => (float) $this->delivery_fee,
             'discount_amount' => (float) $this->discount_amount,
             'coupon_code' => $this->whenLoaded('coupon', fn() => $this->coupon?->code),
             'is_paid' => $this->is_paid,
             'paid_at' => $this->paid_at,
             'is_delivered' => $this->is_delivered,
             'delivered_at' => $this->delivered_at,
-            'is_out_for_delivery' => $this->is_out_for_delivery,
-            'out_for_delivery_at' => $this->out_for_delivery_at,
             // Fila de aprovação da loja (Delivery Fase 1) — expor cru
             // (pending_approval|confirmed|rejected) permite o frontend
             // distinguir "aguardando aprovação"/"recusado" de "em
@@ -40,7 +37,6 @@ class SalePublicTrackingResource extends JsonResource
             // null), que nunca cobria status=rejected (pedido recusado
             // aparecia pro cliente como "em preparação" — bug real).
             'status' => $this->status,
-            'expected_delivery_date' => $this->expected_delivery_date,
             'is_cancelled' => $this->cancelled_at !== null,
             'created_at' => $this->created_at,
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [

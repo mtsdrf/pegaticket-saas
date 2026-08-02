@@ -60,7 +60,7 @@ export function SeasonalityTab({ onPlanLocked }: SeasonalityTabProps) {
           isLoading={isLoading}
           isEmpty={!data || data.length === 0}
           emptyTitle="Sem histórico suficiente ainda"
-          emptyDescription="Assim que os pedidos forem acumulando ao longo dos meses, o comparativo aparece aqui."
+          emptyDescription="Assim que as vendas forem acumulando ao longo dos meses, o comparativo aparece aqui."
           minHeight={320}
         >
           <SeasonalityLinesChart rows={data ?? []} />

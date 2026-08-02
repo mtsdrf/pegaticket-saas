@@ -109,12 +109,6 @@ export interface RevenueConcentration {
   concentration_percentage: number
 }
 
-export interface DeliveryOtif {
-  eligible_orders: number
-  on_time_orders: number
-  otif_percentage: number
-}
-
 export interface CouponRoiGroup {
   count: number
   total_amount: string

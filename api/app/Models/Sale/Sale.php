@@ -24,7 +24,6 @@ class Sale extends BaseModel
         'codigo',
         'is_installment',
         'total_amount',
-        'delivery_fee',
         'service_fee',
         'coupon_id',
         'discount_amount',
@@ -34,7 +33,6 @@ class Sale extends BaseModel
         'is_delivered',
         'delivered_at',
         'due_date',
-        'expected_delivery_date',
         'cancelled_at',
         'cancellation_reason',
         'notes',
@@ -44,9 +42,6 @@ class Sale extends BaseModel
         'status',
         'status_before_cancellation_request',
         'origin',
-        'fulfillment_type',
-        'is_out_for_delivery',
-        'out_for_delivery_at',
         'operated_by',
         'client_sale_uuid',
     ];
@@ -54,7 +49,6 @@ class Sale extends BaseModel
     protected $casts = [
         'is_installment' => 'boolean',
         'total_amount' => 'decimal:2',
-        'delivery_fee' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
@@ -65,10 +59,7 @@ class Sale extends BaseModel
         'is_delivered' => 'boolean',
         'delivered_at' => 'datetime',
         'due_date' => 'date',
-        'expected_delivery_date' => 'date',
         'cancelled_at' => 'datetime',
-        'is_out_for_delivery' => 'boolean',
-        'out_for_delivery_at' => 'datetime',
     ];
 
     protected $hidden = [
