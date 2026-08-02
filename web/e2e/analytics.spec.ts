@@ -357,7 +357,7 @@ test.describe('Análises', () => {
     await expect(page.getByText('Atrasos de pagamento')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Atrasos' }).click()
-    await expect(page.getByText('Pedidos em atraso')).toBeVisible()
+    await expect(page.getByText('Vendas em atraso')).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Cliente Aurora' })).toBeVisible()
     await expect(page.getByText('33 dias')).toBeVisible()
 

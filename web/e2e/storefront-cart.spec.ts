@@ -364,7 +364,7 @@ test.describe('Carrinho público da loja', () => {
     await expect(page.getByLabel('Carrinho, 1 itens')).toBeVisible()
 
     await page.getByRole('button', { name: 'Carrinho, 1 itens' }).click()
-    await expect(page).toHaveURL(/\/loja\/loja-a\/carrinho$/)
+    await expect(page).toHaveURL(/\/eventos\/loja-a\/carrinho$/)
     await expect(page.getByText('Pista inteira').first()).toBeVisible()
     await expect(page.getByText('R$ 18,50').first()).toBeVisible()
 
@@ -383,7 +383,7 @@ test.describe('Carrinho público da loja', () => {
       )
       .toBe(1)
 
-    await page.goto('/loja/loja-b/carrinho')
+    await page.goto('/eventos/loja-b/carrinho')
 
     await expect(page.getByText('Seu carrinho está vazio')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Ver catálogo' })).toBeVisible()
@@ -401,7 +401,7 @@ test.describe('Carrinho público da loja', () => {
       .toEqual({ lojaA: 1, lojaB: 0 })
 
     await page.getByRole('button', { name: 'Ver catálogo' }).click()
-    await expect(page).toHaveURL(/\/loja\/loja-b$/)
+    await expect(page).toHaveURL(/\/eventos\/loja-b$/)
     await expect(page.getByText('Noite Eletrônica').first()).toBeVisible()
     await page.getByText('Noite Eletrônica').first().click()
     await page.getByRole('button', { name: 'Adicionar' }).first().click()
@@ -410,7 +410,7 @@ test.describe('Carrinho público da loja', () => {
     await page.getByRole('button', { name: 'Carrinho, 1 itens' }).click()
     await expect(page.getByText('Front stage').first()).toBeVisible()
 
-    await page.goto('/loja/loja-a/carrinho')
+    await page.goto('/eventos/loja-a/carrinho')
 
     await expect(page.getByText('Pista inteira').first()).toBeVisible()
     await expect(page.getByText('Front stage')).toHaveCount(0)
