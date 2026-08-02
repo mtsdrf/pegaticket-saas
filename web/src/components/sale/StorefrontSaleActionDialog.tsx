@@ -143,9 +143,7 @@ export function StorefrontSaleActionDialog({
     ? deriveSaleStatus({
         is_cancelled: sale.cancelled_at !== null,
         is_paid: sale.is_paid,
-        is_completed: sale.is_completed,
         is_installment: sale.is_installment,
-        completed_at: sale.completed_at,
         paid_at: sale.paid_at,
         status: sale.status,
       })

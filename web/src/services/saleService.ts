@@ -33,32 +33,6 @@ export function updateSaleItems(uuid: string, payload: SaleUpdateItemsPayload): 
   return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${uuid}/items`, payload))
 }
 
-/** Marca a venda como concluída (não é entrega física — libera quitação de parcela, trava edição de itens). */
-export function completeSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/complete`))
-}
-
-export function reopenSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/reopen`))
-}
-
-/**
- * `paidAt` (YYYY-MM-DD) é opcional e pode ser uma data futura (pagamento agendado) —
- * se omitido, o backend usa a data atual do servidor. `amount` é opcional; se
- * enviado MENOR que o total da venda, o backend registra pagamento PARCIAL
- * (`paid_amount`) sem marcar `is_paid: true`.
- */
-export function paySale(uuid: string, paidAt?: string, amount?: number): Promise<Sale> {
-  const body: { paid_at?: string; amount?: number } = {}
-  if (paidAt) body.paid_at = paidAt
-  if (amount !== undefined) body.amount = amount
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/pay`, Object.keys(body).length > 0 ? body : undefined))
-}
-
-export function unpaySale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/unpay`))
-}
-
 export function payInstallment(saleUuid: string, installmentUuid: string, paidAt?: string): Promise<Sale> {
   return unwrap(
     apiClient.patch<ApiSuccess<Sale>>(

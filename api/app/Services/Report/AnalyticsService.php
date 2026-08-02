@@ -188,19 +188,17 @@ class AnalyticsService
     }
 
     /**
-     * Média de dias entre conclusão (completed_at) e pagamento (paid_at)
-     * por cliente — só pedidos com os dois timestamps preenchidos —
-     * ordenado do mais lento pro mais rápido.
+     * Média de dias entre criação (created_at) e pagamento (paid_at) por
+     * cliente — só pedidos pagos — ordenado do mais lento pro mais rápido.
      */
     public function paymentDelays(int $tenantId, ?string $from, ?string $to, int $limit = 10): array
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $avgDaysExpr = $this->dateDiffDaysExpression('sales.paid_at', 'sales.completed_at');
+        $avgDaysExpr = $this->dateDiffDaysExpression('sales.paid_at', 'sales.created_at');
 
         return $this->salesQuery($tenantId, $fromDate, $toDate)
             ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-                        ->whereNotNull('sales.completed_at')
             ->whereNotNull('sales.paid_at')
             ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
             ->selectRaw("final_customers.uuid as client_uuid, final_customers.name as client_name, AVG({$avgDaysExpr}) as avg_days_to_pay, COUNT(sales.id) as order_count")

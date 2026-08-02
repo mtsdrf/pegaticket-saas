@@ -114,7 +114,7 @@ export function ReconciliationPage() {
         width: 130,
         filterType: 'none',
         sortable: false,
-        cellRenderer: (row) => row.order?.codigo ?? '—',
+        cellRenderer: (row) => row.sale?.codigo ?? '—',
       },
       {
         field: 'provider',

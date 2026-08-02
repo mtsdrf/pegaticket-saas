@@ -27,7 +27,7 @@ class SaleRatingService
     {
         $order = $this->portalCustomerService->findOwnedOrder($finalCustomerId, $saleUuid);
 
-        if (!$order->is_completed) {
+        if (!$order->is_paid) {
             throw new InvalidSaleStateException(__('messages.sale.not_completed'));
         }
 

@@ -18,7 +18,6 @@ class PortalSaleResource extends JsonResource
             'tenant_name' => $this->whenLoaded('tenant', fn() => $this->tenant->name),
             'tenant_slug' => $this->whenLoaded('tenant', fn() => $this->tenant->slug),
             'is_paid' => $this->is_paid,
-            'is_completed' => $this->is_completed,
             'status' => $this->status,
             'total_amount' => $this->total_amount,
             'discount_amount' => (float) $this->discount_amount,

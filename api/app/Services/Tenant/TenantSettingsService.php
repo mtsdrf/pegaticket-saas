@@ -29,9 +29,6 @@ class TenantSettingsService
             $original = $settings->getOriginal();
 
             $settings = $this->repository->update($settings, [
-                'send_tracking_link_whatsapp' => $dto->sendTrackingLinkWhatsapp,
-                'minimum_order_value' => $dto->minimumOrderValue,
-                'estimated_preparation_minutes' => $dto->estimatedPreparationMinutes,
                 'accepted_payment_methods' => $dto->acceptedPaymentMethods,
                 'payment_receiving_method' => $dto->paymentReceivingMethod,
                 'payment_pix_key' => $dto->paymentPixKey,

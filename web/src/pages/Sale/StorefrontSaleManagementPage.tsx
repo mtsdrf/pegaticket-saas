@@ -20,7 +20,6 @@ import type { Sale, SaleOperationStage } from '../../types/sale'
 const STAGE_META: Record<SaleOperationStage, { label: string }> = {
   approval: { label: 'Aguardando aprovação' },
   confirmed: { label: 'Confirmado' },
-  financial_pending: { label: 'Financeiro pendente' },
 }
 
 const POLL_PER_PAGE = 20
@@ -221,7 +220,6 @@ export function StorefrontSaleManagementPage() {
 function deriveStage(sale: Sale): SaleOperationStage | null {
   if (sale.cancelled_at || sale.status === 'rejected') return null
   if (sale.status === 'pending_approval') return 'approval'
-  if (sale.is_completed && !sale.is_paid) return 'financial_pending'
-  if (sale.status === 'confirmed' && !sale.is_completed) return 'confirmed'
+  if (sale.status === 'confirmed' && !sale.is_paid) return 'confirmed'
   return null
 }

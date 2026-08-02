@@ -528,7 +528,7 @@ return [
     | Order
     |--------------------------------------------------------------------------
     */
-    'order' => [
+    'sale' => [
         'list' => 'Order list.',
         'show' => 'Order shown successfully.',
         'fiscal_preview' => 'Order fiscal preview shown successfully.',
@@ -559,11 +559,6 @@ return [
         'fiscal_provider_certificate_password_missing' => 'The configured fiscal provider for this company requires the A1 certificate password.',
         'fiscal_nfce_csc_missing' => 'NFC-e issuance requires both CSC ID and CSC configured for the company.',
         'created' => 'Order created successfully.',
-        'completed' => 'Order marked as completed successfully.',
-        'reopened' => 'Order completion undone successfully.',
-        'paid' => 'Order marked as paid successfully.',
-        'partially_paid' => 'Partial order payment recorded successfully.',
-        'unpaid' => 'Order payment undone successfully.',
         'installment_paid' => 'Installment marked as paid successfully.',
         'installment_unpaid' => 'Installment payment undone successfully.',
         'cancelled' => 'Order cancelled successfully.',
@@ -577,8 +572,6 @@ return [
         'not_completed' => 'This order has not been marked as completed yet.',
         'already_paid' => 'This order has already been marked as paid.',
         'not_paid' => 'This order has not been marked as paid yet.',
-        'use_installment_pay' => 'Installment sales must be paid installment by installment.',
-        'use_installment_unpay' => 'Installment sales must have their payment undone installment by installment.',
         'not_installment' => 'This order is not an installment order.',
         'installment_already_paid' => 'This installment has already been paid.',
         'installment_not_paid' => 'This installment has not been paid yet.',
@@ -587,7 +580,6 @@ return [
         'payment_charge_already_active' => 'This order already has an open payment charge.',
         'missing_reservation' => 'Stock reservation not found for this order item.',
         'no_default_stock_location' => 'Nenhum local de estoque padrão encontrado para esta empresa.',
-        'mark_as_paid_requires_non_installment' => 'An installment order cannot be marked as paid at creation; pay it installment by installment instead.',
         'installment_created' => 'Installment created successfully.',
         'installment_updated' => 'Installment updated successfully.',
         'installment_deleted' => 'Installment deleted successfully.',

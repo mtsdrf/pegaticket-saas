@@ -15,8 +15,6 @@ class SaleListResource extends JsonResource
             'total_amount' => $this->total_amount,
             'is_paid' => $this->is_paid,
             'paid_at' => $this->paid_at,
-            'is_completed' => $this->is_completed,
-            'completed_at' => $this->completed_at,
             'due_date' => $this->due_date,
             'cancelled_at' => $this->cancelled_at,
             'status' => $this->status,

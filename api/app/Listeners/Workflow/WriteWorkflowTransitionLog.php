@@ -5,7 +5,7 @@ namespace App\Listeners\Workflow;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
-use App\Events\Sale\SaleCompleted;
+use App\Events\Sale\SalePaid;
 use App\Events\Sale\SaleRejected;
 use App\Models\Sale\Sale;
 use App\Services\Workflow\WorkflowTransitionLogger;
@@ -23,7 +23,7 @@ class WriteWorkflowTransitionLog
             $event instanceof SaleCreated => $this->handleSaleCreated($event),
             $event instanceof SaleApproved => $this->handleSaleApproved($event),
             $event instanceof SaleRejected => $this->handleSaleRejected($event),
-            $event instanceof SaleCompleted => $this->handleSaleCompleted($event),
+            $event instanceof SalePaid => $this->handleSalePaid($event),
             $event instanceof SaleCancelled => $this->handleSaleCancelled($event),
             default => null,
         };
@@ -84,9 +84,9 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleSaleCompleted(SaleCompleted $event): void
+    private function handleSalePaid(SalePaid $event): void
     {
-        $sale = Sale::query()->find($event->saleId);
+        $sale = Sale::query()->where('uuid', $event->saleUuid)->first();
 
         if ($sale === null) {
             return;
@@ -94,8 +94,7 @@ class WriteWorkflowTransitionLog
 
         $this->logger->recordSaleTransition(
             sale: $sale,
-            fromStage: $event->fromStage,
-            toStage: $event->toStage,
+            fromStage: 'confirmed',
             transitionType: 'move',
             actorId: $event->actorId,
         );

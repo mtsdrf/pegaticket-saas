@@ -24,9 +24,7 @@ class WorkflowTransitionLogTest extends TestCase
         $this->grantPermission('sales', 'read');
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
-        $this->grantPermission('sales', 'deliver');
         $this->grantPermission('storefront-sales', 'read');
-        $this->grantPermission('stock', 'entry');
     }
 
     protected function auth()
@@ -54,6 +52,8 @@ class WorkflowTransitionLogTest extends TestCase
         $order = Sale::query()->where('uuid', $saleUuid)->firstOrFail();
         $order->status = 'pending_approval';
         $order->origin = 'storefront';
+        $order->is_paid = false;
+        $order->paid_at = null;
         $order->save();
 
         $this->auth()->postJson("/api/v1/sales/{$saleUuid}/approve")
@@ -61,7 +61,7 @@ class WorkflowTransitionLogTest extends TestCase
             ->assertJsonPath('data.status', 'confirmed');
 
         $log = WorkflowTransitionLog::query()
-            ->where('workflow_type', 'order')
+            ->where('workflow_type', 'sale')
             ->where('entity_uuid', $saleUuid)
             ->where('transition_type', 'move')
             ->latest('id')
@@ -80,6 +80,8 @@ class WorkflowTransitionLogTest extends TestCase
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => 32]);
 
+        // Venda manual não parcelada nasce já paga — a própria criação já
+        // dispara a transição de pagamento (SalePaid), sem ação manual.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
@@ -90,9 +92,6 @@ class WorkflowTransitionLogTest extends TestCase
 
         $saleUuid = $response->json('data.uuid');
 
-        $this->auth()->patchJson("/api/v1/sales/{$saleUuid}/complete")
-            ->assertStatus(200);
-
         $timeline = $this->auth()->getJson("/api/v1/sales/{$saleUuid}/workflow-transitions")
             ->assertStatus(200)
             ->assertJsonPath('success', true)
@@ -100,8 +99,8 @@ class WorkflowTransitionLogTest extends TestCase
 
         $this->assertNotEmpty($timeline->json('data'));
         $this->assertSame($saleUuid, $timeline->json('data.0.entity_uuid'));
-        $this->assertSame('order', $timeline->json('data.0.workflow_type'));
-        $this->assertSame('financial_pending', $timeline->json('data.0.to_stage'));
+        $this->assertSame('sale', $timeline->json('data.0.workflow_type'));
+        $this->assertSame('completed', $timeline->json('data.0.to_stage'));
         $this->assertSame('workflow-user@test.com', $timeline->json('data.0.user.email'));
     }
 

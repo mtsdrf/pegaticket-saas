@@ -176,7 +176,7 @@ class StorefrontHoldCheckoutTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $saleUuid = $response->json('data.order.uuid');
+        $saleUuid = $response->json('data.sale.uuid');
 
         $order = Sale::where('uuid', $saleUuid)->firstOrFail();
         $this->assertSame($tenant->id, $order->tenant_id);
@@ -227,7 +227,7 @@ class StorefrontHoldCheckoutTest extends TestCase
                 'client_name' => 'Comprador',
                 'client_last_name' => 'Teste',
                 'client_phone' => '11999999999',
-            ])->assertStatus(201)->json('data.order');
+            ])->assertStatus(201)->json('data.sale');
 
         $order = Sale::where('uuid', $checkout['uuid'])->firstOrFail();
 

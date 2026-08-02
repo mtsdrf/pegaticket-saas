@@ -11,7 +11,6 @@ use App\Exceptions\InvalidSaleStateException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\PayInstallmentRequest;
-use App\Http\Requests\Sale\PaySaleRequest;
 use App\Http\Requests\Sale\RejectSaleRequest;
 use App\Http\Requests\Sale\StoreSaleRequest;
 use App\Http\Requests\Sale\UpdateSaleItemsRequest;
@@ -70,7 +69,6 @@ class SaleController extends Controller
             'total_amount_min',
             'total_amount_max',
             'is_paid',
-            'is_completed',
             'is_installment',
             'is_cancelled',
             'status',
@@ -154,22 +152,6 @@ class SaleController extends Controller
         );
     }
 
-    public function complete(Sale $sale)
-    {
-        try {
-            $sale = $this->service->complete($sale);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            __('messages.sale.completed')
-        );
-    }
-
     /**
      * Igual a index(), mas força origin=storefront (nunca lido do
      * request) — usado só pela tela dedicada de gestão de vendas online
@@ -181,7 +163,6 @@ class SaleController extends Controller
 
         $filters = $request->only([
             'is_paid',
-            'is_completed',
             'is_installment',
             'is_cancelled',
             'status',
@@ -214,56 +195,6 @@ class SaleController extends Controller
                     'last_page' => $list->lastPage(),
                 ]
             ]
-        );
-    }
-
-    public function reopen(Sale $sale)
-    {
-        try {
-            $sale = $this->service->reopen($sale);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            __('messages.sale.reopened')
-        );
-    }
-
-    public function pay(PaySaleRequest $request, Sale $sale)
-    {
-        $amount = $request->filled('amount') ? (float) $request->input('amount') : null;
-
-        try {
-            $sale = $this->service->pay($sale, $request->input('paid_at'), $amount);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            $sale->is_paid ? __('messages.sale.paid') : __('messages.sale.partially_paid')
-        );
-    }
-
-    public function unpay(Sale $sale)
-    {
-        try {
-            $sale = $this->service->unpay($sale);
-        } catch (InvalidSaleStateException $e) {
-            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
-        }
-
-        $sale->load(self::EAGER_RELATIONS);
-
-        return APIResponse::success(
-            new SaleResource($sale),
-            __('messages.sale.unpaid')
         );
     }
 

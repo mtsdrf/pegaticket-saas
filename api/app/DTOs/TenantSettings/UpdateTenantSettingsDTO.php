@@ -5,9 +5,6 @@ namespace App\DTOs\TenantSettings;
 class UpdateTenantSettingsDTO
 {
     public function __construct(
-        public readonly bool $sendTrackingLinkWhatsapp,
-        public readonly ?float $minimumOrderValue = null,
-        public readonly ?int $estimatedPreparationMinutes = null,
         public readonly ?array $acceptedPaymentMethods = null,
         public readonly string $paymentReceivingMethod = 'manual',
         public readonly ?string $paymentPixKey = null,
@@ -20,11 +17,6 @@ class UpdateTenantSettingsDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            sendTrackingLinkWhatsapp: (bool) $data['send_tracking_link_whatsapp'],
-            minimumOrderValue: isset($data['minimum_order_value']) ? (float) $data['minimum_order_value'] : null,
-            estimatedPreparationMinutes: isset($data['estimated_preparation_minutes'])
-                ? (int) $data['estimated_preparation_minutes']
-                : null,
             acceptedPaymentMethods: isset($data['accepted_payment_methods'])
                 ? array_values($data['accepted_payment_methods'])
                 : null,

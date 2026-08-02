@@ -386,8 +386,6 @@ export function makeSale(overrides: Partial<Sale> = {}): Sale {
     is_paid: overrides.is_paid ?? false,
     paid_amount: overrides.paid_amount ?? null,
     paid_at: overrides.paid_at ?? null,
-    is_completed: overrides.is_completed ?? false,
-    completed_at: overrides.completed_at ?? null,
     due_date: overrides.due_date ?? null,
     cancelled_at: overrides.cancelled_at ?? null,
     cancellation_reason: overrides.cancellation_reason ?? null,

@@ -173,8 +173,6 @@ export function SaleFormPage() {
         installments_count: null,
         notes: notes.trim() || undefined,
         items: itemsPayload,
-        mark_as_completed: true,
-        mark_as_paid: true,
       })
 
       if (isDigitsOnlyPhone(client.phone_primary)) {

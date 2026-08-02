@@ -53,11 +53,7 @@ class WorkflowTransitionLogger
             return 'approval';
         }
 
-        if ($sale->is_completed && !$sale->is_paid) {
-            return 'financial_pending';
-        }
-
-        if ($sale->is_completed && $sale->is_paid) {
+        if ($sale->is_paid) {
             return 'completed';
         }
 

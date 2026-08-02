@@ -535,7 +535,7 @@ return [
     | Pedido
     |--------------------------------------------------------------------------
     */
-    'order' => [
+    'sale' => [
         'list' => 'Lista de pedidos.',
         'show' => 'Pedido exibido com sucesso.',
         'fiscal_preview' => 'Prévia fiscal do pedido exibida com sucesso.',
@@ -566,11 +566,6 @@ return [
         'fiscal_provider_certificate_password_missing' => 'O provider fiscal configurado para esta empresa exige a senha do certificado A1.',
         'fiscal_nfce_csc_missing' => 'A emissão de NFC-e exige CSC ID e CSC configurados para a empresa.',
         'created' => 'Pedido criado com sucesso.',
-        'completed' => 'Pedido marcado como concluído com sucesso.',
-        'reopened' => 'Conclusão do pedido desfeita com sucesso.',
-        'paid' => 'Pedido marcado como pago com sucesso.',
-        'partially_paid' => 'Pagamento parcial do pedido registrado com sucesso.',
-        'unpaid' => 'Pagamento do pedido desfeito com sucesso.',
         'installment_paid' => 'Parcela marcada como paga com sucesso.',
         'installment_unpaid' => 'Pagamento da parcela desfeito com sucesso.',
         'cancelled' => 'Pedido cancelado com sucesso.',
@@ -584,8 +579,6 @@ return [
         'not_completed' => 'Este pedido ainda não foi marcado como concluído.',
         'already_paid' => 'Este pedido já foi marcado como pago.',
         'not_paid' => 'Este pedido ainda não foi marcado como pago.',
-        'use_installment_pay' => 'Pedido parcelado deve ser pago parcela a parcela.',
-        'use_installment_unpay' => 'Pedido parcelado deve ter o pagamento desfeito parcela a parcela.',
         'not_installment' => 'Este pedido não é parcelado.',
         'installment_already_paid' => 'Esta parcela já foi paga.',
         'installment_not_paid' => 'Esta parcela ainda não foi paga.',
@@ -594,7 +587,6 @@ return [
         'payment_charge_already_active' => 'Este pedido já possui uma cobrança de pagamento em aberto.',
         'missing_reservation' => 'Reserva de estoque não encontrada para este item do pedido.',
         'no_default_stock_location' => 'Nenhum local de estoque padrão encontrado para esta empresa.',
-        'mark_as_paid_requires_non_installment' => 'Um pedido parcelado não pode nascer marcado como pago; pague-o parcela a parcela.',
         'installment_created' => 'Parcela criada com sucesso.',
         'installment_updated' => 'Parcela atualizada com sucesso.',
         'installment_deleted' => 'Parcela removida com sucesso.',

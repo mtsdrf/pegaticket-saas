@@ -115,7 +115,7 @@ test.describe('Portal do cliente final', () => {
     await expect(page.getByRole('tab', { name: 'Minhas compras' })).toBeVisible()
     await expect(page.getByText('Loja QA')).toBeVisible()
     await expect(page.getByText('R$ 79,90')).toBeVisible()
-    await expect(page.getByText('Pago - aguardando conclusão').or(page.getByText('Pago — aguardando conclusão'))).toBeVisible()
+    await expect(page.getByText('Venda concluída')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Comprar novamente' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Sair da conta' }).click()

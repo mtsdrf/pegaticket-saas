@@ -35,12 +35,10 @@ class TenantSettingsTest extends TestCase
             ->getJson('/api/v1/tenant-settings')
             ->assertStatus(200);
 
-        $response->assertJsonPath('data.send_tracking_link_whatsapp', false);
         $response->assertJsonPath('data.storefront_enabled', true);
 
         $this->assertDatabaseHas('tenant_settings', [
             'tenant_id' => $this->tenant->id,
-            'send_tracking_link_whatsapp' => false,
             'storefront_enabled' => true,
         ]);
     }
@@ -52,17 +50,13 @@ class TenantSettingsTest extends TestCase
 
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => true,
-                'block_order_without_stock' => false,
                 'storefront_enabled' => false,
             ])
             ->assertStatus(200)
-            ->assertJsonPath('data.send_tracking_link_whatsapp', true)
             ->assertJsonPath('data.storefront_enabled', false);
 
         $this->assertDatabaseHas('tenant_settings', [
             'tenant_id' => $this->tenant->id,
-            'send_tracking_link_whatsapp' => true,
             'storefront_enabled' => false,
         ]);
     }
@@ -74,8 +68,6 @@ class TenantSettingsTest extends TestCase
 
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => false,
-                'block_order_without_stock' => false,
                 'accepted_payment_methods' => ['pix', 'cash', 'credit_card'],
             ])
             ->assertStatus(200)
@@ -92,8 +84,6 @@ class TenantSettingsTest extends TestCase
 
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => false,
-                'block_order_without_stock' => false,
                 'accepted_payment_methods' => ['boleto'],
             ])
             ->assertStatus(422);
@@ -106,8 +96,6 @@ class TenantSettingsTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => false,
-                'block_order_without_stock' => false,
                 'payment_receiving_method' => 'pix_key',
                 'payment_pix_key' => 'pix@empresa.com',
             ])
@@ -120,16 +108,6 @@ class TenantSettingsTest extends TestCase
         $this->assertSame('pix_key', $settings->payment_receiving_method);
         $this->assertSame('pix@empresa.com', $settings->payment_pix_key);
         $this->assertNotSame('pix@empresa.com', $settings->getRawOriginal('payment_pix_key'));
-    }
-
-    #[Test]
-    public function update_requires_boolean_field(): void
-    {
-        $this->grantPermission('tenant_settings', 'update');
-
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->putJson('/api/v1/tenant-settings', [])
-            ->assertStatus(422);
     }
 
     #[Test]
@@ -148,16 +126,16 @@ class TenantSettingsTest extends TestCase
         TenantSettings::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $otherTenant->id,
-            'send_tracking_link_whatsapp' => true,
+            'storefront_enabled' => false,
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->getJson('/api/v1/tenant-settings')
             ->assertStatus(200);
 
-        // Toggle do outro tenant não pode vazar pro tenant ativo — este
-        // tenant ainda não tem linha própria, deve ver o default (false).
-        $response->assertJsonPath('data.send_tracking_link_whatsapp', false);
+        // Configuração do outro tenant não pode vazar pro tenant ativo —
+        // este tenant ainda não tem linha própria, deve ver o default.
+        $response->assertJsonPath('data.storefront_enabled', true);
     }
 
     #[Test]
@@ -173,39 +151,8 @@ class TenantSettingsTest extends TestCase
     {
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/v1/tenant-settings', [
-                'send_tracking_link_whatsapp' => true,
-                'block_order_without_stock' => false,
+                'storefront_enabled' => false,
             ])
             ->assertStatus(403);
-    }
-
-    #[Test]
-    public function my_tenants_exposes_the_toggle_without_needing_the_dedicated_permission(): void
-    {
-        // Usuário sem nenhuma permissão de tenant_settings — o valor deve
-        // aparecer no contexto de auth mesmo assim (ver spec: qualquer
-        // usuário autenticado do tenant precisa saber o valor pra decidir
-        // o texto da mensagem de WhatsApp).
-        TenantSettings::create([
-            'uuid' => (string) Str::uuid(),
-            'tenant_id' => $this->tenant->id,
-            'send_tracking_link_whatsapp' => true,
-        ]);
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/v1/auth/my-tenants')
-            ->assertStatus(200);
-
-        $response->assertJsonFragment(['send_tracking_link_whatsapp' => true]);
-    }
-
-    #[Test]
-    public function my_tenants_defaults_to_false_when_no_settings_row_exists(): void
-    {
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/v1/auth/my-tenants')
-            ->assertStatus(200);
-
-        $response->assertJsonFragment(['send_tracking_link_whatsapp' => false]);
     }
 }

@@ -40,13 +40,11 @@ const STAGE_FILTERS: Array<{ value: 'all' | SaleOperationStage; label: string }>
   { value: 'all', label: 'Todas as etapas' },
   { value: 'approval', label: 'Aguardando aprovação' },
   { value: 'confirmed', label: 'Confirmado' },
-  { value: 'financial_pending', label: 'Financeiro pendente' },
 ]
 
 const STAGE_META: Record<SaleOperationStage, { label: string; accent: string }> = {
   approval: { label: 'Aguardando aprovação', accent: 'var(--pt-warning)' },
   confirmed: { label: 'Confirmado', accent: 'var(--pt-primary)' },
-  financial_pending: { label: 'Financeiro pendente', accent: 'var(--pt-danger)' },
 }
 
 const STATUS_FILTERS: Array<{ value: 'all' | SaleStatus; label: string }> = [
@@ -60,8 +58,7 @@ const STATUS_FILTERS: Array<{ value: 'all' | SaleStatus; label: string }> = [
 function deriveOperationStage(sale: Sale): SaleOperationStage | null {
   if (sale.cancelled_at || sale.status === 'rejected') return null
   if (sale.status === 'pending_approval') return 'approval'
-  if (sale.is_completed && !sale.is_paid) return 'financial_pending'
-  if (sale.status === 'confirmed' && !sale.is_completed) return 'confirmed'
+  if (sale.status === 'confirmed' && !sale.is_paid) return 'confirmed'
   return null
 }
 
@@ -69,9 +66,7 @@ function SaleStatusBadge({ sale }: { sale: Sale }) {
   const derived = deriveSaleStatus({
     is_cancelled: Boolean(sale.cancelled_at),
     is_paid: sale.is_paid,
-    is_completed: sale.is_completed,
     is_installment: sale.is_installment,
-    completed_at: sale.completed_at,
     paid_at: sale.paid_at,
     status: sale.status,
   })
@@ -136,7 +131,6 @@ export function SaleListPage() {
   const stageFilterFromQuery = searchParams.get('stage')
   const isStageFilterFromQueryValid = stageFilterFromQuery === 'approval'
     || stageFilterFromQuery === 'confirmed'
-    || stageFilterFromQuery === 'financial_pending'
 
   const [selectedSaleUuid, setSelectedSaleUuid] = useState<string | null>(null)
   const [selectedTimelineSaleUuid, setSelectedTimelineSaleUuid] = useState<string | null>(null)
@@ -301,9 +295,7 @@ export function SaleListPage() {
             exportValue: (row: Sale) => deriveSaleStatus({
               is_cancelled: Boolean(row.cancelled_at),
               is_paid: row.is_paid,
-              is_completed: row.is_completed,
               is_installment: row.is_installment,
-              completed_at: row.completed_at,
               paid_at: row.paid_at,
               status: row.status,
             }).label,
@@ -315,13 +307,6 @@ export function SaleListPage() {
         width: 110,
         filterType: 'boolean',
         cellRenderer: (row) => <ActiveChip isActive={row.is_paid} activeLabel="Sim" inactiveLabel="Não" />,
-      },
-      {
-        field: 'is_completed',
-        headerName: 'Concluída',
-        width: 120,
-        filterType: 'boolean',
-        cellRenderer: (row) => <ActiveChip isActive={row.is_completed} activeLabel="Sim" inactiveLabel="Não" />,
       },
       {
         field: 'created_at',

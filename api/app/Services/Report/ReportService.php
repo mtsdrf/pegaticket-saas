@@ -25,7 +25,7 @@ class ReportService
     public function indicators(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $totalOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->count();
-        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
+        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
         $paidOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
         $totalAmount = (float) $this->salesQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
@@ -55,7 +55,7 @@ class ReportService
     public function charts(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $totalOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->count();
-        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
+        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
         $paidOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
         $totalAmount = (float) $this->salesQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
@@ -100,7 +100,6 @@ class ReportService
     {
         $sortable = [
             'is_paid' => 'sales.is_paid',
-            'is_completed' => 'sales.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
@@ -135,7 +134,7 @@ class ReportService
             ];
         }
 
-        $completed = $this->salesEloquentQuery($tenantId, $filters)->where('is_completed', true)->count();
+        $completed = $this->salesEloquentQuery($tenantId, $filters)->where('is_paid', true)->count();
         $paid = $this->salesEloquentQuery($tenantId, $filters)->where('is_paid', true)->count();
         $overdue = $this->salesEloquentQuery($tenantId, $filters)
             ->where('is_paid', false)
@@ -411,17 +410,16 @@ class ReportService
             ->where('sales.tenant_id', $tenantId)
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
-            ->whereNotNull('sales.completed_at')
             ->whereNotNull('sales.paid_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
-            ->get(['final_customers.name as client_name', 'sales.completed_at', 'sales.paid_at']);
+            ->get(['final_customers.name as client_name', 'sales.created_at', 'sales.paid_at']);
 
         return $rows
             ->groupBy('client_name')
             ->map(function ($clientRows, $clientName) {
                 $days = collect($clientRows)->map(function ($row) {
-                    return Carbon::parse($row->completed_at)->diffInDays(Carbon::parse($row->paid_at));
+                    return Carbon::parse($row->created_at)->diffInDays(Carbon::parse($row->paid_at));
                 });
 
                 return [
@@ -789,10 +787,9 @@ class ReportService
     }
 
     /**
-     * Filtros: client_uuid, client_name, is_paid,
-     * is_completed, date_from, date_to (por created_at). Cancelado
-     * sempre excluído — não há filtro para incluir cancelados neste
-     * endpoint (ver contrato em routes/api.php).
+     * Filtros: client_uuid, client_name, is_paid, date_from, date_to (por
+     * created_at). Cancelado sempre excluído — não há filtro para incluir
+     * cancelados neste endpoint (ver contrato em routes/api.php).
      */
     private function salesEloquentQuery(int $tenantId, array $filters): Builder
     {
@@ -815,10 +812,6 @@ class ReportService
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {
             $query->where('is_paid', filter_var($filters['is_paid'], FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if (array_key_exists('is_completed', $filters) && $filters['is_completed'] !== null) {
-            $query->where('is_completed', filter_var($filters['is_completed'], FILTER_VALIDATE_BOOLEAN));
         }
 
         if (!empty($filters['date_from'])) {

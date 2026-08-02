@@ -28,8 +28,6 @@ class SalePublicTrackingResource extends JsonResource
             'coupon_code' => $this->whenLoaded('coupon', fn() => $this->coupon?->code),
             'is_paid' => $this->is_paid,
             'paid_at' => $this->paid_at,
-            'is_completed' => $this->is_completed,
-            'completed_at' => $this->completed_at,
             // Fila de aprovação da loja (Delivery Fase 1) — expor cru
             // (pending_approval|confirmed|rejected) permite o frontend
             // distinguir "aguardando aprovação"/"recusado" de "em

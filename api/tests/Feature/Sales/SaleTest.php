@@ -57,11 +57,11 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.total_amount', '76.50')
             ->assertJsonPath('data.items.0.unit_price', '25.50')
             ->assertJsonPath('data.items.0.line_total', '76.50')
-            ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_completed', false);
+            // Venda manual (staff) não parcelada já nasce paga — o dinheiro
+            // já foi recebido na hora pelo operador.
+            ->assertJsonPath('data.is_paid', true);
 
         $this->assertNotNull($response->json('data.due_date'));
-
     }
 
     #[Test]
@@ -252,31 +252,7 @@ class SaleTest extends TestCase
     }
 
     #[Test]
-    public function deliver_converts_reservation_into_real_exit(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_completed', true);
-
-    }
-
-    #[Test]
-    public function paying_last_installment_cascades_to_order_paid_and_delivered(): void
+    public function paying_last_installment_cascades_to_order_paid(): void
     {
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
@@ -293,20 +269,17 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->assertFalse($order['is_completed']);
+        $this->assertFalse($order['is_paid']);
         $installments = $order['installments'];
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[0]['uuid']}/pay")
             ->assertStatus(200)
-            ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_completed', false);
+            ->assertJsonPath('data.is_paid', false);
 
         $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/pay");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.is_paid', true)
-            ->assertJsonPath('data.is_completed', true);
-
+            ->assertJsonPath('data.is_paid', true);
     }
 
     /**
@@ -314,86 +287,6 @@ class SaleTest extends TestCase
      * explícito, inclusive no passado ou no futuro (pagamento agendado,
      * caso de uso real, não validado como erro). Sem paid_at, comportamento
      * atual (now()) se mantém.
-     */
-    #[Test]
-    public function pay_with_explicit_past_paid_at_is_persisted(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ])->json('data');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay", [
-            'paid_at' => '2026-01-05 10:00:00',
-        ]);
-
-        $response->assertStatus(200)->assertJsonPath('data.is_paid', true);
-        $this->assertStringStartsWith('2026-01-05', $response->json('data.paid_at'));
-    }
-
-    #[Test]
-    public function pay_with_explicit_future_paid_at_is_allowed(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ])->json('data');
-
-        $futureDate = now()->addMonths(2)->format('Y-m-d');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay", [
-            'paid_at' => $futureDate,
-        ]);
-
-        $response->assertStatus(200)->assertJsonPath('data.is_paid', true);
-        $this->assertStringStartsWith($futureDate, $response->json('data.paid_at'));
-    }
-
-    #[Test]
-    public function pay_without_paid_at_uses_now(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ])->json('data');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay");
-
-        $response->assertStatus(200)->assertJsonPath('data.is_paid', true);
-        $this->assertStringStartsWith(now()->format('Y-m-d'), $response->json('data.paid_at'));
-    }
-
-    /**
-     * Cascata de quitação total (última parcela paga): paid_at do PEDIDO
-     * (não só da parcela) deve refletir o paid_at explícito informado
-     * NESSA chamada de payInstallment, não now().
      */
     #[Test]
     public function paying_last_installment_with_explicit_paid_at_reflects_on_order_paid_at(): void
@@ -463,311 +356,7 @@ class SaleTest extends TestCase
     }
 
     #[Test]
-    public function cancel_before_delivery_releases_reservation(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'cancel');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
-            'cancellation_reason' => 'Cliente desistiu',
-        ])->assertStatus(200)->assertJsonPath('data.cancellation_reason', 'Cliente desistiu');
-
-    }
-
-    #[Test]
-    public function cancel_after_delivery_returns_stock(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $this->grantPermission('sales', 'cancel');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
-
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
-            'cancellation_reason' => 'Produto com defeito',
-        ])->assertStatus(200);
-
-    }
-
-    #[Test]
-    public function deliver_is_blocked_when_order_is_already_cancelled(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $this->grantPermission('sales', 'cancel');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
-            'cancellation_reason' => 'Cliente desistiu',
-        ])->assertStatus(200);
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function calling_deliver_twice_returns_clean_422_not_server_error(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
-
-        // Sem o lock de linha do Sale, essa segunda chamada podia cair na
-        // exceção de Estoque (reserva já convertida) em vez do 422 limpo de
-        // estado inválido — regressão do achado de concorrência da revisão.
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function calling_pay_twice_returns_clean_422_not_server_error(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay")->assertStatus(200);
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    /**
-     * O achado central de undeliver(): não basta devolver o estoque para
-     * "disponível" (returnStock sozinho) — precisa recriar a RESERVA
-     * (reserve() logo em seguida), senão um segundo deliver() no mesmo
-     * pedido quebra em findReserveMovement() (nenhuma reserva ativa
-     * apontando pro SaleItem). Este teste prova as duas pontas: o saldo
-     * bate exatamente com o estado pré-entrega, e o segundo deliver()
-     * funciona normalmente.
-     */
-    #[Test]
-    public function undeliver_restores_reservation_and_a_second_deliver_works(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_completed', false);
-
-        $this->assertNull(Sale::where('uuid', $order['uuid'])->first()->completed_at);
-
-
-        // Prova que a reserva foi recriada corretamente: um segundo
-        // deliver() funciona sem cair em "reserva não encontrada".
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_completed', true);
-
-    }
-
-    #[Test]
-    public function undeliver_is_blocked_when_order_is_not_delivered(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function undeliver_is_blocked_when_order_is_cancelled(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'deliver');
-        $this->grantPermission('sales', 'pay');
-        $this->grantPermission('sales', 'cancel');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        // Cancela antes de entregar (sem pagamento registrado, cancel() permite).
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
-            'cancellation_reason' => 'Cliente desistiu',
-        ])->assertStatus(200);
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function unpay_reverts_is_paid_and_paid_at(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay")->assertStatus(200);
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_paid', false);
-
-        $fresh = Sale::where('uuid', $order['uuid'])->first();
-        $this->assertFalse((bool) $fresh->is_paid);
-        $this->assertNull($fresh->paid_at);
-    }
-
-    #[Test]
-    public function unpay_is_blocked_for_installment_order(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 30]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => true,
-            'installments_count' => 2,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
-    public function unpay_is_blocked_when_order_is_not_paid(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    /**
-     * Ponto mais fácil de errar do escopo: desfazer o pagamento da
-     * última parcela reverte a cascata de order.is_paid (todas estavam
-     * pagas -> volta pra "nem todas"), mas NÃO mexe em is_completed —
-     * entrega é um fato físico independente, já aconteceu, desfazer
-     * pagamento não desfaz entrega (decisão de design documentada em
-     * SaleService::unpayInstallment()).
-     */
-    #[Test]
-    public function unpay_installment_reverts_order_cascade_without_touching_delivery(): void
+    public function unpay_installment_reverts_order_cascade(): void
     {
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'pay');
@@ -789,25 +378,20 @@ class SaleTest extends TestCase
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[0]['uuid']}/pay")
             ->assertStatus(200);
 
-        // Última parcela: cascata marca is_paid=true E is_completed=true.
+        // Última parcela: cascata marca is_paid=true.
         $paidResponse = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/pay");
         $paidResponse->assertStatus(200)
-            ->assertJsonPath('data.is_paid', true)
-            ->assertJsonPath('data.is_completed', true);
+            ->assertJsonPath('data.is_paid', true);
 
         // Desfaz o pagamento da última parcela: is_paid do pedido volta
-        // para false (nem todas as parcelas pagas mais), mas is_completed
-        // continua true — entrega já aconteceu de fato.
+        // para false (nem todas as parcelas pagas mais).
         $unpaidResponse = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/unpay");
         $unpaidResponse->assertStatus(200)
-            ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_completed', true);
+            ->assertJsonPath('data.is_paid', false);
 
         $fresh = Sale::where('uuid', $order['uuid'])->first();
         $this->assertFalse((bool) $fresh->is_paid);
         $this->assertNull($fresh->paid_at);
-        $this->assertTrue((bool) $fresh->is_completed);
-        $this->assertNotNull($fresh->completed_at);
 
         $installment0Fresh = SaleInstallment::where('uuid', $installments[0]['uuid'])->first();
         $this->assertTrue((bool) $installment0Fresh->is_paid);
@@ -839,32 +423,10 @@ class SaleTest extends TestCase
     }
 
     #[Test]
-    public function undeliver_and_unpay_endpoints_require_their_respective_permissions(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        // Sem sales,deliver e sem sales,pay concedidos.
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")->assertStatus(403);
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")->assertStatus(403);
-    }
-
-    #[Test]
     public function show_and_mutating_actions_return_404_for_order_from_another_tenant(): void
     {
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'read');
-        $this->grantPermission('sales', 'deliver');
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
@@ -880,126 +442,8 @@ class SaleTest extends TestCase
         // Segundo tenant/usuário.
         $this->setUpTenantScopedUser('order-user-other@test.com');
         $this->grantPermission('sales', 'read');
-        $this->grantPermission('sales', 'deliver');
 
         $this->auth()->getJson("/api/v1/sales/{$order['uuid']}")->assertStatus(404);
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(404);
-    }
-
-    /**
-     * mark_as_completed ecoa o default "entregue" (true) do formulário
-     * legado sem reabrir update genérico: dispara a mesma lógica de
-     * deliver() (conversão de reserva -> saída real) dentro da própria
-     * transação de criação. Não exige a permissão sales,deliver — é um
-     * campo do POST /sales, guardado só por sales,create.
-     */
-    #[Test]
-    public function mark_as_completed_on_creation_converts_reservation_into_real_exit(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'mark_as_completed' => true,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.is_completed', true);
-
-        $this->assertNotNull($response->json('data.completed_at'));
-
-    }
-
-    /**
-     * mark_as_paid ecoa o default "pago" (normalmente false, mas o form
-     * legado permite marcar true) sem reabrir update genérico. Só faz
-     * sentido pra pedido não parcelado — pagamento parcelado é sempre por
-     * parcela.
-     */
-    #[Test]
-    public function mark_as_paid_on_creation_marks_non_installment_order_as_paid(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'mark_as_paid' => true,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.is_paid', true)
-            // mark_as_paid não implica mark_as_completed — são flags
-            // independentes, cada uma só ecoa o próprio default do legado.
-            ->assertJsonPath('data.is_completed', false);
-
-        $this->assertNotNull($response->json('data.paid_at'));
-    }
-
-    /**
-     * Confirma que ambos os flags juntos aplicam as duas transições dentro
-     * da mesma transação de criação, sem duplicar a integração de estoque
-     * (performDelivery/performPayment compartilhados com deliver()/pay()).
-     */
-    #[Test]
-    public function mark_as_completed_and_mark_as_paid_together_apply_both_transitions(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'mark_as_completed' => true,
-            'mark_as_paid' => true,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.is_completed', true)
-            ->assertJsonPath('data.is_paid', true);
-
-    }
-
-    #[Test]
-    public function mark_as_paid_is_rejected_for_installment_order(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 30]);
-
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => true,
-            'installments_count' => 2,
-            'mark_as_paid' => true,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ]);
-
-        $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
-        $this->assertArrayHasKey('mark_as_paid', $response->json('errors'));
-
-        $this->assertDatabaseCount('sales', 0);
     }
 
     #[Test]
@@ -1027,14 +471,14 @@ class SaleTest extends TestCase
 
     /**
      * Rede de segurança do Model (Sale::booted()) contra pedidos com
-     * is_completed/is_paid=true e a data correspondente nula — achado real
-     * em produção no import legado (data de origem vazia/inválida). Todo
-     * fluxo da aplicação (deliver()/pay()/create()) já seta a data
+     * is_paid=true e paid_at nulo — achado real em produção no import
+     * legado (data de origem vazia/inválida). Todo fluxo da aplicação
+     * (create()/payInstallment()/reconciliação de webhook) já seta a data
      * corretamente; este teste cobre uma escrita direta no Model (ex: um
      * import futuro) que esqueça de fazer isso.
      */
     #[Test]
-    public function saving_delivered_or_paid_without_a_date_backfills_it_to_now(): void
+    public function saving_paid_without_a_date_backfills_it_to_now(): void
     {
         $client = $this->createClient($this->tenant->id);
 
@@ -1045,14 +489,11 @@ class SaleTest extends TestCase
             'total_amount' => 10,
             'is_paid' => true,
             'paid_at' => null,
-            'is_completed' => true,
-            'completed_at' => null,
         ]);
 
         $order->refresh();
 
         $this->assertNotNull($order->paid_at);
-        $this->assertNotNull($order->completed_at);
     }
 
     /*
@@ -1073,7 +514,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 3],
             ],
@@ -1104,7 +546,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
                 ['ticket_type_uuid' => $productB->uuid, 'quantity' => 1],
@@ -1136,7 +579,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1166,7 +610,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $productA->uuid, 'quantity' => 2],
             ],
@@ -1195,21 +640,22 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
 
         $response = $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
-            'notes' => 'Entregar após 18h',
+            'notes' => 'Editado depois da criação',
             'items' => [
                 ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.notes', 'Entregar após 18h')
+            ->assertJsonPath('data.notes', 'Editado depois da criação')
             ->assertJsonPath('data.total_amount', '20.00');
 
         // Item não mudou (mesmo produto/quantidade) — reserva original
@@ -1217,42 +663,15 @@ class SaleTest extends TestCase
     }
 
     #[Test]
-    public function update_items_is_blocked_when_order_is_already_delivered(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'update');
-        $this->grantPermission('sales', 'deliver');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
-
-        $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
-            'items' => [
-                ['uuid' => $order['items'][0]['uuid'], 'ticket_type_uuid' => $product->uuid, 'quantity' => 3],
-            ],
-        ])->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
-    }
-
-    #[Test]
     public function update_items_is_blocked_when_order_is_already_paid(): void
     {
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
-        $this->grantPermission('sales', 'pay');
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => 10]);
 
-
+        // Venda manual não parcelada nasce já paga — não precisa de uma
+        // ação explícita de pagamento pra chegar nesse estado.
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
@@ -1260,8 +679,6 @@ class SaleTest extends TestCase
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
         ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay")->assertStatus(200);
 
         $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
             'items' => [
@@ -1282,7 +699,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1311,7 +729,8 @@ class SaleTest extends TestCase
 
         $orderA = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1319,7 +738,8 @@ class SaleTest extends TestCase
 
         $orderB = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
             ],
@@ -1350,7 +770,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1377,7 +798,8 @@ class SaleTest extends TestCase
 
         $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 2],
             ],
@@ -1520,7 +942,6 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
-            'is_completed' => false,
             'notes' => 'Pedido direto 1',
             'status' => 'confirmed',
             'origin' => 'staff',
@@ -1532,7 +953,6 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 20,
             'is_paid' => false,
-            'is_completed' => false,
             'notes' => 'Pedido direto 2',
             'status' => 'confirmed',
             'origin' => 'staff',
@@ -1546,133 +966,6 @@ class SaleTest extends TestCase
     /**
      * paid_amount (2026-07-15): pagamento total continua gravando
      * paid_amount = total_amount, comportamento preexistente preservado.
-     */
-    #[Test]
-    public function paying_full_amount_sets_paid_amount_equal_to_total(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay");
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.is_paid', true)
-            ->assertJsonPath('data.total_amount', '50.00');
-
-        // assertJsonPath compara com ===; json_encode(50.0) sem cast
-        // grava "50" (sem casa decimal), então float 50.0 vs int
-        // decodificado quebraria um assertJsonPath direto — assertEquals
-        // é loose e cobre os dois casos.
-        $this->assertEquals(50.0, $response->json('data.paid_amount'));
-    }
-
-    /**
-     * Pagamento PARCIAL (paridade com legado valor_pago, pedido id=12608
-     * confirmado no banco legado): is_paid continua false, paid_amount
-     * grava o valor informado, sem cascata de entrega.
-     */
-    #[Test]
-    public function paying_a_partial_amount_registers_paid_amount_without_marking_order_as_paid(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 10],
-            ],
-        ])->json('data');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay", [
-            'amount' => 50,
-        ]);
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('message', __('messages.sale.partially_paid'));
-
-        $this->assertEquals(50.0, $response->json('data.paid_amount'));
-        $this->assertNull($response->json('data.completed_at'));
-
-        $fresh = Sale::where('uuid', $order['uuid'])->first();
-        $this->assertFalse((bool) $fresh->is_paid);
-        $this->assertFalse((bool) $fresh->is_completed);
-        $this->assertEquals('50.00', $fresh->paid_amount);
-    }
-
-    #[Test]
-    public function paying_an_amount_greater_than_or_equal_to_total_behaves_as_full_payment(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay", [
-            'amount' => 50,
-        ]);
-
-        $response->assertStatus(200)->assertJsonPath('data.is_paid', true);
-        $this->assertEquals(50.0, $response->json('data.paid_amount'));
-    }
-
-    #[Test]
-    public function unpay_after_full_payment_resets_paid_amount_to_null(): void
-    {
-        $this->grantPermission('sales', 'create');
-        $this->grantPermission('sales', 'pay');
-        $client = $this->createClient($this->tenant->id);
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-
-        $order = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
-            ],
-        ])->json('data');
-
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/pay")->assertStatus(200);
-
-        $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay");
-
-        $response->assertStatus(200)->assertJsonPath('data.paid_amount', null);
-
-        $fresh = Sale::where('uuid', $order['uuid'])->first();
-        $this->assertNull($fresh->paid_amount);
-    }
-
-    /**
-     * Comando sales:backfill-codigo (2026-07-15) — pedidos "legados"
-     * simulados apagando codigo/next_sale_code manualmente após criação.
-     * Confirma sequência correta por tenant e que tenants.next_sale_code
-     * fica consistente pro próximo pedido criado depois do backfill.
      */
     #[Test]
     public function backfill_codigo_command_assigns_sequential_codes_per_tenant_and_updates_next_sale_code(): void

@@ -2,7 +2,6 @@ import AddIcon from '@mui/icons-material/Add'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import {
   Alert,
@@ -106,10 +105,8 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
   /** Roadmap A4 — confirmação extra antes de aprovar cancelamento (ação irreversível, executa o cancelamento de fato). */
   const [approveCancellationConfirmOpen, setApproveCancellationConfirmOpen] = useState(false)
-  /** Data opcional de pagamento (YYYY-MM-DD) — vazia = comportamento atual (data de hoje, decidida pelo backend). */
+  /** Data opcional de pagamento de parcela (YYYY-MM-DD) — vazia = data de hoje, decidida pelo backend. */
   const [paidAtDraft, setPaidAtDraft] = useState('')
-  /** Valor opcional de pagamento — vazio = totalmente pago (comportamento atual). Só usado no pagamento da venda (não parcelada), nunca em parcela. */
-  const [paidAmountDraft, setPaidAmountDraft] = useState('')
 
   const [installmentEditorOpen, setInstallmentEditorOpen] = useState(false)
   const [installmentDrafts, setInstallmentDrafts] = useState<InstallmentDraftRow[]>([])
@@ -132,7 +129,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     setSelectedSale(null)
     setCancelReason('')
     setPaidAtDraft('')
-    setPaidAmountDraft('')
     setInstallmentEditorOpen(false)
     setItemsEditorOpen(false)
 
@@ -157,7 +153,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     }
   }, [open, saleUuid])
 
-  const canEditItems = Boolean(selectedSale) && !selectedSale!.is_completed && !selectedSale!.is_paid && !selectedSale!.cancelled_at
+  const canEditItems = Boolean(selectedSale) && !selectedSale!.is_paid && !selectedSale!.cancelled_at
 
   const installmentsSum = useMemo(
     () => (selectedSale?.installments ?? []).reduce((sum, installment) => sum + Number(installment.amount), 0),
@@ -189,7 +185,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
   }
 
   async function runAction(
-    action: 'complete' | 'pay' | 'cancel' | 'approveCancellation' | 'rejectCancellation',
+    action: 'payInstallment' | 'cancel' | 'approveCancellation' | 'rejectCancellation',
     installmentUuid?: string,
   ) {
     if (!selectedSale) return
@@ -197,15 +193,9 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     setIsSubmittingAction(true)
     try {
       let updated: Sale
-      if (action === 'complete') updated = await saleService.completeSale(selectedSale.uuid)
-      else if (action === 'pay') {
+      if (action === 'payInstallment' && installmentUuid) {
         const paidAt = paidAtDraft.trim() || undefined
-        if (installmentUuid) {
-          updated = await saleService.payInstallment(selectedSale.uuid, installmentUuid, paidAt)
-        } else {
-          const amount = paidAmountDraft.trim() ? Number(paidAmountDraft) : undefined
-          updated = await saleService.paySale(selectedSale.uuid, paidAt, amount)
-        }
+        updated = await saleService.payInstallment(selectedSale.uuid, installmentUuid, paidAt)
       } else if (action === 'approveCancellation') {
         updated = await saleService.approveSaleCancellationRequest(selectedSale.uuid)
       } else if (action === 'rejectCancellation') {
@@ -530,10 +520,10 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
 
               <SaleRefundsSection sale={selectedSale} onRefundRegistered={() => void refetchSelectedSale(selectedSale.uuid)} />
 
-              {selectedSale.status !== 'cancellation_requested' && !selectedSale.cancelled_at && !selectedSale.is_paid && (
+              {selectedSale.is_installment && selectedSale.status !== 'cancellation_requested' && !selectedSale.cancelled_at && !selectedSale.is_paid && (
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
                   <TextField
-                    label="Data do pagamento (opcional)"
+                    label="Data do pagamento da parcela (opcional)"
                     type="date"
                     value={paidAtDraft}
                     onChange={(event) => setPaidAtDraft(event.target.value)}
@@ -541,20 +531,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                     helperText="Deixe em branco para usar a data de hoje. Datas futuras agendam o pagamento."
                     sx={{ width: { xs: '100%', sm: '50%' } }}
                   />
-                  {!selectedSale.is_installment && (
-                    <TextField
-                      label="Valor pago (opcional)"
-                      type="number"
-                      value={paidAmountDraft}
-                      onChange={(event) => setPaidAmountDraft(event.target.value)}
-                      slotProps={{
-                        htmlInput: { min: 0.01, step: '0.01' },
-                        input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
-                      }}
-                      helperText="Deixe em branco para marcar como totalmente pago. Um valor menor que o total registra um pagamento parcial sem marcar como pago."
-                      sx={{ width: { xs: '100%', sm: '50%' } }}
-                    />
-                  )}
                 </Stack>
               )}
 
@@ -584,7 +560,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                             size="small"
                             startIcon={<PaidOutlinedIcon />}
                             disabled={isSubmittingAction}
-                            onClick={() => void runAction('pay', installment.uuid)}
+                            onClick={() => void runAction('payInstallment', installment.uuid)}
                           >
                             Pagar
                           </Button>
@@ -639,16 +615,6 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                 Aprovar cancelamento
               </Button>
             </Stack>
-          )}
-          {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_completed && !selectedSale.cancelled_at && (
-            <Button startIcon={<TaskAltOutlinedIcon />} disabled={isSubmittingAction} onClick={() => void runAction('complete')} sx={{ minHeight: 44 }}>
-              Concluir venda
-            </Button>
-          )}
-          {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_installment && !selectedSale.is_paid && !selectedSale.cancelled_at && (
-            <Button startIcon={<PaidOutlinedIcon />} disabled={isSubmittingAction} onClick={() => void runAction('pay')} sx={{ minHeight: 44 }}>
-              Marcar como pago
-            </Button>
           )}
           {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.cancelled_at && !selectedSale.is_paid && (
             <Button

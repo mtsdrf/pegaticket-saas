@@ -8,14 +8,11 @@ use App\DTOs\Sale\UpdateSaleItemsDTO;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
-use App\Events\Sale\SaleCompleted;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
 use App\Events\Sale\SaleItemsUpdated;
 use App\Events\Sale\SalePaid;
-use App\Events\Sale\SalePartiallyPaid;
 use App\Events\Sale\SaleRejected;
-use App\Events\Sale\SaleReopened;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancellationApproved;
@@ -109,7 +106,6 @@ class SaleService
             'total_amount' => 'sales.total_amount',
             'is_installment' => 'sales.is_installment',
             'is_paid' => 'sales.is_paid',
-            'is_completed' => 'sales.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
@@ -124,8 +120,6 @@ class SaleService
                 'sales.total_amount',
                 'sales.is_paid',
                 'sales.paid_at',
-                'sales.is_completed',
-                'sales.completed_at',
                 'sales.due_date',
                 'sales.cancelled_at',
                 'sales.status',
@@ -158,10 +152,6 @@ class SaleService
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {
             $query->where('is_paid', filter_var($filters['is_paid'], FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if (array_key_exists('is_completed', $filters) && $filters['is_completed'] !== null) {
-            $query->where('is_completed', filter_var($filters['is_completed'], FILTER_VALIDATE_BOOLEAN));
         }
 
         if (array_key_exists('is_installment', $filters) && $filters['is_installment'] !== null) {
@@ -205,27 +195,25 @@ class SaleService
                 'confirmed' => $query
                     ->whereNull('sales.cancelled_at')
                     ->where('sales.status', 'confirmed')
-                    ->where('sales.is_completed', false),
-                'financial_pending' => $query
-                    ->whereNull('sales.cancelled_at')
-                    ->where('sales.is_completed', true)
                     ->where('sales.is_paid', false),
                 default => null,
             };
         }
 
         // "Somente ativos" (grid de gestão de vendas online) — filtro
-        // aditivo: exclui cancelado, recusado e pedido concluído (pago E
-        // entregue ao mesmo tempo), deixando só o que ainda demanda ação.
-        // Quando ligado, ordena por urgência (pendentes de aprovação
-        // primeiro, resto por id crescente), ignorando o sort recebido.
+        // aditivo: exclui cancelado, recusado e venda já paga (finalização é
+        // automática: webhook do PagBank pra venda online, criação já paga
+        // pra venda manual — não existe mais gate manual de conclusão),
+        // deixando só o que ainda demanda ação. Quando ligado, ordena por
+        // urgência (pendentes de aprovação primeiro, resto por id
+        // crescente), ignorando o sort recebido.
         $activeOnly = array_key_exists('active_only', $filters)
             && filter_var($filters['active_only'], FILTER_VALIDATE_BOOLEAN);
 
         if ($activeOnly) {
             $query->whereNull('cancelled_at')
                 ->where('sales.status', '!=', 'rejected')
-                ->where(fn($q) => $q->where('is_paid', false)->orWhere('is_completed', false));
+                ->where('is_paid', false);
 
             $query->orderByRaw("(sales.status = 'pending_approval') DESC, sales.id ASC");
         } else {
@@ -301,7 +289,6 @@ class SaleService
                 'coupon_id' => $dto->couponId,
                 'discount_amount' => $dto->discountAmount,
                 'is_paid' => false,
-                'is_completed' => false,
                 'due_date' => $dueDate,
                 'notes' => $dto->notes,
                 'payment_method' => $dto->paymentMethod,
@@ -335,19 +322,12 @@ class SaleService
                 actorId: Auth::id()
             ));
 
-            // Ecoam os defaults do formulário legado ("entregue"/"pago" já
-            // marcados na criação) sem reabrir update genérico — reaproveitam
-            // exatamente a mesma lógica interna de deliver()/pay() (sem
-            // guard/lock próprios: já estamos dentro da transação de
-            // criação, sobre uma linha ainda não visível a outras
-            // transações). mark_as_paid=true com is_installment=true já é
-            // bloqueado na validação (StoreSaleRequest), guard aqui é só
-            // defensivo.
-            if ($dto->markAsCompleted) {
-                $order = $this->performCompletion($order);
-            }
-
-            if ($dto->markAsPaid && !$dto->isInstallment) {
+            // Venda manual (staff) não parcelada nasce já paga — o dinheiro
+            // já foi recebido na hora pelo operador, sem gate manual de
+            // "marcar como paga" depois. Venda online (origin=storefront)
+            // só é paga quando o PagBank confirma via webhook
+            // (SalePaymentService::reconcileWebhookPayment) — nunca aqui.
+            if ($dto->origin === 'staff' && !$dto->isInstallment) {
                 $order = $this->performPayment($order);
             }
 
@@ -481,34 +461,13 @@ class SaleService
         });
     }
 
-    public function complete(Sale $order): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        return DB::transaction(function () use ($order) {
-            $order = $this->lockOrder($order);
-
-            $this->assertOrderIsApproved($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
-            }
-
-            if ($order->is_completed) {
-                throw new InvalidSaleStateException(__('messages.sale.already_completed'));
-            }
-
-            return $this->performCompletion($order);
-        });
-    }
-
     /**
      * Pedido de origem storefront (Fase 1) nasce `pending_approval` e só
-     * pode ser entregue/pago depois que o staff aprova (status vira
-     * `confirmed`) — sem essa checagem, deliver()/pay()/payInstallment()
-     * contornam a fila de aprovação por completo (achado de code review:
-     * um pedido nunca aprovado, ou explicitamente `rejected`, podia ser
-     * entregue/pago normalmente sem nunca ter passado pela aprovação).
+     * pode ser pago depois que o staff aprova (status vira `confirmed`) —
+     * sem essa checagem, payInstallment() contorna a fila de aprovação por
+     * completo (achado de code review: um pedido nunca aprovado, ou
+     * explicitamente `rejected`, podia ser pago normalmente sem nunca ter
+     * passado pela aprovação).
      */
     private function assertOrderIsApproved(Sale $order): void
     {
@@ -522,108 +481,8 @@ class SaleService
     }
 
     /**
-     * Desfaz deliver(): devolve o estoque convertido em saída de volta
-     * para RESERVADO (não só "disponível") — ver performReversal() para
-     * o porquê dos dois passos por item. Pedido continua ativo (diferente
-     * de cancel(), que é definitivo).
-     */
-    public function reopen(Sale $order): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        return DB::transaction(function () use ($order) {
-            $order = $this->lockOrder($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
-            }
-
-            if (!$order->is_completed) {
-                throw new InvalidSaleStateException(__('messages.sale.not_completed'));
-            }
-
-            return $this->performReversal($order);
-        });
-    }
-
-    /**
-     * Só para pedido não parcelado — pagamento é sempre integral aqui,
-     * SALVO quando `$amount` informa um valor parcial (paridade com o
-     * legado: campo `valor_pago` independente do booleano de quitação
-     * total). Pedido parcelado usa payInstallment() por parcela (não
-     * aceita pagamento parcial de parcela, só a parcela inteira).
-     *
-     * Regras de `$amount`:
-     * - null, <= 0 ou >= total_amount: pagamento total normal (mesmo
-     *   comportamento de sempre, `is_paid` vira true).
-     * - > 0 e < total_amount: pagamento PARCIAL — só grava `paid_amount`
-     *   (valor absoluto já pago até agora, substitui o anterior, não
-     *   soma), sem tocar `is_paid`/`paid_at` nem disparar cascata de
-     *   entrega. Dispara SalePartiallyPaid em vez de SalePaid.
-     */
-    public function pay(Sale $order, ?string $paidAt = null, ?float $amount = null): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        if ($order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.sale.use_installment_pay'));
-        }
-
-        return DB::transaction(function () use ($order, $paidAt, $amount) {
-            $order = $this->lockOrder($order);
-
-            $this->assertOrderIsApproved($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
-            }
-
-            if ($order->is_paid) {
-                throw new InvalidSaleStateException(__('messages.sale.already_paid'));
-            }
-
-            $isPartialPayment = $amount !== null && $amount > 0 && $amount < (float) $order->total_amount;
-
-            if ($isPartialPayment) {
-                return $this->performPartialPayment($order, $amount);
-            }
-
-            return $this->performPayment($order, $paidAt ? \Carbon\Carbon::parse($paidAt) : null);
-        });
-    }
-
-    /**
-     * Desfaz pay(). Só para pedido não parcelado — pedido parcelado usa
-     * unpayInstallment() por parcela.
-     */
-    public function unpay(Sale $order): Sale
-    {
-        $this->assertBelongsToCurrentTenant($order);
-
-        if ($order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.sale.use_installment_unpay'));
-        }
-
-        return DB::transaction(function () use ($order) {
-            $order = $this->lockOrder($order);
-
-            if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
-            }
-
-            if (!$order->is_paid) {
-                throw new InvalidSaleStateException(__('messages.sale.not_paid'));
-            }
-
-            return $this->performUnpayment($order);
-        });
-    }
-
-    /**
-     * Cascata de quitação (confirmada no legado): ao pagar a última
-     * parcela pendente, o pedido inteiro vira is_paid=true E
-     * is_completed=true — se ainda não tinha sido entregue, a mesma
-     * integração de estoque de deliver() roda aqui dentro da transação.
+     * Cascata de quitação: ao pagar a última parcela pendente, o pedido
+     * inteiro vira is_paid=true.
      */
     public function payInstallment(Sale $order, SaleInstallment $installment, ?string $paidAt = null): Sale
     {
@@ -665,10 +524,6 @@ class SaleService
                 ->doesntExist();
 
             if ($allInstallmentsPaid) {
-                if (!$order->is_completed) {
-                    $order = $this->performCompletion($order);
-                }
-
                 $order = $this->performPayment($order, $paidAt ? \Carbon\Carbon::parse($paidAt) : null);
             }
 
@@ -680,10 +535,7 @@ class SaleService
      * Desfaz payInstallment() de UMA parcela. Reversão de cascata: se o
      * pedido tinha virado is_paid=true (só acontece quando TODAS as
      * parcelas estavam pagas), volta para false já que agora nem todas
-     * estão. NÃO mexe em is_completed/completed_at — entrega é um fato
-     * físico independente de pagamento; desfazer o pagamento de uma
-     * parcela não desfaz uma entrega que já aconteceu (decisão de
-     * design, ver .claude/memory/api-patterns.md).
+     * estão.
      */
     public function unpayInstallment(Sale $order, SaleInstallment $installment): Sale
     {
@@ -890,9 +742,10 @@ class SaleService
 
     /**
      * Só o cliente final pode solicitar (decisão de produto), e só
-     * enquanto o pedido não passou de "entregue" (flag is_completed), não
-     * pelo enum de status. Pedido já `rejected`/já cancelado/já com
-     * solicitação em aberto também bloqueiam (nada a cancelar/duplicar).
+     * enquanto o pedido não está pago (finalização é automática — webhook
+     * do PagBank), não pelo enum de status. Pedido já `rejected`/já
+     * cancelado/já com solicitação em aberto também bloqueiam (nada a
+     * cancelar/duplicar).
      */
     private function assertCancellationRequestEligible(Sale $order): void
     {
@@ -912,7 +765,7 @@ class SaleService
             throw new InvalidSaleStateException(__('messages.sale.order_rejected'));
         }
 
-        if ($order->is_completed) {
+        if ($order->is_paid) {
             throw new InvalidSaleStateException(__('messages.sale.already_completed'));
         }
     }
@@ -986,53 +839,10 @@ class SaleService
     }
 
     /**
-     * Marca o pedido como entregue. Sem guard/lock/transação próprios —
-     * quem chama já garantiu a validade da transição (deliver() valida
-     * cancelled_at/is_completed e trava a linha; create() está criando a
-     * linha agora, sem concorrência possível; a cascata de
-     * payInstallment() já trava a linha e checa is_completed antes de
-     * chamar). Reaproveitado nos 3 lugares.
-     */
-    private function performCompletion(Sale $order): Sale
-    {
-        $fromStage = 'confirmed';
-        $order->is_completed = true;
-        $order->completed_at = now();
-        $order->save();
-
-        event(new SaleCompleted(
-            saleId: $order->id,
-            saleUuid: $order->uuid,
-            fromStage: $fromStage,
-            toStage: $this->workflowTransitionLogger->resolveSaleStage($order),
-            actorId: Auth::id()
-        ));
-
-        return $order;
-    }
-
-    /**
-     * Inverso de performCompletion(): desmarca o pedido como entregue. Sem
-     * guard/lock/transação próprios — mesma convenção de performCompletion().
-     */
-    private function performReversal(Sale $order): Sale
-    {
-        $order->is_completed = false;
-        $order->completed_at = null;
-        $order->save();
-
-        event(new SaleReopened(
-            saleUuid: $order->uuid,
-            actorId: Auth::id()
-        ));
-
-        return $order;
-    }
-
-    /**
      * Marca o pedido como pago integralmente. Sem guard/lock próprios —
-     * mesma lógica de performCompletion() acima. Reaproveitado por pay(),
-     * create() (mark_as_paid) e pela cascata de payInstallment().
+     * reaproveitado por create() (venda manual não parcelada), pela
+     * cascata de payInstallment() e pela reconciliação de webhook
+     * (SalePaymentService::reconcileWebhookPayment, venda online).
      */
     private function performPayment(Sale $order, ?\Carbon\CarbonInterface $paidAt = null): Sale
     {
@@ -1068,27 +878,6 @@ class SaleService
 
         event(new SaleUnpaid(
             saleUuid: $order->uuid,
-            actorId: Auth::id()
-        ));
-
-        return $order;
-    }
-
-    /**
-     * Pagamento PARCIAL (paridade com o legado `valor_pago`): grava só o
-     * valor absoluto já pago, sem tocar is_paid/paid_at nem disparar a
-     * cascata de entrega de performPayment(). paid_amount é substituído
-     * (não somado) — o valor informado já é o total acumulado até agora,
-     * do jeito que o legado grava.
-     */
-    private function performPartialPayment(Sale $order, float $amount): Sale
-    {
-        $order->paid_amount = $this->centsToDecimal((int) round($amount * 100));
-        $order->save();
-
-        event(new SalePartiallyPaid(
-            saleUuid: $order->uuid,
-            amount: $order->paid_amount,
             actorId: Auth::id()
         ));
 
@@ -1262,11 +1051,10 @@ class SaleService
 
     /**
      * Trava a linha do Sale antes de qualquer leitura de estado
-     * (cancelled_at/is_paid/is_completed) dentro de deliver/pay/
-     * payInstallment/cancel — sem isso, duas ações concorrentes no mesmo
-     * pedido (ex.: deliver() e a cascata de payInstallment() ao mesmo
-     * tempo) podem ambas ler o estado "antigo" antes de qualquer uma
-     * commitar, causando dupla transição a partir do mesmo estado.
+     * (cancelled_at/is_paid) dentro de payInstallment/cancel — sem isso,
+     * duas ações concorrentes no mesmo pedido podem ambas ler o estado
+     * "antigo" antes de qualquer uma commitar, causando dupla transição a
+     * partir do mesmo estado.
      */
     private function lockOrder(Sale $order): Sale
     {
@@ -1275,17 +1063,13 @@ class SaleService
 
     /**
      * Guard de updateItems(): edição de item só é permitida enquanto o
-     * pedido não está entregue/pago/cancelado (escopo deliberadamente
-     * limitado, ver PHPDoc de updateItems()).
+     * pedido não está pago/cancelado (escopo deliberadamente limitado,
+     * ver PHPDoc de updateItems()).
      */
     private function assertSaleItemsEditable(Sale $order): void
     {
         if ($order->cancelled_at !== null) {
             throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
-        }
-
-        if ($order->is_completed) {
-            throw new InvalidSaleStateException(__('messages.sale.already_completed'));
         }
 
         if ($order->is_paid) {

@@ -34,8 +34,6 @@ class SalePushNotificationTest extends TestCase
         $this->setUpTenantScopedUser('push-user@test.com');
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'update');
-        $this->grantPermission('sales', 'deliver');
-        $this->grantPermission('sales', 'pay');
     }
 
     protected function auth()
@@ -54,7 +52,6 @@ class SalePushNotificationTest extends TestCase
             'is_installment' => false,
             'total_amount' => 30,
             'is_paid' => false,
-            'is_completed' => false,
             'status' => 'pending_approval',
             'origin' => 'storefront',
         ], $overrides));
@@ -70,34 +67,6 @@ class SalePushNotificationTest extends TestCase
         ]);
 
         return $order;
-    }
-
-    /**
-     * Mesmo padrão de SaleApprovalQueueTest: cria um pedido de verdade via
-     * POST /sales (reserva real de estoque) e simula que ele "nasceu" da
-     * loja, virando pending_approval — necessário aqui especificamente
-     * porque deliver() sempre converte a reserva em saída física
-     * (exit()), que exige saldo de estoque real (diferente de
-     * approve()/reject(), que não tocam saldo físico).
-     */
-    private function createPendingApprovalOrderWithRealReservation(FinalCustomer $client): Sale
-    {
-        $product = $this->createProduct($this->tenant->id, ['price' => 10]);
-
-        $response = $this->auth()->postJson('/api/v1/sales', [
-            'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
-            'items' => [
-                ['ticket_type_uuid' => $product->uuid, 'quantity' => 3],
-            ],
-        ])->assertStatus(201);
-
-        $order = Sale::where('uuid', $response->json('data.uuid'))->firstOrFail();
-        $order->status = 'pending_approval';
-        $order->origin = 'storefront';
-        $order->save();
-
-        return $order->fresh();
     }
 
     #[Test]
@@ -145,58 +114,6 @@ class SalePushNotificationTest extends TestCase
 
         $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/reject', ['reason' => 'teste'])
             ->assertStatus(200);
-    }
-
-    #[Test]
-    public function delivering_a_storefront_order_with_a_confirmed_link_sends_a_push(): void
-    {
-        $client = $this->createClient($this->tenant->id);
-        $order = $this->createPendingApprovalOrderWithRealReservation($client);
-
-        $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/approve')->assertStatus(200);
-
-        $this->mock(PushNotificationService::class, function ($mock) use ($client, $order) {
-            $mock->shouldReceive('notifyFinalCustomer')
-                ->once()
-                ->with(
-                    $client->id,
-                    __('messages.push.order_completed_title'),
-                    __('messages.push.order_completed_body'),
-                    '/rastreio/' . $order->uuid
-                );
-        });
-
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')
-            ->assertStatus(200);
-    }
-
-    #[Test]
-    public function delivering_an_order_does_not_500_when_vapid_keys_are_missing(): void
-    {
-        // Regressão do bug real de 2026-07-17: ambiente novo cujo .env
-        // ainda não recebeu as chaves VAPID reais. O listener de push é
-        // resolvido pelo container de forma síncrona dentro da mesma
-        // transação de deliver() — sem o fix em
-        // AppServiceProvider::register() (try/catch em torno do binding de
-        // WebPush::class), Minishlink\WebPush\VAPID::validate() lançava
-        // ErrorException e o pedido inteiro dava rollback + 500, mesmo sem
-        // nenhum FinalCustomer vinculado (a resolução do container já
-        // quebra antes de qualquer lógica de "pra quem notificar" rodar).
-        config([
-            'services.vapid.public_key' => null,
-            'services.vapid.private_key' => null,
-            'services.vapid.subject' => null,
-        ]);
-
-        $client = $this->createClient($this->tenant->id);
-        $order = $this->createPendingApprovalOrderWithRealReservation($client);
-
-        $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/approve')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')
-            ->assertStatus(200);
-
-        $this->assertTrue($order->fresh()->is_completed);
     }
 
     #[Test]

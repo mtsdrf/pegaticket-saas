@@ -236,8 +236,8 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
 }
 
 /**
- * Avaliação de venda concluída (Fase 4) — só aparece quando
- * `sale.is_completed` E o `FinalCustomer` está autenticado no portal. Sem
+ * Avaliação de venda paga (Fase 4) — só aparece quando
+ * `sale.is_paid` E o `FinalCustomer` está autenticado no portal. Sem
  * endpoint de "já avaliei" separado: depois do envio, esconde o formulário e
  * mostra a nota enviada só para esta sessão (estado local, não persistido).
  */
@@ -560,7 +560,7 @@ export function SaleTrackingPage() {
 
             {isPortalAuthenticated && sale.is_paid && <TicketsSection saleUuid={sale.uuid} />}
 
-            {sale.is_completed && isPortalAuthenticated && <SaleRatingSection saleUuid={sale.uuid} />}
+            {sale.is_paid && isPortalAuthenticated && <SaleRatingSection saleUuid={sale.uuid} />}
 
             <LinkOrdersSection saleUuid={sale.uuid} />
           </Stack>

@@ -3,9 +3,7 @@
 namespace Tests\Feature\Sales;
 
 use App\Models\Sale\Sale;
-use App\Models\Sale\SaleItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
@@ -14,8 +12,10 @@ use Tests\TestCase;
 /**
  * Tela dedicada de gestão de vendas online (/storefront-sales/*),
  * permissão própria `storefront-sales,{action}` — independente de
- * `sales,{action}`. Reaproveita o MESMO SaleService
- * (approve/reject/cancel/deliver). Ver .claude/memory/architecture-decisions.md.
+ * `sales,{action}`. Reaproveita o MESMO SaleService (approve/reject/cancel).
+ * Não existe mais ação manual de "entregar"/"pagar" — pagamento de venda
+ * online é sempre automático via retorno do PagBank. Ver
+ * .claude/memory/architecture-decisions.md.
  */
 class StorefrontSaleManagementTest extends TestCase
 {
@@ -31,9 +31,6 @@ class StorefrontSaleManagementTest extends TestCase
         $this->grantPermission('storefront-sales', 'read');
         $this->grantPermission('storefront-sales', 'approve');
         $this->grantPermission('storefront-sales', 'cancel');
-        $this->grantPermission('storefront-sales', 'deliver');
-        $this->grantPermission('storefront-sales', 'undeliver');
-        $this->grantPermission('storefront-sales', 'pay');
         // 'create' pra poder criar o pedido de fixture via POST /sales normal.
         $this->grantPermission('sales', 'create');
     }
@@ -59,6 +56,8 @@ class StorefrontSaleManagementTest extends TestCase
         $order = Sale::where('uuid', $response->json('data.uuid'))->firstOrFail();
         $order->status = 'pending_approval';
         $order->origin = $origin;
+        $order->is_paid = false;
+        $order->paid_at = null;
         $order->save();
 
         return $order->fresh();
@@ -69,8 +68,14 @@ class StorefrontSaleManagementTest extends TestCase
         $this->auth()->postJson('/api/v1/storefront-sales/' . $order->uuid . '/approve')->assertStatus(200);
     }
 
+    /** Simula a confirmação de pagamento que normalmente vem do webhook do PagBank. */
+    private function markPaid(Sale $order): void
+    {
+        $order->forceFill(['is_paid' => true, 'paid_at' => now()])->save();
+    }
+
     #[Test]
-    public function full_happy_path_pending_approval_to_delivered(): void
+    public function approve_confirms_a_pending_order(): void
     {
         $order = $this->createPendingApprovalOrder();
 
@@ -78,11 +83,7 @@ class StorefrontSaleManagementTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed');
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_completed', true);
-
-        $this->assertTrue($order->fresh()->is_completed);
+        $this->assertSame('confirmed', $order->fresh()->status);
     }
 
     #[Test]
@@ -131,8 +132,10 @@ class StorefrontSaleManagementTest extends TestCase
 
         $this->auth()->postJson('/api/v1/storefront-sales/' . $order->uuid . '/approve')->assertStatus(200);
 
-        // ...mas continua SEM acesso à rota genérica /sales/{order}/deliver.
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')->assertStatus(403);
+        // ...mas continua SEM acesso à rota genérica /sales/{order}/cancel.
+        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/cancel', [
+            'cancellation_reason' => 'Teste',
+        ])->assertStatus(403);
     }
 
     #[Test]
@@ -142,7 +145,6 @@ class StorefrontSaleManagementTest extends TestCase
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'read');
         $this->grantPermission('sales', 'update');
-        $this->grantPermission('sales', 'deliver');
 
         $order = $this->createPendingApprovalOrder();
 
@@ -151,7 +153,7 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     /**
-     * Tela genérica /pedidos (SaleListPage) passou a filtrar
+     * Tela genérica /vendas (SaleListPage) passou a filtrar
      * origin=staff sempre — pedidos do canal online agora só aparecem em
      * /vendas-online. Filtro já existia no backend (SaleService::paginate),
      * só faltava o whitelist de SaleController::index() aceitar o
@@ -172,53 +174,17 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     #[Test]
-    public function undeliver_route_reverts_delivery(): void
-    {
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/reopen')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_completed', false);
-
-        $this->assertFalse($order->fresh()->is_completed);
-    }
-
-    #[Test]
-    public function pay_route_registers_full_payment(): void
-    {
-        // Pedido de fixture: 3 un. x R$10 = R$30, não parcelado. Sem `amount`
-        // no body, pay() faz pagamento INTEGRAL (is_paid=true), nunca parcial.
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/pay')
-            ->assertStatus(200)
-            ->assertJsonPath('data.is_paid', true);
-
-        $fresh = $order->fresh();
-        $this->assertTrue($fresh->is_paid);
-        $this->assertSame((float) $fresh->total_amount, (float) $fresh->paid_amount);
-    }
-
-    #[Test]
-    public function active_only_filter_returns_only_actionable_sales_in_priority_order(): void
+    public function active_only_filter_returns_only_unpaid_sales_in_priority_order(): void
     {
         // Mix de estados (criados nesta ordem, pending_approval por ÚLTIMO
         // pra provar que a ordenação fixa o coloca em 1º mesmo com id maior).
         $confirmed = $this->createPendingApprovalOrder();
         $this->approve($confirmed);
 
-        $deliveredUnpaid = $this->createPendingApprovalOrder();
-        $this->approve($deliveredUnpaid);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $deliveredUnpaid->uuid . '/complete')->assertStatus(200);
-
-        // Concluído (pago + entregue) — deve ser EXCLUÍDO.
-        $completed = $this->createPendingApprovalOrder();
-        $this->approve($completed);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/complete')->assertStatus(200);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/pay')->assertStatus(200);
+        // Pago — deve ser EXCLUÍDO (finalização automática via webhook).
+        $paid = $this->createPendingApprovalOrder();
+        $this->approve($paid);
+        $this->markPaid($paid);
 
         // Recusado — EXCLUÍDO.
         $rejected = $this->createPendingApprovalOrder();
@@ -238,24 +204,22 @@ class StorefrontSaleManagementTest extends TestCase
 
         $response = $this->auth()->getJson('/api/v1/storefront-sales?active_only=true');
 
-        $response->assertStatus(200)->assertJsonCount(3, 'data');
+        $response->assertStatus(200)->assertJsonCount(2, 'data');
 
         $this->assertSame([
             $pending->uuid,
             $confirmed->uuid,
-            $deliveredUnpaid->uuid,
         ], array_column($response->json('data'), 'uuid'));
     }
 
     #[Test]
     public function active_only_absent_keeps_default_listing(): void
     {
-        // Sem o parâmetro, o filtro não se aplica — pedido concluído
-        // (pago+entregue) continua aparecendo na listagem normal.
-        $completed = $this->createPendingApprovalOrder();
-        $this->approve($completed);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/complete')->assertStatus(200);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/pay')->assertStatus(200);
+        // Sem o parâmetro, o filtro não se aplica — venda paga continua
+        // aparecendo na listagem normal.
+        $paid = $this->createPendingApprovalOrder();
+        $this->approve($paid);
+        $this->markPaid($paid);
 
         $this->auth()->getJson('/api/v1/storefront-sales')
             ->assertStatus(200)
@@ -264,24 +228,5 @@ class StorefrontSaleManagementTest extends TestCase
         $this->auth()->getJson('/api/v1/storefront-sales?active_only=true')
             ->assertStatus(200)
             ->assertJsonCount(0, 'data');
-    }
-
-    #[Test]
-    public function new_routes_require_their_own_permission_action(): void
-    {
-        // Usuário com as permissões antigas da tela, mas SEM as actions
-        // novas (undeliver/pay) — as rotas novas dão 403.
-        $this->setUpTenantScopedUser('storefront-partial-perms@test.com');
-        $this->grantPermission('storefront-sales', 'read');
-        $this->grantPermission('storefront-sales', 'approve');
-        $this->grantPermission('storefront-sales', 'deliver');
-        $this->grantPermission('sales', 'create');
-
-        $order = $this->createPendingApprovalOrder();
-        $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')->assertStatus(200);
-
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/reopen')->assertStatus(403);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/pay')->assertStatus(403);
     }
 }

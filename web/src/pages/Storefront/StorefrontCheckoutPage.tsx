@@ -670,7 +670,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         // PixPaymentPanel sempre oferece "continuar sem pagar agora").
       setPaidSaleUuid(result.sale.uuid)
       } else {
-        navigate(`/rastreio/${result.order.uuid}`)
+        navigate(`/rastreio/${result.sale.uuid}`)
       }
     } catch (error) {
       if (error instanceof ApiRequestError && error.code === INVALID_COUPON_CODE) {

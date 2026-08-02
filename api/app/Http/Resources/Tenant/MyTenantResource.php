@@ -22,7 +22,6 @@ class MyTenantResource extends JsonResource
             'role' => $this->role,
             'plan_slug' => $this->plan_slug,
             'plan_name' => $this->plan_name,
-            'send_tracking_link_whatsapp' => (bool) $this->send_tracking_link_whatsapp,
         ];
     }
 }

@@ -54,8 +54,14 @@ class SaleCancellationApprovalTest extends TestCase
             ],
         ])->assertStatus(201);
 
+        // Venda manual (staff) não parcelada nasce já paga — precisa
+        // desfazer aqui pra simular uma venda online (nunca paga
+        // automaticamente na criação, só via webhook) com cancelamento
+        // solicitado.
         $order = Sale::where('uuid', $response->json('data.uuid'))->firstOrFail();
         $order->origin = 'storefront';
+        $order->is_paid = false;
+        $order->paid_at = null;
         $order->status = 'cancellation_requested';
         $order->status_before_cancellation_request = 'confirmed';
         $order->cancellation_reason = 'Pedido errado';

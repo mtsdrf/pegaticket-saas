@@ -206,8 +206,6 @@ test.describe('Vendas manuais', () => {
       expect(payload).toMatchObject({
         final_customer_uuid: 'final-customer-sale-1',
         is_installment: false,
-        mark_as_completed: true,
-        mark_as_paid: true,
         items: [
           {
             ticket_type_uuid: 'ticket-type-sale-1',

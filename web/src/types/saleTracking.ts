@@ -26,8 +26,6 @@ export interface SaleTracking {
   total_amount: string
   is_paid: boolean
   paid_at: string | null
-  is_completed: boolean
-  completed_at: string | null
   /** `cancellation_requested` (roadmap A4) — solicitação feita via Portal autenticado, não por aqui (rota pública sem login). */
   status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
   is_cancelled: boolean

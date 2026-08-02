@@ -1,14 +1,8 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmptyOutlined'
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
-import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import type { ReactNode } from 'react'
-import {
-  approveStorefrontSale,
-  cancelStorefrontSale,
-  rejectStorefrontSale,
-} from '../services/storefrontSaleService'
+import { cancelStorefrontSale, rejectStorefrontSale, approveStorefrontSale } from '../services/storefrontSaleService'
 import { approveSaleCancellationRequest, rejectSaleCancellationRequest } from '../services/saleService'
 import type { Sale } from '../types/sale'
 import { formatDateTimeBR } from './format'
@@ -30,36 +24,23 @@ export const STATUS_TONE_COLORS: Record<StatusTone, { fg: string; bg: string }> 
 }
 
 /**
- * Campos mínimos usados na derivação de status. `is_installment`/`completed_at`/
- * `paid_at` são opcionais porque `GET /portal/sales` (lista agregada,
- * Fase 5.2) não traz esses três campos — só o detalhe via `GET /rastreio/{uuid}`
- * (Fase 5.1) traz. Ausentes, a legenda cai no texto genérico (sem data/hora).
+ * Campos mínimos usados na derivação de status. `is_installment`/`paid_at`
+ * são opcionais porque `GET /portal/sales` (lista agregada, Fase 5.2) não
+ * traz esses campos — só o detalhe via `GET /rastreio/{uuid}` traz.
  */
 export interface SaleStatusSource {
   is_cancelled: boolean
   is_paid: boolean
-  /** Não é entrega física — gate de conclusão da venda. */
-  is_completed: boolean
   is_installment?: boolean
-  completed_at?: string | null
   paid_at?: string | null
-  /**
-   * Fila de aprovação online — ausente em respostas antigas, tratado como
-   * "confirmed" (comportamento anterior).
-   * `cancellation_requested` (roadmap A4) — cliente solicitou cancelamento,
-   * aguardando aprovação da operação.
-   */
   status?: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
 }
 
 /**
  * Não existe campo pronto de "status" na API — é derivado de
- * `is_cancelled`/`is_paid`/`is_completed`/`is_installment`/`status`,
- * nessa ordem de prioridade (contrato acordado com o
- * backend da Fase 5.1, estendido pela tela de gestão de vendas online).
- * Único lugar dessa lógica no frontend — reaproveitada por
- * `SaleTrackingPage` (Fase 5.1) e `PortalSalesPage` (Fase 5.2), nunca
- * reimplementada.
+ * `is_cancelled`/`is_paid`/`status`. Finalização é sempre automática:
+ * venda online só é paga via retorno do PagBank (webhook); venda manual
+ * já nasce paga. Único lugar dessa lógica no frontend.
  */
 export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
   if (sale.is_cancelled) {
@@ -71,10 +52,6 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
     }
   }
 
-  // status=rejected é uma recusa antes mesmo de confirmar a venda — antes
-  // desta checagem, uma venda recusada (cancelled_at continua null por
-  // desenho, ver SaleService::reject()) caía no bucket genérico "em
-  // preparação", já que is_cancelled nunca refletia isso.
   if (sale.status === 'rejected') {
     return {
       label: 'Venda recusada',
@@ -84,9 +61,6 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
     }
   }
 
-  // Solicitação do cliente final ainda em aberto (roadmap A4) — some assim
-  // que a loja aprovar (vira is_cancelled) ou rejeitar (volta ao status
-  // anterior guardado pelo backend, cai num dos ramos abaixo).
   if (sale.status === 'cancellation_requested') {
     return {
       label: 'Cancelamento solicitado, aguardando aprovação',
@@ -105,44 +79,21 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
     }
   }
 
-  if (sale.is_paid && sale.is_completed) {
+  if (sale.is_paid) {
     return {
       label: 'Venda concluída',
-      caption: sale.completed_at ? `Pago e concluído em ${formatDateTimeBR(sale.completed_at)}.` : 'Venda paga e concluída.',
+      caption: sale.paid_at ? `Pagamento confirmado em ${formatDateTimeBR(sale.paid_at)}.` : 'Pagamento confirmado.',
       tone: 'success',
       icon: <CheckCircleOutlineIcon />,
     }
   }
 
-  if (sale.is_completed && !sale.is_paid) {
-    return sale.is_installment
-      ? {
-          label: 'Concluída — pagamento parcelado em andamento',
-          caption: 'Sua compra já foi concluída. Acompanhe as parcelas abaixo.',
-          tone: 'info',
-          icon: <TaskAltOutlinedIcon />,
-        }
-      : {
-          label: 'Concluída — pagamento pendente',
-          caption: 'Sua compra já foi concluída. Aguardando o pagamento.',
-          tone: 'warning',
-          icon: <TaskAltOutlinedIcon />,
-        }
-  }
-
-  if (sale.is_paid && !sale.is_completed) {
-    return {
-      label: 'Pago — aguardando conclusão',
-      caption: sale.paid_at ? `Pagamento confirmado em ${formatDateTimeBR(sale.paid_at)}.` : 'Pagamento confirmado.',
-      tone: 'info',
-      icon: <PaymentsOutlinedIcon />,
-    }
-  }
-
   return {
-    label: 'Venda em preparação',
-    caption: 'Sua compra ainda está sendo preparada pela empresa.',
-    tone: 'neutral',
+    label: sale.is_installment ? 'Pagamento parcelado em andamento' : 'Aguardando confirmação do pagamento',
+    caption: sale.is_installment
+      ? 'Acompanhe as parcelas abaixo.'
+      : 'A confirmação do pagamento é automática.',
+    tone: 'info',
     icon: <HourglassEmptyIcon />,
   }
 }
@@ -158,38 +109,28 @@ export interface SaleActionButton {
   tone: 'back' | 'forward'
   requiresReason: boolean
   run: (uuid: string, reason?: string) => Promise<Sale>
-  /** Aviso extra mostrado no diálogo de confirmação (ex.: ação irreversível) — substitui o texto genérico "Confirmar esta ação?". */
   confirmWarning?: string
 }
 
 /**
  * Elegibilidade de "solicitar cancelamento" (Portal, roadmap A4) — mesma
- * regra do backend (`SaleService::assertCancellationRequestEligible`):
- * ainda não foi concluída, não está cancelado/recusado e não tem uma
- * solicitação em aberto. Fonte única, reaproveitada por
- * `PortalSalesPage` (lista) e pela tela de detalhe da compra (rastreio).
+ * regra do backend: ainda não paga, não está cancelada/recusada e não tem
+ * uma solicitação em aberto.
  */
 export function canRequestSaleCancellation(sale: SaleStatusSource): boolean {
   return (
     !sale.is_cancelled &&
-    !sale.is_completed &&
+    !sale.is_paid &&
     sale.status !== 'rejected' &&
     sale.status !== 'cancellation_requested'
   )
 }
 
 /**
- * Mapa único de "status atual da venda online -> exatamente 2 (ou 0) botões
- * de ação", conforme fluxo confirmado com o usuário (gestão de /vendas-online).
- * Ordem do array = ordem visual (esquerda→direita). Estados terminais
- * (concluído/recusado/cancelado) retornam `[]` — o modal só mostra o badge de
- * status read-only. Fonte única dessa regra; não reimplementar por tela.
- *
- * `canManageCancellation` (roadmap A4) — só quando o usuário tem
- * `perm:sales,update` (endpoints `approve-cancellation`/`reject-cancellation`
- * vivem no grupo `sales`, não em `storefront-sales`) os botões de
- * aprovar/rejeitar cancelamento aparecem; sem a permissão, a venda mostra só
- * o badge de status (via `deriveSaleStatus`), sem ação.
+ * Mapa único de "status atual da venda online -> botões de ação". Não
+ * existe mais ação manual de concluir/pagar — finalização é sempre
+ * automática (webhook do PagBank). Estados terminais (pago/recusado/
+ * cancelado) retornam `[]` — o modal só mostra o badge de status read-only.
  */
 export function getSaleActionButtons(sale: Sale, canManageCancellation = false): SaleActionButton[] {
   if (sale.status === 'cancellation_requested') {
@@ -201,8 +142,7 @@ export function getSaleActionButtons(sale: Sale, canManageCancellation = false):
         tone: 'forward',
         requiresReason: false,
         run: (uuid) => approveSaleCancellationRequest(uuid),
-        confirmWarning:
-          'Ao aprovar, a venda é cancelada de verdade agora. Esta ação não pode ser desfeita.',
+        confirmWarning: 'Ao aprovar, a venda é cancelada de verdade agora. Esta ação não pode ser desfeita.',
       },
     ]
   }
@@ -214,7 +154,7 @@ export function getSaleActionButtons(sale: Sale, canManageCancellation = false):
     ]
   }
 
-  if (sale.status === 'confirmed' && !sale.is_completed) {
+  if (sale.status === 'confirmed' && !sale.is_paid) {
     return [{ label: 'Cancelar venda', tone: 'back', requiresReason: true, run: (uuid, reason) => cancelStorefrontSale(uuid, reason ?? '') }]
   }
 

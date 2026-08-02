@@ -51,7 +51,6 @@ class PortalSaleCancellationRequestTest extends TestCase
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,
-            'is_completed' => false,
             'status' => 'confirmed',
             'origin' => 'storefront',
         ], $overrides));
@@ -117,8 +116,8 @@ class PortalSaleCancellationRequestTest extends TestCase
         [$customer, $token] = $this->authenticatedCustomer('cliente4@test.com');
         $tenant = $this->createTenant();
         $order = $this->createOrder($tenant, $customer, [
-            'is_completed' => true,
-            'completed_at' => now(),
+            'is_paid' => true,
+            'paid_at' => now(),
         ]);
 
         $this->linkCustomerToOrder($token, $order->uuid);

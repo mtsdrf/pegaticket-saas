@@ -10,9 +10,6 @@ class TenantSettings extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'send_tracking_link_whatsapp',
-        'minimum_order_value',
-        'estimated_preparation_minutes',
         'accepted_payment_methods',
         'payment_receiving_method',
         'payment_pix_key',
@@ -24,9 +21,6 @@ class TenantSettings extends BaseModel
     ];
 
     protected $casts = [
-        'send_tracking_link_whatsapp' => 'boolean',
-        'minimum_order_value' => 'float',
-        'estimated_preparation_minutes' => 'integer',
         'accepted_payment_methods' => 'array',
         // Chave Pix do tenant criptografada em repouso (cast nativo do
         // Eloquent, sem serviço externo) — roadmap 2A.

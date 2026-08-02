@@ -143,8 +143,6 @@ class StorefrontCheckoutService
                 isInstallment: false,
                 installmentsCount: null,
                 notes: $dto->notes,
-                markAsCompleted: false,
-                markAsPaid: false,
                 items: $items,
                 origin: 'storefront',
                 status: 'pending_approval',

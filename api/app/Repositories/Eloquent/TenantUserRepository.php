@@ -20,10 +20,6 @@ class TenantUserRepository extends BaseRepository implements TenantUserRepositor
             ->join('tenants', 'tenants.id', '=', 'tenant_users.tenant_id')
             ->join('tenant_roles', 'tenant_roles.id', '=', 'tenant_users.tenant_role_id')
             ->leftJoin('plans', 'plans.id', '=', 'tenants.plan_id')
-            ->leftJoin('tenant_settings', function ($join) {
-                $join->on('tenant_settings.tenant_id', '=', 'tenants.id')
-                    ->whereNull('tenant_settings.deleted_at');
-            })
             ->where('tenant_users.user_id', $userId)
             ->whereNull('tenant_users.deleted_at')
             ->where('tenant_users.is_active', true)
@@ -37,7 +33,6 @@ class TenantUserRepository extends BaseRepository implements TenantUserRepositor
                 'plans.slug as plan_slug',
                 'plans.name as plan_name'
             )
-            ->selectRaw('COALESCE(tenant_settings.send_tracking_link_whatsapp, 0) as send_tracking_link_whatsapp')
             ->get();
     }
 

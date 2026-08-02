@@ -764,23 +764,6 @@ Route::prefix('v1')->group(function () {
             Route::put('/{sale}/items', [SaleController::class, 'updateItems'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-update-items']);
 
-            // URL/método renomeados de deliver/undeliver para complete/reopen
-            // (não é entrega física, é o gate de conclusão do pedido — ver
-            // Sale::is_completed). Permissão técnica `sales,deliver` mantida
-            // como está (grupos já têm essa permissão atribuída em produção;
-            // renomear a action key exigiria migração de dados de permissão).
-            Route::patch('/{sale}/complete', [SaleController::class, 'complete'])
-                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-complete']);
-
-            Route::patch('/{sale}/reopen', [SaleController::class, 'reopen'])
-                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-reopen']);
-
-            Route::patch('/{sale}/pay', [SaleController::class, 'pay'])
-                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,sales-pay']);
-
-            Route::patch('/{sale}/unpay', [SaleController::class, 'unpay'])
-                ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,sales-unpay']);
-
             // Cobrança Pix de pagamento da venda (roadmap 2A — recebimento
             // do tenant). Reaproveita perm:sales,update (mesma permissão já
             // usada na gestão manual de parcela/itens), sem nova
@@ -878,7 +861,7 @@ Route::prefix('v1')->group(function () {
         // Tela dedicada de gestão de vendas online (origin=storefront) —
         // permissão própria (storefront-sales,*), independente de
         // perm:sales,*. Reaproveita os MESMOS métodos de SaleController
-        // onde a regra de negócio já existe (approve/reject/cancel/deliver);
+        // onde a regra de negócio já existe (approve/reject/cancel);
         // indexStorefront() é o único método novo. Ver
         // .claude/memory/architecture-decisions.md.
         Route::prefix('storefront-sales')->group(function () {
@@ -901,19 +884,6 @@ Route::prefix('v1')->group(function () {
 
             Route::patch('/{sale}/cancel', [SaleController::class, 'cancel'])
                 ->middleware(['tenant', 'perm:storefront-sales,cancel', 'throttle:30,1,storefront-sales-cancel']);
-
-            Route::patch('/{sale}/complete', [SaleController::class, 'complete'])
-                ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-complete']);
-
-            // Reaproveitam os MESMOS métodos de SaleController (reopen/
-            // pay) já usados pelas rotas /sales/*, só com a permissão
-            // isolada da tela da loja. pay sem `amount` no body = pagamento
-            // integral (a tela da loja nunca faz pagamento parcial).
-            Route::patch('/{sale}/reopen', [SaleController::class, 'reopen'])
-                ->middleware(['tenant', 'perm:storefront-sales,undeliver', 'throttle:30,1,storefront-sales-reopen']);
-
-            Route::patch('/{sale}/pay', [SaleController::class, 'pay'])
-                ->middleware(['tenant', 'perm:storefront-sales,pay', 'throttle:30,1,storefront-sales-pay']);
 
             Route::get('/{sale}/workflow-transitions', [WorkflowTransitionLogController::class, 'sale'])
                 ->middleware(['tenant', 'perm:storefront-sales,read', 'throttle:120,1,storefront-sales-workflow-transitions']);

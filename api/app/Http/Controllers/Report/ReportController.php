@@ -16,7 +16,6 @@ class ReportController extends Controller
         'bairro_uuid',
         'client_name',
         'is_paid',
-        'is_completed',
         'date_from',
         'date_to',
         'origin',

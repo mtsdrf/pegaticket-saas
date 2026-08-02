@@ -34,14 +34,6 @@ class StoreSaleRequest extends FormRequest
             'installments_count' => ['required_if:is_installment,true', 'nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:500'],
 
-            // Ecoam o default do formulário legado ("entregue"/"pago" já
-            // marcados na criação) sem reabrir update genérico: disparam a
-            // mesma lógica interna de deliver()/pay() dentro da transação
-            // de criação. mark_as_paid não faz sentido pra pedido parcelado
-            // (pagamento é sempre por parcela) — bloqueado via prohibited_if.
-            'mark_as_completed' => ['nullable', 'boolean'],
-            'mark_as_paid' => ['nullable', 'boolean', 'prohibited_if:is_installment,true'],
-
             // Meio de pagamento pretendido — só formato aqui, mesmo shape de
             // StorefrontCheckoutRequest. Hoje o fluxo do staff NÃO valida
             // cupom por código (CreateSaleDTO::couponId já vem resolvido,
@@ -86,7 +78,6 @@ class StoreSaleRequest extends FormRequest
             'items.*.ticket_type_uuid.exists' => __('messages.sale.invalid_product'),
             'items.*.event_product_uuid.exists' => __('messages.sale.invalid_product'),
             'installments_count.required_if' => __('messages.sale.installments_count_required'),
-            'mark_as_paid.prohibited_if' => __('messages.sale.mark_as_paid_requires_non_installment'),
         ];
     }
 }

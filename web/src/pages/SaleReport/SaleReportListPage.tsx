@@ -108,7 +108,6 @@ export function SaleReportListPage() {
         filterType: 'boolean',
         cellRenderer: (row) => <ActiveChip isActive={row.is_paid} activeLabel="Sim" inactiveLabel="Não" />,
       },
-      { field: 'is_completed', headerName: 'Concluída', width: 120, filterType: 'boolean' },
       { field: 'created_at', headerName: 'Criado em', width: 180, filterType: 'none', sortable: false },
     ],
     [],

@@ -18,7 +18,7 @@ class WorkflowTransitionLogService
         return WorkflowTransitionLog::query()
             ->with('user')
             ->where('tenant_id', app('tenant_id'))
-            ->where('workflow_type', 'order')
+            ->where('workflow_type', 'sale')
             ->where('entity_uuid', $order->uuid)
             ->orderByDesc('moved_at')
             ->orderByDesc('id')

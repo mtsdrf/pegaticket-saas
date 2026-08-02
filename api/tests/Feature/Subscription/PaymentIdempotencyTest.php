@@ -51,13 +51,20 @@ class PaymentIdempotencyTest extends TestCase
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
 
 
-        return $this->auth()->postJson('/api/v1/sales', [
+        // Venda manual não parcelada nasce já paga — desfaz aqui pra
+        // simular uma venda ainda não paga (pré-condição de
+        // createPixChargeForOrder()).
+        $order = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],
         ])->json('data');
+
+        Sale::where('uuid', $order['uuid'])->update(['is_paid' => false, 'paid_at' => null]);
+
+        return $order;
     }
 
     #[Test]

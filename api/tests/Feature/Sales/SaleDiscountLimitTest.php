@@ -177,7 +177,8 @@ class SaleDiscountLimitTest extends TestCase
 
         $created = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
-            'is_installment' => false,
+            'is_installment' => true,
+            'installments_count' => 2,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 1],
             ],

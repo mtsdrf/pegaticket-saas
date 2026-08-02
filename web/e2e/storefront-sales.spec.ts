@@ -416,8 +416,5 @@ test.describe('Vendas online', () => {
 
     await expect(page.getByRole('gridcell', { name: 'Cliente Rejeitar Cancelamento', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cancelamento solicitado', exact: true })).toHaveCount(0)
-
-    await page.getByRole('button', { name: 'Só cancelamento pendente' }).click()
-    await expect(page.getByText('Nenhum cancelamento pendente no momento')).toBeVisible()
   })
 })

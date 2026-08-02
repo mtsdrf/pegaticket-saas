@@ -20,8 +20,6 @@ class SaleResource extends JsonResource
             'paid_amount' => $this->paid_amount !== null ? (float) $this->paid_amount : null,
             'is_paid' => $this->is_paid,
             'paid_at' => $this->paid_at,
-            'is_completed' => $this->is_completed,
-            'completed_at' => $this->completed_at,
             'due_date' => $this->due_date,
             'cancelled_at' => $this->cancelled_at,
             'cancellation_reason' => $this->cancellation_reason,

@@ -254,10 +254,7 @@ use App\Listeners\Storefront\AuditCouponDeleted;
 |--------------------------------------------------------------------------
 */
 use App\Events\Sale\SaleCreated;
-use App\Events\Sale\SaleCompleted;
-use App\Events\Sale\SaleReopened;
 use App\Events\Sale\SalePaid;
-use App\Events\Sale\SalePartiallyPaid;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
@@ -276,10 +273,7 @@ use App\Events\Sale\SaleCancellationRejected;
 use App\Listeners\Sale\AuditSalePaymentCharged;
 use App\Listeners\Sale\AuditSalePaymentRefundRequested;
 use App\Listeners\Sale\AuditSaleCreated;
-use App\Listeners\Sale\AuditSaleCompleted;
-use App\Listeners\Sale\AuditSaleReopened;
 use App\Listeners\Sale\AuditSalePaid;
-use App\Listeners\Sale\AuditSalePartiallyPaid;
 use App\Listeners\Sale\AuditSaleUnpaid;
 use App\Listeners\Sale\AuditSaleInstallmentPaid;
 use App\Listeners\Sale\AuditSaleInstallmentUnpaid;
@@ -297,7 +291,6 @@ use App\Events\Sale\SaleRefundCreated;
 use App\Listeners\Sale\AuditSaleRefundCreated;
 use App\Listeners\Sale\SendPushOnSaleApproved;
 use App\Listeners\Sale\SendPushOnSaleRejected;
-use App\Listeners\Sale\SendPushOnSaleCompleted;
 use App\Listeners\Sale\IssueTicketsOnSalePaid;
 use App\Listeners\Sale\CancelTicketsOnSaleCancelled;
 use App\Events\Ticket\TicketsIssued;
@@ -511,10 +504,7 @@ class EventServiceProvider extends ServiceProvider
         |--------------------------------------------------------------------------
         */
         SaleCreated::class => [AuditSaleCreated::class, WriteWorkflowTransitionLog::class],
-        SaleCompleted::class => [AuditSaleCompleted::class, SendPushOnSaleCompleted::class, WriteWorkflowTransitionLog::class],
-        SaleReopened::class => [AuditSaleReopened::class],
-        SalePaid::class => [AuditSalePaid::class, IssueTicketsOnSalePaid::class],
-        SalePartiallyPaid::class => [AuditSalePartiallyPaid::class],
+        SalePaid::class => [AuditSalePaid::class, IssueTicketsOnSalePaid::class, WriteWorkflowTransitionLog::class],
         SaleUnpaid::class => [AuditSaleUnpaid::class],
         SaleInstallmentPaid::class => [AuditSaleInstallmentPaid::class],
         SaleInstallmentUnpaid::class => [AuditSaleInstallmentUnpaid::class],

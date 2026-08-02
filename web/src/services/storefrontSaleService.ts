@@ -43,17 +43,3 @@ export function cancelStorefrontSale(uuid: string, cancellation_reason: string):
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/cancel`, { cancellation_reason }))
 }
 
-/** Marca a venda como concluída (não é entrega física — ver `is_completed` no backend). */
-export function completeStorefrontSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/complete`))
-}
-
-/** Reverte "concluído" de volta pra "confirmado" (`is_completed` -> false). */
-export function reopenStorefrontSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/reopen`))
-}
-
-/** Conclui a venda marcando-a como PAGA (`is_paid` -> true) — ação financeira real. */
-export function payStorefrontSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/pay`))
-}
