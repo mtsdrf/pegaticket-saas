@@ -206,7 +206,7 @@ test.describe('Vendas manuais', () => {
       expect(payload).toMatchObject({
         final_customer_uuid: 'final-customer-order-1',
         is_installment: false,
-        mark_as_delivered: true,
+        mark_as_completed: true,
         mark_as_paid: false,
         items: [
           {

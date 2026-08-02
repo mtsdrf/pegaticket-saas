@@ -89,11 +89,9 @@ test.describe('Portal do cliente final', () => {
               tenant_name: 'Loja QA',
               tenant_slug: 'loja-qa',
               is_paid: true,
-              is_delivered: false,
-              is_out_for_delivery: false,
+              is_completed: false,
               status: 'confirmed',
               total_amount: '79.90',
-              expected_delivery_date: '2026-07-28',
               is_cancelled: false,
               created_at: '2026-07-28T15:30:00Z',
             },
@@ -117,7 +115,7 @@ test.describe('Portal do cliente final', () => {
     await expect(page.getByRole('tab', { name: 'Minhas compras' })).toBeVisible()
     await expect(page.getByText('Loja QA')).toBeVisible()
     await expect(page.getByText('R$ 79,90')).toBeVisible()
-    await expect(page.getByText('Pago - aguardando entrega').or(page.getByText('Pago — aguardando entrega'))).toBeVisible()
+    await expect(page.getByText('Pago - aguardando conclusão').or(page.getByText('Pago — aguardando conclusão'))).toBeVisible()
     await expect(page.getByRole('button', { name: 'Comprar novamente' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Sair da conta' }).click()

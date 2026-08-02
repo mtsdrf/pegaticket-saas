@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { makeSale, mockAuthenticatedShell, mockPaginatedApiRoute } from './support/api'
 
 test.describe('Vendas online', () => {
-  test('mostra fila online com board e grid sem depender da central manual', async ({ page }) => {
+  test('mostra fila online em lista sem depender das vendas manuais', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['storefront-sales:read', 'sales:update'],
@@ -34,23 +34,23 @@ test.describe('Vendas online', () => {
 
     await page.goto('/vendas-online')
 
-    await expect(page.getByRole('heading', { name: 'Vendas da loja' })).toBeVisible()
-    await expect(page.getByText('Acompanhe e gerencie as vendas recebidas pela loja.')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Aprovação' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Vendas online' })).toBeVisible()
+    await expect(page.getByText('Acompanhe e gerencie as vendas recebidas pelo canal público.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Aguardando aprovação' })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cliente Online QA', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: '2001', exact: true })).toBeVisible()
     await expect(page.getByText('Vendas manuais')).toHaveCount(0)
     await expect(page.getByText('Nenhuma venda pendente de ação no momento')).toHaveCount(0)
   })
 
-  test('move vendas no board entre etapas e exige motivo ao cancelar', async ({ page }) => {
+  test('aprova e cancela vendas pela lista, exigindo motivo ao cancelar', async ({ page }) => {
     await mockAuthenticatedShell(page, {
       tenantSelectionConfirmed: true,
       tenantPermissions: ['storefront-sales:read', 'sales:update'],
       tenantFunctionalities: ['storefront-sales'],
     })
 
-    let boardOrders = [
+    let listOrders = [
       makeSale({
         uuid: 'storefront-order-approval-1',
         codigo: '2101',
@@ -63,30 +63,26 @@ test.describe('Vendas online', () => {
         },
       }),
       makeSale({
-        uuid: 'storefront-order-production-1',
+        uuid: 'storefront-order-confirmed-1',
         codigo: '2102',
         status: 'confirmed',
         origin: 'storefront',
         total_amount: 84.5,
         final_customer: {
           uuid: 'final-customer-storefront-2',
-          name: 'Cliente Produção',
+          name: 'Cliente Confirmado',
         },
       }),
     ]
+
     await page.route('**/api/v1/storefront-sales/storefront-order-approval-1/approve', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.fallback()
         return
       }
 
-      boardOrders = boardOrders.map((order) =>
-        order.uuid === 'storefront-order-approval-1'
-          ? {
-              ...order,
-              status: 'confirmed',
-            }
-          : order,
+      listOrders = listOrders.map((order) =>
+        order.uuid === 'storefront-order-approval-1' ? { ...order, status: 'confirmed' } : order,
       )
 
       await route.fulfill({
@@ -95,20 +91,20 @@ test.describe('Vendas online', () => {
         body: JSON.stringify({
           success: true,
           message: 'OK',
-          data: boardOrders.find((order) => order.uuid === 'storefront-order-approval-1'),
+          data: listOrders.find((order) => order.uuid === 'storefront-order-approval-1'),
           meta: {},
         }),
       })
     })
 
-    await page.route('**/api/v1/storefront-sales/storefront-order-production-1/cancel', async (route) => {
+    await page.route('**/api/v1/storefront-sales/storefront-order-confirmed-1/cancel', async (route) => {
       if (route.request().method() !== 'PATCH') {
         await route.fallback()
         return
       }
 
-      const cancelled = boardOrders.find((order) => order.uuid === 'storefront-order-production-1')
-      boardOrders = boardOrders.filter((order) => order.uuid !== 'storefront-order-production-1')
+      const cancelled = listOrders.find((order) => order.uuid === 'storefront-order-confirmed-1')
+      listOrders = listOrders.filter((order) => order.uuid !== 'storefront-order-confirmed-1')
 
       await route.fulfill({
         status: 200,
@@ -126,6 +122,42 @@ test.describe('Vendas online', () => {
       })
     })
 
+    await page.route('**/api/v1/storefront-sales/storefront-order-approval-1*', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback()
+        return
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'OK',
+          data: listOrders.find((order) => order.uuid === 'storefront-order-approval-1'),
+          meta: {},
+        }),
+      })
+    })
+
+    await page.route('**/api/v1/storefront-sales/storefront-order-confirmed-1*', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback()
+        return
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'OK',
+          data: listOrders.find((order) => order.uuid === 'storefront-order-confirmed-1'),
+          meta: {},
+        }),
+      })
+    })
+
     await page.route('**/api/v1/storefront-sales*', async (route) => {
       const url = route.request().url()
       const method = route.request().method()
@@ -137,12 +169,12 @@ test.describe('Vendas online', () => {
           body: JSON.stringify({
             success: true,
             message: 'OK',
-            data: boardOrders,
+            data: listOrders,
             meta: {
               pagination: {
                 current_page: 1,
                 per_page: 50,
-                total: boardOrders.length,
+                total: listOrders.length,
                 last_page: 1,
               },
             },
@@ -156,45 +188,35 @@ test.describe('Vendas online', () => {
 
     await page.goto('/vendas-online')
 
-    const approvalCard = page.locator('div[draggable="true"]').filter({ hasText: '2101' })
-    const productionCard = page.locator('div[draggable="true"]').filter({ hasText: '2102' })
+    await expect(page.getByRole('gridcell', { name: 'Cliente Aprovação', exact: true })).toBeVisible()
+    await expect(page.getByRole('gridcell', { name: 'Cliente Confirmado', exact: true })).toBeVisible()
 
-    await expect(approvalCard).toBeVisible()
-    await expect(productionCard).toBeVisible()
-
-    const approvalDragData = await page.evaluateHandle(() => new DataTransfer())
+    await page.getByRole('button', { name: /Gerenciar venda do cliente Cliente Aprovação/ }).click()
+    await page.getByRole('button', { name: 'Confirmar venda' }).click()
     const approveResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/storefront-sales/storefront-order-approval-1/approve')
         && response.request().method() === 'POST',
     )
-    await approvalCard.dispatchEvent('dragstart', { dataTransfer: approvalDragData })
-    await page.getByRole('paragraph').filter({ hasText: /^Produção$/ }).dispatchEvent('dragover', { dataTransfer: approvalDragData })
-    await page.getByRole('paragraph').filter({ hasText: /^Produção$/ }).dispatchEvent('drop', { dataTransfer: approvalDragData })
-    await approvalCard.dispatchEvent('dragend', { dataTransfer: approvalDragData })
+    await page.getByRole('button', { name: 'Confirmar' }).click()
     await approveResponse
+    await expect(page.getByRole('button', { name: 'Cancelar venda' })).toBeVisible()
+    await page.mouse.click(10, 10)
+    await expect(page.getByRole('dialog')).toHaveCount(0)
 
-    await expect(page.getByText('2 venda(s)').first()).toBeVisible()
-    await expect(page.getByText('Não foi possível mover a venda agora.')).toHaveCount(0)
-
-    const productionDragData = await page.evaluateHandle(() => new DataTransfer())
-    await productionCard.dispatchEvent('dragstart', { dataTransfer: productionDragData })
-    await page.getByText('Cancelar / recusar', { exact: true }).dispatchEvent('dragover', { dataTransfer: productionDragData })
-    await page.getByText('Cancelar / recusar', { exact: true }).dispatchEvent('drop', { dataTransfer: productionDragData })
-
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.getByText('Informe o motivo do cancelamento.')).toBeVisible()
+    await page.getByRole('button', { name: /Gerenciar venda do cliente Cliente Confirmado/ }).click()
+    await page.getByRole('button', { name: 'Cancelar venda' }).click()
+    await expect(page.getByRole('dialog').filter({ hasText: 'Cancelar venda' })).toBeVisible()
     await page.getByLabel('Motivo').fill('Cliente pediu cancelamento antes da saída.')
     const cancelResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/storefront-sales/storefront-order-production-1/cancel')
+        response.url().includes('/storefront-sales/storefront-order-confirmed-1/cancel')
         && response.request().method() === 'PATCH',
     )
-    await page.getByRole('button', { name: 'Cancelar venda' }).click()
+    await page.getByRole('button', { name: 'Confirmar' }).click()
     await cancelResponse
 
-    await expect(page.locator('div[draggable="true"]').filter({ hasText: '2102' })).toHaveCount(0)
-    await expect(page.locator('div[draggable="true"]').filter({ hasText: 'Cliente Produção' })).toHaveCount(0)
+    await expect(page.getByRole('gridcell', { name: 'Cliente Confirmado', exact: true })).toHaveCount(0)
   })
 
   test('aprova ou rejeita solicitações de cancelamento com reflexo operacional na fila', async ({ page }) => {
