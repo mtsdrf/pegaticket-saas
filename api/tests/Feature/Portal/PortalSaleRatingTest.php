@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 /**
  * Avaliação de pedido entregue (roadmap Delivery, Fase 4 — retenção):
- * POST /portal/sales/{uuid}/rating. Exige is_delivered=true, 1 avaliação
+ * POST /portal/sales/{uuid}/rating. Exige is_completed=true, 1 avaliação
  * por pedido, e a mesma checagem de posse do reorder.
  */
 class PortalSaleRatingTest extends TestCase
@@ -51,7 +51,7 @@ class PortalSaleRatingTest extends TestCase
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
         ], $overrides));
     }
 
@@ -67,7 +67,7 @@ class PortalSaleRatingTest extends TestCase
     {
         [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_completed' => true, 'completed_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -93,7 +93,7 @@ class PortalSaleRatingTest extends TestCase
     {
         [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customer, ['is_delivered' => false]);
+        $order = $this->createOrder($tenant, $customer, ['is_completed' => false]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -110,7 +110,7 @@ class PortalSaleRatingTest extends TestCase
     {
         [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_completed' => true, 'completed_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 
@@ -133,7 +133,7 @@ class PortalSaleRatingTest extends TestCase
         [, $tokenB] = $this->authenticatedCustomer('b@test.com');
 
         $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customerA, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customerA, ['is_completed' => true, 'completed_at' => now()]);
 
         $this->linkCustomerToOrder($tokenA, $order->uuid);
 
@@ -149,7 +149,7 @@ class PortalSaleRatingTest extends TestCase
     {
         [$customer, $token] = $this->authenticatedCustomer('cliente@test.com');
         $tenant = $this->createTenant();
-        $order = $this->createOrder($tenant, $customer, ['is_delivered' => true, 'delivered_at' => now()]);
+        $order = $this->createOrder($tenant, $customer, ['is_completed' => true, 'completed_at' => now()]);
 
         $this->linkCustomerToOrder($token, $order->uuid);
 

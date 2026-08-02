@@ -48,7 +48,7 @@ class ReconciliationTest extends TestCase
             'codigo' => 'PED-' . Str::random(6),
             'total_amount' => 100.0,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
         ]);
     }
 

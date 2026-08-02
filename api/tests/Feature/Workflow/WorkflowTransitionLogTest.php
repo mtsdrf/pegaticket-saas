@@ -90,7 +90,7 @@ class WorkflowTransitionLogTest extends TestCase
 
         $orderUuid = $response->json('data.uuid');
 
-        $this->auth()->patchJson("/api/v1/sales/{$orderUuid}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$orderUuid}/complete")
             ->assertStatus(200);
 
         $timeline = $this->auth()->getJson("/api/v1/sales/{$orderUuid}/workflow-transitions")

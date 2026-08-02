@@ -2,7 +2,7 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
@@ -91,9 +91,9 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { kind: 'link', to: '/portaria', label: 'Portaria', icon: QrCodeScannerOutlinedIcon, access: ACCESS.ticketsCheckin },
-  { kind: 'link', to: '/vendas', label: 'Operação', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/vendas', label: 'Vendas', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-manuais', label: 'Vendas manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
-  { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalShippingOutlinedIcon, access: ACCESS.storefrontSalesRead },
+  { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalActivityOutlinedIcon, access: ACCESS.storefrontSalesRead },
   {
     kind: 'group',
     label: 'Relatórios',

@@ -70,7 +70,7 @@ class SaleController extends Controller
             'total_amount_min',
             'total_amount_max',
             'is_paid',
-            'is_delivered',
+            'is_completed',
             'is_installment',
             'is_cancelled',
             'status',
@@ -154,10 +154,10 @@ class SaleController extends Controller
         );
     }
 
-    public function deliver(Sale $sale)
+    public function complete(Sale $sale)
     {
         try {
-            $sale = $this->service->deliver($sale);
+            $sale = $this->service->complete($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -166,7 +166,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.delivered')
+            __('messages.order.completed')
         );
     }
 
@@ -181,7 +181,7 @@ class SaleController extends Controller
 
         $filters = $request->only([
             'is_paid',
-            'is_delivered',
+            'is_completed',
             'is_installment',
             'is_cancelled',
             'status',
@@ -217,10 +217,10 @@ class SaleController extends Controller
         );
     }
 
-    public function undeliver(Sale $sale)
+    public function reopen(Sale $sale)
     {
         try {
-            $sale = $this->service->undeliver($sale);
+            $sale = $this->service->reopen($sale);
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         }
@@ -229,7 +229,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.undelivered')
+            __('messages.order.reopened')
         );
     }
 

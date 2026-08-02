@@ -341,7 +341,7 @@ class CouponTest extends TestCase
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'origin' => 'storefront',
             'status' => 'confirmed',
         ]);
@@ -383,7 +383,7 @@ class CouponTest extends TestCase
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'origin' => 'storefront',
             'status' => 'confirmed',
         ]);

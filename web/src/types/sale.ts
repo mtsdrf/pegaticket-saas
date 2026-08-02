@@ -67,8 +67,9 @@ export interface Sale {
   /** Valor efetivamente pago — pode ser PARCIAL (menor que `total_amount`) mesmo com `is_paid: false`. */
   paid_amount: number | null
   paid_at: string | null
-  is_delivered: boolean
-  delivered_at: string | null
+  /** Não é entrega física — gate de conclusão do pedido (libera quitação de parcela, trava edição de itens). */
+  is_completed: boolean
+  completed_at: string | null
   due_date: string | null
   cancelled_at: string | null
   cancellation_reason: string | null
@@ -91,7 +92,7 @@ export interface SaleFilters {
   client_uuid?: string
   client_name?: string
   is_paid?: boolean
-  is_delivered?: boolean
+  is_completed?: boolean
   is_installment?: boolean
   is_cancelled?: boolean
   total_amount_min?: number
@@ -125,8 +126,8 @@ export interface SalePayload {
   /** Backend limita a 500 caracteres. */
   notes?: string
   items: SaleCreateItemPayload[]
-  /** Venda já nasce entregue (mesma lógica interna do botão "Entregar"). */
-  mark_as_delivered?: boolean
+  /** Venda já nasce concluída (mesma lógica interna do botão "Concluir pedido"). */
+  mark_as_completed?: boolean
   /** Venda já nasce paga — backend rejeita (422) combinado com `is_installment: true`. */
   mark_as_paid?: boolean
 }

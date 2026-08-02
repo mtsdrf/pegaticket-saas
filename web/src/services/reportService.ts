@@ -1,6 +1,6 @@
 import { apiClient, unwrap } from './apiClient'
 import type { ApiSuccess } from '../types/api'
-import type { ChannelResultPoint, OperationHealthSummary, ReportCharts, ReportIndicators } from '../types/report'
+import type { ChannelResultPoint, ReportCharts, ReportIndicators } from '../types/report'
 
 export interface ReportPeriodParams {
   date_from?: string
@@ -13,10 +13,6 @@ export function getIndicators(params: ReportPeriodParams = {}): Promise<ReportIn
 
 export function getCharts(params: ReportPeriodParams = {}): Promise<ReportCharts> {
   return unwrap(apiClient.get<ApiSuccess<ReportCharts>>('/reports/charts', { params }))
-}
-
-export function getOperationHealth(): Promise<OperationHealthSummary> {
-  return unwrap(apiClient.get<ApiSuccess<OperationHealthSummary>>('/reports/operation-health'))
 }
 
 /** Resultado por canal (roadmap A1.3) — agregação por `orders.origin`. */

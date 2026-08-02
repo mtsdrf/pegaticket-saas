@@ -1,16 +1,16 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmptyOutlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import type { ReactNode } from 'react'
 import {
   approveStorefrontSale,
   cancelStorefrontSale,
-  deliverStorefrontSale,
+  completeStorefrontSale,
   payStorefrontSale,
   rejectStorefrontSale,
-  undeliverStorefrontSale,
+  reopenStorefrontSale,
 } from '../services/storefrontSaleService'
 import { approveSaleCancellationRequest, rejectSaleCancellationRequest } from '../services/saleService'
 import type { Sale } from '../types/sale'
@@ -33,7 +33,7 @@ export const STATUS_TONE_COLORS: Record<StatusTone, { fg: string; bg: string }> 
 }
 
 /**
- * Campos mínimos usados na derivação de status. `is_installment`/`delivered_at`/
+ * Campos mínimos usados na derivação de status. `is_installment`/`completed_at`/
  * `paid_at` são opcionais porque `GET /portal/sales` (lista agregada,
  * Fase 5.2) não traz esses três campos — só o detalhe via `GET /rastreio/{uuid}`
  * (Fase 5.1) traz. Ausentes, a legenda cai no texto genérico (sem data/hora).
@@ -41,9 +41,10 @@ export const STATUS_TONE_COLORS: Record<StatusTone, { fg: string; bg: string }> 
 export interface SaleStatusSource {
   is_cancelled: boolean
   is_paid: boolean
-  is_delivered: boolean
+  /** Não é entrega física — gate de conclusão do pedido. */
+  is_completed: boolean
   is_installment?: boolean
-  delivered_at?: string | null
+  completed_at?: string | null
   paid_at?: string | null
   /**
    * Fila de aprovação online — ausente em respostas antigas, tratado como
@@ -56,7 +57,7 @@ export interface SaleStatusSource {
 
 /**
  * Não existe campo pronto de "status" na API — é derivado de
- * `is_cancelled`/`is_paid`/`is_delivered`/`is_installment`/`status`,
+ * `is_cancelled`/`is_paid`/`is_completed`/`is_installment`/`status`,
  * nessa ordem de prioridade (contrato acordado com o
  * backend da Fase 5.1, estendido pela tela de gestão de vendas online).
  * Único lugar dessa lógica no frontend — reaproveitada por
@@ -101,40 +102,40 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
   if (sale.status === 'pending_approval') {
     return {
       label: 'Aguardando confirmação',
-      caption: 'Assim que a empresa confirmar sua compra, o preparo começa.',
+      caption: 'Assim que a empresa confirmar sua compra, ela é liberada.',
       tone: 'neutral',
       icon: <HourglassEmptyIcon />,
     }
   }
 
-  if (sale.is_paid && sale.is_delivered) {
+  if (sale.is_paid && sale.is_completed) {
     return {
       label: 'Venda concluída',
-      caption: sale.delivered_at ? `Pago e entregue em ${formatDateTimeBR(sale.delivered_at)}.` : 'Venda paga e entregue.',
+      caption: sale.completed_at ? `Pago e concluído em ${formatDateTimeBR(sale.completed_at)}.` : 'Venda paga e concluída.',
       tone: 'success',
       icon: <CheckCircleOutlineIcon />,
     }
   }
 
-  if (sale.is_delivered && !sale.is_paid) {
+  if (sale.is_completed && !sale.is_paid) {
     return sale.is_installment
       ? {
-          label: 'Entregue — pagamento parcelado em andamento',
-          caption: 'Sua compra já foi entregue. Acompanhe as parcelas abaixo.',
+          label: 'Concluída — pagamento parcelado em andamento',
+          caption: 'Sua compra já foi concluída. Acompanhe as parcelas abaixo.',
           tone: 'info',
-          icon: <LocalShippingOutlinedIcon />,
+          icon: <TaskAltOutlinedIcon />,
         }
       : {
-          label: 'Entregue — pagamento pendente',
-          caption: 'Sua compra já foi entregue. Aguardando o pagamento.',
+          label: 'Concluída — pagamento pendente',
+          caption: 'Sua compra já foi concluída. Aguardando o pagamento.',
           tone: 'warning',
-          icon: <LocalShippingOutlinedIcon />,
+          icon: <TaskAltOutlinedIcon />,
         }
   }
 
-  if (sale.is_paid && !sale.is_delivered) {
+  if (sale.is_paid && !sale.is_completed) {
     return {
-      label: 'Pago — aguardando entrega',
+      label: 'Pago — aguardando conclusão',
       caption: sale.paid_at ? `Pagamento confirmado em ${formatDateTimeBR(sale.paid_at)}.` : 'Pagamento confirmado.',
       tone: 'info',
       icon: <PaymentsOutlinedIcon />,
@@ -167,14 +168,14 @@ export interface SaleActionButton {
 /**
  * Elegibilidade de "solicitar cancelamento" (Portal, roadmap A4) — mesma
  * regra do backend (`SaleService::assertCancellationRequestEligible`):
- * ainda não saiu para entrega nem foi entregue, não está cancelado/recusado
- * e não tem uma solicitação em aberto. Fonte única, reaproveitada por
+ * ainda não foi concluída, não está cancelado/recusado e não tem uma
+ * solicitação em aberto. Fonte única, reaproveitada por
  * `PortalSalesPage` (lista) e pela tela de detalhe da compra (rastreio).
  */
 export function canRequestSaleCancellation(sale: SaleStatusSource): boolean {
   return (
     !sale.is_cancelled &&
-    !sale.is_delivered &&
+    !sale.is_completed &&
     sale.status !== 'rejected' &&
     sale.status !== 'cancellation_requested'
   )
@@ -216,16 +217,16 @@ export function getSaleActionButtons(sale: Sale, canManageCancellation = false):
     ]
   }
 
-  if (sale.status === 'confirmed' && !sale.is_delivered) {
+  if (sale.status === 'confirmed' && !sale.is_completed) {
     return [
       { label: 'Cancelar venda', tone: 'back', requiresReason: true, run: (uuid, reason) => cancelStorefrontSale(uuid, reason ?? '') },
-      { label: 'Marcar como entregue', tone: 'forward', requiresReason: false, run: (uuid) => deliverStorefrontSale(uuid) },
+      { label: 'Concluir pedido', tone: 'forward', requiresReason: false, run: (uuid) => completeStorefrontSale(uuid) },
     ]
   }
 
-  if (sale.status === 'confirmed' && sale.is_delivered && !sale.is_paid) {
+  if (sale.status === 'confirmed' && sale.is_completed && !sale.is_paid) {
     return [
-      { label: 'Voltar para confirmado', tone: 'back', requiresReason: false, run: (uuid) => undeliverStorefrontSale(uuid) },
+      { label: 'Voltar para confirmado', tone: 'back', requiresReason: false, run: (uuid) => reopenStorefrontSale(uuid) },
       { label: 'Concluir venda', tone: 'forward', requiresReason: false, run: (uuid) => payStorefrontSale(uuid) },
     ]
   }

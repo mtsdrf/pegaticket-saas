@@ -35,7 +35,7 @@ export interface PortalSaleSummary {
   tenant_name: string
   tenant_slug: string
   is_paid: boolean
-  is_delivered: boolean
+  is_completed: boolean
   /** `cancellation_requested` (roadmap A4) — cliente já solicitou, aguardando aprovação da loja. */
   status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
   total_amount: string

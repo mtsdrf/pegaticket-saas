@@ -27,8 +27,8 @@ class SaleRatingService
     {
         $order = $this->portalCustomerService->findOwnedOrder($finalCustomerId, $orderUuid);
 
-        if (!$order->is_delivered) {
-            throw new InvalidSaleStateException(__('messages.order.not_delivered'));
+        if (!$order->is_completed) {
+            throw new InvalidSaleStateException(__('messages.order.not_completed'));
         }
 
         if (SaleRating::where('order_id', $order->id)->exists()) {

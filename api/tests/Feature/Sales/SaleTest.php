@@ -58,7 +58,7 @@ class SaleTest extends TestCase
             ->assertJsonPath('data.items.0.unit_price', '25.50')
             ->assertJsonPath('data.items.0.line_total', '76.50')
             ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_delivered', false);
+            ->assertJsonPath('data.is_completed', false);
 
         $this->assertNotNull($response->json('data.due_date'));
 
@@ -269,9 +269,9 @@ class SaleTest extends TestCase
         ])->json('data');
 
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
             ->assertStatus(200)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
     }
 
@@ -293,19 +293,19 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->assertFalse($order['is_delivered']);
+        $this->assertFalse($order['is_completed']);
         $installments = $order['installments'];
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[0]['uuid']}/pay")
             ->assertStatus(200)
             ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_delivered', false);
+            ->assertJsonPath('data.is_completed', false);
 
         $response = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/pay");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.is_paid', true)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
     }
 
@@ -503,7 +503,7 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
 
 
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/cancel", [
@@ -534,7 +534,7 @@ class SaleTest extends TestCase
             'cancellation_reason' => 'Cliente desistiu',
         ])->assertStatus(200);
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
             ->assertStatus(422)
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -556,12 +556,12 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
 
         // Sem o lock de linha do Sale, essa segunda chamada podia cair na
         // exceção de Estoque (reserva já convertida) em vez do 422 limpo de
         // estado inválido — regressão do achado de concorrência da revisão.
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
             ->assertStatus(422)
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -617,20 +617,20 @@ class SaleTest extends TestCase
         ])->json('data');
 
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/undeliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
             ->assertStatus(200)
-            ->assertJsonPath('data.is_delivered', false);
+            ->assertJsonPath('data.is_completed', false);
 
-        $this->assertNull(Sale::where('uuid', $order['uuid'])->first()->delivered_at);
+        $this->assertNull(Sale::where('uuid', $order['uuid'])->first()->completed_at);
 
 
         // Prova que a reserva foi recriada corretamente: um segundo
         // deliver() funciona sem cair em "reserva não encontrada".
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")
             ->assertStatus(200)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
     }
 
@@ -651,7 +651,7 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/undeliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
             ->assertStatus(422)
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -680,7 +680,7 @@ class SaleTest extends TestCase
             'cancellation_reason' => 'Cliente desistiu',
         ])->assertStatus(200);
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/undeliver")
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")
             ->assertStatus(422)
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
     }
@@ -761,7 +761,7 @@ class SaleTest extends TestCase
     /**
      * Ponto mais fácil de errar do escopo: desfazer o pagamento da
      * última parcela reverte a cascata de order.is_paid (todas estavam
-     * pagas -> volta pra "nem todas"), mas NÃO mexe em is_delivered —
+     * pagas -> volta pra "nem todas"), mas NÃO mexe em is_completed —
      * entrega é um fato físico independente, já aconteceu, desfazer
      * pagamento não desfaz entrega (decisão de design documentada em
      * SaleService::unpayInstallment()).
@@ -789,25 +789,25 @@ class SaleTest extends TestCase
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[0]['uuid']}/pay")
             ->assertStatus(200);
 
-        // Última parcela: cascata marca is_paid=true E is_delivered=true.
+        // Última parcela: cascata marca is_paid=true E is_completed=true.
         $paidResponse = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/pay");
         $paidResponse->assertStatus(200)
             ->assertJsonPath('data.is_paid', true)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
         // Desfaz o pagamento da última parcela: is_paid do pedido volta
-        // para false (nem todas as parcelas pagas mais), mas is_delivered
+        // para false (nem todas as parcelas pagas mais), mas is_completed
         // continua true — entrega já aconteceu de fato.
         $unpaidResponse = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/unpay");
         $unpaidResponse->assertStatus(200)
             ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
         $fresh = Sale::where('uuid', $order['uuid'])->first();
         $this->assertFalse((bool) $fresh->is_paid);
         $this->assertNull($fresh->paid_at);
-        $this->assertTrue((bool) $fresh->is_delivered);
-        $this->assertNotNull($fresh->delivered_at);
+        $this->assertTrue((bool) $fresh->is_completed);
+        $this->assertNotNull($fresh->completed_at);
 
         $installment0Fresh = SaleInstallment::where('uuid', $installments[0]['uuid'])->first();
         $this->assertTrue((bool) $installment0Fresh->is_paid);
@@ -855,7 +855,7 @@ class SaleTest extends TestCase
         ])->json('data');
 
         // Sem orders,deliver e sem orders,pay concedidos.
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/undeliver")->assertStatus(403);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")->assertStatus(403);
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")->assertStatus(403);
     }
 
@@ -883,18 +883,18 @@ class SaleTest extends TestCase
         $this->grantPermission('sales', 'deliver');
 
         $this->auth()->getJson("/api/v1/sales/{$order['uuid']}")->assertStatus(404);
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(404);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(404);
     }
 
     /**
-     * mark_as_delivered ecoa o default "entregue" (true) do formulário
+     * mark_as_completed ecoa o default "entregue" (true) do formulário
      * legado sem reabrir update genérico: dispara a mesma lógica de
      * deliver() (conversão de reserva -> saída real) dentro da própria
      * transação de criação. Não exige a permissão orders,deliver — é um
      * campo do POST /orders, guardado só por orders,create.
      */
     #[Test]
-    public function mark_as_delivered_on_creation_converts_reservation_into_real_exit(): void
+    public function mark_as_completed_on_creation_converts_reservation_into_real_exit(): void
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
@@ -904,16 +904,16 @@ class SaleTest extends TestCase
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
-            'mark_as_delivered' => true,
+            'mark_as_completed' => true,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
             ],
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
-        $this->assertNotNull($response->json('data.delivered_at'));
+        $this->assertNotNull($response->json('data.completed_at'));
 
     }
 
@@ -942,9 +942,9 @@ class SaleTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('data.is_paid', true)
-            // mark_as_paid não implica mark_as_delivered — são flags
+            // mark_as_paid não implica mark_as_completed — são flags
             // independentes, cada uma só ecoa o próprio default do legado.
-            ->assertJsonPath('data.is_delivered', false);
+            ->assertJsonPath('data.is_completed', false);
 
         $this->assertNotNull($response->json('data.paid_at'));
     }
@@ -955,7 +955,7 @@ class SaleTest extends TestCase
      * (performDelivery/performPayment compartilhados com deliver()/pay()).
      */
     #[Test]
-    public function mark_as_delivered_and_mark_as_paid_together_apply_both_transitions(): void
+    public function mark_as_completed_and_mark_as_paid_together_apply_both_transitions(): void
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
@@ -965,7 +965,7 @@ class SaleTest extends TestCase
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,
-            'mark_as_delivered' => true,
+            'mark_as_completed' => true,
             'mark_as_paid' => true,
             'items' => [
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 5],
@@ -973,7 +973,7 @@ class SaleTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.is_delivered', true)
+            ->assertJsonPath('data.is_completed', true)
             ->assertJsonPath('data.is_paid', true);
 
     }
@@ -1027,7 +1027,7 @@ class SaleTest extends TestCase
 
     /**
      * Rede de segurança do Model (Sale::booted()) contra pedidos com
-     * is_delivered/is_paid=true e a data correspondente nula — achado real
+     * is_completed/is_paid=true e a data correspondente nula — achado real
      * em produção no import legado (data de origem vazia/inválida). Todo
      * fluxo da aplicação (deliver()/pay()/create()) já seta a data
      * corretamente; este teste cobre uma escrita direta no Model (ex: um
@@ -1045,14 +1045,14 @@ class SaleTest extends TestCase
             'total_amount' => 10,
             'is_paid' => true,
             'paid_at' => null,
-            'is_delivered' => true,
-            'delivered_at' => null,
+            'is_completed' => true,
+            'completed_at' => null,
         ]);
 
         $order->refresh();
 
         $this->assertNotNull($order->paid_at);
-        $this->assertNotNull($order->delivered_at);
+        $this->assertNotNull($order->completed_at);
     }
 
     /*
@@ -1234,7 +1234,7 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/deliver")->assertStatus(200);
+        $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/complete")->assertStatus(200);
 
         $this->auth()->putJson("/api/v1/sales/{$order['uuid']}/items", [
             'items' => [
@@ -1520,7 +1520,7 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'notes' => 'Pedido direto 1',
             'status' => 'confirmed',
             'origin' => 'staff',
@@ -1532,7 +1532,7 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 20,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'notes' => 'Pedido direto 2',
             'status' => 'confirmed',
             'origin' => 'staff',
@@ -1608,11 +1608,11 @@ class SaleTest extends TestCase
             ->assertJsonPath('message', __('messages.order.partially_paid'));
 
         $this->assertEquals(50.0, $response->json('data.paid_amount'));
-        $this->assertNull($response->json('data.delivered_at'));
+        $this->assertNull($response->json('data.completed_at'));
 
         $fresh = Sale::where('uuid', $order['uuid'])->first();
         $this->assertFalse((bool) $fresh->is_paid);
-        $this->assertFalse((bool) $fresh->is_delivered);
+        $this->assertFalse((bool) $fresh->is_completed);
         $this->assertEquals('50.00', $fresh->paid_amount);
     }
 

@@ -30,8 +30,8 @@ class Sale extends BaseModel
         'paid_amount',
         'is_paid',
         'paid_at',
-        'is_delivered',
-        'delivered_at',
+        'is_completed',
+        'completed_at',
         'due_date',
         'cancelled_at',
         'cancellation_reason',
@@ -56,8 +56,8 @@ class Sale extends BaseModel
         'change_for_amount' => 'decimal:2',
         'is_paid' => 'boolean',
         'paid_at' => 'datetime',
-        'is_delivered' => 'boolean',
-        'delivered_at' => 'datetime',
+        'is_completed' => 'boolean',
+        'completed_at' => 'datetime',
         'due_date' => 'date',
         'cancelled_at' => 'datetime',
     ];
@@ -76,14 +76,14 @@ class Sale extends BaseModel
     ];
 
     /**
-     * Invariante: is_delivered/is_paid=true sempre tem que vir com a data
+     * Invariante: is_completed/is_paid=true sempre tem que vir com a data
      * correspondente. Todo fluxo atual (deliver()/pay()/create() com
-     * markAsDelivered/markAsPaid) já seta a data — este guard é a rede de
+     * markAsCompleted/markAsPaid) já seta a data — este guard é a rede de
      * segurança pra qualquer escrita futura (import, tinker, feature nova)
      * que marque o flag sem a data. Achado real: o import legado (2026-07)
-     * podia gravar is_paid/is_delivered=true com data nula quando o campo de
+     * podia gravar is_paid/is_completed=true com data nula quando o campo de
      * data de origem vinha vazio/inválido (ver ImportLegacyJsQueijosCommand,
-     * sanitizeDate() retornando null) — 4 pedidos sem delivered_at e 10 sem
+     * sanitizeDate() retornando null) — 4 pedidos sem completed_at e 10 sem
      * paid_at encontrados em produção e corrigidos manualmente; este guard
      * evita repetir o mesmo padrão de novo (regra de não repetição de erro).
      */
@@ -105,8 +105,8 @@ class Sale extends BaseModel
         });
 
         static::saving(function (Sale $order) {
-            if ($order->is_delivered && !$order->delivered_at) {
-                $order->delivered_at = now();
+            if ($order->is_completed && !$order->completed_at) {
+                $order->completed_at = now();
             }
 
             if ($order->is_paid && !$order->paid_at) {

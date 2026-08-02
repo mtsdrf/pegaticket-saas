@@ -39,7 +39,7 @@ class StoreSaleRequest extends FormRequest
             // mesma lógica interna de deliver()/pay() dentro da transação
             // de criação. mark_as_paid não faz sentido pra pedido parcelado
             // (pagamento é sempre por parcela) — bloqueado via prohibited_if.
-            'mark_as_delivered' => ['nullable', 'boolean'],
+            'mark_as_completed' => ['nullable', 'boolean'],
             'mark_as_paid' => ['nullable', 'boolean', 'prohibited_if:is_installment,true'],
 
             // Meio de pagamento pretendido — só formato aqui, mesmo shape de

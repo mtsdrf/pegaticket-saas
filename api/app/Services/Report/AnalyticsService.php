@@ -188,7 +188,7 @@ class AnalyticsService
     }
 
     /**
-     * Média de dias entre entrega (delivered_at) e pagamento (paid_at)
+     * Média de dias entre conclusão (completed_at) e pagamento (paid_at)
      * por cliente — só pedidos com os dois timestamps preenchidos —
      * ordenado do mais lento pro mais rápido.
      */
@@ -196,11 +196,11 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $avgDaysExpr = $this->dateDiffDaysExpression('orders.paid_at', 'orders.delivered_at');
+        $avgDaysExpr = $this->dateDiffDaysExpression('orders.paid_at', 'orders.completed_at');
 
         return $this->ordersQuery($tenantId, $fromDate, $toDate)
             ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-                        ->whereNotNull('orders.delivered_at')
+                        ->whereNotNull('orders.completed_at')
             ->whereNotNull('orders.paid_at')
             ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
             ->selectRaw("final_customers.uuid as client_uuid, final_customers.name as client_name, AVG({$avgDaysExpr}) as avg_days_to_pay, COUNT(orders.id) as order_count")

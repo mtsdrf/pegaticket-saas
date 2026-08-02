@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import * as reportService from '../services/reportService'
 import { getApiErrorMessage } from '../types/api'
-import type { OperationHealthSummary, ReportCharts, ReportIndicators } from '../types/report'
+import type { ReportCharts, ReportIndicators } from '../types/report'
 import { useAuth } from './useAuth'
 
 interface DashboardReportState {
   indicators: ReportIndicators | null
   charts: ReportCharts | null
-  operationHealth: OperationHealthSummary | null
   isLoading: boolean
   error: string | null
 }
@@ -17,7 +16,6 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
   const [state, setState] = useState<DashboardReportState>({
     indicators: null,
     charts: null,
-    operationHealth: null,
     isLoading: true,
     error: null,
   })
@@ -26,7 +24,7 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
     // Usuário sem a permissão `dashboard:read` não deve nem chamar a API
     // (sempre daria 403) — quem decide isso é a página, via `enabled`.
     if (!enabled) {
-      setState({ indicators: null, charts: null, operationHealth: null, isLoading: false, error: null })
+      setState({ indicators: null, charts: null, isLoading: false, error: null })
       return
     }
 
@@ -47,17 +45,15 @@ export function useDashboardReport(dateFrom: string, dateTo: string, enabled: bo
     Promise.all([
       reportService.getIndicators(params),
       reportService.getCharts(params),
-      reportService.getOperationHealth(),
     ])
-      .then(([indicators, charts, operationHealth]) => {
-        if (!cancelled) setState({ indicators, charts, operationHealth, isLoading: false, error: null })
+      .then(([indicators, charts]) => {
+        if (!cancelled) setState({ indicators, charts, isLoading: false, error: null })
       })
       .catch((error) => {
         if (!cancelled) {
           setState({
             indicators: null,
             charts: null,
-            operationHealth: null,
             isLoading: false,
             error: getApiErrorMessage(error, 'Não foi possível carregar os números da operação agora.'),
           })

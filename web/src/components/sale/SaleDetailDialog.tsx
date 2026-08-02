@@ -2,7 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import {
   Alert,
@@ -94,7 +94,7 @@ interface SaleDetailDialogProps {
 
 /**
  * Dialog reutilizável de "Detalhes da venda" — busca a venda sozinha ao
- * abrir e concentra toda a UI de ações (entregar/pagar/cancelar), edição de
+ * abrir e concentra toda a UI de ações (concluir/pagar/cancelar), edição de
  * parcelas e edição de itens/cabeçalho. Usado tanto pela listagem de Vendas
  * quanto pela tela de Rotas (uma parada pode abrir a venda de origem).
  */
@@ -157,7 +157,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     }
   }, [open, saleUuid])
 
-  const canEditItems = Boolean(selectedSale) && !selectedSale!.is_delivered && !selectedSale!.is_paid && !selectedSale!.cancelled_at
+  const canEditItems = Boolean(selectedSale) && !selectedSale!.is_completed && !selectedSale!.is_paid && !selectedSale!.cancelled_at
 
   const installmentsSum = useMemo(
     () => (selectedSale?.installments ?? []).reduce((sum, installment) => sum + Number(installment.amount), 0),
@@ -189,7 +189,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
   }
 
   async function runAction(
-    action: 'deliver' | 'pay' | 'cancel' | 'approveCancellation' | 'rejectCancellation',
+    action: 'complete' | 'pay' | 'cancel' | 'approveCancellation' | 'rejectCancellation',
     installmentUuid?: string,
   ) {
     if (!selectedSale) return
@@ -197,7 +197,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
     setIsSubmittingAction(true)
     try {
       let updated: Sale
-      if (action === 'deliver') updated = await saleService.deliverSale(selectedSale.uuid)
+      if (action === 'complete') updated = await saleService.completeSale(selectedSale.uuid)
       else if (action === 'pay') {
         const paidAt = paidAtDraft.trim() || undefined
         if (installmentUuid) {
@@ -640,9 +640,9 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
               </Button>
             </Stack>
           )}
-          {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_delivered && !selectedSale.cancelled_at && (
-            <Button startIcon={<LocalShippingOutlinedIcon />} disabled={isSubmittingAction} onClick={() => void runAction('deliver')} sx={{ minHeight: 44 }}>
-              Entregar
+          {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_completed && !selectedSale.cancelled_at && (
+            <Button startIcon={<TaskAltOutlinedIcon />} disabled={isSubmittingAction} onClick={() => void runAction('complete')} sx={{ minHeight: 44 }}>
+              Concluir pedido
             </Button>
           )}
           {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_installment && !selectedSale.is_paid && !selectedSale.cancelled_at && (

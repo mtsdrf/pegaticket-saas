@@ -9,7 +9,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,16 +22,10 @@ use Illuminate\Support\Facades\DB;
  */
 class ReportService
 {
-    private const OPERATION_STAGE_THRESHOLDS = [
-        'approval' => ['attention' => 3, 'critical' => 15],
-        'confirmed' => ['attention' => 12, 'critical' => 45],
-        'financial_pending' => ['attention' => 180, 'critical' => 1440],
-    ];
-
     public function indicators(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $totalOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->count();
-        $deliveredOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_delivered', true)->count();
+        $completedOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
         $paidOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
         $totalAmount = (float) $this->ordersQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
@@ -44,8 +37,8 @@ class ReportService
             'total_orders' => $totalOrders,
             'total_sales_amount' => $this->formatMoney($totalAmount),
             'average_ticket' => $this->formatMoney($averageTicket),
-            'delivered_orders' => $deliveredOrders,
-            'undelivered_orders' => $totalOrders - $deliveredOrders,
+            'completed_orders' => $completedOrders,
+            'uncompleted_orders' => $totalOrders - $completedOrders,
             'paid_orders' => $paidOrders,
             'unpaid_orders' => $totalOrders - $paidOrders,
             'amount_received' => $this->formatMoney($amountReceived),
@@ -62,7 +55,7 @@ class ReportService
     public function charts(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $totalOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->count();
-        $deliveredOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_delivered', true)->count();
+        $completedOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
         $paidOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
         $totalAmount = (float) $this->ordersQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
@@ -74,9 +67,9 @@ class ReportService
                 'paid' => $paidOrders,
                 'unpaid' => $totalOrders - $paidOrders,
             ],
-            'delivered_vs_undelivered' => [
-                'delivered' => $deliveredOrders,
-                'undelivered' => $totalOrders - $deliveredOrders,
+            'completed_vs_uncompleted' => [
+                'completed' => $completedOrders,
+                'uncompleted' => $totalOrders - $completedOrders,
             ],
             'received_vs_receivable' => [
                 'received' => $this->formatMoney($amountReceived),
@@ -97,50 +90,6 @@ class ReportService
         ];
     }
 
-    public function operationHealth(int $tenantId): array
-    {
-        $stageSummary = [
-            'approval' => $this->emptyOperationStageSummary('approval', 'Aguardando aprovação'),
-            'confirmed' => $this->emptyOperationStageSummary('confirmed', 'Confirmado'),
-            'financial_pending' => $this->emptyOperationStageSummary('financial_pending', 'Pendente financeiro'),
-        ];
-
-        foreach ($this->activeOperationOrders($tenantId) as $order) {
-            $stage = $this->deriveOperationStageFromRow($order);
-            if ($stage === null) {
-                continue;
-            }
-
-            $ageInMinutes = $this->minutesSince($order->created_at);
-            $stageSummary[$stage]['total']++;
-            $stageSummary[$stage]['oldest_minutes'] = $stageSummary[$stage]['oldest_minutes'] === null
-                ? $ageInMinutes
-                : max($stageSummary[$stage]['oldest_minutes'], $ageInMinutes);
-
-            $thresholds = self::OPERATION_STAGE_THRESHOLDS[$stage];
-
-            if ($ageInMinutes >= $thresholds['critical']) {
-                $stageSummary[$stage]['critical']++;
-                continue;
-            }
-
-            if ($ageInMinutes >= $thresholds['attention']) {
-                $stageSummary[$stage]['attention']++;
-            }
-        }
-
-        $internalAttentionItems = collect($stageSummary)->sum(fn (array $stage) => $stage['attention'] + $stage['critical']);
-        $internalCriticalItems = collect($stageSummary)->sum(fn (array $stage) => $stage['critical']);
-
-        return [
-            'internal' => $stageSummary,
-            'totals' => [
-                'items_requiring_attention' => $internalAttentionItems,
-                'critical_items' => $internalCriticalItems,
-            ],
-        ];
-    }
-
     public function filteredOrders(
         int $tenantId,
         array $filters,
@@ -151,7 +100,7 @@ class ReportService
     {
         $sortable = [
             'is_paid' => 'orders.is_paid',
-            'is_delivered' => 'orders.is_delivered',
+            'is_completed' => 'orders.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
@@ -180,13 +129,13 @@ class ReportService
         if ($total === 0) {
             return [
                 'total' => 0,
-                'delivered_percentage' => 0.0,
+                'completed_percentage' => 0.0,
                 'paid_percentage' => 0.0,
                 'overdue_percentage' => 0.0,
             ];
         }
 
-        $delivered = $this->ordersEloquentQuery($tenantId, $filters)->where('is_delivered', true)->count();
+        $completed = $this->ordersEloquentQuery($tenantId, $filters)->where('is_completed', true)->count();
         $paid = $this->ordersEloquentQuery($tenantId, $filters)->where('is_paid', true)->count();
         $overdue = $this->ordersEloquentQuery($tenantId, $filters)
             ->where('is_paid', false)
@@ -197,7 +146,7 @@ class ReportService
 
         return [
             'total' => $total,
-            'delivered_percentage' => round(($delivered / $total) * 100, 2),
+            'completed_percentage' => round(($completed / $total) * 100, 2),
             'paid_percentage' => round(($paid / $total) * 100, 2),
             'overdue_percentage' => round(($overdue / $total) * 100, 2),
         ];
@@ -267,70 +216,6 @@ class ReportService
             ->whereNull('cancelled_at')
             ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('created_at', '<=', $dateTo));
-    }
-
-    /**
-     * Pedidos ainda em fluxo operacional ou aguardando baixa financeira.
-     * Mantém o mesmo recorte usado pela central operacional do front.
-     */
-    private function activeOperationOrders(int $tenantId): Collection
-    {
-        return DB::table('orders')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->whereNull('cancelled_at')
-            ->select([
-                'status',
-                'is_delivered',
-                'is_paid',
-                'created_at',
-            ])
-            ->get();
-    }
-
-    /**
-     * Espelha a regra do frontend para não existir divergência entre a fila
-     * operacional e a telemetria agregada do dashboard.
-     */
-    private function deriveOperationStageFromRow(object $order): ?string
-    {
-        if (($order->status ?? null) === 'rejected') {
-            return null;
-        }
-
-        if (($order->status ?? null) === 'pending_approval') {
-            return 'approval';
-        }
-
-        if ((bool) ($order->is_delivered ?? false) === true && (bool) ($order->is_paid ?? false) === false) {
-            return 'financial_pending';
-        }
-
-        if (
-            ($order->status ?? null) === 'confirmed'
-            && (bool) ($order->is_delivered ?? false) === false
-        ) {
-            return 'confirmed';
-        }
-
-        return null;
-    }
-
-    private function emptyOperationStageSummary(string $stage, string $label): array
-    {
-        return [
-            'stage' => $stage,
-            'label' => $label,
-            'total' => 0,
-            'attention' => 0,
-            'critical' => 0,
-            'oldest_minutes' => null,
-        ];
-    }
-
-    private function minutesSince(mixed $dateTime): int
-    {
-        return max(0, Carbon::parse($dateTime)->diffInMinutes(now()));
     }
 
     /**
@@ -526,17 +411,17 @@ class ReportService
             ->where('orders.tenant_id', $tenantId)
             ->whereNull('orders.deleted_at')
             ->whereNull('orders.cancelled_at')
-            ->whereNotNull('orders.delivered_at')
+            ->whereNotNull('orders.completed_at')
             ->whereNotNull('orders.paid_at')
                         ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->get(['final_customers.name as client_name', 'orders.delivered_at', 'orders.paid_at']);
+            ->get(['final_customers.name as client_name', 'orders.completed_at', 'orders.paid_at']);
 
         return $rows
             ->groupBy('client_name')
             ->map(function ($clientRows, $clientName) {
                 $days = collect($clientRows)->map(function ($row) {
-                    return Carbon::parse($row->delivered_at)->diffInDays(Carbon::parse($row->paid_at));
+                    return Carbon::parse($row->completed_at)->diffInDays(Carbon::parse($row->paid_at));
                 });
 
                 return [
@@ -905,7 +790,7 @@ class ReportService
 
     /**
      * Filtros: client_uuid, client_name, is_paid,
-     * is_delivered, date_from, date_to (por created_at). Cancelado
+     * is_completed, date_from, date_to (por created_at). Cancelado
      * sempre excluído — não há filtro para incluir cancelados neste
      * endpoint (ver contrato em routes/api.php).
      */
@@ -932,8 +817,8 @@ class ReportService
             $query->where('is_paid', filter_var($filters['is_paid'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (array_key_exists('is_delivered', $filters) && $filters['is_delivered'] !== null) {
-            $query->where('is_delivered', filter_var($filters['is_delivered'], FILTER_VALIDATE_BOOLEAN));
+        if (array_key_exists('is_completed', $filters) && $filters['is_completed'] !== null) {
+            $query->where('is_completed', filter_var($filters['is_completed'], FILTER_VALIDATE_BOOLEAN));
         }
 
         if (!empty($filters['date_from'])) {

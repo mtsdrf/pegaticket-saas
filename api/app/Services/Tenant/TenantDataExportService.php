@@ -103,7 +103,7 @@ class TenantDataExportService
                 'orders.total_amount as total_amount',
                 'orders.origin as origin',
                 'orders.is_paid as is_paid',
-                'orders.is_delivered as is_delivered',
+                'orders.is_completed as is_completed',
                 'orders.cancelled_at as cancelled_at',
                 'orders.created_at as created_at',
             ])
@@ -116,7 +116,7 @@ class TenantDataExportService
         });
 
         return $this->toCsv(
-            ['uuid', 'client_name', 'total_amount', 'origin', 'is_paid', 'is_delivered', 'cancelled_at', 'created_at'],
+            ['uuid', 'client_name', 'total_amount', 'origin', 'is_paid', 'is_completed', 'cancelled_at', 'created_at'],
             $rows
         );
     }

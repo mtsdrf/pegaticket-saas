@@ -1,7 +1,7 @@
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import { Box, Button, Chip } from '@mui/material'
@@ -108,7 +108,7 @@ export function SaleReportListPage() {
         filterType: 'boolean',
         cellRenderer: (row) => <ActiveChip isActive={row.is_paid} activeLabel="Sim" inactiveLabel="Não" />,
       },
-      { field: 'is_delivered', headerName: 'Entregue', width: 120, filterType: 'boolean' },
+      { field: 'is_completed', headerName: 'Concluída', width: 120, filterType: 'boolean' },
       { field: 'created_at', headerName: 'Criado em', width: 180, filterType: 'none', sortable: false },
     ],
     [],
@@ -180,9 +180,9 @@ export function SaleReportListPage() {
           index={0}
         />
         <MetricCard
-          icon={LocalShippingOutlinedIcon}
-          label="Entregues"
-          value={summary ? formatPercentage(summary.delivered_percentage) : null}
+          icon={TaskAltOutlinedIcon}
+          label="Concluídas"
+          value={summary ? formatPercentage(summary.completed_percentage) : null}
           tone="accent"
           isLoading={isLoadingSummary}
           index={1}

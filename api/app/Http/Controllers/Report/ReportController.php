@@ -16,7 +16,7 @@ class ReportController extends Controller
         'bairro_uuid',
         'client_name',
         'is_paid',
-        'is_delivered',
+        'is_completed',
         'date_from',
         'date_to',
         'origin',
@@ -47,13 +47,6 @@ class ReportController extends Controller
         );
 
         return APIResponse::success($data, __('messages.report.charts'));
-    }
-
-    public function operationHealth()
-    {
-        $data = $this->service->operationHealth(app('tenant_id'));
-
-        return APIResponse::success($data, __('messages.report.operation_health'));
     }
 
     public function sales(Request $request)

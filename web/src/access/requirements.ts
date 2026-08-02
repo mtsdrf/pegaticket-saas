@@ -60,8 +60,9 @@ export const ACCESS = {
   storefrontSalesRead: tenant('storefront-sales', 'read'),
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),
   storefrontSalesCancel: tenant('storefront-sales', 'cancel'),
-  storefrontSalesDeliver: tenant('storefront-sales', 'deliver'),
-  storefrontSalesUndeliver: tenant('storefront-sales', 'undeliver'),
+  /** Não é entrega física — action key técnica `deliver`/`undeliver` mantida no backend (permissão já atribuída em produção). */
+  storefrontSalesComplete: tenant('storefront-sales', 'deliver'),
+  storefrontSalesReopen: tenant('storefront-sales', 'undeliver'),
   storefrontSalesPay: tenant('storefront-sales', 'pay'),
   reportsRead: tenant('reports', 'read'),
   /** Conciliação financeira (roadmap A3.12) — `payments`/`refunds`/`webhook_events` do tenant. */

@@ -236,8 +236,8 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
 }
 
 /**
- * Avaliação de venda entregue (Delivery Fase 4) — só aparece quando
- * `sale.is_delivered` E o `FinalCustomer` está autenticado no portal. Sem
+ * Avaliação de venda concluída (Fase 4) — só aparece quando
+ * `sale.is_completed` E o `FinalCustomer` está autenticado no portal. Sem
  * endpoint de "já avaliei" separado: depois do envio, esconde o formulário e
  * mostra a nota enviada só para esta sessão (estado local, não persistido).
  */
@@ -474,7 +474,7 @@ export function SaleTrackingPage() {
 
     fetchTracking(true)
     // Situação do pedido muda sem o cliente recarregar a página (loja
-    // aprova/despacha/entrega) — atualiza sozinho a cada 30s, sem reexibir
+    // aprova/conclui/paga) — atualiza sozinho a cada 30s, sem reexibir
     // o skeleton de loading (só troca os dados quando a resposta chega).
     const interval = setInterval(() => fetchTracking(false), REFRESH_INTERVAL_MS)
 
@@ -560,7 +560,7 @@ export function SaleTrackingPage() {
 
             {isPortalAuthenticated && order.is_paid && <TicketsSection saleUuid={order.uuid} />}
 
-            {order.is_delivered && isPortalAuthenticated && <SaleRatingSection saleUuid={order.uuid} />}
+            {order.is_completed && isPortalAuthenticated && <SaleRatingSection saleUuid={order.uuid} />}
 
             <LinkOrdersSection saleUuid={order.uuid} />
           </Stack>

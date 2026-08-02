@@ -52,7 +52,7 @@ class PortalResaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => $quantity * $unitPrice,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
         ]);
 
         SaleItem::create([

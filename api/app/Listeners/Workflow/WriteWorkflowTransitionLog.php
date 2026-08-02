@@ -5,7 +5,7 @@ namespace App\Listeners\Workflow;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
-use App\Events\Sale\SaleDelivered;
+use App\Events\Sale\SaleCompleted;
 use App\Events\Sale\SaleRejected;
 use App\Models\Sale\Sale;
 use App\Services\Workflow\WorkflowTransitionLogger;
@@ -23,7 +23,7 @@ class WriteWorkflowTransitionLog
             $event instanceof SaleCreated => $this->handleOrderCreated($event),
             $event instanceof SaleApproved => $this->handleOrderApproved($event),
             $event instanceof SaleRejected => $this->handleOrderRejected($event),
-            $event instanceof SaleDelivered => $this->handleOrderDelivered($event),
+            $event instanceof SaleCompleted => $this->handleOrderCompleted($event),
             $event instanceof SaleCancelled => $this->handleOrderCancelled($event),
             default => null,
         };
@@ -84,7 +84,7 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderDelivered(SaleDelivered $event): void
+    private function handleOrderCompleted(SaleCompleted $event): void
     {
         $order = Sale::query()->find($event->orderId);
 

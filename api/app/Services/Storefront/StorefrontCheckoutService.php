@@ -143,7 +143,7 @@ class StorefrontCheckoutService
                 isInstallment: false,
                 installmentsCount: null,
                 notes: $dto->notes,
-                markAsDelivered: false,
+                markAsCompleted: false,
                 markAsPaid: false,
                 items: $items,
                 origin: 'storefront',

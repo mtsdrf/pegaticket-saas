@@ -2,7 +2,7 @@ export interface SaleReportFilters {
   client_uuid?: string
   client_name?: string
   is_paid?: boolean
-  is_delivered?: boolean
+  is_completed?: boolean
   date_from?: string
   date_to?: string
   /** Drill-down do relatório "Resultado por canal" (`/relatorios/canais`) — `?origin=X` na URL. */
@@ -15,7 +15,7 @@ export interface SaleReportFilters {
 
 export interface SaleReportSummary {
   total: number
-  delivered_percentage: number
+  completed_percentage: number
   paid_percentage: number
   overdue_percentage: number
 }

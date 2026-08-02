@@ -8,14 +8,14 @@ use App\DTOs\Sale\UpdateSaleItemsDTO;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
-use App\Events\Sale\SaleDelivered;
+use App\Events\Sale\SaleCompleted;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
 use App\Events\Sale\SaleItemsUpdated;
 use App\Events\Sale\SalePaid;
 use App\Events\Sale\SalePartiallyPaid;
 use App\Events\Sale\SaleRejected;
-use App\Events\Sale\SaleUndelivered;
+use App\Events\Sale\SaleReopened;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancellationApproved;
@@ -109,7 +109,7 @@ class SaleService
             'total_amount' => 'orders.total_amount',
             'is_installment' => 'orders.is_installment',
             'is_paid' => 'orders.is_paid',
-            'is_delivered' => 'orders.is_delivered',
+            'is_completed' => 'orders.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
@@ -124,8 +124,8 @@ class SaleService
                 'orders.total_amount',
                 'orders.is_paid',
                 'orders.paid_at',
-                'orders.is_delivered',
-                'orders.delivered_at',
+                'orders.is_completed',
+                'orders.completed_at',
                 'orders.due_date',
                 'orders.cancelled_at',
                 'orders.status',
@@ -160,8 +160,8 @@ class SaleService
             $query->where('is_paid', filter_var($filters['is_paid'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (array_key_exists('is_delivered', $filters) && $filters['is_delivered'] !== null) {
-            $query->where('is_delivered', filter_var($filters['is_delivered'], FILTER_VALIDATE_BOOLEAN));
+        if (array_key_exists('is_completed', $filters) && $filters['is_completed'] !== null) {
+            $query->where('is_completed', filter_var($filters['is_completed'], FILTER_VALIDATE_BOOLEAN));
         }
 
         if (array_key_exists('is_installment', $filters) && $filters['is_installment'] !== null) {
@@ -205,10 +205,10 @@ class SaleService
                 'confirmed' => $query
                     ->whereNull('orders.cancelled_at')
                     ->where('orders.status', 'confirmed')
-                    ->where('orders.is_delivered', false),
+                    ->where('orders.is_completed', false),
                 'financial_pending' => $query
                     ->whereNull('orders.cancelled_at')
-                    ->where('orders.is_delivered', true)
+                    ->where('orders.is_completed', true)
                     ->where('orders.is_paid', false),
                 default => null,
             };
@@ -225,7 +225,7 @@ class SaleService
         if ($activeOnly) {
             $query->whereNull('cancelled_at')
                 ->where('orders.status', '!=', 'rejected')
-                ->where(fn($q) => $q->where('is_paid', false)->orWhere('is_delivered', false));
+                ->where(fn($q) => $q->where('is_paid', false)->orWhere('is_completed', false));
 
             $query->orderByRaw("(orders.status = 'pending_approval') DESC, orders.id ASC");
         } else {
@@ -301,7 +301,7 @@ class SaleService
                 'coupon_id' => $dto->couponId,
                 'discount_amount' => $dto->discountAmount,
                 'is_paid' => false,
-                'is_delivered' => false,
+                'is_completed' => false,
                 'due_date' => $dueDate,
                 'notes' => $dto->notes,
                 'payment_method' => $dto->paymentMethod,
@@ -343,8 +343,8 @@ class SaleService
             // transações). mark_as_paid=true com is_installment=true já é
             // bloqueado na validação (StoreSaleRequest), guard aqui é só
             // defensivo.
-            if ($dto->markAsDelivered) {
-                $order = $this->performDelivery($order);
+            if ($dto->markAsCompleted) {
+                $order = $this->performCompletion($order);
             }
 
             if ($dto->markAsPaid && !$dto->isInstallment) {
@@ -481,7 +481,7 @@ class SaleService
         });
     }
 
-    public function deliver(Sale $order): Sale
+    public function complete(Sale $order): Sale
     {
         $this->assertBelongsToCurrentTenant($order);
 
@@ -494,11 +494,11 @@ class SaleService
                 throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
             }
 
-            if ($order->is_delivered) {
-                throw new InvalidSaleStateException(__('messages.order.already_delivered'));
+            if ($order->is_completed) {
+                throw new InvalidSaleStateException(__('messages.order.already_completed'));
             }
 
-            return $this->performDelivery($order);
+            return $this->performCompletion($order);
         });
     }
 
@@ -523,11 +523,11 @@ class SaleService
 
     /**
      * Desfaz deliver(): devolve o estoque convertido em saída de volta
-     * para RESERVADO (não só "disponível") — ver performUndelivery() para
+     * para RESERVADO (não só "disponível") — ver performReversal() para
      * o porquê dos dois passos por item. Pedido continua ativo (diferente
      * de cancel(), que é definitivo).
      */
-    public function undeliver(Sale $order): Sale
+    public function reopen(Sale $order): Sale
     {
         $this->assertBelongsToCurrentTenant($order);
 
@@ -538,11 +538,11 @@ class SaleService
                 throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
             }
 
-            if (!$order->is_delivered) {
-                throw new InvalidSaleStateException(__('messages.order.not_delivered'));
+            if (!$order->is_completed) {
+                throw new InvalidSaleStateException(__('messages.order.not_completed'));
             }
 
-            return $this->performUndelivery($order);
+            return $this->performReversal($order);
         });
     }
 
@@ -622,7 +622,7 @@ class SaleService
     /**
      * Cascata de quitação (confirmada no legado): ao pagar a última
      * parcela pendente, o pedido inteiro vira is_paid=true E
-     * is_delivered=true — se ainda não tinha sido entregue, a mesma
+     * is_completed=true — se ainda não tinha sido entregue, a mesma
      * integração de estoque de deliver() roda aqui dentro da transação.
      */
     public function payInstallment(Sale $order, SaleInstallment $installment, ?string $paidAt = null): Sale
@@ -665,8 +665,8 @@ class SaleService
                 ->doesntExist();
 
             if ($allInstallmentsPaid) {
-                if (!$order->is_delivered) {
-                    $order = $this->performDelivery($order);
+                if (!$order->is_completed) {
+                    $order = $this->performCompletion($order);
                 }
 
                 $order = $this->performPayment($order, $paidAt ? \Carbon\Carbon::parse($paidAt) : null);
@@ -680,7 +680,7 @@ class SaleService
      * Desfaz payInstallment() de UMA parcela. Reversão de cascata: se o
      * pedido tinha virado is_paid=true (só acontece quando TODAS as
      * parcelas estavam pagas), volta para false já que agora nem todas
-     * estão. NÃO mexe em is_delivered/delivered_at — entrega é um fato
+     * estão. NÃO mexe em is_completed/completed_at — entrega é um fato
      * físico independente de pagamento; desfazer o pagamento de uma
      * parcela não desfaz uma entrega que já aconteceu (decisão de
      * design, ver .claude/memory/api-patterns.md).
@@ -890,7 +890,7 @@ class SaleService
 
     /**
      * Só o cliente final pode solicitar (decisão de produto), e só
-     * enquanto o pedido não passou de "entregue" (flag is_delivered), não
+     * enquanto o pedido não passou de "entregue" (flag is_completed), não
      * pelo enum de status. Pedido já `rejected`/já cancelado/já com
      * solicitação em aberto também bloqueiam (nada a cancelar/duplicar).
      */
@@ -912,8 +912,8 @@ class SaleService
             throw new InvalidSaleStateException(__('messages.order.order_rejected'));
         }
 
-        if ($order->is_delivered) {
-            throw new InvalidSaleStateException(__('messages.order.already_delivered'));
+        if ($order->is_completed) {
+            throw new InvalidSaleStateException(__('messages.order.already_completed'));
         }
     }
 
@@ -988,19 +988,19 @@ class SaleService
     /**
      * Marca o pedido como entregue. Sem guard/lock/transação próprios —
      * quem chama já garantiu a validade da transição (deliver() valida
-     * cancelled_at/is_delivered e trava a linha; create() está criando a
+     * cancelled_at/is_completed e trava a linha; create() está criando a
      * linha agora, sem concorrência possível; a cascata de
-     * payInstallment() já trava a linha e checa is_delivered antes de
+     * payInstallment() já trava a linha e checa is_completed antes de
      * chamar). Reaproveitado nos 3 lugares.
      */
-    private function performDelivery(Sale $order): Sale
+    private function performCompletion(Sale $order): Sale
     {
         $fromStage = 'confirmed';
-        $order->is_delivered = true;
-        $order->delivered_at = now();
+        $order->is_completed = true;
+        $order->completed_at = now();
         $order->save();
 
-        event(new SaleDelivered(
+        event(new SaleCompleted(
             orderId: $order->id,
             orderUuid: $order->uuid,
             fromStage: $fromStage,
@@ -1012,16 +1012,16 @@ class SaleService
     }
 
     /**
-     * Inverso de performDelivery(): desmarca o pedido como entregue. Sem
-     * guard/lock/transação próprios — mesma convenção de performDelivery().
+     * Inverso de performCompletion(): desmarca o pedido como entregue. Sem
+     * guard/lock/transação próprios — mesma convenção de performCompletion().
      */
-    private function performUndelivery(Sale $order): Sale
+    private function performReversal(Sale $order): Sale
     {
-        $order->is_delivered = false;
-        $order->delivered_at = null;
+        $order->is_completed = false;
+        $order->completed_at = null;
         $order->save();
 
-        event(new SaleUndelivered(
+        event(new SaleReopened(
             orderUuid: $order->uuid,
             actorId: Auth::id()
         ));
@@ -1031,7 +1031,7 @@ class SaleService
 
     /**
      * Marca o pedido como pago integralmente. Sem guard/lock próprios —
-     * mesma lógica de performDelivery() acima. Reaproveitado por pay(),
+     * mesma lógica de performCompletion() acima. Reaproveitado por pay(),
      * create() (mark_as_paid) e pela cascata de payInstallment().
      */
     private function performPayment(Sale $order, ?\Carbon\CarbonInterface $paidAt = null): Sale
@@ -1262,7 +1262,7 @@ class SaleService
 
     /**
      * Trava a linha do Sale antes de qualquer leitura de estado
-     * (cancelled_at/is_paid/is_delivered) dentro de deliver/pay/
+     * (cancelled_at/is_paid/is_completed) dentro de deliver/pay/
      * payInstallment/cancel — sem isso, duas ações concorrentes no mesmo
      * pedido (ex.: deliver() e a cascata de payInstallment() ao mesmo
      * tempo) podem ambas ler o estado "antigo" antes de qualquer uma
@@ -1284,8 +1284,8 @@ class SaleService
             throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
         }
 
-        if ($order->is_delivered) {
-            throw new InvalidSaleStateException(__('messages.order.already_delivered'));
+        if ($order->is_completed) {
+            throw new InvalidSaleStateException(__('messages.order.already_completed'));
         }
 
         if ($order->is_paid) {

@@ -69,7 +69,7 @@ class PortalAddressAndVouchersTest extends TestCase
             'is_installment' => false,
             'total_amount' => 50,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
         ]);
 
         $coupon = Coupon::create([

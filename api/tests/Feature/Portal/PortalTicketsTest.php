@@ -57,7 +57,7 @@ class PortalTicketsTest extends TestCase
             'is_installment' => false,
             'total_amount' => 80,
             'is_paid' => true,
-            'is_delivered' => false,
+            'is_completed' => false,
         ]);
 
         $item = SaleItem::create([
@@ -110,7 +110,7 @@ class PortalTicketsTest extends TestCase
             'is_installment' => false,
             'total_amount' => 50,
             'is_paid' => true,
-            'is_delivered' => false,
+            'is_completed' => false,
         ]);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)

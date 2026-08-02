@@ -33,12 +33,13 @@ export function updateSaleItems(uuid: string, payload: SaleUpdateItemsPayload): 
   return unwrap(apiClient.put<ApiSuccess<Sale>>(`/sales/${uuid}/items`, payload))
 }
 
-export function deliverSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/deliver`))
+/** Marca a venda como concluída (não é entrega física — libera quitação de parcela, trava edição de itens). */
+export function completeSale(uuid: string): Promise<Sale> {
+  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/complete`))
 }
 
-export function undeliverSale(uuid: string): Promise<Sale> {
-  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/undeliver`))
+export function reopenSale(uuid: string): Promise<Sale> {
+  return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/sales/${uuid}/reopen`))
 }
 
 /**

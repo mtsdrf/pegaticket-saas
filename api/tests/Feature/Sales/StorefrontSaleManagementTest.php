@@ -78,11 +78,11 @@ class StorefrontSaleManagementTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed');
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')
             ->assertStatus(200)
-            ->assertJsonPath('data.is_delivered', true);
+            ->assertJsonPath('data.is_completed', true);
 
-        $this->assertTrue($order->fresh()->is_delivered);
+        $this->assertTrue($order->fresh()->is_completed);
     }
 
     #[Test]
@@ -132,7 +132,7 @@ class StorefrontSaleManagementTest extends TestCase
         $this->auth()->postJson('/api/v1/storefront-sales/' . $order->uuid . '/approve')->assertStatus(200);
 
         // ...mas continua SEM acesso à rota genérica /orders/{order}/deliver.
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver')->assertStatus(403);
+        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')->assertStatus(403);
     }
 
     #[Test]
@@ -176,13 +176,13 @@ class StorefrontSaleManagementTest extends TestCase
     {
         $order = $this->createPendingApprovalOrder();
         $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')->assertStatus(200);
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undeliver')
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/reopen')
             ->assertStatus(200)
-            ->assertJsonPath('data.is_delivered', false);
+            ->assertJsonPath('data.is_completed', false);
 
-        $this->assertFalse($order->fresh()->is_delivered);
+        $this->assertFalse($order->fresh()->is_completed);
     }
 
     #[Test]
@@ -212,12 +212,12 @@ class StorefrontSaleManagementTest extends TestCase
 
         $deliveredUnpaid = $this->createPendingApprovalOrder();
         $this->approve($deliveredUnpaid);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $deliveredUnpaid->uuid . '/deliver')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $deliveredUnpaid->uuid . '/complete')->assertStatus(200);
 
         // Concluído (pago + entregue) — deve ser EXCLUÍDO.
         $completed = $this->createPendingApprovalOrder();
         $this->approve($completed);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/deliver')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/complete')->assertStatus(200);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/pay')->assertStatus(200);
 
         // Recusado — EXCLUÍDO.
@@ -254,7 +254,7 @@ class StorefrontSaleManagementTest extends TestCase
         // (pago+entregue) continua aparecendo na listagem normal.
         $completed = $this->createPendingApprovalOrder();
         $this->approve($completed);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/deliver')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/complete')->assertStatus(200);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $completed->uuid . '/pay')->assertStatus(200);
 
         $this->auth()->getJson('/api/v1/storefront-sales')
@@ -279,9 +279,9 @@ class StorefrontSaleManagementTest extends TestCase
 
         $order = $this->createPendingApprovalOrder();
         $this->approve($order);
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/deliver')->assertStatus(200);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/complete')->assertStatus(200);
 
-        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/undeliver')->assertStatus(403);
+        $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/reopen')->assertStatus(403);
         $this->auth()->patchJson('/api/v1/storefront-sales/' . $order->uuid . '/pay')->assertStatus(403);
     }
 }

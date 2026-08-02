@@ -764,11 +764,16 @@ Route::prefix('v1')->group(function () {
             Route::put('/{sale}/items', [SaleController::class, 'updateItems'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-update-items']);
 
-            Route::patch('/{sale}/deliver', [SaleController::class, 'deliver'])
-                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-deliver']);
+            // URL/método renomeados de deliver/undeliver para complete/reopen
+            // (não é entrega física, é o gate de conclusão do pedido — ver
+            // Sale::is_completed). Permissão técnica `sales,deliver` mantida
+            // como está (grupos já têm essa permissão atribuída em produção;
+            // renomear a action key exigiria migração de dados de permissão).
+            Route::patch('/{sale}/complete', [SaleController::class, 'complete'])
+                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-complete']);
 
-            Route::patch('/{sale}/undeliver', [SaleController::class, 'undeliver'])
-                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-undeliver']);
+            Route::patch('/{sale}/reopen', [SaleController::class, 'reopen'])
+                ->middleware(['tenant', 'perm:sales,deliver', 'throttle:30,1,sales-reopen']);
 
             Route::patch('/{sale}/pay', [SaleController::class, 'pay'])
                 ->middleware(['tenant', 'perm:sales,pay', 'throttle:30,1,sales-pay']);
@@ -897,15 +902,15 @@ Route::prefix('v1')->group(function () {
             Route::patch('/{sale}/cancel', [SaleController::class, 'cancel'])
                 ->middleware(['tenant', 'perm:storefront-sales,cancel', 'throttle:30,1,storefront-sales-cancel']);
 
-            Route::patch('/{sale}/deliver', [SaleController::class, 'deliver'])
-                ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-deliver']);
+            Route::patch('/{sale}/complete', [SaleController::class, 'complete'])
+                ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-complete']);
 
-            // Reaproveitam os MESMOS métodos de SaleController (undeliver/
+            // Reaproveitam os MESMOS métodos de SaleController (reopen/
             // pay) já usados pelas rotas /orders/*, só com a permissão
             // isolada da tela da loja. pay sem `amount` no body = pagamento
             // integral (a tela da loja nunca faz pagamento parcial).
-            Route::patch('/{sale}/undeliver', [SaleController::class, 'undeliver'])
-                ->middleware(['tenant', 'perm:storefront-sales,undeliver', 'throttle:30,1,storefront-sales-undeliver']);
+            Route::patch('/{sale}/reopen', [SaleController::class, 'reopen'])
+                ->middleware(['tenant', 'perm:storefront-sales,undeliver', 'throttle:30,1,storefront-sales-reopen']);
 
             Route::patch('/{sale}/pay', [SaleController::class, 'pay'])
                 ->middleware(['tenant', 'perm:storefront-sales,pay', 'throttle:30,1,storefront-sales-pay']);
@@ -920,9 +925,6 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/charts', [ReportController::class, 'charts'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-charts']);
-
-            Route::get('/operation-health', [ReportController::class, 'operationHealth'])
-                ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-operation-health']);
 
             Route::get('/sales', [ReportController::class, 'sales'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales']);

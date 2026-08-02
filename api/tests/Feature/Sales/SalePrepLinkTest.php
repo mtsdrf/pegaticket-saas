@@ -50,7 +50,7 @@ class SalePrepLinkTest extends TestCase
             'is_installment' => false,
             'total_amount' => 100,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'origin' => 'storefront',
             'status' => 'pending_approval',
         ]);

@@ -103,7 +103,7 @@ export function SaleFormPage() {
   const [installmentsCount, setInstallmentsCount] = useState('2')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([createDraftItem()])
-  const [markAsDelivered, setMarkAsDelivered] = useState(true)
+  const [markAsCompleted, setMarkAsCompleted] = useState(true)
   const [markAsPaid, setMarkAsPaid] = useState(false)
   const [paidAmount, setPaidAmount] = useState('')
 
@@ -201,7 +201,7 @@ export function SaleFormPage() {
         installments_count: isInstallment ? Number(installmentsCount) : null,
         notes: notes.trim() || undefined,
         items: itemsPayload,
-        mark_as_delivered: markAsDelivered,
+        mark_as_completed: markAsCompleted,
         mark_as_paid: isInstallment ? false : markAsPaid,
       })
 
@@ -371,8 +371,8 @@ export function SaleFormPage() {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
           <FormControlLabel
-            control={<Switch checked={markAsDelivered} onChange={(event) => setMarkAsDelivered(event.target.checked)} />}
-            label="Entregue"
+            control={<Switch checked={markAsCompleted} onChange={(event) => setMarkAsCompleted(event.target.checked)} />}
+            label="Concluída"
           />
           <Stack>
             <FormControlLabel

@@ -49,15 +49,15 @@ export function buildSaleCreatedWhatsAppMessage(params: {
 export function buildSaleSummaryWhatsAppMessage(params: {
   codigo: string
   clientName: string
-  isDelivered: boolean
-  deliveredAt: string | null
+  isCompleted: boolean
+  completedAt: string | null
   notes: string | null
   items: { name: string; quantity: number; unit: string | null; lineTotal: number }[]
   total: number
   paidAmount: number | null
   trackingUrl?: string
 }): string {
-  const { codigo, clientName, isDelivered, deliveredAt, notes, items, total, paidAmount, trackingUrl } = params
+  const { codigo, clientName, isCompleted, completedAt, notes, items, total, paidAmount, trackingUrl } = params
 
   const lines: string[] = [
     'Olá, obrigado por comprar em nossa loja!',
@@ -67,11 +67,11 @@ export function buildSaleSummaryWhatsAppMessage(params: {
     '',
     `Cliente: ${clientName}`,
     '',
-    `Entregue: ${isDelivered ? 'Sim' : 'Não'}`,
+    `Concluída: ${isCompleted ? 'Sim' : 'Não'}`,
   ]
 
-  if (deliveredAt) {
-    lines.push('', `Data de entrega: ${formatDateBR(deliveredAt)}`)
+  if (completedAt) {
+    lines.push('', `Data de conclusão: ${formatDateBR(completedAt)}`)
   }
 
   if (notes && notes.trim() !== '') {

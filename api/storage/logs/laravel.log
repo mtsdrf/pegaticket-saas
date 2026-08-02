@@ -2282,3 +2282,103 @@
 [2026-08-01 20:00:23] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
 [2026-08-01 20:00:59] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
 [2026-08-01 20:01:03] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:19:27] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:19:34] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:20:02] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:20:10] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:20:45] testing.ERROR: No matching handler found for Mockery_2_App_Services_Storefront_PushNotificationService::notifyFinalCustomer(1, 'Compra concluída', 'Sua compra foi concluída!', '/rastreio/30d7a4df-4ed2-43ed-84a2-1570b2fac88b'). Either the method was unexpected or its arguments matched no expected argument list for this method
+
+ {"userId":1,"exception":"[object] (Mockery\\Exception\\NoMatchingExpectationException(code: 0): No matching handler found for Mockery_2_App_Services_Storefront_PushNotificationService::notifyFinalCustomer(1, 'Compra concluída', 'Sua compra foi concluída!', '/rastreio/30d7a4df-4ed2-43ed-84a2-1570b2fac88b'). Either the method was unexpected or its arguments matched no expected argument list for this method
+
+ at /home/mtsdrf/workspace/pegaticket-saas/api/vendor/mockery/mockery/library/Mockery/ExpectationDirector.php:90)
+[stacktrace]
+#0 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/mockery/mockery/library/Mockery/Loader/EvalLoader.php(30) : eval()'d code(925): Mockery\\ExpectationDirector->call()
+#1 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/mockery/mockery/library/Mockery/Loader/EvalLoader.php(30) : eval()'d code(1030): Mockery_2_App_Services_Storefront_PushNotificationService->_mockery_handleMethodCall()
+#2 /home/mtsdrf/workspace/pegaticket-saas/api/app/Listeners/Sale/SendPushOnSaleCompleted.php(39): Mockery_2_App_Services_Storefront_PushNotificationService->notifyFinalCustomer()
+#3 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Events/Dispatcher.php(519): App\\Listeners\\Sale\\SendPushOnSaleCompleted->handle()
+#4 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Events/Dispatcher.php(329): Illuminate\\Events\\Dispatcher->{closure:Illuminate\\Events\\Dispatcher::createClassListener():512}()
+#5 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Events/Dispatcher.php(309): Illuminate\\Events\\Dispatcher->invokeListeners()
+#6 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php(505): Illuminate\\Events\\Dispatcher->dispatch()
+#7 /home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Sale/SaleService.php(1003): event()
+#8 /home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Sale/SaleService.php(501): App\\Services\\Sale\\SaleService->performCompletion()
+#9 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(35): App\\Services\\Sale\\SaleService->{closure:App\\Services\\Sale\\SaleService::complete():488}()
+#10 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(502): Illuminate\\Database\\Connection->transaction()
+#11 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(363): Illuminate\\Database\\DatabaseManager->__call()
+#12 /home/mtsdrf/workspace/pegaticket-saas/api/app/Services/Sale/SaleService.php(488): Illuminate\\Support\\Facades\\Facade::__callStatic()
+#13 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Controllers/Sale/SaleController.php(160): App\\Services\\Sale\\SaleService->complete()
+#14 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\\Http\\Controllers\\Sale\\SaleController->complete()
+#15 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(275): Illuminate\\Routing\\ControllerDispatcher->dispatch()
+#16 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Route.php(215): Illuminate\\Routing\\Route->runController()
+#17 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\\Routing\\Route->run()
+#18 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Routing\\Router->{closure:Illuminate\\Routing\\Router::runRouteWithinStack():821}()
+#19 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/ThrottleRequests.php(45): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():178}()
+#20 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\ThrottleRequests->handle()
+#21 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/CheckPermission.php(58): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#22 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\CheckPermission->handle()
+#23 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/ResolveTenant.php(66): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#24 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\ResolveTenant->handle()
+#25 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/JwtAccessMiddleware.php(67): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#26 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\JwtAccessMiddleware->handle()
+#27 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(52): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#28 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle()
+#29 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#30 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\\Pipeline\\Pipeline->then()
+#31 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate\\Routing\\Router->runRouteWithinStack()
+#32 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate\\Routing\\Router->runRoute()
+#33 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate\\Routing\\Router->dispatchToRoute()
+#34 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\\Routing\\Router->dispatch()
+#35 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Foundation\\Http\\Kernel->{closure:Illuminate\\Foundation\\Http\\Kernel::dispatchToRouter():197}()
+#36 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/SetLocale.php(17): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():178}()
+#37 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\SetLocale->handle()
+#38 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/ApplicationRequestLogger.php(15): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#39 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\ApplicationRequestLogger->handle()
+#40 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/RequestId.php(16): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#41 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\RequestId->handle()
+#42 /home/mtsdrf/workspace/pegaticket-saas/api/app/Http/Middleware/ApiHardening.php(14): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#43 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\ApiHardening->handle()
+#44 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#45 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle()
+#46 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle()
+#47 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#48 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle()
+#49 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle()
+#50 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#51 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\ValidatePostSize->handle()
+#52 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#53 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()
+#54 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#55 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\HandleCors->handle()
+#56 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#57 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\TrustProxies->handle()
+#58 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#59 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle()
+#60 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#61 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\ValidatePathEncoding->handle()
+#62 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#63 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\\Pipeline\\Pipeline->then()
+#64 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()
+#65 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate\\Foundation\\Http\\Kernel->handle()
+#66 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(573): Illuminate\\Foundation\\Testing\\TestCase->call()
+#67 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(471): Illuminate\\Foundation\\Testing\\TestCase->json()
+#68 /home/mtsdrf/workspace/pegaticket-saas/api/tests/Feature/Sales/SalePushNotificationTest.php(169): Illuminate\\Foundation\\Testing\\TestCase->patchJson()
+#69 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestCase.php(1318): Tests\\Feature\\Sales\\SalePushNotificationTest->delivering_a_storefront_order_with_a_confirmed_link_sends_a_push()
+#70 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestCase.php(1355): PHPUnit\\Framework\\TestCase->invokeTestMethod()
+#71 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestCase.php(521): PHPUnit\\Framework\\TestCase->runTest()
+#72 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(99): PHPUnit\\Framework\\TestCase->runBare()
+#73 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestCase.php(361): PHPUnit\\Framework\\TestRunner->run()
+#74 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\\Framework\\TestCase->run()
+#75 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\\Framework\\TestSuite->run()
+#76 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\\Framework\\TestSuite->run()
+#77 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\\Framework\\TestSuite->run()
+#78 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit\\TextUI\\TestRunner->run()
+#79 /home/mtsdrf/workspace/pegaticket-saas/api/vendor/phpunit/phpunit/phpunit(104): PHPUnit\\TextUI\\Application->run()
+#80 {main}
+"} 
+[2026-08-02 01:20:45] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:20:53] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:21:25] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:21:32] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:23:37] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:23:45] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 
+[2026-08-02 01:37:29] testing.WARNING: Web Push (VAPID) mal configurado — notificações push desativadas até corrigir o .env {"error":"[VAPID] You must provide a subject that is either a mailto: or a URL."} 
+[2026-08-02 01:37:37] testing.WARNING: Falha ao enviar Web Push notification {"push_subscription_id":1,"final_customer_id":1,"error":"timeout"} 

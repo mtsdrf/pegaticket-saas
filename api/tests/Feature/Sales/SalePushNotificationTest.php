@@ -54,7 +54,7 @@ class SalePushNotificationTest extends TestCase
             'is_installment' => false,
             'total_amount' => 30,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'status' => 'pending_approval',
             'origin' => 'storefront',
         ], $overrides));
@@ -160,13 +160,13 @@ class SalePushNotificationTest extends TestCase
                 ->once()
                 ->with(
                     $client->id,
-                    __('messages.push.order_delivered_title'),
-                    __('messages.push.order_delivered_body'),
+                    __('messages.push.order_completed_title'),
+                    __('messages.push.order_completed_body'),
                     '/rastreio/' . $order->uuid
                 );
         });
 
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver')
+        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')
             ->assertStatus(200);
     }
 
@@ -193,10 +193,10 @@ class SalePushNotificationTest extends TestCase
 
         $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/approve')->assertStatus(200);
 
-        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver')
+        $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')
             ->assertStatus(200);
 
-        $this->assertTrue($order->fresh()->is_delivered);
+        $this->assertTrue($order->fresh()->is_completed);
     }
 
     #[Test]

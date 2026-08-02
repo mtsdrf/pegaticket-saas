@@ -79,7 +79,7 @@ class SaleApprovalQueueTest extends TestCase
             'is_installment' => false,
             'total_amount' => 30,
             'is_paid' => false,
-            'is_delivered' => false,
+            'is_completed' => false,
             'status' => 'pending_approval',
             'origin' => 'storefront',
         ]);
@@ -184,10 +184,10 @@ class SaleApprovalQueueTest extends TestCase
     {
         $order = $this->createPendingApprovalOrderWithRealReservation();
 
-        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver');
+        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete');
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
-        $this->assertFalse($order->fresh()->is_delivered);
+        $this->assertFalse($order->fresh()->is_completed);
     }
 
     #[Test]
@@ -208,10 +208,10 @@ class SaleApprovalQueueTest extends TestCase
         $order->status = 'rejected';
         $order->save();
 
-        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver');
+        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete');
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
-        $this->assertFalse($order->fresh()->is_delivered);
+        $this->assertFalse($order->fresh()->is_completed);
     }
 
     #[Test]
@@ -220,9 +220,9 @@ class SaleApprovalQueueTest extends TestCase
         $order = $this->createPendingApprovalOrderWithRealReservation();
         $this->auth()->postJson('/api/v1/sales/' . $order->uuid . '/approve')->assertStatus(200);
 
-        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/deliver');
+        $response = $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete');
 
         $response->assertStatus(200);
-        $this->assertTrue($order->fresh()->is_delivered);
+        $this->assertTrue($order->fresh()->is_completed);
     }
 }

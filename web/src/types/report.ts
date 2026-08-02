@@ -2,8 +2,8 @@ export interface ReportIndicators {
   total_orders: number
   total_sales_amount: string
   average_ticket: string
-  delivered_orders: number
-  undelivered_orders: number
+  completed_orders: number
+  uncompleted_orders: number
   paid_orders: number
   unpaid_orders: number
   amount_received: string
@@ -112,25 +112,6 @@ export interface ChannelResultPoint {
   average_ticket: string
 }
 
-export type OperationHealthStageKey = 'approval' | 'confirmed' | 'financial_pending'
-
-export interface OperationHealthStageSummary {
-  stage: OperationHealthStageKey
-  label: string
-  total: number
-  attention: number
-  critical: number
-  oldest_minutes: number | null
-}
-
-export interface OperationHealthSummary {
-  internal: Record<OperationHealthStageKey, OperationHealthStageSummary>
-  totals: {
-    items_requiring_attention: number
-    critical_items: number
-  }
-}
-
 /** Rótulo em português de cada `orders.origin` — usado no relatório "Resultado por canal" e no drill-down até o relatório de pedidos. */
 export const CHANNEL_LABELS: Record<string, string> = {
   staff: 'Lançado internamente',
@@ -140,7 +121,7 @@ export const CHANNEL_LABELS: Record<string, string> = {
 export interface ReportCharts {
   orders_by_month: SalesByMonthPoint[]
   paid_vs_unpaid: { paid: number; unpaid: number }
-  delivered_vs_undelivered: { delivered: number; undelivered: number }
+  completed_vs_uncompleted: { completed: number; uncompleted: number }
   received_vs_receivable: { received: string; receivable: string }
   orders_by_city: SalesByCityPoint[]
   orders_by_neighborhood: SalesByNeighborhoodPoint[]

@@ -2,13 +2,11 @@ import AddBusinessOutlinedIcon from '@mui/icons-material/AddBusinessOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
-import ArrowOutwardOutlinedIcon from '@mui/icons-material/ArrowOutwardOutlined'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
@@ -26,12 +24,11 @@ import { useDashboardReport } from '../../hooks/useDashboardReport'
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
-import { PAGE_CONTAINER_SX, UI_RADIUS } from '../../styles/layoutStandards'
+import { PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { formatCurrency, formatPercentage } from '../../utils/format'
 import { presetRange } from '../../utils/period'
 import { ACCESS } from '../../access/requirements'
-import type { OperationHealthStageSummary } from '../../types/report'
 
 const QUICK_ACTIONS = [
   { icon: ReceiptLongOutlinedIcon, label: 'Nova venda', to: '/vendas/nova' },
@@ -40,117 +37,13 @@ const QUICK_ACTIONS = [
 
 const DEFAULT_RANGE = presetRange('this_month')
 
-function formatOperationAge(totalMinutes: number | null): string {
-  if (totalMinutes === null) return 'Sem fila agora'
-  if (totalMinutes < 60) return `${totalMinutes} min`
-
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  if (hours < 24) {
-    return minutes > 0 ? `${hours}h${String(minutes).padStart(2, '0')}` : `${hours}h`
-  }
-
-  const days = Math.floor(hours / 24)
-  const remainingHours = hours % 24
-
-  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`
-}
-
-function stageDestination(stage: OperationHealthStageSummary['stage']): string {
-  return `/vendas?stage=${stage}&source=dashboard`
-}
-
-function OperationHealthStageCard({
-  stage,
-  index,
-  canOpenQueue,
-}: {
-  stage: OperationHealthStageSummary
-  index: number
-  canOpenQueue: boolean
-}) {
-  const hasCritical = stage.critical > 0
-  const hasAttention = stage.attention > 0
-  const accent = hasCritical ? 'var(--pt-danger)' : hasAttention ? 'var(--pt-warning)' : 'var(--pt-primary)'
-  const subtitle =
-    stage.total === 0
-      ? 'Nenhum item nesta etapa.'
-      : `${stage.attention} em atenção • ${stage.critical} crítico${stage.critical === 1 ? '' : 's'}`
-
-  return (
-    <Paper
-      variant="outlined"
-      className="pt-reveal"
-      sx={{
-        p: { xs: 2, sm: 2.25 },
-        ...ELEVATED_SURFACE_SX,
-        animationDelay: `${index * 70}ms`,
-        borderColor: `color-mix(in srgb, ${accent} 26%, var(--pt-border))`,
-        background: `color-mix(in srgb, ${accent} 6%, var(--pt-surface))`,
-      }}
-    >
-      <Stack spacing={1.25}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
-              {stage.label}
-            </Typography>
-            <Typography sx={{ fontSize: 28, lineHeight: 1.1, fontWeight: 700, color: 'var(--pt-text)', fontVariantNumeric: 'tabular-nums' }}>
-              {stage.total}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              minWidth: 84,
-              px: 1.25,
-              py: 0.875,
-              borderRadius: UI_RADIUS.lg,
-              background: `color-mix(in srgb, ${accent} 12%, transparent)`,
-              color: accent,
-              textAlign: 'right',
-            }}
-          >
-            <Typography sx={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.28, textTransform: 'uppercase' }}>
-              Mais antigo
-            </Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-              {formatOperationAge(stage.oldest_minutes)}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-          {subtitle}
-        </Typography>
-
-        {canOpenQueue ? (
-          <Box>
-            <Button
-              component={RouterLink}
-              to={stageDestination(stage.stage)}
-              size="small"
-              variant={hasCritical || hasAttention ? 'contained' : 'text'}
-              endIcon={<ArrowOutwardOutlinedIcon sx={{ fontSize: 16 }} />}
-            >
-              Abrir fila
-            </Button>
-          </Box>
-        ) : null}
-      </Stack>
-    </Paper>
-  )
-}
-
 export function DashboardPage() {
   const { can } = useAccessControl()
   const { isAccessProfileLoading } = useAuth()
   const canViewStats = can(ACCESS.dashboard)
-  const canOpenOrdersQueue = can(ACCESS.salesRead)
-  const canOpenStorefrontQueue = can(ACCESS.storefrontSalesRead)
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
-  const { indicators, charts, operationHealth, isLoading, error } = useDashboardReport(from, to, canViewStats)
+  const { indicators, charts, isLoading, error } = useDashboardReport(from, to, canViewStats)
   const { checklist, dismiss: dismissChecklist } = useOnboardingChecklist()
   const showOnboardingChecklist = checklist !== null && checklist.completed < checklist.total && !checklist.is_dismissed
   const growthCaption = indicators
@@ -164,13 +57,6 @@ export function DashboardPage() {
     if (action.to === '/eventos/novo') return can(ACCESS.eventsCreate)
     return true
   })
-  const operationStages = operationHealth
-    ? [
-        operationHealth.internal.approval,
-        operationHealth.internal.confirmed,
-        operationHealth.internal.financial_pending,
-      ]
-    : []
   return (
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1600 }}>
       <PageHeader title="Visão geral" subtitle="Acompanhe os principais números da operação." accent />
@@ -354,11 +240,11 @@ export function DashboardPage() {
             index={2}
           />
           <MetricCard
-            icon={LocalShippingOutlinedIcon}
+            icon={TaskAltOutlinedIcon}
             label="Vendas não concluídas"
-            value={indicators ? String(indicators.undelivered_orders) : null}
-            caption={indicators ? `${indicators.delivered_orders} já entregue${indicators.delivered_orders === 1 ? '' : 's'}` : null}
-            tone={indicators && indicators.undelivered_orders > 0 ? 'warning' : 'primary'}
+            value={indicators ? String(indicators.uncompleted_orders) : null}
+            caption={indicators ? `${indicators.completed_orders} já concluída${indicators.completed_orders === 1 ? '' : 's'}` : null}
+            tone={indicators && indicators.uncompleted_orders > 0 ? 'warning' : 'primary'}
             isLoading={isLoading}
             index={3}
           />
@@ -366,155 +252,12 @@ export function DashboardPage() {
             icon={SellOutlinedIcon}
             label="Ticket médio"
             value={indicators ? formatCurrency(indicators.average_ticket) : null}
-            caption={indicators ? `${indicators.delivered_orders} entregues e ${indicators.paid_orders} pagos` : null}
+            caption={indicators ? `${indicators.completed_orders} concluídas e ${indicators.paid_orders} pagos` : null}
             tone="primary"
             isLoading={isLoading}
             index={4}
           />
         </Box>
-
-        <Paper
-          variant="outlined"
-          className="pt-reveal"
-          sx={{
-            p: { xs: 2, sm: 3 },
-            ...ELEVATED_SURFACE_SX,
-            animationDelay: '180ms',
-          }}
-        >
-          <Stack spacing={2}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-                  <InsightsOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
-                  <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
-                    Saúde da operação
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                  Filas internas que precisam de acompanhamento agora.
-                </Typography>
-              </Box>
-
-              {operationHealth ? (
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: UI_RADIUS.pill,
-                      background: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)',
-                      color: 'var(--pt-warning)',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-                      {operationHealth.totals.items_requiring_attention} item(ns) em atenção
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: UI_RADIUS.pill,
-                      background: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)',
-                      color: 'var(--pt-danger)',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-                      {operationHealth.totals.critical_items} crítico(s)
-                    </Typography>
-                  </Box>
-                </Stack>
-              ) : null}
-            </Box>
-
-            {operationHealth && operationHealth.totals.critical_items > 0 ? (
-              <Alert severity="error" variant="outlined">
-                Existem {operationHealth.totals.critical_items} item(ns) críticos entre aprovação, produção,
-                expedição e financeiro.
-                {canOpenOrdersQueue ? (
-                  <Button
-                    component={RouterLink}
-                    to="/vendas?stage=approval&source=dashboard"
-                    size="small"
-                    color="error"
-                    sx={{ ml: 1, mt: { xs: 1, sm: 0 } }}
-                    endIcon={<ArrowOutwardOutlinedIcon sx={{ fontSize: 16 }} />}
-                  >
-                    Abrir operação
-                  </Button>
-                ) : null}
-              </Alert>
-            ) : null}
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
-                gap: 1.5,
-              }}
-            >
-              {isLoading && operationStages.length === 0
-                ? Array.from({ length: 4 }).map((_, index) => (
-                    <Paper key={index} variant="outlined" sx={{ p: 2.25, ...ELEVATED_SURFACE_SX }}>
-                      <Stack spacing={1.25}>
-                        <CircularProgress size={22} sx={{ alignSelf: 'flex-start' }} />
-                        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Carregando etapa...</Typography>
-                      </Stack>
-                    </Paper>
-                  ))
-                : operationStages.map((stage, index) => (
-                    <OperationHealthStageCard
-                      key={stage.stage}
-                      stage={stage}
-                      index={index}
-                      canOpenQueue={canOpenOrdersQueue}
-                    />
-                  ))}
-            </Box>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: 'minmax(0, 1fr)' },
-                gap: 1.5,
-              }}
-            >
-              <Paper
-                variant="outlined"
-                className="pt-reveal"
-                sx={{ p: { xs: 2, sm: 2.25 }, ...ELEVATED_SURFACE_SX }}
-              >
-                <Stack spacing={1.25}>
-                  <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: 0.32 }}>
-                      Bilheteria online
-                    </Typography>
-                    <Typography sx={{ fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                      {operationHealth ? operationHealth.internal.approval.total : 0} venda(s) aguardando aprovação
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                    Acompanhe as vendas recebidas pela bilheteria online que ainda dependem de aprovação manual.
-                  </Typography>
-                  {canOpenStorefrontQueue ? (
-                    <Box>
-                      <Button
-                        component={RouterLink}
-                        to="/vendas-online?stage=approval&source=dashboard"
-                        size="small"
-                        variant="text"
-                        endIcon={<ArrowOutwardOutlinedIcon sx={{ fontSize: 16 }} />}
-                      >
-                        Abrir board online
-                      </Button>
-                    </Box>
-                  ) : null}
-                </Stack>
-              </Paper>
-            </Box>
-          </Stack>
-        </Paper>
 
         <Paper
           variant="outlined"
