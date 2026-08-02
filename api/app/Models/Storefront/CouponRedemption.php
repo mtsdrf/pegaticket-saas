@@ -24,7 +24,7 @@ class CouponRedemption extends Model
         'tenant_id',
         'coupon_id',
         'final_customer_id',
-        'order_id',
+        'sale_id',
         'redeemed_at',
     ];
 
@@ -47,8 +47,8 @@ class CouponRedemption extends Model
         return $this->belongsTo(FinalCustomer::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 }

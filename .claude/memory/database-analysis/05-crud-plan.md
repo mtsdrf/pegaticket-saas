@@ -21,7 +21,7 @@ Rotas seguem o padrão já estabelecido em `.claude/memory/api-patterns.md` (`/a
 ---
 
 ## CRUD: Cliente
-- Tabela principal: `cliente`. Tabelas relacionadas: `endereco`, `dia_ideal`, `periodo_ideal`, `categoria_cliente` (N:N via `categoria_cliente_cliente`), `pedido` (histórico, leitura).
+- Tabela principal: `cliente`. Tabelas relacionadas: `endereco`, `dia_ideal`, `periodo_ideal`, `categoria_cliente` (N:N via `categoria_cliente_cliente`), `venda` (histórico, leitura).
 - Rotas REST sugeridas:
   ```
   GET    /api/v1/clientes
@@ -34,12 +34,12 @@ Rotas seguem o padrão já estabelecido em `.claude/memory/api-patterns.md` (`/a
 - Campos de listagem: nome, telefone_principal, categoria(s), cidade/bairro (via endereço), confiança, ativo.
 - Campos de formulário: nome, endereço (estado/cidade/bairro/logradouro/número/complemento/CEP), telefone_principal, telefone_secundario, dia_ideal, periodo_ideal, categorias (multi-select), observação, confiança.
 - Validações **confirmadas pelo código-fonte** (`Cliente/ValidarController` do legado): só `nome` (2-90 chars), `endereco_id` e `ativo` são obrigatórios — telefone é opcional (corrige suposição anterior).
-- Sub-recurso confirmado: `GET /clientes/{uuid}/pedidos` — histórico de pedidos do cliente com saldo devedor calculado (ver [[06-business-rules]]).
+- Sub-recurso confirmado: `GET /clientes/{uuid}/vendas` — histórico de vendas do cliente com saldo devedor calculado (ver [[06-business-rules]]).
 - Relacionamentos necessários: endereço deve existir/ser criado junto (sub-formulário, não há tela de endereço isolada do ponto de vista do usuário final no legado).
 - Filtros prováveis: por categoria, por cidade/bairro, por dia_ideal/periodo_ideal, por confiança, por ativo.
 - Ordenações prováveis: nome, data de inclusão.
 - Permissões prováveis: `clientes.read/create/update/delete` (seguir padrão `Functionality`+`Action` já existente).
-- Regras de exclusão: bloqueada se houver `pedido` vinculado (FK sem cascade) — **Confirmado pelo banco**. Recomendar inativar (`ativo=0`) em vez de excluir.
+- Regras de exclusão: bloqueada se houver `venda` vinculado (FK sem cascade) — **Confirmado pelo banco**. Recomendar inativar (`ativo=0`) em vez de excluir.
 - Riscos: volume alto (~2000 clientes no legado) e **listagem sem paginação confirmada no código legado** — não replicar, paginar desde o início no novo CRUD.
 - Prioridade: **Alta**.
 
@@ -70,7 +70,7 @@ Rotas seguem o padrão já estabelecido em `.claude/memory/api-patterns.md` (`/a
 - Filtros prováveis: por categoria, por tipo, por disponibilidade.
 - Ordenações prováveis: nome, valor, prioridade do tipo/categoria.
 - Permissões prováveis: `produtos.read/create/update/delete`.
-- Regras de exclusão: bloqueada se vinculado a `pedido_produto` (histórico de venda) — recomendar inativar (`disponivel=0`/`ativo=0`) em vez de excluir.
+- Regras de exclusão: bloqueada se vinculado a `venda_produto` (histórico de venda) — recomendar inativar (`disponivel=0`/`ativo=0`) em vez de excluir.
 - Prioridade: **Alta**.
 
 ---
@@ -83,49 +83,49 @@ Rotas seguem o padrão já estabelecido em `.claude/memory/api-patterns.md` (`/a
 
 ---
 
-## CRUD: Pedido (com sub-recursos)
-- Tabela principal: `pedido`. Tabelas relacionadas: `cliente` (belongsTo), `pedido_produto` (hasMany, sub-recurso), `pedido_parcela` (hasMany, sub-recurso).
+## CRUD: Venda (com sub-recursos)
+- Tabela principal: `venda`. Tabelas relacionadas: `cliente` (belongsTo), `venda_produto` (hasMany, sub-recurso), `venda_parcela` (hasMany, sub-recurso).
 - Rotas REST sugeridas:
   ```
-  GET    /api/v1/pedidos
-  POST   /api/v1/pedidos
-  GET    /api/v1/pedidos/{uuid}
-  PUT    /api/v1/pedidos/{uuid}
-  DELETE /api/v1/pedidos/{uuid}
+  GET    /api/v1/vendas
+  POST   /api/v1/vendas
+  GET    /api/v1/vendas/{uuid}
+  PUT    /api/v1/vendas/{uuid}
+  DELETE /api/v1/vendas/{uuid}
 
-  GET    /api/v1/pedidos/{uuid}/itens
-  POST   /api/v1/pedidos/{uuid}/itens
-  DELETE /api/v1/pedidos/{uuid}/itens/{itemUuid}
+  GET    /api/v1/vendas/{uuid}/itens
+  POST   /api/v1/vendas/{uuid}/itens
+  DELETE /api/v1/vendas/{uuid}/itens/{itemUuid}
 
-  GET    /api/v1/pedidos/{uuid}/parcelas
-  POST   /api/v1/pedidos/{uuid}/parcelas
-  PATCH  /api/v1/pedidos/{uuid}/entregue
-  PATCH  /api/v1/pedidos/{uuid}/pago
+  GET    /api/v1/vendas/{uuid}/parcelas
+  POST   /api/v1/vendas/{uuid}/parcelas
+  PATCH  /api/v1/vendas/{uuid}/entregue
+  PATCH  /api/v1/vendas/{uuid}/pago
   ```
-  (`entregue`/`pago` como ações dedicadas — **confirmado pelo código-fonte**, o legado já tem `alterarEntregue`/`alterarPago` separados de `alterar`, evita reenviar o pedido inteiro só para marcar status.)
+  (`entregue`/`pago` como ações dedicadas — **confirmado pelo código-fonte**, o legado já tem `alterarEntregue`/`alterarPago` separados de `alterar`, evita reenviar o venda inteiro só para marcar status.)
 - Campos de listagem: cliente, valor_total, pago, parcelado, entregue, data_entrega.
 - Campos de formulário: cliente (busca), itens (produto + quantidade, valor travado no submit), parcelado (sim/não → gera parcelas), observação.
 - Validações prováveis: pelo menos 1 item, cliente obrigatório, valor_total = soma dos itens (regra a confirmar com o usuário — banco não garante isso via CHECK, e o código legado também não recalcula/valida isso no servidor, confia no valor enviado pelo frontend — **candidato a melhoria** no novo sistema: validar `valor_total` no backend).
-- Relacionamentos necessários: criação de pedido + itens deve ser transacional (tudo ou nada) — seguir padrão `DB::transaction` já usado no projeto (mesmo padrão do legado).
-- Regra de vencimento e cascata de quitação: **confirmadas pelo código-fonte**, ver [[06-business-rules]] — vencimento = dia 10 do mês seguinte se não pago; última parcela paga quita o pedido inteiro automaticamente.
+- Relacionamentos necessários: criação de venda + itens deve ser transacional (tudo ou nada) — seguir padrão `DB::transaction` já usado no projeto (mesmo padrão do legado).
+- Regra de vencimento e cascata de quitação: **confirmadas pelo código-fonte**, ver [[06-business-rules]] — vencimento = dia 10 do mês seguinte se não pago; última parcela paga quita o venda inteiro automaticamente.
 - Filtros prováveis: por cliente, por status (pago/pendente/entregue), por período, por localização do cliente (cidade/bairro/endereço — confirmado pelo relatório legado).
 - Ordenações prováveis: data de inclusão (mais recente primeiro).
-- Permissões prováveis: `pedidos.read/create/update`, `pedidos.marcar-entregue`, `pedidos.marcar-pago` (ações dedicadas, não `update` genérico).
-- Regras de exclusão: **confirmado pelo código-fonte** — pedido não pode ser excluído (rota de delete estava comentada no legado). Só existe update/ações de status.
+- Permissões prováveis: `vendas.read/create/update`, `vendas.marcar-entregue`, `vendas.marcar-pago` (ações dedicadas, não `update` genérico).
+- Regras de exclusão: **confirmado pelo código-fonte** — venda não pode ser excluído (rota de delete estava comentada no legado). Só existe update/ações de status.
 - Riscos: é o módulo mais complexo (transação com sub-recursos, cálculo de parcelas, snapshot de preço, cascata de quitação) — maior superfície de regra de negócio.
 - Prioridade: **Alta**, mas **depende de Cliente e Produto existirem primeiro**.
 
 ---
 
 ## CRUD: Relatórios / Indicadores (confirmado pelo código-fonte, novo módulo não previsto na 1ª versão do plano)
-- Sem tabela própria — leitura agregada de `pedido`/`cliente`/`produto`/`endereco`.
+- Sem tabela própria — leitura agregada de `venda`/`cliente`/`produto`/`endereco`.
 - Rotas REST sugeridas (ação, não recurso CRUD tradicional):
   ```
   GET  /api/v1/relatorios/indicadores?data_inicio=&data_fim=
   GET  /api/v1/relatorios/graficos?data_inicio=&data_fim=
-  GET  /api/v1/relatorios/pedidos?cliente_id=&cidade_id=&bairro_id=&endereco_id=&pago=&entregue=&data_inicio=&data_fim=
-  GET  /api/v1/relatorios/clientes?cidade_id=&bairro_id=&endereco_id=  (clientes com todos os pedidos pagos+entregues)
-  POST /api/v1/relatorios/pedidos/pdf
+  GET  /api/v1/relatorios/vendas?cliente_id=&cidade_id=&bairro_id=&endereco_id=&pago=&entregue=&data_inicio=&data_fim=
+  GET  /api/v1/relatorios/clientes?cidade_id=&bairro_id=&endereco_id=  (clientes com todos os vendas pagos+entregues)
+  POST /api/v1/relatorios/vendas/pdf
   POST /api/v1/relatorios/clientes/pdf
   ```
 - Indicadores/gráficos exatos: ver [[04-modules-map]] → "Relatórios e Indicadores" e [[06-business-rules]].

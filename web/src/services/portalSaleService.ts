@@ -2,7 +2,7 @@ import { unwrap } from './apiClient'
 import { portalApiClient } from './portalApiClient'
 import type { ApiSuccess } from '../types/api'
 import type { SalePayment } from '../types/sale'
-import type { CreatePortalLinkPayload, PortalLink, PortalSaleSummary, PortalReorderItem, PortalTicket } from '../types/portal'
+import type { CreatePortalLinkPayload, PortalLink, PortalSaleSummary, PortalResaleItem, PortalTicket } from '../types/portal'
 
 /** Lista agregada de compras entre todas as empresas vinculadas, mais recente primeiro. */
 export function listPortalSales(): Promise<PortalSaleSummary[]> {
@@ -15,9 +15,9 @@ export function createPortalLink(payload: CreatePortalLinkPayload): Promise<Port
 }
 
 /** "Comprar novamente" — itens da compra anterior com preço/disponibilidade atuais. */
-export function getSaleItemsForReorder(saleUuid: string): Promise<PortalReorderItem[]> {
+export function getSaleItemsForReorder(saleUuid: string): Promise<PortalResaleItem[]> {
   return unwrap(
-    portalApiClient.get<ApiSuccess<{ items: PortalReorderItem[] }>>(`/portal/sales/${saleUuid}/items`),
+    portalApiClient.get<ApiSuccess<{ items: PortalResaleItem[] }>>(`/portal/sales/${saleUuid}/items`),
   ).then((result) => result.items)
 }
 

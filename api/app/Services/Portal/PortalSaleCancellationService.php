@@ -22,9 +22,9 @@ class PortalSaleCancellationService
     ) {
     }
 
-    public function request(FinalCustomer $customer, string $orderUuid, RequestSaleCancellationDTO $dto): Sale
+    public function request(FinalCustomer $customer, string $saleUuid, RequestSaleCancellationDTO $dto): Sale
     {
-        $order = $this->portalCustomerService->findOwnedOrder($customer->id, $orderUuid);
+        $order = $this->portalCustomerService->findOwnedOrder($customer->id, $saleUuid);
 
         return $this->orderService->requestCancellation($order, $dto->reason, $customer->uuid);
     }

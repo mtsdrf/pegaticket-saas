@@ -86,7 +86,7 @@ return new class extends Migration {
                 'enderecos',
                 'clients',
                 'products',
-                'orders',
+                'sales',
                 'reports',
             ],
         ];

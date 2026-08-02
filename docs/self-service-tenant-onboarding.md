@@ -54,7 +54,7 @@ Exemplos:
 - `clients`
 - `products`
 - `stock`
-- `orders`
+- `sales`
 - `reports`
 
 As rotas tenant-scoped passam pelo middleware `tenant` e aceitam:

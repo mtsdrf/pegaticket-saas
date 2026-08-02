@@ -61,7 +61,7 @@ class ReportController extends Controller
 
         return APIResponse::success(
             SaleResource::collection($list),
-            __('messages.report.orders_list'),
+            __('messages.report.sales_list'),
             200,
             [
                 'pagination' => [
@@ -76,17 +76,17 @@ class ReportController extends Controller
 
     public function salesSummary(Request $request)
     {
-        $data = $this->service->ordersFilteredSummary(
+        $data = $this->service->salesFilteredSummary(
             app('tenant_id'),
             $request->only(self::ORDER_FILTERS)
         );
 
-        return APIResponse::success($data, __('messages.report.orders_summary'));
+        return APIResponse::success($data, __('messages.report.sales_summary'));
     }
 
     /**
-     * Resultado por canal (roadmap A1.3) — agregado por orders.origin.
-     * Drill-down até o pedido reaproveita GET /orders?origin=X&date_from=
+     * Resultado por canal (roadmap A1.3) — agregado por sales.origin.
+     * Drill-down até o pedido reaproveita GET /sales?origin=X&date_from=
      * Y&date_to=Z, que já aceita esses filtros (nenhuma mudança necessária
      * ali, ver architecture-decisions.md).
      */

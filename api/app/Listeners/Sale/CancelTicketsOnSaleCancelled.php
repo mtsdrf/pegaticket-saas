@@ -15,7 +15,7 @@ class CancelTicketsOnSaleCancelled
 
     public function handle(SaleCancelled $event): void
     {
-        $order = Sale::where('uuid', $event->orderUuid)->whereNull('deleted_at')->first();
+        $order = Sale::where('uuid', $event->saleUuid)->whereNull('deleted_at')->first();
 
         if (!$order) {
             return;

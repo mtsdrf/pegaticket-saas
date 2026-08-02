@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             // Informativo, capturado só na criação — distinto de
             // delivered_at, que continua sendo setado exclusivamente por
             // deliver()/a cascata de payInstallment(). Réplica do
@@ -20,7 +20,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn('expected_delivery_date');
         });
     }

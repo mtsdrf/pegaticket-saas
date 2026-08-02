@@ -31,7 +31,7 @@ function rankItems(items: CommandPaletteItem[], query: string): RankedItem[] {
 /**
  * Busca universal (`Ctrl+K`/`Cmd+K`) — navega entre as telas já existentes
  * no menu (`AppLayout`/`NAV_ITEMS`), sem buscar dado de negócio (cliente,
- * pedido, produto específico). Fuzzy simples por subsequência, sem libs
+ * venda, ingresso específico). Fuzzy simples por subsequência, sem libs
  * externas (`utils/fuzzyMatch.ts`).
  */
 export function CommandPalette({

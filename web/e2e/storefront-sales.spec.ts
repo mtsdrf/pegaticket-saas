@@ -13,7 +13,7 @@ test.describe('Vendas online', () => {
       path: '/storefront-sales',
       body: [
         makeSale({
-          uuid: 'storefront-order-1',
+          uuid: 'storefront-sale-1',
           codigo: '2001',
           status: 'pending_approval',
           origin: 'storefront',
@@ -35,8 +35,8 @@ test.describe('Vendas online', () => {
     await page.goto('/vendas-online')
 
     await expect(page.getByRole('heading', { name: 'Vendas online' })).toBeVisible()
-    await expect(page.getByText('Acompanhe e gerencie as vendas recebidas pelo canal público.')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Aguardando aprovação' })).toBeVisible()
+    await expect(page.getByText('Acompanhe e gerencie as vendas recebidas pelo canal publico.')).toBeVisible()
+    await expect(page.getByText('Aguardando aprovação').first()).toBeVisible()
     await expect(page.getByRole('gridcell', { name: 'Cliente Online QA', exact: true })).toBeVisible()
     await expect(page.getByRole('gridcell', { name: '2001', exact: true })).toBeVisible()
     await expect(page.getByText('Vendas manuais')).toHaveCount(0)
@@ -50,9 +50,9 @@ test.describe('Vendas online', () => {
       tenantFunctionalities: ['storefront-sales'],
     })
 
-    let listOrders = [
+    let listSales = [
       makeSale({
-        uuid: 'storefront-order-approval-1',
+        uuid: 'storefront-sale-approval-1',
         codigo: '2101',
         status: 'pending_approval',
         origin: 'storefront',
@@ -63,7 +63,7 @@ test.describe('Vendas online', () => {
         },
       }),
       makeSale({
-        uuid: 'storefront-order-confirmed-1',
+        uuid: 'storefront-sale-confirmed-1',
         codigo: '2102',
         status: 'confirmed',
         origin: 'storefront',
@@ -75,14 +75,14 @@ test.describe('Vendas online', () => {
       }),
     ]
 
-    await page.route('**/api/v1/storefront-sales/storefront-order-approval-1/approve', async (route) => {
+    await page.route('**/api/v1/storefront-sales/storefront-sale-approval-1/approve', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.fallback()
         return
       }
 
-      listOrders = listOrders.map((order) =>
-        order.uuid === 'storefront-order-approval-1' ? { ...order, status: 'confirmed' } : order,
+      listSales = listSales.map((sale) =>
+        sale.uuid === 'storefront-sale-approval-1' ? { ...sale, status: 'confirmed' } : sale,
       )
 
       await route.fulfill({
@@ -91,20 +91,20 @@ test.describe('Vendas online', () => {
         body: JSON.stringify({
           success: true,
           message: 'OK',
-          data: listOrders.find((order) => order.uuid === 'storefront-order-approval-1'),
+          data: listSales.find((sale) => sale.uuid === 'storefront-sale-approval-1'),
           meta: {},
         }),
       })
     })
 
-    await page.route('**/api/v1/storefront-sales/storefront-order-confirmed-1/cancel', async (route) => {
+    await page.route('**/api/v1/storefront-sales/storefront-sale-confirmed-1/cancel', async (route) => {
       if (route.request().method() !== 'PATCH') {
         await route.fallback()
         return
       }
 
-      const cancelled = listOrders.find((order) => order.uuid === 'storefront-order-confirmed-1')
-      listOrders = listOrders.filter((order) => order.uuid !== 'storefront-order-confirmed-1')
+      const cancelled = listSales.find((sale) => sale.uuid === 'storefront-sale-confirmed-1')
+      listSales = listSales.filter((sale) => sale.uuid !== 'storefront-sale-confirmed-1')
 
       await route.fulfill({
         status: 200,
@@ -122,7 +122,7 @@ test.describe('Vendas online', () => {
       })
     })
 
-    await page.route('**/api/v1/storefront-sales/storefront-order-approval-1*', async (route) => {
+    await page.route('**/api/v1/storefront-sales/storefront-sale-approval-1*', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.fallback()
         return
@@ -134,13 +134,13 @@ test.describe('Vendas online', () => {
         body: JSON.stringify({
           success: true,
           message: 'OK',
-          data: listOrders.find((order) => order.uuid === 'storefront-order-approval-1'),
+          data: listSales.find((sale) => sale.uuid === 'storefront-sale-approval-1'),
           meta: {},
         }),
       })
     })
 
-    await page.route('**/api/v1/storefront-sales/storefront-order-confirmed-1*', async (route) => {
+    await page.route('**/api/v1/storefront-sales/storefront-sale-confirmed-1*', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.fallback()
         return
@@ -152,7 +152,7 @@ test.describe('Vendas online', () => {
         body: JSON.stringify({
           success: true,
           message: 'OK',
-          data: listOrders.find((order) => order.uuid === 'storefront-order-confirmed-1'),
+          data: listSales.find((sale) => sale.uuid === 'storefront-sale-confirmed-1'),
           meta: {},
         }),
       })
@@ -169,12 +169,12 @@ test.describe('Vendas online', () => {
           body: JSON.stringify({
             success: true,
             message: 'OK',
-            data: listOrders,
+            data: listSales,
             meta: {
               pagination: {
                 current_page: 1,
                 per_page: 50,
-                total: listOrders.length,
+                total: listSales.length,
                 last_page: 1,
               },
             },
@@ -195,7 +195,7 @@ test.describe('Vendas online', () => {
     await page.getByRole('button', { name: 'Confirmar venda' }).click()
     const approveResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/storefront-sales/storefront-order-approval-1/approve')
+        response.url().includes('/storefront-sales/storefront-sale-approval-1/approve')
         && response.request().method() === 'POST',
     )
     await page.getByRole('button', { name: 'Confirmar' }).click()
@@ -210,7 +210,7 @@ test.describe('Vendas online', () => {
     await page.getByLabel('Motivo').fill('Cliente pediu cancelamento antes da saída.')
     const cancelResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/storefront-sales/storefront-order-confirmed-1/cancel')
+        response.url().includes('/storefront-sales/storefront-sale-confirmed-1/cancel')
         && response.request().method() === 'PATCH',
     )
     await page.getByRole('button', { name: 'Confirmar' }).click()

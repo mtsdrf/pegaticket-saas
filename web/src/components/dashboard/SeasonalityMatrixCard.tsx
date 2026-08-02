@@ -62,7 +62,7 @@ export function SeasonalityMatrixCard({ rows, isLoading }: SeasonalityMatrixCard
   }
 
   // Intensidade relativa ao maior mês da matriz — com volume real
-  // (milhares de pedidos), um corte fixo saturaria tudo igual.
+  // (milhares de vendas), um corte fixo saturaria tudo igual.
   const maxCount = Math.max(1, ...rows.flatMap((row) => row.months.map((month) => month.count)))
 
   return (

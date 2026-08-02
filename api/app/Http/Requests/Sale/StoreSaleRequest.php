@@ -26,7 +26,7 @@ class StoreSaleRequest extends FormRequest
                         ->exists();
 
                     if (!$exists) {
-                        $fail(__('messages.order.invalid_client'));
+                        $fail(__('messages.sale.invalid_client'));
                     }
                 },
             ],
@@ -82,11 +82,11 @@ class StoreSaleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'final_customer_uuid.exists' => __('messages.order.invalid_client'),
-            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
-            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
-            'installments_count.required_if' => __('messages.order.installments_count_required'),
-            'mark_as_paid.prohibited_if' => __('messages.order.mark_as_paid_requires_non_installment'),
+            'final_customer_uuid.exists' => __('messages.sale.invalid_client'),
+            'items.*.ticket_type_uuid.exists' => __('messages.sale.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.sale.invalid_product'),
+            'installments_count.required_if' => __('messages.sale.installments_count_required'),
+            'mark_as_paid.prohibited_if' => __('messages.sale.mark_as_paid_requires_non_installment'),
         ];
     }
 }

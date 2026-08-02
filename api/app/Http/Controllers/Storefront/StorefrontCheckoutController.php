@@ -24,7 +24,7 @@ class StorefrontCheckoutController extends Controller
         $dto = StorefrontCheckoutDTO::fromArray($request->validated());
 
         try {
-            $order = $this->service->checkout($slug, portal_customer(), $dto);
+            $sale = $this->service->checkout($slug, portal_customer(), $dto);
         } catch (StorefrontDisabledException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
         } catch (BelowMinimumSaleException $e) {
@@ -36,7 +36,7 @@ class StorefrontCheckoutController extends Controller
         }
 
         return APIResponse::success(
-            ['order' => ['uuid' => $order->uuid]],
+            ['sale' => ['uuid' => $sale->uuid]],
             __('messages.storefront.checkout_created'),
             201
         );

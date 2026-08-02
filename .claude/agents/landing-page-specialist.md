@@ -1,6 +1,6 @@
 ---
 name: landing-page-specialist
-description: Especialista sênior em landing pages React 19 para o SaaS de pedidos, alinhado ao design system, componentes, identidade, arquitetura e funcionalidades reais do sistema existente.
+description: Especialista sênior em landing pages React 19 para o SaaS de vendas, alinhado ao design system, componentes, identidade, arquitetura e funcionalidades reais do sistema existente.
 tools:
   - Read
   - Grep
@@ -39,7 +39,7 @@ Considere:
 - múltiplas lojas, filiais, depósitos, usuários e permissões;
 - clientes de atacado, varejo, distribuidoras de bebidas e laticínios;
 - expansão futura para bares, restaurantes, boates, casas noturnas e eventos;
-- módulos de pedidos, produtos, estoque, clientes, entregas, BI, assinaturas, pagamentos, fiscal e contabilidade, conforme existência real no repositório.
+- módulos de vendas, produtos, estoque, clientes, entregas, BI, assinaturas, pagamentos, fiscal e contabilidade, conforme existência real no repositório.
 
 ## Regra principal
 
@@ -168,7 +168,7 @@ Priorize:
 - gravações reais;
 - componentes reais em modo demonstração;
 - dados fictícios e controlados;
-- fluxos reais de pedido, status, estoque e BI.
+- fluxos reais de venda, status, estoque e BI.
 
 Nunca use dados reais de clientes sem autorização.
 
@@ -392,9 +392,9 @@ Uma página de vendas realmente eficiente não deve apenas parecer bonita. Ela p
 
 > **Reconheço meu problema → percebo o impacto → entendo a solução → confio no produto → vejo valor → quero experimentar → sinto segurança para comprar.**
 
-Para o seu SaaS de pedidos, a página deve vender principalmente a transformação:
+Para o seu SaaS de vendas, a página deve vender principalmente a transformação:
 
-> Menos confusão operacional, mais pedidos, atendimento mais rápido e controle completo do negócio.
+> Menos confusão operacional, mais vendas, atendimento mais rápido e controle completo do negócio.
 
 ---
 
@@ -448,7 +448,7 @@ Uma faixa pequena pode destacar:
 
 Exemplo:
 
-> **Novidade:** receba pedidos do seu próprio cardápio digital sem depender de marketplaces.
+> **Novidade:** receba vendas do seu próprio cardápio digital sem depender de marketplaces.
 
 ### Título principal
 
@@ -456,17 +456,17 @@ O título deve vender o resultado, não a tecnologia.
 
 Exemplos:
 
-> **Mais pedidos. Menos confusão. Tudo em um só lugar.**
+> **Mais vendas. Menos confusão. Tudo em um só lugar.**
 
-> **Transforme cada pedido em uma operação organizada e lucrativa.**
+> **Transforme cada venda em uma operação organizada e lucrativa.**
 
-> **Seu negócio vendendo melhor, do pedido à entrega.**
+> **Seu negócio vendendo melhor, do venda à entrega.**
 
 ### Subtítulo
 
 Deve explicar como o resultado será alcançado:
 
-> Cardápio digital, gestão de pedidos, clientes, pagamentos, entregas e relatórios em uma única plataforma simples de usar.
+> Cardápio digital, gestão de vendas, clientes, pagamentos, entregas e relatórios em uma única plataforma simples de usar.
 
 ### Chamadas para ação
 
@@ -475,7 +475,7 @@ Botão principal:
 * Começar gratuitamente.
 * Criar meu cardápio.
 * Testar grátis.
-* Quero organizar meus pedidos.
+* Quero organizar meus vendas.
 
 Botão secundário:
 
@@ -499,13 +499,13 @@ Logo abaixo dos botões:
 Ao lado do texto, apresente:
 
 * Dashboard principal.
-* Pedidos entrando.
+* Vendas entrando.
 * Cardápio no celular.
 * Atualização de status.
 * Indicadores de vendas.
 * Notificações.
 
-A apresentação pode usar camadas flutuantes, mostrando ao mesmo tempo o painel administrativo, o cardápio do cliente e uma notificação de novo pedido.
+A apresentação pode usar camadas flutuantes, mostrando ao mesmo tempo o painel administrativo, o cardápio do cliente e uma notificação de novo venda.
 
 ---
 
@@ -515,7 +515,7 @@ A animação deve fazer o produto parecer vivo.
 
 ## Exemplos
 
-* Um pedido entra no painel.
+* Um venda entra no painel.
 * O contador de vendas aumenta.
 * O status muda de “novo” para “em preparo”.
 * Uma notificação aparece suavemente.
@@ -560,14 +560,14 @@ Antes de apresentar dezenas de funcionalidades, demonstre que você entende o cl
 
 ## Problemas apresentados
 
-* Pedidos espalhados entre WhatsApp, telefone e balcão.
+* Vendas espalhados entre WhatsApp, telefone e balcão.
 * Erros ao anotar produtos e complementos.
 * Clientes perguntando repetidamente pelo status.
 * Dificuldade para entender o lucro.
 * Alterações manuais no cardápio.
 * Dependência de marketplaces e taxas.
 * Falta de controle entre atendentes.
-* Perda de pedidos nos horários de pico.
+* Perda de vendas nos horários de pico.
 
 ## Interação visual
 
@@ -585,7 +585,7 @@ Crie uma divisão clara entre antes e depois.
 
 ## Antes
 
-* Pedidos em papéis.
+* Vendas em papéis.
 * Conversas espalhadas.
 * Produtos desatualizados.
 * Erros de cálculo.
@@ -594,7 +594,7 @@ Crie uma divisão clara entre antes e depois.
 
 ## Depois
 
-* Pedidos centralizados.
+* Vendas centralizados.
 * Status em tempo real.
 * Cardápio sempre atualizado.
 * Valores calculados automaticamente.
@@ -607,8 +607,8 @@ Uma barra central pode ser arrastada para comparar os dois estados.
 
 Outra opção é apresentar uma sequência animada:
 
-1. Pedido recebido.
-2. Pedido confirmado.
+1. Venda recebido.
+2. Venda confirmado.
 3. Cozinha notificada.
 4. Entrega preparada.
 5. Cliente atualizado.
@@ -627,7 +627,7 @@ O visitante pode:
 * Escolher um tipo de negócio.
 * Criar um produto fictício.
 * Adicionar um item ao cardápio.
-* Simular um pedido.
+* Simular um venda.
 * Alterar o status.
 * Ver o indicador de vendas aumentar.
 
@@ -637,7 +637,7 @@ Não precisa ser o sistema completo. Deve ser uma demonstração guiada de 30 a 
 
 Dentro da imagem do sistema, pequenos pontos podem indicar:
 
-* Gerencie pedidos.
+* Gerencie vendas.
 * Atualize o cardápio.
 * Acompanhe o faturamento.
 * Controle usuários.
@@ -660,7 +660,7 @@ Apresente benefícios antes de listas técnicas.
 
 ### Atenda melhor
 
-> Centralize pedidos e reduza erros nos horários de maior movimento.
+> Centralize vendas e reduza erros nos horários de maior movimento.
 
 ### Controle a operação
 
@@ -672,7 +672,7 @@ Apresente benefícios antes de listas técnicas.
 
 ### Conheça seus clientes
 
-> Construa uma base própria de consumidores e acompanhe o histórico de pedidos.
+> Construa uma base própria de consumidores e acompanhe o histórico de vendas.
 
 ### Cresça com organização
 
@@ -684,7 +684,7 @@ Apresente benefícios antes de listas técnicas.
 
 Evite uma grade com 30 cards idênticos. Organize as funcionalidades como histórias de uso.
 
-## Bloco 1 — Receba pedidos
+## Bloco 1 — Receba vendas
 
 * Cardápio digital.
 * Busca de produtos.
@@ -692,15 +692,15 @@ Evite uma grade com 30 cards idênticos. Organize as funcionalidades como histó
 * Variações e complementos.
 * Cupons.
 * Entrega ou retirada.
-* Pedidos agendados.
+* Vendas agendados.
 
 Movimento:
 
-Um celular demonstra o cliente montando um pedido.
+Um celular demonstra o cliente montando um venda.
 
 ## Bloco 2 — Organize a operação
 
-* Painel de pedidos.
+* Painel de vendas.
 * Status.
 * Impressão.
 * Usuários e permissões.
@@ -710,7 +710,7 @@ Um celular demonstra o cliente montando um pedido.
 
 Movimento:
 
-O pedido percorre visualmente as etapas da operação.
+O venda percorre visualmente as etapas da operação.
 
 ## Bloco 3 — Tome decisões
 
@@ -744,9 +744,9 @@ A rolagem deve contar uma história, e não apenas empilhar seções.
 Uma estrutura visual interessante:
 
 1. O usuário vê a promessa.
-2. O caos dos pedidos aparece.
+2. O caos dos vendas aparece.
 3. O sistema organiza o caos.
-4. Um pedido real percorre a operação.
+4. Um venda real percorre a operação.
 5. Os resultados aparecem no dashboard.
 6. Clientes reais confirmam o valor.
 7. O visitante compara os planos.
@@ -758,8 +758,8 @@ Uma tela do sistema pode permanecer fixa enquanto o texto ao lado muda.
 
 Por exemplo:
 
-* Texto 1: receba o pedido.
-* A interface mostra um novo pedido.
+* Texto 1: receba o venda.
+* A interface mostra um novo venda.
 * Texto 2: organize o preparo.
 * A interface muda para o kanban.
 * Texto 3: acompanhe a entrega.
@@ -778,7 +778,7 @@ A prova social precisa parecer verdadeira e específica.
 ## Elementos
 
 * Número de empresas atendidas.
-* Quantidade de pedidos processados.
+* Quantidade de vendas processados.
 * Volume financeiro processado.
 * Avaliação média.
 * Logotipos de clientes.
@@ -796,7 +796,7 @@ Evite:
 
 Prefira:
 
-> Antes, precisávamos conferir os pedidos manualmente em três celulares. Com a plataforma, centralizamos o atendimento e reduzimos os erros nos horários de pico.
+> Antes, precisávamos conferir os vendas manualmente em três celulares. Com a plataforma, centralizamos o atendimento e reduzimos os erros nos horários de pico.
 
 ## Cards de depoimentos
 
@@ -820,7 +820,7 @@ Use números apenas quando forem reais e verificáveis.
 
 Exemplos:
 
-* Pedidos processados.
+* Vendas processados.
 * Empresas ativas.
 * Tempo médio economizado.
 * Redução de erros.
@@ -850,7 +850,7 @@ Inclua um vídeo curto de demonstração.
 
 ## Possível roteiro
 
-1. Um cliente faz o pedido.
+1. Um cliente faz o venda.
 2. O estabelecimento recebe.
 3. O operador atualiza o status.
 4. O cliente é informado.
@@ -928,7 +928,7 @@ Uma calculadora simples pode tornar o valor do SaaS mais concreto.
 
 ## Campos
 
-* Pedidos por mês.
+* Vendas por mês.
 * Ticket médio.
 * Taxa atual de marketplace.
 * Número de atendentes.
@@ -940,7 +940,7 @@ Uma calculadora simples pode tornar o valor do SaaS mais concreto.
 * Taxas potencialmente economizadas.
 * Horas poupadas.
 * Receita administrada.
-* Custo estimado por pedido.
+* Custo estimado por venda.
 * Relação entre o preço do plano e o retorno potencial.
 
 Deixe claro que o resultado é uma estimativa, não uma promessa garantida.
@@ -1009,7 +1009,7 @@ Mostrar uma linha do tempo:
 2. Configure o negócio.
 3. Cadastre ou importe os produtos.
 4. Publique o cardápio.
-5. Comece a receber pedidos.
+5. Comece a receber vendas.
 
 ## “Minha equipe vai aprender?”
 
@@ -1042,7 +1042,7 @@ O FAQ deve responder dúvidas reais:
 * Preciso instalar alguma coisa?
 * Funciona no celular?
 * Posso usar em mais de um computador?
-* Existe limite de pedidos?
+* Existe limite de vendas?
 * Posso ter várias unidades?
 * Como recebo os pagamentos?
 * Existe integração com WhatsApp?
@@ -1069,7 +1069,7 @@ A última seção deve recapitular a transformação.
 
 ## Subtítulo
 
-> Centralize seus pedidos, acompanhe sua equipe e tenha mais clareza para fazer o negócio crescer.
+> Centralize seus vendas, acompanhe sua equipe e tenha mais clareza para fazer o negócio crescer.
 
 ## CTA
 
@@ -1088,7 +1088,7 @@ Mostre o sistema completo em uma composição final:
 
 * Painel no desktop.
 * Cardápio no celular.
-* Notificação de pedido.
+* Notificação de venda.
 * Indicador de crescimento.
 
 ---
@@ -1239,11 +1239,11 @@ Após a seleção, a página ajusta:
 
 Exemplo para distribuidora:
 
-> Organize pedidos de bebidas, controle produtos e agilize entregas.
+> Organize vendas de bebidas, controle produtos e agilize entregas.
 
 Exemplo para restaurante:
 
-> Receba pedidos pelo cardápio digital e acompanhe cada etapa do preparo.
+> Receba vendas pelo cardápio digital e acompanhe cada etapa do preparo.
 
 ---
 
@@ -1263,7 +1263,7 @@ Troque:
 
 Por:
 
-> Centralize os pedidos e acompanhe produtos, clientes e vendas no mesmo painel.
+> Centralize os vendas e acompanhe produtos, clientes e vendas no mesmo painel.
 
 ## Prova
 
@@ -1402,7 +1402,7 @@ Também incluir:
 6. Transformação antes e depois.
 7. Demonstração interativa.
 8. Benefícios principais.
-9. Fluxo completo de um pedido.
+9. Fluxo completo de um venda.
 10. Funcionalidades por área.
 11. Segmentos atendidos.
 12. Resultados e indicadores.
@@ -1420,19 +1420,19 @@ Também incluir:
 
 ---
 
-# 27. Direção específica para o seu SaaS de pedidos
+# 27. Direção específica para o seu SaaS de vendas
 
 Eu usaria como conceito principal:
 
 ## Tema
 
-> **Do pedido ao crescimento.**
+> **Do venda ao crescimento.**
 
 ## História visual
 
 ### Primeira cena
 
-Várias mensagens de pedidos aparecem de forma desorganizada.
+Várias mensagens de vendas aparecem de forma desorganizada.
 
 ### Transição
 
@@ -1440,11 +1440,11 @@ As mensagens são puxadas para dentro do sistema.
 
 ### Segunda cena
 
-Os pedidos aparecem organizados por status.
+Os vendas aparecem organizados por status.
 
 ### Terceira cena
 
-Um pedido percorre:
+Um venda percorre:
 
 > Novo → confirmado → em preparo → pronto → entregue.
 
@@ -1454,7 +1454,7 @@ O resultado aparece no dashboard:
 
 * Vendas do dia.
 * Ticket médio.
-* Pedidos concluídos.
+* Vendas concluídos.
 * Produto mais vendido.
 
 ### Encerramento
@@ -1471,7 +1471,7 @@ CTA:
 
 A experiência visual precisa despertar:
 
-* **Alívio:** finalmente posso organizar os pedidos.
+* **Alívio:** finalmente posso organizar os vendas.
 * **Ambição:** meu negócio pode crescer.
 * **Controle:** sei tudo o que está acontecendo.
 * **Confiança:** parece uma empresa séria.

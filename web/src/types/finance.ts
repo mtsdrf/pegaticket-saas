@@ -34,8 +34,8 @@ export interface ReconciliationEntry {
   status: ReconciliationStatus
   paid_at: string | null
   created_at: string
-  /** `when($this->payable !== null)` no Resource — ausente quando o pedido de origem foi removido. */
-  order?: { uuid: string; codigo: string }
+  /** `when($this->payable !== null)` no Resource — ausente quando a venda de origem foi removida. */
+  sale?: { uuid: string; codigo: string }
   refunds: ReconciliationRefund[]
   /** `when($this->matched_webhook_event !== null)` — casamento best-effort por `provider`+`provider_charge_id`. */
   webhook_event?: ReconciliationWebhookEvent

@@ -5,7 +5,7 @@ namespace App\Events\Sale;
 class SalePaid
 {
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public int $actorId
     ) {
     }

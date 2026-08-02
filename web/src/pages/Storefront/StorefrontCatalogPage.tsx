@@ -39,17 +39,6 @@ import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type { StorefrontCategory, StorefrontEvent, StorefrontTenant } from '../../types/storefront'
 
-/** Tempo estimado de preparo, quando o tenant informou. Badge "Aberto agora"/"Fechado no momento" foi removido (roadmap Fase B — `StoreBusinessHour` saiu do backend, não há mais `business_hours` na resposta). */
-function StorePrepBadge({ tenant }: { tenant: StorefrontTenant }) {
-  if (tenant.estimated_preparation_minutes === null) return null
-
-  return (
-    <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-      ~{tenant.estimated_preparation_minutes} min
-    </Typography>
-  )
-}
-
 const PER_PAGE = 12
 
 function CatalogSkeleton() {
@@ -265,7 +254,6 @@ export function StorefrontCatalogPage() {
               <Skeleton variant="text" width={100} height={20} />
             ) : tenant ? (
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-                <StorePrepBadge tenant={tenant} />
                 {!tenant.storefront_enabled && <Chip size="small" label="Bilheteria online desativada" variant="outlined" />}
                 {tenant.ratings_count > 0 && tenant.average_rating !== null && (
                   <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
@@ -323,7 +311,7 @@ export function StorefrontCatalogPage() {
                   {tenant.whatsapp ? <Typography sx={{ color: 'var(--pt-muted)' }}>WhatsApp: {tenant.whatsapp}</Typography> : null}
                   {tenant.email ? <Typography sx={{ color: 'var(--pt-muted)' }}>E-mail: {tenant.email}</Typography> : null}
                 </Stack>
-                <Button variant="text" onClick={() => navigate(`${slug ? `/loja/${slug}/perfil` : '/'}`)} sx={{ alignSelf: 'flex-start', px: 0 }}>
+                <Button variant="text" onClick={() => navigate(`${slug ? `/eventos/${slug}/perfil` : '/'}`)} sx={{ alignSelf: 'flex-start', px: 0 }}>
                   Ver endereço, horários e detalhes completos
                 </Button>
               </Stack>
@@ -388,7 +376,7 @@ export function StorefrontCatalogPage() {
                 <EventCard
                   key={event.uuid}
                   event={event}
-                  onClick={(clicked) => navigate(`/loja/${slug}/eventos/${clicked.slug}`)}
+                  onClick={(clicked) => navigate(`/eventos/${slug}/${clicked.slug}`)}
                   onToggleFavorite={handleToggleFavorite}
                 />
               ))}

@@ -7,7 +7,7 @@ import type { Sale, SaleFilters } from '../types/sale'
 /**
  * Tela dedicada de gestão de vendas online (`/vendas-online`) — mesmo
  * contrato de `saleService.ts`, mas contra `/storefront-sales/...`
- * (permissão `storefront-sales,*`, independente de `orders,*`). O
+ * (permissão `storefront-sales,*`, independente de `sales,*`). O
  * backend já força `origin=storefront` no servidor — nenhum filtro de
  * origin precisa (ou pode) ser enviado daqui.
  */
@@ -15,7 +15,7 @@ export function listStorefrontSales(filters: SaleFilters): Promise<PaginatedResu
   return listPaginated<Sale>('/storefront-sales', filters)
 }
 
-/** Detalhe completo de um pedido do canal online (itens/telefone/endereço/cupom). */
+/** Detalhe completo de uma venda do canal online (itens/telefone/endereço/cupom). */
 export function getStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.get<ApiSuccess<Sale>>(`/storefront-sales/${uuid}`))
 }
@@ -34,7 +34,7 @@ export function approveStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/approve`))
 }
 
-/** `reason` opcional — vira `cancellation_reason` no pedido recusado. */
+/** `reason` opcional — vira `cancellation_reason` na venda recusada. */
 export function rejectStorefrontSale(uuid: string, reason?: string): Promise<Sale> {
   return unwrap(apiClient.post<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/reject`, reason ? { reason } : undefined))
 }
@@ -43,7 +43,7 @@ export function cancelStorefrontSale(uuid: string, cancellation_reason: string):
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/cancel`, { cancellation_reason }))
 }
 
-/** Marca o pedido como concluído (não é entrega física — ver `is_completed` no backend). */
+/** Marca a venda como concluída (não é entrega física — ver `is_completed` no backend). */
 export function completeStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/complete`))
 }
@@ -53,7 +53,7 @@ export function reopenStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/reopen`))
 }
 
-/** Conclui o pedido marcando-o como PAGO (`is_paid` -> true) — ação financeira real. */
+/** Conclui a venda marcando-a como PAGA (`is_paid` -> true) — ação financeira real. */
 export function payStorefrontSale(uuid: string): Promise<Sale> {
   return unwrap(apiClient.patch<ApiSuccess<Sale>>(`/storefront-sales/${uuid}/pay`))
 }

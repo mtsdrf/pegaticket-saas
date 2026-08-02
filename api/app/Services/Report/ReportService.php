@@ -24,23 +24,23 @@ class ReportService
 {
     public function indicators(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
-        $totalOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->count();
-        $completedOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
-        $paidOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
+        $totalOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->count();
+        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
+        $paidOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
-        $totalAmount = (float) $this->ordersQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
+        $totalAmount = (float) $this->salesQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
         $amountReceived = $this->amountReceived($tenantId, $dateFrom, $dateTo);
         $averageTicket = $totalOrders > 0 ? $totalAmount / $totalOrders : 0.0;
         $comparison = $this->salesComparison($tenantId, $dateFrom, $dateTo);
 
         return [
-            'total_orders' => $totalOrders,
+            'total_sales' => $totalOrders,
             'total_sales_amount' => $this->formatMoney($totalAmount),
             'average_ticket' => $this->formatMoney($averageTicket),
-            'completed_orders' => $completedOrders,
-            'uncompleted_orders' => $totalOrders - $completedOrders,
-            'paid_orders' => $paidOrders,
-            'unpaid_orders' => $totalOrders - $paidOrders,
+            'completed_sales' => $completedOrders,
+            'uncompleted_sales' => $totalOrders - $completedOrders,
+            'paid_sales' => $paidOrders,
+            'unpaid_sales' => $totalOrders - $paidOrders,
             'amount_received' => $this->formatMoney($amountReceived),
             'amount_receivable' => $this->formatMoney($totalAmount - $amountReceived),
             'current_period_total_amount' => $this->formatMoney($comparison['current_total']),
@@ -48,21 +48,21 @@ class ReportService
             'sales_growth_percentage' => $comparison['growth_percentage'],
             'comparison_current_label' => $comparison['current_label'],
             'comparison_previous_label' => $comparison['previous_label'],
-            'overdue_orders_count' => $this->overdueOrdersCount($tenantId),
+            'overdue_sales_count' => $this->overdueOrdersCount($tenantId),
         ];
     }
 
     public function charts(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
-        $totalOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->count();
-        $completedOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
-        $paidOrders = $this->ordersQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
+        $totalOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->count();
+        $completedOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_completed', true)->count();
+        $paidOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->where('is_paid', true)->count();
 
-        $totalAmount = (float) $this->ordersQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
+        $totalAmount = (float) $this->salesQuery($tenantId, $dateFrom, $dateTo)->sum('total_amount');
         $amountReceived = $this->amountReceived($tenantId, $dateFrom, $dateTo);
 
         return [
-            'orders_by_month' => $this->ordersByMonth($tenantId, $dateFrom, $dateTo),
+            'sales_by_month' => $this->salesByMonth($tenantId, $dateFrom, $dateTo),
             'paid_vs_unpaid' => [
                 'paid' => $paidOrders,
                 'unpaid' => $totalOrders - $paidOrders,
@@ -75,14 +75,14 @@ class ReportService
                 'received' => $this->formatMoney($amountReceived),
                 'receivable' => $this->formatMoney($totalAmount - $amountReceived),
             ],
-            'orders_by_city' => [],
-            'orders_by_neighborhood' => [],
+            'sales_by_city' => [],
+            'sales_by_neighborhood' => [],
             'seasonality_matrix' => $this->seasonalityMatrix($tenantId),
             'top_ticket_types' => $this->topTicketTypes($tenantId, $dateFrom, $dateTo),
             'top_clients' => $this->topClients($tenantId, $dateFrom, $dateTo),
             'rfm_clients' => $this->rfmClients($tenantId, $dateFrom, $dateTo),
             'late_payment_clients' => $this->latePaymentClients($tenantId, $dateFrom, $dateTo),
-            'overdue_orders' => $this->overdueOrders($tenantId),
+            'overdue_sales' => $this->overdueOrders($tenantId),
             'receivables_aging' => $this->receivablesAging($tenantId),
             'receivables_forecast_by_month' => $this->receivablesForecastByMonth($tenantId),
             'abc_ticket_types' => $this->abcTicketTypes($tenantId, $dateFrom, $dateTo),
@@ -99,20 +99,20 @@ class ReportService
     ): LengthAwarePaginator
     {
         $sortable = [
-            'is_paid' => 'orders.is_paid',
-            'is_completed' => 'orders.is_completed',
+            'is_paid' => 'sales.is_paid',
+            'is_completed' => 'sales.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
 
-        return $this->ordersEloquentQuery($tenantId, $filters)
-            ->orderBy($sortColumn ?? 'orders.id', GridQuery::normalizeSortDir($sortDir))
+        return $this->salesEloquentQuery($tenantId, $filters)
+            ->orderBy($sortColumn ?? 'sales.id', GridQuery::normalizeSortDir($sortDir))
             ->paginate($perPage);
     }
 
     /**
      * Resumo agregado (não paginado) do relatório de pedidos, sobre a
-     * MESMA base filtrada de filteredOrders() (ordersEloquentQuery), só
+     * MESMA base filtrada de filteredOrders() (salesEloquentQuery), só
      * trocando paginação por contagem.
      *
      * overdue_percentage é uma definição SIMPLIFICADA: só pedidos com
@@ -120,11 +120,11 @@ class ReportService
      * NÃO cobre parcelas atrasadas de pedido parcelado (essa lógica de
      * union por installment vive em overdueOrdersCount() e não é replicada
      * aqui para não duplicá-la; este summary usa apenas o campo direto
-     * orders.due_date, consistente com o resto de ordersEloquentQuery).
+     * sales.due_date, consistente com o resto de salesEloquentQuery).
      */
-    public function ordersFilteredSummary(int $tenantId, array $filters): array
+    public function salesFilteredSummary(int $tenantId, array $filters): array
     {
-        $total = $this->ordersEloquentQuery($tenantId, $filters)->count();
+        $total = $this->salesEloquentQuery($tenantId, $filters)->count();
 
         if ($total === 0) {
             return [
@@ -135,9 +135,9 @@ class ReportService
             ];
         }
 
-        $completed = $this->ordersEloquentQuery($tenantId, $filters)->where('is_completed', true)->count();
-        $paid = $this->ordersEloquentQuery($tenantId, $filters)->where('is_paid', true)->count();
-        $overdue = $this->ordersEloquentQuery($tenantId, $filters)
+        $completed = $this->salesEloquentQuery($tenantId, $filters)->where('is_completed', true)->count();
+        $paid = $this->salesEloquentQuery($tenantId, $filters)->where('is_paid', true)->count();
+        $overdue = $this->salesEloquentQuery($tenantId, $filters)
             ->where('is_paid', false)
             ->where('is_installment', false)
             ->whereNotNull('due_date')
@@ -153,9 +153,9 @@ class ReportService
     }
 
     /**
-     * Resultado por canal (roadmap A1.3, `orders.origin`) — agregado por
+     * Resultado por canal (roadmap A1.3, `sales.origin`) — agregado por
      * origin (staff/storefront e canais históricos), sobre a MESMA base de
-     * ordersQuery() (pedido cancelado/soft-deletado sempre excluído, mesmo
+     * salesQuery() (pedido cancelado/soft-deletado sempre excluído, mesmo
      * filtro de período por created_at dos outros indicadores). Um bucket
      * por origin com pedido no período, ordenado por revenue desc.
      *
@@ -163,10 +163,10 @@ class ReportService
      */
     public function byChannel(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
-        $normalizedOriginSql = "CASE WHEN orders.origin = 'counter' THEN 'staff' ELSE orders.origin END";
+        $normalizedOriginSql = "CASE WHEN sales.origin = 'counter' THEN 'staff' ELSE sales.origin END";
 
-        $rows = $this->ordersQuery($tenantId, $dateFrom, $dateTo)
-            ->selectRaw("{$normalizedOriginSql} as origin, COUNT(*) as order_count, SUM(orders.total_amount) as total_amount")
+        $rows = $this->salesQuery($tenantId, $dateFrom, $dateTo)
+            ->selectRaw("{$normalizedOriginSql} as origin, COUNT(*) as order_count, SUM(sales.total_amount) as total_amount")
             ->groupByRaw($normalizedOriginSql)
             ->orderByDesc('total_amount')
             ->get();
@@ -190,10 +190,10 @@ class ReportService
      */
     public function generateSalesPdf(int $tenantId, array $filters): array
     {
-        $orders = $this->ordersEloquentQuery($tenantId, $filters)->orderByDesc('id')->get();
+        $sales = $this->salesEloquentQuery($tenantId, $filters)->orderByDesc('id')->get();
 
         $pdf = Pdf::loadView('reports.sales-pdf', [
-            'orders' => $orders,
+            'sales' => $sales,
             'tenantName' => tenant()?->name,
             'generatedAt' => now(),
         ]);
@@ -208,9 +208,9 @@ class ReportService
      * Base de pedidos ativos (não cancelados, não soft-deletados) do
      * tenant, com filtro opcional de período por `created_at`.
      */
-    private function ordersQuery(int $tenantId, ?string $dateFrom, ?string $dateTo): QueryBuilder
+    private function salesQuery(int $tenantId, ?string $dateFrom, ?string $dateTo): QueryBuilder
     {
-        return DB::table('orders')
+        return DB::table('sales')
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->whereNull('cancelled_at')
@@ -220,27 +220,27 @@ class ReportService
 
     /**
      * Valor recebido = soma de total_amount dos pedidos não-parcelados
-     * pagos + soma de amount das parcelas pagas (via join com orders não
+     * pagos + soma de amount das parcelas pagas (via join com sales não
      * cancelados do tenant). Sempre agregado via SQL (sum/join), nunca
      * carregando pedidos um a um em PHP.
      */
     private function amountReceived(int $tenantId, ?string $dateFrom, ?string $dateTo): float
     {
-        $nonInstallment = (float) $this->ordersQuery($tenantId, $dateFrom, $dateTo)
+        $nonInstallment = (float) $this->salesQuery($tenantId, $dateFrom, $dateTo)
             ->where('is_installment', false)
             ->where('is_paid', true)
             ->sum('total_amount');
 
-        $installments = (float) DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', true)
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->sum('order_installments.amount');
+        $installments = (float) DB::table('sale_installments')
+            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', true)
+            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->sum('sale_installments.amount');
 
         return $nonInstallment + $installments;
     }
@@ -252,11 +252,11 @@ class ReportService
      * vs `strftime` do SQLite usado nos testes), sem carregar as linhas
      * inteiras de pedido em memória.
      */
-    private function ordersByMonth(int $tenantId, ?string $dateFrom, ?string $dateTo): array
+    private function salesByMonth(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         $grouped = [];
 
-        foreach ($this->ordersQuery($tenantId, $dateFrom, $dateTo)->get(['created_at', 'total_amount']) as $row) {
+        foreach ($this->salesQuery($tenantId, $dateFrom, $dateTo)->get(['created_at', 'total_amount']) as $row) {
             $month = Carbon::parse($row->created_at)->format('Y-m');
 
             if (!isset($grouped[$month])) {
@@ -276,12 +276,12 @@ class ReportService
         ])->values()->all();
     }
 
-    private function ordersByCity(int $tenantId, ?string $dateFrom, ?string $dateTo): array
+    private function salesByCity(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         return [];
     }
 
-    private function ordersByNeighborhood(int $tenantId, ?string $dateFrom, ?string $dateTo): array
+    private function salesByNeighborhood(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         return [];
     }
@@ -290,7 +290,7 @@ class ReportService
     {
         $grouped = [];
 
-        foreach ($this->ordersQuery($tenantId, null, null)->get(['created_at', 'total_amount']) as $row) {
+        foreach ($this->salesQuery($tenantId, null, null)->get(['created_at', 'total_amount']) as $row) {
             $date = Carbon::parse($row->created_at);
             $year = (int) $date->format('Y');
             $month = (int) $date->format('n');
@@ -327,18 +327,18 @@ class ReportService
 
     private function topTicketTypes(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        return DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_items.deleted_at')
+        return DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
             ->whereNull('ticket_types.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('ticket_types.id', 'ticket_types.name')
-            ->selectRaw('ticket_types.name as ticket_type_name, SUM(order_items.quantity) as quantity_sold, SUM(order_items.line_total) as revenue')
+            ->selectRaw('ticket_types.name as ticket_type_name, SUM(sale_items.quantity) as quantity_sold, SUM(sale_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit)
             ->get()
@@ -352,15 +352,15 @@ class ReportService
 
     private function topClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        return DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
+        return DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
-            ->selectRaw('final_customers.name as client_name, COUNT(orders.id) as order_count, SUM(orders.total_amount) as total_amount')
+            ->selectRaw('final_customers.name as client_name, COUNT(sales.id) as order_count, SUM(sales.total_amount) as total_amount')
             ->orderByDesc('total_amount')
             ->limit($limit)
             ->get()
@@ -374,15 +374,15 @@ class ReportService
 
     private function rfmClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        $rows = DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
+        $rows = DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
-            ->selectRaw('final_customers.name as client_name, COUNT(orders.id) as frequency, SUM(orders.total_amount) as monetary, MAX(orders.created_at) as last_order_at')
+            ->selectRaw('final_customers.name as client_name, COUNT(sales.id) as frequency, SUM(sales.total_amount) as monetary, MAX(sales.created_at) as last_order_at')
             ->orderByDesc('monetary')
             ->limit($limit)
             ->get();
@@ -406,16 +406,16 @@ class ReportService
 
     private function latePaymentClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        $rows = DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNotNull('orders.completed_at')
-            ->whereNotNull('orders.paid_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
-            ->get(['final_customers.name as client_name', 'orders.completed_at', 'orders.paid_at']);
+        $rows = DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNotNull('sales.completed_at')
+            ->whereNotNull('sales.paid_at')
+                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->get(['final_customers.name as client_name', 'sales.completed_at', 'sales.paid_at']);
 
         return $rows
             ->groupBy('client_name')
@@ -427,7 +427,7 @@ class ReportService
                 return [
                     'client_name' => $clientName,
                     'avg_days_to_pay' => round($days->avg() ?? 0, 1),
-                    'paid_orders_count' => $days->count(),
+                    'paid_sales_count' => $days->count(),
                 ];
             })
             ->sortByDesc('avg_days_to_pay')
@@ -438,24 +438,24 @@ class ReportService
 
     private function overdueOrders(int $tenantId, int $limit = 5): array
     {
-        $installmentRows = DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->whereDate('order_installments.due_date', '<', now()->toDateString())
+        $installmentRows = DB::table('sale_installments')
+            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', false)
+            ->whereDate('sale_installments.due_date', '<', now()->toDateString())
             ->select(
-                'orders.uuid as order_uuid',
+                'sales.uuid as sale_uuid',
                 'final_customers.name as client_name',
-                'order_installments.amount as amount',
-                'order_installments.due_date as due_date'
+                'sale_installments.amount as amount',
+                'sale_installments.due_date as due_date'
             )
             ->get()
             ->map(fn($row) => [
-                'order_uuid' => $row->order_uuid,
+                'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'amount' => $this->formatMoney((float) $row->amount),
                 'due_date' => Carbon::parse($row->due_date)->toDateString(),
@@ -463,24 +463,24 @@ class ReportService
                 'source' => 'installment',
             ]);
 
-        $orderRows = DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->where('orders.is_installment', false)
-            ->where('orders.is_paid', false)
-            ->whereNotNull('orders.due_date')
-            ->whereDate('orders.due_date', '<', now()->toDateString())
+        $orderRows = DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->where('sales.is_installment', false)
+            ->where('sales.is_paid', false)
+            ->whereNotNull('sales.due_date')
+            ->whereDate('sales.due_date', '<', now()->toDateString())
             ->select(
-                'orders.uuid as order_uuid',
+                'sales.uuid as sale_uuid',
                 'final_customers.name as client_name',
-                'orders.total_amount as amount',
-                'orders.due_date as due_date'
+                'sales.total_amount as amount',
+                'sales.due_date as due_date'
             )
             ->get()
             ->map(fn($row) => [
-                'order_uuid' => $row->order_uuid,
+                'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'amount' => $this->formatMoney((float) $row->amount),
                 'due_date' => Carbon::parse($row->due_date)->toDateString(),
@@ -507,17 +507,17 @@ class ReportService
             'overdue_90_plus' => ['bucket' => 'overdue_90_plus', 'label' => 'Vencido 90+ dias', 'amount' => 0.0, 'count' => 0],
         ];
 
-        $rows = DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->get(['order_installments.amount', 'order_installments.due_date'])
+        $rows = DB::table('sale_installments')
+            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', false)
+            ->get(['sale_installments.amount', 'sale_installments.due_date'])
             ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             ->concat(
-                DB::table('orders')
+                DB::table('sales')
                     ->where('tenant_id', $tenantId)
                     ->whereNull('deleted_at')
                     ->whereNull('cancelled_at')
@@ -559,17 +559,17 @@ class ReportService
     {
         $grouped = [];
 
-        $rows = DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->get(['order_installments.amount', 'order_installments.due_date'])
+        $rows = DB::table('sale_installments')
+            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', false)
+            ->get(['sale_installments.amount', 'sale_installments.due_date'])
             ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             ->concat(
-                DB::table('orders')
+                DB::table('sales')
                     ->where('tenant_id', $tenantId)
                     ->whereNull('deleted_at')
                     ->whereNull('cancelled_at')
@@ -606,18 +606,18 @@ class ReportService
 
     private function abcTicketTypes(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        $rows = DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_items.deleted_at')
+        $rows = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
             ->whereNull('ticket_types.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('ticket_types.id', 'ticket_types.name')
-            ->selectRaw('ticket_types.name as ticket_type_name, SUM(order_items.line_total) as revenue')
+            ->selectRaw('ticket_types.name as ticket_type_name, SUM(sale_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->get()
             ->map(fn($row) => ['ticket_type_name' => $row->ticket_type_name, 'revenue' => (float) $row->revenue]);
@@ -627,15 +627,15 @@ class ReportService
 
     private function abcClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
-        $rows = DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('orders.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('orders.created_at', '<=', $dateTo))
+        $rows = DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
-            ->selectRaw('final_customers.name as client_name, SUM(orders.total_amount) as revenue')
+            ->selectRaw('final_customers.name as client_name, SUM(sales.total_amount) as revenue')
             ->orderByDesc('revenue')
             ->get()
             ->map(fn($row) => ['client_name' => $row->client_name, 'revenue' => (float) $row->revenue]);
@@ -666,17 +666,17 @@ class ReportService
     {
         $today = now()->toDateString();
 
-        $overdueInstallments = DB::table('order_installments')
-            ->join('orders', 'orders.id', '=', 'order_installments.order_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->whereDate('order_installments.due_date', '<', $today)
+        $overdueInstallments = DB::table('sale_installments')
+            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', false)
+            ->whereDate('sale_installments.due_date', '<', $today)
             ->count();
 
-        $overdueOrders = DB::table('orders')
+        $overdueOrders = DB::table('sales')
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->whereNull('cancelled_at')
@@ -694,13 +694,13 @@ class ReportService
         [$currentStart, $currentEnd, $previousStart, $previousEnd, $currentLabel, $previousLabel] =
             $this->comparisonPeriods($dateFrom, $dateTo);
 
-        $currentTotal = (float) $this->ordersQuery(
+        $currentTotal = (float) $this->salesQuery(
             $tenantId,
             $currentStart->toDateString(),
             $currentEnd->toDateString()
         )->sum('total_amount');
 
-        $previousTotal = (float) $this->ordersQuery(
+        $previousTotal = (float) $this->salesQuery(
             $tenantId,
             $previousStart->toDateString(),
             $previousEnd->toDateString()
@@ -794,7 +794,7 @@ class ReportService
      * sempre excluído — não há filtro para incluir cancelados neste
      * endpoint (ver contrato em routes/api.php).
      */
-    private function ordersEloquentQuery(int $tenantId, array $filters): Builder
+    private function salesEloquentQuery(int $tenantId, array $filters): Builder
     {
         $query = Sale::where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
@@ -835,9 +835,9 @@ class ReportService
             $normalizedOrigin = Sale::normalizeOrigin((string) $filters['origin']);
 
             if ($normalizedOrigin === 'staff') {
-                $query->whereIn('orders.origin', ['staff', 'counter']);
+                $query->whereIn('sales.origin', ['staff', 'counter']);
             } else {
-                $query->where('orders.origin', $normalizedOrigin);
+                $query->where('sales.origin', $normalizedOrigin);
             }
         }
 

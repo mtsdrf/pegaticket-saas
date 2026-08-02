@@ -69,10 +69,10 @@ class SalePaymentTest extends TestCase
             ->assertJsonPath('data.method', 'pix')
             ->assertJsonPath('data.amount', '80.00');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
         $this->assertDatabaseHas('payments', [
             'payable_type' => Sale::class,
-            'payable_id' => $orderId,
+            'payable_id' => $saleId,
             'status' => 'pending',
         ]);
     }
@@ -89,8 +89,8 @@ class SalePaymentTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $saleId)->count());
     }
 
     #[Test]

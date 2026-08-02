@@ -46,7 +46,7 @@ interface PaymentProviderInterface
 
     /**
      * Estorna uma order (total quando $amount é null, senão parcial —
-     * `POST /v1/orders/{order_id}/refund`).
+     * `POST /v1/orders/{sale_id}/refund`).
      *
      * @return array<string, mixed>
      */

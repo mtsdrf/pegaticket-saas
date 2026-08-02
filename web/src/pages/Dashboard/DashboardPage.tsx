@@ -31,7 +31,7 @@ import { presetRange } from '../../utils/period'
 import { ACCESS } from '../../access/requirements'
 
 const QUICK_ACTIONS = [
-  { icon: ReceiptLongOutlinedIcon, label: 'Nova venda', to: '/vendas/nova' },
+  { icon: ReceiptLongOutlinedIcon, label: 'Nova venda', to: '/vendas-manuais/nova' },
   { icon: Inventory2OutlinedIcon, label: 'Cadastrar evento', to: '/eventos/novo' },
 ]
 
@@ -51,9 +51,9 @@ export function DashboardPage() {
       ? 'Novo'
       : `${indicators.sales_growth_percentage > 0 ? '+' : ''}${indicators.sales_growth_percentage.toFixed(2)}% vs período anterior`
     : null
-  const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_orders === 0
+  const isFirstOrderEmptyState = !isLoading && !error && indicators !== null && indicators.total_sales === 0
   const quickActions = QUICK_ACTIONS.filter((action) => {
-    if (action.to === '/vendas/nova') return can(ACCESS.salesCreate)
+    if (action.to === '/vendas-manuais/nova') return can(ACCESS.salesCreate)
     if (action.to === '/eventos/novo') return can(ACCESS.eventsCreate)
     return true
   })
@@ -189,7 +189,7 @@ export function DashboardPage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                 {can(ACCESS.salesCreate) ? (
-                  <Button component={RouterLink} to="/vendas/nova" variant="contained">
+                  <Button component={RouterLink} to="/vendas-manuais/nova" variant="contained">
                     Fazer primeira venda
                   </Button>
                 ) : null}
@@ -216,7 +216,7 @@ export function DashboardPage() {
           <MetricCard
             icon={ReceiptLongOutlinedIcon}
             label="Vendas no período"
-            value={indicators ? String(indicators.total_orders) : null}
+            value={indicators ? String(indicators.total_sales) : null}
             tone="primary"
             isLoading={isLoading}
             index={0}
@@ -234,7 +234,7 @@ export function DashboardPage() {
             icon={AccountBalanceWalletOutlinedIcon}
             label="Valor recebido"
             value={indicators ? formatCurrency(indicators.amount_received) : null}
-            caption={indicators ? `${indicators.paid_orders} venda${indicators.paid_orders === 1 ? '' : 's'} paga${indicators.paid_orders === 1 ? '' : 's'}` : null}
+            caption={indicators ? `${indicators.paid_sales} venda${indicators.paid_sales === 1 ? '' : 's'} paga${indicators.paid_sales === 1 ? '' : 's'}` : null}
             tone="accent"
             isLoading={isLoading}
             index={2}
@@ -242,9 +242,9 @@ export function DashboardPage() {
           <MetricCard
             icon={TaskAltOutlinedIcon}
             label="Vendas não concluídas"
-            value={indicators ? String(indicators.uncompleted_orders) : null}
-            caption={indicators ? `${indicators.completed_orders} já concluída${indicators.completed_orders === 1 ? '' : 's'}` : null}
-            tone={indicators && indicators.uncompleted_orders > 0 ? 'warning' : 'primary'}
+            value={indicators ? String(indicators.uncompleted_sales) : null}
+            caption={indicators ? `${indicators.completed_sales} já concluída${indicators.completed_sales === 1 ? '' : 's'}` : null}
+            tone={indicators && indicators.uncompleted_sales > 0 ? 'warning' : 'primary'}
             isLoading={isLoading}
             index={3}
           />
@@ -252,7 +252,7 @@ export function DashboardPage() {
             icon={SellOutlinedIcon}
             label="Ticket médio"
             value={indicators ? formatCurrency(indicators.average_ticket) : null}
-            caption={indicators ? `${indicators.completed_orders} concluídas e ${indicators.paid_orders} pagos` : null}
+            caption={indicators ? `${indicators.completed_sales} concluídas e ${indicators.paid_sales} pagos` : null}
             tone="primary"
             isLoading={isLoading}
             index={4}
@@ -278,7 +278,7 @@ export function DashboardPage() {
             Volume de vendas criadas em cada mês.
           </Typography>
 
-          <SalesByMonthChart data={charts?.orders_by_month ?? null} isLoading={isLoading} />
+          <SalesByMonthChart data={charts?.sales_by_month ?? null} isLoading={isLoading} />
         </Paper>
 
         <Box
@@ -293,7 +293,7 @@ export function DashboardPage() {
             subtitle="Cidades com maior faturamento no período."
             isLoading={isLoading}
             items={
-              charts?.orders_by_city?.map((item) => ({
+              charts?.sales_by_city?.map((item) => ({
                 title: item.city_name,
                 value: formatCurrency(item.total_amount),
                 meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
@@ -308,7 +308,7 @@ export function DashboardPage() {
             subtitle="Bairros com maior faturamento no período."
             isLoading={isLoading}
             items={
-              charts?.orders_by_neighborhood?.map((item) => ({
+              charts?.sales_by_neighborhood?.map((item) => ({
                 title: item.neighborhood_name,
                 value: formatCurrency(item.total_amount),
                 meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
@@ -333,7 +333,7 @@ export function DashboardPage() {
             subtitle="Itens com maior faturamento no período."
             isLoading={isLoading}
             items={
-              charts?.top_products?.map((item) => ({
+              charts?.top_addons?.map((item) => ({
                 title: item.product_name,
                 value: formatCurrency(item.revenue),
                 meta: `${item.quantity_sold} vendidos`,
@@ -389,7 +389,7 @@ export function DashboardPage() {
               charts?.late_payment_clients?.map((item) => ({
                 title: item.client_name,
                 value: `${item.avg_days_to_pay} dia${item.avg_days_to_pay === 1 ? '' : 's'}`,
-                meta: `${item.paid_orders_count} venda${item.paid_orders_count === 1 ? '' : 's'} paga${item.paid_orders_count === 1 ? '' : 's'}`,
+                meta: `${item.paid_sales_count} venda${item.paid_sales_count === 1 ? '' : 's'} paga${item.paid_sales_count === 1 ? '' : 's'}`,
               })) ?? null
             }
             emptyTitle="Nenhum prazo de pagamento medido ainda"
@@ -401,7 +401,7 @@ export function DashboardPage() {
             subtitle="Títulos vencidos com maior tempo em aberto."
             isLoading={isLoading}
             items={
-              charts?.overdue_orders?.map((item) => ({
+              charts?.overdue_sales?.map((item) => ({
                 title: item.client_name,
                 value: `${item.days_overdue} dia${item.days_overdue === 1 ? '' : 's'}`,
                 meta: `${item.source === 'installment' ? 'Parcela' : 'Venda'} • vence em ${item.due_date} • ${formatCurrency(item.amount)}`,

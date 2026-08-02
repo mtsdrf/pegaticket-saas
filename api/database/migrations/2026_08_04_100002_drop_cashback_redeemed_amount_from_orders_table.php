@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'cashback_redeemed_amount')) {
-            Schema::table('orders', function (Blueprint $table) {
+        if (Schema::hasTable('sales') && Schema::hasColumn('sales', 'cashback_redeemed_amount')) {
+            Schema::table('sales', function (Blueprint $table) {
                 $table->dropColumn('cashback_redeemed_amount');
             });
         }

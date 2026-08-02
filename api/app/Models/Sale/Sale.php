@@ -16,7 +16,7 @@ class Sale extends BaseModel
         'counter' => 'staff',
     ];
 
-    protected $table = 'orders';
+    protected $table = 'sales';
 
     protected $fillable = [
         'tenant_id',
@@ -100,8 +100,8 @@ class Sale extends BaseModel
             // `Sale::create()` direto (fora de SaleService::create()):
             // mantém a mesma convenção por tenant (999 -> 1000) e evita
             // pedidos novos sem código de exibição.
-            DB::table('tenants')->where('id', $order->tenant_id)->increment('next_order_code');
-            $order->codigo = (string) DB::table('tenants')->where('id', $order->tenant_id)->value('next_order_code');
+            DB::table('tenants')->where('id', $order->tenant_id)->increment('next_sale_code');
+            $order->codigo = (string) DB::table('tenants')->where('id', $order->tenant_id)->value('next_sale_code');
         });
 
         static::saving(function (Sale $order) {
@@ -160,17 +160,17 @@ class Sale extends BaseModel
 
     public function items()
     {
-        return $this->hasMany(SaleItem::class, 'order_id');
+        return $this->hasMany(SaleItem::class, 'sale_id');
     }
 
     public function installments()
     {
-        return $this->hasMany(SaleInstallment::class, 'order_id');
+        return $this->hasMany(SaleInstallment::class, 'sale_id');
     }
 
     public function rating()
     {
-        return $this->hasOne(SaleRating::class, 'order_id');
+        return $this->hasOne(SaleRating::class, 'sale_id');
     }
 
     /**

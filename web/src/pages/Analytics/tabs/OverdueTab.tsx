@@ -81,7 +81,7 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     >
       <Box sx={{ mb: 2 }}>
         <Typography sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontWeight: 700, fontSize: 16.5, color: 'var(--pt-text)', mb: 0.25 }}>
-          Pedidos em atraso
+          Vendas em atraso
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
           Pagamentos vencidos e entregas atrasadas no período — uma venda atrasada nos dois aparece uma vez por tipo.
@@ -132,7 +132,7 @@ export function OverdueTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
               </TableHead>
               <TableBody>
                 {rows.map((row, index) => (
-                  <TableRow key={`${row.order_uuid}-${row.type ?? index}`} hover>
+                  <TableRow key={`${row.sale_uuid}-${row.type ?? index}`} hover>
                     <TableCell sx={{ color: 'var(--pt-text)', fontWeight: 500 }}>{row.client_name}</TableCell>
                     <TableCell>{row.type ? <OverdueTypeChip type={row.type} /> : '—'}</TableCell>
                     <TableCell align="right" sx={{ color: 'var(--pt-text)', fontVariantNumeric: 'tabular-nums' }}>

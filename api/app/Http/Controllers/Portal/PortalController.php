@@ -36,7 +36,7 @@ class PortalController extends Controller
 
         return APIResponse::success(
             PortalSaleResource::collection($sales),
-            __('messages.portal.orders_shown')
+            __('messages.portal.sales_shown')
         );
     }
 
@@ -71,11 +71,11 @@ class PortalController extends Controller
 
     public function saleItems(string $uuid)
     {
-        $items = $this->service->getOrderItemsForReorder(portal_customer(), $uuid);
+        $items = $this->service->getSaleItemsForReorder(portal_customer(), $uuid);
 
         return APIResponse::success(
             ['items' => $items],
-            __('messages.portal.order_items_shown')
+            __('messages.portal.sale_items_shown')
         );
     }
 
@@ -133,7 +133,7 @@ class PortalController extends Controller
 
         return APIResponse::success(
             new SalePaymentResource($payment),
-            __('messages.order.payment_charge_created'),
+            __('messages.sale.payment_charge_created'),
             201
         );
     }

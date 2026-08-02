@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Confirmação explícita de vínculo entre o cliente final (autenticado no
  * Portal) e uma loja (tenant), a partir de um pedido que ele já tem em
- * mãos (order_uuid já validado no FormRequest via Rule::exists — mesmo
- * padrão de FK cross-tabela do resto do projeto) — o order_uuid é só PROVA
+ * mãos (sale_uuid já validado no FormRequest via Rule::exists — mesmo
+ * padrão de FK cross-tabela do resto do projeto) — o sale_uuid é só PROVA
  * de que ele é cliente real dessa loja, não precisa ser um pedido feito
  * por ESTE FinalCustomer (order.final_customer_id não muda aqui: o pedido
  * já nasceu vinculado ao seu comprador original em SaleService::create()
@@ -32,7 +32,7 @@ class PortalLinkService
     public function link(FinalCustomer $customer, CreatePortalLinkDTO $dto): FinalCustomerTenantLink
     {
         return DB::transaction(function () use ($customer, $dto) {
-            $order = Sale::where('uuid', $dto->orderUuid)
+            $order = Sale::where('uuid', $dto->saleUuid)
                 ->whereNull('deleted_at')
                 ->firstOrFail();
 

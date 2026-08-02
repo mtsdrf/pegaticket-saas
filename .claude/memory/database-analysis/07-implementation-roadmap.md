@@ -13,7 +13,7 @@ O novo sistema (`api/`) já tem, mais robusto que o legado:
 - Soft delete real (`deleted_at`) + `created_by`/`updated_by`/`deleted_by` — **superior** ao `ativo` booleano do legado.
 - Padrão de API/Resource/Service/Repository já estabelecido (`.claude/memory/api-patterns.md`, `.claude/skills/laravel-api.md`).
 
-**Conclusão: Fase 1 (base técnica) do processo padrão do agente já está pronta.** O trabalho real começa na Fase 2 (CRUDs), adaptando os módulos de negócio do legado (Cliente, Produto, Pedido) ao padrão arquitetural já existente — não recriando auth/permissão/auditoria do zero.
+**Conclusão: Fase 1 (base técnica) do processo padrão do agente já está pronta.** O trabalho real começa na Fase 2 (CRUDs), adaptando os módulos de negócio do legado (Cliente, Produto, Venda) ao padrão arquitetural já existente — não recriando auth/permissão/auditoria do zero.
 
 ## Fase 2 — CRUDs base (cadastros simples/domínio)
 - ✅ Categoria de Cliente (`ClientCategory`, tenant-scoped, CRUD completo) — implementado 2026-07-06.
@@ -28,8 +28,8 @@ O novo sistema (`api/`) já tem, mais robusto que o legado:
 - ✅ Produto → `Product` (com tipo/categoria derivada, imagem em disco local do servidor) — implementado 2026-07-09, revisado sem achados críticos/médios.
 - 188 testes passando no total. Ver [[architecture-decisions]] para detalhe de cada módulo.
 
-## Fase 4 — Estoque, Parte 1 ✅ concluída (2026-07-09, inserida antes de Pedido)
-Pedido explícito do usuário: módulo de estoque completo (estrutura) antes do Pedido existir, para o Pedido já nascer integrado. Sem precedente no legado (que não tinha controle de estoque, só `produto.quantidade` solto) — 100% desenho novo. Escopo completo (MVP + tudo que fica "no radar" das 300 capacidades levantadas pelo usuário) em [[08-estoque-plan]], não duplicado aqui.
+## Fase 4 — Estoque, Parte 1 ✅ concluída (2026-07-09, inserida antes de Venda)
+Venda explícito do usuário: módulo de estoque completo (estrutura) antes do Venda existir, para o Venda já nascer integrado. Sem precedente no legado (que não tinha controle de estoque, só `produto.quantidade` solto) — 100% desenho novo. Escopo completo (MVP + tudo que fica "no radar" das 300 capacidades levantadas pelo usuário) em [[08-estoque-plan]], não duplicado aqui.
 - `StockLocation` (locais de estoque, tenant-scoped, com local padrão auto-criado).
 - Extensão de `Product`: `sku`, `barcode`, `brand`, `unit`, flags `is_lot_controlled`/`is_expiry_controlled`/`is_serial_controlled`, `min_stock`/`max_stock`/`reorder_point`/`reorder_qty`, `last_purchase_cost`.
 - `StockBalance` (saldo por produto+local: on_hand/reserved/blocked, disponível computado).
@@ -38,18 +38,18 @@ Pedido explícito do usuário: módulo de estoque completo (estrutura) antes do 
 - Mecanismo de reserva (`reserve`/`reserve_cancel`) que a Fase 5 vai consumir.
 - Fora do MVP (documentado, não esquecido): inventário físico, lote/validade/série (comportamento — as flags já nascem agora), custeio avançado, kit/composição, código de barras/etiquetas, importação em massa, workflow de transferência com estados, integrações externas, notificações. Ver [[08-estoque-plan]] para a lista completa.
 
-## Fase 5 — Pedido, Parte 2 ✅ concluída (2026-07-09, integrado com Estoque desde o início)
-- Pedido + itens (`pedido_produto`, snapshot de preço) + parcelas (`pedido_parcela`), transacional (mesmo padrão do legado).
+## Fase 5 — Venda, Parte 2 ✅ concluída (2026-07-09, integrado com Estoque desde o início)
+- Venda + itens (`venda_produto`, snapshot de preço) + parcelas (`venda_parcela`), transacional (mesmo padrão do legado).
 - Ações dedicadas `marcar-entregue`/`marcar-pago` (confirmado pelo código-fonte, não é `update` genérico).
 - Vencimento de parcela: configurável via `.env` (`PARCELA_VENCIMENTO_DIA`, default 10), com rollover pro próximo dia válido quando o dia não existir no mês — decisão e fórmula em [[architecture-decisions]].
-- Cascata de quitação: última parcela paga marca o pedido inteiro como pago+entregue (regra confirmada no legado, replicar).
-- Exclusão de pedido **não existe** (confirmado) — só cancelamento.
-- **Cancelamento de pedido**: feature nova desenhada do zero (sem precedente legado), regra completa em [[architecture-decisions]] — bloqueado se houver parcela paga, pedido inteiro (não item a item), reverte reserva/saída de estoque via `StockMovement`.
-- **Integração com estoque desde a criação**: criar pedido reserva estoque dos itens (`StockBalance.quantity_reserved`); marcar entregue converte reserva em saída real; cancelar reverte a reserva/saída. Depende da Fase 4 estar pronta.
+- Cascata de quitação: última parcela paga marca o venda inteiro como pago+entregue (regra confirmada no legado, replicar).
+- Exclusão de venda **não existe** (confirmado) — só cancelamento.
+- **Cancelamento de venda**: feature nova desenhada do zero (sem precedente legado), regra completa em [[architecture-decisions]] — bloqueado se houver parcela paga, venda inteiro (não item a item), reverte reserva/saída de estoque via `StockMovement`.
+- **Integração com estoque desde a criação**: criar venda reserva estoque dos itens (`StockBalance.quantity_reserved`); marcar entregue converte reserva em saída real; cancelar reverte a reserva/saída. Depende da Fase 4 estar pronta.
 
-## Fase 6 — Relatórios e dashboards ✅ indicadores/gráficos/PDF de Pedido+Cliente concluídos (2026-07-09)
-- ✅ Indicadores e gráficos **confirmados pelo código-fonte** implementados: `ReportService`/`ReportController` (`GET reports/indicators`, `GET reports/charts`, `GET reports/orders`, `GET reports/clients`, `POST reports/orders/pdf`, `POST reports/clients/pdf`). Pedido cancelado nunca conta (regra nova do sistema, sem precedente no legado). Detalhe completo em [[architecture-decisions]].
-- ✅ Exportação em PDF (pedidos e clientes) via `barryvdh/laravel-dompdf` v3.1 instalado e funcionando, views `resources/views/reports/{orders,clients}-pdf.blade.php`.
+## Fase 6 — Relatórios e dashboards ✅ indicadores/gráficos/PDF de Venda+Cliente concluídos (2026-07-09)
+- ✅ Indicadores e gráficos **confirmados pelo código-fonte** implementados: `ReportService`/`ReportController` (`GET reports/indicators`, `GET reports/charts`, `GET reports/sales`, `GET reports/clients`, `POST reports/sales/pdf`, `POST reports/clients/pdf`). Venda cancelado nunca conta (regra nova do sistema, sem precedente no legado). Detalhe completo em [[architecture-decisions]].
+- ✅ Exportação em PDF (vendas e clientes) via `barryvdh/laravel-dompdf` v3.1 instalado e funcionando, views `resources/views/reports/{sales,clients}-pdf.blade.php`.
 - ✅ Filtros reescritos com Query Builder/binding — nenhuma concatenação de string, ao contrário do legado.
 - 250 testes passando no total (236 anteriores + 14 novos de `ReportTest`).
 - Ainda em aberto (não implementado nesta rodada, radar para o futuro): relatório de inadimplência dedicado (não existe pronto no legado, seria feature nova baseada no `due_date` já confirmado) e relatórios de estoque (posição, movimentações, produtos abaixo do mínimo, produtos parados) — parte do radar de [[08-estoque-plan]].
@@ -66,7 +66,7 @@ Pedido explícito do usuário: módulo de estoque completo (estrutura) antes do 
 
 ## Frontend (`web/`)
 - Reaproveitar `AppLayout`/`TenantMenu` já existentes.
-- Listagens (Clientes, Produtos, Pedidos) em **ag-Grid** (já instalado, ainda sem uso). O legado usava `@nadavshaar/react-grid-table` própria — **não reaproveitável**, ag-Grid é a escolha já feita para o projeto novo.
+- Listagens (Clientes, Produtos, Vendas) em **ag-Grid** (já instalado, ainda sem uso). O legado usava `@nadavshaar/react-grid-table` própria — **não reaproveitável**, ag-Grid é a escolha já feita para o projeto novo.
 - Formulários e componentes em **MUI** (já instalado). Legado usava Bootstrap 4/Formik/Yup/react-select/react-date-picker/react-text-mask — **não reaproveitável como código** (stack totalmente diferente), mas a lista de campos por formulário (já mapeada em [[05-crud-plan]]) é reaproveitável como especificação.
 - Gráficos de indicador (Fase 5) em **Chart.js** — mesma lib do legado (`react-chartjs-2`), só a versão muda (legado v3, novo v5) e a integração é refeita com API/tema novos.
 - Legado usa Redux + `react-query` para estado/cache — o projeto novo já resolve isso com Context (`AuthContext`) + services simples; **reavaliar se `react-query`/TanStack Query vale a pena adicionar** quando as listagens ficarem mais complexas (cache de lista, invalidação) — não decidido ainda, não instalar sem necessidade real.
@@ -77,11 +77,11 @@ Pedido explícito do usuário: módulo de estoque completo (estrutura) antes do 
 1. ~~**Papéis de usuário**~~ — resolvida: legado só tinha "super admin" (cross-tenant, não existe mais) e "admin" (opera dentro do estabelecimento). Mapeado 1:1 para `TenantRole` (não `Group`). Ver [[architecture-decisions]].
 2. ~~**`dia_ideal`/`periodo_ideal`/`confianca`**~~ — resolvida: investigação exaustiva (backend+frontend do legado) não achou automação nenhuma; usuário confirmou que o uso era manual/humano, não de sistema. Ficam como campos informativos simples no `Cliente`, sem trabalho extra. Ver [[architecture-decisions]].
 3. ~~**Migração de dados reais**~~ — resolvida: existe dump com dados reais, tratado como Fase 8 própria (ETL), não bloqueia Fase 2/3/4/5. Ver [[architecture-decisions]].
-4. ~~**Cancelamento de pedido**~~ — resolvida: é feature nova (sem precedente no legado), desenhada dentro da Fase 4 como decisão de produto própria, não réplica.
+4. ~~**Cancelamento de venda**~~ — resolvida: é feature nova (sem precedente no legado), desenhada dentro da Fase 4 como decisão de produto própria, não réplica.
 5. ~~**Localização (Estado/Cidade/Bairro)**~~ — resolvida e implementada 2026-07-06: viraram tabelas globais compartilhadas (sem seed de dados reais do IBGE ainda). Ver [[architecture-decisions]].
 6. ~~**`cliente_novo`/`Publico` (captura de lead)**~~ — resolvida: confirmado fora de uso, não será replicado. Fora de escopo.
 
-Resolvidas (ver [[06-business-rules]] e [[architecture-decisions]]): modelo de tenant, vencimento de parcela (dia 10 do mês seguinte), `pedido.entregue` default, exclusão de pedido (não existe), super-admin cross-tenant (não existe no novo sistema), papéis de usuário, migração de dados, cancelamento de pedido, captura de lead pública, dia/período ideal (sem automação, campo informativo).
+Resolvidas (ver [[06-business-rules]] e [[architecture-decisions]]): modelo de tenant, vencimento de parcela (dia 10 do mês seguinte), `venda.entregue` default, exclusão de venda (não existe), super-admin cross-tenant (não existe no novo sistema), papéis de usuário, migração de dados, cancelamento de venda, captura de lead pública, dia/período ideal (sem automação, campo informativo).
 
 **Nenhuma dúvida bloqueando — Fase 3 pode começar.**
 

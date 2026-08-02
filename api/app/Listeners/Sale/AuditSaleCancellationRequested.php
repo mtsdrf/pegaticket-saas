@@ -13,7 +13,7 @@ class AuditSaleCancellationRequested
             event: 'order_cancellation_requested',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'reason' => $event->reason,
                 'final_customer_uuid' => $event->finalCustomerUuid,
             ],

@@ -7,10 +7,7 @@ import type { ReactNode } from 'react'
 import {
   approveStorefrontSale,
   cancelStorefrontSale,
-  completeStorefrontSale,
-  payStorefrontSale,
   rejectStorefrontSale,
-  reopenStorefrontSale,
 } from '../services/storefrontSaleService'
 import { approveSaleCancellationRequest, rejectSaleCancellationRequest } from '../services/saleService'
 import type { Sale } from '../types/sale'
@@ -41,7 +38,7 @@ export const STATUS_TONE_COLORS: Record<StatusTone, { fg: string; bg: string }> 
 export interface SaleStatusSource {
   is_cancelled: boolean
   is_paid: boolean
-  /** Não é entrega física — gate de conclusão do pedido. */
+  /** Não é entrega física — gate de conclusão da venda. */
   is_completed: boolean
   is_installment?: boolean
   completed_at?: string | null
@@ -218,17 +215,7 @@ export function getSaleActionButtons(sale: Sale, canManageCancellation = false):
   }
 
   if (sale.status === 'confirmed' && !sale.is_completed) {
-    return [
-      { label: 'Cancelar venda', tone: 'back', requiresReason: true, run: (uuid, reason) => cancelStorefrontSale(uuid, reason ?? '') },
-      { label: 'Concluir pedido', tone: 'forward', requiresReason: false, run: (uuid) => completeStorefrontSale(uuid) },
-    ]
-  }
-
-  if (sale.status === 'confirmed' && sale.is_completed && !sale.is_paid) {
-    return [
-      { label: 'Voltar para confirmado', tone: 'back', requiresReason: false, run: (uuid) => reopenStorefrontSale(uuid) },
-      { label: 'Concluir venda', tone: 'forward', requiresReason: false, run: (uuid) => payStorefrontSale(uuid) },
-    ]
+    return [{ label: 'Cancelar venda', tone: 'back', requiresReason: true, run: (uuid, reason) => cancelStorefrontSale(uuid, reason ?? '') }]
   }
 
   return []

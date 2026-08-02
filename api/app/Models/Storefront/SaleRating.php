@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Avaliação do cliente final sobre um pedido entregue — sem BaseModel de
  * propósito (mesmo desvio de ProductFavorite/CouponRedemption). Unique em
- * order_id (schema) garante 1 avaliação por pedido; SaleRatingService checa
+ * sale_id (schema) garante 1 avaliação por pedido; SaleRatingService checa
  * antes de deixar o DB estourar. Só created_at faz sentido (sem edição de
  * avaliação nesta fatia) — UPDATED_AT desligado.
  */
@@ -20,11 +20,11 @@ class SaleRating extends Model
 
     const UPDATED_AT = null;
 
-    protected $table = 'order_ratings';
+    protected $table = 'sale_ratings';
 
     protected $fillable = [
         'tenant_id',
-        'order_id',
+        'sale_id',
         'final_customer_id',
         'rating',
         'comment',
@@ -39,9 +39,9 @@ class SaleRating extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
     public function finalCustomer()

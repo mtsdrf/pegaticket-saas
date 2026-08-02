@@ -1,19 +1,6 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import {
-  Alert,
-  Box,
-  Button,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material'
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { Alert, Box, Button, Divider, IconButton, InputAdornment, Paper, Stack, TextField, Typography } from '@mui/material'
+import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AsyncAutocomplete } from '../../components/crud/AsyncAutocomplete'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
@@ -99,23 +86,11 @@ export function SaleFormPage() {
         phone_primary: customerOption.phone_primary,
       }
     : null
-  const [isInstallment, setIsInstallment] = useState(false)
-  const [installmentsCount, setInstallmentsCount] = useState('2')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([createDraftItem()])
-  const [markAsCompleted, setMarkAsCompleted] = useState(true)
-  const [markAsPaid, setMarkAsPaid] = useState(false)
-  const [paidAmount, setPaidAmount] = useState('')
-
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const whatsAppWindowRef = useRef<Window | null>(null)
-
-  // "Pago" não existe pra venda parcelada (backend rejeita com 422) — some
-  // junto se o usuário ligar "parcelado" depois de já ter marcado "pago".
-  useEffect(() => {
-    if (isInstallment) setMarkAsPaid(false)
-  }, [isInstallment])
 
   const fetchClientOptions = useCallback(async (query: string): Promise<FinalCustomerSearchResult[]> => {
     if (!activeTenantUuid) return []
@@ -161,9 +136,6 @@ export function SaleFormPage() {
     }
   }, [items])
 
-  const paidAmountNumber = paidAmount.trim() === '' ? summary.totalPracticed : Number(paidAmount)
-  const pendingOrChange = summary.totalPracticed - (Number.isFinite(paidAmountNumber) ? paidAmountNumber : 0)
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError(null)
@@ -197,12 +169,12 @@ export function SaleFormPage() {
     try {
       const sale: Sale = await saleService.createSale({
         final_customer_uuid: client.uuid,
-        is_installment: isInstallment,
-        installments_count: isInstallment ? Number(installmentsCount) : null,
+        is_installment: false,
+        installments_count: null,
         notes: notes.trim() || undefined,
         items: itemsPayload,
-        mark_as_completed: markAsCompleted,
-        mark_as_paid: isInstallment ? false : markAsPaid,
+        mark_as_completed: true,
+        mark_as_paid: true,
       })
 
       if (isDigitsOnlyPhone(client.phone_primary)) {
@@ -214,8 +186,8 @@ export function SaleFormPage() {
             unitPrice: effectiveUnitPrice(item),
           })),
           total: sale.total_amount,
-          isPaid: markAsPaid && !isInstallment,
-          paidAmount: markAsPaid && !isInstallment ? paidAmountNumber : null,
+          isPaid: true,
+          paidAmount: sale.total_amount,
           trackingUrl: activeTenant?.send_tracking_link_whatsapp
             ? `${window.location.origin}/rastreio/${sale.uuid}`
             : undefined,
@@ -224,7 +196,7 @@ export function SaleFormPage() {
         whatsAppWindowRef.current = window.open(url, '_blank')
       }
 
-      navigate('/vendas')
+      navigate('/vendas-manuais')
     } catch (err) {
       setFormError(getApiErrorMessage(err, 'Não foi possível criar a venda agora.'))
     } finally {
@@ -234,11 +206,11 @@ export function SaleFormPage() {
 
   return (
     <CrudFormShell
-      backLabel="Vendas"
-      backTo="/vendas"
+      backLabel="Vendas manuais"
+      backTo="/vendas-manuais"
       title="Nova venda"
       subtitle="Monte os itens, defina a forma de pagamento e confirme a venda."
-      breadcrumbs={[{ label: 'Vendas', to: '/vendas' }, { label: 'Nova' }]}
+      breadcrumbs={[{ label: 'Vendas manuais', to: '/vendas-manuais' }, { label: 'Nova' }]}
       formError={formError}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
@@ -260,22 +232,6 @@ export function SaleFormPage() {
             placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
           />
         </Box>
-
-        <FormControlLabel
-          control={<Switch checked={isInstallment} onChange={(event) => setIsInstallment(event.target.checked)} />}
-          label="Venda parcelada"
-        />
-
-        {isInstallment && (
-          <TextField
-            label="Quantidade de parcelas"
-            type="number"
-            value={installmentsCount}
-            onChange={(event) => setInstallmentsCount(event.target.value)}
-            slotProps={{ htmlInput: { min: 1, step: 1 } }}
-            sx={{ maxWidth: 220 }}
-          />
-        )}
 
         <Stack spacing={1.5}>
           <Typography sx={{ fontWeight: 700 }}>Itens da venda</Typography>
@@ -369,48 +325,9 @@ export function SaleFormPage() {
           slotProps={{ htmlInput: { maxLength: NOTES_MAX_LENGTH } }}
         />
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
-          <FormControlLabel
-            control={<Switch checked={markAsCompleted} onChange={(event) => setMarkAsCompleted(event.target.checked)} />}
-            label="Concluída"
-          />
-          <Stack>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={markAsPaid}
-                  disabled={isInstallment}
-                  onChange={(event) => {
-                    setMarkAsPaid(event.target.checked)
-                    if (event.target.checked && paidAmount.trim() === '') {
-                      setPaidAmount(summary.totalPracticed.toFixed(2))
-                    }
-                  }}
-                />
-              }
-              label="Pago"
-            />
-            {isInstallment && (
-              <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                Venda parcelada não pode nascer paga — use "Pagar parcela" depois de criada.
-              </Typography>
-            )}
-          </Stack>
-        </Box>
-
-        {markAsPaid && !isInstallment && (
-          <TextField
-            label="Valor pago"
-            type="number"
-            value={paidAmount}
-            onChange={(event) => setPaidAmount(event.target.value)}
-            slotProps={{
-              htmlInput: { min: 0, step: '0.01' },
-              input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
-            }}
-            sx={{ maxWidth: 260 }}
-          />
-        )}
+        <Alert severity="info" variant="outlined">
+          Vendas manuais sao registradas como concluidas e pagas no momento da criacao.
+        </Alert>
 
         <Paper variant="outlined" sx={{ p: 2, ...SOFT_PANEL_SX }}>
           <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Resumo</Typography>
@@ -431,18 +348,10 @@ export function SaleFormPage() {
               <Typography sx={{ fontWeight: 700 }}>{formatCurrency(summary.totalPracticed)}</Typography>
             </Stack>
 
-            {markAsPaid && !isInstallment && (
-              <>
-                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: 'var(--pt-muted)' }}>Valor pago</Typography>
-                  <Typography>{formatCurrency(Number.isFinite(paidAmountNumber) ? paidAmountNumber : 0)}</Typography>
-                </Stack>
-                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: 'var(--pt-muted)' }}>{pendingOrChange > 0 ? 'Pendente' : pendingOrChange < 0 ? 'Troco' : 'Quitado'}</Typography>
-                  <Typography>{pendingOrChange === 0 ? '—' : formatCurrency(Math.abs(pendingOrChange))}</Typography>
-                </Stack>
-              </>
-            )}
+            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+              <Typography sx={{ color: 'var(--pt-muted)' }}>Status inicial</Typography>
+              <Typography>Concluida e paga</Typography>
+            </Stack>
           </Stack>
         </Paper>
 

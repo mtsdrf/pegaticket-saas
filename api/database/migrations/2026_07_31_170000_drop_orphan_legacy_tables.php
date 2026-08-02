@@ -31,7 +31,7 @@ return new class extends Migration
         Schema::dropIfExists('clients');
 
         // Legado de catálogo/produto removido do domínio principal.
-        Schema::dropIfExists('order_item_options');
+        Schema::dropIfExists('sale_item_options');
         Schema::dropIfExists('product_options');
         Schema::dropIfExists('product_option_groups');
         Schema::dropIfExists('product_favorites');

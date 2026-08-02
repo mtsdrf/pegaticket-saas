@@ -140,17 +140,17 @@ class EventSessionService
      * Spec 5.4: "uma sessão com vendas não poderá ser removida sem
      * procedimento de cancelamento" — bloqueia soft delete se existir
      * TicketType vinculado a esta sessão com algum item de pedido já
-     * vendido (via ticket_types.event_session_id -> order_items).
+     * vendido (via ticket_types.event_session_id -> sale_items).
      */
     public function delete(EventSession $eventSession): void
     {
         $this->assertBelongsToCurrentTenant($eventSession);
 
         DB::transaction(function () use ($eventSession) {
-            $hasSales = DB::table('order_items')
-                ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
+            $hasSales = DB::table('sale_items')
+                ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
                 ->where('ticket_types.event_session_id', $eventSession->id)
-                ->whereNull('order_items.deleted_at')
+                ->whereNull('sale_items.deleted_at')
                 ->exists();
 
             if ($hasSales) {

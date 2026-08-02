@@ -59,13 +59,13 @@ export interface TopClient {
 export interface PaymentDelayClient {
   name: string
   avg_days_to_pay: number
-  paid_orders_count: number
+  paid_sales_count: number
 }
 
 export type OverdueType = 'pagamento' | 'entrega'
 
 export interface OverdueSale {
-  order_uuid: string
+  sale_uuid: string
   client_name: string
   amount: number
   due_date: string | null
@@ -116,8 +116,8 @@ export interface CouponRoiGroup {
 }
 
 export interface CouponRoi {
-  orders_with_coupon: CouponRoiGroup
-  orders_without_coupon: CouponRoiGroup
+  sales_with_coupon: CouponRoiGroup
+  sales_without_coupon: CouponRoiGroup
   total_discount_amount: string
   ticket_lift_percentage: number
 }

@@ -16,7 +16,7 @@ class Tenant extends BaseModel
         'plan_id',
         'is_active',
         'trial_ends_at',
-        'next_order_code',
+        'next_sale_code',
         'logo_path',
         'logo_data',
         'logo_mime',
@@ -34,7 +34,7 @@ class Tenant extends BaseModel
         'is_active' => 'boolean',
         'trial_ends_at' => 'datetime',
         'logo_updated_at' => 'datetime',
-        'next_order_code' => 'integer',
+        'next_sale_code' => 'integer',
     ];
 
     protected $hidden = [

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->string('payment_method', 20)->nullable()->after('notes');
             $table->boolean('needs_change')->default(false)->after('payment_method');
             $table->decimal('change_for_amount', 10, 2)->nullable()->after('needs_change');
@@ -25,7 +25,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn(['payment_method', 'needs_change', 'change_for_amount']);
         });
     }

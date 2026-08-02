@@ -43,10 +43,10 @@ const FAILED_STATUSES = new Set(['failed', 'rejected'])
 
 /**
  * Histórico unificado de estornos do tenant (`GET /subscription/refunds`) —
- * reúne pedido pago cancelado, arrependimento de assinatura e
+ * reúne venda paga cancelada, arrependimento de assinatura e
  * contestação/chargeback numa única lista, cada um identificado pelo texto
  * já descritivo de `reason`. Só visualização: solicitar um novo estorno
- * continua nos fluxos próprios (cancelamento de pedido, arrependimento).
+ * continua nos fluxos próprios (cancelamento de venda, arrependimento).
  */
 export function SubscriptionRefundHistory() {
   const [page, setPage] = useState(1)

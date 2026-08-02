@@ -60,7 +60,7 @@ class PortalSalesTest extends TestCase
     }
 
     #[Test]
-    public function orders_only_include_linked_and_confirmed_stores(): void
+    public function sales_only_include_linked_and_confirmed_stores(): void
     {
         [$customer, $token] = $this->authenticatedCustomer();
 
@@ -71,7 +71,7 @@ class PortalSalesTest extends TestCase
         $this->createOrder($unlinkedTenant, $customer);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $linkedOrder->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $linkedOrder->uuid])
             ->assertStatus(200);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -87,7 +87,7 @@ class PortalSalesTest extends TestCase
     }
 
     #[Test]
-    public function orders_are_empty_when_no_store_is_linked_yet(): void
+    public function sales_are_empty_when_no_store_is_linked_yet(): void
     {
         [$customer, $token] = $this->authenticatedCustomer();
 
@@ -101,7 +101,7 @@ class PortalSalesTest extends TestCase
     }
 
     #[Test]
-    public function me_returns_profile_and_linked_stores(): void
+    public function me_returns_profile_and_linked_tenants(): void
     {
         [$customer, $token] = $this->authenticatedCustomer('perfil@test.com');
 
@@ -109,7 +109,7 @@ class PortalSalesTest extends TestCase
         $order = $this->createOrder($tenant, $customer);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $order->uuid])
             ->assertStatus(200);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -117,11 +117,11 @@ class PortalSalesTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.email', 'perfil@test.com')
-            ->assertJsonPath('data.linked_stores.0.tenant_name', 'Loja X');
+            ->assertJsonPath('data.linked_tenants.0.tenant_name', 'Loja X');
     }
 
     #[Test]
-    public function orders_and_me_require_authentication(): void
+    public function sales_and_me_require_authentication(): void
     {
         $this->getJson('/api/v1/portal/sales')->assertStatus(401);
         $this->getJson('/api/v1/portal/me')->assertStatus(401);

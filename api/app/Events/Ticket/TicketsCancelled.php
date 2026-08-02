@@ -8,7 +8,7 @@ class TicketsCancelled
      * @param string[] $ticketUuids
      */
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public array $ticketUuids,
         public string $status,
         public ?int $actorId

@@ -89,7 +89,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
             ], 200),
         ]);
 
-        Artisan::call('payments:reconcile-mercadopago-orders', ['--payment_uuid' => $payment->uuid]);
+        Artisan::call('payments:reconcile-mercadopago-sales', ['--payment_uuid' => $payment->uuid]);
 
         $payment->refresh();
         $order->refresh();
@@ -117,7 +117,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
             ], 200),
         ]);
 
-        Artisan::call('payments:reconcile-mercadopago-orders', ['--payment_uuid' => $payment->uuid]);
+        Artisan::call('payments:reconcile-mercadopago-sales', ['--payment_uuid' => $payment->uuid]);
 
         $payment->refresh();
         $order->refresh();
@@ -145,7 +145,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
             ], 200),
         ]);
 
-        Artisan::call('payments:reconcile-mercadopago-orders', ['--payment_uuid' => $payment->uuid]);
+        Artisan::call('payments:reconcile-mercadopago-sales', ['--payment_uuid' => $payment->uuid]);
 
         $payment->refresh();
 
@@ -177,7 +177,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
             ], 200),
         ]);
 
-        $exitCode = Artisan::call('payments:reconcile-mercadopago-orders', ['--limit' => 10]);
+        $exitCode = Artisan::call('payments:reconcile-mercadopago-sales', ['--limit' => 10]);
 
         $failingPayment->refresh();
         $okPayment->refresh();

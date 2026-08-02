@@ -92,8 +92,8 @@ class SaleRefundTest extends TestCase
             'items' => $items,
         ])->assertStatus(201)->json('data');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $tickets = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderId))->get();
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $tickets = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->get();
 
         return ['order' => $order, 'tickets' => $tickets];
     }
@@ -269,7 +269,7 @@ class SaleRefundTest extends TestCase
         ]);
 
         $log = AuditLog::where('event', 'order_refund_created')->first();
-        $this->assertSame($order['uuid'], $log->meta['order_uuid']);
+        $this->assertSame($order['uuid'], $log->meta['sale_uuid']);
         $this->assertSame('total', $log->meta['type']);
     }
 
@@ -314,7 +314,7 @@ class SaleRefundTest extends TestCase
     /**
      * Decisão técnica documentada em SaleRefundService: a disponibilidade
      * de assento é calculada em StorefrontHoldService::buildSeatAvailability()
-     * somando order_items.seat_id não-nulo de pedidos não cancelados —
+     * somando sale_items.seat_id não-nulo de pedidos não cancelados —
      * NUNCA olha para Ticket.status. "Liberar lugar" só tem efeito real se
      * o seat_id do order_item (e do ticket) for nulado; sem
      * release_seats=true, o item some do ticket mas o vínculo com o
@@ -327,13 +327,13 @@ class SaleRefundTest extends TestCase
 
         ['order' => $order, 'tickets' => $tickets] = $this->createPaidOrderWithTickets(1, 25);
         $ticket = $tickets->first();
-        $orderItemId = $ticket->order_item_id;
+        $saleItemId = $ticket->sale_item_id;
 
         // Sem seat vinculado no fixture (createProduct não usa mapa de
         // assento) — associa manualmente pra simular o cenário de venda
         // com assento reservado.
         $ticket->update(['seat_id' => $seat->id]);
-        SaleItem::whereKey($orderItemId)->update(['seat_id' => $seat->id]);
+        SaleItem::whereKey($saleItemId)->update(['seat_id' => $seat->id]);
 
         $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/refunds", [
             'type' => 'total',
@@ -344,7 +344,7 @@ class SaleRefundTest extends TestCase
         ])->assertStatus(201);
 
         $this->assertNull($ticket->fresh()->seat_id);
-        $this->assertNull(SaleItem::whereKey($orderItemId)->value('seat_id'));
+        $this->assertNull(SaleItem::whereKey($saleItemId)->value('seat_id'));
         $this->assertSame('estornado', $ticket->fresh()->status);
     }
 
@@ -355,10 +355,10 @@ class SaleRefundTest extends TestCase
 
         ['order' => $order, 'tickets' => $tickets] = $this->createPaidOrderWithTickets(1, 25);
         $ticket = $tickets->first();
-        $orderItemId = $ticket->order_item_id;
+        $saleItemId = $ticket->sale_item_id;
 
         $ticket->update(['seat_id' => $seat->id]);
-        SaleItem::whereKey($orderItemId)->update(['seat_id' => $seat->id]);
+        SaleItem::whereKey($saleItemId)->update(['seat_id' => $seat->id]);
 
         $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/refunds", [
             'type' => 'total',
@@ -369,7 +369,7 @@ class SaleRefundTest extends TestCase
         ])->assertStatus(201);
 
         $this->assertSame($seat->id, $ticket->fresh()->seat_id);
-        $this->assertSame($seat->id, SaleItem::whereKey($orderItemId)->value('seat_id'));
+        $this->assertSame($seat->id, SaleItem::whereKey($saleItemId)->value('seat_id'));
         $this->assertSame('estornado', $ticket->fresh()->status);
     }
 

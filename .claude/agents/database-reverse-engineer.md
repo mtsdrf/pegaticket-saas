@@ -162,7 +162,7 @@ Tabela pivô/relacionamento:
 Tabela que liga duas ou mais entidades.
 
 Tabela transacional:
-Tabela que registra operações, movimentos, pedidos, eventos ou processos.
+Tabela que registra operações, movimentos, vendas, eventos ou processos.
 
 Tabela de histórico:
 Tabela que preserva versões, alterações ou eventos passados.

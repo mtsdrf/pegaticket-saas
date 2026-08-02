@@ -18,7 +18,7 @@ class SyncTenantRolePermissionsRequest extends FormRequest
             'permissions.*.functionality' => ['required', 'string'],
             'permissions.*.action' => ['required', 'string'],
             // Limite percentual de desconto por perfil (roadmap A1.5) —
-            // nullable/opcional, só faz sentido na linha functionality=orders
+            // nullable/opcional, só faz sentido na linha functionality=sales
             // (qualquer outra linha aceita o valor mas ele é ignorado, ver
             // PermissionService::resolveOrderDiscountLimitPercent).
             'permissions.*.discount_limit_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],

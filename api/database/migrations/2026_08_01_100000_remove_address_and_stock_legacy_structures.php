@@ -21,8 +21,8 @@ return new class extends Migration {
             });
         }
 
-        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'stock_location_id')) {
-            Schema::table('orders', function (Blueprint $table) {
+        if (Schema::hasTable('sales') && Schema::hasColumn('sales', 'stock_location_id')) {
+            Schema::table('sales', function (Blueprint $table) {
                 $table->dropForeign(['stock_location_id']);
                 $table->unsignedBigInteger('stock_location_id')->nullable()->change();
             });

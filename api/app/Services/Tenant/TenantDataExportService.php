@@ -32,7 +32,7 @@ class TenantDataExportService
 
         $zip->addFromString('customers.csv', $this->customersCsv($tenantId));
         $zip->addFromString('ticket_types.csv', $this->productsCsv($tenantId));
-        $zip->addFromString('orders.csv', $this->ordersCsv($tenantId));
+        $zip->addFromString('sales.csv', $this->salesCsv($tenantId));
 
         $zip->close();
 
@@ -90,22 +90,22 @@ class TenantDataExportService
         );
     }
 
-    private function ordersCsv(int $tenantId): string
+    private function salesCsv(int $tenantId): string
     {
-        $rows = DB::table('orders')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->orderByDesc('orders.id')
+        $rows = DB::table('sales')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->orderByDesc('sales.id')
             ->select([
-                'orders.uuid as uuid',
+                'sales.uuid as uuid',
                 'final_customers.name as client_name',
-                'orders.total_amount as total_amount',
-                'orders.origin as origin',
-                'orders.is_paid as is_paid',
-                'orders.is_completed as is_completed',
-                'orders.cancelled_at as cancelled_at',
-                'orders.created_at as created_at',
+                'sales.total_amount as total_amount',
+                'sales.origin as origin',
+                'sales.is_paid as is_paid',
+                'sales.is_completed as is_completed',
+                'sales.cancelled_at as cancelled_at',
+                'sales.created_at as created_at',
             ])
             ->get();
 

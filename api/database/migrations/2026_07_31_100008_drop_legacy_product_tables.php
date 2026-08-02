@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
  * (roadmap PegaTicket, seções 2.4/2.8/4/4A). Todas as tabelas
  * dependentes de `products`/`product_categories`/`product_types` já foram
  * repontadas pra `ticket_types`/`events`/`event_categories` nas migrations
- * anteriores desta mesma leva (order_items, stock_balances,
+ * anteriores desta mesma leva (sale_items, stock_balances,
  * stock_movements, product_promotions, product_favorites->event_favorites)
  * — o que sobra aqui é dropar, na ordem filho->pai, o que não tem mais
  * consumidor: grupos de opcionais de produto (feature descontinuada,
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::dropIfExists('order_item_options');
+        Schema::dropIfExists('sale_item_options');
         Schema::dropIfExists('product_options');
         Schema::dropIfExists('product_option_groups');
         Schema::dropIfExists('product_category_prices');

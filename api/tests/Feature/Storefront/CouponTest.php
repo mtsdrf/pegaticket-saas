@@ -352,7 +352,7 @@ class CouponTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'coupon_id' => $coupon->id,
             'final_customer_id' => $customer->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'redeemed_at' => now(),
         ]);
 
@@ -394,7 +394,7 @@ class CouponTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'coupon_id' => $coupon->id,
             'final_customer_id' => $customer->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'redeemed_at' => now(),
         ]);
 

@@ -83,7 +83,7 @@ class SaleTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonPath('data.items.0.notes', 'Sem cebola');
 
-        $this->assertDatabaseHas('order_items', [
+        $this->assertDatabaseHas('sale_items', [
             'tenant_id' => $this->tenant->id,
             'ticket_type_id' => $product->id,
             'notes' => 'Sem cebola',
@@ -854,7 +854,7 @@ class SaleTest extends TestCase
             ],
         ])->json('data');
 
-        // Sem orders,deliver e sem orders,pay concedidos.
+        // Sem sales,deliver e sem sales,pay concedidos.
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/reopen")->assertStatus(403);
         $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/unpay")->assertStatus(403);
     }
@@ -890,8 +890,8 @@ class SaleTest extends TestCase
      * mark_as_completed ecoa o default "entregue" (true) do formulário
      * legado sem reabrir update genérico: dispara a mesma lógica de
      * deliver() (conversão de reserva -> saída real) dentro da própria
-     * transação de criação. Não exige a permissão orders,deliver — é um
-     * campo do POST /orders, guardado só por orders,create.
+     * transação de criação. Não exige a permissão sales,deliver — é um
+     * campo do POST /sales, guardado só por sales,create.
      */
     #[Test]
     public function mark_as_completed_on_creation_converts_reservation_into_real_exit(): void
@@ -999,7 +999,7 @@ class SaleTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
         $this->assertArrayHasKey('mark_as_paid', $response->json('errors'));
 
-        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('sales', 0);
     }
 
     #[Test]
@@ -1022,7 +1022,7 @@ class SaleTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'VALIDATION_ERROR');
         $this->assertArrayHasKey('notes', $response->json('errors'));
 
-        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('sales', 0);
     }
 
     /**
@@ -1057,7 +1057,7 @@ class SaleTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | PUT /orders/{order}/items — edição de itens/cabeçalho
+    | PUT /sales/{order}/items — edição de itens/cabeçalho
     |--------------------------------------------------------------------------
     */
 
@@ -1444,12 +1444,12 @@ class SaleTest extends TestCase
     }
 
     /**
-     * orders.codigo (2026-07-15): número sequencial de exibição por
-     * tenant, via tenants.next_order_code. Primeiro pedido do tenant
+     * sales.codigo (2026-07-15): número sequencial de exibição por
+     * tenant, via tenants.next_sale_code. Primeiro pedido do tenant
      * recebe "1000", segundo "1001", etc.
      */
     #[Test]
-    public function creating_orders_assigns_sequential_codigo_starting_at_1000(): void
+    public function creating_sales_assigns_sequential_codigo_starting_at_1000(): void
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
@@ -1512,7 +1512,7 @@ class SaleTest extends TestCase
     {
         $client = $this->createClient($this->tenant->id);
 
-        DB::table('tenants')->where('id', $this->tenant->id)->update(['next_order_code' => 999]);
+        DB::table('tenants')->where('id', $this->tenant->id)->update(['next_sale_code' => 999]);
 
         $firstOrder = Sale::create([
             'tenant_id' => $this->tenant->id,
@@ -1540,7 +1540,7 @@ class SaleTest extends TestCase
 
         $this->assertSame('1000', $firstOrder->fresh()->codigo);
         $this->assertSame('1001', $secondOrder->fresh()->codigo);
-        $this->assertEquals(1001, DB::table('tenants')->where('id', $this->tenant->id)->value('next_order_code'));
+        $this->assertEquals(1001, DB::table('tenants')->where('id', $this->tenant->id)->value('next_sale_code'));
     }
 
     /**
@@ -1605,7 +1605,7 @@ class SaleTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.is_paid', false)
-            ->assertJsonPath('message', __('messages.order.partially_paid'));
+            ->assertJsonPath('message', __('messages.sale.partially_paid'));
 
         $this->assertEquals(50.0, $response->json('data.paid_amount'));
         $this->assertNull($response->json('data.completed_at'));
@@ -1669,13 +1669,13 @@ class SaleTest extends TestCase
     }
 
     /**
-     * Comando orders:backfill-codigo (2026-07-15) — pedidos "legados"
-     * simulados apagando codigo/next_order_code manualmente após criação.
-     * Confirma sequência correta por tenant e que tenants.next_order_code
+     * Comando sales:backfill-codigo (2026-07-15) — pedidos "legados"
+     * simulados apagando codigo/next_sale_code manualmente após criação.
+     * Confirma sequência correta por tenant e que tenants.next_sale_code
      * fica consistente pro próximo pedido criado depois do backfill.
      */
     #[Test]
-    public function backfill_codigo_command_assigns_sequential_codes_per_tenant_and_updates_next_order_code(): void
+    public function backfill_codigo_command_assigns_sequential_codes_per_tenant_and_updates_next_sale_code(): void
     {
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
@@ -1695,7 +1695,7 @@ class SaleTest extends TestCase
 
         // Simula pedidos legados: apaga codigo e reseta o contador do tenant.
         Sale::where('tenant_id', $tenantA->id)->update(['codigo' => null]);
-        DB::table('tenants')->where('id', $tenantA->id)->update(['next_order_code' => 1000]);
+        DB::table('tenants')->where('id', $tenantA->id)->update(['next_sale_code' => 1000]);
 
         $this->setUpTenantScopedUser('order-codigo-backfill-b@test.com');
         $this->grantPermission('sales', 'create');
@@ -1713,9 +1713,9 @@ class SaleTest extends TestCase
         ])->assertStatus(201);
 
         Sale::where('tenant_id', $tenantB->id)->update(['codigo' => null]);
-        DB::table('tenants')->where('id', $tenantB->id)->update(['next_order_code' => 1000]);
+        DB::table('tenants')->where('id', $tenantB->id)->update(['next_sale_code' => 1000]);
 
-        $this->artisan('orders:backfill-codigo')->assertExitCode(0);
+        $this->artisan('sales:backfill-codigo')->assertExitCode(0);
 
         $this->assertEquals(
             ['1000', '1001'],
@@ -1727,10 +1727,10 @@ class SaleTest extends TestCase
             Sale::where('tenant_id', $tenantB->id)->orderBy('id')->pluck('codigo')->all()
         );
 
-        // next_order_code guarda o ÚLTIMO código emitido (não o próximo),
+        // next_sale_code guarda o ÚLTIMO código emitido (não o próximo),
         // mesma convenção de SaleService::create() — increment-then-read.
-        $this->assertEquals(1001, DB::table('tenants')->where('id', $tenantA->id)->value('next_order_code'));
-        $this->assertEquals(1000, DB::table('tenants')->where('id', $tenantB->id)->value('next_order_code'));
+        $this->assertEquals(1001, DB::table('tenants')->where('id', $tenantA->id)->value('next_sale_code'));
+        $this->assertEquals(1000, DB::table('tenants')->where('id', $tenantB->id)->value('next_sale_code'));
 
         // Pedido criado depois do backfill não colide com os códigos
         // recém-atribuídos.
@@ -1746,7 +1746,7 @@ class SaleTest extends TestCase
     /**
      * Guards do checkout público (horário de funcionamento e pedido mínimo)
      * vivem inteiramente em StorefrontCheckoutService::checkout(), nunca em
-     * SaleService::create(). POST /orders (fluxo staff) não passa por esse
+     * SaleService::create(). POST /sales (fluxo staff) não passa por esse
      * Service, então StoreBusinessHour e minimum_order_value não bloqueiam
      * o pedido manual.
      */

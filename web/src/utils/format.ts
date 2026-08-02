@@ -9,7 +9,7 @@ export function formatCurrency(value: string | number): string {
 }
 
 /**
- * Quantidade de item de pedido: só mostra casas decimais quando o produto é
+ * Quantidade de item de venda: só mostra casas decimais quando o produto é
  * vendido por peso (`unit === 'kg'`) — caso contrário exibe como inteiro,
  * sem o `.000` de `decimal(12,3)` que confundia (lido como "2 mil" em vez de
  * "2 unidades" no padrão de milhar pt-BR). Aceita string porque `SaleItem`
@@ -74,7 +74,7 @@ export function formatDateBR(value: string): string {
  * colunas `date` puras e força meia-noite local; aqui o valor já traz o
  * instante certo (UTC ou com offset), então `new Date(value)` sozinho já
  * respeita o fuso do navegador sem precisar (e sem poder) normalizar hora.
- * Usar esta função para qualquer datetime, nunca `formatDateBR` — pedido
+ * Usar esta função para qualquer datetime, nunca `formatDateBR` — venda
  * feito à noite no Brasil (UTC-3) já é o dia seguinte em UTC, e o slice de
  * `formatDateBR` pegaria a data UTC errada.
  */

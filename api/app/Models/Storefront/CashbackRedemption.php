@@ -23,7 +23,7 @@ class CashbackRedemption extends Model
     protected $fillable = [
         'tenant_id',
         'final_customer_id',
-        'order_id',
+        'sale_id',
         'cashback_earning_id',
         'amount',
         'redeemed_at',
@@ -44,9 +44,9 @@ class CashbackRedemption extends Model
         return $this->belongsTo(FinalCustomer::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
     public function cashbackEarning()

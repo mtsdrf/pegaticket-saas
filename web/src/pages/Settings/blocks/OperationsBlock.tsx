@@ -1,16 +1,4 @@
-import {
-  Alert,
-  Button,
-  FormControlLabel,
-  InputAdornment,
-  Radio,
-  RadioGroup,
-  Skeleton,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { Alert, Button, FormControlLabel, Radio, RadioGroup, Skeleton, Stack, Switch, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useTenantSettingsData } from './useTenantSettingsData'
 import * as tenantSettingsService from '../../../services/tenantSettingsService'
@@ -18,7 +6,7 @@ import { getApiErrorMessage } from '../../../types/api'
 import type { StorefrontCatalogLayout } from '../../../types/storefront'
 
 /**
- * Bloco "Pedidos e Operação" — subconjunto de `tenant_settings` (extraído de
+ * Bloco "Vendas e Operação" — subconjunto de `tenant_settings` (extraído de
  * `TenantSettingsPage`, 2026-07-24). Edita só os campos operacionais; o
  * restante do objeto (`accepted_payment_methods`, dados de recebimento) é preservado
  * do payload carregado por `useTenantSettingsData`.
@@ -26,9 +14,6 @@ import type { StorefrontCatalogLayout } from '../../../types/storefront'
 export function OperationsBlock() {
   const { settings, setSettings, isLoading, loadError, reload } = useTenantSettingsData()
 
-  const [sendTrackingLink, setSendTrackingLink] = useState(false)
-  const [minimumOrderValue, setMinimumOrderValue] = useState('')
-  const [estimatedPreparationMinutes, setEstimatedPreparationMinutes] = useState('')
   const [storefrontEnabled, setStorefrontEnabled] = useState(true)
   const [catalogLayout, setCatalogLayout] = useState<StorefrontCatalogLayout>('list')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,11 +22,6 @@ export function OperationsBlock() {
 
   useEffect(() => {
     if (!settings) return
-    setSendTrackingLink(settings.send_tracking_link_whatsapp)
-    setMinimumOrderValue(settings.minimum_order_value !== null ? String(settings.minimum_order_value) : '')
-    setEstimatedPreparationMinutes(
-      settings.estimated_preparation_minutes !== null ? String(settings.estimated_preparation_minutes) : '',
-    )
     setStorefrontEnabled(settings.storefront_enabled)
     setCatalogLayout(settings.catalog_layout)
   }, [settings])
@@ -54,9 +34,9 @@ export function OperationsBlock() {
 
     try {
       const updated = await tenantSettingsService.updateTenantSettings({
-        send_tracking_link_whatsapp: sendTrackingLink,
-        minimum_order_value: minimumOrderValue.trim() ? Number(minimumOrderValue) : null,
-        estimated_preparation_minutes: estimatedPreparationMinutes.trim() ? Number(estimatedPreparationMinutes) : null,
+        send_tracking_link_whatsapp: settings.send_tracking_link_whatsapp,
+        minimum_order_value: settings.minimum_order_value,
+        estimated_preparation_minutes: settings.estimated_preparation_minutes,
         storefront_enabled: storefrontEnabled,
         catalog_layout: catalogLayout,
         accepted_payment_methods: settings.accepted_payment_methods,
@@ -113,42 +93,6 @@ export function OperationsBlock() {
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
         Quando desligado, a página pública continua acessível apenas como vitrine institucional; o catálogo e o checkout deixam de aparecer.
       </Typography>
-
-      <FormControlLabel
-        control={<Switch checked={sendTrackingLink} onChange={(event) => setSendTrackingLink(event.target.checked)} />}
-        label="Enviar link de rastreio na mensagem do WhatsApp"
-        sx={{ mt: 2.5 }}
-      />
-      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mt: 0.5, ml: { xs: 0, sm: 6 } }}>
-        Quando ativado, as mensagens de WhatsApp incluem um link para o comprador acompanhar a evolução da compra.
-      </Typography>
-
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
-        <TextField
-          label="Compra mínima do canal público"
-          type="number"
-          value={minimumOrderValue}
-          onChange={(event) => setMinimumOrderValue(event.target.value)}
-          helperText="Deixe em branco para não exigir um valor mínimo."
-          fullWidth
-          slotProps={{
-            input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
-            htmlInput: { min: 0, step: '0.01' },
-          }}
-        />
-        <TextField
-          label="Tempo estimado de preparo"
-          type="number"
-          value={estimatedPreparationMinutes}
-          onChange={(event) => setEstimatedPreparationMinutes(event.target.value)}
-          helperText="Deixe em branco para não exibir estimativa no catálogo."
-          fullWidth
-          slotProps={{
-            input: { endAdornment: <InputAdornment position="end">min</InputAdornment> },
-            htmlInput: { min: 1, step: 1 },
-          }}
-        />
-      </Stack>
 
       <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Layout do catálogo</Typography>
       <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1 }}>

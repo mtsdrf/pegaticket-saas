@@ -176,7 +176,7 @@ export interface StorefrontCheckoutItemPayload {
   ticket_type_uuid?: string
   event_product_uuid?: string
   quantity: number
-  /** Observação por item, até 200 caracteres, distinta do `notes` geral do pedido. */
+  /** Observação por item, até 200 caracteres, distinta do `notes` geral da venda. */
   notes?: string
   /** Só enviado para itens de `ticket_type_uuid` com ao menos um participante preenchido. */
   participants?: StorefrontCheckoutParticipantPayload[]
@@ -200,9 +200,9 @@ export interface StorefrontCheckoutPayload {
   change_for_amount?: number
 }
 
-/** `POST /loja/{slug}/checkout` devolve só `{ order: { uuid } }` — o frontend redireciona pro rastreio público, não cria tela de status própria. */
+/** `POST /loja/{slug}/checkout` devolve só `{ sale: { uuid } }` — o frontend redireciona pro rastreio público, não cria tela de status própria da venda. */
 export interface StorefrontCheckoutResult {
-  order: { uuid: string }
+  sale: { uuid: string }
 }
 
 export interface StorefrontAvailabilityTicketType {

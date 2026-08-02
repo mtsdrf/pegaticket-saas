@@ -171,17 +171,17 @@ class PaymentWebhookController extends Controller
                 // (ex. "ORD01JQ4S4KY8HWQ6NA5PXB65B3D3"). O `action` nunca decide
                 // sozinho o efeito: reconcileOrderPayment sempre reconsulta a
                 // order real via GET /v1/orders/{id} antes de confirmar.
-                $orderId = $request->input('provider_charge_id')
+                $saleId = $request->input('provider_charge_id')
                     ?? $request->input('charge_id')
                     ?? $request->input('data.id');
 
-                if ($orderId !== null && $orderId !== '') {
+                if ($saleId !== null && $saleId !== '') {
                     $payment = Payment::where('provider', $provider)
-                        ->where('provider_charge_id', (string) $orderId)
+                        ->where('provider_charge_id', (string) $saleId)
                         ->first();
 
                     if ($payment !== null && $payment->payable_type === Sale::class) {
-                        $this->reconcileOrderPayment($mercadoPago, $payment, (string) $orderId);
+                        $this->reconcileOrderPayment($mercadoPago, $payment, (string) $saleId);
                     }
                 }
             }
@@ -216,9 +216,9 @@ class PaymentWebhookController extends Controller
     private function reconcileOrderPayment(
         MercadoPagoPaymentProvider $mercadoPago,
         Payment $payment,
-        string $orderId
+        string $saleId
     ): void {
-        $remote = $mercadoPago->getPayment($orderId);
+        $remote = $mercadoPago->getPayment($saleId);
 
         if (($remote['status'] ?? null) !== 'paid') {
             // Ainda pending/failed no MP — nada a conciliar agora, o

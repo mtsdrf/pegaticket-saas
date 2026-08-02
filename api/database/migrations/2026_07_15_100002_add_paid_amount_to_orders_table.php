@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             // Valor efetivamente pago — só diverge de total_amount em
             // pagamento PARCIAL de pedido não parcelado (paridade com o
             // legado, campo valor_pago). Pagamento total sempre grava
@@ -18,7 +18,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn('paid_amount');
         });
     }

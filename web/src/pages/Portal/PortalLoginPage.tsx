@@ -60,7 +60,7 @@ export function PortalLoginPage() {
 
       if (orderToLink) {
         try {
-          await createPortalLink({ order_uuid: orderToLink })
+          await createPortalLink({ sale_uuid: orderToLink })
         } catch (linkError) {
           navigate('/portal/compras', {
             replace: true,

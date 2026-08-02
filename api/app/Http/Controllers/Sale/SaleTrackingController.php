@@ -24,7 +24,7 @@ class SaleTrackingController extends Controller
 
         return APIResponse::success(
             new SalePublicTrackingResource($sale),
-            __('messages.order.tracking_shown')
+            __('messages.sale.tracking_shown')
         );
     }
 }

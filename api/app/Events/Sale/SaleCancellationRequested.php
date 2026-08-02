@@ -13,7 +13,7 @@ namespace App\Events\Sale;
 class SaleCancellationRequested
 {
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public ?string $reason,
         public ?string $finalCustomerUuid,
     ) {

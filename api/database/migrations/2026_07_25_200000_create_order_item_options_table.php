@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('order_item_options', function (Blueprint $table) {
+        Schema::create('sale_item_options', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
             $table->unsignedBigInteger('tenant_id')->index();
-            $table->foreignId('order_item_id')->constrained('order_items')->cascadeOnDelete();
+            $table->foreignId('sale_item_id')->constrained('sale_items')->cascadeOnDelete();
             $table->foreignId('product_option_id')->constrained('product_options')->cascadeOnDelete();
             $table->unsignedInteger('quantity')->default(1);
             $table->decimal('unit_price', 10, 2);
@@ -29,12 +29,12 @@ return new class extends Migration {
                 ->on('tenants')
                 ->cascadeOnDelete();
 
-            $table->index(['order_item_id', 'product_option_id'], 'order_item_options_item_option_idx');
+            $table->index(['sale_item_id', 'product_option_id'], 'sale_item_options_item_option_idx');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('order_item_options');
+        Schema::dropIfExists('sale_item_options');
     }
 };

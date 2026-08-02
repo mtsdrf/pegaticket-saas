@@ -62,7 +62,7 @@ class PortalTicketsTest extends TestCase
 
         $item = SaleItem::create([
             'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'ticket_type_id' => $ticketType->id,
             'quantity' => 2,
             'unit_price' => 40,
@@ -71,7 +71,7 @@ class PortalTicketsTest extends TestCase
 
         Ticket::create([
             'tenant_id' => $tenant->id,
-            'order_item_id' => $item->id,
+            'sale_item_id' => $item->id,
             'ticket_type_id' => $ticketType->id,
             'status' => 'ativo',
             'issued_at' => now(),
@@ -79,14 +79,14 @@ class PortalTicketsTest extends TestCase
 
         Ticket::create([
             'tenant_id' => $tenant->id,
-            'order_item_id' => $item->id,
+            'sale_item_id' => $item->id,
             'ticket_type_id' => $ticketType->id,
             'status' => 'ativo',
             'issued_at' => now(),
         ]);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $order->uuid])
             ->assertStatus(200);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)

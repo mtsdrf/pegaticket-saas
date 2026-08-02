@@ -89,7 +89,7 @@ pegaticket-saas/
 - Tipos de produto
 - Produtos com upload de imagem
 - Estoque: locations, balances, movements
-- Pedidos
+- Vendas
 - Relatórios
 
 ### Frontend já existente
@@ -190,7 +190,7 @@ Em ordem mais provável:
 
 1. finalizar o polimento das telas de CRUD já iniciadas
 2. expor no frontend os módulos já prontos no backend e ainda ausentes da navegação
-3. implementar pedidos no frontend
+3. implementar vendas no frontend
 4. destravar as ações rápidas do dashboard
 5. depois avançar em estoque e relatórios mais completos
 

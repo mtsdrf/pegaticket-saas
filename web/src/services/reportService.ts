@@ -15,7 +15,7 @@ export function getCharts(params: ReportPeriodParams = {}): Promise<ReportCharts
   return unwrap(apiClient.get<ApiSuccess<ReportCharts>>('/reports/charts', { params }))
 }
 
-/** Resultado por canal (roadmap A1.3) — agregação por `orders.origin`. */
+/** Resultado por canal (roadmap A1.3) — agregação por `sales.origin`. */
 export function getByChannel(params: ReportPeriodParams = {}): Promise<ChannelResultPoint[]> {
   return unwrap(apiClient.get<ApiSuccess<ChannelResultPoint[]>>('/reports/by-channel', { params }))
 }

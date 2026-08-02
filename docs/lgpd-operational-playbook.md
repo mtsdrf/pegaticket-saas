@@ -7,7 +7,7 @@ Este documento organiza a operação mínima de privacidade do PegaTicket para o
 ## 1. Papel da PegaTicket no tratamento de dados
 
 - **Controladora** dos dados do relacionamento comercial com a própria empresa contratante e seus usuários de acesso.
-- **Operadora** dos dados pessoais que a empresa contratante cadastra e trata dentro do sistema sobre clientes, contatos, destinatários, equipe, pedidos e rotinas operacionais.
+- **Operadora** dos dados pessoais que a empresa contratante cadastra e trata dentro do sistema sobre clientes, contatos, destinatários, equipe, vendas e rotinas operacionais.
 
 ## 2. O que já existe no produto
 
@@ -42,12 +42,12 @@ Fluxo:
 Exemplos:
 
 - cliente final pedindo acesso, correção ou exclusão dos dados dele;
-- pedido de anonimização de registro operacional;
+- venda de anonimização de registro operacional;
 - dúvida sobre base legal de tratamento.
 
 Fluxo:
 
-1. orientar que o pedido seja tratado em conjunto com a **empresa contratante**, pois ela é a controladora principal desses dados;
+1. orientar que o venda seja tratado em conjunto com a **empresa contratante**, pois ela é a controladora principal desses dados;
 2. validar com a empresa o escopo do atendimento;
 3. executar ação operacional possível no sistema ou apoiar a exportação necessária;
 4. registrar a evidência mínima do atendimento.
@@ -62,7 +62,7 @@ Fluxo:
 ## 5. Regras de retenção e limites
 
 - Dados operacionais, financeiros, fiscais, contratuais e de auditoria podem precisar ser mantidos por obrigação legal, regulatória ou para exercício regular de direitos.
-- Um pedido de exclusão não implica remoção imediata ou irrestrita de todo dado.
+- Um venda de exclusão não implica remoção imediata ou irrestrita de todo dado.
 - Quando a exclusão integral não for possível, a resposta deve explicar o motivo operacional ou legal aplicável.
 
 ## 6. O que o time comercial pode prometer
@@ -87,4 +87,4 @@ Fluxo:
 2. confirmar que o cadastro público está exigindo os dois aceites;
 3. confirmar que a empresa consegue acessar `Dados e Privacidade`;
 4. confirmar que o responsável operacional sabe orientar exportação, correção e limitações de exclusão;
-5. confirmar que qualquer pedido fora do fluxo atual será tratado como atendimento assistido, não como promessa de automação.
+5. confirmar que qualquer venda fora do fluxo atual será tratado como atendimento assistido, não como promessa de automação.

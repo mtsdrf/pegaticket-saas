@@ -19,7 +19,7 @@ interface Cell {
 }
 
 export function SalesByHourHeatmapCard({ data, isLoading }: SalesByHourHeatmapCardProps) {
-  // Backend só retorna células com pedido — completamos a grade 7×24 com zero.
+  // Backend só retorna células com venda — completamos a grade 7×24 com zero.
   const { grid, maxCount, hasData } = useMemo(() => {
     const map = new Map<string, Cell>()
     let max = 0

@@ -21,7 +21,7 @@ test.describe('Análises', () => {
             current: {
               from: '2025-08-01',
               to: '2026-07-31',
-              total_orders: 18,
+              total_sales: 18,
               total_revenue: 4820.5,
               average_ticket: 267.81,
               buckets: [
@@ -79,10 +79,10 @@ test.describe('Análises', () => {
           success: true,
           message: 'OK',
           data: {
-            eligible_orders: 12,
-            on_time_orders: 10,
-            in_full_orders: 11,
-            otif_orders: 9,
+            eligible_sales: 12,
+            on_time_sales: 10,
+            in_full_sales: 11,
+            otif_sales: 9,
             otif_percentage: 75,
           },
           meta: {},
@@ -99,8 +99,8 @@ test.describe('Análises', () => {
           message: 'OK',
           data: {
             total_discount_amount: '211.40',
-            orders_with_coupon: { count: 6, revenue: '1640.00', average_ticket: '273.33' },
-            orders_without_coupon: { count: 12, revenue: '3180.50', average_ticket: '265.04' },
+            sales_with_coupon: { count: 6, revenue: '1640.00', average_ticket: '273.33' },
+            sales_without_coupon: { count: 12, revenue: '3180.50', average_ticket: '265.04' },
           },
           meta: {},
         }),
@@ -191,8 +191,8 @@ test.describe('Análises', () => {
           success: true,
           message: 'OK',
           data: {
-            cities: [{ city_name: 'São Paulo', orders_count: 11, total_amount: 3020.4 }],
-            neighborhoods: [{ neighborhood_name: 'Mooca', orders_count: 5, total_amount: 1310.2 }],
+            cities: [{ city_name: 'São Paulo', sales_count: 11, total_amount: 3020.4 }],
+            neighborhoods: [{ neighborhood_name: 'Mooca', sales_count: 5, total_amount: 1310.2 }],
           },
           meta: {},
         }),
@@ -270,8 +270,8 @@ test.describe('Análises', () => {
           success: true,
           message: 'OK',
           data: [
-            { client_name: 'Cliente Horizonte', avg_days_to_pay: 2, paid_orders_count: 5 },
-            { client_name: 'Cliente Aurora', avg_days_to_pay: 7, paid_orders_count: 3 },
+            { client_name: 'Cliente Horizonte', avg_days_to_pay: 2, paid_sales_count: 5 },
+            { client_name: 'Cliente Aurora', avg_days_to_pay: 7, paid_sales_count: 3 },
           ],
           meta: {},
         }),
@@ -285,14 +285,14 @@ test.describe('Análises', () => {
         pageNumber === 1
           ? [
               {
-                order_uuid: 'order-1',
+                sale_uuid: 'order-1',
                 client_name: 'Cliente Horizonte',
                 open_amount: 210.4,
                 days_overdue: 12,
                 type: 'pagamento',
               },
               {
-                order_uuid: 'order-2',
+                sale_uuid: 'order-2',
                 client_name: 'Cliente Aurora',
                 open_amount: 98,
                 days_overdue: 33,
@@ -301,7 +301,7 @@ test.describe('Análises', () => {
             ]
           : [
               {
-                order_uuid: 'order-3',
+                sale_uuid: 'order-3',
                 client_name: 'Cliente Horizonte Sul',
                 open_amount: 55,
                 days_overdue: 4,

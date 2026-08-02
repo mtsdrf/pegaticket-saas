@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->decimal('cashback_redeemed_amount', 10, 2)->default(0)->after('discount_amount');
         });
     }
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn('cashback_redeemed_amount');
         });
     }

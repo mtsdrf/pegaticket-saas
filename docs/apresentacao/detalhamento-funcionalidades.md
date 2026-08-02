@@ -9,22 +9,22 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 - **Cadastro da empresa**: nome, slug (identificador único), logo (upload direto, guardado no banco — não depende de disco), status ativo/inativo, período de teste (trial).
 - **Dados fiscais do emitente**: CNPJ, Inscrição Estadual, Inscrição Municipal, CNAE, regime tributário (Simples Nacional/Lucro Presumido/Lucro Real), ambiente fiscal (homologação/produção — nunca começa em produção por padrão, pra não emitir nota real por engano), código IBGE do município.
 - **Plano comercial único (`PegaTicket`)**, com todas as funcionalidades liberadas por padrão na operação atual.
-- **Configurações operacionais da empresa** (`tenant_settings`): forma(s) de pagamento aceitas, chave Pix de recebimento, bloquear ou não pedido sem estoque disponível, valor mínimo de pedido, tempo estimado de preparo, envio de link de rastreio por WhatsApp, taxa de serviço (percentual e se é obrigatória).
+- **Configurações operacionais da empresa** (`tenant_settings`): forma(s) de pagamento aceitas, chave Pix de recebimento, bloquear ou não venda sem estoque disponível, valor mínimo de venda, tempo estimado de preparo, envio de link de rastreio por WhatsApp, taxa de serviço (percentual e se é obrigatória).
 
 ## 2. Usuários e controle de acesso
 
 - **Usuário (`User`)**: cadastro único de login (e-mail/senha), pode ter acesso a mais de 1 empresa ao mesmo tempo.
 - **Vínculo empresa-usuário (`TenantUser`)**: liga um usuário a uma empresa através de um **perfil (Role)** daquela empresa especificamente — o mesmo usuário pode ser dono numa empresa e funcionário em outra.
 - **Perfis por empresa (`TenantRole`)**: cada empresa pode criar quantos perfis quiser (ex.: "Vendedor", "Caixa", "Gerente"), além do perfil "Proprietário" (criado automaticamente, sempre com acesso total ao que o produto libera).
-- **Permissão granular**: cada perfil tem, por funcionalidade (ex.: "Pedidos"), quais ações pode fazer (ver/criar/editar/excluir/aprovar/entregar/etc.) — controlado por tela dedicada, sem precisar mexer em código.
+- **Permissão granular**: cada perfil tem, por funcionalidade (ex.: "Vendas"), quais ações pode fazer (ver/criar/editar/excluir/aprovar/entregar/etc.) — controlado por tela dedicada, sem precisar mexer em código.
 - **Convite de usuário**: é possível convidar alguém por e-mail pra entrar numa empresa com um perfil específico; a pessoa aceita o convite e já entra vinculada.
 - **Troca de empresa ativa**: usuário com acesso a mais de uma empresa troca de contexto sem precisar deslogar — o token de acesso é reemitido pra empresa escolhida.
 - **Recuperação de senha, confirmação de e-mail** — fluxos padrão de autoatendimento, sem precisar de suporte manual.
-- **Auditoria**: toda criação/edição/exclusão relevante (empresa, usuário, permissão, pedido, produto etc.) fica registrada em log de auditoria — quem fez, quando, o que mudou.
+- **Auditoria**: toda criação/edição/exclusão relevante (empresa, usuário, permissão, venda, produto etc.) fica registrada em log de auditoria — quem fez, quando, o que mudou.
 
 ## 3. Clientes
 
-- **Cadastro de cliente**: nome, telefone(s), endereço, se é "cliente de confiança" (afeta liberação de pedido sem exigir pagamento antecipado), observações.
+- **Cadastro de cliente**: nome, telefone(s), endereço, se é "cliente de confiança" (afeta liberação de venda sem exigir pagamento antecipado), observações.
 - **Categoria de cliente**: agrupamento livre (ex.: "Atacado", "Varejo", "VIP") — usado em relatórios e preço diferenciado por categoria.
 - **Dia ideal / Período ideal**: preferência de dia da semana e turno pra contato/entrega — organiza a rota do vendedor.
 - **Exportação de clientes**: lista filtrável, exportável em PDF.
@@ -46,44 +46,44 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 ## 6. Estoque
 
 - **Local de estoque**: cada empresa pode ter mais de um depósito/filial; um é sempre o padrão.
-- **Saldo por produto e local**: quantidade disponível, com reserva automática quando entra num pedido (evita vender o mesmo item duas vezes antes de confirmar).
+- **Saldo por produto e local**: quantidade disponível, com reserva automática quando entra num venda (evita vender o mesmo item duas vezes antes de confirmar).
 - **Movimentações**: entrada (compra/reposição), saída (venda), ajuste (correção manual, com motivo), transferência entre locais, bloqueio (item indisponível temporariamente) — tudo com histórico completo, nunca some um registro.
 - **Alerta de estoque mínimo**: produto pode ter um mínimo configurado pra sinalizar reposição.
 
-## 7. Pedidos
+## 7. Vendas
 
-- **Criação de pedido**: cliente, itens (produto + quantidade, preço travado no momento da venda), origem (equipe/loja online).
-- **Status do pedido**: confirmado, cancelado (com motivo), e os estágios de entrega (a caminho, entregue).
-- **Pagamento do pedido**: marcação de pago/parcial, valor pago, data do pagamento.
+- **Criação de venda**: cliente, itens (produto + quantidade, preço travado no momento da venda), origem (equipe/loja online).
+- **Status do venda**: confirmado, cancelado (com motivo), e os estágios de entrega (a caminho, entregue).
+- **Pagamento do venda**: marcação de pago/parcial, valor pago, data do pagamento.
 - **Cupom de desconto**: código aplicável no checkout, com regras (percentual/valor fixo/frete grátis, valor mínimo, limite de uso total e por cliente, validade).
 - **Taxa de entrega**: calculada por bairro, configurada pela empresa.
-- **Código sequencial de exibição**: cada pedido tem um número curto e sequencial por empresa (mais fácil de falar por telefone que o identificador interno).
+- **Código sequencial de exibição**: cada venda tem um número curto e sequencial por empresa (mais fácil de falar por telefone que o identificador interno).
 
 ## 8. Loja online (Storefront) — catálogo público sem login
 
 - **Catálogo público**: acessível por link direto (`/loja/<empresa>`), sem exigir cadastro pra navegar.
-- **Horário de funcionamento**: configurável por dia da semana, bloqueia pedido fora do horário.
-- **Taxa de entrega e valor mínimo de pedido**: configurados pela empresa, aplicados automaticamente no checkout.
-- **Carrinho e checkout**: fluxo completo até a confirmação do pedido.
-- **Aprovação de pedido novo**: pedidos vindos da loja entram como pendentes até a equipe aprovar/recusar.
-- **Acompanhamento de preparo**: tela pública (sem login) onde o cliente acompanha o status do próprio pedido pelo link recebido.
+- **Horário de funcionamento**: configurável por dia da semana, bloqueia venda fora do horário.
+- **Taxa de entrega e valor mínimo de venda**: configurados pela empresa, aplicados automaticamente no checkout.
+- **Carrinho e checkout**: fluxo completo até a confirmação do venda.
+- **Aprovação de venda novo**: vendas vindos da loja entram como pendentes até a equipe aprovar/recusar.
+- **Acompanhamento de preparo**: tela pública (sem login) onde o cliente acompanha o status do próprio venda pelo link recebido.
 - **Verificação de idade**: bloqueio de confirmação pra produtos que exigem (bebida alcoólica, por exemplo).
 
 ## 9. Portal do cliente final
 
 Área separada, com login próprio do cliente final (diferente do login da equipe da empresa):
-- **Histórico de pedidos** feitos naquela empresa.
+- **Histórico de vendas** feitos naquela empresa.
 - **Favoritos**: produtos marcados pra recompra rápida.
-- **Endereços salvos**: reutilizados em pedidos futuros.
+- **Endereços salvos**: reutilizados em vendas futuros.
 - **Vouchers/cupons** disponíveis pra aquele cliente.
 - **Extrato de cashback**: crédito ganho, resgatado, e o que ainda está pendente de liberação.
 - **Perfil**: dados pessoais do cliente final.
 
 ## 10. Cashback / fidelidade
 
-- **Configuração por empresa**: percentual de crédito por compra, valor máximo de crédito por pedido, dias de carência antes do crédito ficar disponível pra uso, percentual máximo do pedido que pode ser pago com cashback acumulado, nome customizável do programa.
-- **Crédito automático**: gerado a partir de pedidos confirmados/pagos.
-- **Resgate**: aplicado como desconto num pedido futuro, respeitando o limite percentual configurado.
+- **Configuração por empresa**: percentual de crédito por compra, valor máximo de crédito por venda, dias de carência antes do crédito ficar disponível pra uso, percentual máximo do venda que pode ser pago com cashback acumulado, nome customizável do programa.
+- **Crédito automático**: gerado a partir de vendas confirmados/pagos.
+- **Resgate**: aplicado como desconto num venda futuro, respeitando o limite percentual configurado.
 - **Processamento automático**: liberação do crédito após o período de carência roda periodicamente, sem intervenção manual.
 
 ## 11. Assinatura — cobrança do próprio PegaTicket
@@ -110,15 +110,15 @@ Levantamento completo de tudo que existe hoje no sistema, por tópico. Onde uma 
 
 ## 14. Relatórios e Analytics
 
-- **Dashboard**: métricas do dia a dia (pedidos entregues/pendentes, valor recebido) + gráfico de pedidos por mês.
+- **Dashboard**: métricas do dia a dia (vendas entregues/pendentes, valor recebido) + gráfico de vendas por mês.
 - **Análises avançadas**: indicadores mais profundos de operação.
-- **Relatório de pedidos**: filtrável por período/status/cliente, exportável.
+- **Relatório de vendas**: filtrável por período/status/cliente, exportável.
 - **Base de clientes**: listagem completa, exportável.
 - **Recebíveis**: o que já entrou vs. o que ainda está em aberto, por período.
 
 ## 15. Rotas de entrega
 
-- **Montagem de rota**: agrupa pedidos por região/proximidade pra organizar a saída de entrega do dia.
+- **Montagem de rota**: agrupa vendas por região/proximidade pra organizar a saída de entrega do dia.
 
 ## 16. Redes sociais
 

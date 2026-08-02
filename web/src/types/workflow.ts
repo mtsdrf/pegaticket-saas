@@ -1,4 +1,4 @@
-export type WorkflowEntityType = 'order'
+export type WorkflowEntityType = 'sale'
 
 export interface WorkflowTransitionLogUser {
   uuid: string

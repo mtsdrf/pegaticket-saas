@@ -125,7 +125,7 @@ Considere, salvo evidência contrária:
 - Distribuidoras.
 - Laticínios.
 - Produtos perecíveis.
-- Pedidos.
+- Vendas.
 - Estoque.
 - Clientes.
 - Entregas.
@@ -537,7 +537,7 @@ Para entidades com ciclo de vida, documente:
 
 Aplicar a:
 
-- pedidos;
+- vendas;
 - pagamentos;
 - assinaturas;
 - documentos fiscais;
@@ -586,7 +586,7 @@ Padronize erros:
 {
   "error": {
     "code": "ORDER_INVALID_STATUS",
-    "message": "O pedido não pode ser alterado neste estado.",
+    "message": "O venda não pode ser alterado neste estado.",
     "details": [],
     "trace_id": "..."
   }
@@ -599,7 +599,7 @@ Padronize erros:
 
 Identifique operações idempotentes:
 
-- pedido;
+- venda;
 - pagamento;
 - reembolso;
 - cancelamento;
@@ -909,7 +909,7 @@ Defina:
 - histórico;
 - imutabilidade.
 
-Use snapshots para pedidos, pagamentos, fiscal, preços, clientes, endereços e itens quando a informação histórica não puder mudar.
+Use snapshots para vendas, pagamentos, fiscal, preços, clientes, endereços e itens quando a informação histórica não puder mudar.
 
 ---
 
@@ -1022,7 +1022,7 @@ Para serviços críticos, definir:
 Exemplo:
 
 ```text
-SLI: percentual de pedidos criados com sucesso
+SLI: percentual de vendas criados com sucesso
 SLO: 99,9% por mês
 SLA: compromisso contratual aplicável
 ```

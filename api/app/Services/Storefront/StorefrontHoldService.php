@@ -306,15 +306,15 @@ class StorefrontHoldService
             ->pluck('reserved_quantity', 'seat_id');
 
         $soldSeatQuantities = \App\Models\Sale\SaleItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('orders.tenant_id', $event->tenant_id)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->where('orders.status', '!=', 'rejected')
-            ->whereNotNull('order_items.seat_id')
-            ->whereNull('order_items.deleted_at')
-            ->selectRaw('order_items.seat_id as seat_id, SUM(order_items.quantity) as sold_quantity')
-            ->groupBy('order_items.seat_id')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.tenant_id', $event->tenant_id)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->where('sales.status', '!=', 'rejected')
+            ->whereNotNull('sale_items.seat_id')
+            ->whereNull('sale_items.deleted_at')
+            ->selectRaw('sale_items.seat_id as seat_id, SUM(sale_items.quantity) as sold_quantity')
+            ->groupBy('sale_items.seat_id')
             ->pluck('sold_quantity', 'seat_id');
 
         return $event->venueMapVersion->seats->map(function (Seat $seat) use ($reservedSeatQuantities, $soldSeatQuantities) {
@@ -469,13 +469,13 @@ class StorefrontHoldService
     private function soldSeatQuantity(int $seatId): int
     {
         return (int) \App\Models\Sale\SaleItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('order_items.seat_id', $seatId)
-            ->whereNull('order_items.deleted_at')
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->where('orders.status', '!=', 'rejected')
-            ->sum('order_items.quantity');
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sale_items.seat_id', $seatId)
+            ->whereNull('sale_items.deleted_at')
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->where('sales.status', '!=', 'rejected')
+            ->sum('sale_items.quantity');
     }
 
     private function resolveSession(Event $event, string $sessionUuid): EventSession

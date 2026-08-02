@@ -79,7 +79,7 @@ class SalePrepLinkTest extends TestCase
     }
 
     #[Test]
-    public function generating_prep_link_requires_storefront_orders_read_permission(): void
+    public function generating_prep_link_requires_storefront_sales_read_permission(): void
     {
         $this->setUpTenantScopedUser('no-perm-prep-user@test.com');
         $order = $this->createOrderWithClient();

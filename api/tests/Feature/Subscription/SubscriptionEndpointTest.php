@@ -881,7 +881,7 @@ class SubscriptionEndpointTest extends TestCase
         $functionalityId = DB::table('functionalities')->insertGetId([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
             'name' => 'Pedidos',
-            'slug' => 'orders-' . \Illuminate\Support\Str::random(6),
+            'slug' => 'sales-' . \Illuminate\Support\Str::random(6),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

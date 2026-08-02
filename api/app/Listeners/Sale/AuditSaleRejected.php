@@ -13,7 +13,7 @@ class AuditSaleRejected
             event: 'order_rejected',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'reason' => $event->reason,
             ],
             actorId: $event->actorId

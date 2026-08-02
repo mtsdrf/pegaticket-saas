@@ -62,7 +62,7 @@ class SalePushNotificationTest extends TestCase
         SaleItem::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 10,
@@ -74,7 +74,7 @@ class SalePushNotificationTest extends TestCase
 
     /**
      * Mesmo padrão de SaleApprovalQueueTest: cria um pedido de verdade via
-     * POST /orders (reserva real de estoque) e simula que ele "nasceu" da
+     * POST /sales (reserva real de estoque) e simula que ele "nasceu" da
      * loja, virando pending_approval — necessário aqui especificamente
      * porque deliver() sempre converte a reserva em saída física
      * (exit()), que exige saldo de estoque real (diferente de

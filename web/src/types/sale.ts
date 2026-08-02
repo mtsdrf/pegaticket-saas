@@ -67,7 +67,7 @@ export interface Sale {
   /** Valor efetivamente pago — pode ser PARCIAL (menor que `total_amount`) mesmo com `is_paid: false`. */
   paid_amount: number | null
   paid_at: string | null
-  /** Não é entrega física — gate de conclusão do pedido (libera quitação de parcela, trava edição de itens). */
+  /** Não é entrega física — gate de conclusão da venda (libera quitação de parcela, trava edição de itens). */
   is_completed: boolean
   completed_at: string | null
   due_date: string | null
@@ -126,7 +126,7 @@ export interface SalePayload {
   /** Backend limita a 500 caracteres. */
   notes?: string
   items: SaleCreateItemPayload[]
-  /** Venda já nasce concluída (mesma lógica interna do botão "Concluir pedido"). */
+  /** Venda já nasce concluída (mesma lógica interna do botão "Concluir venda"). */
   mark_as_completed?: boolean
   /** Venda já nasce paga — backend rejeita (422) combinado com `is_installment: true`. */
   mark_as_paid?: boolean
@@ -139,7 +139,7 @@ export interface SaleInstallmentPayload {
 }
 
 /**
- * Item do lote de `PUT /orders/{order}/installments`. `uuid` presente = atualiza
+ * Item do lote de `PUT /sales/{sale}/installments`. `uuid` presente = atualiza
  * parcela não paga existente; ausente = cria. Parcela não paga existente que não
  * aparecer no array é excluída pelo backend. Parcela paga nunca entra aqui.
  */
@@ -155,7 +155,7 @@ export interface SaleInstallmentsReallocatePayload {
 }
 
 /**
- * Item do payload de `PUT /orders/{order}/items`. `uuid` presente = atualiza
+ * Item do payload de `PUT /sales/{sale}/items`. `uuid` presente = atualiza
  * item existente; ausente = cria. Item existente que não aparecer no array
  * (`items` é o array COMPLETO) é removido pelo backend.
  */

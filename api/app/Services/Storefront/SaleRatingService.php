@@ -23,21 +23,21 @@ class SaleRatingService
     ) {
     }
 
-    public function rate(int $finalCustomerId, string $orderUuid, int $rating, ?string $comment): SaleRating
+    public function rate(int $finalCustomerId, string $saleUuid, int $rating, ?string $comment): SaleRating
     {
-        $order = $this->portalCustomerService->findOwnedOrder($finalCustomerId, $orderUuid);
+        $order = $this->portalCustomerService->findOwnedOrder($finalCustomerId, $saleUuid);
 
         if (!$order->is_completed) {
-            throw new InvalidSaleStateException(__('messages.order.not_completed'));
+            throw new InvalidSaleStateException(__('messages.sale.not_completed'));
         }
 
-        if (SaleRating::where('order_id', $order->id)->exists()) {
+        if (SaleRating::where('sale_id', $order->id)->exists()) {
             throw new SaleAlreadyRatedException(__('messages.storefront.order_already_rated'));
         }
 
         return SaleRating::create([
             'tenant_id' => $order->tenant_id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'final_customer_id' => $finalCustomerId,
             'rating' => $rating,
             'comment' => $comment,

@@ -9,7 +9,7 @@ use App\Models\Tenant\Tenant;
  * Diferente de SaleItem (que continua um objeto de valor sem CRUD
  * próprio, ver PHPDoc lá): SaleInstallment ganhou gestão manual
  * (App\Services\Sale\SaleInstallmentService + rotas
- * POST/PUT/DELETE /orders/{order}/installments) a partir de 2026-07-12,
+ * POST/PUT/DELETE /sales/{order}/installments) a partir de 2026-07-12,
  * pra suportar correção manual de parcelas (paridade com o legado, que
  * tinha CRUD livre de parcela — mas com validação de soma que o legado
  * não tinha, ver architecture-decisions.md). Continua sem Repository
@@ -18,11 +18,11 @@ use App\Models\Tenant\Tenant;
  */
 class SaleInstallment extends BaseModel
 {
-    protected $table = 'order_installments';
+    protected $table = 'sale_installments';
 
     protected $fillable = [
         'tenant_id',
-        'order_id',
+        'sale_id',
         'installment_number',
         'amount',
         'due_date',
@@ -41,7 +41,7 @@ class SaleInstallment extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'order_id',
+        'sale_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -53,9 +53,8 @@ class SaleInstallment extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
-
 }

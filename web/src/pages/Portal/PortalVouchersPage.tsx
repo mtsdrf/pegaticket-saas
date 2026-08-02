@@ -91,7 +91,7 @@ export function PortalVouchersPage() {
       {!isLoading && !errorMessage && vouchers && vouchers.length > 0 && (
         <Stack spacing={1.25}>
           {vouchers.map((voucher, index) => (
-            <VoucherCard key={`${voucher.order_uuid ?? 'voucher'}-${index}`} voucher={voucher} />
+            <VoucherCard key={`${voucher.sale_uuid ?? 'voucher'}-${index}`} voucher={voucher} />
           ))}
         </Stack>
       )}

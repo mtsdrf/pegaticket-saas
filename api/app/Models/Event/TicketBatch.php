@@ -56,7 +56,7 @@ class TicketBatch extends BaseModel
         return $this->belongsTo(TicketType::class);
     }
 
-    public function orderItems(): HasMany
+    public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
     }

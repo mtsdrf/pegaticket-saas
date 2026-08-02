@@ -11,7 +11,7 @@ use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
 /**
- * Gestão manual de parcela (POST/PUT/DELETE /orders/{order}/installments)
+ * Gestão manual de parcela (POST/PUT/DELETE /sales/{order}/installments)
  * — correção do bug do legado (CRUD livre de parcela sem validar soma).
  * Ver App\Services\Sale\SaleInstallmentService e
  * .claude/memory/architecture-decisions.md.
@@ -179,7 +179,7 @@ class SaleInstallmentTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
         // Nada foi persistido — rollback da transação.
-        $this->assertDatabaseCount('order_installments', 2);
+        $this->assertDatabaseCount('sale_installments', 2);
     }
 
     #[Test]
@@ -198,7 +198,7 @@ class SaleInstallmentTest extends TestCase
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
-        $this->assertDatabaseHas('order_installments', [
+        $this->assertDatabaseHas('sale_installments', [
             'uuid' => $installments[0]['uuid'],
             'amount' => 50.00,
         ]);
@@ -216,8 +216,8 @@ class SaleInstallmentTest extends TestCase
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
-        $this->assertDatabaseCount('order_installments', 2);
-        $this->assertDatabaseHas('order_installments', ['uuid' => $installments[0]['uuid']]);
+        $this->assertDatabaseCount('sale_installments', 2);
+        $this->assertDatabaseHas('sale_installments', ['uuid' => $installments[0]['uuid']]);
     }
 
     #[Test]
@@ -290,7 +290,7 @@ class SaleInstallmentTest extends TestCase
             ->assertJsonPath('data.amount', '20.00')
             ->assertJsonPath('data.is_paid', false);
 
-        $this->assertDatabaseCount('order_installments', 3);
+        $this->assertDatabaseCount('sale_installments', 3);
     }
 
     #[Test]
@@ -314,7 +314,7 @@ class SaleInstallmentTest extends TestCase
             ->assertJsonPath('data.amount', '70.00');
         $this->assertStringStartsWith('2026-08-15', $response->json('data.due_date'));
 
-        $this->assertDatabaseHas('order_installments', [
+        $this->assertDatabaseHas('sale_installments', [
             'uuid' => $installments[0]['uuid'],
             'amount' => 70.00,
         ]);
@@ -361,7 +361,7 @@ class SaleInstallmentTest extends TestCase
 
         // delete() é soft delete (BaseModel) — a linha continua na tabela
         // com deleted_at preenchido, não é removida fisicamente.
-        $this->assertSoftDeleted('order_installments', ['uuid' => $installments[1]['uuid']]);
+        $this->assertSoftDeleted('sale_installments', ['uuid' => $installments[1]['uuid']]);
         $this->assertEquals(1, SaleInstallment::whereNull('deleted_at')->count());
 
         // Recria uma parcela nova cobrindo a diferença.
@@ -377,7 +377,7 @@ class SaleInstallmentTest extends TestCase
         $this->assertEquals(2, SaleInstallment::whereNull('deleted_at')->count());
     }
 
-    // --- PUT /orders/{order}/installments (lote) ---
+    // --- PUT /sales/{order}/installments (lote) ---
 
     /**
      * O caso que motivou o endpoint de lote: redistribuir valor entre
@@ -411,7 +411,7 @@ class SaleInstallmentTest extends TestCase
         $this->assertEquals(['40.00', '60.00'], $amounts);
 
         $this->assertEquals(2, SaleInstallment::whereNull('deleted_at')->count());
-        $this->assertSoftDeleted('order_installments', ['uuid' => $installments[2]['uuid']]);
+        $this->assertSoftDeleted('sale_installments', ['uuid' => $installments[2]['uuid']]);
     }
 
     #[Test]
@@ -457,7 +457,7 @@ class SaleInstallmentTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
         // Nada mudou — parcela paga continua paga, a outra continua com o valor original.
-        $this->assertDatabaseHas('order_installments', [
+        $this->assertDatabaseHas('sale_installments', [
             'uuid' => $installments[1]['uuid'],
             'amount' => 50.00,
         ]);
@@ -481,8 +481,8 @@ class SaleInstallmentTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
         // Tudo ou nada — os valores originais continuam intactos.
-        $this->assertDatabaseHas('order_installments', ['uuid' => $installments[0]['uuid'], 'amount' => 50.00]);
-        $this->assertDatabaseHas('order_installments', ['uuid' => $installments[1]['uuid'], 'amount' => 50.00]);
+        $this->assertDatabaseHas('sale_installments', ['uuid' => $installments[0]['uuid'], 'amount' => 50.00]);
+        $this->assertDatabaseHas('sale_installments', ['uuid' => $installments[1]['uuid'], 'amount' => 50.00]);
         $this->assertEquals(2, SaleInstallment::whereNull('deleted_at')->count());
     }
 
@@ -510,7 +510,7 @@ class SaleInstallmentTest extends TestCase
      * Bug real reportado pelo frontend (2026-07-12): excluir uma parcela
      * e criar uma nova reaproveitando o MESMO installment_number no
      * mesmo payload de reallocate() dava 500 cru. Causa raiz: a
-     * constraint única (order_id, installment_number) não filtra
+     * constraint única (sale_id, installment_number) não filtra
      * deleted_at — soft delete sozinho não libera o número no banco, e
      * o processamento original criava a parcela nova ANTES de excluir a
      * antiga. Corrigido com uma fase intermediária que move todo número
@@ -542,7 +542,7 @@ class SaleInstallmentTest extends TestCase
         sort($numbers);
         $this->assertEquals([1, 2], $numbers);
 
-        $this->assertSoftDeleted('order_installments', ['uuid' => $installments[1]['uuid']]);
+        $this->assertSoftDeleted('sale_installments', ['uuid' => $installments[1]['uuid']]);
         $this->assertEquals(2, SaleInstallment::whereNull('deleted_at')->count());
     }
 
@@ -600,7 +600,7 @@ class SaleInstallmentTest extends TestCase
         $installments = $order['installments'];
 
         // Campo obrigatório ausente (due_date) — mensagem de regra padrão
-        // do Laravel, não uma chave custom de messages.order.*.
+        // do Laravel, não uma chave custom de messages.sale.*.
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->withHeader('Accept-Language', 'pt_BR')
             ->putJson("/api/v1/sales/{$order['uuid']}/installments", [

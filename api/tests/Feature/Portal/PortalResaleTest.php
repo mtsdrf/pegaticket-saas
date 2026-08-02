@@ -58,7 +58,7 @@ class PortalResaleTest extends TestCase
         SaleItem::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'ticket_type_id' => $product->id,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
@@ -68,10 +68,10 @@ class PortalResaleTest extends TestCase
         return $order;
     }
 
-    private function linkCustomerToOrder(string $token, string $orderUuid): void
+    private function linkCustomerToOrder(string $token, string $saleUuid): void
     {
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $orderUuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $saleUuid])
             ->assertStatus(200);
     }
 
@@ -156,7 +156,7 @@ class PortalResaleTest extends TestCase
     }
 
     #[Test]
-    public function returns_404_for_nonexistent_order_uuid(): void
+    public function returns_404_for_nonexistent_sale_uuid(): void
     {
         [, $token] = $this->authenticatedCustomer('cliente@test.com');
 

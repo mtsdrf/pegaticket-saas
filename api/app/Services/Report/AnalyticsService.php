@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  *   agregadas (curva ABC acumulada, rótulo RFM) acontece em PHP.
  * - Período (`from`/`to`) opcional em todos os endpoints exceto
  *   sales-history; default = últimos 12 meses, filtro por
- *   orders.created_at.
+ *   sales.created_at.
  * - Funções de data são específicas de engine (MySQL em produção,
  *   SQLite nos testes) — resolvidas por driver em métodos *Expression().
  */
@@ -54,18 +54,18 @@ class AnalyticsService
     }
 
     /**
-     * Top produtos por faturamento no período, via order_items
+     * Top produtos por faturamento no período, via sale_items
      * (snapshot de venda), com quantidade vendida.
      */
     public function topTicketTypes(int $tenantId, ?string $from, ?string $to, int $limit = 10): array
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        return $this->orderItemsQuery($tenantId, $fromDate, $toDate)
-            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
+        return $this->saleItemsQuery($tenantId, $fromDate, $toDate)
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
             ->whereNull('ticket_types.deleted_at')
             ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name')
-            ->selectRaw('ticket_types.uuid as ticket_type_uuid, ticket_types.name as ticket_type_name, SUM(order_items.quantity) as quantity_sold, SUM(order_items.line_total) as revenue')
+            ->selectRaw('ticket_types.uuid as ticket_type_uuid, ticket_types.name as ticket_type_name, SUM(sale_items.quantity) as quantity_sold, SUM(sale_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit)
             ->get()
@@ -97,10 +97,10 @@ class AnalyticsService
      */
     public function salesHistory(int $tenantId): array
     {
-        [$yearExpr, $monthExpr] = $this->yearMonthExpressions('orders.created_at');
+        [$yearExpr, $monthExpr] = $this->yearMonthExpressions('sales.created_at');
 
-        $rows = $this->ordersQuery($tenantId, null, null)
-            ->selectRaw("{$yearExpr} as year, {$monthExpr} as month, COUNT(*) as order_count, SUM(orders.total_amount) as revenue")
+        $rows = $this->salesQuery($tenantId, null, null)
+            ->selectRaw("{$yearExpr} as year, {$monthExpr} as month, COUNT(*) as order_count, SUM(sales.total_amount) as revenue")
             ->groupByRaw("{$yearExpr}, {$monthExpr}")
             ->get();
 
@@ -147,10 +147,10 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $rows = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
+        $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
                         ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
-            ->selectRaw('final_customers.uuid as client_uuid, final_customers.name as client_name, COUNT(orders.id) as order_count, SUM(orders.total_amount) as total_amount, MAX(orders.created_at) as last_order_at')
+            ->selectRaw('final_customers.uuid as client_uuid, final_customers.name as client_name, COUNT(sales.id) as order_count, SUM(sales.total_amount) as total_amount, MAX(sales.created_at) as last_order_at')
             ->orderByDesc('total_amount')
             ->get();
 
@@ -196,14 +196,14 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $avgDaysExpr = $this->dateDiffDaysExpression('orders.paid_at', 'orders.completed_at');
+        $avgDaysExpr = $this->dateDiffDaysExpression('sales.paid_at', 'sales.completed_at');
 
-        return $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-                        ->whereNotNull('orders.completed_at')
-            ->whereNotNull('orders.paid_at')
+        return $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+                        ->whereNotNull('sales.completed_at')
+            ->whereNotNull('sales.paid_at')
             ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
-            ->selectRaw("final_customers.uuid as client_uuid, final_customers.name as client_name, AVG({$avgDaysExpr}) as avg_days_to_pay, COUNT(orders.id) as order_count")
+            ->selectRaw("final_customers.uuid as client_uuid, final_customers.name as client_name, AVG({$avgDaysExpr}) as avg_days_to_pay, COUNT(sales.id) as order_count")
             ->orderByDesc('avg_days_to_pay')
             ->limit($limit)
             ->get()
@@ -228,29 +228,29 @@ class AnalyticsService
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
         $today = now()->toDateString();
 
-        $overdueInstallments = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->join('order_installments', 'order_installments.order_id', '=', 'orders.id')
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->whereNull('order_installments.deleted_at')
-            ->where('order_installments.is_paid', false)
-            ->whereDate('order_installments.due_date', '<', $today)
-            ->groupBy('orders.id', 'orders.uuid', 'final_customers.name')
+        $overdueInstallments = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->join('sale_installments', 'sale_installments.sale_id', '=', 'sales.id')
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->whereNull('sale_installments.deleted_at')
+            ->where('sale_installments.is_paid', false)
+            ->whereDate('sale_installments.due_date', '<', $today)
+            ->groupBy('sales.id', 'sales.uuid', 'final_customers.name')
             ->selectRaw(
-                "orders.uuid as order_uuid, final_customers.name as client_name, 'pagamento' as type, SUM(order_installments.amount) as open_amount, MAX("
-                . $this->daysSinceExpression('order_installments.due_date')
+                "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, SUM(sale_installments.amount) as open_amount, MAX("
+                . $this->daysSinceExpression('sale_installments.due_date')
                 . ') as days_overdue',
                 [$today]
             );
 
-        $overduePaymentOrders = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
-            ->where('orders.is_installment', false)
-            ->where('orders.is_paid', false)
-            ->whereNotNull('orders.due_date')
-            ->whereDate('orders.due_date', '<', $today)
+        $overduePaymentOrders = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.is_installment', false)
+            ->where('sales.is_paid', false)
+            ->whereNotNull('sales.due_date')
+            ->whereDate('sales.due_date', '<', $today)
             ->selectRaw(
-                "orders.uuid as order_uuid, final_customers.name as client_name, 'pagamento' as type, orders.total_amount as open_amount, "
-                . $this->daysSinceExpression('orders.due_date')
+                "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, sales.total_amount as open_amount, "
+                . $this->daysSinceExpression('sales.due_date')
                 . ' as days_overdue',
                 [$today]
             );
@@ -261,10 +261,10 @@ class AnalyticsService
         return DB::query()
             ->fromSub($union, 'overdue')
             ->orderByDesc('days_overdue')
-            ->orderBy('order_uuid')
+            ->orderBy('sale_uuid')
             ->paginate($perPage)
             ->through(fn($row) => [
-                'order_uuid' => $row->order_uuid,
+                'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'type' => $row->type,
                 'open_amount' => $this->formatMoney((float) $row->open_amount),
@@ -281,18 +281,18 @@ class AnalyticsService
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
         if ($dimension === 'clients') {
-            $rows = $this->ordersQuery($tenantId, $fromDate, $toDate)
-                ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
+            $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
+                ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
                                 ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
-                ->selectRaw('final_customers.uuid as uuid, final_customers.name as name, SUM(orders.total_amount) as revenue')
+                ->selectRaw('final_customers.uuid as uuid, final_customers.name as name, SUM(sales.total_amount) as revenue')
                 ->orderByDesc('revenue')
                 ->get();
         } else {
-            $rows = $this->orderItemsQuery($tenantId, $fromDate, $toDate)
-                ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
+            $rows = $this->saleItemsQuery($tenantId, $fromDate, $toDate)
+                ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
                 ->whereNull('ticket_types.deleted_at')
                 ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name')
-                ->selectRaw('ticket_types.uuid as uuid, ticket_types.name as name, SUM(order_items.line_total) as revenue')
+                ->selectRaw('ticket_types.uuid as uuid, ticket_types.name as name, SUM(sale_items.line_total) as revenue')
                 ->orderByDesc('revenue')
                 ->get();
         }
@@ -327,7 +327,7 @@ class AnalyticsService
     }
 
     /**
-     * Margem bruta do período a partir de order_items × custo de compra
+     * Margem bruta do período a partir de sale_items × custo de compra
      * do produto (last_purchase_cost). Só entra no cálculo de custo/margem
      * o item cujo produto tem custo conhecido; coverage_percentage revela
      * quanto do faturamento tem custo cadastrado (qualidade do dado).
@@ -336,12 +336,12 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $row = $this->orderItemsQuery($tenantId, $fromDate, $toDate)
-            ->join('ticket_types', 'ticket_types.id', '=', 'order_items.ticket_type_id')
+        $row = $this->saleItemsQuery($tenantId, $fromDate, $toDate)
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
             ->selectRaw(
-                'SUM(order_items.line_total) as total_revenue, '
-                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN order_items.line_total ELSE 0 END) as revenue_with_cost, '
-                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN order_items.quantity * ticket_types.last_purchase_cost ELSE 0 END) as total_cost'
+                'SUM(sale_items.line_total) as total_revenue, '
+                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.line_total ELSE 0 END) as revenue_with_cost, '
+                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.quantity * ticket_types.last_purchase_cost ELSE 0 END) as total_cost'
             )
             ->first();
 
@@ -373,13 +373,13 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $row = $this->ordersQuery($tenantId, $fromDate, $toDate)
+        $row = $this->salesQuery($tenantId, $fromDate, $toDate)
             ->selectRaw(
-                'SUM(CASE WHEN orders.coupon_id IS NOT NULL THEN 1 ELSE 0 END) as with_count, '
-                . 'SUM(CASE WHEN orders.coupon_id IS NOT NULL THEN orders.total_amount ELSE 0 END) as with_total, '
-                . 'SUM(CASE WHEN orders.coupon_id IS NULL THEN 1 ELSE 0 END) as without_count, '
-                . 'SUM(CASE WHEN orders.coupon_id IS NULL THEN orders.total_amount ELSE 0 END) as without_total, '
-                . 'SUM(CASE WHEN orders.coupon_id IS NOT NULL THEN orders.discount_amount ELSE 0 END) as total_discount'
+                'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN 1 ELSE 0 END) as with_count, '
+                . 'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.total_amount ELSE 0 END) as with_total, '
+                . 'SUM(CASE WHEN sales.coupon_id IS NULL THEN 1 ELSE 0 END) as without_count, '
+                . 'SUM(CASE WHEN sales.coupon_id IS NULL THEN sales.total_amount ELSE 0 END) as without_total, '
+                . 'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.discount_amount ELSE 0 END) as total_discount'
             )
             ->first();
 
@@ -393,12 +393,12 @@ class AnalyticsService
         $avgWithout = $withoutCount > 0 ? $withoutTotal / $withoutCount : 0.0;
 
         return [
-            'orders_with_coupon' => [
+            'sales_with_coupon' => [
                 'count' => $withCount,
                 'total_amount' => $this->formatMoney($withTotal),
                 'average_ticket' => $this->formatMoney($avgWith),
             ],
-            'orders_without_coupon' => [
+            'sales_without_coupon' => [
                 'count' => $withoutCount,
                 'total_amount' => $this->formatMoney($withoutTotal),
                 'average_ticket' => $this->formatMoney($avgWithout),
@@ -416,12 +416,12 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $totalRevenue = (float) $this->ordersQuery($tenantId, $fromDate, $toDate)->sum('orders.total_amount');
+        $totalRevenue = (float) $this->salesQuery($tenantId, $fromDate, $toDate)->sum('sales.total_amount');
 
-        $top10Revenue = (float) $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->whereNotNull('orders.final_customer_id')
-            ->groupBy('orders.final_customer_id')
-            ->selectRaw('SUM(orders.total_amount) as client_revenue')
+        $top10Revenue = (float) $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->whereNotNull('sales.final_customer_id')
+            ->groupBy('sales.final_customer_id')
+            ->selectRaw('SUM(sales.total_amount) as client_revenue')
             ->orderByDesc('client_revenue')
             ->limit(10)
             ->get()
@@ -435,7 +435,7 @@ class AnalyticsService
     }
 
     /**
-     * Clientes evadidos (churn): identificados por orders.final_customer_id, com
+     * Clientes evadidos (churn): identificados por sales.final_customer_id, com
      * 2+ pedidos ativos e cujo último pedido é anterior a
      * CHURN_INACTIVITY_DAYS. Receita mensal em risco por cliente = soma
      * dos pedidos nos 90 dias que antecedem o último pedido, dividida por
@@ -445,11 +445,11 @@ class AnalyticsService
     {
         $threshold = now()->subDays(self::CHURN_INACTIVITY_DAYS)->startOfDay();
 
-        $clients = $this->ordersQuery($tenantId, null, null)
-            ->join('final_customers', 'final_customers.id', '=', 'orders.final_customer_id')
+        $clients = $this->salesQuery($tenantId, null, null)
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
                         ->groupBy('final_customers.id', 'final_customers.name')
-            ->havingRaw('COUNT(orders.id) >= 2')
-            ->selectRaw('final_customers.id as client_id, final_customers.name as client_name, MAX(orders.created_at) as last_order_at')
+            ->havingRaw('COUNT(sales.id) >= 2')
+            ->selectRaw('final_customers.id as client_id, final_customers.name as client_name, MAX(sales.created_at) as last_order_at')
             ->get()
             ->filter(fn($row) => Carbon::parse($row->last_order_at)->lt($threshold))
             ->keyBy(fn($row) => (int) $row->client_id);
@@ -467,13 +467,13 @@ class AnalyticsService
             'start' => Carbon::parse($row->last_order_at)->subDays(90),
         ]);
 
-        $orders = $this->ordersQuery($tenantId, null, null)
-            ->whereIn('orders.final_customer_id', $clients->keys()->all())
-            ->get(['orders.final_customer_id as client_id', 'orders.created_at', 'orders.total_amount']);
+        $sales = $this->salesQuery($tenantId, null, null)
+            ->whereIn('sales.final_customer_id', $clients->keys()->all())
+            ->get(['sales.final_customer_id as client_id', 'sales.created_at', 'sales.total_amount']);
 
         $revenueAtRisk = [];
 
-        foreach ($orders as $order) {
+        foreach ($sales as $order) {
             $clientId = (int) $order->client_id;
             $window = $windows[$clientId];
             $createdAt = Carbon::parse($order->created_at);
@@ -520,11 +520,11 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        $dowExpr = $this->dayOfWeekExpression('orders.created_at');
-        $hourExpr = $this->hourExpression('orders.created_at');
+        $dowExpr = $this->dayOfWeekExpression('sales.created_at');
+        $hourExpr = $this->hourExpression('sales.created_at');
 
-        $cells = $this->ordersQuery($tenantId, $fromDate, $toDate)
-            ->selectRaw("{$dowExpr} as day_of_week, {$hourExpr} as hour, COUNT(*) as order_count, SUM(orders.total_amount) as revenue")
+        $cells = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->selectRaw("{$dowExpr} as day_of_week, {$hourExpr} as hour, COUNT(*) as order_count, SUM(sales.total_amount) as revenue")
             ->groupByRaw("{$dowExpr}, {$hourExpr}")
             ->orderByRaw("{$dowExpr}, {$hourExpr}")
             ->get()
@@ -543,34 +543,34 @@ class AnalyticsService
     // Bases de query
     // ------------------------------------------------------------------
 
-    private function ordersQuery(int $tenantId, ?Carbon $from, ?Carbon $to): QueryBuilder
+    private function salesQuery(int $tenantId, ?Carbon $from, ?Carbon $to): QueryBuilder
     {
-        return DB::table('orders')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->when($from, fn($q) => $q->whereDate('orders.created_at', '>=', $from->toDateString()))
-            ->when($to, fn($q) => $q->whereDate('orders.created_at', '<=', $to->toDateString()));
+        return DB::table('sales')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->when($from, fn($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
+            ->when($to, fn($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
     }
 
-    private function orderItemsQuery(int $tenantId, ?Carbon $from, ?Carbon $to): QueryBuilder
+    private function saleItemsQuery(int $tenantId, ?Carbon $from, ?Carbon $to): QueryBuilder
     {
-        return DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
-            ->whereNull('orders.cancelled_at')
-            ->whereNull('order_items.deleted_at')
-            ->when($from, fn($q) => $q->whereDate('orders.created_at', '>=', $from->toDateString()))
-            ->when($to, fn($q) => $q->whereDate('orders.created_at', '<=', $to->toDateString()));
+        return DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
+            ->when($from, fn($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
+            ->when($to, fn($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
     }
 
     private function salesSummaryPeriod(int $tenantId, Carbon $from, Carbon $to, string $groupBy): array
     {
         $bucketExpr = $this->bucketExpression($groupBy);
 
-        $buckets = $this->ordersQuery($tenantId, $from, $to)
-            ->selectRaw("{$bucketExpr} as bucket, COUNT(*) as order_count, SUM(orders.total_amount) as revenue")
+        $buckets = $this->salesQuery($tenantId, $from, $to)
+            ->selectRaw("{$bucketExpr} as bucket, COUNT(*) as order_count, SUM(sales.total_amount) as revenue")
             ->groupByRaw($bucketExpr)
             ->orderByRaw($bucketExpr)
             ->get()
@@ -588,7 +588,7 @@ class AnalyticsService
         return [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
-            'total_orders' => $totalOrders,
+            'total_sales' => $totalOrders,
             'total_revenue' => $this->formatMoney($totalRevenue),
             'average_ticket' => $this->formatMoney($totalOrders > 0 ? $totalRevenue / $totalOrders : 0.0),
             'buckets' => $buckets,
@@ -604,8 +604,8 @@ class AnalyticsService
         $format = $groupBy === 'day' ? '%Y-%m-%d' : '%Y-%m';
 
         return DB::connection()->getDriverName() === 'sqlite'
-            ? "strftime('{$format}', orders.created_at)"
-            : "DATE_FORMAT(orders.created_at, '{$format}')";
+            ? "strftime('{$format}', sales.created_at)"
+            : "DATE_FORMAT(sales.created_at, '{$format}')";
     }
 
     /**

@@ -26,7 +26,7 @@ class ActionsSeeder extends Seeder
             // só semeando a permissão para não precisar de migration depois.
             ['key' => 'approve_inventory', 'name' => 'Aprovar inventário'],
             ['key' => 'reverse', 'name' => 'Estornar'],
-            // Ações de Pedido (orders,{action}) — Fase 5.
+            // Ações de Pedido (sales,{action}) — Fase 5.
             // Key técnica 'deliver'/'undeliver' mantida (grupos já têm essa
             // permissão atribuída em produção); nome exibido atualizado —
             // não é entrega física, é o gate de conclusão do pedido.

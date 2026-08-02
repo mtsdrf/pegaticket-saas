@@ -25,7 +25,7 @@ class InventoryHold extends BaseModel
         'final_customer_id',
         'event_id',
         'event_session_id',
-        'converted_order_id',
+        'converted_sale_id',
         'session_token',
         'status',
         'origin',
@@ -42,7 +42,7 @@ class InventoryHold extends BaseModel
         'final_customer_id',
         'event_id',
         'event_session_id',
-        'converted_order_id',
+        'converted_sale_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -69,9 +69,9 @@ class InventoryHold extends BaseModel
         return $this->belongsTo(EventSession::class, 'event_session_id');
     }
 
-    public function convertedOrder(): BelongsTo
+    public function convertedSale(): BelongsTo
     {
-        return $this->belongsTo(Sale::class, 'converted_order_id');
+        return $this->belongsTo(Sale::class, 'converted_sale_id');
     }
 
     public function items(): HasMany

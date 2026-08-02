@@ -50,19 +50,19 @@ class WorkflowTransitionLogTest extends TestCase
             ],
         ])->assertStatus(201);
 
-        $orderUuid = $response->json('data.uuid');
-        $order = Sale::query()->where('uuid', $orderUuid)->firstOrFail();
+        $saleUuid = $response->json('data.uuid');
+        $order = Sale::query()->where('uuid', $saleUuid)->firstOrFail();
         $order->status = 'pending_approval';
         $order->origin = 'storefront';
         $order->save();
 
-        $this->auth()->postJson("/api/v1/sales/{$orderUuid}/approve")
+        $this->auth()->postJson("/api/v1/sales/{$saleUuid}/approve")
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed');
 
         $log = WorkflowTransitionLog::query()
             ->where('workflow_type', 'order')
-            ->where('entity_uuid', $orderUuid)
+            ->where('entity_uuid', $saleUuid)
             ->where('transition_type', 'move')
             ->latest('id')
             ->first();
@@ -88,18 +88,18 @@ class WorkflowTransitionLogTest extends TestCase
             ],
         ])->assertStatus(201);
 
-        $orderUuid = $response->json('data.uuid');
+        $saleUuid = $response->json('data.uuid');
 
-        $this->auth()->patchJson("/api/v1/sales/{$orderUuid}/complete")
+        $this->auth()->patchJson("/api/v1/sales/{$saleUuid}/complete")
             ->assertStatus(200);
 
-        $timeline = $this->auth()->getJson("/api/v1/sales/{$orderUuid}/workflow-transitions")
+        $timeline = $this->auth()->getJson("/api/v1/sales/{$saleUuid}/workflow-transitions")
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', __('messages.workflow.timeline_list'));
 
         $this->assertNotEmpty($timeline->json('data'));
-        $this->assertSame($orderUuid, $timeline->json('data.0.entity_uuid'));
+        $this->assertSame($saleUuid, $timeline->json('data.0.entity_uuid'));
         $this->assertSame('order', $timeline->json('data.0.workflow_type'));
         $this->assertSame('financial_pending', $timeline->json('data.0.to_stage'));
         $this->assertSame('workflow-user@test.com', $timeline->json('data.0.user.email'));

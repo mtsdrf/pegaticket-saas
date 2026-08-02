@@ -121,7 +121,7 @@ Acesso controlado por `TenantRolePermission`.
 | `products` | `read`, `create`, `update`, `delete` |
 | `stock_locations` | `read`, `create`, `update`, `delete` |
 | `stock` | `read`, `entry`, `exit`, `adjustment`, `transfer`, `block`, `reserve`, `view_costs` |
-| `orders` | `read`, `create`, `deliver`, `pay`, `cancel` |
+| `sales` | `read`, `create`, `deliver`, `pay`, `cancel` |
 | `reports` | `read`, `export_pdf` |
 
 #### Perfil `Sales`
@@ -132,7 +132,7 @@ Acesso controlado por `TenantRolePermission`.
 | `enderecos` | `read`, `create`, `update` |
 | `products` | `read` |
 | `stock` | `read` |
-| `orders` | `read`, `create` |
+| `sales` | `read`, `create` |
 | `reports` | `read` |
 
 #### Perfil `Warehouse`
@@ -142,14 +142,14 @@ Acesso controlado por `TenantRolePermission`.
 | `products` | `read` |
 | `stock_locations` | `read` |
 | `stock` | `read`, `entry`, `exit`, `adjustment`, `transfer`, `block`, `reserve` |
-| `orders` | `read`, `deliver` |
+| `sales` | `read`, `deliver` |
 
 #### Perfil `Finance`
 
 | Funcionalidade | Ações |
 | --- | --- |
 | `clients` | `read` |
-| `orders` | `read`, `pay`, `cancel` |
+| `sales` | `read`, `pay`, `cancel` |
 | `reports` | `read`, `export_pdf` |
 
 #### Perfil `Viewer`
@@ -159,7 +159,7 @@ Acesso controlado por `TenantRolePermission`.
 | `clients` | `read` |
 | `products` | `read` |
 | `stock` | `read` |
-| `orders` | `read` |
+| `sales` | `read` |
 | `reports` | `read` |
 
 ## Fluxo de implantação
@@ -249,7 +249,7 @@ Validar com um usuário do cliente:
 4. criação de cliente
 5. criação de produto
 6. entrada de estoque
-7. criação de pedido
+7. criação de venda
 8. entrega/pagamento conforme perfil
 9. relatório + exportação PDF
 

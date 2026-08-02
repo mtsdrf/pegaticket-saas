@@ -160,7 +160,7 @@ function InstallmentsList({ installments }: { installments: SaleTracking['instal
  * visualização da compra atual, só oferece agregar esta compra a uma conta
  * do portal. Se o cliente já está logado no portal, vincula direto
  * (`POST /portal/links`, idempotente) e vai pra lista. Se não, manda pro
- * login do portal levando o `order_uuid` via querystring (`?vincular=`) —
+ * login do portal levando o `sale_uuid` via querystring (`?vincular=`) —
  * `PortalLoginPage` completa o vínculo sozinha depois do `verify-otp`.
  */
 function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
@@ -179,7 +179,7 @@ function LinkOrdersSection({ saleUuid }: { saleUuid: string }) {
 
     setIsLinking(true)
     try {
-      await createPortalLink({ order_uuid: saleUuid })
+      await createPortalLink({ sale_uuid: saleUuid })
       navigate('/portal/compras')
     } catch (error) {
       setLinkError(getApiErrorMessage(error, 'Não foi possível vincular esta compra agora. Tente novamente.'))
@@ -376,7 +376,7 @@ function TicketCard({ ticket }: { ticket: PortalTicket }) {
  * "Meus ingressos" — só busca quando o comprador está autenticado no Portal
  * (o endpoint `GET /portal/sales/{uuid}/tickets` exige posse via
  * `portal_customer()`, indisponível na rota pública de rastreio sem login).
- * Falha (ex.: pedido ainda não vinculado à conta) não bloqueia o resto da
+ * Falha (ex.: venda ainda não vinculada à conta) não bloqueia o resto da
  * tela de rastreio — a seção some silenciosamente, sem alerta de erro.
  */
 function TicketsSection({ saleUuid }: { saleUuid: string }) {
@@ -431,7 +431,7 @@ export function SaleTrackingPage() {
   const { uuid } = useParams<{ uuid: string }>()
   const { isAuthenticated: isPortalAuthenticated } = usePortalAuth()
 
-  const [order, setOrder] = useState<SaleTracking | null>(null)
+  const [sale, setSale] = useState<SaleTracking | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -452,7 +452,7 @@ export function SaleTrackingPage() {
 
       getSaleTracking(uuid!)
         .then((result) => {
-          if (!cancelled) setOrder(result)
+          if (!cancelled) setSale(result)
         })
         .catch((error) => {
           if (cancelled) return
@@ -473,7 +473,7 @@ export function SaleTrackingPage() {
     }
 
     fetchTracking(true)
-    // Situação do pedido muda sem o cliente recarregar a página (loja
+    // Situação da venda muda sem o cliente recarregar a página (loja
     // aprova/conclui/paga) — atualiza sozinho a cada 30s, sem reexibir
     // o skeleton de loading (só troca os dados quando a resposta chega).
     const interval = setInterval(() => fetchTracking(false), REFRESH_INTERVAL_MS)
@@ -501,11 +501,11 @@ export function SaleTrackingPage() {
       <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 480 }}>
         <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', mb: 3 }}>
           <Logo variant="mark" size={38} />
-          {order?.tenant_name && (
+          {sale?.tenant_name && (
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', lineHeight: 1.2 }}>Compra de</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, wordBreak: 'break-word' }}>
-                {order.tenant_name}
+                {sale.tenant_name}
               </Typography>
             </Box>
           )}
@@ -513,11 +513,11 @@ export function SaleTrackingPage() {
 
         {isLoading && <LoadingSkeleton />}
 
-        {!isLoading && errorMessage && !order && <NotFoundState message={errorMessage} />}
+        {!isLoading && errorMessage && !sale && <NotFoundState message={errorMessage} />}
 
-        {!isLoading && order && (
+        {!isLoading && sale && (
           <Stack spacing={2.5}>
-            <StatusBanner sale={order} />
+            <StatusBanner sale={sale} />
 
             <Paper
               elevation={0}
@@ -528,13 +528,13 @@ export function SaleTrackingPage() {
             >
               <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Cliente</Typography>
               <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>
-                {order.final_customer_name}
+                {sale.final_customer_name}
               </Typography>
             </Paper>
 
             <Box>
               <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Itens da compra</Typography>
-              <ItemsList items={order.items} />
+              <ItemsList items={sale.items} />
             </Box>
 
             <Paper
@@ -548,21 +548,21 @@ export function SaleTrackingPage() {
               }}
             >
               <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Total da compra</Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(order.total_amount)}</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(sale.total_amount)}</Typography>
             </Paper>
 
-            {order.is_installment && order.installments.length > 0 && (
+            {sale.is_installment && sale.installments.length > 0 && (
               <Box>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Parcelas</Typography>
-                <InstallmentsList installments={order.installments} />
+                <InstallmentsList installments={sale.installments} />
               </Box>
             )}
 
-            {isPortalAuthenticated && order.is_paid && <TicketsSection saleUuid={order.uuid} />}
+            {isPortalAuthenticated && sale.is_paid && <TicketsSection saleUuid={sale.uuid} />}
 
-            {order.is_completed && isPortalAuthenticated && <SaleRatingSection saleUuid={order.uuid} />}
+            {sale.is_completed && isPortalAuthenticated && <SaleRatingSection saleUuid={sale.uuid} />}
 
-            <LinkOrdersSection saleUuid={order.uuid} />
+            <LinkOrdersSection saleUuid={sale.uuid} />
           </Stack>
         )}
 

@@ -93,10 +93,10 @@ class MercadoPagoSalePaymentTest extends TestCase
             ->assertJsonPath('data.method', 'pix')
             ->assertJsonPath('data.metadata.qr_code', '00020126...copia-e-cola...6304ABCD');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
         $this->assertDatabaseHas('payments', [
             'payable_type' => Sale::class,
-            'payable_id' => $orderId,
+            'payable_id' => $saleId,
             'provider' => 'mercadopago',
             'provider_charge_id' => 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3',
             'status' => 'pending',
@@ -131,8 +131,8 @@ class MercadoPagoSalePaymentTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('code', 'PAYMENT_PROVIDER_UNAVAILABLE');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $saleId)->count());
     }
 
     #[Test]
@@ -189,7 +189,7 @@ class MercadoPagoSalePaymentTest extends TestCase
     }
 
     /**
-     * FinalCustomer absorveu Client (2026-07-31): orders.final_customer_id
+     * FinalCustomer absorveu Client (2026-07-31): sales.final_customer_id
      * referencia final_customers diretamente, que sempre tem `email`
      * (coluna obrigatória) — não existe mais o cenário "Client sem
      * FinalCustomer vinculado" do desenho antigo (Client nunca tinha

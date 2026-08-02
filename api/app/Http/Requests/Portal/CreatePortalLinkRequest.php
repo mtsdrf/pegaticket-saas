@@ -15,10 +15,10 @@ class CreatePortalLinkRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_uuid' => [
+            'sale_uuid' => [
                 'required',
                 'uuid',
-                Rule::exists('orders', 'uuid')->whereNull('deleted_at'),
+                Rule::exists('sales', 'uuid')->whereNull('deleted_at'),
             ],
         ];
     }

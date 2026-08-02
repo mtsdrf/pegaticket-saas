@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Limite percentual de desconto por perfil (roadmap A1.5). Nullable = sem
  * limite configurado, preserva 100% o comportamento atual (sem restrição)
  * — só passa a existir restrição quando um admin/dono explicitamente
- * configura um valor pra alguma linha (tenant_role, functionality=orders,
+ * configura um valor pra alguma linha (tenant_role, functionality=sales,
  * qualquer action) do perfil. Decisão de onde exatamente o valor é lido
  * (qual linha) documentada em architecture-decisions.md.
  */

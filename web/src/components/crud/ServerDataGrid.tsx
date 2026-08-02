@@ -121,7 +121,7 @@ ModuleRegistry.registerModules([
  * mudam entre sm/md/lg/xl, só `xs` é diferente).
  * Telas com breadcrumb (Categorias/Tipos de produto) têm o cabeçalho ~28px
  * mais alto — sobra uma rolagem externa mínima (<15px) nessas 2 telas, o
- * que é aceitável (ver pedido original) em troca de não repetir essa conta
+ * que é aceitável (ver solicitação original) em troca de não repetir essa conta
  * em cada uma das 4 páginas que usam este componente.
  */
 const DEFAULT_GRID_HEIGHT = {
@@ -160,7 +160,7 @@ interface ServerDataGridProps<T> {
    * do backend) sempre que eles mudam — não dispara em troca de página/
    * ordenação com os mesmos filtros. Usado por telas que mostram um resumo
    * agregado que precisa acompanhar o filtro do grid (ex.: relatório de
-   * pedidos), reaproveitando o mesmo estado de filtro, sem duplicá-lo.
+   * vendas), reaproveitando o mesmo estado de filtro, sem duplicá-lo.
    */
   onFiltersChange?: (filters: Record<string, string | number | boolean | undefined>) => void
 }

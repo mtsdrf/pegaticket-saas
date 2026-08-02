@@ -27,12 +27,12 @@ use Illuminate\Support\Collection;
  * Decisão técnica sobre "liberar lugar" (spec item 7, investigada antes
  * de implementar): a disponibilidade de assento hoje é calculada em
  * StorefrontHoldService::buildSeatAvailability() somando
- * `order_items.quantity` (via SaleItem) para pedidos não cancelados —
+ * `sale_items.quantity` (via SaleItem) para pedidos não cancelados —
  * ela NUNCA olha para Ticket.status. Seat.status é estrutural/admin
  * (compartilhado por todas as vendas daquele assento) e não pode virar
  * um "liberado por venda" sem virar uma mudança perigosa e global.
- * Como `order_items.seat_id`/`tickets.seat_id` são nullable e a query de
- * disponibilidade já filtra `whereNotNull('order_items.seat_id')`, a
+ * Como `sale_items.seat_id`/`tickets.seat_id` são nullable e a query de
+ * disponibilidade já filtra `whereNotNull('sale_items.seat_id')`, a
  * forma correta e mínima de "devolver o lugar ao mapa" dentro da
  * arquitetura existente é nular o `seat_id` do Ticket estornado E do
  * SaleItem (order_item) de origem — isso remove a linha da soma de
@@ -54,7 +54,7 @@ class SaleRefundService
         $this->assertBelongsToCurrentTenant($order);
 
         if ($dto->type === SaleRefund::TYPE_PARTIAL && empty($dto->ticketUuids)) {
-            throw new InvalidSaleStateException(__('messages.order.refund_partial_requires_tickets'));
+            throw new InvalidSaleStateException(__('messages.sale.refund_partial_requires_tickets'));
         }
 
         $newReceipt = null;
@@ -75,7 +75,7 @@ class SaleRefundService
 
             $refund = SaleRefund::create([
                 'tenant_id' => $order->tenant_id,
-                'order_id' => $order->id,
+                'sale_id' => $order->id,
                 'type' => $dto->type,
                 'amount' => $dto->amount,
                 'reason' => $dto->reason,
@@ -105,14 +105,14 @@ class SaleRefundService
                     // order_item de origem também perde o vínculo com o
                     // assento — é essa linha que StorefrontHoldService
                     // soma para calcular "vendido" (ver docblock da classe).
-                    $ticket->orderItem()->update(['seat_id' => null]);
+                    $ticket->saleItem()->update(['seat_id' => null]);
                 }
 
                 $ticket->save();
             }
 
             event(new SaleRefundCreated(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 saleRefundUuid: $refund->uuid,
                 type: $refund->type,
                 amount: (float) $refund->amount,
@@ -139,7 +139,7 @@ class SaleRefundService
      */
     private function resolveAffectedTickets(Sale $order, CreateSaleRefundDTO $dto): Collection
     {
-        $query = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $order->id))
+        $query = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $order->id))
             ->where('tenant_id', $order->tenant_id)
             ->where('status', '!=', 'estornado')
             ->lockForUpdate();
@@ -151,11 +151,11 @@ class SaleRefundService
         $tickets = $query->get();
 
         if ($dto->type === SaleRefund::TYPE_PARTIAL && $tickets->count() !== count($dto->ticketUuids)) {
-            throw new InvalidSaleStateException(__('messages.order.refund_ticket_not_found_in_order'));
+            throw new InvalidSaleStateException(__('messages.sale.refund_ticket_not_found_in_order'));
         }
 
         if ($tickets->isEmpty()) {
-            throw new InvalidSaleStateException(__('messages.order.refund_no_eligible_tickets'));
+            throw new InvalidSaleStateException(__('messages.sale.refund_no_eligible_tickets'));
         }
 
         return $tickets;
@@ -168,7 +168,7 @@ class SaleRefundService
         $amountCents = (int) round($amount * 100);
 
         if ($amountCents + $alreadyRefundedCents > $paidAmountCents) {
-            throw new InvalidSaleStateException(__('messages.order.refund_amount_exceeds_paid', [
+            throw new InvalidSaleStateException(__('messages.sale.refund_amount_exceeds_paid', [
                 'available' => $this->centsToDecimal(max(0, $paidAmountCents - $alreadyRefundedCents)),
             ]));
         }

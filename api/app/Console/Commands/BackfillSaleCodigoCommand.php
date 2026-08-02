@@ -7,19 +7,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Backfill de orders.codigo (2026-07-15) — pedidos criados antes do campo
+ * Backfill de sales.codigo (2026-07-15) — pedidos criados antes do campo
  * existir não têm código de exibição. Por tenant, atribui sequencialmente
  * a partir de 1000 + (quantidade de pedidos daquele tenant que já têm
- * código), na ordem de criação (orders.id asc), e ao final sincroniza
- * tenants.next_order_code para o próximo valor livre — mesma regra de
+ * código), na ordem de criação (sales.id asc), e ao final sincroniza
+ * tenants.next_sale_code para o próximo valor livre — mesma regra de
  * sequência usada em SaleService::create(). Idempotente: pedidos que já
  * têm codigo são ignorados.
  */
 class BackfillSaleCodigoCommand extends Command
 {
-    protected $signature = 'orders:backfill-codigo';
+    protected $signature = 'sales:backfill-codigo';
 
-    protected $description = 'Atribui orders.codigo sequencial (por tenant) aos pedidos que ainda não têm.';
+    protected $description = 'Atribui sales.codigo sequencial (por tenant) aos pedidos que ainda não têm.';
 
     public function handle(): int
     {
@@ -36,7 +36,7 @@ class BackfillSaleCodigoCommand extends Command
                     ->whereNotNull('codigo')
                     ->count();
 
-                // Convenção de tenants.next_order_code: guarda o ÚLTIMO
+                // Convenção de tenants.next_sale_code: guarda o ÚLTIMO
                 // código emitido (não o próximo), mesma semântica de
                 // SaleService::create() (increment-then-read). Começa em
                 // 999 + já-codificados pra que o primeiro código atribuído
@@ -47,8 +47,8 @@ class BackfillSaleCodigoCommand extends Command
                 Sale::where('tenant_id', $tenantId)
                     ->whereNull('codigo')
                     ->orderBy('id')
-                    ->chunkById(200, function ($orders) use (&$lastAssigned, &$assignedForTenant) {
-                        foreach ($orders as $order) {
+                    ->chunkById(200, function ($sales) use (&$lastAssigned, &$assignedForTenant) {
+                        foreach ($sales as $order) {
                             $lastAssigned++;
                             $order->codigo = (string) $lastAssigned;
                             $order->save();
@@ -56,7 +56,7 @@ class BackfillSaleCodigoCommand extends Command
                         }
                     });
 
-                DB::table('tenants')->where('id', $tenantId)->update(['next_order_code' => $lastAssigned]);
+                DB::table('tenants')->where('id', $tenantId)->update(['next_sale_code' => $lastAssigned]);
 
                 return $assignedForTenant;
             });

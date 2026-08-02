@@ -13,7 +13,7 @@ class AuditSalePartiallyPaid
             event: 'order_partially_paid',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'amount' => $event->amount,
             ],
             actorId: $event->actorId

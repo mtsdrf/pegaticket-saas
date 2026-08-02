@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('order_installments', function (Blueprint $table) {
+        Schema::create('sale_installments', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
 
             $table->unsignedBigInteger('tenant_id')->index();
 
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('sale_id')->constrained('sales')->cascadeOnDelete();
 
             $table->unsignedInteger('installment_number');
             $table->decimal('amount', 10, 2);
@@ -34,12 +34,12 @@ return new class extends Migration {
                 ->on('tenants')
                 ->cascadeOnDelete();
 
-            $table->unique(['order_id', 'installment_number'], 'uniq_order_installment_number');
+            $table->unique(['sale_id', 'installment_number'], 'uniq_order_installment_number');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('order_installments');
+        Schema::dropIfExists('sale_installments');
     }
 };

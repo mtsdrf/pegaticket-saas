@@ -6,7 +6,7 @@
 - Sem ação: tenant continua sem `subscription` (endpoint `GET /subscription` retorna vazio, nenhum bloqueio de acesso).
 - Para ativar: 1) confirmar/ajustar `plan_prices` (já seedado com os 3 planos × 3 ciclos, desconto 10%/20%); 2) decidir e implementar o ponto que liga `SubscriptionService::create()` ao signup (hoje deliberadamente desligado — ver `architecture-decisions.md`, Onda 1); 3) trocar `PaymentProviderInterface` do bind `ManualPaymentProvider` por um adapter de PSP real antes de cobrar de verdade (hoje toda cobrança fica `pending`).
 
-## Pagamento de pedido (cliente final → tenant)
+## Pagamento de venda (cliente final → tenant)
 - Sem ação: `tenant_settings.payment_receiving_method` fica `manual` (comportamento atual, sem mudança).
 - Para ativar por tenant: o próprio dono cadastra `payment_pix_key` em Configurações (campo já existe, criptografado); ainda depende de um adapter real de `PaymentProviderInterface` pra o Pix ser cobrado de verdade — sem isso, `createPixChargeForOrder` só registra intenção `pending`.
 

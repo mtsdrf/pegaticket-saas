@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($orders as $order)
+            @forelse ($sales as $order)
                 <tr>
                     <td>{{ $order->client->name ?? '-' }}</td>
                     <td>{{ $order->created_at?->format('d/m/Y') }}</td>
@@ -35,7 +35,7 @@
         </tbody>
     </table>
 
-    <p class="totals">Total de pedidos: {{ $orders->count() }}</p>
+    <p class="totals">Total de pedidos: {{ $sales->count() }}</p>
 
     @include('reports.partials.pdf-footer')
 </body>

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * Mercado Pago tratava a repetição como uma cobrança/assinatura nova.
  *
  * `operation` é a identidade lógica ESTÁVEL da operação (ex.:
- * "order_charge:{order_uuid}", "preapproval_create:{subscription_uuid}",
+ * "order_charge:{sale_uuid}", "preapproval_create:{subscription_uuid}",
  * "preapproval_change:{subscription_uuid}") — não um id de tentativa. A
  * unique composta (tenant_id, operation) garante no máximo 1 tentativa "em
  * voo" por operação lógica por vez.

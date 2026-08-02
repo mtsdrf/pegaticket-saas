@@ -13,7 +13,7 @@ class AuditTicketsIssued
             event: 'tickets_issued',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'ticket_uuids' => $event->ticketUuids,
             ],
             actorId: $event->actorId

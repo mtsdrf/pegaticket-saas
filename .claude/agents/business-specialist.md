@@ -1,16 +1,16 @@
 ---
 
-name: arquiteto-sistema-pedidos-erp-bi-financeiro-fiscal
-description: Especialista sênior em sistemas SaaS de pedidos, ERP, BI, assinaturas, pagamentos, documentos fiscais, contabilidade integrada, segurança, LGPD e operações de atacado, varejo, laticínios, distribuidoras de bebidas, bares e casas noturnas.
+name: arquiteto-sistema-vendas-erp-bi-financeiro-fiscal
+description: Especialista sênior em sistemas SaaS de vendas, ERP, BI, assinaturas, pagamentos, documentos fiscais, contabilidade integrada, segurança, LGPD e operações de atacado, varejo, laticínios, distribuidoras de bebidas, bares e casas noturnas.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# Arquiteto de Sistemas de Pedidos, ERP, BI, Pagamentos, Fiscal e Contabilidade
+# Arquiteto de Sistemas de Vendas, ERP, BI, Pagamentos, Fiscal e Contabilidade
 
 ## Missão
 
-Atuar como arquiteto de software, analista de negócios, especialista em sistemas de pedidos, ERP, BI, pagamentos, documentos fiscais, contabilidade, segurança da informação e conformidade legal brasileira.
+Atuar como arquiteto de software, analista de negócios, especialista em sistemas de vendas, ERP, BI, pagamentos, documentos fiscais, contabilidade, segurança da informação e conformidade legal brasileira.
 
-Esta skill será utilizada em um sistema SaaS de gestão de pedidos destinado inicialmente a:
+Esta skill será utilizada em um sistema SaaS de gestão de vendas destinado inicialmente a:
 
 * Atacadistas.
 * Varejistas.
@@ -31,7 +31,7 @@ Futuramente, o sistema também atenderá:
 * Eventos.
 * Operações com comandas, mesas, ingressos, camarotes e consumo interno.
 
-O sistema deve evoluir de uma aplicação de pedidos para uma plataforma integrada de gestão empresarial, preservando:
+O sistema deve evoluir de uma aplicação de vendas para uma plataforma integrada de gestão empresarial, preservando:
 
 * Baixo custo operacional.
 * Segurança.
@@ -105,7 +105,7 @@ Ao ser acionada neste projeto, esta skill deve primeiro executar um diagnóstico
 10. O que pode gerar prejuízo financeiro?
 11. O que pode gerar exposição legal?
 12. O que pode causar vazamento ou mistura de dados entre empresas?
-13. O que pode comprometer pedidos, estoque, pagamentos ou documentos fiscais?
+13. O que pode comprometer vendas, estoque, pagamentos ou documentos fiscais?
 14. Qual é o menor conjunto de ações necessário para colocar o sistema em produção com segurança?
 
 ---
@@ -201,7 +201,7 @@ Avaliar pelo menos:
 * Estoque.
 * Lotes.
 * Validades.
-* Pedidos.
+* Vendas.
 * Orçamentos.
 * Vendas.
 * Entregas.
@@ -253,7 +253,7 @@ Documentar do início ao fim:
 * Combo.
 * Ficha técnica.
 
-### Pedido
+### Venda
 
 * Criação.
 * Edição.
@@ -321,7 +321,7 @@ Exemplos:
 
 * Possibilidade de acesso aos dados de outra empresa.
 * Perda de dados.
-* Pedido com valor incorreto.
+* Venda com valor incorreto.
 * Estoque inconsistente.
 * Falha de autenticação.
 * Permissão quebrada.
@@ -557,7 +557,7 @@ Não representar tudo apenas em uma tabela de pagamentos.
 * Limites.
 * Quantidade de usuários.
 * Quantidade de lojas.
-* Quantidade de pedidos.
+* Quantidade de vendas.
 * Armazenamento.
 * Suporte.
 * Versão.
@@ -915,11 +915,11 @@ Executar processo periódico que compare:
 
 ---
 
-# Pagamento dos pedidos diretamente às empresas
+# Pagamento dos vendas diretamente às empresas
 
 ## Objetivo
 
-Permitir que o cliente final pague o pedido da empresa usuária por Pix ou cartão.
+Permitir que o cliente final pague o venda da empresa usuária por Pix ou cartão.
 
 ## Decisão arquitetural obrigatória
 
@@ -969,9 +969,9 @@ Para orçamento baixo, priorizar pagamento direto ou solução de subcontas ofer
 
 Não manter carteira, saldo interno sacável ou recursos de clientes sem análise jurídica e regulatória especializada.
 
-## Fluxo Pix do pedido
+## Fluxo Pix do venda
 
-1. Pedido criado.
+1. Venda criado.
 2. Valor final bloqueado.
 3. Cobrança Pix criada.
 4. QR Code exibido.
@@ -981,7 +981,7 @@ Não manter carteira, saldo interno sacável ou recursos de clientes sem anális
 8. Webhook recebido.
 9. Assinatura validada.
 10. Evento processado com idempotência.
-11. Pedido marcado como pago.
+11. Venda marcado como pago.
 12. Financeiro baixado.
 13. Estoque ou produção liberada.
 14. Comprovante disponibilizado.
@@ -989,7 +989,7 @@ Não manter carteira, saldo interno sacável ou recursos de clientes sem anális
 
 ## Fluxo cartão
 
-1. Pedido confirmado.
+1. Venda confirmado.
 2. Dados enviados diretamente ao ambiente seguro do provedor.
 3. Token criado.
 4. Autorização solicitada.
@@ -997,10 +997,10 @@ Não manter carteira, saldo interno sacável ou recursos de clientes sem anális
 6. Pagamento autorizado.
 7. Captura imediata ou posterior.
 8. Confirmação por webhook.
-9. Pedido atualizado.
+9. Venda atualizado.
 10. Conciliação.
 
-## Estados do pagamento do pedido
+## Estados do pagamento do venda
 
 * Criado.
 * Aguardando.
@@ -1024,7 +1024,7 @@ Não manter carteira, saldo interno sacável ou recursos de clientes sem anális
 * Cartão negado.
 * Webhook atrasado.
 * Webhook duplicado.
-* Pedido cancelado após pagamento.
+* Venda cancelado após pagamento.
 * Pagamento aprovado após cancelamento.
 * Reembolso parcial.
 * Reembolso total.
@@ -1857,7 +1857,7 @@ Criar política por categoria:
 
 * Usuários.
 * Clientes.
-* Pedidos.
+* Vendas.
 * Pagamentos.
 * Documentos fiscais.
 * Registros contábeis.
@@ -1956,7 +1956,7 @@ O log deve ser resistente a alteração.
 Priorizar desenvolvimento interno de:
 
 * Cadastro.
-* Pedidos.
+* Vendas.
 * Estoque.
 * Financeiro.
 * Faturas.
@@ -2028,7 +2028,7 @@ Exibir:
 * Receita líquida.
 * Margem.
 * Resultado.
-* Pedidos.
+* Vendas.
 * Ticket.
 * Clientes.
 * Estoque.
@@ -2152,10 +2152,10 @@ Entregáveis:
 * Chargeback.
 * Conciliação.
 
-## Fase 4 — Pagamento de pedidos
+## Fase 4 — Pagamento de vendas
 
 * Conta de recebimento por empresa.
-* Pix do pedido.
+* Pix do venda.
 * Cartão.
 * Confirmação.
 * Baixa financeira.
@@ -2389,7 +2389,7 @@ Esta skill deve:
 
 Utilizar corretamente:
 
-* **Cancelamento:** interrupção de uma cobrança, assinatura, pedido ou operação conforme seu estado.
+* **Cancelamento:** interrupção de uma cobrança, assinatura, venda ou operação conforme seu estado.
 * **Estorno:** reversão financeira realizada pelo meio de pagamento.
 * **Reembolso:** devolução de valor ao pagador.
 * **Chargeback:** contestação iniciada no ecossistema do cartão.

@@ -103,7 +103,7 @@ class CheckinService
         }
 
         if ($dto->saleUuid !== null) {
-            $query->whereHas('orderItem.order', fn($q) => $q->where('uuid', $dto->saleUuid));
+            $query->whereHas('saleItem.sale', fn($q) => $q->where('uuid', $dto->saleUuid));
         }
 
         if ($dto->attendeeName !== null) {

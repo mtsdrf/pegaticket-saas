@@ -8,16 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->uuid('client_sale_uuid')->nullable()->after('operated_by');
-            $table->unique(['tenant_id', 'client_sale_uuid'], 'orders_tenant_client_sale_uuid_unique');
+            $table->unique(['tenant_id', 'client_sale_uuid'], 'sales_tenant_client_sale_uuid_unique');
         });
     }
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropUnique('orders_tenant_client_sale_uuid_unique');
+        Schema::table('sales', function (Blueprint $table) {
+            $table->dropUnique('sales_tenant_client_sale_uuid_unique');
             $table->dropColumn('client_sale_uuid');
         });
     }

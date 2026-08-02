@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->boolean('is_out_for_delivery')->default(false)->after('stock_reserved');
             $table->timestamp('out_for_delivery_at')->nullable()->after('is_out_for_delivery');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn(['is_out_for_delivery', 'out_for_delivery_at']);
         });
     }

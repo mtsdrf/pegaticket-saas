@@ -74,8 +74,8 @@ class PaymentIdempotencyTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('code', 'PAYMENT_PROVIDER_UNAVAILABLE');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $saleId)->count());
 
         $record = PaymentIdempotencyKey::where('operation', "order_charge:{$order['uuid']}")->firstOrFail();
         $this->assertSame('pending', $record->status);
@@ -90,7 +90,7 @@ class PaymentIdempotencyTest extends TestCase
             ->assertJsonPath('code', 'PAYMENT_OPERATION_IN_PROGRESS');
 
         $this->assertSame($firstKey, $record->fresh()->idempotency_key);
-        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
+        $this->assertSame(0, Payment::where('payable_type', Sale::class)->where('payable_id', $saleId)->count());
     }
 
     #[Test]
@@ -135,8 +135,8 @@ class PaymentIdempotencyTest extends TestCase
         $this->assertSame('succeeded', $record->fresh()->status);
         $this->assertSame(2, Http::recorded()->count());
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $orderId)->count());
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $saleId)->count());
     }
 
     #[Test]

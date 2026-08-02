@@ -12,8 +12,8 @@ use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
 /**
- * Fila de aprovação do staff (Delivery Fase 1) — POST /orders/{order}/approve
- * e /orders/{order}/reject, extensão do SaleController/SaleService
+ * Fila de aprovação do staff (Delivery Fase 1) — POST /sales/{order}/approve
+ * e /sales/{order}/reject, extensão do SaleController/SaleService
  * existentes (não um controller/service novo). Todo pedido origin=storefront
  * nasce status=pending_approval e precisa passar por aqui.
  */
@@ -40,7 +40,7 @@ class SaleApprovalQueueTest extends TestCase
     }
 
     /**
-     * Cria um pedido de verdade via POST /orders (reserva de estoque real,
+     * Cria um pedido de verdade via POST /sales (reserva de estoque real,
      * origin=staff/status=confirmed por default) e simula que ele "nasceu"
      * da loja, virando pending_approval — mesmo estado que
      * StorefrontCheckoutService produz, só que aqui com uma reserva real
@@ -87,7 +87,7 @@ class SaleApprovalQueueTest extends TestCase
         SaleItem::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 10,

@@ -49,12 +49,12 @@ class SaleTrackingTest extends TestCase
         ], $overrides));
     }
 
-    private function createOrderItem(Tenant $tenant, Sale $order, TicketType $product, array $overrides = []): SaleItem
+    private function createSaleItem(Tenant $tenant, Sale $order, TicketType $product, array $overrides = []): SaleItem
     {
         return SaleItem::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'ticket_type_id' => $product->id,
             'quantity' => 3,
             'unit_price' => 38,
@@ -67,7 +67,7 @@ class SaleTrackingTest extends TestCase
         return SaleInstallment::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenant->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'installment_number' => 1,
             'amount' => 60,
             'due_date' => now()->addMonth()->toDateString(),
@@ -98,7 +98,7 @@ class SaleTrackingTest extends TestCase
         $client = $this->createClient($tenant->id);
         $product = $this->createProduct($tenant->id, ['name' => 'Queijo Meia Cura']);
         $order = $this->createOrder($tenant, $client, ['is_installment' => false]);
-        $this->createOrderItem($tenant, $order, $product);
+        $this->createSaleItem($tenant, $order, $product);
 
         $response = $this->getJson('/api/v1/rastreio/' . $order->uuid);
 
@@ -117,7 +117,7 @@ class SaleTrackingTest extends TestCase
         $client = $this->createClient($tenant->id);
         $product = $this->createProduct($tenant->id);
         $order = $this->createOrder($tenant, $client, ['is_installment' => true]);
-        $this->createOrderItem($tenant, $order, $product);
+        $this->createSaleItem($tenant, $order, $product);
         $this->createInstallment($tenant, $order, ['installment_number' => 1, 'amount' => 60]);
         $this->createInstallment($tenant, $order, ['installment_number' => 2, 'amount' => 60, 'is_paid' => true, 'paid_at' => now()]);
 

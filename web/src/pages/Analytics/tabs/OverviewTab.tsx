@@ -87,7 +87,7 @@ export function OverviewTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         value={couponData ? formatCurrency(couponData.total_discount_amount) : null}
         caption={
           couponData
-            ? `Ticket com cupom ${formatCurrency(couponData.orders_with_coupon.average_ticket)} vs sem cupom ${formatCurrency(couponData.orders_without_coupon.average_ticket)}`
+            ? `Ticket com cupom ${formatCurrency(couponData.sales_with_coupon.average_ticket)} vs sem cupom ${formatCurrency(couponData.sales_without_coupon.average_ticket)}`
             : null
         }
         tone="info"

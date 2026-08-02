@@ -91,7 +91,6 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { kind: 'link', to: '/portaria', label: 'Portaria', icon: QrCodeScannerOutlinedIcon, access: ACCESS.ticketsCheckin },
-  { kind: 'link', to: '/vendas', label: 'Vendas', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-manuais', label: 'Vendas manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalActivityOutlinedIcon, access: ACCESS.storefrontSalesRead },
   {

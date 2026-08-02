@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
 
@@ -18,7 +18,7 @@ return new class extends Migration {
 
             $table->boolean('is_installment')->default(false)->index();
 
-            // Sempre calculado no backend a partir da soma dos order_items,
+            // Sempre calculado no backend a partir da soma dos sale_items,
             // nunca confiado no valor enviado pelo request.
             $table->decimal('total_amount', 10, 2);
 
@@ -29,7 +29,7 @@ return new class extends Migration {
             $table->timestamp('delivered_at')->nullable();
 
             // Só relevante para pedido não parcelado (calculado no backend);
-            // pedido parcelado tem vencimento por parcela em order_installments.
+            // pedido parcelado tem vencimento por parcela em sale_installments.
             $table->date('due_date')->nullable();
 
             $table->timestamp('cancelled_at')->nullable();
@@ -53,6 +53,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('sales');
     }
 };

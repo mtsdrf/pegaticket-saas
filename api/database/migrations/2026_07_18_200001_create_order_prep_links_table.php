@@ -15,12 +15,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('order_prep_links', function (Blueprint $table) {
+        Schema::create('sale_prep_links', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
 
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('sale_id')->constrained('sales')->cascadeOnDelete();
 
             $table->string('token', 64)->unique()->index();
             $table->timestamp('expires_at');
@@ -30,6 +30,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('order_prep_links');
+        Schema::dropIfExists('sale_prep_links');
     }
 };

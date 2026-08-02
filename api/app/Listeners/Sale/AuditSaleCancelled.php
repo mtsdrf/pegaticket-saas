@@ -13,7 +13,7 @@ class AuditSaleCancelled
             event: 'order_cancelled',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'cancellation_reason' => $event->cancellationReason,
             ],
             actorId: $event->actorId

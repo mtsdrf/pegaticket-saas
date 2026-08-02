@@ -41,12 +41,12 @@ class OnboardingChecklistTest extends TestCase
 
         $this->assertFalse($data['has_product']);
         $this->assertFalse($data['has_client']);
-        $this->assertFalse($data['has_first_order']);
+        $this->assertFalse($data['has_first_sale']);
         $this->assertFalse($data['is_dismissed']);
         $this->assertNull($data['dismissed_at']);
         $this->assertEquals(0, $data['completed']);
         $this->assertEquals(3, $data['total']);
-        $this->assertSame(['has_product', 'has_client', 'has_first_order'], array_column($data['steps'], 'key'));
+        $this->assertSame(['has_product', 'has_client', 'has_first_sale'], array_column($data['steps'], 'key'));
     }
 
     #[Test]
@@ -103,7 +103,7 @@ class OnboardingChecklistTest extends TestCase
 
         $this->assertTrue($data['has_product']);
         $this->assertTrue($data['has_client']);
-        $this->assertFalse($data['has_first_order']);
+        $this->assertFalse($data['has_first_sale']);
         $this->assertEquals(2, $data['completed']);
     }
 

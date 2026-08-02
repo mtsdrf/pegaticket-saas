@@ -25,7 +25,7 @@ class SaleRefund extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'order_id',
+        'sale_id',
         'type',
         'amount',
         'reason',
@@ -47,7 +47,7 @@ class SaleRefund extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'order_id',
+        'sale_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -59,9 +59,9 @@ class SaleRefund extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function order(): BelongsTo
+    public function sale(): BelongsTo
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
     public function tickets(): BelongsToMany

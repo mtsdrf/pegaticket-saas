@@ -3,13 +3,13 @@ import type { ApiSuccess } from '../types/api'
 import type { SaleRefund, SaleRefundPayload } from '../types/saleRefund'
 import { extractFilenameFromContentDisposition, triggerBlobDownload } from '../utils/fileDownload'
 
-/** Estornos já registrados de um pedido — spec 5.14 (estorno externo, PagBank fora do sistema). */
-export function listSaleRefunds(orderUuid: string): Promise<SaleRefund[]> {
-  return unwrap(apiClient.get<ApiSuccess<SaleRefund[]>>(`/sales/${orderUuid}/refunds`))
+/** Estornos já registrados de uma venda — spec 5.14 (estorno externo, PagBank fora do sistema). */
+export function listSaleRefunds(saleUuid: string): Promise<SaleRefund[]> {
+  return unwrap(apiClient.get<ApiSuccess<SaleRefund[]>>(`/sales/${saleUuid}/refunds`))
 }
 
 /** Multipart por causa do upload opcional de comprovante (`receipt`). */
-export function createSaleRefund(orderUuid: string, payload: SaleRefundPayload): Promise<SaleRefund> {
+export function createSaleRefund(saleUuid: string, payload: SaleRefundPayload): Promise<SaleRefund> {
   const formData = new FormData()
   formData.append('type', payload.type)
   formData.append('amount', String(payload.amount))
@@ -23,12 +23,12 @@ export function createSaleRefund(orderUuid: string, payload: SaleRefundPayload):
     payload.ticket_uuids.forEach((uuid, index) => formData.append(`ticket_uuids[${index}]`, uuid))
   }
 
-  return unwrap(apiClient.post<ApiSuccess<SaleRefund>>(`/sales/${orderUuid}/refunds`, formData))
+  return unwrap(apiClient.post<ApiSuccess<SaleRefund>>(`/sales/${saleUuid}/refunds`, formData))
 }
 
 /** Comprovante do estorno — disco privado, só baixável autenticado/tenant-scoped (mesmo padrão de `tenantProfileService.exportTenantData`). */
-export async function downloadSaleRefundReceipt(orderUuid: string, refundUuid: string): Promise<void> {
-  const response = await apiClient.get(`/sales/${orderUuid}/refunds/${refundUuid}/receipt`, { responseType: 'blob' })
+export async function downloadSaleRefundReceipt(saleUuid: string, refundUuid: string): Promise<void> {
+  const response = await apiClient.get(`/sales/${saleUuid}/refunds/${refundUuid}/receipt`, { responseType: 'blob' })
   const filename = extractFilenameFromContentDisposition(response.headers['content-disposition'], 'comprovante-estorno')
   triggerBlobDownload(response.data, filename)
 }

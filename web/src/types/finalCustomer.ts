@@ -11,10 +11,10 @@ export interface FinalCustomerSearchResultRef {
  * Item de `GET /final-customers` (busca staff-facing pós-migração
  * `Client`→`FinalCustomer`). Tem DOIS uuids: `uuid` (vínculo tenant×comprador,
  * só serve como chave de lista/React key) e `final_customer.uuid` (comprador
- * global, o que o backend espera em `POST /orders`).
+ * global, o que o backend espera em `POST /sales`).
  */
 export interface FinalCustomerSearchResult {
-  /** Uuid do vínculo tenant×comprador — NÃO usar no pedido. */
+  /** Uuid do vínculo tenant×comprador — NÃO usar na venda. */
   uuid: string
   cpf_cnpj: string | null
   phone_primary: string | null

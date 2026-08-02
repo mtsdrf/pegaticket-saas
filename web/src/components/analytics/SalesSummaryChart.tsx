@@ -28,7 +28,7 @@ interface SalesSummaryChartProps {
 
 /**
  * Faturamento por bucket (dia/mês) — série única na cor primária; qtd de
- * pedidos e ticket médio aparecem no tooltip, nunca num segundo eixo.
+ * vendas e ticket médio aparecem no tooltip, nunca num segundo eixo.
  */
 export function SalesSummaryChart({ buckets, groupBy }: SalesSummaryChartProps) {
   const { palette } = useTheme()
@@ -75,7 +75,7 @@ export function SalesSummaryChart({ buckets, groupBy }: SalesSummaryChartProps) 
                   if (!bucket) return ''
                   return [
                     `Faturamento: ${formatCurrency(bucket.total_amount)}`,
-                    `Pedidos: ${bucket.count}`,
+                    `Vendas: ${bucket.count}`,
                     `Ticket médio: ${formatCurrency(bucket.average_ticket)}`,
                   ]
                 },

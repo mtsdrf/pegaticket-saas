@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Ticket = ingresso digital emitido (spec 5.15). Emitido automaticamente
- * por TicketIssuanceService quando a Sale (order_items.order_id) é
- * confirmada/paga — nunca criado manualmente via formulário. `order_item_id`
- * é a origem (SaleItem::table = order_items); `ticket_type_id` é redundante
+ * por TicketIssuanceService quando a Sale (sale_items.sale_id) é
+ * confirmada/paga — nunca criado manualmente via formulário. `sale_item_id`
+ * é a origem (SaleItem::table = sale_items); `ticket_type_id` é redundante
  * mas evita join extra em toda leitura de portaria/portal. `seat_id`
  * nullable: mapa de assento é fase futura, FK já pronta.
  */
@@ -21,8 +21,8 @@ return new class extends Migration {
 
             $table->unsignedBigInteger('tenant_id')->index();
 
-            $table->foreignId('order_item_id')
-                ->constrained('order_items')
+            $table->foreignId('sale_item_id')
+                ->constrained('sale_items')
                 ->cascadeOnDelete();
 
             $table->foreignId('ticket_type_id')

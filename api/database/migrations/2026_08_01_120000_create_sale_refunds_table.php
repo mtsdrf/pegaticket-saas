@@ -26,8 +26,8 @@ return new class extends Migration {
 
             $table->unsignedBigInteger('tenant_id')->index();
 
-            $table->foreignId('order_id')
-                ->constrained('orders')
+            $table->foreignId('sale_id')
+                ->constrained('sales')
                 ->cascadeOnDelete();
 
             $table->string('type', 10)->index(); // total|parcial

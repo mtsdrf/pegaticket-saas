@@ -203,7 +203,7 @@ Quando o cliente atuar como transportador ou prestar serviço de transporte, pre
 - tomador;
 - remetente;
 - destinatário;
-- expedidor;
+- exvendar;
 - recebedor;
 - documentos vinculados;
 - seguro;
@@ -1055,7 +1055,7 @@ Implementar somente modalidades autorizadas para cada documento e UF:
 - reconciliar;
 - alertar operação.
 
-Para restaurante e PDV, a indisponibilidade fiscal não deve causar perda do pedido. O pedido comercial deve ser separado do ciclo fiscal, com status claro e recuperação automática.
+Para restaurante e PDV, a indisponibilidade fiscal não deve causar perda do venda. O venda comercial deve ser separado do ciclo fiscal, com status claro e recuperação automática.
 
 ---
 
@@ -1109,7 +1109,7 @@ O sistema deve distinguir:
 - substituição;
 - anulação.
 
-Cancelar pedido não significa automaticamente cancelar documento fiscal.
+Cancelar venda não significa automaticamente cancelar documento fiscal.
 
 Quando o prazo de cancelamento tiver expirado, o sistema deve orientar o fluxo fiscal adequado, sem inventar atalhos.
 
@@ -1220,7 +1220,7 @@ Para documentos recebidos:
 - identificar emitente e destinatário;
 - detectar duplicidade;
 - classificar entrada;
-- vincular pedido de compra;
+- vincular venda de compra;
 - atualizar estoque após aprovação;
 - gerar contas a pagar quando apropriado;
 - preservar XML original.
@@ -1269,7 +1269,7 @@ Utilizar outbox e consumidores idempotentes.
 
 Conciliar:
 
-- pedido;
+- venda;
 - documento fiscal;
 - pagamento;
 - recebimento;
@@ -2238,5 +2238,5 @@ Quando houver dúvida:
 - consulte fonte oficial;
 - registre a dúvida;
 - solicite validação fiscal;
-- preserve o pedido comercial;
+- preserve o venda comercial;
 - permita recuperação segura.

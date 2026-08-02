@@ -13,7 +13,7 @@ class AuditSalePaid
             event: 'order_paid',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
             ],
             actorId: $event->actorId
         );

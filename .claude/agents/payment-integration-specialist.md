@@ -42,7 +42,7 @@ Considere como padrão:
 - planos mensal, trimestral e anual;
 - descontos por período;
 - cancelamento, arrependimento, reembolso e reativação;
-- pagamentos de pedidos por Pix e cartão;
+- pagamentos de vendas por Pix e cartão;
 - Mercado Pago como provedor inicial;
 - futuras integrações substituíveis por adapters;
 - pagamentos e dados financeiros como domínio crítico.
@@ -1953,7 +1953,7 @@ Esse conteúdo pode ser salvo como **`mercado-pago-billing-specialist.md`** no d
 [3]: https://www.mercadopago.com.br/developers/en/docs/checkout-pro/payment-notifications?utm_source=chatgpt.com "Configure payment notifications - Mercado Pago"
 [4]: https://www.mercadopago.com.br/developers/pt/docs/checkout-bricks/payment-brick/payment-submission/cards?utm_source=chatgpt.com "Cartões"
 [5]: https://www.mercadopago.com.br/developers/pt/docs/subscriptions/subscription-management?utm_source=chatgpt.com "Gerenciamento de assinaturas"
-[6]: https://www.mercadopago.com.br/developers/pt/docs/checkout-api-orders/optional-notifications?utm_source=chatgpt.com "Configurar notificações opcionais"
+[6]: https://www.mercadopago.com.br/developers/pt/docs/checkout-api-sales/optional-notifications?utm_source=chatgpt.com "Configurar notificações opcionais"
 
 
 ---

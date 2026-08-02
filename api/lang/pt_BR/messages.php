@@ -789,8 +789,8 @@ return [
     'report' => [
         'indicators' => 'Indicadores obtidos com sucesso.',
         'charts' => 'Gráficos obtidos com sucesso.',
-        'orders_list' => 'Lista do relatório de pedidos.',
-        'orders_summary' => 'Resumo do relatório de pedidos.',
+        'sales_list' => 'Lista do relatório de pedidos.',
+        'sales_summary' => 'Resumo do relatório de pedidos.',
         'by_channel' => 'Resultado por canal de venda.',
         'clients_list' => 'Lista do relatório de clientes.',
         'receivables_list' => 'Lista do relatório de recebíveis.',
@@ -802,12 +802,12 @@ return [
 
     'analytics' => [
         'sales_summary' => 'Resumo de vendas obtido com sucesso.',
-        'top_products' => 'Top produtos obtidos com sucesso.',
+        'top_addons' => 'Top produtos obtidos com sucesso.',
         'sales_by_location' => 'Vendas por localização obtidas com sucesso.',
         'sales_history' => 'Histórico de vendas obtido com sucesso.',
         'top_clients' => 'Top clientes obtidos com sucesso.',
         'payment_delays' => 'Atrasos de pagamento obtidos com sucesso.',
-        'overdue_orders' => 'Pedidos em atraso obtidos com sucesso.',
+        'overdue_sales' => 'Pedidos em atraso obtidos com sucesso.',
         'abc_analysis' => 'Análise ABC obtida com sucesso.',
         'margin_summary' => 'Resumo de margem obtido com sucesso.',
         'coupon_roi' => 'Comparação de ticket por cupom obtida com sucesso.',
@@ -983,9 +983,9 @@ return [
         'expired_code' => 'Este código expirou. Solicite um novo código.',
         'too_many_attempts' => 'Muitas tentativas erradas. Solicite um novo código.',
         'link_confirmed' => 'Loja vinculada com sucesso ao seu histórico.',
-        'orders_shown' => 'Pedidos do cliente.',
+        'sales_shown' => 'Pedidos do cliente.',
         'me_shown' => 'Perfil do cliente.',
-        'order_items_shown' => 'Itens do pedido para novo pedido.',
+        'sale_items_shown' => 'Itens do pedido para novo pedido.',
         'addresses_listed' => 'Seus endereços.',
         'address_updated' => 'Endereço atualizado com sucesso.',
         'coupon_redemptions_listed' => 'Seus cupons utilizados.',
@@ -1092,8 +1092,8 @@ return [
     ],
 
     'public_api' => [
-        'orders_list' => 'Pedidos.',
-        'orders_show' => 'Pedido.',
+        'sales_list' => 'Pedidos.',
+        'sales_show' => 'Pedido.',
         'products_list' => 'Produtos.',
     ],
 ];

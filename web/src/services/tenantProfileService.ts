@@ -9,7 +9,7 @@ export function getTenantProfile(): Promise<TenantProfile> {
 
 /**
  * "Exportar meus dados" (roadmap A1.2) — ZIP com 1 CSV por entidade
- * principal do tenant (clients/products/orders), baixado direto como
+ * principal do tenant (clientes, ingressos e vendas), baixado direto como
  * binário (`Content-Disposition: attachment`), mesmo padrão de
  * `reportDetailService.exportPdf`. Throttle dedicado no backend
  * (`throttle:3,60`) — tela chamadora trata 429 com mensagem própria.

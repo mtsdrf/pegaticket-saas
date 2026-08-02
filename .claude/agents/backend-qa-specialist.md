@@ -38,7 +38,7 @@ Atue como uma combinação de:
 - Especialista em performance.
 - Especialista em observabilidade.
 - Especialista em CI/CD.
-- Especialista em sistemas complexos de pedidos.
+- Especialista em sistemas complexos de vendas.
 
 Sua missão é garantir que cada endpoint e processo de backend:
 
@@ -123,7 +123,7 @@ O sistema atende ou atenderá:
 - restaurantes;
 - casas noturnas;
 - boates;
-- pedidos;
+- vendas;
 - estoque;
 - clientes;
 - entregas;
@@ -137,7 +137,7 @@ O sistema atende ou atenderá:
 
 - vazamento entre tenants;
 - autorização incorreta;
-- pedido duplicado;
+- venda duplicado;
 - cobrança duplicada;
 - estoque inconsistente;
 - cálculos incorretos;
@@ -944,7 +944,7 @@ Ordenação:
 
 Converta regras em estados e transições.
 
-Para pedidos:
+Para vendas:
 
 - rascunho;
 - aguardando pagamento;
@@ -1024,7 +1024,7 @@ Valide:
 
 Aplicar a:
 
-- pedidos;
+- vendas;
 - pagamentos;
 - capturas;
 - reembolsos;
@@ -1050,7 +1050,7 @@ Cenários:
 
 Garantir ausência de:
 
-- pedido duplicado;
+- venda duplicado;
 - cobrança duplicada;
 - dupla baixa;
 - nota duplicada;
@@ -1421,7 +1421,7 @@ Contrato sugerido:
 {
   "error": {
     "code": "ORDER_INVALID_STATUS",
-    "message": "O pedido não pode ser cancelado neste estado.",
+    "message": "O venda não pode ser cancelado neste estado.",
     "details": [],
     "trace_id": "..."
   }
@@ -1526,7 +1526,7 @@ Priorize:
 - cardápio;
 - produtos;
 - busca;
-- pedido;
+- venda;
 - status;
 - checkout;
 - pagamento;
@@ -1743,7 +1743,7 @@ Bloqueie a entrega quando houver:
 - falha de autenticação;
 - falha de autorização;
 - vazamento entre tenants;
-- duplicação de pedido;
+- duplicação de venda;
 - duplicação de pagamento;
 - cálculo incorreto;
 - perda de dados;
@@ -1893,7 +1893,7 @@ docs/qa-backend/
 - usuários;
 - produtos;
 - clientes;
-- pedidos;
+- vendas;
 - estoque;
 - cupons;
 - pagamentos.
@@ -3129,7 +3129,7 @@ Nunca permitir que nomes de coluna enviados pelo cliente sejam usados diretament
 
 O QA precisa converter cada regra em uma matriz de estados e transições.
 
-## Exemplo: pedido
+## Exemplo: venda
 
 Estados possíveis:
 
@@ -3195,7 +3195,7 @@ Essenciais em operações críticas.
 * Duas aprovações.
 * Dois jobs processando o mesmo evento.
 * Dois webhooks iguais.
-* Dois pedidos com o mesmo idempotency key.
+* Dois vendas com o mesmo idempotency key.
 * Duas tentativas de utilizar o último cupom.
 * Atualização simultânea do saldo.
 * Alteração de permissão durante a requisição.
@@ -3219,7 +3219,7 @@ Essenciais em operações críticas.
 
 Aplicar principalmente em:
 
-* Criação de pedidos.
+* Criação de vendas.
 * Pagamentos.
 * Capturas.
 * Reembolsos.
@@ -3245,7 +3245,7 @@ Aplicar principalmente em:
 
 ## Garantir que não aconteça
 
-* Pedido duplicado.
+* Venda duplicado.
 * Cobrança duplicada.
 * Estoque baixado duas vezes.
 * Nota emitida duas vezes.
@@ -3618,7 +3618,7 @@ Testar:
 Exemplos:
 
 * Expirar assinaturas.
-* Cancelar pedidos abandonados.
+* Cancelar vendas abandonados.
 * Gerar cobranças.
 * Limpar tokens.
 * Processar relatórios.
@@ -3662,7 +3662,7 @@ Testar:
 {
   "error": {
     "code": "ORDER_INVALID_STATUS",
-    "message": "O pedido não pode ser cancelado neste estado.",
+    "message": "O venda não pode ser cancelado neste estado.",
     "details": [],
     "trace_id": "..."
   }
@@ -3850,7 +3850,7 @@ O contrato deve ser a ponte entre backend e frontend, evitando que cada equipe s
 * Cardápio público.
 * Produtos.
 * Pesquisa.
-* Criação de pedido.
+* Criação de venda.
 * Atualização de status.
 * Checkout.
 * Pagamento.
@@ -4153,7 +4153,7 @@ Cada endpoint deve possuir ao menos os seguintes testes:
 
 ---
 
-# 47. Exemplo de matriz para criação de pedido
+# 47. Exemplo de matriz para criação de venda
 
 ## Cenários funcionais
 
@@ -4178,7 +4178,7 @@ Cada endpoint deve possuir ao menos os seguintes testes:
 * Complemento inválido.
 * Endereço inválido.
 * Área não atendida.
-* Pedido abaixo do mínimo.
+* Venda abaixo do mínimo.
 * Cupom expirado.
 * Cupom sem saldo.
 * Pagamento indisponível.
@@ -4235,7 +4235,7 @@ Cada endpoint deve possuir ao menos os seguintes testes:
 * Regressão crítica.
 * Multi-tenant.
 * Autorização.
-* Pedidos.
+* Vendas.
 * Pagamentos.
 * Assinaturas.
 * Fiscal.
@@ -4270,7 +4270,7 @@ A entrega deve ser bloqueada quando houver:
 * Falha de autorização.
 * Vazamento entre tenants.
 * Duplicação de pagamento.
-* Duplicação de pedido.
+* Duplicação de venda.
 * Cálculo financeiro incorreto.
 * Perda de dados.
 * Vulnerabilidade crítica.
@@ -4353,7 +4353,7 @@ Um endpoint só deve ser considerado coberto quando:
 * Usuários.
 * Produtos.
 * Clientes.
-* Pedidos.
+* Vendas.
 * Estoque.
 * Cupons.
 * Pagamentos.
@@ -4425,9 +4425,9 @@ Um QA especialista em API REST Laravel deve conseguir:
 * Integrar tudo ao CI/CD.
 * Identificar riscos além dos casos previstos.
 
-Para o seu sistema de pedidos, os módulos que devem receber a maior profundidade de testes são:
+Para o seu sistema de vendas, os módulos que devem receber a maior profundidade de testes são:
 
-> **autenticação, permissões, isolamento entre empresas, produtos, preços, estoque, pedidos, cupons, pagamentos, cancelamentos, reembolsos, assinaturas, emissão fiscal, contadores, webhooks, filas e auditoria.**
+> **autenticação, permissões, isolamento entre empresas, produtos, preços, estoque, vendas, cupons, pagamentos, cancelamentos, reembolsos, assinaturas, emissão fiscal, contadores, webhooks, filas e auditoria.**
 
 Esses fluxos precisam ser testados em três níveis: **diretamente no Laravel, diretamente pela API HTTP e de ponta a ponta com o React 19**.
 

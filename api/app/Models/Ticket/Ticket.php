@@ -29,7 +29,7 @@ class Ticket extends BaseModel
 
     protected $fillable = [
         'tenant_id',
-        'order_item_id',
+        'sale_item_id',
         'ticket_type_id',
         'seat_id',
         'code',
@@ -47,7 +47,7 @@ class Ticket extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'order_item_id',
+        'sale_item_id',
         'ticket_type_id',
         'seat_id',
         // qr_token nunca serializado em resposta padrão — só exposto via
@@ -98,9 +98,9 @@ class Ticket extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function orderItem(): BelongsTo
+    public function saleItem(): BelongsTo
     {
-        return $this->belongsTo(SaleItem::class, 'order_item_id');
+        return $this->belongsTo(SaleItem::class, 'sale_item_id');
     }
 
     public function ticketType(): BelongsTo

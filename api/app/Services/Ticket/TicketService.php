@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
  */
 class TicketService
 {
-    public const EAGER_RELATIONS = ['ticketType.event', 'ticketType.session', 'seat', 'orderItem.order'];
+    public const EAGER_RELATIONS = ['ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale'];
 
     public function __construct(
         private TicketRepositoryInterface $repository
@@ -58,7 +58,7 @@ class TicketService
         }
 
         if (!empty($filters['sale_uuid'])) {
-            $query->whereHas('orderItem.order', fn($q) => $q->where('uuid', $filters['sale_uuid']));
+            $query->whereHas('saleItem.sale', fn($q) => $q->where('uuid', $filters['sale_uuid']));
         }
 
         if (!empty($filters['search'])) {

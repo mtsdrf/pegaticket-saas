@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  * Conciliação do tenant enxerga só pagamentos de PEDIDO (cliente final →
  * tenant), nunca fatura de assinatura (PegaTicket → tenant, sem tenant_id
  * direto em `payments`) — por isso o filtro é sempre
- * `payable_type=Sale::class` + `orders.tenant_id`.
+ * `payable_type=Sale::class` + `sales.tenant_id`.
  *
  * Casamento com webhook_events é best-effort em PHP (não em SQL): a tabela
  * não tem FK pra `payments`, só (provider, external_id) — o vínculo real é
@@ -39,7 +39,7 @@ class ReconciliationService
             ->where('payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
-                    ->from('orders')
+                    ->from('sales')
                     ->where('tenant_id', $tenantId)
                     ->whereNull('deleted_at');
             })
@@ -114,7 +114,7 @@ class ReconciliationService
             ->where('payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
-                    ->from('orders')
+                    ->from('sales')
                     ->where('tenant_id', $tenantId)
                     ->whereNull('deleted_at');
             });

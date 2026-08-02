@@ -642,7 +642,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
           )}
           {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_completed && !selectedSale.cancelled_at && (
             <Button startIcon={<TaskAltOutlinedIcon />} disabled={isSubmittingAction} onClick={() => void runAction('complete')} sx={{ minHeight: 44 }}>
-              Concluir pedido
+              Concluir venda
             </Button>
           )}
           {selectedSale && selectedSale.status !== 'cancellation_requested' && !selectedSale.is_installment && !selectedSale.is_paid && !selectedSale.cancelled_at && (

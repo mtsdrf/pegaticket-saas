@@ -18,7 +18,7 @@ class OnboardingService
         $items = [
             'has_product' => TicketType::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
             'has_client' => FinalCustomerTenantLink::where('tenant_id', $tenantId)->exists(),
-            'has_first_order' => Sale::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
+            'has_first_sale' => Sale::where('tenant_id', $tenantId)->whereNull('deleted_at')->exists(),
         ];
 
         $steps = [
@@ -31,19 +31,19 @@ class OnboardingService
             ],
             [
                 'key' => 'has_client',
-                'label' => 'Preencha um cliente em um pedido',
-                'to' => '/pedidos/novo',
-                'link_label' => 'Abrir pedido',
+                'label' => 'Cadastre seu primeiro cliente',
+                'to' => '/clientes/novo',
+                'link_label' => 'Cadastrar cliente',
                 'completed' => $items['has_client'],
             ],
         ];
 
         $steps[] = [
-            'key' => 'has_first_order',
-            'label' => 'Registre seu primeiro pedido',
-            'to' => '/pedidos/novo',
-            'link_label' => 'Novo pedido',
-            'completed' => $items['has_first_order'],
+            'key' => 'has_first_sale',
+            'label' => 'Registre sua primeira venda',
+            'to' => '/vendas/nova',
+            'link_label' => 'Nova venda',
+            'completed' => $items['has_first_sale'],
         ];
 
         return array_merge($items, [

@@ -14,7 +14,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->renameColumn('is_delivered', 'is_completed');
             $table->renameColumn('delivered_at', 'completed_at');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->renameColumn('is_completed', 'is_delivered');
             $table->renameColumn('completed_at', 'delivered_at');
         });

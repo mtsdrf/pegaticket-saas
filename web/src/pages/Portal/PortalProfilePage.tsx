@@ -40,11 +40,11 @@ export function PortalProfilePage() {
         <Box>
           <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Lojas vinculadas</Typography>
 
-          {(!customer || customer.linked_stores.length === 0) && <LinkedStoresEmpty />}
+          {(!customer || customer.linked_tenants.length === 0) && <LinkedStoresEmpty />}
 
-          {customer && customer.linked_stores.length > 0 && (
+          {customer && customer.linked_tenants.length > 0 && (
             <Stack spacing={1.25}>
-              {customer.linked_stores.map((store) => (
+              {customer.linked_tenants.map((store) => (
                 <Paper
                   key={`${store.tenant_name}-${store.confirmed_at}`}
                   elevation={0}

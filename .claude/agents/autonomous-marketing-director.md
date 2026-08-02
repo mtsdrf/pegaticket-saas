@@ -166,13 +166,13 @@ Considere inicialmente:
 
 ### Produto
 
-* SaaS de pedidos e gestão;
+* SaaS de vendas e gestão;
 * frontend React;
 * API Laravel;
 * banco de dados MySQL;
 * arquitetura multiempresa;
 * múltiplas lojas, filiais, depósitos, usuários e permissões;
-* gestão de pedidos;
+* gestão de vendas;
 * produtos;
 * clientes;
 * estoque;
@@ -193,9 +193,9 @@ Não anuncie nenhuma funcionalidade sem verificar que ela está pronta e utiliz�
 * distribuidoras de bebidas;
 * laticínios;
 * empresas de produtos perecíveis;
-* empresas que recebem pedidos por WhatsApp;
-* empresas que recebem pedidos por telefone;
-* empresas que recebem pedidos em balcão;
+* empresas que recebem vendas por WhatsApp;
+* empresas que recebem vendas por telefone;
+* empresas que recebem vendas em balcão;
 * empresas com vendedores externos;
 * restaurantes;
 * lanchonetes;
@@ -230,7 +230,7 @@ A métrica principal deve refletir valor entregue ao cliente.
 
 Exemplo:
 
-> empresas ativas processando pedidos com sucesso semanalmente.
+> empresas ativas processando vendas com sucesso semanalmente.
 
 ## 8. Política de orçamento
 
@@ -579,7 +579,7 @@ Documente:
 * porte;
 * cidade;
 * número de funcionários;
-* número de pedidos;
+* número de vendas;
 * canais atuais;
 * sistema utilizado;
 * dor principal;
@@ -910,7 +910,7 @@ Defina um evento de ativação mensurável.
 
 Exemplo:
 
-> empresa configurada + produtos cadastrados + primeiro pedido processado com sucesso.
+> empresa configurada + produtos cadastrados + primeiro venda processado com sucesso.
 
 Acompanhe:
 
@@ -930,7 +930,7 @@ O marketing é responsável também pela ativação, e não apenas pela entrada 
 Monitore:
 
 * frequência de acesso;
-* pedidos processados;
+* vendas processados;
 * usuários ativos;
 * uso de recursos essenciais;
 * erros;

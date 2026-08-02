@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->foreignId('final_customer_id')->nullable()->constrained('final_customers')->nullOnDelete();
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->foreignId('event_session_id')->nullable()->constrained('event_sessions')->nullOnDelete();
-            $table->foreignId('converted_order_id')->nullable()->constrained('orders')->nullOnDelete();
+            $table->foreignId('converted_sale_id')->nullable()->constrained('sales')->nullOnDelete();
 
             $table->string('session_token', 120)->nullable()->index();
             $table->string('status')->default('reservado')->index();

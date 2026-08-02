@@ -30,7 +30,7 @@ class TicketIssuanceService
     public function issueForSale(Sale $order, ?int $actorId): void
     {
         DB::transaction(function () use ($order, $actorId) {
-            $items = SaleItem::where('order_id', $order->id)
+            $items = SaleItem::where('sale_id', $order->id)
                 ->whereNotNull('ticket_type_id')
                 ->whereNull('deleted_at')
                 ->get();
@@ -38,7 +38,7 @@ class TicketIssuanceService
             $issuedUuids = [];
 
             foreach ($items as $item) {
-                $existing = Ticket::where('order_item_id', $item->id)->count();
+                $existing = Ticket::where('sale_item_id', $item->id)->count();
                 $needed = (int) round((float) $item->quantity) - $existing;
 
                 if ($needed <= 0) {
@@ -59,7 +59,7 @@ class TicketIssuanceService
 
                     $ticket = Ticket::create([
                         'tenant_id' => $order->tenant_id,
-                        'order_item_id' => $item->id,
+                        'sale_item_id' => $item->id,
                         'ticket_type_id' => $item->ticket_type_id,
                         'seat_id' => $item->seat_id,
                         'attendee_name' => $attendee['name'] ?? null,
@@ -74,7 +74,7 @@ class TicketIssuanceService
 
             if (!empty($issuedUuids)) {
                 event(new TicketsIssued(
-                    orderUuid: $order->uuid,
+                    saleUuid: $order->uuid,
                     ticketUuids: $issuedUuids,
                     actorId: $actorId
                 ));
@@ -96,9 +96,9 @@ class TicketIssuanceService
         $status = $order->is_paid ? 'estornado' : 'cancelado';
 
         DB::transaction(function () use ($order, $status, $actorId) {
-            $itemIds = SaleItem::where('order_id', $order->id)->pluck('id');
+            $itemIds = SaleItem::where('sale_id', $order->id)->pluck('id');
 
-            $tickets = Ticket::whereIn('order_item_id', $itemIds)
+            $tickets = Ticket::whereIn('sale_item_id', $itemIds)
                 ->whereNotIn('status', ['cancelado', 'estornado'])
                 ->get();
 
@@ -111,7 +111,7 @@ class TicketIssuanceService
             Ticket::whereIn('id', $tickets->pluck('id'))->update(['status' => $status]);
 
             event(new TicketsCancelled(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 ticketUuids: $uuids,
                 status: $status,
                 actorId: $actorId

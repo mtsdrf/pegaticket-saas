@@ -216,8 +216,6 @@ export const TENANT_ROLE_ACTION_OPTIONS = [
   'view_costs',
   'approve_inventory',
   'reverse',
-  'deliver',
-  'pay',
   'cancel',
   'export_pdf',
 ] as const
@@ -245,8 +243,8 @@ const TENANT_ROLE_ACTIONS_BY_FUNCTIONALITY: Record<string, readonly string[]> = 
   'tenant-profile': ['read', 'update', 'export'],
   storefront: ['read', 'update'],
   subscription: ['read', 'update'],
-  sales: ['read', 'create', 'update', 'deliver', 'pay', 'cancel'],
-  'storefront-sales': ['read', 'approve', 'cancel', 'deliver', 'undeliver', 'pay'],
+  sales: ['read', 'create', 'update', 'cancel'],
+  'storefront-sales': ['read', 'approve', 'cancel'],
   sale_refunds: ['read', 'create'],
 }
 
@@ -271,11 +269,8 @@ export const ACTION_LABELS_PT: Record<string, string> = {
   view_costs: 'Ver custos',
   approve_inventory: 'Aprovar estoque',
   reverse: 'Estornar',
-  deliver: 'Entregar',
-  pay: 'Pagar',
   cancel: 'Cancelar',
   approve: 'Aprovar',
-  undeliver: 'Desfazer entrega',
   export: 'Exportar dados',
   export_pdf: 'Exportar PDF',
   open: 'Abrir',

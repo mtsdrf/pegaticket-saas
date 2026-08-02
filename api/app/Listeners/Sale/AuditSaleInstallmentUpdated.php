@@ -13,7 +13,7 @@ class AuditSaleInstallmentUpdated
             event: 'order_installment_updated',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'installment_uuid' => $event->installmentUuid,
                 'changes' => $event->changes,
             ],

@@ -43,7 +43,7 @@ test.describe('Vendas manuais', () => {
       path: '/sales',
       body: [
         makeSale({
-          uuid: 'order-qa-manual-1',
+          uuid: 'sale-qa-manual-1',
           codigo: '1042',
           total_amount: 239.5,
           final_customer: {
@@ -82,11 +82,11 @@ test.describe('Vendas manuais', () => {
       path: '/sales',
       body: [
         makeSale({
-          uuid: 'order-manual-created-1',
+          uuid: 'sale-manual-created-1',
           codigo: '2050',
           total_amount: 39.8,
           final_customer: {
-            uuid: 'final-customer-order-1',
+            uuid: 'final-customer-sale-1',
             name: 'Comprador Venda Manual',
           },
         }),
@@ -115,7 +115,7 @@ test.describe('Vendas manuais', () => {
             {
               uuid: 'tenant-final-customer-link-1',
               final_customer: {
-                uuid: 'final-customer-order-1',
+                uuid: 'final-customer-sale-1',
                 name: 'Comprador Venda',
                 last_name: 'Manual',
               },
@@ -146,7 +146,7 @@ test.describe('Vendas manuais', () => {
       path: '/ticket-types',
       body: [
         {
-          uuid: 'ticket-type-order-1',
+          uuid: 'ticket-type-sale-1',
           name: 'Ingresso Pista Manual',
           price: 19.9,
           description: null,
@@ -172,7 +172,7 @@ test.describe('Vendas manuais', () => {
       path: '/event-products',
       body: [
         {
-          uuid: 'event-product-order-1',
+          uuid: 'event-product-sale-1',
           name: 'Estacionamento VIP',
           description: null,
           price: 35,
@@ -204,13 +204,13 @@ test.describe('Vendas manuais', () => {
 
       const payload = JSON.parse(route.request().postData() ?? '{}')
       expect(payload).toMatchObject({
-        final_customer_uuid: 'final-customer-order-1',
+        final_customer_uuid: 'final-customer-sale-1',
         is_installment: false,
         mark_as_completed: true,
-        mark_as_paid: false,
+        mark_as_paid: true,
         items: [
           {
-            ticket_type_uuid: 'ticket-type-order-1',
+            ticket_type_uuid: 'ticket-type-sale-1',
             quantity: 2,
             unit_price: 19.9,
           },
@@ -222,13 +222,13 @@ test.describe('Vendas manuais', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          message: 'Pedido criado com sucesso.',
+          message: 'Venda criada com sucesso.',
           data: makeSale({
-            uuid: 'order-manual-created-1',
+            uuid: 'sale-manual-created-1',
             codigo: '2050',
             total_amount: 39.8,
             final_customer: {
-              uuid: 'final-customer-order-1',
+              uuid: 'final-customer-sale-1',
               name: 'Comprador Venda Manual',
             },
           }),
@@ -237,7 +237,7 @@ test.describe('Vendas manuais', () => {
       })
     })
 
-    await page.goto('/vendas/nova')
+    await page.goto('/vendas-manuais/nova')
 
     await expect(page.getByRole('heading', { name: 'Nova venda' })).toBeVisible()
 
@@ -256,7 +256,7 @@ test.describe('Vendas manuais', () => {
 
     await page.getByRole('button', { name: 'Salvar' }).click()
 
-    await page.waitForURL('**/vendas')
+    await page.waitForURL('**/vendas-manuais')
     await expect(page.getByText('2050').first()).toBeVisible()
     await expect(page.getByText('Comprador Venda Manual').first()).toBeVisible()
   })

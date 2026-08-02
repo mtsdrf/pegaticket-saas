@@ -104,7 +104,7 @@ class SaleDiscountLimitTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonPath('code', 'DISCOUNT_LIMIT_EXCEEDED');
-        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('sales', 0);
     }
 
     #[Test]

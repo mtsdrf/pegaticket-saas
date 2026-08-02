@@ -273,7 +273,7 @@ Exemplos:
 page.getByRole('button', { name: 'Salvar' });
 page.getByLabel('Nome do cliente');
 page.getByPlaceholder('Digite o CPF');
-page.getByText('Pedido criado com sucesso');
+page.getByText('Venda criado com sucesso');
 ```
 
 Evite seletores frágeis como:
@@ -309,7 +309,7 @@ tests/
 │   ├── produtos/
 │   ├── categorias/
 │   ├── estoque/
-│   ├── pedidos/
+│   ├── vendas/
 │   ├── entregas/
 │   ├── pagamentos/
 │   ├── assinaturas/
@@ -593,7 +593,7 @@ Testes paralelos não devem disputar:
 * códigos;
 * empresas;
 * usuários;
-* pedidos.
+* vendas.
 
 ## 15. Planos de teste
 
@@ -666,7 +666,7 @@ Exemplo:
 ID: PED-E2E-001
 
 Título:
-Criar e concluir um pedido para entrega.
+Criar e concluir um venda para entrega.
 
 Prioridade:
 Crítica.
@@ -682,24 +682,24 @@ Pré-condições:
 - estoque suficiente.
 
 Passos:
-1. Acessar pedidos.
-2. Selecionar “Novo pedido”.
+1. Acessar vendas.
+2. Selecionar “Novo venda”.
 3. Informar o cliente.
 4. Adicionar produto.
 5. Informar quantidade.
 6. Selecionar entrega.
-7. Confirmar pedido.
+7. Confirmar venda.
 8. Iniciar preparação.
 9. Marcar como saiu para entrega.
 10. Concluir a entrega.
 
 Resultado esperado:
-- pedido criado;
+- venda criado;
 - total calculado corretamente;
 - estoque movimentado uma única vez;
 - status atualizado;
 - histórico registrado;
-- pedido exibido nos relatórios;
+- venda exibido nos relatórios;
 - dados isolados no tenant correto.
 ```
 
@@ -752,7 +752,7 @@ Login
 → cadastrar cliente
 → cadastrar produto
 → lançar estoque
-→ criar pedido
+→ criar venda
 → iniciar preparo
 → concluir entrega
 → verificar relatório
@@ -904,7 +904,7 @@ Exemplos:
 
 * estoque não pode ser baixado duas vezes;
 * cobrança não pode ser duplicada;
-* pedido não pode ser criado duas vezes;
+* venda não pode ser criado duas vezes;
 * entrega não pode ser concluída duas vezes;
 * assinatura não pode ser renovada duas vezes.
 
@@ -1002,7 +1002,7 @@ Execute fluxos críticos em:
 Priorize:
 
 * autenticação;
-* pedidos;
+* vendas;
 * pagamentos;
 * impressão;
 * uploads;
@@ -1036,10 +1036,10 @@ Problemas de acessibilidade que impeçam uma ação principal devem bloquear apr
 
 ## 30. Testes de impressão
 
-Quando houver impressão de pedidos, valide:
+Quando houver impressão de vendas, valide:
 
 * conteúdo;
-* número do pedido;
+* número do venda;
 * empresa;
 * cliente;
 * endereço;
@@ -1055,7 +1055,7 @@ Quando houver impressão de pedidos, valide:
 * caracteres especiais;
 * duplicidade;
 * reimpressão;
-* pedido cancelado;
+* venda cancelado;
 * indisponibilidade da impressora.
 
 Quando não for possível validar fisicamente a impressora, valide:
@@ -1151,7 +1151,7 @@ await page.waitForTimeout(5000);
 Prefira aguardar uma condição real:
 
 ```ts
-await expect(page.getByText('Pedido criado com sucesso')).toBeVisible();
+await expect(page.getByText('Venda criado com sucesso')).toBeVisible();
 ```
 
 Ou:
@@ -1159,7 +1159,7 @@ Ou:
 ```ts
 await page.waitForResponse(
   response =>
-    response.url().includes('/orders') &&
+    response.url().includes('/sales') &&
     response.status() === 201
 );
 ```
@@ -1173,9 +1173,9 @@ Asserções devem validar comportamentos relevantes.
 Exemplos:
 
 ```ts
-await expect(page.getByRole('heading', { name: 'Pedidos' })).toBeVisible();
-await expect(page.getByText('Pedido criado com sucesso')).toBeVisible();
-await expect(page).toHaveURL(/pedidos/);
+await expect(page.getByRole('heading', { name: 'Vendas' })).toBeVisible();
+await expect(page.getByText('Venda criado com sucesso')).toBeVisible();
+await expect(page).toHaveURL(/vendas/);
 await expect(response.status()).toBe(201);
 ```
 
@@ -1245,13 +1245,13 @@ O título deve descrever o comportamento.
 Evite títulos genéricos como:
 
 ```text
-Erro no pedido
+Erro no venda
 ```
 
 Prefira:
 
 ```text
-Estoque é baixado duas vezes quando o operador clica rapidamente em “Confirmar pedido”
+Estoque é baixado duas vezes quando o operador clica rapidamente em “Confirmar venda”
 ```
 
 ## 38. Severidade
@@ -1270,7 +1270,7 @@ Estoque é baixado duas vezes quando o operador clica rapidamente em “Confirma
 ### Alta
 
 * regra de negócio importante incorreta;
-* pedido não processado;
+* venda não processado;
 * estoque incorreto;
 * permissão indevida;
 * relatório financeiro incorreto;
@@ -1307,7 +1307,7 @@ Priorize:
 
 1. segurança e tenancy;
 2. autenticação e permissões;
-3. pedidos;
+3. vendas;
 4. pagamentos;
 5. estoque;
 6. assinaturas;
@@ -1341,7 +1341,7 @@ Inclui:
 * autenticação;
 * tenant;
 * permissões;
-* pedidos;
+* vendas;
 * estoque;
 * pagamentos;
 * assinaturas;
@@ -1395,7 +1395,7 @@ Exemplos conceituais:
 ```bash
 npx playwright test
 npx playwright test --headed
-npx playwright test tests/e2e/pedidos
+npx playwright test tests/e2e/vendas
 npx playwright test --debug
 npx playwright show-report
 ```
@@ -1503,7 +1503,7 @@ Quando não for possível automatizar, justifique e crie caso manual documentado
 Ao receber uma solicitação ampla, como:
 
 ```text
-Teste completamente o fluxo de pedidos.
+Teste completamente o fluxo de vendas.
 ```
 
 Execute:

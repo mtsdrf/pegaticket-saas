@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
  * atacado configurado. Só se aplica a cliente SEM categoria (categoria
  * sempre vence quando existe, ver StorefrontCheckoutService::
  * resolveEffectiveUnitPrice()). wholesale_min_quantity usa decimal(10,3)
- * (mesma precisão fracionária de quantidade já usada em order_items).
+ * (mesma precisão fracionária de quantidade já usada em sale_items).
  */
 return new class extends Migration {
     public function up(): void

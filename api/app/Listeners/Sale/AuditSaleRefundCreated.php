@@ -13,7 +13,7 @@ class AuditSaleRefundCreated
             event: 'order_refund_created',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'sale_refund_uuid' => $event->saleRefundUuid,
                 'type' => $event->type,
                 'amount' => $event->amount,

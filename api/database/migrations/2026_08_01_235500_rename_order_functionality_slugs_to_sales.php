@@ -8,7 +8,7 @@ return new class extends Migration
     public function up(): void
     {
         DB::table('functionalities')
-            ->where('slug', 'orders')
+            ->where('slug', 'sales')
             ->update([
                 'slug' => 'sales',
                 'name' => 'Vendas',
@@ -17,7 +17,7 @@ return new class extends Migration
             ]);
 
         DB::table('functionalities')
-            ->where('slug', 'storefront-orders')
+            ->where('slug', 'storefront-sales')
             ->update([
                 'slug' => 'storefront-sales',
                 'name' => 'Vendas Online',
@@ -31,7 +31,7 @@ return new class extends Migration
         DB::table('functionalities')
             ->where('slug', 'sales')
             ->update([
-                'slug' => 'orders',
+                'slug' => 'sales',
                 'name' => 'Pedidos',
                 'description' => 'Gestão de pedidos',
                 'updated_at' => now(),
@@ -40,7 +40,7 @@ return new class extends Migration
         DB::table('functionalities')
             ->where('slug', 'storefront-sales')
             ->update([
-                'slug' => 'storefront-orders',
+                'slug' => 'storefront-sales',
                 'name' => 'Vendas Online',
                 'description' => 'Gestão das vendas geradas pela bilheteria online (aprovar, cancelar, despachar, entregar)',
                 'updated_at' => now(),

@@ -18,15 +18,15 @@ use App\Models\Venue\Seat;
  * `ticket_type_id`/`event_product_id`: exatamente um preenchido por item
  * (ingresso OU adicional/estacionamento) — substitui `product_id` desde a
  * migração PegaTicket (roadmap seção 2.4/4A). Garantido em
- * SaleService::resolveOrderItemLine(), não em constraint de banco.
+ * SaleService::resolveSaleItemLine(), não em constraint de banco.
  */
 class SaleItem extends BaseModel
 {
-    protected $table = 'order_items';
+    protected $table = 'sale_items';
 
     protected $fillable = [
         'tenant_id',
-        'order_id',
+        'sale_id',
         'ticket_type_id',
         'event_product_id',
         'seat_id',
@@ -48,7 +48,7 @@ class SaleItem extends BaseModel
     protected $hidden = [
         'id',
         'tenant_id',
-        'order_id',
+        'sale_id',
         'ticket_type_id',
         'event_product_id',
         'seat_id',
@@ -64,9 +64,9 @@ class SaleItem extends BaseModel
         return $this->belongsTo(Tenant::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
     public function ticketType()
@@ -95,6 +95,6 @@ class SaleItem extends BaseModel
      */
     public function tickets()
     {
-        return $this->hasMany(Ticket::class, 'order_item_id');
+        return $this->hasMany(Ticket::class, 'sale_item_id');
     }
 }

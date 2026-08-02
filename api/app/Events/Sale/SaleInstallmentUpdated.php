@@ -8,7 +8,7 @@ class SaleInstallmentUpdated
      * @param array<int, string> $changes
      */
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public string $installmentUuid,
         public int $actorId,
         public array $changes = []

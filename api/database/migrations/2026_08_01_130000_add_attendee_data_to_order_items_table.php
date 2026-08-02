@@ -16,14 +16,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
+        Schema::table('sale_items', function (Blueprint $table) {
             $table->json('attendee_data')->nullable()->after('notes');
         });
     }
 
     public function down(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
+        Schema::table('sale_items', function (Blueprint $table) {
             $table->dropColumn('attendee_data');
         });
     }

@@ -1,11 +1,11 @@
 export interface ReportIndicators {
-  total_orders: number
+  total_sales: number
   total_sales_amount: string
   average_ticket: string
-  completed_orders: number
-  uncompleted_orders: number
-  paid_orders: number
-  unpaid_orders: number
+  completed_sales: number
+  uncompleted_sales: number
+  paid_sales: number
+  unpaid_sales: number
   amount_received: string
   amount_receivable: string
   current_period_total_amount: string
@@ -13,7 +13,7 @@ export interface ReportIndicators {
   sales_growth_percentage: number | null
   comparison_current_label: string
   comparison_previous_label: string
-  overdue_orders_count: number
+  overdue_sales_count: number
 }
 
 export interface SalesByMonthPoint {
@@ -57,11 +57,11 @@ export interface RfmClientPoint {
 export interface LatePaymentClientPoint {
   client_name: string
   avg_days_to_pay: number
-  paid_orders_count: number
+  paid_sales_count: number
 }
 
 export interface OverdueSalePoint {
-  order_uuid: string
+  sale_uuid: string
   client_name: string
   amount: string
   due_date: string
@@ -112,25 +112,25 @@ export interface ChannelResultPoint {
   average_ticket: string
 }
 
-/** Rótulo em português de cada `orders.origin` — usado no relatório "Resultado por canal" e no drill-down até o relatório de pedidos. */
+/** Rótulo em português de cada `sales.origin` — usado no relatório "Resultado por canal" e no drill-down até o relatório de vendas. */
 export const CHANNEL_LABELS: Record<string, string> = {
   staff: 'Lançado internamente',
   storefront: 'Bilheteria online',
 }
 
 export interface ReportCharts {
-  orders_by_month: SalesByMonthPoint[]
+  sales_by_month: SalesByMonthPoint[]
   paid_vs_unpaid: { paid: number; unpaid: number }
   completed_vs_uncompleted: { completed: number; uncompleted: number }
   received_vs_receivable: { received: string; receivable: string }
-  orders_by_city: SalesByCityPoint[]
-  orders_by_neighborhood: SalesByNeighborhoodPoint[]
+  sales_by_city: SalesByCityPoint[]
+  sales_by_neighborhood: SalesByNeighborhoodPoint[]
   seasonality_matrix: SeasonalityYearRow[]
-  top_products: TopProductPoint[]
+  top_addons: TopProductPoint[]
   top_clients: TopClientPoint[]
   rfm_clients: RfmClientPoint[]
   late_payment_clients: LatePaymentClientPoint[]
-  overdue_orders: OverdueSalePoint[]
+  overdue_sales: OverdueSalePoint[]
   receivables_aging: ReceivablesAgingPoint[]
   receivables_forecast_by_month: SalesByMonthPoint[]
   abc_products: AbcProductPoint[]

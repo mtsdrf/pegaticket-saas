@@ -28,7 +28,7 @@ Schedule::command('subscriptions:enforce-grace-period')->daily();
 // o webhook; atua como rede de segurança para atraso/perda de notificação
 // ou timeout ambíguo de criação. Rodar em intervalos curtos reduz a janela
 // em que um pagamento já aprovado no PSP ainda aparece pendente aqui.
-Schedule::command('payments:reconcile-mercadopago-orders --limit=100')->everyFifteenMinutes();
+Schedule::command('payments:reconcile-mercadopago-sales --limit=100')->everyFifteenMinutes();
 
 // Reconciliação ativa das assinaturas/preapprovals no Mercado Pago. Não
 // substitui o webhook de cobrança do ciclo; sincroniza o status estrutural

@@ -26,7 +26,7 @@ export interface PortalCustomer {
   uuid: string
   name: string | null
   email: string
-  linked_stores: PortalLinkedStore[]
+  linked_tenants: PortalLinkedStore[]
 }
 
 /** Item de `GET /portal/sales` — lista agregada entre todas as lojas vinculadas. */
@@ -44,15 +44,15 @@ export interface PortalSaleSummary {
 }
 
 /**
- * Item de `GET /portal/sales/{uuid}/items` ("pedir de novo", Delivery Fase
- * 4) — preço/disponibilidade sempre ATUAIS do ingresso/adicional, nunca o
- * valor congelado no pedido original. `ticket_type_uuid`/`ticket_type_name`
+ * Item de `GET /portal/sales/{uuid}/items` ("comprar novamente") — preço/
+ * disponibilidade sempre ATUAIS do ingresso/adicional, nunca o valor
+ * congelado na venda original. `ticket_type_uuid`/`ticket_type_name`
  * cobrem tanto `TicketType` quanto `EventProduct` (mesmo campo no backend,
- * `PortalCustomerService::getOrderItemsForReorder()`) — podem vir `null` só
+ * `PortalCustomerService::getSaleItemsForReorder()`) — podem vir `null` só
  * no caso raro do item ter sido removido permanentemente do banco (nunca
  * deveria acontecer com soft delete, mas o backend permite).
  */
-export interface PortalReorderItem {
+export interface PortalResaleItem {
   ticket_type_uuid: string | null
   ticket_type_name: string | null
   quantity: number
@@ -65,11 +65,11 @@ export interface PortalCouponRedemption {
   coupon_code: string | null
   tenant_name: string | null
   redeemed_at: string
-  order_uuid: string | null
+  sale_uuid: string | null
 }
 
 export interface CreatePortalLinkPayload {
-  order_uuid: string
+  sale_uuid: string
 }
 
 /** Resposta de `POST /portal/links` — idempotente, cria ou reaproveita o vínculo. */

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * conjunto inteiro via forceDelete()+recreate (ver ProductCategoryPriceRepository)
  * — nunca soft-deleta linha individual nesse fluxo, então a colisão
  * "unique não filtra deleted_at" (documentada em api-patterns.md para
- * order_installments) não se aplica aqui: não existe cenário onde uma
+ * sale_installments) não se aplica aqui: não existe cenário onde uma
  * linha soft-deletada fica "ocupando" a constraint enquanto o mesmo par
  * product+category é reenviado. softDeletes() mantido só por consistência
  * de schema (database-rules.md), não é exercitado pelo fluxo real.

@@ -11,7 +11,7 @@ use App\Services\Ticket\TicketIssuanceService;
  * SalePaid é disparado tanto por SaleService::performPayment() (pay(),
  * create() com mark_as_paid, cascata de payInstallment()) quanto por
  * SalePaymentService::markOrderPaid() (confirmação via webhook/Pix) — os
- * dois únicos caminhos que marcam `orders.is_paid = true` no sistema.
+ * dois únicos caminhos que marcam `sales.is_paid = true` no sistema.
  * Ouvir aqui em vez de chamar TicketIssuanceService direto de dentro de
  * SaleService cobre os dois sem duplicar a chamada em cada um.
  */
@@ -24,7 +24,7 @@ class IssueTicketsOnSalePaid
 
     public function handle(SalePaid $event): void
     {
-        $order = Sale::where('uuid', $event->orderUuid)->whereNull('deleted_at')->first();
+        $order = Sale::where('uuid', $event->saleUuid)->whereNull('deleted_at')->first();
 
         if (!$order) {
             return;

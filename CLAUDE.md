@@ -438,7 +438,7 @@ Fundo com gradiente sofisticado + elementos abstratos sutis de movimento (nunca 
 
 ### Regras para dashboard
 
-Separar sempre cabeçalho da página → ações rápidas → métricas → gráfico → navegação. Título "Visão geral", subtítulo "Acompanhe os principais números da operação.". Ações rápidas: Novo pedido / Adicionar cliente / Cadastrar produto. Métricas: Pedidos entregues / Pedidos pendentes / Valor recebido. Evitar botões azuis gigantes, cards azuis pesados repetidos, azul chapado em todo bloco, gráfico sem contexto, sidebar sem estado ativo claro.
+Separar sempre cabeçalho da página → ações rápidas → métricas → gráfico → navegação. Título "Visão geral", subtítulo "Acompanhe os principais números da operação.". Ações rápidas: Novo venda / Adicionar cliente / Cadastrar produto. Métricas: Vendas entregues / Vendas pendentes / Valor recebido. Evitar botões azuis gigantes, cards azuis pesados repetidos, azul chapado em todo bloco, gráfico sem contexto, sidebar sem estado ativo claro.
 
 ### Regras de tema
 

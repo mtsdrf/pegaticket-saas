@@ -38,9 +38,9 @@ class TicketResource extends JsonResource
                 'label' => $this->seat->label,
                 'sector_name' => $this->seat->sector_name,
             ] : null),
-            'sale' => $this->whenLoaded('orderItem', fn() => $this->orderItem->relationLoaded('order') ? [
-                'uuid' => $this->orderItem->order->uuid,
-                'codigo' => $this->orderItem->order->codigo,
+            'sale' => $this->whenLoaded('saleItem', fn() => $this->saleItem->relationLoaded('sale') ? [
+                'uuid' => $this->saleItem->sale->uuid,
+                'codigo' => $this->saleItem->sale->codigo,
             ] : null),
             'created_at' => $this->created_at,
         ];

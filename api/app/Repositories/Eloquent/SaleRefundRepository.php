@@ -16,14 +16,14 @@ class SaleRefundRepository extends BaseRepository implements SaleRefundRepositor
 
     public function sumAmountForOrder(Sale $order): float
     {
-        return (float) SaleRefund::where('order_id', $order->id)
+        return (float) SaleRefund::where('sale_id', $order->id)
             ->whereNull('deleted_at')
             ->sum('amount');
     }
 
     public function listForOrder(Sale $order): Collection
     {
-        return SaleRefund::where('order_id', $order->id)
+        return SaleRefund::where('sale_id', $order->id)
             ->whereNull('deleted_at')
             ->with('tickets')
             ->orderByDesc('id')

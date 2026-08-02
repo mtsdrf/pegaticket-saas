@@ -85,7 +85,7 @@ class PortalAddressAndVouchersTest extends TestCase
             'tenant_id' => $tenant->id,
             'coupon_id' => $coupon->id,
             'final_customer_id' => $customer->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'redeemed_at' => now(),
         ]);
 
@@ -94,7 +94,7 @@ class PortalAddressAndVouchersTest extends TestCase
             'tenant_id' => $tenant->id,
             'coupon_id' => $coupon->id,
             'final_customer_id' => $otherCustomer->id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'redeemed_at' => now(),
         ]);
 
@@ -105,7 +105,7 @@ class PortalAddressAndVouchersTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.coupon_code', 'PROMO10')
             ->assertJsonPath('data.0.tenant_name', 'Loja do Cupom')
-            ->assertJsonPath('data.0.order_uuid', $order->uuid);
+            ->assertJsonPath('data.0.sale_uuid', $order->uuid);
     }
 
     #[Test]

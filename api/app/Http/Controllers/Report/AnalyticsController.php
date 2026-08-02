@@ -43,7 +43,7 @@ class AnalyticsController extends Controller
             (int) ($validated['limit'] ?? 10)
         );
 
-        return APIResponse::success($data, __('messages.analytics.top_products'));
+        return APIResponse::success($data, __('messages.analytics.top_addons'));
     }
 
     public function salesByLocation(AnalyticsPeriodRequest $request)
@@ -107,7 +107,7 @@ class AnalyticsController extends Controller
 
         return APIResponse::success(
             $list->items(),
-            __('messages.analytics.overdue_orders'),
+            __('messages.analytics.overdue_sales'),
             200,
             [
                 'pagination' => [

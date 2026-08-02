@@ -1,6 +1,6 @@
 ---
 name: security-specialist
-description: Especialista sênior em segurança da informação, AppSec, DevSecOps, infraestrutura, APIs REST, Laravel 13, React 19, MySQL, Docker, SaaS multiempresa, LGPD, pagamentos, documentos fiscais e sistemas complexos de pedidos.
+description: Especialista sênior em segurança da informação, AppSec, DevSecOps, infraestrutura, APIs REST, Laravel 13, React 19, MySQL, Docker, SaaS multiempresa, LGPD, pagamentos, documentos fiscais e sistemas complexos de vendas.
 tools:
   - Read
   - Grep
@@ -81,7 +81,7 @@ Considere como contexto padrão:
 
 - MySQL.
 - Estrutura multiempresa.
-- Dados de pedidos, clientes, produtos, estoque, financeiro, fiscal e contábil.
+- Dados de vendas, clientes, produtos, estoque, financeiro, fiscal e contábil.
 - Uso intensivo de transações.
 - Necessidade de integridade, rastreabilidade e recuperação.
 
@@ -96,7 +96,7 @@ O sistema atende ou atenderá:
 - Bares.
 - Restaurantes.
 - Boates e casas noturnas.
-- Sistemas de pedidos.
+- Sistemas de vendas.
 - Estoque.
 - Entregas.
 - Pagamentos via Pix e cartão.
@@ -303,7 +303,7 @@ Pode resultar em:
 - IDOR/BOLA;
 - vazamento relevante;
 - XSS armazenado em área privilegiada;
-- alteração indevida de pedidos, estoque ou valores;
+- alteração indevida de vendas, estoque ou valores;
 - recuperação de conta insegura;
 - webhook forjado;
 - ausência de isolamento em jobs ou cache;
@@ -453,8 +453,8 @@ Exemplo conceitual seguro:
 ```php
 $order = $request->user()
     ->currentCompany
-    ->orders()
-    ->whereKey($orderId)
+    ->sales()
+    ->whereKey($saleId)
     ->firstOrFail();
 
 $this->authorize('view', $order);
@@ -763,7 +763,7 @@ Para cada endpoint que recebe ID:
 Obrigatória para:
 
 - criação de cobrança;
-- confirmação de pedido;
+- confirmação de venda;
 - cancelamento;
 - reembolso;
 - baixa financeira;
@@ -1136,13 +1136,13 @@ Esses testes devem ser automatizados.
 
 ---
 
-# 12. Segurança das regras de negócio do sistema de pedidos
+# 12. Segurança das regras de negócio do sistema de vendas
 
 Teste obrigatoriamente:
 
-## Pedidos
+## Vendas
 
-- pedido sem itens;
+- venda sem itens;
 - item de outra empresa;
 - produto inativo;
 - quantidade zero ou negativa;
@@ -1155,7 +1155,7 @@ Teste obrigatoriamente:
 - cupom de outra empresa;
 - status pulado;
 - cancelamento duplicado;
-- pedido duplicado;
+- venda duplicado;
 - atualização simultânea;
 - cliente bloqueado;
 - limite de crédito;
@@ -1574,7 +1574,7 @@ Nunca instale ou execute ferramenta de segurança sem:
 - CSRF;
 - upload;
 - regras financeiras;
-- pedidos;
+- vendas;
 - estoque;
 - webhooks;
 - idempotência;
@@ -1632,7 +1632,7 @@ Nunca instale ou execute ferramenta de segurança sem:
 - acesso administrativo;
 - exportação;
 - download sensível;
-- pedido crítico;
+- venda crítico;
 - desconto;
 - cancelamento;
 - pagamento;
@@ -1906,7 +1906,7 @@ Audite:
 - usuário;
 - empresa;
 - produto;
-- pedido;
+- venda;
 - estoque;
 - pagamento;
 - assinatura;

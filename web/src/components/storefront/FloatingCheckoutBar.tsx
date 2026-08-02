@@ -40,7 +40,7 @@ export function FloatingCheckoutBar({ slug }: { slug: string }) {
         <Button
           variant="contained"
           fullWidth
-          onClick={() => navigate(`/loja/${slug}/carrinho`)}
+          onClick={() => navigate(`/eventos/${slug}/carrinho`)}
           startIcon={<ShoppingCartOutlinedIcon fontSize="small" />}
           sx={{ minHeight: UI_SIZE.controlLarge, display: 'flex', justifyContent: 'space-between', px: 2 }}
         >

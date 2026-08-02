@@ -13,7 +13,7 @@ class AuditTicketsCancelled
             event: 'tickets_cancelled',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'ticket_uuids' => $event->ticketUuids,
                 'status' => $event->status,
             ],

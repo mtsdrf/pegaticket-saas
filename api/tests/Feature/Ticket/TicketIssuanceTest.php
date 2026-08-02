@@ -58,10 +58,10 @@ class TicketIssuanceTest extends TestCase
             ],
         ])->assertStatus(201)->json('data');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
 
-        $this->assertSame(3, Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderId))->count());
-        $this->assertSame(3, Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderId))->where('status', 'ativo')->count());
+        $this->assertSame(3, Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->count());
+        $this->assertSame(3, Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->where('status', 'ativo')->count());
 
         $list = $this->auth()->getJson('/api/v1/tickets?sale_uuid=' . $order['uuid'])->assertStatus(200)->json('data');
         $this->assertCount(3, $list);
@@ -96,11 +96,11 @@ class TicketIssuanceTest extends TestCase
             ],
         ])->assertStatus(201)->json('data');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
 
         // Só o item de ticket_type gera Ticket (1), o item de EventProduct
         // (quantidade 2) não gera nenhum.
-        $this->assertSame(1, Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderId))->count());
+        $this->assertSame(1, Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->count());
     }
 
     #[Test]
@@ -119,13 +119,13 @@ class TicketIssuanceTest extends TestCase
         ])->assertStatus(201)->json('data');
 
         $orderModel = Sale::where('uuid', $order['uuid'])->first();
-        $this->assertSame(2, Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderModel->id))->count());
+        $this->assertSame(2, Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $orderModel->id))->count());
 
         // Simula reprocessamento de webhook: mesmo evento disparado de novo.
         app(TicketIssuanceService::class)->issueForSale($orderModel, $this->userId);
         app(TicketIssuanceService::class)->issueForSale($orderModel, $this->userId);
 
-        $this->assertSame(2, Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderModel->id))->count());
+        $this->assertSame(2, Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $orderModel->id))->count());
     }
 
     #[Test]
@@ -156,15 +156,15 @@ class TicketIssuanceTest extends TestCase
         $orderModel->save();
 
         event(new SaleCancelled(
-            orderId: $orderModel->id,
-            orderUuid: $orderModel->uuid,
+            saleId: $orderModel->id,
+            saleUuid: $orderModel->uuid,
             fromStage: 'confirmed',
             toStage: 'cancelled',
             cancellationReason: 'teste',
             actorId: $this->userId,
         ));
 
-        $ticket = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderModel->id))->firstOrFail();
+        $ticket = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $orderModel->id))->firstOrFail();
         $this->assertSame('cancelado', $ticket->status);
     }
 
@@ -190,15 +190,15 @@ class TicketIssuanceTest extends TestCase
         $orderModel->save();
 
         event(new SaleCancelled(
-            orderId: $orderModel->id,
-            orderUuid: $orderModel->uuid,
+            saleId: $orderModel->id,
+            saleUuid: $orderModel->uuid,
             fromStage: 'confirmed',
             toStage: 'cancelled',
             cancellationReason: 'estorno de teste',
             actorId: $this->userId,
         ));
 
-        $ticket = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderModel->id))->firstOrFail();
+        $ticket = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $orderModel->id))->firstOrFail();
         $this->assertSame('estornado', $ticket->status);
     }
 }

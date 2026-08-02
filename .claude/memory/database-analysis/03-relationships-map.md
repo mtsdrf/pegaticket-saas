@@ -24,12 +24,12 @@ Toda tabela com `estabelecimento_id` tem FK `estabelecimento_id → estabelecime
 | `cliente` ↔ `categoria_cliente` | via `categoria_cliente_cliente` | belongsToMany | `categoria_cliente_cliente.{cliente_id,categoria_cliente_id}` | N:N | `Cliente::categorias()` / `CategoriaCliente::clientes()` |
 | `tipo_produto` | `categoria_produto` | belongsTo | `tipo_produto.categoria_produto_id` | N:1 | `TipoProduto::categoriaProduto()` |
 | `produto` | `tipo_produto` | belongsTo | `produto.tipo_produto_id` | N:1 | `Produto::tipoProduto()` |
-| `pedido` | `cliente` | belongsTo | `pedido.cliente_id` | N:1 | `Pedido::cliente()` |
-| `pedido_produto` | `pedido` | belongsTo | `pedido_produto.pedido_id` | N:1 | `PedidoProduto::pedido()` |
-| `pedido_produto` | `produto` | belongsTo | `pedido_produto.produto_id` | N:1 | `PedidoProduto::produto()` |
-| `pedido` | `pedido_produto` | hasMany | (inverso da linha acima) | 1:N | `Pedido::itens()` |
-| `pedido_parcela` | `pedido` | belongsTo | `pedido_parcela.pedido_id` | N:1 | `PedidoParcela::pedido()` |
-| `pedido` | `pedido_parcela` | hasMany | (inverso da linha acima) | 1:N | `Pedido::parcelas()` |
+| `venda` | `cliente` | belongsTo | `venda.cliente_id` | N:1 | `Venda::cliente()` |
+| `venda_produto` | `venda` | belongsTo | `venda_produto.venda_id` | N:1 | `VendaProduto::venda()` |
+| `venda_produto` | `produto` | belongsTo | `venda_produto.produto_id` | N:1 | `VendaProduto::produto()` |
+| `venda` | `venda_produto` | hasMany | (inverso da linha acima) | 1:N | `Venda::itens()` |
+| `venda_parcela` | `venda` | belongsTo | `venda_parcela.venda_id` | N:1 | `VendaParcela::venda()` |
+| `venda` | `venda_parcela` | hasMany | (inverso da linha acima) | 1:N | `Venda::parcelas()` |
 | `usuario` | `estabelecimento` | belongsTo | `usuario.estabelecimento_id` | N:1 | `Usuario::estabelecimento()` |
 
 ## Tabela pivô — `categoria_cliente_cliente`
@@ -39,9 +39,9 @@ Toda tabela com `estabelecimento_id` tem FK `estabelecimento_id → estabelecime
 - Campos adicionais na relação: nenhum além dos de auditoria/tenant padrão (não carrega dado próprio como "data de atribuição" ou "peso da categoria").
 - Precisa de model própria? **Não obrigatoriamente** — é um pivot simples (`belongsToMany` com `withTimestamps`/`withPivot` mínimo), mas como tem `id`/`uuid`/auditoria própria, no Eloquent isso normalmente vira uma tabela pivô "rica" com `Model` dedicado (`->using(CategoriaClienteCliente::class)`) para não perder essas colunas — decisão de implementação, não de modelagem (marcar para Laravel PHP Master).
 
-## `pedido_produto` — pivô ou entidade?
+## `venda_produto` — pivô ou entidade?
 
-Tecnicamente é uma tabela de associação `pedido` × `produto`, mas carrega dado de negócio real (`valor_momento_venda`, `quantidade_produto`) que não existe nem em `pedido` nem em `produto`. **Recomendação: tratar como entidade própria (model `PedidoProduto`/`PedidoItem`), não como pivot Eloquent simples** — é o padrão line-item de pedido, não uma associação genérica.
+Tecnicamente é uma tabela de associação `venda` × `produto`, mas carrega dado de negócio real (`valor_momento_venda`, `quantidade_produto`) que não existe nem em `venda` nem em `produto`. **Recomendação: tratar como entidade própria (model `VendaProduto`/`VendaItem`), não como pivot Eloquent simples** — é o padrão line-item de venda, não uma associação genérica.
 
 ## Dependências entre módulos (para ordem de implementação)
 
@@ -54,9 +54,9 @@ estabelecimento (raiz)
   → cliente (depende de endereco, dia_ideal, periodo_ideal)
   → categoria_cliente_cliente (depende de cliente + categoria_cliente)
   → categoria_produto → tipo_produto → produto (cadeia de catálogo)
-  → pedido (depende de cliente)
-  → pedido_produto (depende de pedido + produto)
-  → pedido_parcela (depende de pedido)
+  → venda (depende de cliente)
+  → venda_produto (depende de venda + produto)
+  → venda_parcela (depende de venda)
 ```
 
 Nenhuma dependência circular encontrada. `cliente_novo` e `json` não têm FK, portanto não entram nessa cadeia.

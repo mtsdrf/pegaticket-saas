@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Rota pública GET /loja/{slug} — allow-list deliberada, mesmo espírito de
  * SalePublicTrackingResource: NUNCA adicionar campo novo (uuid interno,
- * plan_id, next_order_code, etc.) sem confirmação explícita — é rota
+ * plan_id, next_sale_code, etc.) sem confirmação explícita — é rota
  * pública, todo campo extra é superfície de vazamento.
  *
  * estimated_preparation_minutes (roadmap Delivery, Fase 2) não é atributo

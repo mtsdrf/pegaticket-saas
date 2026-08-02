@@ -125,10 +125,10 @@ export interface SubscriptionHistoryItem {
 
 /**
  * Espelha `RefundResource` (`GET /subscription/refunds`) — histórico
- * unificado de estornos do tenant: pedido pago cancelado, arrependimento de
+ * unificado de estornos do tenant: venda paga cancelada, arrependimento de
  * assinatura (CDC art. 49) e contestação/chargeback, todos na mesma tabela
  * `refunds` no backend. `reason` já vem como texto descritivo da origem
- * (ex. "Cancelamento de pedido pago", "Arrependimento (7 dias)"), não há
+ * (ex. "Cancelamento de venda paga", "Arrependimento (7 dias)"), não há
  * campo de categoria separado.
  */
 export interface RefundItem {

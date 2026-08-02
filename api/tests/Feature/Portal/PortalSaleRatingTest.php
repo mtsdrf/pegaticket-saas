@@ -55,10 +55,10 @@ class PortalSaleRatingTest extends TestCase
         ], $overrides));
     }
 
-    private function linkCustomerToOrder(string $token, string $orderUuid): void
+    private function linkCustomerToOrder(string $token, string $saleUuid): void
     {
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $orderUuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $saleUuid])
             ->assertStatus(200);
     }
 
@@ -81,8 +81,8 @@ class PortalSaleRatingTest extends TestCase
             ->assertJsonPath('data.rating', 5)
             ->assertJsonPath('data.comment', 'Ótimo atendimento!');
 
-        $this->assertDatabaseHas('order_ratings', [
-            'order_id' => $order->id,
+        $this->assertDatabaseHas('sale_ratings', [
+            'sale_id' => $order->id,
             'tenant_id' => $tenant->id,
             'rating' => 5,
         ]);
@@ -102,7 +102,7 @@ class PortalSaleRatingTest extends TestCase
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
-        $this->assertDatabaseMissing('order_ratings', ['order_id' => $order->id]);
+        $this->assertDatabaseMissing('sale_ratings', ['sale_id' => $order->id]);
     }
 
     #[Test]
@@ -123,7 +123,7 @@ class PortalSaleRatingTest extends TestCase
 
         $response->assertStatus(422)->assertJsonPath('code', 'ORDER_ALREADY_RATED');
 
-        $this->assertDatabaseCount('order_ratings', 1);
+        $this->assertDatabaseCount('sale_ratings', 1);
     }
 
     #[Test]
@@ -141,7 +141,7 @@ class PortalSaleRatingTest extends TestCase
             ->postJson('/api/v1/portal/sales/' . $order->uuid . '/rating', ['rating' => 3])
             ->assertStatus(404);
 
-        $this->assertDatabaseMissing('order_ratings', ['order_id' => $order->id]);
+        $this->assertDatabaseMissing('sale_ratings', ['sale_id' => $order->id]);
     }
 
     #[Test]

@@ -24,7 +24,7 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { getSaleItemsForReorder, listPortalSales, requestSaleCancellation } from '../../services/portalSaleService'
 import { storefrontCartStorageKey } from '../../constants/storage'
 import { getApiErrorMessage } from '../../types/api'
-import type { PortalSaleSummary, PortalReorderItem } from '../../types/portal'
+import type { PortalSaleSummary, PortalResaleItem } from '../../types/portal'
 import type { StorefrontCartItem } from '../../types/storefront'
 import { canRequestSaleCancellation, deriveSaleStatus, STATUS_TONE_COLORS } from '../../utils/saleStatus'
 import { formatCurrency, formatDateFromDateTimeBR } from '../../utils/format'
@@ -39,7 +39,7 @@ import { PortalShell } from './PortalShell'
  * (não mescla) o carrinho existente daquela loja, no mesmo espírito de
  * recompra a partir do zero.
  */
-function replaceCartForStore(slug: string, items: PortalReorderItem[]): void {
+function replaceCartForStore(slug: string, items: PortalResaleItem[]): void {
   const cartItems: StorefrontCartItem[] = items
     .filter((item) => item.is_available && item.ticket_type_uuid && item.current_price !== null)
     .map((item) => ({
@@ -164,7 +164,7 @@ function SaleCard({
 
       <Button
         component={RouterLink}
-        to={`/loja/${sale.tenant_slug}`}
+        to={`/eventos/${sale.tenant_slug}`}
         startIcon={<StorefrontOutlinedIcon fontSize="small" />}
         fullWidth
         sx={{ borderRadius: 0, py: 1, fontSize: 13, fontWeight: 600 }}
@@ -284,7 +284,7 @@ function RequestCancellationDialog({
  */
 function ReorderDialog({ sale, onClose }: { sale: PortalSaleSummary | null; onClose: () => void }) {
   const navigate = useNavigate()
-  const [items, setItems] = useState<PortalReorderItem[] | null>(null)
+  const [items, setItems] = useState<PortalResaleItem[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -321,7 +321,7 @@ function ReorderDialog({ sale, onClose }: { sale: PortalSaleSummary | null; onCl
   const handleConfirm = () => {
     if (!sale || availableItems.length === 0) return
     replaceCartForStore(sale.tenant_slug, availableItems)
-    navigate(`/loja/${sale.tenant_slug}/carrinho`)
+    navigate(`/eventos/${sale.tenant_slug}/carrinho`)
     onClose()
   }
 

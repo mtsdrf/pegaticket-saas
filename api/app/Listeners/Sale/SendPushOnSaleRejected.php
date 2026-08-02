@@ -21,7 +21,7 @@ class SendPushOnSaleRejected
 
     public function handle(SaleRejected $event): void
     {
-        $order = Sale::where('uuid', $event->orderUuid)->first();
+        $order = Sale::where('uuid', $event->saleUuid)->first();
 
         if (!$order || $order->origin !== 'storefront') {
             return;

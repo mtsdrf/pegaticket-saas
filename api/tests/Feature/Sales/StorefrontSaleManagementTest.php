@@ -14,7 +14,7 @@ use Tests\TestCase;
 /**
  * Tela dedicada de gestão de vendas online (/storefront-sales/*),
  * permissão própria `storefront-sales,{action}` — independente de
- * `orders,{action}`. Reaproveita o MESMO SaleService
+ * `sales,{action}`. Reaproveita o MESMO SaleService
  * (approve/reject/cancel/deliver). Ver .claude/memory/architecture-decisions.md.
  */
 class StorefrontSaleManagementTest extends TestCase
@@ -34,7 +34,7 @@ class StorefrontSaleManagementTest extends TestCase
         $this->grantPermission('storefront-sales', 'deliver');
         $this->grantPermission('storefront-sales', 'undeliver');
         $this->grantPermission('storefront-sales', 'pay');
-        // 'create' pra poder criar o pedido de fixture via POST /orders normal.
+        // 'create' pra poder criar o pedido de fixture via POST /sales normal.
         $this->grantPermission('sales', 'create');
     }
 
@@ -111,7 +111,7 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     #[Test]
-    public function index_only_returns_storefront_origin_orders_even_when_client_tries_to_override(): void
+    public function index_only_returns_storefront_origin_sales_even_when_client_tries_to_override(): void
     {
         $storefrontOrder = $this->createPendingApprovalOrder('storefront');
         $this->createPendingApprovalOrder('staff');
@@ -123,22 +123,22 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     #[Test]
-    public function storefront_orders_permission_is_independent_from_orders_permission(): void
+    public function storefront_sales_permission_is_independent_from_sales_permission(): void
     {
-        // Usuário SEM nenhuma permissão orders,* (só storefront-sales,*
+        // Usuário SEM nenhuma permissão sales,* (só storefront-sales,*
         // do setUp) consegue usar a tela nova normalmente...
         $order = $this->createPendingApprovalOrder();
 
         $this->auth()->postJson('/api/v1/storefront-sales/' . $order->uuid . '/approve')->assertStatus(200);
 
-        // ...mas continua SEM acesso à rota genérica /orders/{order}/deliver.
+        // ...mas continua SEM acesso à rota genérica /sales/{order}/deliver.
         $this->auth()->patchJson('/api/v1/sales/' . $order->uuid . '/complete')->assertStatus(403);
     }
 
     #[Test]
-    public function generic_orders_permission_does_not_grant_access_to_storefront_orders_screen(): void
+    public function generic_sales_permission_does_not_grant_access_to_storefront_sales_screen(): void
     {
-        $this->setUpTenantScopedUser('generic-orders-user@test.com');
+        $this->setUpTenantScopedUser('generic-sales-user@test.com');
         $this->grantPermission('sales', 'create');
         $this->grantPermission('sales', 'read');
         $this->grantPermission('sales', 'update');
@@ -158,7 +158,7 @@ class StorefrontSaleManagementTest extends TestCase
      * parâmetro.
      */
     #[Test]
-    public function generic_orders_index_excludes_storefront_orders_when_filtered_by_origin_staff(): void
+    public function generic_sales_index_excludes_storefront_sales_when_filtered_by_origin_staff(): void
     {
         $this->grantPermission('sales', 'read');
 
@@ -203,7 +203,7 @@ class StorefrontSaleManagementTest extends TestCase
     }
 
     #[Test]
-    public function active_only_filter_returns_only_actionable_orders_in_priority_order(): void
+    public function active_only_filter_returns_only_actionable_sales_in_priority_order(): void
     {
         // Mix de estados (criados nesta ordem, pending_approval por ÚLTIMO
         // pra provar que a ordenação fixa o coloca em 1º mesmo com id maior).

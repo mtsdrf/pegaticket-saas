@@ -22,7 +22,7 @@ use Illuminate\Console\Command;
  */
 class ReconcileMercadoPagoSalePaymentsCommand extends Command
 {
-    protected $signature = 'payments:reconcile-mercadopago-orders {--limit=100} {--payment_uuid=}';
+    protected $signature = 'payments:reconcile-mercadopago-sales {--limit=100} {--payment_uuid=}';
 
     protected $description = 'Reconcilia cobranças Mercado Pago de pedidos ainda pendentes/divergentes/falhas não revisadas.';
 

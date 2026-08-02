@@ -13,7 +13,7 @@ use Tests\TestCase;
 /**
  * Aprovação/rejeição, pelo staff, da solicitação de cancelamento feita
  * pelo cliente final via Portal (roadmap A4 — "aprovar cancelamento").
- * POST /orders/{order}/approve-cancellation e /reject-cancellation.
+ * POST /sales/{order}/approve-cancellation e /reject-cancellation.
  */
 class SaleCancellationApprovalTest extends TestCase
 {
@@ -36,7 +36,7 @@ class SaleCancellationApprovalTest extends TestCase
     }
 
     /**
-     * Cria um pedido real via POST /orders (reserva de estoque real),
+     * Cria um pedido real via POST /sales (reserva de estoque real),
      * marca origin=storefront e simula que o cliente já solicitou o
      * cancelamento (status=cancellation_requested,
      * status_before_cancellation_request='confirmed').

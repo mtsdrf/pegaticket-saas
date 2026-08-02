@@ -10,15 +10,15 @@
 
 ## Sumário executivo
 
-O PegaTicket hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, pedidos, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: a arquitetura de planos existe como **gate de funcionalidades**, porém o modelo comercial ainda estava em consolidação na data deste levantamento. O cadastro self-service colocava o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de pedido era baixa manual; não havia gateway em produção.
+O PegaTicket hoje é um SaaS multi-tenant de gestão comercial **funcionalmente maduro no núcleo operacional** (clientes, produtos, estoque, vendas, crediário/parcelas, relatórios/analytics, portal do cliente final, delivery, cupons, cashback) mas **comercialmente e financeiramente "cru"**: a arquitetura de planos existe como **gate de funcionalidades**, porém o modelo comercial ainda estava em consolidação na data deste levantamento. O cadastro self-service colocava o tenant em "trial", mas **nada expira e nada cobra**. Pagamento de venda era baixa manual; não havia gateway em produção.
 
-Consequência estratégica: **o produto não consegue faturar sozinho ainda.** As quatro grandes frentes pedidas (cobrança de planos, pagamento de pedidos, documento fiscal e módulo do contador) têm uma ordem natural de dependência forte, e tentar fazer tudo em paralelo com orçamento baixo é o principal risco do projeto.
+Consequência estratégica: **o produto não consegue faturar sozinho ainda.** As quatro grandes frentes pedidas (cobrança de planos, pagamento de vendas, documento fiscal e módulo do contador) têm uma ordem natural de dependência forte, e tentar fazer tudo em paralelo com orçamento baixo é o principal risco do projeto.
 
 Recomendação de sequência macro (detalhada no roadmap final):
 
 1. **Endurecimento de produção** (segurança, observabilidade, LGPD, backup/DR) — bloqueante para cobrar qualquer centavo de cliente real. Esforço **M**.
 2. **Cobrança de planos via Pix** (a PegaTicket cobrando os tenants) — menor superfície regulatória, Pix tem custo quase zero. Habilita o negócio a existir. Esforço **M/G**.
-3. **Pagamento de pedidos via Pix** (cliente final pagando o tenant) — reaproveita a infra de Pix do item 2, mas exige decisão de arquitetura de recebimento (conta por tenant vs. marketplace). Esforço **G**.
+3. **Pagamento de vendas via Pix** (cliente final pagando o tenant) — reaproveita a infra de Pix do item 2, mas exige decisão de arquitetura de recebimento (conta por tenant vs. marketplace). Esforço **G**.
 4. **Documento fiscal (NF-e/NFC-e/NFS-e)** — a área mais complexa, arriscada e cara em esforço de todo o roadmap. NFS-e (para a plataforma emitir nota dos planos) primeiro; NF-e/NFC-e dos tenants depois. Esforço **GG**.
 5. **Módulo do contador** — depende de dados fiscais e financeiros existirem para ter o que entregar. Esforço **G**.
 
@@ -40,8 +40,8 @@ Levantado lendo o código, não presumido:
 - `plans` (id, uuid, name, slug, description, sort_order, is_active) + `plan_functionalities` (pivot) + `tenants.plan_id`. **O model `Plan` NÃO tem preço, moeda, ciclo nem trial.** É exclusivamente feature-gating.
 - Signup self-service (`POST /auth/signup`) cria owner + tenant "em teste", mas **não há entidade de assinatura, fatura, ciclo, nem expiração de trial efetiva**. A própria memória registra "ativação de trial e billing real" como pendência não feita.
 
-**Pagamento de pedidos**
-- `orders` tem `is_paid`, `paid_amount`, `paid_at`, `due_date`, `is_installment` + `order_installments`. Baixa é **manual** (`pay`, `payInstallment`). `tenant_settings.accepted_payment_methods` é só uma lista (cash/pix/credit_card/debit_card) exibida no catálogo público — **nenhum processamento real de pagamento existe.**
+**Pagamento de vendas**
+- `sales` tem `is_paid`, `paid_amount`, `paid_at`, `due_date`, `is_installment` + `sale_installments`. Baixa é **manual** (`pay`, `payInstallment`). `tenant_settings.accepted_payment_methods` é só uma lista (cash/pix/credit_card/debit_card) exibida no catálogo público — **nenhum processamento real de pagamento existe.**
 
 **Infra e conformidade**
 - Hospedagem: Hostinger compartilhada (memória: desativa `symlink()`/`exec()` no PHP). Queue driver = `database`.
@@ -76,7 +76,7 @@ Checklist crítico e realista. Classificação: **P0** = bloqueia cobrar cliente
 
 ### 1.3 Performance e escala (P1)
 
-- Índices compostos já foram adicionados nas listagens pesadas (memória confirma `clients`/`orders`). Bom.
+- Índices compostos já foram adicionados nas listagens pesadas (memória confirma `clients`/`sales`). Bom.
 - Queue em `database` driver: funciona em shared hosting, mas **precisa de um worker rodando**. Em Hostinger compartilhada não há `supervisor`; a prática é **cron chamando `queue:work --stop-when-empty`** a cada minuto. **Verificar se esse cron existe** — hoje há dependência não confirmada de `schedule:run` para o `cashback:process` (memória registra isso como pendência real). **Sem cron de schedule + queue, jobs assíncronos não rodam em produção. P1 (P0 quando houver cobrança dependente de job).**
 - Teste de carga: não crítico no volume inicial de poucos tenants, mas definir um teto conhecido (ex.: quando passar de ~50 tenants ativos, reavaliar sair de shared hosting).
 
@@ -100,7 +100,7 @@ Checklist crítico e realista. Classificação: **P0** = bloqueia cobrar cliente
 
 - **Backup automático: verificar.** Havia um dump SQL de produção (23MB) circulando no contexto operacional do projeto, o que indica que o processo de backup ainda era **manual**. Isto é **P0**. Mínimo viável barato: cron `mysqldump` diário + `gzip` + cópia para storage fora do servidor (a própria Hostinger oferece backup, mas **não confie só no backup do provedor** — leve uma cópia para outro lugar, ex.: bucket barato ou até Google Drive via rclone). Definir **RPO** (perda máxima aceitável, ex.: 24h) e **RTO** (tempo de restauração, ex.: 4h) e **testar restauração** pelo menos uma vez.
 - **Cuidado LGPD**: qualquer dump SQL de produção deixado na raiz do repo ou fora de um fluxo controlado é **risco de vazamento de dado pessoal** — garantir que está no `.gitignore` e removido de qualquer histórico público. **[verificar]**
-- **Política de retenção por categoria**: dados fiscais têm prazo legal de guarda (em regra 5 anos, podendo variar) **[requer validação contábil/jurídica]**; não podem ser apagados por um pedido genérico de exclusão LGPD. Documentar.
+- **Política de retenção por categoria**: dados fiscais têm prazo legal de guarda (em regra 5 anos, podendo variar) **[requer validação contábil/jurídica]**; não podem ser apagados por um venda genérico de exclusão LGPD. Documentar.
 
 ### 1.7 Deploy, documentação operacional e suporte (P1/P2)
 
@@ -241,11 +241,11 @@ Independente de quem "transmite" a nota, o PegaTicket precisa **calcular e param
 
 ## Seção 4 — Pagamento de PEDIDOS direto para as empresas (cliente final → tenant)
 
-Diferente da Seção 2 (PegaTicket cobra o tenant). Aqui o **cliente final paga o pedido do tenant** via Pix/cartão, com confirmação automática. A infra técnica de Pix/webhook/idempotência é **a mesma** da Seção 2 — reaproveitar a camada de abstração de pagamento. O que muda, e é **a decisão de arquitetura mais importante**, é **quem recebe o dinheiro**.
+Diferente da Seção 2 (PegaTicket cobra o tenant). Aqui o **cliente final paga o venda do tenant** via Pix/cartão, com confirmação automática. A infra técnica de Pix/webhook/idempotência é **a mesma** da Seção 2 — reaproveitar a camada de abstração de pagamento. O que muda, e é **a decisão de arquitetura mais importante**, é **quem recebe o dinheiro**.
 
 ### 4.1 Decisão de arquitetura: onde o dinheiro cai
 
-**Modelo A — Pagamento direto (recomendado para orçamento baixo):** cada tenant conecta a **própria conta** num PSP (ou informa a própria chave Pix), e o dinheiro do pedido cai **direto na conta do tenant**. A PegaTicket **não** toca no dinheiro de terceiros.
+**Modelo A — Pagamento direto (recomendado para orçamento baixo):** cada tenant conecta a **própria conta** num PSP (ou informa a própria chave Pix), e o dinheiro do venda cai **direto na conta do tenant**. A PegaTicket **não** toca no dinheiro de terceiros.
 - **Prós:** **menor responsabilidade e risco regulatório** (a PegaTicket não custodia recurso de terceiro), sem necessidade de virar/parecer instituição de pagamento, mais barato. **Alinhado ao orçamento e à lei.**
 - **Contras:** cada tenant precisa configurar credencial própria; conciliação e experiência menos padronizadas.
 
@@ -257,14 +257,14 @@ Diferente da Seção 2 (PegaTicket cobra o tenant). Aqui o **cliente final paga 
 
 ### 4.2 Preferência por Pix (custo quase zero)
 
-Pix é **muito** mais barato que cartão (que tem taxa de adquirente inevitável de ~2–4%). Para pagamento de pedido, **priorizar Pix**:
-- Fluxo: pedido confirmado → valor travado → `createPixCharge` (QR + copia-e-cola, com expiração) → cliente paga → **webhook** confirma → validação de assinatura + idempotência → pedido marcado pago → baixa financeira → libera separação/entrega → comprovante.
+Pix é **muito** mais barato que cartão (que tem taxa de adquirente inevitável de ~2–4%). Para pagamento de venda, **priorizar Pix**:
+- Fluxo: venda confirmado → valor travado → `createPixCharge` (QR + copia-e-cola, com expiração) → cliente paga → **webhook** confirma → validação de assinatura + idempotência → venda marcado pago → baixa financeira → libera separação/entrega → comprovante.
 - Reaproveita 100% da infra de webhook/idempotência/conciliação da Seção 2.
-- Cartão do pedido: fase posterior, tokenizado no PSP, mesma camada de abstração.
+- Cartão do venda: fase posterior, tokenizado no PSP, mesma camada de abstração.
 
 ### 4.3 Casos especiais a tratar (barato de errar, caro de ignorar)
 
-Pagamento duplicado, Pix após expiração, Pix com valor divergente, cartão negado, webhook atrasado/duplicado, pedido cancelado **após** pagamento (→ vira reembolso, não cancelamento), reembolso parcial/total, chargeback. Cada um precisa de regra explícita e teste. **Idempotência** resolve a maioria dos webhooks duplicados.
+Pagamento duplicado, Pix após expiração, Pix com valor divergente, cartão negado, webhook atrasado/duplicado, venda cancelado **após** pagamento (→ vira reembolso, não cancelamento), reembolso parcial/total, chargeback. Cada um precisa de regra explícita e teste. **Idempotência** resolve a maioria dos webhooks duplicados.
 
 ---
 
@@ -288,7 +288,7 @@ O modelo de acesso do PegaTicket **já suporta a fundação disso** sem reinvent
 
 Priorizando o que **sai barato dos dados que já existem**:
 
-- **Já viável hoje (dados existentes):** relatório de vendas por período, movimentação financeira (recebíveis/parcelas já existem), livro-caixa simples (entradas de `orders`/pagamentos), DRE **simplificado** (receita de vendas − custos, se houver custo de produto cadastrado), exportação CSV/PDF. **Esforço M**, alto valor, **não depende de fiscal**.
+- **Já viável hoje (dados existentes):** relatório de vendas por período, movimentação financeira (recebíveis/parcelas já existem), livro-caixa simples (entradas de `sales`/pagamentos), DRE **simplificado** (receita de vendas − custos, se houver custo de produto cadastrado), exportação CSV/PDF. **Esforço M**, alto valor, **não depende de fiscal**.
 - **Depende da Seção 3 (fiscal):** notas fiscais emitidas (XML/DANFE), impostos apurados, exportação de XML das notas para o sistema do contador. **Só existe depois que documento fiscal existir.**
 - **Exportações que contadores usam:** XML de NF-e (padrão universal que todo sistema contábil importa) é o formato mais valioso e **evita** você ter que gerar SPED no MVP. Geração de SPED (ECD/ECF/EFD) é **GG** e **[requer validação contábil]** — deixar para o fim, ou nem fazer (o contador gera o SPED no sistema **dele** a partir do XML que você exporta).
 - **Folha/DP:** fora de escopo inicial — só se algum tenant tiver funcionários e demanda real. Não construir especulativamente.
@@ -309,7 +309,7 @@ Esforço: **P** = dias · **M** = 1–2 semanas · **G** = 3+ semanas · **GG** 
 
 ### Dependências-chave (ler antes das fases)
 - Cobrar qualquer cliente **depende** do endurecimento de produção (Fase A).
-- Pagamento de pedidos (Fase C) **reaproveita** a infra de Pix/webhook da cobrança de planos (Fase B) — fazer B antes de C.
+- Pagamento de vendas (Fase C) **reaproveita** a infra de Pix/webhook da cobrança de planos (Fase B) — fazer B antes de C.
 - Emissão de NFS-e dos planos (Fase D1) **depende** de faturas de plano existirem (Fase B).
 - NF-e/NFC-e dos tenants (Fase D2) é independente de B/C tecnicamente, mas **compete por recurso** e é a mais cara — não paralelizar com nada crítico.
 - Módulo do contador (Fase E) entrega valor parcial **sem** fiscal (relatórios financeiros), mas a parte fiscal dele **depende** da Fase D.
@@ -335,13 +335,13 @@ Esforço: **P** = dias · **M** = 1–2 semanas · **G** = 3+ semanas · **GG** 
 - Conciliação periódica (job nativo).
 - Descontos por ciclo (mensal/trimestral ~10%/anual ~20%).
 
-### FASE C — Pagamento de pedidos via Pix *(cliente final → tenant)* — **G**
+### FASE C — Pagamento de vendas via Pix *(cliente final → tenant)* — **G**
 - **Decisão de arquitetura primeiro:** Modelo A (pagamento direto / subconta) — **sem custódia de saldo de terceiros**. **[requer validação jurídica/regulatória]**
 - Config por tenant da credencial/chave de recebimento.
 - Reuso da camada de Pix/webhook/idempotência da Fase B.
-- Fluxo Pix do pedido → baixa financeira automática → libera separação/entrega → comprovante.
+- Fluxo Pix do venda → baixa financeira automática → libera separação/entrega → comprovante.
 - Tratamento dos casos especiais (duplicado, expirado, valor divergente, cancelado-após-pago→reembolso, chargeback).
-- (Posterior) Cartão do pedido tokenizado.
+- (Posterior) Cartão do venda tokenizado.
 
 ### FASE D — Fiscal — **GG (a mais arriscada)** · **[validação contábil/fiscal contínua]**
 - **D0 (nativo, pré-requisito):** cadastro fiscal de tenant/produto/cliente + motor tributário parametrizado e **versionado por vigência** (pronto para CBS/IBS/IS da Reforma). Camada de abstração `FiscalProvider` (adapter).

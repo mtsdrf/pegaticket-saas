@@ -41,7 +41,7 @@ class SaleInstallmentController extends Controller
 
         return APIResponse::success(
             new SaleInstallmentResource($installment),
-            __('messages.order.installment_created'),
+            __('messages.sale.installment_created'),
             201
         );
     }
@@ -58,7 +58,7 @@ class SaleInstallmentController extends Controller
 
         return APIResponse::success(
             new SaleInstallmentResource($installment),
-            __('messages.order.installment_updated')
+            __('messages.sale.installment_updated')
         );
     }
 
@@ -72,7 +72,7 @@ class SaleInstallmentController extends Controller
 
         return APIResponse::success(
             null,
-            __('messages.order.installment_deleted'),
+            __('messages.sale.installment_deleted'),
             204
         );
     }
@@ -96,7 +96,7 @@ class SaleInstallmentController extends Controller
 
         return APIResponse::success(
             SaleInstallmentResource::collection($installments),
-            __('messages.order.installments_reallocated')
+            __('messages.sale.installments_reallocated')
         );
     }
 }

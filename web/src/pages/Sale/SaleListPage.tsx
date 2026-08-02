@@ -57,23 +57,23 @@ const STATUS_FILTERS: Array<{ value: 'all' | SaleStatus; label: string }> = [
   { value: 'rejected', label: 'Recusados' },
 ]
 
-function deriveOperationStage(order: Sale): SaleOperationStage | null {
-  if (order.cancelled_at || order.status === 'rejected') return null
-  if (order.status === 'pending_approval') return 'approval'
-  if (order.is_completed && !order.is_paid) return 'financial_pending'
-  if (order.status === 'confirmed' && !order.is_completed) return 'confirmed'
+function deriveOperationStage(sale: Sale): SaleOperationStage | null {
+  if (sale.cancelled_at || sale.status === 'rejected') return null
+  if (sale.status === 'pending_approval') return 'approval'
+  if (sale.is_completed && !sale.is_paid) return 'financial_pending'
+  if (sale.status === 'confirmed' && !sale.is_completed) return 'confirmed'
   return null
 }
 
-function SaleStatusBadge({ order }: { order: Sale }) {
+function SaleStatusBadge({ sale }: { sale: Sale }) {
   const derived = deriveSaleStatus({
-    is_cancelled: Boolean(order.cancelled_at),
-    is_paid: order.is_paid,
-    is_completed: order.is_completed,
-    is_installment: order.is_installment,
-    completed_at: order.completed_at,
-    paid_at: order.paid_at,
-    status: order.status,
+    is_cancelled: Boolean(sale.cancelled_at),
+    is_paid: sale.is_paid,
+    is_completed: sale.is_completed,
+    is_installment: sale.is_installment,
+    completed_at: sale.completed_at,
+    paid_at: sale.paid_at,
+    status: sale.status,
   })
   const colors = STATUS_TONE_COLORS[derived.tone]
 
@@ -297,7 +297,7 @@ export function SaleListPage() {
             width: 300,
             sortable: false,
             filterType: 'none',
-            cellRenderer: (row: Sale) => <SaleStatusBadge order={row} />,
+            cellRenderer: (row: Sale) => <SaleStatusBadge sale={row} />,
             exportValue: (row: Sale) => deriveSaleStatus({
               is_cancelled: Boolean(row.cancelled_at),
               is_paid: row.is_paid,
@@ -470,7 +470,7 @@ export function SaleListPage() {
       subtitle="Gerencie as vendas lançadas manualmente pela equipe."
       createLabel="Nova venda"
       canCreate={can(ACCESS.salesCreate)}
-      onCreate={() => navigate('/vendas/nova')}
+      onCreate={() => navigate('/vendas-manuais/nova')}
       error={null}
       onRetry={() => undefined}
       isLoading={!activeTenantUuid}
@@ -491,7 +491,7 @@ export function SaleListPage() {
               title: 'Nenhuma venda manual encontrada',
               description: 'Assim que a equipe criar vendas manualmente, elas aparecerão aqui.',
               action: can(ACCESS.salesCreate) ? (
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas/nova')}>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas-manuais/nova')}>
                   Criar primeira venda
                 </Button>
               ) : undefined,
@@ -510,7 +510,7 @@ export function SaleListPage() {
           subtitle="Acompanhe as vendas do sistema por canal, etapa e status."
           createLabel="Nova venda"
           canCreate={can(ACCESS.salesCreate)}
-          onCreate={() => navigate('/vendas/nova')}
+          onCreate={() => navigate('/vendas-manuais/nova')}
           error={null}
           onRetry={() => undefined}
           isLoading={!activeTenantUuid}
@@ -534,7 +534,7 @@ export function SaleListPage() {
                     ? 'Quando houver novas vendas, elas aparecerão aqui independente do canal de entrada.'
                     : 'Ajuste os filtros acima ou crie a primeira venda.',
                   action: can(ACCESS.salesCreate) ? (
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas/nova')}>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas-manuais/nova')}>
                       Criar primeira venda
                     </Button>
                   ) : undefined,

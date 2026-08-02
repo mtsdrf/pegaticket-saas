@@ -34,9 +34,9 @@ Roteiro passo a passo pra gravar um vídeo mostrando o sistema inteiro, usando a
 Tela inicial após login (`/`).
 
 1. Aponte o título **"Visão geral"** e o subtítulo **"Acompanhe os principais números da operação."**
-2. Ações rápidas no topo: **Novo pedido / Adicionar cliente / Cadastrar produto** — atalho direto pras 3 tarefas mais comuns do dia a dia.
-3. 3 cards de métrica: **Pedidos entregues / Pedidos pendentes / Valor recebido** — números reais da empresa logada.
-4. Gráfico de pedidos por mês, abaixo dos cards.
+2. Ações rápidas no topo: **Novo venda / Adicionar cliente / Cadastrar produto** — atalho direto pras 3 tarefas mais comuns do dia a dia.
+3. 3 cards de métrica: **Vendas entregues / Vendas pendentes / Valor recebido** — números reais da empresa logada.
+4. Gráfico de vendas por mês, abaixo dos cards.
 5. Repare no menu lateral esquerdo — ele concentra toda a operação atual no mesmo plano.
 
 ---
@@ -48,7 +48,7 @@ Menu lateral → **Clientes** (grupo).
 1. **Clientes → Categorias de cliente** (`/clientes/categorias`): explique que serve pra agrupar clientes por perfil (ex.: "Atacado", "Varejo", "VIP") — usado depois em preço diferenciado e relatórios.
 2. **Clientes → Dias ideais** (`/clientes/dias-ideais`): dia da semana em que aquele cliente prefere ser visitado/atendido (ex.: "Segunda", "Quarta") — ajuda o vendedor a organizar a rota de visitas.
 3. **Clientes → Períodos ideais** (`/clientes/periodos-ideais`): turno preferido (manhã/tarde/noite) — usado junto com o dia ideal.
-4. **Clientes → Clientes** (`/clientes`): cadastro completo — nome, telefone(s), categoria, dia/período ideal, endereço, se é cliente de confiança (`is_trusted`, afeta liberação de pedido sem pagamento antecipado). Abra 1 cliente de exemplo e mostre os campos preenchidos.
+4. **Clientes → Clientes** (`/clientes`): cadastro completo — nome, telefone(s), categoria, dia/período ideal, endereço, se é cliente de confiança (`is_trusted`, afeta liberação de venda sem pagamento antecipado). Abra 1 cliente de exemplo e mostre os campos preenchidos.
 
 ---
 
@@ -73,12 +73,12 @@ Menu lateral → **Produto** (grupo).
 
 ---
 
-## 6. Pedidos
+## 6. Vendas
 
-Menu lateral → **Pedidos** (`/pedidos`).
+Menu lateral → **Vendas** (`/vendas`).
 
-1. **Pedidos**: lançados manualmente pela equipe (venda por telefone/WhatsApp, por exemplo). Mostre a lista e abra 1 pedido — itens, valor total, status de pagamento e de entrega.
-2. Clique em **Novo pedido** (uma das ações rápidas do Dashboard) e monte um pedido ao vivo: escolha cliente, adicione produtos, confirme.
+1. **Vendas**: lançados manualmente pela equipe (venda por telefone/WhatsApp, por exemplo). Mostre a lista e abra 1 venda — itens, valor total, status de pagamento e de entrega.
+2. Clique em **Novo venda** (uma das ações rápidas do Dashboard) e monte um venda ao vivo: escolha cliente, adicione produtos, confirme.
 
 ---
 
@@ -87,7 +87,7 @@ Menu lateral → **Pedidos** (`/pedidos`).
 Menu lateral → **Relatórios** (grupo).
 
 1. **Análises** (`/analises`) — indicadores agregados.
-2. **Relatório de pedidos** (`/relatorios/pedidos`) — filtros por período/status, exportável.
+2. **Relatório de vendas** (`/relatorios/vendas`) — filtros por período/status, exportável.
 3. **Base de clientes** (`/relatorios/clientes`) — listagem/exportação de clientes.
 4. **Recebíveis** (`/relatorios/recebiveis`) — o que já foi recebido vs. o que ainda está em aberto.
 
@@ -99,7 +99,7 @@ Faça logout para seguir para a perspectiva publica da loja.
 
 ## 8. Loja online e operação omnichannel
 
-Faça login novamente com `dono.demo@pegaticket.com`. Aponte que o mesmo plano já inclui **Estoque**, **Pedidos da Loja**, **Loja online**, **Montar rota** e **Análises**.
+Faça login novamente com `dono.demo@pegaticket.com`. Aponte que o mesmo plano já inclui **Estoque**, **Vendas da Loja**, **Loja online**, **Montar rota** e **Análises**.
 
 ### Estoque
 Menu lateral → **Estoque** (grupo).
@@ -109,11 +109,11 @@ Menu lateral → **Estoque** (grupo).
 
 ### Loja online
 Menu lateral → **Loja online** (`/configuracoes/loja-online`).
-1. Mostre a configuração do catálogo público: horário de funcionamento, taxa de entrega por bairro, valor mínimo de pedido e tempo estimado de preparo.
-2. Em seguida, abra **Pedidos da Loja** (`/pedidos-loja`) e explique que essa é a fila dedicada para aprovar, despachar, entregar e receber pedidos vindos do canal online.
+1. Mostre a configuração do catálogo público: horário de funcionamento, taxa de entrega por bairro, valor mínimo de venda e tempo estimado de preparo.
+2. Em seguida, abra **Vendas da Loja** (`/vendas-loja`) e explique que essa é a fila dedicada para aprovar, despachar, entregar e receber vendas vindos do canal online.
 
 ### Montar rota
-Menu lateral → **Montar rota** (`/rotas`) — monta o roteiro de entrega do dia, agrupando pedidos por região/bairro.
+Menu lateral → **Montar rota** (`/rotas`) — monta o roteiro de entrega do dia, agrupando vendas por região/bairro.
 
 Faça logout para seguir para a experiencia publica do cliente final.
 
@@ -125,8 +125,8 @@ Ainda logado como visitante (sem conta), acesse a URL da loja da empresa demo (`
 
 1. Mostre o catálogo público — produtos organizados por categoria, sem precisar de login.
 2. Adicione um produto ao carrinho, avance até o checkout.
-3. Finalize um pedido de teste (ou mostre até a etapa de confirmação, sem precisar concluir pagamento real).
-4. Acesse `/portal/entrar` — aqui é onde o **cliente final** (não a equipe da empresa) acompanha os próprios pedidos depois de comprar: histórico de pedidos, favoritos, endereços salvos e perfil.
+3. Finalize um venda de teste (ou mostre até a etapa de confirmação, sem precisar concluir pagamento real).
+4. Acesse `/portal/entrar` — aqui é onde o **cliente final** (não a equipe da empresa) acompanha os próprios vendas depois de comprar: histórico de vendas, favoritos, endereços salvos e perfil.
 
 **O que explicar:** são 2 públicos completamente diferentes — a equipe da empresa usa o sistema principal, e o cliente final da empresa usa só essa área pública + o Portal, sem nunca ver o painel administrativo.
 
@@ -160,7 +160,7 @@ Acesse `/contador/entrar` (é uma área separada, login próprio — o contador 
 
 Faça logout e entre com `funcionario.demo@pegaticket.com`.
 
-Mostre lado a lado (ou compare de memória com o que apareceu logado como dono) que o menu lateral do funcionário é bem mais enxuto — só o que a função dele precisa no dia a dia (pedidos, clientes, produtos), sem acesso a configurações, assinatura, usuários ou dados financeiros sensíveis.
+Mostre lado a lado (ou compare de memória com o que apareceu logado como dono) que o menu lateral do funcionário é bem mais enxuto — só o que a função dele precisa no dia a dia (vendas, clientes, produtos), sem acesso a configurações, assinatura, usuários ou dados financeiros sensíveis.
 
 **O que explicar:** cada empresa pode criar quantos perfis de funcionário quiser, escolhendo exatamente o que cada um pode ver/fazer — não é tudo ou nada.
 
@@ -170,7 +170,7 @@ Mostre lado a lado (ou compare de memória com o que apareceu logado como dono) 
 
 Sugestão de fechamento: recapitule o plano unico em 3 frentes —
 
-- **Operação**: pedidos, clientes, produtos, estoque e loja online no mesmo sistema.
+- **Operação**: vendas, clientes, produtos, estoque e loja online no mesmo sistema.
 - **Gestão**: relatórios, analytics, financeiro, rotas e configurações no mesmo pacote.
 - **Governança**: assinatura, fiscal e contador já liberados no mesmo plano.
 

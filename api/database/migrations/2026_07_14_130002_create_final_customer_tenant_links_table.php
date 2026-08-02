@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Vínculo EXPLÍCITO entre a identidade global do cliente final e uma loja
  * (tenant) onde ele confirmou ser o mesmo Client. Nunca criado
  * automaticamente por telefone/nome batendo entre tenants — só via
- * POST /portal/links, a partir de um order_uuid que o cliente já tinha
+ * POST /portal/links, a partir de um sale_uuid que o cliente já tinha
  * (prova de posse, mesmo espírito do link público de rastreio da Fase 5.1).
  * Unique composta (final_customer_id, client_id): não faz sentido vincular
  * o mesmo Client duas vezes; linkar de novo é idempotente na Service, não

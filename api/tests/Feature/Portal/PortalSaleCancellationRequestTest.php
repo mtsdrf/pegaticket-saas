@@ -57,10 +57,10 @@ class PortalSaleCancellationRequestTest extends TestCase
         ], $overrides));
     }
 
-    private function linkCustomerToOrder(string $token, string $orderUuid): void
+    private function linkCustomerToOrder(string $token, string $saleUuid): void
     {
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $orderUuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $saleUuid])
             ->assertStatus(200);
     }
 
@@ -81,7 +81,7 @@ class PortalSaleCancellationRequestTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.status', 'cancellation_requested');
 
-        $this->assertDatabaseHas('orders', [
+        $this->assertDatabaseHas('sales', [
             'id' => $order->id,
             'status' => 'cancellation_requested',
             'status_before_cancellation_request' => 'confirmed',
@@ -143,7 +143,7 @@ class PortalSaleCancellationRequestTest extends TestCase
 
         $response->assertStatus(422)->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
-        $this->assertDatabaseHas('orders', [
+        $this->assertDatabaseHas('sales', [
             'id' => $order->id,
             'status' => 'confirmed',
         ]);

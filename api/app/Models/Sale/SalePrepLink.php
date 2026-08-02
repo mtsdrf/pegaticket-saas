@@ -16,11 +16,11 @@ class SalePrepLink extends Model
 {
     use HasUuid;
 
-    protected $table = 'order_prep_links';
+    protected $table = 'sale_prep_links';
 
     protected $fillable = [
         'tenant_id',
-        'order_id',
+        'sale_id',
         'token',
         'expires_at',
     ];
@@ -34,8 +34,8 @@ class SalePrepLink extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function order(): BelongsTo
+    public function sale(): BelongsTo
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 }

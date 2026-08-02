@@ -90,7 +90,7 @@ class SaleService
 
         return SalePrepLink::create([
             'tenant_id' => $order->tenant_id,
-            'order_id' => $order->id,
+            'sale_id' => $order->id,
             'token' => Str::random(48),
             'expires_at' => now()->addMinutes(15),
         ]);
@@ -106,10 +106,10 @@ class SaleService
     {
         $sortable = [
             'client_name' => 'final_customers.name',
-            'total_amount' => 'orders.total_amount',
-            'is_installment' => 'orders.is_installment',
-            'is_paid' => 'orders.is_paid',
-            'is_completed' => 'orders.is_completed',
+            'total_amount' => 'sales.total_amount',
+            'is_installment' => 'sales.is_installment',
+            'is_paid' => 'sales.is_paid',
+            'is_completed' => 'sales.is_completed',
         ];
 
         $sortColumn = is_string($sortBy) ? ($sortable[$sortBy] ?? null) : null;
@@ -117,27 +117,27 @@ class SaleService
 
         $query = Sale::query()
             ->select([
-                'orders.id',
-                'orders.uuid',
-                'orders.final_customer_id',
-                'orders.is_installment',
-                'orders.total_amount',
-                'orders.is_paid',
-                'orders.paid_at',
-                'orders.is_completed',
-                'orders.completed_at',
-                'orders.due_date',
-                'orders.cancelled_at',
-                'orders.status',
-                'orders.origin',
-                'orders.created_at',
+                'sales.id',
+                'sales.uuid',
+                'sales.final_customer_id',
+                'sales.is_installment',
+                'sales.total_amount',
+                'sales.is_paid',
+                'sales.paid_at',
+                'sales.is_completed',
+                'sales.completed_at',
+                'sales.due_date',
+                'sales.cancelled_at',
+                'sales.status',
+                'sales.origin',
+                'sales.created_at',
             ])
-            ->where('orders.tenant_id', $tenantId)
-            ->whereNull('orders.deleted_at')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
             ->with(self::LIST_EAGER_RELATIONS);
 
         if ($needsClientJoin) {
-            $query->leftJoin('final_customers', 'final_customers.id', '=', 'orders.final_customer_id');
+            $query->leftJoin('final_customers', 'final_customers.id', '=', 'sales.final_customer_id');
         }
 
         if (!empty($filters['client_name'])) {
@@ -149,11 +149,11 @@ class SaleService
         }
 
         if (isset($filters['total_amount_min']) && $filters['total_amount_min'] !== '') {
-            $query->where('orders.total_amount', '>=', (float) $filters['total_amount_min']);
+            $query->where('sales.total_amount', '>=', (float) $filters['total_amount_min']);
         }
 
         if (isset($filters['total_amount_max']) && $filters['total_amount_max'] !== '') {
-            $query->where('orders.total_amount', '<=', (float) $filters['total_amount_max']);
+            $query->where('sales.total_amount', '<=', (float) $filters['total_amount_max']);
         }
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {
@@ -178,18 +178,18 @@ class SaleService
         // status (pending_approval|confirmed|rejected), tela dedicada usa
         // status=pending_approval.
         if (!empty($filters['status'])) {
-            $query->where('orders.status', $filters['status']);
+            $query->where('sales.status', $filters['status']);
         }
 
-        // Tela dedicada de gestão de vendas online (storefront-orders,*)
+        // Tela dedicada de gestão de vendas online (storefront-sales,*)
         // força origin=storefront no controller, nunca lido cru do request.
         if (!empty($filters['origin'])) {
             $normalizedOrigin = Sale::normalizeOrigin((string) $filters['origin']);
 
             if ($normalizedOrigin === 'staff') {
-                $query->whereIn('orders.origin', ['staff', 'counter']);
+                $query->whereIn('sales.origin', ['staff', 'counter']);
             } else {
-                $query->where('orders.origin', $normalizedOrigin);
+                $query->where('sales.origin', $normalizedOrigin);
             }
         }
 
@@ -200,16 +200,16 @@ class SaleService
         if (!empty($filters['stage'])) {
             match ($filters['stage']) {
                 'approval' => $query
-                    ->whereNull('orders.cancelled_at')
-                    ->where('orders.status', 'pending_approval'),
+                    ->whereNull('sales.cancelled_at')
+                    ->where('sales.status', 'pending_approval'),
                 'confirmed' => $query
-                    ->whereNull('orders.cancelled_at')
-                    ->where('orders.status', 'confirmed')
-                    ->where('orders.is_completed', false),
+                    ->whereNull('sales.cancelled_at')
+                    ->where('sales.status', 'confirmed')
+                    ->where('sales.is_completed', false),
                 'financial_pending' => $query
-                    ->whereNull('orders.cancelled_at')
-                    ->where('orders.is_completed', true)
-                    ->where('orders.is_paid', false),
+                    ->whereNull('sales.cancelled_at')
+                    ->where('sales.is_completed', true)
+                    ->where('sales.is_paid', false),
                 default => null,
             };
         }
@@ -224,12 +224,12 @@ class SaleService
 
         if ($activeOnly) {
             $query->whereNull('cancelled_at')
-                ->where('orders.status', '!=', 'rejected')
+                ->where('sales.status', '!=', 'rejected')
                 ->where(fn($q) => $q->where('is_paid', false)->orWhere('is_completed', false));
 
-            $query->orderByRaw("(orders.status = 'pending_approval') DESC, orders.id ASC");
+            $query->orderByRaw("(sales.status = 'pending_approval') DESC, sales.id ASC");
         } else {
-            $query->orderBy($sortColumn ?? 'orders.id', GridQuery::normalizeSortDir($sortDir));
+            $query->orderBy($sortColumn ?? 'sales.id', GridQuery::normalizeSortDir($sortDir));
         }
 
         return $query->paginate($perPage);
@@ -260,7 +260,7 @@ class SaleService
             foreach ($dto->items as $item) {
                 $sellable = $this->resolveSellable($item, $dto->tenantId);
 
-                $line = $this->resolveOrderItemLine($sellable, $client, $item);
+                $line = $this->resolveSaleItemLine($sellable, $client, $item);
 
                 $totalCents += $line['line_total_cents'];
                 $lines[] = $line;
@@ -283,13 +283,13 @@ class SaleService
 
             $dueDate = $dto->isInstallment ? null : $this->vencimentoCalculator->calculateDueDate(now());
 
-            // Sequência de exibição por tenant (tenants.next_order_code) —
+            // Sequência de exibição por tenant (tenants.next_sale_code) —
             // increment() já é atômico (UPDATE de linha única); a leitura
             // seguinte, na mesma transação, enxerga o próprio valor já
             // incrementado (read-your-own-writes), sem precisar de
             // lockForUpdate() explícito adicional.
-            DB::table('tenants')->where('id', $dto->tenantId)->increment('next_order_code');
-            $codigo = (string) DB::table('tenants')->where('id', $dto->tenantId)->value('next_order_code');
+            DB::table('tenants')->where('id', $dto->tenantId)->increment('next_sale_code');
+            $codigo = (string) DB::table('tenants')->where('id', $dto->tenantId)->value('next_sale_code');
 
             $order = $this->repository->create([
                 'tenant_id' => $dto->tenantId,
@@ -312,9 +312,9 @@ class SaleService
             ]);
 
             foreach ($lines as $line) {
-                $orderItem = SaleItem::create([
+                $saleItem = SaleItem::create([
                     'tenant_id' => $dto->tenantId,
-                    'order_id' => $order->id,
+                    'sale_id' => $order->id,
                     'ticket_type_id' => $line['is_ticket_type'] ? $line['sellable']->id : null,
                     'event_product_id' => $line['is_ticket_type'] ? null : $line['sellable']->id,
                     'quantity' => $line['quantity'],
@@ -330,8 +330,8 @@ class SaleService
             }
 
             event(new SaleCreated(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
+                saleId: $order->id,
+                saleUuid: $order->uuid,
                 actorId: Auth::id()
             ));
 
@@ -365,7 +365,7 @@ class SaleService
      *
      * Pedido parcelado: total_amount muda mas as installments NÃO são
      * recalculadas automaticamente aqui (decisão intencional — usuário
-     * ajusta via PUT /orders/{order}/installments depois).
+     * ajusta via PUT /sales/{order}/installments depois).
      */
     public function updateItems(Sale $order, UpdateSaleItemsDTO $dto): Sale
     {
@@ -374,12 +374,12 @@ class SaleService
         return DB::transaction(function () use ($order, $dto) {
             $order = $this->lockOrder($order);
 
-            $this->assertOrderItemsEditable($order);
+            $this->assertSaleItemsEditable($order);
 
             $order->loadMissing('finalCustomer');
             $client = $order->finalCustomer;
 
-            $currentItems = SaleItem::where('order_id', $order->id)
+            $currentItems = SaleItem::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->get()
                 ->keyBy('uuid');
@@ -396,12 +396,12 @@ class SaleService
                 }
 
                 if (in_array($uuid, $seenUuids, true)) {
-                    throw new InvalidSaleStateException(__('messages.order.item_duplicate_reference'));
+                    throw new InvalidSaleStateException(__('messages.sale.item_duplicate_reference'));
                 }
                 $seenUuids[] = $uuid;
 
                 if (!$currentItems->has($uuid)) {
-                    throw new InvalidSaleStateException(__('messages.order.item_not_found_in_order'));
+                    throw new InvalidSaleStateException(__('messages.sale.item_not_found_in_order'));
                 }
             }
 
@@ -412,11 +412,11 @@ class SaleService
                 }
 
                 $sellable = $this->resolveSellable($item, $order->tenant_id);
-                $line = $this->resolveOrderItemLine($sellable, $client, $item);
+                $line = $this->resolveSaleItemLine($sellable, $client, $item);
 
                 SaleItem::create([
                     'tenant_id' => $order->tenant_id,
-                    'order_id' => $order->id,
+                    'sale_id' => $order->id,
                     'ticket_type_id' => $line['is_ticket_type'] ? $sellable->id : null,
                     'event_product_id' => $line['is_ticket_type'] ? null : $sellable->id,
                     'quantity' => $line['quantity'],
@@ -439,7 +439,7 @@ class SaleService
                 $sellable = $this->resolveSellable($item, $order->tenant_id);
                 $isTicketType = $sellable instanceof TicketType;
 
-                $line = $this->resolveOrderItemLine($sellable, $client, $item, $existing);
+                $line = $this->resolveSaleItemLine($sellable, $client, $item, $existing);
                 $quantity = $line['quantity'];
 
                 $existing->ticket_type_id = $isTicketType ? $sellable->id : null;
@@ -461,7 +461,7 @@ class SaleService
             }
 
             $totalCents = (int) round(
-                (float) SaleItem::where('order_id', $order->id)->whereNull('deleted_at')->sum('line_total') * 100
+                (float) SaleItem::where('sale_id', $order->id)->whereNull('deleted_at')->sum('line_total') * 100
             );
 
             $order->total_amount = $this->centsToDecimal($totalCents);
@@ -473,7 +473,7 @@ class SaleService
             $order->save();
 
             event(new SaleItemsUpdated(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 actorId: Auth::id()
             ));
 
@@ -491,11 +491,11 @@ class SaleService
             $this->assertOrderIsApproved($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if ($order->is_completed) {
-                throw new InvalidSaleStateException(__('messages.order.already_completed'));
+                throw new InvalidSaleStateException(__('messages.sale.already_completed'));
             }
 
             return $this->performCompletion($order);
@@ -513,11 +513,11 @@ class SaleService
     private function assertOrderIsApproved(Sale $order): void
     {
         if ($order->status === 'pending_approval') {
-            throw new InvalidSaleStateException(__('messages.order.awaiting_approval'));
+            throw new InvalidSaleStateException(__('messages.sale.awaiting_approval'));
         }
 
         if ($order->status === 'rejected') {
-            throw new InvalidSaleStateException(__('messages.order.order_rejected'));
+            throw new InvalidSaleStateException(__('messages.sale.order_rejected'));
         }
     }
 
@@ -535,11 +535,11 @@ class SaleService
             $order = $this->lockOrder($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if (!$order->is_completed) {
-                throw new InvalidSaleStateException(__('messages.order.not_completed'));
+                throw new InvalidSaleStateException(__('messages.sale.not_completed'));
             }
 
             return $this->performReversal($order);
@@ -566,7 +566,7 @@ class SaleService
         $this->assertBelongsToCurrentTenant($order);
 
         if ($order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.order.use_installment_pay'));
+            throw new InvalidSaleStateException(__('messages.sale.use_installment_pay'));
         }
 
         return DB::transaction(function () use ($order, $paidAt, $amount) {
@@ -575,11 +575,11 @@ class SaleService
             $this->assertOrderIsApproved($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if ($order->is_paid) {
-                throw new InvalidSaleStateException(__('messages.order.already_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.already_paid'));
             }
 
             $isPartialPayment = $amount !== null && $amount > 0 && $amount < (float) $order->total_amount;
@@ -601,18 +601,18 @@ class SaleService
         $this->assertBelongsToCurrentTenant($order);
 
         if ($order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.order.use_installment_unpay'));
+            throw new InvalidSaleStateException(__('messages.sale.use_installment_unpay'));
         }
 
         return DB::transaction(function () use ($order) {
             $order = $this->lockOrder($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if (!$order->is_paid) {
-                throw new InvalidSaleStateException(__('messages.order.not_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.not_paid'));
             }
 
             return $this->performUnpayment($order);
@@ -632,7 +632,7 @@ class SaleService
         $this->assertInstallmentBelongsToOrder($order, $installment);
 
         if (!$order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.order.not_installment'));
+            throw new InvalidSaleStateException(__('messages.sale.not_installment'));
         }
 
         return DB::transaction(function () use ($order, $installment, $paidAt) {
@@ -642,11 +642,11 @@ class SaleService
             $this->assertOrderIsApproved($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if ($installment->is_paid) {
-                throw new InvalidSaleStateException(__('messages.order.installment_already_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.installment_already_paid'));
             }
 
             $installment->is_paid = true;
@@ -654,12 +654,12 @@ class SaleService
             $installment->save();
 
             event(new SaleInstallmentPaid(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 installmentUuid: $installment->uuid,
                 actorId: Auth::id()
             ));
 
-            $allInstallmentsPaid = SaleInstallment::where('order_id', $order->id)
+            $allInstallmentsPaid = SaleInstallment::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->where('is_paid', false)
                 ->doesntExist();
@@ -692,7 +692,7 @@ class SaleService
         $this->assertInstallmentBelongsToOrder($order, $installment);
 
         if (!$order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.order.not_installment'));
+            throw new InvalidSaleStateException(__('messages.sale.not_installment'));
         }
 
         return DB::transaction(function () use ($order, $installment) {
@@ -700,11 +700,11 @@ class SaleService
             $installment = SaleInstallment::whereKey($installment->id)->lockForUpdate()->firstOrFail();
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if (!$installment->is_paid) {
-                throw new InvalidSaleStateException(__('messages.order.installment_not_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.installment_not_paid'));
             }
 
             $installment->is_paid = false;
@@ -712,7 +712,7 @@ class SaleService
             $installment->save();
 
             event(new SaleInstallmentUnpaid(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 installmentUuid: $installment->uuid,
                 actorId: Auth::id()
             ));
@@ -735,14 +735,14 @@ class SaleService
 
         return DB::transaction(function () use ($order, $dto) {
             $order = $this->lockOrder($order);
-            $fromStage = $this->workflowTransitionLogger->resolveOrderStage($order);
+            $fromStage = $this->workflowTransitionLogger->resolveSaleStage($order);
 
             if ($order->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             $hasPaidAmount = $order->is_installment
-                ? SaleInstallment::where('order_id', $order->id)
+                ? SaleInstallment::where('sale_id', $order->id)
                     ->whereNull('deleted_at')
                     ->where('is_paid', true)
                     ->exists()
@@ -756,7 +756,7 @@ class SaleService
             $paidPixCharge = $hasPaidAmount ? $this->paymentService->paidChargeForOrder($order) : null;
 
             if ($hasPaidAmount && $paidPixCharge === null) {
-                throw new InvalidSaleStateException(__('messages.order.cannot_cancel_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.cannot_cancel_paid'));
             }
 
             $order->cancelled_at = now();
@@ -770,8 +770,8 @@ class SaleService
             }
 
             event(new SaleCancelled(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
+                saleId: $order->id,
+                saleUuid: $order->uuid,
                 fromStage: $fromStage,
                 toStage: 'cancelled',
                 cancellationReason: $dto->cancellationReason,
@@ -797,17 +797,17 @@ class SaleService
             $order = $this->lockOrder($order);
 
             if ($order->status !== 'pending_approval') {
-                throw new InvalidSaleStateException(__('messages.order.not_pending_approval'));
+                throw new InvalidSaleStateException(__('messages.sale.not_pending_approval'));
             }
 
             $order->status = 'confirmed';
             $order->save();
 
             event(new SaleApproved(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
+                saleId: $order->id,
+                saleUuid: $order->uuid,
                 fromStage: 'approval',
-                toStage: $this->workflowTransitionLogger->resolveOrderStage($order),
+                toStage: $this->workflowTransitionLogger->resolveSaleStage($order),
                 actorId: Auth::id()
             ));
 
@@ -829,13 +829,13 @@ class SaleService
             $order = $this->lockOrder($order);
 
             if ($order->status !== 'pending_approval') {
-                throw new InvalidSaleStateException(__('messages.order.not_pending_approval'));
+                throw new InvalidSaleStateException(__('messages.sale.not_pending_approval'));
             }
 
             // Pedido recusado nunca deve consumir o limite de uso do
             // cliente sobre um cupom — roadmap Delivery, Fase 3.
             if ($order->coupon_id !== null) {
-                CouponRedemption::where('order_id', $order->id)->delete();
+                CouponRedemption::where('sale_id', $order->id)->delete();
             }
 
             $order->status = 'rejected';
@@ -843,8 +843,8 @@ class SaleService
             $order->save();
 
             event(new SaleRejected(
-                orderId: $order->id,
-                orderUuid: $order->uuid,
+                saleId: $order->id,
+                saleUuid: $order->uuid,
                 fromStage: 'approval',
                 toStage: 'rejected',
                 reason: $reason,
@@ -879,7 +879,7 @@ class SaleService
             $order->save();
 
             event(new SaleCancellationRequested(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 reason: $reason,
                 finalCustomerUuid: $finalCustomerUuid,
             ));
@@ -897,23 +897,23 @@ class SaleService
     private function assertCancellationRequestEligible(Sale $order): void
     {
         if ($order->origin !== 'storefront') {
-            throw new InvalidSaleStateException(__('messages.order.cancellation_request_not_storefront'));
+            throw new InvalidSaleStateException(__('messages.sale.cancellation_request_not_storefront'));
         }
 
         if ($order->cancelled_at !== null) {
-            throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+            throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
         }
 
         if ($order->status === 'cancellation_requested') {
-            throw new InvalidSaleStateException(__('messages.order.cancellation_already_requested'));
+            throw new InvalidSaleStateException(__('messages.sale.cancellation_already_requested'));
         }
 
         if ($order->status === 'rejected') {
-            throw new InvalidSaleStateException(__('messages.order.order_rejected'));
+            throw new InvalidSaleStateException(__('messages.sale.order_rejected'));
         }
 
         if ($order->is_completed) {
-            throw new InvalidSaleStateException(__('messages.order.already_completed'));
+            throw new InvalidSaleStateException(__('messages.sale.already_completed'));
         }
     }
 
@@ -934,11 +934,11 @@ class SaleService
             $order = $this->lockOrder($order);
 
             if ($order->status !== 'cancellation_requested') {
-                throw new InvalidSaleStateException(__('messages.order.no_cancellation_requested'));
+                throw new InvalidSaleStateException(__('messages.sale.no_cancellation_requested'));
             }
 
             $previousStatus = $order->status_before_cancellation_request ?? 'confirmed';
-            $reason = $order->cancellation_reason ?: __('messages.order.cancellation_requested_by_client_default');
+            $reason = $order->cancellation_reason ?: __('messages.sale.cancellation_requested_by_client_default');
 
             $order = $this->cancel($order, new CancelSaleDTO(cancellationReason: $reason));
 
@@ -947,7 +947,7 @@ class SaleService
             $order->save();
 
             event(new SaleCancellationApproved(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 actorId: Auth::id()
             ));
 
@@ -968,7 +968,7 @@ class SaleService
             $order = $this->lockOrder($order);
 
             if ($order->status !== 'cancellation_requested') {
-                throw new InvalidSaleStateException(__('messages.order.no_cancellation_requested'));
+                throw new InvalidSaleStateException(__('messages.sale.no_cancellation_requested'));
             }
 
             $order->status = $order->status_before_cancellation_request ?? 'confirmed';
@@ -977,7 +977,7 @@ class SaleService
             $order->save();
 
             event(new SaleCancellationRejected(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 actorId: Auth::id()
             ));
 
@@ -1001,10 +1001,10 @@ class SaleService
         $order->save();
 
         event(new SaleCompleted(
-            orderId: $order->id,
-            orderUuid: $order->uuid,
+            saleId: $order->id,
+            saleUuid: $order->uuid,
             fromStage: $fromStage,
-            toStage: $this->workflowTransitionLogger->resolveOrderStage($order),
+            toStage: $this->workflowTransitionLogger->resolveSaleStage($order),
             actorId: Auth::id()
         ));
 
@@ -1022,7 +1022,7 @@ class SaleService
         $order->save();
 
         event(new SaleReopened(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             actorId: Auth::id()
         ));
 
@@ -1046,7 +1046,7 @@ class SaleService
         $order->save();
 
         event(new SalePaid(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             actorId: Auth::id()
         ));
 
@@ -1067,7 +1067,7 @@ class SaleService
         $order->save();
 
         event(new SaleUnpaid(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             actorId: Auth::id()
         ));
 
@@ -1087,7 +1087,7 @@ class SaleService
         $order->save();
 
         event(new SalePartiallyPaid(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             amount: $order->paid_amount,
             actorId: Auth::id()
         ));
@@ -1096,7 +1096,7 @@ class SaleService
     }
 
     /**
-     * @param int $totalCents Soma exata dos order_items em centavos.
+     * @param int $totalCents Soma exata dos sale_items em centavos.
      * Divisão igual entre as N parcelas, última parcela absorve o resto
      * do arredondamento para a soma bater exatamente com total_amount.
      */
@@ -1112,7 +1112,7 @@ class SaleService
 
             SaleInstallment::create([
                 'tenant_id' => $order->tenant_id,
-                'order_id' => $order->id,
+                'sale_id' => $order->id,
                 'installment_number' => $number,
                 'amount' => $this->centsToDecimal($amountCents),
                 'due_date' => $dueDate,
@@ -1134,7 +1134,7 @@ class SaleService
         $eventProductUuid = $item['event_product_uuid'] ?? null;
 
         if (($ticketTypeUuid === null) === ($eventProductUuid === null)) {
-            throw new InvalidSaleStateException(__('messages.order.item_missing_sellable'));
+            throw new InvalidSaleStateException(__('messages.sale.item_missing_sellable'));
         }
 
         if ($ticketTypeUuid !== null) {
@@ -1162,7 +1162,7 @@ class SaleService
      *   attendee_data: ?array
      * }
      */
-    private function resolveOrderItemLine(
+    private function resolveSaleItemLine(
         TicketType|EventProduct $sellable,
         FinalCustomer $client,
         array $item,
@@ -1255,7 +1255,7 @@ class SaleService
         // positivo num desconto que bate exatamente no limite configurado.
         if ($discountPercent > $limitPercent + 0.01) {
             throw new DiscountLimitExceededException(
-                __('messages.order.discount_limit_exceeded', ['limit' => rtrim(rtrim(number_format($limitPercent, 2), '0'), '.')])
+                __('messages.sale.discount_limit_exceeded', ['limit' => rtrim(rtrim(number_format($limitPercent, 2), '0'), '.')])
             );
         }
     }
@@ -1278,18 +1278,18 @@ class SaleService
      * pedido não está entregue/pago/cancelado (escopo deliberadamente
      * limitado, ver PHPDoc de updateItems()).
      */
-    private function assertOrderItemsEditable(Sale $order): void
+    private function assertSaleItemsEditable(Sale $order): void
     {
         if ($order->cancelled_at !== null) {
-            throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+            throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
         }
 
         if ($order->is_completed) {
-            throw new InvalidSaleStateException(__('messages.order.already_completed'));
+            throw new InvalidSaleStateException(__('messages.sale.already_completed'));
         }
 
         if ($order->is_paid) {
-            throw new InvalidSaleStateException(__('messages.order.already_paid'));
+            throw new InvalidSaleStateException(__('messages.sale.already_paid'));
         }
     }
 
@@ -1314,7 +1314,7 @@ class SaleService
      */
     private function assertInstallmentBelongsToOrder(Sale $order, SaleInstallment $installment): void
     {
-        if ((int) $installment->order_id !== (int) $order->id) {
+        if ((int) $installment->sale_id !== (int) $order->id) {
             abort(404);
         }
     }

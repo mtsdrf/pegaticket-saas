@@ -14,6 +14,6 @@ Convenções já em uso neste projeto (ver `.claude/memory/database-rules.md`):
 
 Antes de qualquer migration:
 1. Checar se a tabela/coluna já existe (grep em `database/migrations/`).
-2. Migration nova, nunca editar migration já rodada em produção — alertar o usuário se isso for pedido.
+2. Migration nova, nunca editar migration já rodada em produção — alertar o usuário se isso for venda.
 3. Migration destrutiva (drop column/table) exige confirmação explícita do usuário antes de gerar.
 4. Seeder correspondente se a tabela precisa de dados de referência (padrão: `{Nome}Seeder` em `database/seeders/`, registrado em `DatabaseSeeder`).

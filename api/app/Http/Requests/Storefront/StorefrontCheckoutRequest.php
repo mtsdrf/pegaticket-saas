@@ -93,8 +93,8 @@ class StorefrontCheckoutRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.*.ticket_type_uuid.exists' => __('messages.order.invalid_product'),
-            'items.*.event_product_uuid.exists' => __('messages.order.invalid_product'),
+            'items.*.ticket_type_uuid.exists' => __('messages.sale.invalid_product'),
+            'items.*.event_product_uuid.exists' => __('messages.sale.invalid_product'),
         ];
     }
 }

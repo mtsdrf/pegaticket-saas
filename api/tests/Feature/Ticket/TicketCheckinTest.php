@@ -49,8 +49,8 @@ class TicketCheckinTest extends TestCase
             ],
         ])->assertStatus(201)->json('data');
 
-        $orderId = Sale::where('uuid', $order['uuid'])->value('id');
-        $ticket = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $orderId))->firstOrFail();
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $ticket = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->firstOrFail();
 
         if (!empty($attendee)) {
             $ticket->fill($attendee)->save();

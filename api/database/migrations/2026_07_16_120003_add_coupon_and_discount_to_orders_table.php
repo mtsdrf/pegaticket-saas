@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 /**
  * coupon_id usa nullOnDelete() (não cascade): pedido histórico não pode
  * sumir se o cupom for removido depois — diferente de todas as outras FKs
- * de orders (client/stock_location), que são obrigatórias por natureza.
+ * de sales (client/stock_location), que são obrigatórias por natureza.
  * discount_amount default 0 preserva 100% o fluxo staff existente (nunca
  * usa cupom).
  */
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->foreignId('coupon_id')->nullable()->after('client_id')
                 ->constrained('coupons')->nullOnDelete();
             $table->decimal('discount_amount', 10, 2)->default(0)->after('delivery_fee');
@@ -23,7 +23,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropConstrainedForeignId('coupon_id');
             $table->dropColumn('discount_amount');
         });

@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Leitura agregada do cliente final autenticado: pedidos de todas as lojas
- * vinculadas E confirmadas, e o perfil básico (GET /portal/orders,
+ * vinculadas E confirmadas, e o perfil básico (GET /portal/sales,
  * GET /portal/me).
  */
 class PortalCustomerService
@@ -57,9 +57,9 @@ class PortalCustomerService
      * para uuid inexistente quanto para pedido de outra loja não vinculada,
      * nunca vazando qual dos dois casos é.
      */
-    public function findOwnedOrder(int $finalCustomerId, string $orderUuid): Sale
+    public function findOwnedOrder(int $finalCustomerId, string $saleUuid): Sale
     {
-        $order = Sale::where('uuid', $orderUuid)->whereNull('deleted_at')->first();
+        $order = Sale::where('uuid', $saleUuid)->whereNull('deleted_at')->first();
 
         if (!$order || (int) $order->final_customer_id !== $finalCustomerId) {
             abort(404);
@@ -81,9 +81,9 @@ class PortalCustomerService
      * porque o nome histórico do item precisa aparecer mesmo se o item
      * foi removido desde então — nesse caso is_available fica false.
      */
-    public function getOrderItemsForReorder(FinalCustomer $customer, string $orderUuid): array
+    public function getSaleItemsForReorder(FinalCustomer $customer, string $saleUuid): array
     {
-        $order = $this->findOwnedOrder($customer->id, $orderUuid);
+        $order = $this->findOwnedOrder($customer->id, $saleUuid);
         $order->load('items');
 
         return $order->items->map(function ($item) {

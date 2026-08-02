@@ -227,6 +227,13 @@ export function AppRoutes() {
             ProtectedRoute/PermissionRoute. `StorefrontLayout` monta seu
             próprio `PortalAuthProvider` (mesma identidade OTP do Portal,
             reaproveitada) + `StorefrontCartProvider` (carrinho por slug). */}
+        <Route path="/eventos/:slug" element={<StorefrontLayout />}>
+          <Route index element={<StorefrontCatalogPage />} />
+          <Route path=":eventSlug" element={<StorefrontEventDetailPage />} />
+          <Route path="perfil" element={<StorefrontProfilePage />} />
+          <Route path="carrinho" element={<StorefrontCartPage />} />
+          <Route path="checkout" element={<StorefrontCheckoutPage />} />
+        </Route>
         <Route path="/loja/:slug" element={<StorefrontLayout />}>
           <Route index element={<StorefrontCatalogPage />} />
           <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
@@ -283,9 +290,10 @@ export function AppRoutes() {
             <Route path="/locais/:venueUuid/assentos/novo" element={<PermissionRoute requirement={ACCESS.seatsCreate}><SeatFormPage /></PermissionRoute>} />
             <Route path="/locais/:venueUuid/assentos/:seatUuid/editar" element={<PermissionRoute requirement={ACCESS.seatsUpdate}><SeatFormPage /></PermissionRoute>} />
 
-            <Route path="/vendas" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
+            <Route path="/vendas" element={<Navigate to="/vendas-manuais" replace />} />
             <Route path="/vendas-manuais" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
-            <Route path="/vendas/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
+            <Route path="/vendas/nova" element={<Navigate to="/vendas-manuais/nova" replace />} />
+            <Route path="/vendas-manuais/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />

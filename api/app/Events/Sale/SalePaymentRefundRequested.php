@@ -5,7 +5,7 @@ namespace App\Events\Sale;
 class SalePaymentRefundRequested
 {
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public string $refundProtocol,
         public ?int $actorId
     ) {

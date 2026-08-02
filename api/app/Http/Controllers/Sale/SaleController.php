@@ -55,7 +55,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SalePaymentResource($payment),
-            __('messages.order.payment_charge_created'),
+            __('messages.sale.payment_charge_created'),
             201
         );
     }
@@ -89,7 +89,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             SaleListResource::collection($list),
-            __('messages.order.list'),
+            __('messages.sale.list'),
             200,
             [
                 'pagination' => [
@@ -109,7 +109,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.show')
+            __('messages.sale.show')
         );
     }
 
@@ -129,7 +129,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.created'),
+            __('messages.sale.created'),
             201
         );
     }
@@ -150,7 +150,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.items_updated')
+            __('messages.sale.items_updated')
         );
     }
 
@@ -166,14 +166,14 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.completed')
+            __('messages.sale.completed')
         );
     }
 
     /**
      * Igual a index(), mas força origin=storefront (nunca lido do
      * request) — usado só pela tela dedicada de gestão de vendas online
-     * (perm:storefront-sales,read), independente da permissão orders,read.
+     * (perm:storefront-sales,read), independente da permissão sales,read.
      */
     public function indexStorefront(Request $request)
     {
@@ -204,7 +204,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             SaleListResource::collection($list),
-            __('messages.order.list'),
+            __('messages.sale.list'),
             200,
             [
                 'pagination' => [
@@ -229,7 +229,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.reopened')
+            __('messages.sale.reopened')
         );
     }
 
@@ -247,7 +247,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            $sale->is_paid ? __('messages.order.paid') : __('messages.order.partially_paid')
+            $sale->is_paid ? __('messages.sale.paid') : __('messages.sale.partially_paid')
         );
     }
 
@@ -263,7 +263,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.unpaid')
+            __('messages.sale.unpaid')
         );
     }
 
@@ -279,7 +279,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.installment_paid')
+            __('messages.sale.installment_paid')
         );
     }
 
@@ -295,7 +295,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.installment_unpaid')
+            __('messages.sale.installment_unpaid')
         );
     }
 
@@ -313,7 +313,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.cancelled')
+            __('messages.sale.cancelled')
         );
     }
 
@@ -329,7 +329,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.approved')
+            __('messages.sale.approved')
         );
     }
 
@@ -351,7 +351,7 @@ class SaleController extends Controller
                 'token' => $prepLink->token,
                 'expires_at' => $prepLink->expires_at,
             ],
-            __('messages.order.prep_link_generated'),
+            __('messages.sale.prep_link_generated'),
             201
         );
     }
@@ -368,7 +368,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.rejected')
+            __('messages.sale.rejected')
         );
     }
 
@@ -384,7 +384,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.cancellation_approved')
+            __('messages.sale.cancellation_approved')
         );
     }
 
@@ -400,7 +400,7 @@ class SaleController extends Controller
 
         return APIResponse::success(
             new SaleResource($sale),
-            __('messages.order.cancellation_rejected')
+            __('messages.sale.cancellation_rejected')
         );
     }
 }

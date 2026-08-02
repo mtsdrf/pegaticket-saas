@@ -22,7 +22,7 @@ return new class extends Migration {
 
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('final_customer_id')->constrained('final_customers')->cascadeOnDelete();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('sale_id')->constrained('sales')->cascadeOnDelete();
 
             $table->decimal('amount', 10, 2);
             $table->decimal('remaining_amount', 10, 2);

@@ -17,7 +17,7 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 2. preparar a arquitetura interna;
 3. criar a fundação persistente e operacional;
 4. deixar o projeto pronto para receber a primeira loja em homologação;
-5. só então implementar pedido, ações e catálogo.
+5. só então implementar venda, ações e catálogo.
 
 ---
 
@@ -25,8 +25,8 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 
 ### O que já existe e pode ser reaproveitado
 
-- `orders.origin` já existe e hoje suporta canais internos (`staff`, `storefront`, `counter`).
-- domínio de pedidos, itens, pagamento, entrega, cancelamento e operação já existe.
+- `sales.origin` já existe e hoje suporta canais internos (`staff`, `storefront`, `counter`).
+- domínio de vendas, itens, pagamento, entrega, cancelamento e operação já existe.
 - existe fila, jobs, auditoria e padrões de service/repository/DTO.
 - existe gestão de `API keys` e `webhook subscriptions` para integrações externas genéricas.
 - existe catálogo próprio, loja pública, horários, taxa de entrega, cupom, cashback e operação de loja.
@@ -42,7 +42,7 @@ Começar a integração do iFood sem inventar contrato técnico. O foco inicial 
 - nenhuma tabela de ações de marketplace;
 - nenhuma tabela de merchants/lojas externas;
 - nenhuma máquina de estados externa por parceiro;
-- nenhuma conciliação de pedido externo;
+- nenhuma conciliação de venda externo;
 - nenhum fluxo de homologação operacional de marketplace.
 
 Conclusão: o PegaTicket tem **fundação boa**, mas a integração iFood começa praticamente do zero na camada de marketplace.
@@ -69,7 +69,7 @@ Os itens abaixo foram confirmados a partir das páginas públicas do portal ofic
 - o iFood possui módulo de **Events**;
 - o iFood possui **polling de eventos**;
 - o iFood possui **webhook**;
-- o iFood possui **eventos de pedido**;
+- o iFood possui **eventos de venda**;
 - o iFood possui conceito de **merchant/workflow**;
 - o iFood possui documentação para **presence**;
 - o iFood possui fluxo de **generate test order** no portal;
@@ -82,8 +82,8 @@ Os itens abaixo foram confirmados a partir das páginas públicas do portal ofic
 
 - a integração do iFood no PegaTicket deve nascer com suporte estrutural para:
   - recebimento de eventos;
-  - consulta de detalhes do pedido;
-  - execução de ações no pedido;
+  - consulta de detalhes do venda;
+  - execução de ações no venda;
   - vínculo de merchants;
   - testes/homologação.
 
@@ -126,11 +126,11 @@ Regra ativa para esta frente:
    - conectar merchant;
    - receber evento;
    - persistir payload;
-   - normalizar pedido;
+   - normalizar venda;
    - não executar ação externa ainda.
 
 2. **Shadow mode operacional**
-   - importar pedido do iFood;
+   - importar venda do iFood;
    - comparar com fluxo interno;
    - medir duplicidade, atraso e consistência;
    - ainda sem aceitar/rejeitar pelo PegaTicket.
@@ -145,19 +145,19 @@ Regra ativa para esta frente:
 4. **Gradual rollout**
    - ampliar por loja;
    - ampliar por tenant;
-   - ampliar por capacidade: pedidos, depois ações, depois catálogo, depois presença.
+   - ampliar por capacidade: vendas, depois ações, depois catálogo, depois presença.
 
 ### Sequência técnica recomendada
 
 1. eventos;
-2. pedido canônico;
-3. ações de pedido;
+2. venda canônico;
+3. ações de venda;
 4. merchants e health;
 5. catálogo;
 6. disponibilidade/presença;
 7. conciliação e operação avançada.
 
-Não recomendo começar por catálogo antes do fluxo de pedidos.
+Não recomendo começar por catálogo antes do fluxo de vendas.
 
 ---
 
@@ -206,7 +206,7 @@ O provider do iFood deve expor capacidades, por exemplo:
 - suporta polling?
 - suporta catálogo?
 - suporta disponibilidade?
-- suporta ações de pedido?
+- suporta ações de venda?
 - suporta logística?
 - suporta conciliação?
 
@@ -251,7 +251,7 @@ Assim o PegaTicket não acopla o fluxo inteiro a uma suposição fixa.
    - merchant_id
    - platform
    - external_event_id
-   - external_order_id
+   - external_sale_id
    - event_type
    - payload
    - payload_hash
@@ -265,7 +265,7 @@ Assim o PegaTicket não acopla o fluxo inteiro a uma suposição fixa.
 5. `marketplace_actions`
    - tenant_id
    - integration_id
-   - order_id
+   - sale_id
    - platform
    - action
    - idempotency_key
@@ -281,13 +281,13 @@ Assim o PegaTicket não acopla o fluxo inteiro a uma suposição fixa.
    - error_message
    - correlation_id
 
-6. `marketplace_orders`
+6. `marketplace_sales`
    - tenant_id
    - integration_id
    - merchant_id
-   - order_id interno
+   - sale_id interno
    - platform
-   - external_order_id
+   - external_sale_id
    - external_display_id
    - external_status
    - internal_status
@@ -296,7 +296,7 @@ Assim o PegaTicket não acopla o fluxo inteiro a uma suposição fixa.
 ### Restrições mínimas
 
 - unique por `platform + integration_id + external_event_id`
-- unique por `platform + merchant_id + external_order_id`
+- unique por `platform + merchant_id + external_sale_id`
 - unique por `platform + integration_id + idempotency_key`
 
 ---
@@ -318,7 +318,7 @@ Entregas:
 - central interna de status de integração no backend.
 
 Critério de saída:
-- projeto consegue representar uma integração iFood sem ainda operar pedido real.
+- projeto consegue representar uma integração iFood sem ainda operar venda real.
 
 ## Fase 2 — Credenciamento e vínculo de merchant
 
@@ -348,35 +348,35 @@ Entregas:
 - polling oficial, se necessário ou recomendado;
 - persistência bruta do evento;
 - job de processamento;
-- retry, dead-letter e locks por pedido/evento;
+- retry, dead-letter e locks por venda/evento;
 - dashboard técnico mínimo de eventos.
 
 Critério de saída:
 - eventos do iFood entram com idempotência e trilha operacional.
 
-## Fase 4 — Normalização de pedido
+## Fase 4 — Normalização de venda
 
 Objetivo:
-- converter pedido do iFood no pedido canônico do PegaTicket.
+- converter venda do iFood no venda canônico do PegaTicket.
 
 Entregas:
 - DTO externo do iFood;
-- normalizador iFood → pedido canônico;
+- normalizador iFood → venda canônico;
 - mapeamento de cliente, endereço, itens, adicionais, taxas e pagamento;
-- persistência do vínculo `pedido interno ↔ external_order_id`;
-- adição de `ifood` ao ecossistema de origem do pedido.
+- persistência do vínculo `venda interno ↔ external_sale_id`;
+- adição de `ifood` ao ecossistema de origem do venda.
 
 Critério de saída:
-- pedido do iFood nasce corretamente dentro do fluxo interno, sem duplicidade.
+- venda do iFood nasce corretamente dentro do fluxo interno, sem duplicidade.
 
-## Fase 5 — Ações no pedido
+## Fase 5 — Ações no venda
 
 Objetivo:
 - permitir operação de aceite/rejeição e evolução de status via PegaTicket.
 
 Entregas:
-- aceitar pedido;
-- rejeitar pedido;
+- aceitar venda;
+- rejeitar venda;
 - marcar preparo;
 - marcar pronto;
 - despachar, se aplicável;
@@ -385,7 +385,7 @@ Entregas:
 - recuperação de timeout indeterminado.
 
 Critério de saída:
-- o operador consegue atuar no pedido do iFood sem acessar outro sistema.
+- o operador consegue atuar no venda do iFood sem acessar outro sistema.
 
 ## Fase 6 — Catálogo
 
@@ -429,7 +429,7 @@ Entregas:
 - backlog de eventos;
 - retry manual;
 - dead letters;
-- correlação de pedidos;
+- correlação de vendas;
 - health checks;
 - alertas;
 - runbook de incidente.
@@ -487,7 +487,7 @@ Critério de saída:
 - o primeiro parceiro será o **iFood**;
 - a implementação deve seguir **documentação oficial primeiro**;
 - não vamos assumir contrato privado a partir de memória;
-- o rollout deve começar por **pedido/evento**, não por catálogo;
+- o rollout deve começar por **venda/evento**, não por catálogo;
 - a operação deve nascer com trilha e reprocessamento, não só com endpoint "funcionando".
 
 ---
@@ -500,7 +500,7 @@ Estas decisões precisam ser fechadas antes da implementação real do adapter i
 2. já existem credenciais de homologação?
 3. já existe merchant/loja de teste disponível?
 4. o fluxo oficial para a aplicação será webhook, polling ou ambos?
-5. catálogo entra na V1 ou só pedidos e ações?
+5. catálogo entra na V1 ou só vendas e ações?
 6. aceite automático será permitido/necessário em algum tenant?
 7. a homologação inicial será com uma operação real já definida?
 
@@ -513,7 +513,7 @@ A V1 iFood só pode ser tratada como pronta quando houver:
 - integração autenticada;
 - merchant vinculado;
 - eventos recebidos com idempotência;
-- pedido criado sem duplicidade;
+- venda criado sem duplicidade;
 - ações mínimas operacionais funcionando;
 - observabilidade mínima ativa;
 - testes automatizados;

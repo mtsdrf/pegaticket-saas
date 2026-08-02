@@ -17,11 +17,11 @@ export const PLAN_SALES_INFO: PlanSalesInfo[] = [
     slug: 'pegaticket',
     name: 'PegaTicket',
     featureHighlights: [
-      'Pedidos internos e fila da bilheteria online',
-      'Clientes, produtos, categorias e tipos de item',
-      'Estoque, integracoes e planejamento de rotas',
+      'Vendas manuais e bilheteria online',
+      'Clientes, eventos, categorias e tipos de ingresso',
+      'Ingressos emitidos, adicionais, locais e portaria',
       'Analytics, financeiro e dashboard operacional',
-      'Contador, suporte e assinatura',
+      'Suporte e assinatura',
     ],
   },
 ]

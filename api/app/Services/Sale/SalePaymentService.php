@@ -58,15 +58,15 @@ class SalePaymentService
             $locked = Sale::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->cancelled_at !== null) {
-                throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+                throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
             if ($locked->is_paid) {
-                throw new InvalidSaleStateException(__('messages.order.already_paid'));
+                throw new InvalidSaleStateException(__('messages.sale.already_paid'));
             }
 
             if ($this->activePendingCharge($locked) !== null) {
-                throw new InvalidSaleStateException(__('messages.order.payment_charge_already_active'));
+                throw new InvalidSaleStateException(__('messages.sale.payment_charge_already_active'));
             }
         });
 
@@ -75,7 +75,7 @@ class SalePaymentService
         $payment = Payment::where('uuid', $result['payment_uuid'])->firstOrFail();
 
         event(new SalePaymentCharged(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             paymentUuid: $payment->uuid,
             method: $payment->method ?? 'pix',
             actorId: Auth::id()
@@ -240,14 +240,14 @@ class SalePaymentService
                 $refund->save();
 
                 ApplicationLogger::error('Falha ao solicitar estorno no PSP para cancelamento de pedido', [
-                    'order_uuid' => $order->uuid,
+                    'sale_uuid' => $order->uuid,
                     'payment_uuid' => $payment->uuid,
                 ]);
             }
         }
 
         event(new SalePaymentRefundRequested(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             refundProtocol: $refund->protocol,
             actorId: Auth::id()
         ));
@@ -274,7 +274,7 @@ class SalePaymentService
      * Diferente de createPixChargeForOrder(): não há PSP nem webhook, então a
      * linha nasce `paid` imediatamente. Cria SÓ a linha em `payments`
      * (payable=Sale, provider='manual', status='paid'); NÃO mexe em
-     * `orders.is_paid` — quem chama valida a soma de TODAS as formas contra o
+     * `sales.is_paid` — quem chama valida a soma de TODAS as formas contra o
      * total e decide marcar o pedido como pago só quando bate. Sem
      * transação/guard próprios: sempre chamado de dentro da transação do
      * fluxo operacional que fecha o pedido.
@@ -311,7 +311,7 @@ class SalePaymentService
         $order->save();
 
         event(new SalePaid(
-            orderUuid: $order->uuid,
+            saleUuid: $order->uuid,
             actorId: Auth::id()
         ));
     }

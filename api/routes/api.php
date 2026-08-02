@@ -906,7 +906,7 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:storefront-sales,deliver', 'throttle:30,1,storefront-sales-complete']);
 
             // Reaproveitam os MESMOS métodos de SaleController (reopen/
-            // pay) já usados pelas rotas /orders/*, só com a permissão
+            // pay) já usados pelas rotas /sales/*, só com a permissão
             // isolada da tela da loja. pay sem `amount` no body = pagamento
             // integral (a tela da loja nunca faz pagamento parcial).
             Route::patch('/{sale}/reopen', [SaleController::class, 'reopen'])
@@ -933,7 +933,7 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales-summary']);
 
             // Resultado por canal (roadmap A1.3) — drill-down até o pedido
-            // via GET /orders?origin=X&date_from=Y&date_to=Z (já existente).
+            // via GET /sales?origin=X&date_from=Y&date_to=Z (já existente).
             Route::get('/by-channel', [ReportController::class, 'byChannel'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-by-channel']);
 
@@ -1042,7 +1042,7 @@ Route::prefix('v1')->group(function () {
         // Estornos do PRÓPRIO tenant (roadmap 2026-07-24) — pedido pago
         // cancelado, arrependimento de assinatura e contestação, todos
         // reunidos numa única visão para o proprietário (hoje espalhados
-        // entre /orders e /subscription sem lista dedicada).
+        // entre /sales e /subscription sem lista dedicada).
         Route::prefix('subscription')->group(function () {
             Route::get('/refunds', [RefundController::class, 'index'])
                 ->middleware(['tenant', 'tenant.owner', 'perm:subscription,read', 'throttle:60,1,subscription-refunds']);

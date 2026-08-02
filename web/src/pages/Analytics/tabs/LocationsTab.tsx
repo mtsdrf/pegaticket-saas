@@ -38,7 +38,7 @@ export function LocationsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         isLoading={isLoading}
         items={toRankingItems(data?.cities)}
         emptyTitle="Nenhuma venda com cidade no período"
-        emptyDescription="Pedidos com endereço preenchido aparecem agrupados por cidade aqui."
+        emptyDescription="Vendas com endereço preenchido aparecem agrupadas por cidade aqui."
       />
 
       <RankingListCard
@@ -47,7 +47,7 @@ export function LocationsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
         isLoading={isLoading}
         items={toRankingItems(data?.neighborhoods)}
         emptyTitle="Nenhuma venda com bairro no período"
-        emptyDescription="Pedidos com endereço preenchido aparecem agrupados por bairro aqui."
+        emptyDescription="Vendas com endereço preenchido aparecem agrupadas por bairro aqui."
       />
     </Box>
   )

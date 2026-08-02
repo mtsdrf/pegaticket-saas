@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Schema;
  * OrderService::reject(), que também devolve o valor a remaining_amount do
  * lote de origem.
  *
- * order_id nullable de propósito: CashbackService::reserveRedemption()
+ * sale_id nullable de propósito: CashbackService::reserveRedemption()
  * roda ANTES de Order existir (o valor reservado precisa ser conhecido pra
- * calcular orders.total_amount), preenchido logo depois via
+ * calcular sales.total_amount), preenchido logo depois via
  * attachRedemptionToOrder() — mesma transação do checkout inteira, nunca
  * fica órfão de fato (rollback desfaz tudo se algo falhar no meio).
  */
@@ -28,7 +28,7 @@ return new class extends Migration {
 
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('final_customer_id')->constrained('final_customers')->cascadeOnDelete();
-            $table->foreignId('order_id')->nullable()->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('sale_id')->nullable()->constrained('sales')->cascadeOnDelete();
             $table->foreignId('cashback_earning_id')->constrained('cashback_earnings')->cascadeOnDelete();
 
             $table->decimal('amount', 10, 2);

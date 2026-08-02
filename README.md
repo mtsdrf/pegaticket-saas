@@ -14,7 +14,7 @@
 [![App](https://img.shields.io/badge/App-SaaS%20multiempresa-0F3D5E?style=for-the-badge)](web/)
 [![Experiência](https://img.shields.io/badge/Experiência-mobile--first-1B4965?style=for-the-badge)](#sobre)
 [![Plano](https://img.shields.io/badge/Plano-%C3%BAnico%20completo-2C7A7B?style=for-the-badge)](#funcionalidades)
-[![Operação](https://img.shields.io/badge/Operação-Loja%20online%20%C2%B7%20Pedidos%20%C2%B7%20Estoque-CF7A00?style=for-the-badge)](#funcionalidades)
+[![Operação](https://img.shields.io/badge/Operação-Loja%20online%20%C2%B7%20Vendas%20%C2%B7%20Estoque-CF7A00?style=for-the-badge)](#funcionalidades)
 
 [![Backend](https://img.shields.io/badge/Backend-Laravel%2013-8B1E3F?style=for-the-badge&logo=laravel&logoColor=white)](api/)
 [![Frontend](https://img.shields.io/badge/Frontend-React%2019-0E7490?style=for-the-badge&logo=react&logoColor=white)](web/)
@@ -29,7 +29,7 @@
 
 ## Sobre
 
-**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: pedidos, clientes, produtos, estoque, financeiro, loja online e visão analítica, tudo numa experiência clara, direta e mobile-first.
+**PegaTicket** é uma plataforma de gestão comercial multiempresa pensada para operação real: vendas, clientes, produtos, estoque, financeiro, loja online e visão analítica, tudo numa experiência clara, direta e mobile-first.
 
 Cada empresa opera isolada dentro do SaaS, com:
 
@@ -84,8 +84,8 @@ O **Portal do cliente final** e a **Loja online** vivem dentro de `web/`, sob ro
 
 ## Funcionalidades
 
-- **Operação comercial** — pedidos internos, pedidos da loja, clientes, produtos, categorias, estoque, expedição e histórico completo.
-- **Loja online** — catálogo público, checkout, acompanhamento do pedido, cashback, favoritos e portal do cliente final.
+- **Operação comercial** — vendas internos, vendas da loja, clientes, produtos, categorias, estoque, expedição e histórico completo.
+- **Loja online** — catálogo público, checkout, acompanhamento do venda, cashback, favoritos e portal do cliente final.
 - **Financeiro e analytics** — conciliação, relatórios, indicadores, recebíveis e visão gerencial por canal, cliente, produto e local.
 - **Assinatura e planos** — contratação, troca de plano, histórico de cobrança, Pix para faturas elegíveis, cancelamento, renovação e regras de consumidor.
 - **Multiempresa** — isolamento por empresa, plano único `PegaTicket`, permissões e overrides por funcionalidade.
@@ -150,7 +150,7 @@ Todo Model de domínio estende `BaseModel` (UUID público + PK interna, soft del
 
 Integração real com **Mercado Pago**:
 
-- **Pedido/fatura avulsa** — API de Orders (`/v1/orders`), Pix com QR code + copia-e-cola, cartão tokenizado no navegador (PCI-safe, PAN/CVV nunca chegam ao backend).
+- **Venda/fatura avulsa** — API de Orders (`/v1/orders`), Pix com QR code + copia-e-cola, cartão tokenizado no navegador (PCI-safe, PAN/CVV nunca chegam ao backend).
 - **Assinatura recorrente** — Preapproval, cobrança automática por ciclo, período de graça de 7 dias em caso de falha, suspensão de acesso após o prazo.
 - **Webhooks** — assinatura HMAC-SHA256 validada antes de qualquer escrita, idempotência por tipo de evento, nunca confia no payload sem reconsultar a API oficial.
 

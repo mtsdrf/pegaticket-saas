@@ -72,7 +72,7 @@ export function ClientsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
             paymentDelays.data?.map((client) => ({
               title: client.name,
               value: `${client.avg_days_to_pay} dia${client.avg_days_to_pay === 1 ? '' : 's'}`,
-              meta: `${client.paid_orders_count} venda${client.paid_orders_count === 1 ? '' : 's'} paga${client.paid_orders_count === 1 ? '' : 's'}`,
+              meta: `${client.paid_sales_count} venda${client.paid_sales_count === 1 ? '' : 's'} paga${client.paid_sales_count === 1 ? '' : 's'}`,
             })) ?? null
           }
           emptyTitle="Nenhum atraso de pagamento no período"

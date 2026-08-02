@@ -27,7 +27,7 @@ metadata:
 O sistema já tem CRUD de `tenant-roles`, `tenant-users` e `tenant-role-permissions`, e agora o middleware já permite que permissões do `TenantRole` abram rotas tenant-scoped. Na prática:
 
 - rotas globais (`users`, `groups`, `functionalities`, `tenants`, catálogos globais) dependem de `GroupPermission`
-- rotas tenant-scoped (`clients`, `products`, `stock`, `orders`, `reports`, `tenant_roles`, `tenant_users` etc.) dependem do middleware `tenant` e aceitam autorização por `GroupPermission` **ou** `TenantRolePermission`
+- rotas tenant-scoped (`clients`, `products`, `stock`, `sales`, `reports`, `tenant_roles`, `tenant_users` etc.) dependem do middleware `tenant` e aceitam autorização por `GroupPermission` **ou** `TenantRolePermission`
 - nessas rotas tenant-scoped, passar pela permissão do usuário já não basta: o módulo também precisa estar habilitado no plano do tenant
 - isso permite usar grupos globais mínimos para governança e perfis do tenant para operação real do dia a dia
 

@@ -12,7 +12,7 @@ class PortalMeResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'email' => $this->email,
-            'linked_stores' => $this->whenLoaded('links', fn() => $this->links->map(fn($link) => [
+            'linked_tenants' => $this->whenLoaded('links', fn() => $this->links->map(fn($link) => [
                 'tenant_name' => $link->tenant->name,
                 'confirmed_at' => $link->confirmed_at,
             ])),

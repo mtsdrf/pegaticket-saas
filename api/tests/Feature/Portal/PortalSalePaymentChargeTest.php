@@ -65,10 +65,10 @@ class PortalSalePaymentChargeTest extends TestCase
         ], $overrides));
     }
 
-    private function linkCustomerToOrder(string $token, string $orderUuid): void
+    private function linkCustomerToOrder(string $token, string $saleUuid): void
     {
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $orderUuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $saleUuid])
             ->assertStatus(200);
     }
 

@@ -20,45 +20,45 @@ class WriteWorkflowTransitionLog
     public function handle(object $event): void
     {
         match (true) {
-            $event instanceof SaleCreated => $this->handleOrderCreated($event),
-            $event instanceof SaleApproved => $this->handleOrderApproved($event),
-            $event instanceof SaleRejected => $this->handleOrderRejected($event),
-            $event instanceof SaleCompleted => $this->handleOrderCompleted($event),
-            $event instanceof SaleCancelled => $this->handleOrderCancelled($event),
+            $event instanceof SaleCreated => $this->handleSaleCreated($event),
+            $event instanceof SaleApproved => $this->handleSaleApproved($event),
+            $event instanceof SaleRejected => $this->handleSaleRejected($event),
+            $event instanceof SaleCompleted => $this->handleSaleCompleted($event),
+            $event instanceof SaleCancelled => $this->handleSaleCancelled($event),
             default => null,
         };
     }
 
-    private function handleOrderCreated(SaleCreated $event): void
+    private function handleSaleCreated(SaleCreated $event): void
     {
-        $order = Sale::query()->find($event->orderId);
+        $sale = Sale::query()->find($event->saleId);
 
-        if ($order === null) {
+        if ($sale === null) {
             return;
         }
 
-        $this->logger->recordOrderTransition(
-            order: $order,
+        $this->logger->recordSaleTransition(
+            sale: $sale,
             fromStage: null,
             transitionType: 'create',
             actorId: $event->actorId,
             meta: [
-                'origin' => $order->origin,
-                'status' => $order->status,
+                'origin' => $sale->origin,
+                'status' => $sale->status,
             ],
         );
     }
 
-    private function handleOrderApproved(SaleApproved $event): void
+    private function handleSaleApproved(SaleApproved $event): void
     {
-        $order = Sale::query()->find($event->orderId);
+        $sale = Sale::query()->find($event->saleId);
 
-        if ($order === null) {
+        if ($sale === null) {
             return;
         }
 
-        $this->logger->recordOrderTransition(
-            order: $order,
+        $this->logger->recordSaleTransition(
+            sale: $sale,
             fromStage: $event->fromStage,
             toStage: $event->toStage,
             transitionType: 'move',
@@ -66,16 +66,16 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderRejected(SaleRejected $event): void
+    private function handleSaleRejected(SaleRejected $event): void
     {
-        $order = Sale::query()->find($event->orderId);
+        $sale = Sale::query()->find($event->saleId);
 
-        if ($order === null) {
+        if ($sale === null) {
             return;
         }
 
-        $this->logger->recordOrderTransition(
-            order: $order,
+        $this->logger->recordSaleTransition(
+            sale: $sale,
             fromStage: $event->fromStage,
             toStage: $event->toStage,
             transitionType: 'reject',
@@ -84,16 +84,16 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderCompleted(SaleCompleted $event): void
+    private function handleSaleCompleted(SaleCompleted $event): void
     {
-        $order = Sale::query()->find($event->orderId);
+        $sale = Sale::query()->find($event->saleId);
 
-        if ($order === null) {
+        if ($sale === null) {
             return;
         }
 
-        $this->logger->recordOrderTransition(
-            order: $order,
+        $this->logger->recordSaleTransition(
+            sale: $sale,
             fromStage: $event->fromStage,
             toStage: $event->toStage,
             transitionType: 'move',
@@ -101,16 +101,16 @@ class WriteWorkflowTransitionLog
         );
     }
 
-    private function handleOrderCancelled(SaleCancelled $event): void
+    private function handleSaleCancelled(SaleCancelled $event): void
     {
-        $order = Sale::query()->find($event->orderId);
+        $sale = Sale::query()->find($event->saleId);
 
-        if ($order === null) {
+        if ($sale === null) {
             return;
         }
 
-        $this->logger->recordOrderTransition(
-            order: $order,
+        $this->logger->recordSaleTransition(
+            sale: $sale,
             fromStage: $event->fromStage,
             toStage: $event->toStage,
             transitionType: 'cancel',

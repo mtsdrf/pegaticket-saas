@@ -1,8 +1,8 @@
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
+import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
-import RestaurantMenuOutlinedIcon from '@mui/icons-material/RestaurantMenuOutlined'
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
@@ -87,7 +87,7 @@ function NavButton({
 
 /**
  * Barra de navegação fixa da loja pública (substitui o antigo
- * `StorefrontHeader`) — Cardápio / Perfil da loja / Carrinho / Conta. A lógica
+ * `StorefrontHeader`) — Eventos / Perfil da loja / Carrinho / Conta. A lógica
  * de "Conta" é PORTADA do header: deslogado abre o `OtpLoginDialog` (mesma
  * identidade OTP do Portal); logado abre o mesmo menu com os mesmos itens,
  * agora ancorado no item do nav e abrindo pra cima.
@@ -100,7 +100,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
   const [otpOpen, setOtpOpen] = useState(false)
-  const base = `/loja/${slug}`
+  const base = `/eventos/${slug}`
 
   function handleAccountClick(event: React.MouseEvent<HTMLElement>) {
     if (!isAuthenticated) {
@@ -123,7 +123,7 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
     { key: 'favoritos', label: 'Favoritos', icon: <FavoriteBorderOutlinedIcon fontSize="small" />, path: '/portal/favoritos' },
   ]
 
-  const isCardapio = pathname === base || pathname === `${base}/`
+  const isEventos = pathname === base || pathname === `${base}/`
   const isPerfil = pathname === `${base}/perfil`
   const isCarrinho = pathname === `${base}/carrinho` || pathname === `${base}/checkout`
   return (
@@ -153,9 +153,9 @@ export function StorefrontBottomNav({ slug, tenant }: StorefrontBottomNavProps) 
           }}
         >
           <NavButton
-            icon={<RestaurantMenuOutlinedIcon />}
-            label={storefrontEnabled ? 'Catálogo' : 'Empresa'}
-            active={isCardapio}
+            icon={<LocalActivityOutlinedIcon />}
+            label={storefrontEnabled ? 'Eventos' : 'Empresa'}
+            active={isEventos}
             onClick={() => navigate(base)}
           />
           <NavButton

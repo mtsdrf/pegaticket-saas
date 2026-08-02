@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\DB;
  * FinalCustomer absorveu Client por completo: não existe mais Client pra
  * criar. O que este service resolve/cria é o FinalCustomerTenantLink (o
  * registro POR-TENANT do cliente já autenticado via OTP), sem
- * tocar em PortalLinkService::link() (caminho de vínculo por order_uuid
+ * tocar em PortalLinkService::link() (caminho de vínculo por sale_uuid
  * pré-existente, continua intocado). Toda a lógica de preço/criação de
  * pedido é 100% reaproveitada de SaleService::create() — este
  * service só garante o link e monta o CreateSaleDTO com
@@ -169,7 +169,7 @@ class StorefrontCheckoutService
                     'tenant_id' => $tenant->id,
                     'coupon_id' => $orderDto->couponId,
                     'final_customer_id' => $customer->id,
-                    'order_id' => $order->id,
+                    'sale_id' => $order->id,
                     'redeemed_at' => now(),
                 ]);
             }
@@ -185,7 +185,7 @@ class StorefrontCheckoutService
      * de contato informados no checkout; em compras seguintes só retorna o
      * link já existente (não sobrescreve dado já capturado).
      * A prova de posse aqui é o próprio OTP já verificado (customer.jwt),
-     * não um order_uuid pré-existente como no fluxo de
+     * não um sale_uuid pré-existente como no fluxo de
      * PortalLinkService::link().
      */
     private function ensureCustomerLink(int $tenantId, FinalCustomer $customer, StorefrontCheckoutDTO $dto): FinalCustomerTenantLink
@@ -303,7 +303,7 @@ class StorefrontCheckoutService
                 'unit_price' => $this->resolveEffectiveUnitPrice($sellable, (float) $item['quantity']),
                 'notes' => isset($item['notes']) && trim((string) $item['notes']) !== '' ? trim((string) $item['notes']) : null,
                 // Participantes (spec 5.10 Etapa 2) — repassados como estão,
-                // SaleService::resolveOrderItemLine() já normaliza/descarta
+                // SaleService::resolveSaleItemLine() já normaliza/descarta
                 // pra item de event_product.
                 'attendee_data' => $item['participants'] ?? null,
             ];
@@ -382,24 +382,24 @@ class StorefrontCheckoutService
         $order->loadMissing('items');
 
         $holdItems = $hold->items->sortBy('id')->values();
-        $orderItems = $order->items->sortBy('id')->values();
+        $saleItems = $order->items->sortBy('id')->values();
 
         foreach ($holdItems as $index => $holdItem) {
-            $orderItem = $orderItems[$index] ?? null;
+            $saleItem = $saleItems[$index] ?? null;
 
-            if (!$orderItem) {
+            if (!$saleItem) {
                 abort(422, __('messages.inventory_hold.checkout_mismatch'));
             }
 
             if ($holdItem->ticket_batch_id !== null) {
-                $orderItem->ticket_batch_id = $holdItem->ticket_batch_id;
+                $saleItem->ticket_batch_id = $holdItem->ticket_batch_id;
             }
 
             if ($holdItem->seat_id !== null) {
-                $orderItem->seat_id = $holdItem->seat_id;
+                $saleItem->seat_id = $holdItem->seat_id;
             }
 
-            $orderItem->save();
+            $saleItem->save();
 
             if ($holdItem->ticketBatch) {
                 $holdItem->ticketBatch->increment('quantity_sold', (int) $holdItem->quantity);
@@ -408,7 +408,7 @@ class StorefrontCheckoutService
 
         $hold->forceFill([
             'final_customer_id' => $order->final_customer_id,
-            'converted_order_id' => $order->id,
+            'converted_sale_id' => $order->id,
             'status' => InventoryHold::STATUS_CONVERTED,
         ])->save();
     }

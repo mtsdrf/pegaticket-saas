@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Inscrição de Web Push (VAPID) do cliente final (roadmap Delivery, Fase 4
  * — Web Push real). Mesmo desvio deliberado de product_favorites/
- * order_ratings: sem BaseModel/soft delete/created_by (sempre criado pelo
+ * sale_ratings: sem BaseModel/soft delete/created_by (sempre criado pelo
  * próprio cliente final, nunca por staff), sem updated_at (subscribe é
  * upsert por endpoint, nunca update parcial de outros campos).
  * Escopado GLOBALMENTE por final_customer_id, não por tenant — o mesmo

@@ -14,7 +14,7 @@ class CashbackEarning extends BaseModel
     protected $fillable = [
         'tenant_id',
         'final_customer_id',
-        'order_id',
+        'sale_id',
         'amount',
         'remaining_amount',
         'status',
@@ -48,9 +48,9 @@ class CashbackEarning extends BaseModel
         return $this->belongsTo(FinalCustomer::class);
     }
 
-    public function order()
+    public function sale()
     {
-        return $this->belongsTo(Sale::class, 'order_id');
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
     public function redemptions()

@@ -8,7 +8,7 @@ class SaleRefundCreated
      * @param list<string> $ticketUuids
      */
     public function __construct(
-        public string $orderUuid,
+        public string $saleUuid,
         public string $saleRefundUuid,
         public string $type,
         public float $amount,

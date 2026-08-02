@@ -42,7 +42,7 @@ class PortalIdentityBoundaryTest extends TestCase
             ->assertJsonPath('code', 'TOKEN_INVALID');
 
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => (string) Str::uuid()])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => (string) Str::uuid()])
             ->assertStatus(401)
             ->assertJsonPath('code', 'TOKEN_INVALID');
     }

@@ -22,9 +22,9 @@ Classificação das 20 tabelas do `dump_base.sql`. Ver [[01-schema-overview]] pa
 | `categoria_produto` | Domínio | Categoria de produto (com prioridade/ordem) | sim |
 | `tipo_produto` | Domínio | Subtipo de produto, filho de categoria | sim |
 | `produto` | Entidade principal | Item do catálogo | sim |
-| `pedido` | Transacional (núcleo) | Venda/pedido do cliente | sim |
-| `pedido_produto` | Pivô/transacional | Item de linha do pedido (snapshot de preço) | herda do pedido |
-| `pedido_parcela` | Transacional | Parcela de pagamento do pedido | herda do pedido |
+| `venda` | Transacional (núcleo) | Venda/venda do cliente | sim |
+| `venda_produto` | Pivô/transacional | Item de linha do venda (snapshot de preço) | herda do venda |
+| `venda_parcela` | Transacional | Parcela de pagamento do venda | herda do venda |
 | `json` | Técnica/auditoria fraca | Log genérico de alteração por tabela | sim |
 
 ## Entidades principais (detalhado)
@@ -43,27 +43,27 @@ Observações: 1 usuário pertence a exatamente 1 estabelecimento (`estabelecime
 Descrição: cliente do estabelecimento. Tipo: Entidade principal.
 FKs: `estabelecimento_id`, `endereco_id` (belongsTo `endereco`), `dia_ideal_id`/`periodo_ideal_id` (nullable, belongsTo).
 Campos próprios: `numero`, `complemento` (ficam no **cliente**, não no `endereco` — permite vários clientes compartilharem o mesmo logradouro com números diferentes), `telefone_principal`/`telefone_secundario`, `observacao`, `confianca` (tinyint, default 1 — provável rating/flag de confiança para venda a prazo).
-Observações: `dia_ideal`/`periodo_ideal` + `confianca` + módulo de parcelas em `pedido` sugerem fortemente um negócio de **venda porta-a-porta com crediário** (compatível com o nome "PegaTicket" ~ "mascate" = vendedor ambulante/porta-a-porta). *Inferência de alta confiança, não confirmada.*
+Observações: `dia_ideal`/`periodo_ideal` + `confianca` + módulo de parcelas em `venda` sugerem fortemente um negócio de **venda porta-a-porta com crediário** (compatível com o nome "PegaTicket" ~ "mascate" = vendedor ambulante/porta-a-porta). *Inferência de alta confiança, não confirmada.*
 
 ### `produto`
 Descrição: item do catálogo. Tipo: Entidade principal.
 FKs: `estabelecimento_id`, `tipo_produto_id`.
 Campos próprios: `valor`, `descricao`, `imagem` (`longblob`), `disponivel` (flag), `quantidade` (nullable — provável estoque, mas não obrigatório: pode haver produto sem controle de estoque), `taxa_acrescimo` (nullable — provável acréscimo para venda parcelada).
 
-### `pedido`
-Descrição: venda/pedido. Tipo: Transacional (núcleo do negócio).
+### `venda`
+Descrição: venda/venda. Tipo: Transacional (núcleo do negócio).
 FKs: `estabelecimento_id`, `cliente_id`.
 Campos próprios: `entregue` (flag, default **1** — confirmado pelo banco; nome sugere "não entregue" mas default é entregue=true, possível inconsistência de nome/default a validar), `data_entrega`, `data_pagamento`, `valor_pago`, `valor_total` (NOT NULL), `pago` (flag, sem default), `parcelado` (flag, sem default), `observacao`.
 Observações: `pago`/`parcelado` sem default sugerem que a aplicação sempre define esses valores explicitamente na criação (nunca conta com default do banco) — *inferência*.
 
-### `pedido_produto`
-Descrição: item de linha do pedido. Tipo: Pivô/transacional.
-FKs: `pedido_id`, `produto_id`.
+### `venda_produto`
+Descrição: item de linha do venda. Tipo: Pivô/transacional.
+FKs: `venda_id`, `produto_id`.
 Campos próprios: `valor_momento_venda` (snapshot do preço na venda — **boa prática confirmada pelo banco**, preço não muda retroativamente se o produto mudar de preço depois), `quantidade_produto` (**float**, não inteiro — permite produto vendido por peso/fração).
 
-### `pedido_parcela`
-Descrição: parcela de pagamento do pedido. Tipo: Transacional.
-FKs: `pedido_id`.
+### `venda_parcela`
+Descrição: parcela de pagamento do venda. Tipo: Transacional.
+FKs: `venda_id`.
 Campos próprios: `numero` (ordem da parcela), `valor`, `pago`, `valor_pago`, `data_pagamento`, `observacao`.
 Observações: cada parcela é rastreada individualmente (paga ou não, valor pago, data) — suporta pagamento parcial de uma parcela específica. Confirma o modelo de crediário/parcelamento.
 

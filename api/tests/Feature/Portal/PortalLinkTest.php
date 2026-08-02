@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 /**
  * POST /portal/links — confirmação explícita de que o cliente final também
- * é o Client de uma loja específica, a partir de um order_uuid que ele já
+ * é o Client de uma loja específica, a partir de um sale_uuid que ele já
  * tem (mesmo espírito de posse do link de rastreio da Fase 5.1).
  */
 class PortalLinkTest extends TestCase
@@ -65,7 +65,7 @@ class PortalLinkTest extends TestCase
         $order = $this->createOrder($tenant, $client);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid]);
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $order->uuid]);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.tenant_name', $tenant->name);
@@ -78,7 +78,7 @@ class PortalLinkTest extends TestCase
         // 2 linhas no total: a do próprio $client (criada por
         // createClient(), CreatesSaleFixtures — já confirmada de
         // fábrica) + a nova, do $customer autenticado que acabou de
-        // vincular via order_uuid.
+        // vincular via sale_uuid.
         $this->assertDatabaseCount('final_customer_tenant_links', 2);
     }
 
@@ -92,11 +92,11 @@ class PortalLinkTest extends TestCase
         $order = $this->createOrder($tenant, $client);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $order->uuid])
             ->assertStatus(200);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $order->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $order->uuid])
             ->assertStatus(200);
 
         // Só 1 linha pro $customer autenticado (idempotente) — a segunda
@@ -116,11 +116,11 @@ class PortalLinkTest extends TestCase
         $secondOrder = $this->createOrder($tenant, $client);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $firstOrder->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $firstOrder->uuid])
             ->assertStatus(200);
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => $secondOrder->uuid])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => $secondOrder->uuid])
             ->assertStatus(200);
 
         $this->assertDatabaseCount('final_customer_tenant_links', 2);
@@ -128,12 +128,12 @@ class PortalLinkTest extends TestCase
     }
 
     #[Test]
-    public function rejects_a_nonexistent_order_uuid(): void
+    public function rejects_a_nonexistent_sale_uuid(): void
     {
         [, $token] = $this->authenticatedCustomer();
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/v1/portal/links', ['order_uuid' => (string) Str::uuid()])
+            ->postJson('/api/v1/portal/links', ['sale_uuid' => (string) Str::uuid()])
             ->assertStatus(422)
             ->assertJsonPath('code', 'VALIDATION_ERROR');
     }
@@ -141,7 +141,7 @@ class PortalLinkTest extends TestCase
     #[Test]
     public function requires_authentication(): void
     {
-        $this->postJson('/api/v1/portal/links', ['order_uuid' => (string) Str::uuid()])
+        $this->postJson('/api/v1/portal/links', ['sale_uuid' => (string) Str::uuid()])
             ->assertStatus(401);
     }
 }

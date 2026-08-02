@@ -684,7 +684,7 @@ export function StorefrontEventDetailPage() {
       <Box sx={{ maxWidth: 960, mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 } }}>
         <Button
           startIcon={<ArrowBackOutlinedIcon />}
-          onClick={() => navigate(`/loja/${slug}`)}
+          onClick={() => navigate(`/eventos/${slug}`)}
           sx={{ mb: 2, minHeight: 44 }}
         >
           Voltar ao catálogo

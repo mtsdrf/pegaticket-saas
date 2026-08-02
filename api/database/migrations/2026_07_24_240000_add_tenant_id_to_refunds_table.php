@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * (convenção do projeto é toda tabela de domínio ter `tenant_id`
  * denormalizado — ver `webhook_deliveries`); o vínculo só existia
  * indiretamente via `payment_id` -> `payments.payable_type/payable_id` ->
- * `orders.tenant_id`/`invoices.tenant_id`, e nem sempre existe (Refund de
+ * `sales.tenant_id`/`invoices.tenant_id`, e nem sempre existe (Refund de
  * arrependimento em trial pode nascer com `payment_id` nulo — ver
  * SubscriptionService::requestWithdrawal). Sem `tenant_id` próprio não
  * havia forma segura de escopar por tenant nesse caso. Nullable porque
@@ -34,8 +34,8 @@ return new class extends Migration {
             UPDATE refunds
             SET tenant_id = (
                 SELECT COALESCE(
-                    (SELECT orders.tenant_id FROM payments
-                        INNER JOIN orders ON orders.id = payments.payable_id
+                    (SELECT sales.tenant_id FROM payments
+                        INNER JOIN sales ON sales.id = payments.payable_id
                         WHERE payments.id = refunds.payment_id AND payments.payable_type = ?),
                     (SELECT invoices.tenant_id FROM payments
                         INNER JOIN invoices ON invoices.id = payments.payable_id

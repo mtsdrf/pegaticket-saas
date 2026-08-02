@@ -44,7 +44,7 @@ export function TenantRoleFormPage() {
           setIsActive(role.is_active)
         }
         const next: Record<string, string[]> = {}
-        let ordersDiscountLimit: number | null = null
+        let salesDiscountLimit: number | null = null
         permissions.forEach((permission) => {
           next[permission.functionality] = [...(next[permission.functionality] ?? []), permission.action]
           if (
@@ -52,14 +52,14 @@ export function TenantRoleFormPage() {
             permission.discount_limit_percent !== null &&
             permission.discount_limit_percent !== undefined
           ) {
-            ordersDiscountLimit =
-              ordersDiscountLimit === null
+            salesDiscountLimit =
+              salesDiscountLimit === null
                 ? permission.discount_limit_percent
-                : Math.min(ordersDiscountLimit, permission.discount_limit_percent)
+                : Math.min(salesDiscountLimit, permission.discount_limit_percent)
           }
         })
         setSelected(next)
-        setDiscountLimitPercent(ordersDiscountLimit !== null ? String(ordersDiscountLimit) : '')
+        setDiscountLimitPercent(salesDiscountLimit !== null ? String(salesDiscountLimit) : '')
       })
       .catch((error) => setLoadError(getApiErrorMessage(error, 'Não foi possível carregar os dados do perfil agora.')))
       .finally(() => setIsLoading(false))
@@ -159,7 +159,7 @@ export function TenantRoleFormPage() {
               htmlInput: { min: 0, max: 100, step: '0.01' },
             }}
           />
-          {!selected.orders?.length && discountLimitPercent.trim() && (
+          {!selected.sales?.length && discountLimitPercent.trim() && (
             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-warning)', mt: 0.5 }}>
               Este perfil não tem nenhuma permissão de "Vendas" marcada abaixo — o limite só tem efeito se o
               perfil puder criar/editar vendas.

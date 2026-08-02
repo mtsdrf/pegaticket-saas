@@ -27,7 +27,7 @@ import type { PaginatedResult, PaginationMeta } from '../types/pagination'
 /**
  * Os endpoints `/reports/analytics/*` estão sendo desenvolvidos em paralelo
  * no backend — os nomes de endpoint são finais, mas os nomes exatos de campo
- * podem variar levemente (ex.: `count` vs `orders_count`). Este service é a
+ * podem variar levemente (ex.: `count` vs `sales_count`). Este service é a
  * única camada que conhece o shape cru da resposta: normaliza tudo para os
  * view models de `types/analytics.ts` aceitando os sinônimos prováveis, de
  * forma que uma divergência pequena de contrato não quebre página nenhuma.
@@ -54,7 +54,7 @@ function asArray(value: unknown): Raw[] {
   return Array.isArray(value) ? (value as Raw[]) : []
 }
 
-const COUNT_KEYS = ['count', 'orders_count', 'order_count', 'quantity', 'qty']
+const COUNT_KEYS = ['count', 'sales_count', 'order_count', 'quantity', 'qty']
 const AMOUNT_KEYS = ['total_amount', 'revenue', 'amount', 'faturamento']
 const TICKET_KEYS = ['average_ticket', 'avg_ticket', 'ticket_medio', 'ticket']
 const NAME_KEYS = ['name', 'label']
@@ -79,13 +79,13 @@ function totalsFromBuckets(buckets: SalesSummaryBucket[]): SalesSummaryTotals {
 }
 
 /**
- * Contrato real do backend: `{ group_by, current: { from, to, total_orders,
+ * Contrato real do backend: `{ group_by, current: { from, to, total_sales,
  * total_revenue, average_ticket, buckets: [...] }, previous: { ...idem } }`
  * (`AnalyticsService::salesSummaryPeriod`). Os totais do período vêm no
  * próprio objeto do período, não num sub-objeto `totals`.
  */
 function normalizePeriodTotals(raw: Raw, buckets: SalesSummaryBucket[]): SalesSummaryTotals {
-  const count = pick(raw, ['total_orders', ...COUNT_KEYS])
+  const count = pick(raw, ['total_sales', ...COUNT_KEYS])
   const amount = pick(raw, ['total_revenue', ...AMOUNT_KEYS])
   if (count === undefined && amount === undefined) return totalsFromBuckets(buckets)
 
@@ -177,7 +177,7 @@ export async function getTopClients(params: AnalyticsPeriodParams & { limit: num
     const segment = toText(pick(raw, ['rfm', 'segment', 'rfm_segment', 'rfm_label'])).toLowerCase()
     return {
       name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
-      order_count: toNumber(pick(raw, ['order_count', 'orders_count', 'frequency', 'count'])),
+      order_count: toNumber(pick(raw, ['order_count', 'sales_count', 'frequency', 'count'])),
       total_amount: toNumber(pick(raw, [...AMOUNT_KEYS, 'monetary'])),
       rfm: (RFM_SEGMENTS as readonly string[]).includes(segment) ? (segment as TopClient['rfm']) : null,
     }
@@ -195,7 +195,7 @@ export async function getPaymentDelays(
   return items.map((raw) => ({
     name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
     avg_days_to_pay: toNumber(pick(raw, ['avg_days_to_pay', 'average_days_to_pay', 'avg_delay_days', 'avg_days_late'])),
-    paid_orders_count: toNumber(pick(raw, ['order_count', 'paid_orders_count', 'orders_count', 'count'])),
+    paid_sales_count: toNumber(pick(raw, ['order_count', 'paid_sales_count', 'sales_count', 'count'])),
   }))
 }
 
@@ -204,7 +204,7 @@ const OVERDUE_TYPES = ['pagamento', 'entrega'] as const
 /**
  * Divergência conhecida vs brief original: o backend NÃO expõe filtro por
  * `type` nem retorna `due_date` — o tipo (`pagamento`/`entrega`) vem como
- * campo de cada linha (`open_amount` = valor em aberto). Um pedido atrasado
+ * campo de cada linha (`open_amount` = valor em aberto). Uma venda atrasada
  * em pagamento E entrega aparece duas vezes, uma por tipo (decisão do backend).
  */
 export async function listOverdueOrders(
@@ -219,7 +219,7 @@ export async function listOverdueOrders(
   const rows = items.map((raw) => {
     const type = toText(pick(raw, ['type', 'tipo', 'source'])).toLowerCase()
     return {
-      order_uuid: toText(pick(raw, ['order_uuid', 'uuid'])),
+      sale_uuid: toText(pick(raw, ['sale_uuid', 'uuid'])),
       client_name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
       amount: toNumber(pick(raw, ['open_amount', ...AMOUNT_KEYS])),
       due_date: toText(pick(raw, ['due_date', 'date'])) || null,

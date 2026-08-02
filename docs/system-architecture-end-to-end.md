@@ -31,7 +31,7 @@ O **PegaTicket** é um SaaS multiempresa orientado a operação comercial, com f
 - clientes, endereços e catálogos auxiliares;
 - produtos, categorias, tipos, preços e opcionais;
 - estoque e movimentações;
-- pedidos internos e pedidos originados da loja/iFood;
+- vendas internos e vendas originados da loja/iFood;
 - relatórios operacionais e analíticos;
 - loja online, portal do cliente final e jornada de recompra;
 - assinatura, faturamento e integração com Mercado Pago;
@@ -49,8 +49,8 @@ Em 25/07/2026, o repositório representa um sistema já bastante amplo, com:
 - frontend principal em **React 19 / TypeScript / Vite / MUI / ag-Grid**;
 - base ativa em **MariaDB 11.8.8**;
 - tabelas operacionais mais pesadas em produção:
-  - `orders`: **42.25 MB**
-  - `order_items`: **31.16 MB**
+  - `sales`: **42.25 MB**
+  - `sale_items`: **31.16 MB**
   - `payments`: **20.64 MB**
 
 ## 3. Topologia do monorepo
@@ -194,7 +194,7 @@ Principais áreas já implementadas:
 - clientes;
 - produtos;
 - estoque;
-- pedidos;
+- vendas;
 - relatórios;
 - analytics;
 - integrações;
@@ -215,7 +215,7 @@ Fluxos públicos já existentes:
 - cálculo de taxa de entrega;
 - validação de cupom;
 - checkout;
-- acompanhamento de pedido;
+- acompanhamento de venda;
 - manifesto PWA.
 
 ### 6.3 Portal do cliente final
@@ -223,7 +223,7 @@ Fluxos públicos já existentes:
 Fluxos já implementados:
 
 - autenticação por OTP;
-- histórico de pedidos;
+- histórico de vendas;
 - favoritos;
 - cashback;
 - vouchers;
@@ -275,11 +275,11 @@ Usada no portal e em trechos da loja.
 Capacidades:
 
 - OTP;
-- consulta de pedidos;
+- consulta de vendas;
 - favoritos;
 - cashback;
 - vínculo com empresas;
-- pedidos novamente;
+- vendas novamente;
 - avaliação.
 
 ### 7.3 Escritório contábil (`AccountingOffice`)
@@ -414,14 +414,14 @@ Módulos:
 - devoluções;
 - ajustes.
 
-O estoque já é integrado aos fluxos de pedido e entrega.
+O estoque já é integrado aos fluxos de venda e entrega.
 
-### 9.5 Pedidos
+### 9.5 Vendas
 
 Módulos:
 
-- pedidos internos;
-- itens de pedido;
+- vendas internos;
+- itens de venda;
 - parcelas;
 - pagamento;
 - entrega;
@@ -429,9 +429,9 @@ Módulos:
 - fila operacional;
 - rastreio;
 - preparo;
-- origem do pedido.
+- origem do venda.
 
-O domínio de pedido é um dos agregados centrais do sistema.
+O domínio de venda é um dos agregados centrais do sistema.
 
 ### 9.6 Loja online e delivery direto
 
@@ -492,7 +492,7 @@ Módulos:
 
 - escritórios contábeis;
 - vínculos com empresas;
-- pedidos de acesso;
+- vendas de acesso;
 - mensagens;
 - relatórios do contador;
 - TOTP e auth segregada.
@@ -576,9 +576,9 @@ Comercial:
 
 Operação:
 
-- `orders`
-- `order_items`
-- `order_installments`
+- `sales`
+- `sale_items`
+- `sale_installments`
 - `stock_locations`
 - `stock_balances`
 - `stock_movements`
@@ -592,7 +592,7 @@ Loja/portal:
 - `coupon_redemptions`
 - `product_promotions`
 - `product_favorites`
-- `order_ratings`
+- `sale_ratings`
 - `push_subscriptions`
 - `cart_events`
 
@@ -625,7 +625,7 @@ Marketplace:
 - `marketplace_integrations`
 - `marketplace_merchants`
 - `marketplace_events`
-- `marketplace_orders`
+- `marketplace_sales`
 - `marketplace_actions`
 - `marketplace_catalog_mappings`
 - `marketplace_catalog_syncs`
@@ -645,8 +645,8 @@ Operações de caixa e preparo herdadas:
 
 Hotspots atuais de volume:
 
-- `orders`: **42.25 MB**
-- `order_items`: **31.16 MB**
+- `sales`: **42.25 MB**
+- `sale_items`: **31.16 MB**
 - `payments`: **20.64 MB**
 - `clients`: **1.20 MB**
 - `enderecos`: **0.94 MB**
@@ -654,7 +654,7 @@ Hotspots atuais de volume:
 
 Conclusão operacional:
 
-- o centro de gravidade atual de volume está em **pedidos + itens + pagamentos**;
+- o centro de gravidade atual de volume está em **vendas + itens + pagamentos**;
 - qualquer iniciativa séria de performance deve continuar olhando primeiro para:
   - paginação;
   - índices compostos;
@@ -703,7 +703,7 @@ Fluxos existentes:
 Fluxo típico:
 
 1. cadastro/configuração de clientes e catálogo;
-2. criação de pedido;
+2. criação de venda;
 3. reserva de estoque;
 4. faturamento/pagamento;
 5. entrega;
@@ -719,15 +719,15 @@ Fluxo típico:
 3. escolhe produtos;
 4. calcula taxa;
 5. aplica cupom, cashback e regras da empresa;
-6. fecha pedido;
-7. acompanha o pedido.
+6. fecha venda;
+7. acompanha o venda.
 
 ### 11.5 Portal do cliente final
 
 Fluxo típico:
 
 1. cliente autentica por OTP;
-2. consulta pedidos agregados;
+2. consulta vendas agregados;
 3. pede novamente;
 4. mantém favoritos;
 5. consulta vouchers/cashback;
@@ -747,7 +747,7 @@ Fluxo típico:
 
 Fluxo atual:
 
-1. pedido recebe diagnóstico fiscal;
+1. venda recebe diagnóstico fiscal;
 2. sistema valida pendências;
 3. prepara documento fiscal interno;
 4. gera snapshot estruturado;
@@ -765,10 +765,10 @@ Fluxo atual:
 1. integração iFood é cadastrada;
 2. merchants são sincronizados;
 3. webhook/polling materializam eventos;
-4. pedido externo é carregado;
-5. operação acompanha fila em `Pedidos iFood`;
+4. venda externo é carregado;
+5. operação acompanha fila em `Vendas iFood`;
 6. ações operacionais podem ser disparadas;
-7. pedido pode ser importado para o fluxo interno.
+7. venda pode ser importado para o fluxo interno.
 
 Complementos já implementados:
 
@@ -784,7 +784,7 @@ Complementos já implementados:
 Estado:
 
 - integração real em andamento/ativa no domínio financeiro;
-- uso para pedidos e assinatura;
+- uso para vendas e assinatura;
 - forte endurecimento de segurança e idempotência já documentado na memória.
 
 Pontos estruturais:
@@ -808,7 +808,7 @@ Estado:
 Estado:
 
 - módulo de integração já existe;
-- operacional de pedidos já funciona no código;
+- operacional de vendas já funciona no código;
 - catálogo e disponibilidade também já possuem base;
 - a homologação final depende da empresa configurar suas próprias credenciais e operação do parceiro.
 
@@ -885,7 +885,7 @@ Observação operacional:
 
 - anexos públicos quando servidos por storage público;
 - dependência de execução correta de worker/scheduler em infra limitada;
-- crescimento de tabelas centrais de pedidos/pagamentos;
+- crescimento de tabelas centrais de vendas/pagamentos;
 - futuras integrações fiscais oficiais;
 - homologação externa de parceiros.
 
@@ -923,7 +923,7 @@ Pontos fortes:
 - garantir worker/filas conforme módulos habilitados;
 - validar CORS e variáveis públicas do frontend;
 - validar segredos de pagamento, fiscal e marketplace por empresa/ambiente;
-- monitorar crescimento das tabelas de pedidos e pagamentos.
+- monitorar crescimento das tabelas de vendas e pagamentos.
 
 ## 17. Estado atual por maturidade de domínio
 
@@ -934,7 +934,7 @@ Pontos fortes:
 - RBAC híbrido;
 - clientes;
 - produtos;
-- pedidos;
+- vendas;
 - estoque;
 - relatórios;
 - loja;
@@ -962,7 +962,7 @@ Principais pontos a observar a partir do estado atual:
 
 ### 18.1 Banco e performance
 
-- `orders`, `order_items` e `payments` já concentram volume significativo;
+- `sales`, `sale_items` e `payments` já concentram volume significativo;
 - toda tela nova de listagem deve nascer paginada e com payload mínimo;
 - qualquer regressão em eager loading nesses módulos pode ficar cara rapidamente.
 

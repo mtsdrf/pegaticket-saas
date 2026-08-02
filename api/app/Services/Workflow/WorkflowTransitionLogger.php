@@ -8,8 +8,8 @@ use Carbon\CarbonInterface;
 
 class WorkflowTransitionLogger
 {
-    public function recordOrderTransition(
-        Sale $order,
+    public function recordSaleTransition(
+        Sale $sale,
         ?string $fromStage,
         ?string $toStage = null,
         string $transitionType = 'move',
@@ -18,14 +18,14 @@ class WorkflowTransitionLogger
         array $meta = [],
         ?CarbonInterface $movedAt = null,
     ): void {
-        $resolvedToStage = $toStage ?? $this->resolveOrderStage($order);
+        $resolvedToStage = $toStage ?? $this->resolveSaleStage($sale);
 
         $this->record(
-            tenantId: (int) $order->tenant_id,
+            tenantId: (int) $sale->tenant_id,
             actorId: $actorId,
-            workflowType: 'order',
-            entityId: (int) $order->id,
-            entityUuid: $order->uuid,
+            workflowType: 'sale',
+            entityId: (int) $sale->id,
+            entityUuid: $sale->uuid,
             fromStage: $fromStage,
             toStage: $resolvedToStage,
             transitionType: $transitionType,
@@ -35,29 +35,29 @@ class WorkflowTransitionLogger
         );
     }
 
-    public function resolveOrderStage(Sale $order): string
+    public function resolveSaleStage(Sale $sale): string
     {
-        if ($order->cancelled_at !== null) {
+        if ($sale->cancelled_at !== null) {
             return 'cancelled';
         }
 
-        if ($order->status === 'rejected') {
+        if ($sale->status === 'rejected') {
             return 'rejected';
         }
 
-        if ($order->status === 'cancellation_requested') {
+        if ($sale->status === 'cancellation_requested') {
             return 'cancellation_requested';
         }
 
-        if ($order->status === 'pending_approval') {
+        if ($sale->status === 'pending_approval') {
             return 'approval';
         }
 
-        if ($order->is_completed && !$order->is_paid) {
+        if ($sale->is_completed && !$sale->is_paid) {
             return 'financial_pending';
         }
 
-        if ($order->is_completed && $order->is_paid) {
+        if ($sale->is_completed && $sale->is_paid) {
             return 'completed';
         }
 

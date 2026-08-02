@@ -15,7 +15,6 @@ import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
 import * as storefrontSaleService from '../../services/storefrontSaleService'
 import * as workflowService from '../../services/workflowService'
-import { UI_RADIUS } from '../../styles/layoutStandards'
 import type { Sale, SaleOperationStage } from '../../types/sale'
 
 const STAGE_META: Record<SaleOperationStage, { label: string }> = {
@@ -27,22 +26,15 @@ const STAGE_META: Record<SaleOperationStage, { label: string }> = {
 const POLL_PER_PAGE = 20
 const REFRESH_INTERVAL_MS = 30000
 
-const STAGE_FILTER_OPTIONS: Array<{ value: 'all' | SaleOperationStage; label: string }> = [
-  { value: 'all', label: 'Todas' },
-  { value: 'approval', label: 'Aguardando aprovação' },
-  { value: 'confirmed', label: 'Confirmado' },
-  { value: 'financial_pending', label: 'Financeiro pendente' },
-]
-
 /**
- * Gestão de pedidos vindos do canal público (`/vendas-online`, permissão própria
+ * Gestão de vendas vindas do canal público (`/vendas-online`, permissão própria
  * storefront-sales,*). Lista simples (código/cliente/status/ação); toda a
  * gestão fica no modal por venda (`StorefrontSaleActionDialog`), que mostra
  * sempre 2 botões de ação escolhidos pelo status atual — não existe etapa
  * operacional intermediária de "preparo"/"despacho" pra ingresso.
  *
- * Polling de 30s toca `notificacao.mp3` quando um pedido inédito aparece com
- * a aba visível e recarrega o grid (sem exibir board — só sinaliza pedido novo).
+ * Polling de 30s toca `notificacao.mp3` quando uma venda inédita aparece com
+ * a aba visível e recarrega o grid (sem exibir board — só sinaliza venda nova).
  */
 export function StorefrontSaleManagementPage() {
   const { activeTenantUuid } = useAuth()
@@ -52,11 +44,8 @@ export function StorefrontSaleManagementPage() {
 
   const [selectedSaleUuid, setSelectedSaleUuid] = useState<string | null>(null)
   const [selectedTimelineSaleUuid, setSelectedTimelineSaleUuid] = useState<string | null>(null)
-  const [stageFilter, setStageFilter] = useState<'all' | SaleOperationStage>('all')
-  const [onlyCancellationRequested, setOnlyCancellationRequested] = useState(false)
-
   // UUIDs já vistos — populado sem tocar som no primeiro polling; só um UUID
-  // inédito num polling posterior dispara o som de pedido novo.
+  // inédito num polling posterior dispara o som de venda nova.
   const seenOrderUuidsRef = useRef<Set<string>>(new Set())
   const seededRef = useRef(false)
 
@@ -65,14 +54,12 @@ export function StorefrontSaleManagementPage() {
       if (!activeTenantUuid) return { rows: [], total: 0 }
       const result = await storefrontSaleService.listStorefrontSales({
         active_only: true,
-        ...(stageFilter !== 'all' ? { stage: stageFilter } : {}),
-        ...(onlyCancellationRequested ? { status: 'cancellation_requested' } : {}),
         page,
         per_page: perPage,
       })
       return { rows: result.items, total: result.pagination.total }
     },
-    [activeTenantUuid, stageFilter, onlyCancellationRequested],
+    [activeTenantUuid],
   )
 
   useEffect(() => {
@@ -182,37 +169,11 @@ export function StorefrontSaleManagementPage() {
     <>
       <CrudListPage
         title="Vendas online"
-        subtitle="Acompanhe e gerencie as vendas recebidas pelo canal público."
+        subtitle="Acompanhe e gerencie as vendas recebidas pelo canal publico."
         error={null}
         onRetry={() => undefined}
         isLoading={!activeTenantUuid}
         isEmpty={false}
-        toolbar={
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1, alignItems: 'center' }}>
-            {STAGE_FILTER_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                clickable
-                label={option.label}
-                color={stageFilter === option.value ? 'primary' : 'default'}
-                variant={stageFilter === option.value ? 'filled' : 'outlined'}
-                onClick={() => setStageFilter(option.value)}
-                sx={{ fontWeight: 600, height: 32, borderRadius: UI_RADIUS.pill }}
-              />
-            ))}
-            {canManageCancellation ? (
-              <Chip
-                clickable
-                icon={<CancelOutlinedIcon fontSize="small" />}
-                label="Só cancelamento pendente"
-                color={onlyCancellationRequested ? 'warning' : 'default'}
-                variant={onlyCancellationRequested ? 'filled' : 'outlined'}
-                onClick={() => setOnlyCancellationRequested((current) => !current)}
-                sx={{ fontWeight: 600, height: 32, borderRadius: UI_RADIUS.pill }}
-              />
-            ) : null}
-          </Stack>
-        }
       >
         <ServerDataGrid
           columns={columns}
@@ -222,19 +183,11 @@ export function StorefrontSaleManagementPage() {
           onGridReady={(api) => {
             gridApiRef.current = api
           }}
-          emptyState={
-            onlyCancellationRequested
-              ? {
-                  icon: <CancelOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: 'Nenhum cancelamento pendente no momento',
-                  description: 'Solicitações de cancelamento feitas pelos clientes aparecerão aqui.',
-                }
-              : {
-                  icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: 'Nenhuma venda pendente de ação no momento',
-                  description: 'Vendas concluídas, recusadas ou canceladas não aparecem aqui.',
-                }
-          }
+          emptyState={{
+            icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhuma venda pendente de ação no momento',
+            description: 'Vendas concluidas, recusadas ou canceladas nao aparecem aqui.',
+          }}
         />
       </CrudListPage>
 
@@ -265,10 +218,10 @@ export function StorefrontSaleManagementPage() {
   )
 }
 
-function deriveStage(order: Sale): SaleOperationStage | null {
-  if (order.cancelled_at || order.status === 'rejected') return null
-  if (order.status === 'pending_approval') return 'approval'
-  if (order.is_completed && !order.is_paid) return 'financial_pending'
-  if (order.status === 'confirmed' && !order.is_completed) return 'confirmed'
+function deriveStage(sale: Sale): SaleOperationStage | null {
+  if (sale.cancelled_at || sale.status === 'rejected') return null
+  if (sale.status === 'pending_approval') return 'approval'
+  if (sale.is_completed && !sale.is_paid) return 'financial_pending'
+  if (sale.status === 'confirmed' && !sale.is_completed) return 'confirmed'
   return null
 }

@@ -97,7 +97,7 @@ export function getSubscriptionHistory(page: number, perPage = 10): Promise<Pagi
 }
 
 /**
- * Histórico unificado de estornos do tenant (pedido pago cancelado,
+ * Histórico unificado de estornos do tenant (venda paga cancelada,
  * arrependimento de assinatura, contestação/chargeback) — visão só de
  * leitura, sem ação de solicitar novo estorno aqui.
  */

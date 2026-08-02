@@ -56,14 +56,10 @@ export const ACCESS = {
   /** Estorno externo (spec 5.14) — registro de estorno já feito fora do sistema (PagBank), functionality própria `sale_refunds`. */
   saleRefundsRead: tenant('sale_refunds', 'read'),
   saleRefundsCreate: tenant('sale_refunds', 'create'),
-  /** Tela dedicada de vendas online (`/vendas-online`) — permissão própria, independente de `orders,*`. */
+  /** Tela dedicada de vendas online (`/vendas-online`) — permissão própria, independente de `sales,*`. */
   storefrontSalesRead: tenant('storefront-sales', 'read'),
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),
   storefrontSalesCancel: tenant('storefront-sales', 'cancel'),
-  /** Não é entrega física — action key técnica `deliver`/`undeliver` mantida no backend (permissão já atribuída em produção). */
-  storefrontSalesComplete: tenant('storefront-sales', 'deliver'),
-  storefrontSalesReopen: tenant('storefront-sales', 'undeliver'),
-  storefrontSalesPay: tenant('storefront-sales', 'pay'),
   reportsRead: tenant('reports', 'read'),
   /** Conciliação financeira (roadmap A3.12) — `payments`/`refunds`/`webhook_events` do tenant. */
   financeRead: tenant('finance', 'read'),
@@ -85,7 +81,7 @@ export const ACCESS = {
   subscriptionUpdate: tenant('subscription', 'update'),
   tenantProfileRead: tenant('tenant-profile', 'read'),
   tenantProfileUpdate: tenant('tenant-profile', 'update'),
-  /** Exportar dados (roadmap A1.2) — ZIP com CSVs de clients/products/orders do tenant. */
+  /** Exportar dados (roadmap A1.2) — ZIP com CSVs de clientes, ingressos e vendas do tenant. */
   tenantProfileExport: tenant('tenant-profile', 'export'),
   /** Central de chamados nativa (roadmap A4, item 17) — functionality `support`, reaproveita actions `read`/`create` já existentes. */
   helpRequestsRead: tenant('support', 'read'),

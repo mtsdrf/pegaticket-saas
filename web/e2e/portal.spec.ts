@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Portal do cliente final', () => {
-  test('realiza login por OTP, mostra os pedidos vinculados e permite sair da conta', async ({ page }) => {
+  test('realiza login por OTP, mostra as compras vinculadas e permite sair da conta', async ({ page }) => {
     await page.route('**/api/v1/portal/auth/request-otp*', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.fallback()
@@ -85,7 +85,7 @@ test.describe('Portal do cliente final', () => {
           message: 'OK',
           data: [
             {
-              uuid: 'portal-order-1',
+              uuid: 'portal-sale-1',
               tenant_name: 'Loja QA',
               tenant_slug: 'loja-qa',
               is_paid: true,

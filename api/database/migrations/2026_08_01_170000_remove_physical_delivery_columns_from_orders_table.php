@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Remove o conceito de entrega física de orders — decisão confirmada
+ * Remove o conceito de entrega física de sales — decisão confirmada
  * 2026-08-01: PegaTicket é bilheteria de eventos, não delivery/comércio
  * físico (resíduo do produto antigo "Maskats"). Mantém propositalmente:
  * - is_delivered/delivered_at: continuam sendo o gate de conclusão do
@@ -23,24 +23,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            if (Schema::hasColumn('orders', 'delivery_fee')) {
+        Schema::table('sales', function (Blueprint $table) {
+            if (Schema::hasColumn('sales', 'delivery_fee')) {
                 $table->dropColumn('delivery_fee');
             }
 
-            if (Schema::hasColumn('orders', 'expected_delivery_date')) {
+            if (Schema::hasColumn('sales', 'expected_delivery_date')) {
                 $table->dropColumn('expected_delivery_date');
             }
 
-            if (Schema::hasColumn('orders', 'fulfillment_type')) {
+            if (Schema::hasColumn('sales', 'fulfillment_type')) {
                 $table->dropColumn('fulfillment_type');
             }
 
-            if (Schema::hasColumn('orders', 'is_out_for_delivery')) {
+            if (Schema::hasColumn('sales', 'is_out_for_delivery')) {
                 $table->dropColumn('is_out_for_delivery');
             }
 
-            if (Schema::hasColumn('orders', 'out_for_delivery_at')) {
+            if (Schema::hasColumn('sales', 'out_for_delivery_at')) {
                 $table->dropColumn('out_for_delivery_at');
             }
         });

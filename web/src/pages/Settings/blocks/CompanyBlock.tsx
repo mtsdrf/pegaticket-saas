@@ -168,7 +168,7 @@ export function CompanyBlock() {
   const { hasPermission } = useAuth()
   const canUpdate = hasPermission(ACCESS.tenantProfileUpdate)
   const publicBaseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  const storefrontUrl = `${publicBaseUrl}/loja/${profile?.slug ?? ''}`
+  const storefrontUrl = `${publicBaseUrl}/eventos/${profile?.slug ?? ''}`
 
   function syncProfile(data: TenantProfile) {
     setProfile(data)
@@ -280,7 +280,7 @@ export function CompanyBlock() {
             description="Use este endereço para divulgar o catálogo e receber compras pela vitrine pública."
             url={storefrontUrl}
             onCopy={handleCopyLink}
-            qrCodeFileName={`qr-code-loja-${profile?.slug ?? 'pegaticket'}`}
+            qrCodeFileName={`qr-code-eventos-${profile?.slug ?? 'pegaticket'}`}
           />
         </Stack>
       </Stack>

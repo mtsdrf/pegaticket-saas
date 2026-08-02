@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  * total do pedido) replicada de forma corrigida: mesmas 3 operações
  * (criar/editar/excluir), mas parcela paga é imutável e toda operação
  * precisa manter a soma de todas as parcelas exatamente igual a
- * `orders.total_amount` — é a correção do bug de integridade do legado,
+ * `sales.total_amount` — é a correção do bug de integridade do legado,
  * decisão consciente do usuário (não é suposição). Ver
  * `.claude/memory/architecture-decisions.md`.
  *
@@ -44,7 +44,7 @@ class SaleInstallmentService
 
             $installment = SaleInstallment::create([
                 'tenant_id' => $order->tenant_id,
-                'order_id' => $order->id,
+                'sale_id' => $order->id,
                 'installment_number' => $dto->installmentNumber,
                 'amount' => $this->centsToDecimal($amountCents),
                 'due_date' => $dto->dueDate,
@@ -54,7 +54,7 @@ class SaleInstallmentService
             $this->assertSumMatchesTotal($order);
 
             event(new SaleInstallmentCreated(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 installmentUuid: $installment->uuid,
                 actorId: Auth::id()
             ));
@@ -91,7 +91,7 @@ class SaleInstallmentService
             $changes = array_diff_assoc($installment->getAttributes(), $original);
 
             event(new SaleInstallmentUpdated(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 installmentUuid: $installment->uuid,
                 actorId: Auth::id(),
                 changes: array_keys($changes)
@@ -121,7 +121,7 @@ class SaleInstallmentService
             $this->assertSumMatchesTotal($order);
 
             event(new SaleInstallmentDeleted(
-                orderUuid: $order->uuid,
+                saleUuid: $order->uuid,
                 installmentUuid: $installmentUuid,
                 actorId: Auth::id()
             ));
@@ -136,7 +136,7 @@ class SaleInstallmentService
      * architecture-decisions.md). Aqui a soma só é validada UMA VEZ, no
      * final da operação inteira: os itens podem estar temporariamente
      * "desbalanceados" entre si durante o processamento, só o resultado
-     * final precisa bater com `orders.total_amount`.
+     * final precisa bater com `sales.total_amount`.
      *
      * @param array<int, array{uuid?: string, installment_number: int, amount: float, due_date: string}> $items
      * @return \Illuminate\Support\Collection<int, SaleInstallment> Todas as parcelas ativas do pedido após a operação (pagas + as recém-processadas), ordenadas por installment_number.
@@ -153,7 +153,7 @@ class SaleInstallmentService
             // Trava TODAS as parcelas do pedido (pagas + não pagas) —
             // serializa reallocate() concorrente com payInstallment()/os
             // 3 endpoints individuais sobre o mesmo pedido.
-            $existing = SaleInstallment::where('order_id', $order->id)
+            $existing = SaleInstallment::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->lockForUpdate()
                 ->get()
@@ -174,21 +174,21 @@ class SaleInstallmentService
 
                 if ($uuid !== null) {
                     if (in_array($uuid, $seenUuids, true)) {
-                        throw new InvalidSaleStateException(__('messages.order.installment_duplicate_reference'));
+                        throw new InvalidSaleStateException(__('messages.sale.installment_duplicate_reference'));
                     }
                     $seenUuids[] = $uuid;
 
                     if (in_array($uuid, $paidUuids, true)) {
-                        throw new InvalidSaleStateException(__('messages.order.installment_immutable_when_paid'));
+                        throw new InvalidSaleStateException(__('messages.sale.installment_immutable_when_paid'));
                     }
 
                     if (!$unpaidExisting->has($uuid)) {
-                        throw new InvalidSaleStateException(__('messages.order.installment_not_found_in_order'));
+                        throw new InvalidSaleStateException(__('messages.sale.installment_not_found_in_order'));
                     }
                 }
 
                 if (in_array($item['installment_number'], $seenNumbers, true)) {
-                    throw new InvalidSaleStateException(__('messages.order.installment_number_duplicate'));
+                    throw new InvalidSaleStateException(__('messages.sale.installment_number_duplicate'));
                 }
                 $seenNumbers[] = $item['installment_number'];
             }
@@ -203,7 +203,7 @@ class SaleInstallmentService
             // globalmente única, então o sentinela nunca colide). Duas
             // razões pra isso ser necessário, não só um reordenamento
             // simples de delete/update/create:
-            // (a) a constraint única (order_id, installment_number) NÃO
+            // (a) a constraint única (sale_id, installment_number) NÃO
             //     filtra deleted_at — soft delete não libera o número no
             //     banco, então excluir a parcela #2 e criar uma nova #2
             //     no mesmo lote colide mesmo com a exclusão acontecendo
@@ -229,7 +229,7 @@ class SaleInstallmentService
                 $this->releaseNumberAndDelete($installment);
 
                 event(new SaleInstallmentDeleted(
-                    orderUuid: $order->uuid,
+                    saleUuid: $order->uuid,
                     installmentUuid: $uuid,
                     actorId: Auth::id()
                 ));
@@ -255,7 +255,7 @@ class SaleInstallmentService
                 $installment->save();
 
                 event(new SaleInstallmentUpdated(
-                    orderUuid: $order->uuid,
+                    saleUuid: $order->uuid,
                     installmentUuid: $installment->uuid,
                     actorId: Auth::id(),
                     changes: ['installment_number', 'amount', 'due_date']
@@ -274,7 +274,7 @@ class SaleInstallmentService
 
                 $created = SaleInstallment::create([
                     'tenant_id' => $order->tenant_id,
-                    'order_id' => $order->id,
+                    'sale_id' => $order->id,
                     'installment_number' => $item['installment_number'],
                     'amount' => $this->centsToDecimal($amountCents),
                     'due_date' => $item['due_date'],
@@ -282,7 +282,7 @@ class SaleInstallmentService
                 ]);
 
                 event(new SaleInstallmentCreated(
-                    orderUuid: $order->uuid,
+                    saleUuid: $order->uuid,
                     installmentUuid: $created->uuid,
                     actorId: Auth::id()
                 ));
@@ -292,7 +292,7 @@ class SaleInstallmentService
             // permite redistribuir valor entre parcelas numa chamada só.
             $this->assertSumMatchesTotal($order);
 
-            return SaleInstallment::where('order_id', $order->id)
+            return SaleInstallment::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->orderBy('installment_number')
                 ->get();
@@ -302,7 +302,7 @@ class SaleInstallmentService
     /**
      * Move installment_number pra um sentinela único (fora de qualquer
      * faixa real de uso) antes do soft delete — a constraint única
-     * `uniq_order_installment_number` (order_id, installment_number)
+     * `uniq_order_installment_number` (sale_id, installment_number)
      * NÃO filtra `deleted_at`, então soft delete sozinho não libera o
      * número no banco. Sem isso, criar/editar outra parcela reaproveitando
      * o mesmo número (seja no mesmo `reallocate()` ou numa chamada
@@ -327,11 +327,11 @@ class SaleInstallmentService
     private function assertMutable(Sale $order): void
     {
         if (!$order->is_installment) {
-            throw new InvalidSaleStateException(__('messages.order.not_installment'));
+            throw new InvalidSaleStateException(__('messages.sale.not_installment'));
         }
 
         if ($order->cancelled_at !== null) {
-            throw new InvalidSaleStateException(__('messages.order.already_cancelled'));
+            throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
         }
     }
 
@@ -341,7 +341,7 @@ class SaleInstallmentService
     private function assertInstallmentIsEditable(SaleInstallment $installment): void
     {
         if ($installment->is_paid) {
-            throw new InvalidSaleStateException(__('messages.order.installment_immutable_when_paid'));
+            throw new InvalidSaleStateException(__('messages.sale.installment_immutable_when_paid'));
         }
     }
 
@@ -352,14 +352,14 @@ class SaleInstallmentService
      */
     private function assertInstallmentNumberAvailable(Sale $order, int $installmentNumber, ?int $excludeInstallmentId = null): void
     {
-        $exists = SaleInstallment::where('order_id', $order->id)
+        $exists = SaleInstallment::where('sale_id', $order->id)
             ->where('installment_number', $installmentNumber)
             ->whereNull('deleted_at')
             ->when($excludeInstallmentId, fn($q) => $q->whereKeyNot($excludeInstallmentId))
             ->exists();
 
         if ($exists) {
-            throw new InvalidSaleStateException(__('messages.order.installment_number_duplicate'));
+            throw new InvalidSaleStateException(__('messages.sale.installment_number_duplicate'));
         }
     }
 
@@ -367,7 +367,7 @@ class SaleInstallmentService
      * Regra 4 — o núcleo da correção do bug do legado: depois de
      * qualquer create/update/delete, a soma de TODAS as parcelas
      * (pagas + não pagas) precisa bater exatamente com
-     * orders.total_amount, em centavos (mesmo padrão de precisão do
+     * sales.total_amount, em centavos (mesmo padrão de precisão do
      * resto do serviço, ver SaleService::centsToDecimal). Se não bater,
      * a exceção propaga e o DB::transaction() do caller reverte a
      * operação inteira — nunca persiste um estado inconsistente.
@@ -378,7 +378,7 @@ class SaleInstallmentService
 
         $sumCents = 0;
         foreach (
-            SaleInstallment::where('order_id', $order->id)
+            SaleInstallment::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->pluck('amount') as $amount
         ) {
@@ -391,7 +391,7 @@ class SaleInstallmentService
 
         $diffCents = $totalCents - $sumCents;
 
-        throw new InvalidSaleStateException(__('messages.order.installment_sum_mismatch', [
+        throw new InvalidSaleStateException(__('messages.sale.installment_sum_mismatch', [
             'sum' => $this->centsToDecimal($sumCents),
             'total' => $this->centsToDecimal($totalCents),
             'diff' => $this->centsToDecimal(abs($diffCents)),
@@ -431,7 +431,7 @@ class SaleInstallmentService
      */
     private function assertInstallmentBelongsToOrder(Sale $order, SaleInstallment $installment): void
     {
-        if ((int) $installment->order_id !== (int) $order->id) {
+        if ((int) $installment->sale_id !== (int) $order->id) {
             abort(404);
         }
     }

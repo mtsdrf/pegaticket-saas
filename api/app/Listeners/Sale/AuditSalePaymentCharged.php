@@ -13,7 +13,7 @@ class AuditSalePaymentCharged
             event: 'order_payment_charged',
             model: null,
             meta: [
-                'order_uuid' => $event->orderUuid,
+                'sale_uuid' => $event->saleUuid,
                 'payment_uuid' => $event->paymentUuid,
                 'method' => $event->method,
             ],

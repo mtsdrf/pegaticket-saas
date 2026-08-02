@@ -50,7 +50,7 @@ function loadSdkScript(): Promise<void> {
  * abre) e devolve uma instância pronta de `MercadoPago`. A tokenização
  * (`createCardToken`) acontece inteiramente no navegador, direto contra a
  * API do Mercado Pago — nenhum dado de cartão cru chega ao backend PegaTicket,
- * só o token resultante (mesmo padrão já usado no checkout Pix/pedido, ver
+ * só o token resultante (mesmo padrão já usado no checkout Pix/venda, ver
  * `.claude/memory/architecture-decisions.md`).
  */
 export function useMercadoPagoSdk(enabled: boolean) {

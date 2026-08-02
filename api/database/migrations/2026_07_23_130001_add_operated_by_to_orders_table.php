@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             // Achado durante migrate:fresh (2026-07-31, fora do escopo da
             // migração Client->FinalCustomer): ->after('cash_session_id')
             // referenciava uma coluna que nunca chegou a existir em
@@ -27,7 +27,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn('operated_by');
         });
     }

@@ -669,7 +669,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
     /**
      * Resolve o `payer` de uma cobrança de PEDIDO (cliente final → tenant).
      * `POST /v1/orders` exige ao menos 1 propriedade preenchida em `payer` —
-     * `orders.final_customer_id` referencia `final_customers` diretamente
+     * `sales.final_customer_id` referencia `final_customers` diretamente
      * (FinalCustomer absorveu Client em 2026-07-31), que já tem `email`
      * (login do Portal/loja). CPF/CNPJ vem do FinalCustomerTenantLink
      * (dado por-tenant). Prioridade: e-mail do FinalCustomer > CPF/CNPJ do

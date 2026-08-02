@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * FinalCustomer absorve Client por completo (decisão 2026-07-31):
  * - clients: descontinuado, substituído por final_customers +
- *   final_customer_tenant_links (orders.client_id e
+ *   final_customer_tenant_links (sales.client_id e
  *   final_customer_tenant_links.client_id já removidos em migrations
  *   anteriores desta mesma leva).
  * - client_categories/client_client_categories: CRM B2B morto, sem

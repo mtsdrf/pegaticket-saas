@@ -97,7 +97,7 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
       }}
     >
       <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 520 }}>
-        <Button startIcon={<ArrowBackIcon />} color="inherit" onClick={() => navigate(`/loja/${slug}/carrinho`)} sx={{ ml: -1, mb: 1 }}>
+        <Button startIcon={<ArrowBackIcon />} color="inherit" onClick={() => navigate(`/eventos/${slug}/carrinho`)} sx={{ ml: -1, mb: 1 }}>
           Voltar ao carrinho
         </Button>
         <Stack spacing={0.5} sx={{ alignItems: 'center', mb: 3 }}>
@@ -305,7 +305,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   // Checkout Pix (roadmap Fase B, item 1) — só oferecido se a loja aceita
   // Pix (`tenant_settings.accepted_payment_methods`). Escolha é só local:
   // o backend de checkout não recebe forma de pagamento, a cobrança Pix é
-  // gerada à parte, depois do pedido criado (ver handleSubmit).
+  // gerada à parte, depois da venda criada (ver handleSubmit).
   const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<PaymentMethod[]>([])
   // Radio "combinar na entrega" vs "Pagar com Pix agora" foi removido
   // temporariamente (sistema não processa pagamento ainda) — `paymentMethod`
@@ -550,7 +550,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     // a tela de checkout "viva" com um hold morto (spec item 2).
     shouldReleaseHoldRef.current = false
     setHold(null)
-    navigate(`/loja/${slug}/carrinho`, {
+    navigate(`/eventos/${slug}/carrinho`, {
       state: {
         holdExpiredMessage:
           'Sua reserva temporária expirou antes da finalização. Revise seus itens e tente novamente.',
@@ -668,7 +668,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         // Venda já criada com sucesso a partir daqui — trocar de tela pra
         // gerar o Pix, nunca perder a compra se a cobrança falhar (o
         // PixPaymentPanel sempre oferece "continuar sem pagar agora").
-        setPaidSaleUuid(result.order.uuid)
+      setPaidSaleUuid(result.sale.uuid)
       } else {
         navigate(`/rastreio/${result.order.uuid}`)
       }
@@ -1045,7 +1045,7 @@ export function StorefrontCheckoutPage() {
           <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mb: 2.5 }}>
             Volte ao catálogo e adicione produtos antes de finalizar a compra.
           </Typography>
-          <Button variant="contained" onClick={() => navigate(`/loja/${slug}`)}>
+          <Button variant="contained" onClick={() => navigate(`/eventos/${slug}`)}>
             Ver catálogo
           </Button>
         </Paper>

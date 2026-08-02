@@ -32,7 +32,7 @@ class PlanGatePermissionsTest extends TestCase
             ['key' => 'create', 'name' => 'Create', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $ordersFunctionalityId = DB::table('functionalities')->insertGetId([
+        $salesFunctionalityId = DB::table('functionalities')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'name' => 'Orders',
             'slug' => 'sales',
@@ -102,7 +102,7 @@ class PlanGatePermissionsTest extends TestCase
         DB::table('tenant_role_permissions')->insert([
             'uuid' => (string) Str::uuid(),
             'tenant_role_id' => $this->role->id,
-            'functionality_id' => $ordersFunctionalityId,
+            'functionality_id' => $salesFunctionalityId,
             'action_id' => DB::table('actions')->where('key', 'read')->value('id'),
             'created_at' => now(),
             'updated_at' => now(),

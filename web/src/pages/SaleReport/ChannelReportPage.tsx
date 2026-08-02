@@ -23,8 +23,8 @@ const CHANNEL_ICONS: Record<string, SvgIconComponent> = {
 }
 
 /**
- * Resultado por canal (roadmap A1.3) — agregação por `orders.origin`.
- * Drill-down: clicar num canal leva pro relatório de pedidos existente
+ * Resultado por canal (roadmap A1.3) — agregação por `sales.origin`.
+ * Drill-down: clicar num canal leva pro relatório de vendas existente
  * (`/relatorios/vendas`), filtrado por aquele `origin` + mesmo período
  * (query string, ver `SaleReportListPage`).
  */

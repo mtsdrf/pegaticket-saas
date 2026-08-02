@@ -31,7 +31,7 @@ class SaleRefundController extends Controller
 
         return APIResponse::success(
             SaleRefundResource::collection($refunds),
-            __('messages.order.refund_list')
+            __('messages.sale.refund_list')
         );
     }
 
@@ -47,7 +47,7 @@ class SaleRefundController extends Controller
 
         return APIResponse::success(
             new SaleRefundResource($refund),
-            __('messages.order.refund_created'),
+            __('messages.sale.refund_created'),
             201
         );
     }
@@ -60,7 +60,7 @@ class SaleRefundController extends Controller
      */
     public function receipt(Sale $sale, SaleRefund $refund)
     {
-        if ((int) $sale->tenant_id !== (int) app('tenant_id') || (int) $refund->order_id !== (int) $sale->id) {
+        if ((int) $sale->tenant_id !== (int) app('tenant_id') || (int) $refund->sale_id !== (int) $sale->id) {
             abort(404);
         }
 

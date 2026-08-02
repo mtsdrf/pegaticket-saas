@@ -58,7 +58,7 @@ export function StorefrontCartPage() {
         <Button
           startIcon={<ArrowBackIcon />}
           color="inherit"
-          onClick={() => navigate(`/loja/${slug}`)}
+          onClick={() => navigate(`/eventos/${slug}`)}
           sx={{ ml: -1, mb: 2 }}
         >
           Continuar comprando
@@ -79,7 +79,7 @@ export function StorefrontCartPage() {
               title="Seu carrinho está vazio"
               description="Volte ao catálogo e adicione produtos para continuar."
               action={
-                <Button variant="contained" onClick={() => navigate(`/loja/${slug}`)}>
+                <Button variant="contained" onClick={() => navigate(`/eventos/${slug}`)}>
                   Ver catálogo
                 </Button>
               }
@@ -212,7 +212,7 @@ export function StorefrontCartPage() {
             <Button
               variant="contained"
               fullWidth
-              onClick={() => navigate(`/loja/${slug}/checkout`)}
+              onClick={() => navigate(`/eventos/${slug}/checkout`)}
               sx={{ minHeight: UI_SIZE.controlLarge }}
             >
               Continuar para o checkout

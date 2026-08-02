@@ -25,7 +25,7 @@ metadata:
   - autenticação
   - multi-tenancy
   - RBAC híbrido global + empresa
-  - clientes, produtos, estoque e pedidos
+  - clientes, produtos, estoque e vendas
   - loja online e portal do cliente
   - PDV e balcão com offline controlado
   - assinatura SaaS e billing
@@ -35,35 +35,35 @@ metadata:
   - suporte, contabilidade e treinamento
 - Conclusão principal da auditoria:
   - o maior gap do produto não é falta de módulo
-  - o maior gap é a fragmentação da operação em trilhas paralelas de pedido:
-    - pedido interno
-    - pedido da loja
-    - pedido do PDV
-    - pedido do balcão
-    - pedido do iFood
+  - o maior gap é a fragmentação da operação em trilhas paralelas de venda:
+    - venda interno
+    - venda da loja
+    - venda do PDV
+    - venda do balcão
+    - venda do iFood
   - todas convergem parcialmente para `Order`, mas a experiência operacional ainda não converge para uma esteira única
 - Comparação funcional com a referência pública do Anota AI:
   - o PegaTicket já possui fundações técnicas mais profundas em várias áreas
   - o concorrente parece mais simples na narrativa operacional
-  - a lição prática não é copiar UI, e sim unificar a experiência do pedido ponta a ponta
+  - a lição prática não é copiar UI, e sim unificar a experiência do venda ponta a ponta
 - Proposta arquitetural e de produto registrada:
-  - unificar a navegação principal por esteira operacional, não por origem do pedido
-  - tratar origem apenas como atributo/filtro do pedido
+  - unificar a navegação principal por esteira operacional, não por origem do venda
+  - tratar origem apenas como atributo/filtro do venda
   - criar ou consolidar quatro camadas centrais:
-    - central operacional de pedidos
+    - central operacional de vendas
     - central de produção
     - central de expedição
     - central de entregas
   - reforçar um fluxo guiado de implantação inicial da empresa
 - Backlog prioritário derivado da auditoria:
   - `P0`
-    - transformar `Pedidos` em central operacional multi-origem
+    - transformar `Vendas` em central operacional multi-origem
     - explicitar produção
     - explicitar expedição
     - criar implantação guiada da empresa
     - consolidar linguagem de status e transições
   - `P1`
-    - reposicionar `Pedidos da loja` e `Pedidos iFood` como visões especializadas da mesma operação
+    - reposicionar `Vendas da loja` e `Vendas iFood` como visões especializadas da mesma operação
     - integrar melhor balcão/KDS com a esteira canônica
     - criar painel de saúde operacional de integrações e conflitos offline
   - `P2`
@@ -77,7 +77,7 @@ metadata:
   - `frontend-react`: central operacional, produção, expedição e implantação
   - `delivery-integration-specialist`: acoplamento com iFood e futuros parceiros
   - `payment-integration-specialist`: alinhamento de estados financeiros
-  - `fiscal-document-specialist`: acoplamento entre pedido e fiscal
+  - `fiscal-document-specialist`: acoplamento entre venda e fiscal
   - `security-specialist`: revisão de permissão por transição
   - `qa-testing-master`: estratégia de testes ponta a ponta
   - `ui-ux-master`: simplificação da jornada principal

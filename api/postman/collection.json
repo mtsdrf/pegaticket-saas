@@ -745,7 +745,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"Orders\",\n  \"slug\": \"orders\",\n  \"description\": \"Orders management\",\n  \"is_active\": true\n}",
+                            "raw": "{\n  \"name\": \"Orders\",\n  \"slug\": \"sales\",\n  \"description\": \"Orders management\",\n  \"is_active\": true\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

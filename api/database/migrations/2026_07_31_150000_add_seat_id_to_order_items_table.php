@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
+        Schema::table('sale_items', function (Blueprint $table) {
             $table->foreignId('seat_id')
                 ->nullable()
                 ->after('event_product_id')
@@ -18,7 +18,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
+        Schema::table('sale_items', function (Blueprint $table) {
             $table->dropForeign(['seat_id']);
             $table->dropColumn('seat_id');
         });

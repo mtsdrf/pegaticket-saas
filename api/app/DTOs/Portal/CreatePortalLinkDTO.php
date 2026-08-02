@@ -5,14 +5,14 @@ namespace App\DTOs\Portal;
 class CreatePortalLinkDTO
 {
     public function __construct(
-        public readonly string $orderUuid,
+        public readonly string $saleUuid,
     ) {
     }
 
     public static function fromArray(array $data): self
     {
         return new self(
-            orderUuid: $data['order_uuid'],
+            saleUuid: $data['sale_uuid'],
         );
     }
 }

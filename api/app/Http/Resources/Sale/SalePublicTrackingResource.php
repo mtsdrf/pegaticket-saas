@@ -5,7 +5,7 @@ namespace App\Http\Resources\Sale;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Resource dedicado à rota pública GET /rastreio/{order:uuid} (Fase 5.1 do
+ * Resource dedicado à rota pública GET /rastreio/{sale:uuid} (Fase 5.1 do
  * roadmap — link de acompanhamento sem login enviado por WhatsApp).
  * Allow-list deliberada: NUNCA reaproveitar SaleResource aqui nem
  * adicionar campo novo sem confirmação explícita — é rota pública, todo

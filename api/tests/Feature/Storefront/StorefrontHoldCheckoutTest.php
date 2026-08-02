@@ -176,9 +176,9 @@ class StorefrontHoldCheckoutTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $orderUuid = $response->json('data.order.uuid');
+        $saleUuid = $response->json('data.order.uuid');
 
-        $order = Sale::where('uuid', $orderUuid)->firstOrFail();
+        $order = Sale::where('uuid', $saleUuid)->firstOrFail();
         $this->assertSame($tenant->id, $order->tenant_id);
         $this->assertSame('pending_approval', $order->status);
         $this->assertSame('150.00', number_format((float) $order->total_amount, 2, '.', ''));
@@ -193,7 +193,7 @@ class StorefrontHoldCheckoutTest extends TestCase
             InventoryHold::STATUS_CONVERTED,
             InventoryHold::where('uuid', $hold['uuid'])->value('status')
         );
-        $this->assertSame($order->id, InventoryHold::where('uuid', $hold['uuid'])->value('converted_order_id'));
+        $this->assertSame($order->id, InventoryHold::where('uuid', $hold['uuid'])->value('converted_sale_id'));
     }
 
     #[Test]
@@ -236,7 +236,7 @@ class StorefrontHoldCheckoutTest extends TestCase
         // fluxo de pagamento — mesma simulação usada em TicketIssuanceTest.
         app(TicketIssuanceService::class)->issueForSale($order, null);
 
-        $ticket = Ticket::whereHas('orderItem', fn($q) => $q->where('order_id', $order->id))->firstOrFail();
+        $ticket = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $order->id))->firstOrFail();
         $this->assertSame('Beltrano', $ticket->attendee_name);
         $this->assertSame('99988877766', $ticket->attendee_document);
     }
