@@ -10,6 +10,7 @@ use App\Models\Event\TicketType;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
+use App\Models\Sale\SaleItem;
 use App\Models\Venue\Seat;
 use App\Services\Tenant\TenantSettingsService;
 use App\Support\MediaUrl;
@@ -24,8 +25,8 @@ class StorefrontHoldService
     public function __construct(
         private StorefrontCatalogService $catalogService,
         private TenantSettingsService $tenantSettingsService,
-    ) {
-    }
+        private SeatAllocationService $seatAllocationService,
+    ) {}
 
     /**
      * Prazo de reserva (spec 5.9): configurável por tenant via
@@ -48,7 +49,7 @@ class StorefrontHoldService
         $session = $sessionUuid ? $this->resolveSession($event, $sessionUuid) : null;
         $eventHasSessions = $event->sessions->isNotEmpty();
 
-        $ticketTypes = $eventHasSessions && !$session
+        $ticketTypes = $eventHasSessions && ! $session
             ? collect()
             : $this->buildTicketTypesAvailability($event, $session);
 
@@ -67,7 +68,7 @@ class StorefrontHoldService
                     'background_image_url' => MediaUrl::resolvePublic(
                         $event->venueMapVersion->venue->background_image_path,
                         $event->venueMapVersion->venue->background_image_data ?? $event->venueMapVersion->venue->background_image_mime,
-                        '/api/v1/venues/' . $event->venueMapVersion->venue->uuid . '/image',
+                        '/api/v1/venues/'.$event->venueMapVersion->venue->uuid.'/image',
                         null,
                         'venue'
                     ),
@@ -78,7 +79,7 @@ class StorefrontHoldService
             'requires_session_selection' => $eventHasSessions,
             'selected_session_uuid' => $session?->uuid,
             'sessions' => $event->sessions
-                ->map(fn(EventSession $item) => [
+                ->map(fn (EventSession $item) => [
                     'uuid' => $item->uuid,
                     'name' => $item->name,
                     'starts_at' => $item->starts_at,
@@ -106,7 +107,7 @@ class StorefrontHoldService
 
             $session = $this->resolveRequestedSession($event, $payload['session_uuid'] ?? null);
             $expiresAt = now()->addMinutes($this->holdTtlMinutes($tenant->id));
-            $items = collect($payload['items']);
+            $items = $this->expandAutoSelectSeatItems($tenant->id, $event, collect($payload['items']));
 
             $this->assertNoDuplicateSeats($items);
 
@@ -122,9 +123,9 @@ class StorefrontHoldService
             ]);
 
             foreach ($items as $item) {
-                $ticketType = !empty($item['ticket_type_uuid']) ? $this->lockTicketType($tenant->id, $event->id, $item['ticket_type_uuid']) : null;
-                $eventProduct = !empty($item['event_product_uuid']) ? $this->lockEventProduct($tenant->id, $event->id, $item['event_product_uuid']) : null;
-                $seat = !empty($item['seat_uuid']) ? $this->lockSeatForEvent($event, $item['seat_uuid']) : null;
+                $ticketType = ! empty($item['ticket_type_uuid']) ? $this->lockTicketType($tenant->id, $event->id, $item['ticket_type_uuid']) : null;
+                $eventProduct = ! empty($item['event_product_uuid']) ? $this->lockEventProduct($tenant->id, $event->id, $item['event_product_uuid']) : null;
+                $seat = ! empty($item['seat_uuid']) ? $this->lockSeatForEvent($event, $item['seat_uuid']) : null;
                 $quantity = (int) $item['quantity'];
 
                 $this->assertValidHoldItem($event, $session, $ticketType, $eventProduct, $seat, $quantity);
@@ -217,16 +218,16 @@ class StorefrontHoldService
             ->whereNull('deleted_at')
             ->with([
                 'venueMapVersion.venue',
-                'venueMapVersion.seats' => fn($q) => $q->whereNull('deleted_at')->orderBy('label'),
-                'sessions' => fn($q) => $q
+                'venueMapVersion.seats' => fn ($q) => $q->whereNull('deleted_at')->orderBy('label'),
+                'sessions' => fn ($q) => $q
                     ->whereNull('deleted_at')
                     ->whereNotIn('status', ['cancelado', 'arquivado'])
                     ->orderBy('starts_at'),
-                'ticketTypes' => fn($q) => $q
+                'ticketTypes' => fn ($q) => $q
                     ->where('status', 'ativo')
                     ->whereNull('deleted_at')
-                    ->with(['event', 'session', 'batches' => fn($batch) => $batch->whereNull('deleted_at')->orderBy('priority')]),
-                'eventProducts' => fn($q) => $q
+                    ->with(['event', 'session', 'batches' => fn ($batch) => $batch->whereNull('deleted_at')->orderBy('priority')]),
+                'eventProducts' => fn ($q) => $q
                     ->where('status', 'ativo')
                     ->whereNull('deleted_at')
                     ->orderBy('name'),
@@ -292,7 +293,7 @@ class StorefrontHoldService
 
     private function buildSeatAvailability(Event $event): Collection
     {
-        if (!$event->venueMapVersion) {
+        if (! $event->venueMapVersion) {
             return collect();
         }
 
@@ -307,7 +308,7 @@ class StorefrontHoldService
             ->groupBy('inventory_hold_items.seat_id')
             ->pluck('reserved_quantity', 'seat_id');
 
-        $soldSeatQuantities = \App\Models\Sale\SaleItem::query()
+        $soldSeatQuantities = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.tenant_id', $event->tenant_id)
             ->whereNull('sales.deleted_at')
@@ -385,7 +386,7 @@ class StorefrontHoldService
     private function resolveBatchForStorefront(TicketType $ticketType, ?int $requiredQuantity = null): ?TicketBatch
     {
         $batches = $ticketType->batches
-            ->filter(fn(TicketBatch $batch) => $this->batchIsActive($batch))
+            ->filter(fn (TicketBatch $batch) => $this->batchIsActive($batch))
             ->sortBy('priority')
             ->values();
 
@@ -400,7 +401,7 @@ class StorefrontHoldService
                 return $batch;
             }
 
-            if (!$this->shouldAutoAdvanceBatch($batch, $available)) {
+            if (! $this->shouldAutoAdvanceBatch($batch, $available)) {
                 return $requiredQuantity === null ? $batch : null;
             }
         }
@@ -510,7 +511,7 @@ class StorefrontHoldService
 
     private function soldSeatQuantity(int $seatId): int
     {
-        return (int) \App\Models\Sale\SaleItem::query()
+        return (int) SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sale_items.seat_id', $seatId)
             ->whereNull('sale_items.deleted_at')
@@ -531,7 +532,7 @@ class StorefrontHoldService
             return null;
         }
 
-        if (!$sessionUuid) {
+        if (! $sessionUuid) {
             abort(422, __('messages.inventory_hold.session_required'));
         }
 
@@ -550,7 +551,7 @@ class StorefrontHoldService
             abort(422, __('messages.inventory_hold.invalid_item'));
         }
 
-        if ($seat && !$ticketType) {
+        if ($seat && ! $ticketType) {
             abort(422, __('messages.inventory_hold.seat_requires_ticket_type'));
         }
 
@@ -578,13 +579,73 @@ class StorefrontHoldService
             abort(422, __('messages.inventory_hold.ticket_type_session_mismatch'));
         }
 
-        if ($ticketType && $ticketType->event_session_id !== null && !$session) {
+        if ($ticketType && $ticketType->event_session_id !== null && ! $session) {
             abort(422, __('messages.inventory_hold.session_required'));
         }
 
-        if ($seat && (!$event->venueMapVersion || (int) $seat->venue_map_version_id !== (int) $event->venueMapVersion->id)) {
+        if ($seat && (! $event->venueMapVersion || (int) $seat->venue_map_version_id !== (int) $event->venueMapVersion->id)) {
             abort(422, __('messages.inventory_hold.invalid_seat'));
         }
+    }
+
+    /**
+     * Expande itens de "melhor assento disponível" (roadmap Fase 3): um item
+     * sem `seat_uuid` mas com `sector_name` para um ticket type de evento com
+     * assento vira N itens individuais (quantity=1 cada), com o assento já
+     * escolhido por `SeatAllocationService`. Itens que já informam
+     * `seat_uuid`, ou que não são de assento, passam direto.
+     */
+    private function expandAutoSelectSeatItems(int $tenantId, Event $event, Collection $items): Collection
+    {
+        return $items->flatMap(function (array $item) use ($tenantId, $event) {
+            if (! empty($item['seat_uuid']) || empty($item['sector_name']) || empty($item['ticket_type_uuid'])) {
+                return [$item];
+            }
+
+            $ticketType = TicketType::query()
+                ->where('tenant_id', $tenantId)
+                ->where('event_id', $event->id)
+                ->where('uuid', $item['ticket_type_uuid'])
+                ->whereNull('deleted_at')
+                ->with('event')
+                ->first();
+
+            if (! $ticketType || ! in_array($ticketType->event?->type, ['assento', 'mesa', 'misto'], true)) {
+                return [$item];
+            }
+
+            $quantity = (int) $item['quantity'];
+            $availableSeats = $this->lockAvailableSeatsInSector($event, (string) $item['sector_name']);
+            $selected = $this->seatAllocationService->selectBest($availableSeats, $quantity);
+
+            if ($selected->count() < $quantity) {
+                abort(422, __('messages.inventory_hold.insufficient_availability'));
+            }
+
+            return $selected->map(fn (Seat $seat) => [
+                'ticket_type_uuid' => $item['ticket_type_uuid'],
+                'seat_uuid' => $seat->uuid,
+                'quantity' => 1,
+            ])->all();
+        });
+    }
+
+    private function lockAvailableSeatsInSector(Event $event, string $sectorName): Collection
+    {
+        if (! $event->venueMapVersion) {
+            return collect();
+        }
+
+        return Seat::query()
+            ->where('venue_map_version_id', $event->venueMapVersion->id)
+            ->where('sector_name', $sectorName)
+            ->where('kind', 'assento')
+            ->where('status', 'disponivel')
+            ->whereNull('deleted_at')
+            ->lockForUpdate()
+            ->get()
+            ->filter(fn (Seat $seat) => $this->calculateAvailableUnits(null, null, $seat, null) > 0)
+            ->values();
     }
 
     private function assertNoDuplicateSeats(Collection $items): void
@@ -610,7 +671,7 @@ class StorefrontHoldService
             ->where('status', 'ativo')
             ->whereNull('deleted_at')
             ->lockForUpdate()
-            ->with(['event', 'session', 'batches' => fn($q) => $q->whereNull('deleted_at')->orderBy('priority')])
+            ->with(['event', 'session', 'batches' => fn ($q) => $q->whereNull('deleted_at')->orderBy('priority')])
             ->firstOrFail();
     }
 
@@ -628,7 +689,7 @@ class StorefrontHoldService
 
     private function lockSeatForEvent(Event $event, string $uuid): Seat
     {
-        if (!$event->venueMapVersion) {
+        if (! $event->venueMapVersion) {
             abort(422, __('messages.inventory_hold.invalid_seat'));
         }
 
@@ -656,7 +717,7 @@ class StorefrontHoldService
         $customerMatches = $customer && (int) $hold->final_customer_id === (int) $customer->id;
         $sessionMatches = $sessionToken !== null && $hold->session_token === $sessionToken;
 
-        if (!$customerMatches && !$sessionMatches) {
+        if (! $customerMatches && ! $sessionMatches) {
             abort(404);
         }
 
@@ -679,7 +740,7 @@ class StorefrontHoldService
     {
         InventoryHold::query()
             ->where('tenant_id', $tenantId)
-            ->when($eventId !== null, fn($q) => $q->where('event_id', $eventId))
+            ->when($eventId !== null, fn ($q) => $q->where('event_id', $eventId))
             ->where('status', InventoryHold::STATUS_RESERVED)
             ->where('expires_at', '<=', now())
             ->update([

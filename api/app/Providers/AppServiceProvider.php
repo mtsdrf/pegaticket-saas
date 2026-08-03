@@ -2,109 +2,104 @@
 
 namespace App\Providers;
 
+use App\Contracts\Payment\PaymentProviderInterface;
+use App\Repositories\Contracts\AuditLogRepositoryInterface;
+use App\Repositories\Contracts\CartEventRepositoryInterface;
+use App\Repositories\Contracts\CashSessionRepositoryInterface;
+use App\Repositories\Contracts\CouponRepositoryInterface;
+use App\Repositories\Contracts\EventCategoryRepositoryInterface;
+// Repository Interfaces
+use App\Repositories\Contracts\EventProductRepositoryInterface;
+use App\Repositories\Contracts\EventRepositoryInterface;
+use App\Repositories\Contracts\EventSessionRepositoryInterface;
+use App\Repositories\Contracts\FinalCustomerRepositoryInterface;
+use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
+use App\Repositories\Contracts\FunctionalityRepositoryInterface;
+use App\Repositories\Contracts\GroupRepositoryInterface;
+use App\Repositories\Contracts\HelpRequestRepositoryInterface;
+use App\Repositories\Contracts\IdempotencyRepositoryInterface;
+use App\Repositories\Contracts\InvoiceRepositoryInterface;
+use App\Repositories\Contracts\LegalDocumentRepositoryInterface;
+use App\Repositories\Contracts\PaymentRepositoryInterface;
+use App\Repositories\Contracts\PlanFunctionalityRepositoryInterface;
+use App\Repositories\Contracts\PlanPriceRepositoryInterface;
+use App\Repositories\Contracts\PlanRepositoryInterface;
+use App\Repositories\Contracts\PrivacyRequestRepositoryInterface;
+use App\Repositories\Contracts\RefundRepositoryInterface;
+use App\Repositories\Contracts\ReleaseNoteRepositoryInterface;
+use App\Repositories\Contracts\SaleRefundRepositoryInterface;
+use App\Repositories\Contracts\SaleRepositoryInterface;
+use App\Repositories\Contracts\SeatRepositoryInterface;
+use App\Repositories\Contracts\SubscriptionRepositoryInterface;
+use App\Repositories\Contracts\TenantFeatureOverrideRepositoryInterface;
+use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Repositories\Contracts\TenantRolePermissionRepositoryInterface;
+use App\Repositories\Contracts\TenantRoleRepositoryInterface;
+use App\Repositories\Contracts\TenantSettingsRepositoryInterface;
+use App\Repositories\Contracts\TenantUserInviteRepositoryInterface;
+use App\Repositories\Contracts\TenantUserRepositoryInterface;
+use App\Repositories\Contracts\TicketBatchRepositoryInterface;
+use App\Repositories\Contracts\TicketCheckinRepositoryInterface;
+use App\Repositories\Contracts\TicketRepositoryInterface;
+use App\Repositories\Contracts\TicketTypeRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\VenueRepositoryInterface;
+use App\Repositories\Eloquent\AuditLogRepository;
+use App\Repositories\Eloquent\CartEventRepository;
+use App\Repositories\Eloquent\CashSessionRepository;
+use App\Repositories\Eloquent\CouponRepository;
+use App\Repositories\Eloquent\EventCategoryRepository;
+// Repository Implementations
+use App\Repositories\Eloquent\EventProductRepository;
+use App\Repositories\Eloquent\EventRepository;
+use App\Repositories\Eloquent\EventSessionRepository;
+use App\Repositories\Eloquent\FinalCustomerRepository;
+use App\Repositories\Eloquent\FinalCustomerTenantLinkRepository;
+use App\Repositories\Eloquent\FunctionalityRepository;
+use App\Repositories\Eloquent\GroupRepository;
+use App\Repositories\Eloquent\HelpRequestRepository;
+use App\Repositories\Eloquent\IdempotencyRepository;
+use App\Repositories\Eloquent\InvoiceRepository;
+use App\Repositories\Eloquent\LegalDocumentRepository;
+use App\Repositories\Eloquent\PaymentRepository;
+use App\Repositories\Eloquent\PlanFunctionalityRepository;
+use App\Repositories\Eloquent\PlanPriceRepository;
+use App\Repositories\Eloquent\PlanRepository;
+use App\Repositories\Eloquent\PrivacyRequestRepository;
+use App\Repositories\Eloquent\RefundRepository;
+use App\Repositories\Eloquent\ReleaseNoteRepository;
+use App\Repositories\Eloquent\SaleRefundRepository;
+use App\Repositories\Eloquent\SaleRepository;
+use App\Repositories\Eloquent\SeatRepository;
+use App\Repositories\Eloquent\SubscriptionRepository;
+use App\Repositories\Eloquent\TenantFeatureOverrideRepository;
+use App\Repositories\Eloquent\TenantRepository;
+use App\Repositories\Eloquent\TenantRolePermissionRepository;
+use App\Repositories\Eloquent\TenantRoleRepository;
+use App\Repositories\Eloquent\TenantSettingsRepository;
+use App\Repositories\Eloquent\TenantUserInviteRepository;
+use App\Repositories\Eloquent\TenantUserRepository;
+use App\Repositories\Eloquent\TicketBatchRepository;
+use App\Repositories\Eloquent\TicketCheckinRepository;
+use App\Repositories\Eloquent\TicketRepository;
+use App\Repositories\Eloquent\TicketTypeRepository;
+use App\Repositories\Eloquent\UserRepository;
+use App\Repositories\Eloquent\VenueRepository;
+use App\Services\Payment\ManualPaymentProvider;
+use App\Services\Payment\MercadoPagoPaymentProvider;
+use App\Services\Payment\PagBankPaymentProvider;
+use App\Services\Sale\SalePaymentService;
 use Illuminate\Cache\RateLimiting\Limit;
+// Payment provider (cobrança de planos — roadmap 1B)
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Minishlink\WebPush\WebPush;
 
-// Repository Interfaces
-use App\Repositories\Contracts\{
-    UserRepositoryInterface,
-    GroupRepositoryInterface,
-    FunctionalityRepositoryInterface,
-    TenantRepositoryInterface,
-    PlanRepositoryInterface,
-    PlanFunctionalityRepositoryInterface,
-    TenantRoleRepositoryInterface,
-    TenantRolePermissionRepositoryInterface,
-    TenantUserRepositoryInterface,
-    TenantUserInviteRepositoryInterface,
-    EventCategoryRepositoryInterface,
-    EventRepositoryInterface,
-    TicketTypeRepositoryInterface,
-    EventProductRepositoryInterface,
-    EventSessionRepositoryInterface,
-    TicketBatchRepositoryInterface,
-    VenueRepositoryInterface,
-    SeatRepositoryInterface,
-    SaleRepositoryInterface,
-    AuditLogRepositoryInterface,
-    FinalCustomerRepositoryInterface,
-    FinalCustomerTenantLinkRepositoryInterface,
-    TenantSettingsRepositoryInterface,
-    CouponRepositoryInterface,
-    LegalDocumentRepositoryInterface,
-    PrivacyRequestRepositoryInterface,
-    SubscriptionRepositoryInterface,
-    PlanPriceRepositoryInterface,
-    InvoiceRepositoryInterface,
-    PaymentRepositoryInterface,
-    ReleaseNoteRepositoryInterface,
-    CartEventRepositoryInterface,
-    HelpRequestRepositoryInterface,
-    TenantFeatureOverrideRepositoryInterface,
-    IdempotencyRepositoryInterface,
-    RefundRepositoryInterface,
-    TicketRepositoryInterface,
-    TicketCheckinRepositoryInterface,
-    SaleRefundRepositoryInterface,
-};
-
-// Repository Implementations
-use App\Repositories\Eloquent\{
-    UserRepository,
-    GroupRepository,
-    FunctionalityRepository,
-    TenantRepository,
-    PlanRepository,
-    PlanFunctionalityRepository,
-    TenantRoleRepository,
-    TenantRolePermissionRepository,
-    TenantUserRepository,
-    TenantUserInviteRepository,
-    EventCategoryRepository,
-    EventRepository,
-    TicketTypeRepository,
-    EventProductRepository,
-    EventSessionRepository,
-    TicketBatchRepository,
-    VenueRepository,
-    SeatRepository,
-    SaleRepository,
-    AuditLogRepository,
-    FinalCustomerRepository,
-    FinalCustomerTenantLinkRepository,
-    TenantSettingsRepository,
-    CouponRepository,
-    LegalDocumentRepository,
-    PrivacyRequestRepository,
-    SubscriptionRepository,
-    PlanPriceRepository,
-    InvoiceRepository,
-    PaymentRepository,
-    ReleaseNoteRepository,
-    CartEventRepository,
-    HelpRequestRepository,
-    TenantFeatureOverrideRepository,
-    IdempotencyRepository,
-    RefundRepository,
-    TicketRepository,
-    TicketCheckinRepository,
-    SaleRefundRepository,
-};
-
-// Payment provider (cobrança de planos — roadmap 1B)
-use App\Contracts\Payment\PaymentProviderInterface;
-use App\Services\Payment\ManualPaymentProvider;
-use App\Services\Payment\MercadoPagoPaymentProvider;
-use App\Services\Payment\PagBankPaymentProvider;
-use App\Services\Sale\SalePaymentService;
-
 /**
  * Class AppServiceProvider
- * 
+ *
  * Service Provider principal da aplicação.
  * Registra bindings de Repositories e outras dependências.
  */
@@ -166,7 +161,7 @@ class AppServiceProvider extends ServiceProvider
                 // mesmo notice de GMP/BCMath ausente — sem suprimir,
                 // vira uma SEGUNDA ErrorException não capturada e o
                 // fallback quebra do mesmo jeito que o caso original.
-                return @new WebPush();
+                return @new WebPush;
             }
         });
     }
@@ -190,11 +185,9 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Registrar bindings de Repositories
-     * 
+     *
      * Vincula interfaces aos seus repositórios concretos.
      * Permite Dependency Injection via interface.
-     * 
-     * @return void
      */
     protected function registerRepositories(): void
     {
@@ -308,6 +301,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             SaleRefundRepositoryInterface::class,
             SaleRefundRepository::class
+        );
+
+        // Cash Session Repository (caixa, roadmap Fase 2)
+        $this->app->bind(
+            CashSessionRepositoryInterface::class,
+            CashSessionRepository::class
         );
 
         // Venue Repository

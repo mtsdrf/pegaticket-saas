@@ -8,6 +8,10 @@
 
     @if ($mode === 'resent')
         <p>Reenviamos os dados do seu ingresso da venda <strong>#{{ $sale->codigo }}</strong>.</p>
+    @elseif ($mode === 'reminder')
+        <p>Seu evento está chegando! Aqui está o lembrete dos ingressos da venda <strong>#{{ $sale->codigo }}</strong>.</p>
+    @elseif ($mode === 'transferred')
+        <p>A titularidade de um ingresso da venda <strong>#{{ $sale->codigo }}</strong> foi transferida. Segue o novo QR Code — o anterior não é mais válido.</p>
     @else
         <p>Seu pagamento foi confirmado e seus ingressos da venda <strong>#{{ $sale->codigo }}</strong> já estão prontos.</p>
     @endif

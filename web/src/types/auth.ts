@@ -13,8 +13,6 @@ export interface MyTenant {
   role_slug?: string | null
   plan_slug?: string | null
   plan_name?: string | null
-  /** Default `false` quando a empresa nunca configurou nada — não exige a permissão `tenant_settings` (ver `services/tenantSettingsService.ts` para a tela dedicada). */
-  send_tracking_link_whatsapp: boolean
   /** `null` quando a empresa não tem logo cadastrada — usado pela tela "Redes Sociais" para o toggle "Incluir logo da empresa". */
   logo_url: string | null
 }

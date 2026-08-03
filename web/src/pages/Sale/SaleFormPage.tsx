@@ -69,7 +69,7 @@ async function fetchCatalogOptions(query: string): Promise<CatalogItemOption[]> 
 
 export function SaleFormPage() {
   const navigate = useNavigate()
-  const { activeTenantUuid, activeTenant } = useAuth()
+  const { activeTenantUuid } = useAuth()
 
   const [customerOption, setCustomerOption] = useState<FinalCustomerSearchResult | null>(null)
   /**
@@ -186,9 +186,6 @@ export function SaleFormPage() {
           total: sale.total_amount,
           isPaid: true,
           paidAmount: sale.total_amount,
-          trackingUrl: activeTenant?.send_tracking_link_whatsapp
-            ? `${window.location.origin}/rastreio/${sale.uuid}`
-            : undefined,
         })
         const url = buildWhatsAppUrl(client.phone_primary, message)
         whatsAppWindowRef.current = window.open(url, '_blank')

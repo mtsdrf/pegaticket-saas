@@ -33,6 +33,7 @@ class InitialPlansSeeder extends Seeder
                     'seats',
                     'sales',
                     'sale_refunds',
+                    'cash_sessions',
                     'tickets',
                     'customers',
                     'storefront',
@@ -55,7 +56,7 @@ class InitialPlansSeeder extends Seeder
         foreach ($plans as $data) {
             $plan = Plan::withTrashed()->where('slug', $data['slug'])->first();
 
-            if (!$plan) {
+            if (! $plan) {
                 $plan = Plan::create([
                     'name' => $data['name'],
                     'slug' => $data['slug'],

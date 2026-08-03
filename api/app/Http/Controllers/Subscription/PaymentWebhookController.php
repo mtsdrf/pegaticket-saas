@@ -11,8 +11,9 @@ use App\Models\Subscription\Subscription;
 use App\Models\Subscription\WebhookEvent;
 use App\Services\APIResponse;
 use App\Services\Logging\ApplicationLogger;
-use App\Services\Sale\SalePaymentService;
 use App\Services\Payment\MercadoPagoPaymentProvider;
+use App\Services\Payment\PagBankPaymentProvider;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Subscription\InvoicePaymentService;
 use App\Services\Subscription\SubscriptionService;
 use Illuminate\Http\Request;
@@ -50,14 +51,17 @@ class PaymentWebhookController extends Controller
         private SalePaymentService $orderPaymentService,
         private SubscriptionService $subscriptionService,
         private InvoicePaymentService $invoicePaymentService,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, string $provider)
     {
         $externalId = $request->input('external_id')
             ?? $request->input('id')
             ?? $request->input('data.id');
+
+        if ($provider === 'pagbank') {
+            return $this->handlePagBank($request);
+        }
 
         if ($provider !== 'mercadopago') {
             // Sem PSP real validando assinatura para este provider — mantém
@@ -86,7 +90,7 @@ class PaymentWebhookController extends Controller
         // nunca grava em webhook_events, senão um external_id forjado
         // poderia "reservar" a idempotência antes do evento legítimo
         // chegar, ou inflar a tabela com payload arbitrário do atacante.
-        if (!$mercadoPago->validateWebhook($request)) {
+        if (! $mercadoPago->validateWebhook($request)) {
             ApplicationLogger::warning('Webhook Mercado Pago rejeitado: assinatura inválida', [
                 'provider' => $provider,
                 'has_signature_header' => $request->hasHeader('x-signature'),
@@ -209,6 +213,64 @@ class PaymentWebhookController extends Controller
             $event->processed_at = now();
             $event->save();
         }
+
+        return APIResponse::success(null, __('messages.webhook.received'));
+    }
+
+    /**
+     * Webhook do rail comprador -> tenant (venda de ingresso via PagBank —
+     * ver PagBankPaymentProvider). O payload da notificação é o próprio
+     * Order (`id`, `charges[]`) — mesma postura de segurança do ramo
+     * mercadopago: `id` só localiza o Payment local, o efeito é sempre
+     * decidido por uma reconsulta real (getPayment()/GET /orders/{id}),
+     * nunca pelo corpo bruto recebido.
+     */
+    private function handlePagBank(Request $request)
+    {
+        $pagBank = app(PagBankPaymentProvider::class);
+
+        if (! $pagBank->validateWebhook($request)) {
+            ApplicationLogger::warning('Webhook PagBank rejeitado: assinatura inválida', [
+                'provider' => 'pagbank',
+                'has_signature_header' => $request->hasHeader('x-authenticity-token'),
+            ]);
+
+            return APIResponse::error(
+                __('messages.webhook.invalid_signature'),
+                401,
+                'WEBHOOK_INVALID_SIGNATURE'
+            );
+        }
+
+        $orderId = (string) ($request->input('id') ?? '');
+
+        if ($orderId === '') {
+            return APIResponse::success(null, __('messages.webhook.received'));
+        }
+
+        $event = WebhookEvent::firstOrCreate(
+            ['provider' => 'pagbank', 'type' => 'order', 'external_id' => $orderId],
+            ['payload' => $this->sanitizedPayload($request), 'processed_at' => null]
+        );
+
+        if ($event->processed_at !== null) {
+            return APIResponse::success(null, __('messages.webhook.received'));
+        }
+
+        $payment = Payment::where('provider', 'pagbank')
+            ->where('provider_charge_id', $orderId)
+            ->first();
+
+        if ($payment !== null && $payment->payable_type === Sale::class) {
+            $remote = $pagBank->getPayment($orderId);
+
+            if (($remote['status'] ?? null) === 'paid') {
+                $this->orderPaymentService->reconcileWebhookPayment($payment, (string) ($remote['amount'] ?? '0'));
+            }
+        }
+
+        $event->processed_at = now();
+        $event->save();
 
         return APIResponse::success(null, __('messages.webhook.received'));
     }
@@ -434,7 +496,7 @@ class PaymentWebhookController extends Controller
         $this->orderPaymentService->registerExternalReview(
             $payment,
             'Alerta antifraude do Mercado Pago',
-            'fraud-alert:' . $providerChargeId,
+            'fraud-alert:'.$providerChargeId,
         );
     }
 

@@ -291,7 +291,7 @@ return [
         'created' => 'Usuário vinculado à empresa com sucesso.',
         'updated' => 'Vínculo atualizado com sucesso.',
         'deleted' => 'Usuário removido da empresa.',
-        'already_exists' => 'Usuário já pertence a esta empresa.'
+        'already_exists' => 'Usuário já pertence a esta empresa.',
     ],
 
     /*
@@ -400,8 +400,22 @@ return [
         'list' => 'Lista de ingressos.',
         'show' => 'Ingresso exibido com sucesso.',
         'resent' => 'Reenvio do ingresso registrado com sucesso.',
+        'transferred' => 'Ingresso transferido com sucesso.',
+        'not_transferable' => 'Este ingresso não pode ser transferido no status atual.',
         'mail_subject_issued' => 'Seus ingressos da venda #:code',
         'mail_subject_resent' => 'Reenvio dos ingressos da venda #:code',
+        'mail_subject_reminder' => 'Seu evento está chegando — venda #:code',
+        'mail_subject_transferred' => 'Transferência de ingresso confirmada — venda #:code',
+    ],
+
+    'guest_list' => [
+        'list' => 'Listas de convidados exibidas com sucesso.',
+        'created' => 'Lista de convidados criada com sucesso.',
+        'show' => 'Lista de convidados exibida com sucesso.',
+        'entry_added' => 'Convidado adicionado com sucesso.',
+        'invite_shown' => 'Convite exibido com sucesso.',
+        'redeemed' => 'Convite resgatado com sucesso.',
+        'already_redeemed' => 'Este convite já foi resgatado.',
     ],
 
     'ticket_checkin' => [
@@ -544,6 +558,20 @@ return [
         'insufficient_blocked_balance' => 'Saldo bloqueado insuficiente para esta operação.',
         'insufficient_reserved_balance' => 'Saldo reservado insuficiente para esta operação.',
         'reserve_already_cancelled' => 'Esta reserva já foi cancelada anteriormente.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Caixa
+    |--------------------------------------------------------------------------
+    */
+    'cash_session' => [
+        'list' => 'Lista de caixas.',
+        'current' => 'Caixa atual exibido com sucesso.',
+        'opened' => 'Caixa aberto com sucesso.',
+        'closed' => 'Caixa fechado com sucesso.',
+        'already_open' => 'Já existe um caixa aberto. Feche-o antes de abrir um novo.',
+        'no_open_session' => 'Não há caixa aberto para fechar.',
     ],
 
     /*
@@ -795,6 +823,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'report' => [
+        'operation_snapshot' => 'Panorama operacional obtido com sucesso.',
         'indicators' => 'Indicadores obtidos com sucesso.',
         'charts' => 'Gráficos obtidos com sucesso.',
         'sales_list' => 'Lista do relatório de pedidos.',

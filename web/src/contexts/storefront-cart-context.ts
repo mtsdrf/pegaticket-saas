@@ -12,6 +12,14 @@ export interface StorefrontCartContextValue {
     session?: { uuid: string; name: string } | null,
     seat?: { uuid: string; label: string; sector_name?: string | null; kind: string; capacity?: number | null } | null,
   ) => void
+  /** "Melhor assento disponível"/assentos contíguos (roadmap Fase 3): uma linha de carrinho por setor, sem assento específico — o back-end escolhe na criação do hold (ver `sector_name` em `StorefrontCreateHoldPayload`). */
+  addAutoSeatSelection: (
+    event: StorefrontEvent,
+    ticketType: StorefrontTicketType,
+    quantity: number,
+    sectorName: string,
+    session?: { uuid: string; name: string } | null,
+  ) => void
   addEventProduct: (
     event: StorefrontEvent,
     eventProduct: StorefrontEventProduct,

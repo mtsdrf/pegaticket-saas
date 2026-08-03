@@ -41,9 +41,6 @@ export function PaymentBlock() {
 
     try {
       const updated = await tenantSettingsService.updateTenantSettings({
-        send_tracking_link_whatsapp: settings.send_tracking_link_whatsapp,
-        minimum_order_value: settings.minimum_order_value,
-        estimated_preparation_minutes: settings.estimated_preparation_minutes,
         storefront_enabled: settings.storefront_enabled,
         catalog_layout: settings.catalog_layout,
         accepted_payment_methods: acceptedPaymentMethods,

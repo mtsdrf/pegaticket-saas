@@ -3,6 +3,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
 import {
   Alert,
   Box,
@@ -21,6 +22,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AsyncAutocomplete } from '../crud/AsyncAutocomplete'
 import { SaleRefundsSection } from './SaleRefundsSection'
+import { SaleReceiptPrintView } from './SaleReceiptPrintView'
+import { useAuth } from '../../hooks/useAuth'
 import * as eventProductService from '../../services/eventProductService'
 import * as saleService from '../../services/saleService'
 import * as ticketTypeService from '../../services/ticketTypeService'
@@ -98,6 +101,8 @@ interface SaleDetailDialogProps {
  * quanto pela tela de Rotas (uma parada pode abrir a venda de origem).
  */
 export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDetailDialogProps) {
+  const { activeTenant } = useAuth()
+  const [isPrinting, setIsPrinting] = useState(false)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
@@ -120,6 +125,22 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
   const [itemsFieldErrors, setItemsFieldErrors] = useState<Record<string, string[]>>({})
   const [isSavingItems, setIsSavingItems] = useState(false)
   const [headerNotesDraft, setHeaderNotesDraft] = useState('')
+
+  // Mesmo padrão de ServerDataGrid (impressão de grid): dispara
+  // window.print() assim que o recibo "invisível" é montado, e limpa o
+  // estado no `afterprint` (cobre "Salvar como PDF" e "Cancelar").
+  useEffect(() => {
+    if (!isPrinting) return
+
+    const timer = window.setTimeout(() => window.print(), 50)
+    const handleAfterPrint = () => setIsPrinting(false)
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [isPrinting])
 
   useEffect(() => {
     if (!open || !saleUuid) return
@@ -627,9 +648,23 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
               Cancelar venda
             </Button>
           )}
+          {selectedSale && (
+            <Button
+              startIcon={<PrintOutlinedIcon />}
+              disabled={isPrinting}
+              onClick={() => setIsPrinting(true)}
+              sx={{ minHeight: 44 }}
+            >
+              Imprimir recibo
+            </Button>
+          )}
           <Button onClick={onClose} sx={{ minHeight: 44 }}>Fechar</Button>
         </DialogActions>
       </Dialog>
+
+      {isPrinting && selectedSale && (
+        <SaleReceiptPrintView sale={selectedSale} tenantName={activeTenant?.tenant_name ?? 'PegaTicket'} />
+      )}
 
       <Dialog open={approveCancellationConfirmOpen} onClose={() => !isSubmittingAction && setApproveCancellationConfirmOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Aprovar cancelamento</DialogTitle>

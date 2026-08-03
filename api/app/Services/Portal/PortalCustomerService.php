@@ -2,10 +2,11 @@
 
 namespace App\Services\Portal;
 
-use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\Sale\Sale;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\Sale\Sale;
+use App\Models\Ticket\Ticket;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Support\Collection;
 
@@ -18,8 +19,7 @@ class PortalCustomerService
 {
     public function __construct(
         private FinalCustomerTenantLinkRepositoryInterface $linkRepository,
-    ) {
-    }
+    ) {}
 
     public function listOrders(FinalCustomer $customer): Collection
     {
@@ -61,17 +61,45 @@ class PortalCustomerService
     {
         $order = Sale::where('uuid', $saleUuid)->whereNull('deleted_at')->first();
 
-        if (!$order || (int) $order->final_customer_id !== $finalCustomerId) {
+        if (! $order || (int) $order->final_customer_id !== $finalCustomerId) {
             abort(404);
         }
 
         $link = $this->linkRepository->findConfirmedByTenantAndFinalCustomer((int) $order->tenant_id, $finalCustomerId);
 
-        if (!$link) {
+        if (! $link) {
             abort(404);
         }
 
         return $order;
+    }
+
+    /**
+     * "Titularidade e transferência" (roadmap Fase 4) — mesma checagem de
+     * posse do findOwnedOrder, mas navegando do Ticket pra Sale (só o
+     * comprador dono da venda pode transferir um ingresso dela).
+     */
+    public function findOwnedTicket(int $finalCustomerId, string $ticketUuid): Ticket
+    {
+        $ticket = Ticket::query()
+            ->with('saleItem.sale')
+            ->where('uuid', $ticketUuid)
+            ->whereNull('deleted_at')
+            ->first();
+
+        $sale = $ticket?->saleItem?->sale;
+
+        if (! $ticket || ! $sale || (int) $sale->final_customer_id !== $finalCustomerId) {
+            abort(404);
+        }
+
+        $link = $this->linkRepository->findConfirmedByTenantAndFinalCustomer((int) $sale->tenant_id, $finalCustomerId);
+
+        if (! $link) {
+            abort(404);
+        }
+
+        return $ticket;
     }
 
     /**
@@ -97,7 +125,7 @@ class PortalCustomerService
                 'quantity' => (float) $item->quantity,
                 'current_price' => $sellable ? (float) $sellable->price : null,
                 'is_available' => $sellable
-                    ? (!$sellable->trashed() && ($item->ticket_type_id === null || $sellable->status === 'ativo'))
+                    ? (! $sellable->trashed() && ($item->ticket_type_id === null || $sellable->status === 'ativo'))
                     : false,
             ];
         })->values()->all();

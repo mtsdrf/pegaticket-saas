@@ -24,14 +24,8 @@ import type { StorefrontTenant } from '../types/storefront'
 function StorefrontChrome({ slug, tenant }: { slug: string; tenant: StorefrontTenant | null }) {
   const { pathname } = useLocation()
   const { totalQuantity } = useStorefrontCart()
-  const isCatalogRoute =
-    pathname === `/eventos/${slug}` ||
-    pathname === `/loja/${slug}` ||
-    pathname === `/bilheteria/${slug}`
-  const isCartRoute =
-    pathname === `/eventos/${slug}/carrinho` ||
-    pathname === `/loja/${slug}/carrinho` ||
-    pathname === `/bilheteria/${slug}/carrinho`
+  const isCatalogRoute = pathname === `/eventos/${slug}`
+  const isCartRoute = pathname === `/eventos/${slug}/carrinho`
   const showFloatingBar = isCatalogRoute && totalQuantity > 0
   const showCartBar = isCartRoute && totalQuantity > 0
 
@@ -118,14 +112,7 @@ export function StorefrontLayout() {
   useEffect(() => {
     if (!slug || !tenant || tenant.storefront_enabled) return
 
-    if (
-      pathname === `/eventos/${slug}/carrinho` ||
-      pathname === `/eventos/${slug}/checkout` ||
-      pathname === `/loja/${slug}/carrinho` ||
-      pathname === `/loja/${slug}/checkout` ||
-      pathname === `/bilheteria/${slug}/carrinho` ||
-      pathname === `/bilheteria/${slug}/checkout`
-    ) {
+    if (pathname === `/eventos/${slug}/carrinho` || pathname === `/eventos/${slug}/checkout`) {
       navigate(`/eventos/${slug}`, { replace: true })
     }
   }, [navigate, pathname, slug, tenant])

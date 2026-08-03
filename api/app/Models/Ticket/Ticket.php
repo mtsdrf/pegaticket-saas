@@ -75,6 +75,17 @@ class Ticket extends BaseModel
         });
     }
 
+    /**
+     * Titularidade/transferência (roadmap Fase 4): troca o participante e
+     * invalida o code/qr_token antigo (evita que a pessoa anterior ainda
+     * consiga usar um QR já compartilhado/salvo).
+     */
+    public function rotateAccessCredentials(): void
+    {
+        $this->code = self::generateUniqueCode();
+        $this->qr_token = self::generateUniqueQrToken();
+    }
+
     private static function generateUniqueCode(): string
     {
         do {

@@ -284,7 +284,7 @@ return [
         'created' => 'Usuário vinculado à empresa com sucesso.',
         'updated' => 'Vínculo da empresa atualizado com sucesso.',
         'deleted' => 'Usuário removido da empresa.',
-        'already_exists' => 'Usuário já pertence a esta empresa.'
+        'already_exists' => 'Usuário já pertence a esta empresa.',
     ],
 
     /*
@@ -393,8 +393,22 @@ return [
         'list' => 'Tickets list.',
         'show' => 'Ticket shown successfully.',
         'resent' => 'Ticket resend registered successfully.',
+        'transferred' => 'Ticket transferred successfully.',
+        'not_transferable' => 'This ticket cannot be transferred in its current status.',
         'mail_subject_issued' => 'Your tickets for sale #:code',
         'mail_subject_resent' => 'Ticket resend for sale #:code',
+        'mail_subject_reminder' => 'Your event is coming up — sale #:code',
+        'mail_subject_transferred' => 'Ticket transfer confirmed — sale #:code',
+    ],
+
+    'guest_list' => [
+        'list' => 'Guest lists shown successfully.',
+        'created' => 'Guest list created successfully.',
+        'show' => 'Guest list shown successfully.',
+        'entry_added' => 'Guest added successfully.',
+        'invite_shown' => 'Invite shown successfully.',
+        'redeemed' => 'Invite redeemed successfully.',
+        'already_redeemed' => 'This invite has already been redeemed.',
     ],
 
     'ticket_checkin' => [
@@ -537,6 +551,20 @@ return [
         'insufficient_blocked_balance' => 'Insufficient blocked balance for this operation.',
         'insufficient_reserved_balance' => 'Insufficient reserved balance for this operation.',
         'reserve_already_cancelled' => 'This reservation has already been cancelled.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cash session
+    |--------------------------------------------------------------------------
+    */
+    'cash_session' => [
+        'list' => 'Cash sessions list.',
+        'current' => 'Current cash session shown successfully.',
+        'opened' => 'Cash session opened successfully.',
+        'closed' => 'Cash session closed successfully.',
+        'already_open' => 'There is already an open cash session. Close it before opening a new one.',
+        'no_open_session' => 'There is no open cash session to close.',
     ],
 
     /*
@@ -788,6 +816,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'report' => [
+        'operation_snapshot' => 'Operational snapshot retrieved successfully.',
         'indicators' => 'Indicators retrieved successfully.',
         'charts' => 'Charts retrieved successfully.',
         'sales_list' => 'Order report list.',

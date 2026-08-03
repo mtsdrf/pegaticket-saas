@@ -14,6 +14,7 @@ import { PeriodFilter } from '../../components/analytics/PeriodFilter'
 import { MetricCard } from '../../components/dashboard/MetricCard'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { OnboardingChecklistCard } from '../../components/dashboard/OnboardingChecklistCard'
+import { OperationSnapshotCard } from '../../components/dashboard/OperationSnapshotCard'
 import { SalesByMonthChart } from '../../components/dashboard/SalesByMonthChart'
 import { QuickActionCard } from '../../components/dashboard/QuickActionCard'
 import { RankingListCard } from '../../components/dashboard/RankingListCard'
@@ -102,6 +103,8 @@ export function DashboardPage() {
             ))}
           </Box>
         </Box>
+
+        {canViewStats && <OperationSnapshotCard />}
 
         {showOnboardingChecklist && checklist && (
             <OnboardingChecklistCard checklist={checklist} onDismiss={() => void dismissChecklist()} />

@@ -10,7 +10,7 @@ import { Logo } from '../../components/ui/Logo'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
-import { createPortalLink, listSaleTickets } from '../../services/portalSaleService'
+import { createPortalLink, listSaleTickets, transferTicket } from '../../services/portalSaleService'
 import { getSaleTracking } from '../../services/saleTrackingService'
 import { rateSale, type SaleRatingResult } from '../../services/saleRatingService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
@@ -331,7 +331,36 @@ function SaleRatingSection({ saleUuid }: { saleUuid: string }) {
   )
 }
 
-function TicketCard({ ticket }: { ticket: PortalTicket }) {
+function TicketCard({ ticket, onTransferred }: { ticket: PortalTicket; onTransferred: (ticket: PortalTicket) => void }) {
+  const [showTransferForm, setShowTransferForm] = useState(false)
+  const [transferName, setTransferName] = useState('')
+  const [transferDocument, setTransferDocument] = useState('')
+  const [transferError, setTransferError] = useState<string | null>(null)
+  const [isTransferring, setIsTransferring] = useState(false)
+
+  async function handleTransfer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!transferName.trim()) return
+
+    setIsTransferring(true)
+    setTransferError(null)
+
+    try {
+      const updated = await transferTicket(ticket.uuid, {
+        attendee_name: transferName.trim(),
+        attendee_document: transferDocument.trim() || undefined,
+      })
+      onTransferred(updated)
+      setShowTransferForm(false)
+      setTransferName('')
+      setTransferDocument('')
+    } catch (error) {
+      setTransferError(getApiErrorMessage(error, 'Não foi possível transferir este ingresso agora.'))
+    } finally {
+      setIsTransferring(false)
+    }
+  }
+
   return (
     <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX, textAlign: 'center' }}>
       <Box
@@ -368,6 +397,58 @@ function TicketCard({ ticket }: { ticket: PortalTicket }) {
 
       <Divider sx={{ my: 1.25 }} />
       <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>Código: {ticket.code}</Typography>
+
+      {ticket.status === 'ativo' && (
+        <Box sx={{ mt: 1.25, textAlign: 'left' }}>
+          {!showTransferForm ? (
+            <Button size="small" variant="outlined" onClick={() => setShowTransferForm(true)} sx={{ minHeight: 36 }}>
+              Transferir ingresso
+            </Button>
+          ) : (
+            <Box component="form" onSubmit={(event) => void handleTransfer(event)} noValidate>
+              {transferError && (
+                <Alert severity="error" variant="outlined" role="alert" sx={{ mb: 1 }}>
+                  {transferError}
+                </Alert>
+              )}
+              <Stack spacing={1}>
+                <TextField
+                  label="Nome de quem vai comparecer"
+                  value={transferName}
+                  onChange={(event) => setTransferName(event.target.value)}
+                  size="small"
+                  fullWidth
+                  required
+                  autoFocus
+                />
+                <TextField
+                  label="Documento (opcional)"
+                  value={transferDocument}
+                  onChange={(event) => setTransferDocument(event.target.value)}
+                  size="small"
+                  fullWidth
+                />
+                <Stack direction="row" spacing={1}>
+                  <Button type="submit" variant="contained" size="small" disabled={!transferName.trim() || isTransferring}>
+                    {isTransferring ? 'Transferindo…' : 'Confirmar transferência'}
+                  </Button>
+                  <Button
+                    size="small"
+                    color="inherit"
+                    disabled={isTransferring}
+                    onClick={() => {
+                      setShowTransferForm(false)
+                      setTransferError(null)
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
+          )}
+        </Box>
+      )}
     </Paper>
   )
 }
@@ -412,6 +493,10 @@ function TicketsSection({ saleUuid }: { saleUuid: string }) {
 
   if (!tickets || tickets.length === 0) return null
 
+  function handleTransferred(updated: PortalTicket) {
+    setTickets((current) => current?.map((ticket) => (ticket.uuid === updated.uuid ? updated : ticket)) ?? current)
+  }
+
   return (
     <Box>
       <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -420,7 +505,7 @@ function TicketsSection({ saleUuid }: { saleUuid: string }) {
       </Typography>
       <Stack spacing={1.5}>
         {tickets.map((ticket) => (
-          <TicketCard key={ticket.uuid} ticket={ticket} />
+          <TicketCard key={ticket.uuid} ticket={ticket} onTransferred={handleTransferred} />
         ))}
       </Stack>
     </Box>

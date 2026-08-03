@@ -34,9 +34,6 @@ export function OperationsBlock() {
 
     try {
       const updated = await tenantSettingsService.updateTenantSettings({
-        send_tracking_link_whatsapp: settings.send_tracking_link_whatsapp,
-        minimum_order_value: settings.minimum_order_value,
-        estimated_preparation_minutes: settings.estimated_preparation_minutes,
         storefront_enabled: storefrontEnabled,
         catalog_layout: catalogLayout,
         accepted_payment_methods: settings.accepted_payment_methods,

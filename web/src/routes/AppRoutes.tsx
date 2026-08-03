@@ -99,6 +99,10 @@ const VenueFormPage = lazy(() => import('../pages/Venue/VenueFormPage').then((m)
 const VenueSeatsPage = lazy(() => import('../pages/Venue/VenueSeatsPage').then((m) => ({ default: m.VenueSeatsPage })))
 const SeatFormPage = lazy(() => import('../pages/Venue/SeatFormPage').then((m) => ({ default: m.SeatFormPage })))
 const SaleListPage = lazy(() => import('../pages/Sale/SaleListPage').then((m) => ({ default: m.SaleListPage })))
+const CashSessionPage = lazy(() => import('../pages/CashSession/CashSessionPage').then((m) => ({ default: m.CashSessionPage })))
+const GuestListsPage = lazy(() => import('../pages/GuestList/GuestListsPage').then((m) => ({ default: m.GuestListsPage })))
+const GuestListDetailPage = lazy(() => import('../pages/GuestList/GuestListDetailPage').then((m) => ({ default: m.GuestListDetailPage })))
+const GuestInvitePage = lazy(() => import('../pages/GuestList/GuestInvitePage').then((m) => ({ default: m.GuestInvitePage })))
 const StorefrontSaleManagementPage = lazy(() =>
   import('../pages/Sale/StorefrontSaleManagementPage').then((m) => ({ default: m.StorefrontSaleManagementPage })),
 )
@@ -207,6 +211,7 @@ export function AppRoutes() {
         <Route path="/termos" element={<LegalDocumentPage type="terms" />} />
         <Route path="/privacidade" element={<LegalDocumentPage type="privacy" />} />
         <Route path="/convite/:token" element={<AcceptInvitePage />} />
+        <Route path="/convite-ingresso/:token" element={<GuestInvitePage />} />
         <Route path="/confirmar-email/:token" element={<ConfirmEmailPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/redefinir-senha/:token" element={<ResetPasswordPage />} />
@@ -230,20 +235,6 @@ export function AppRoutes() {
         <Route path="/eventos/:slug" element={<StorefrontLayout />}>
           <Route index element={<StorefrontCatalogPage />} />
           <Route path=":eventSlug" element={<StorefrontEventDetailPage />} />
-          <Route path="perfil" element={<StorefrontProfilePage />} />
-          <Route path="carrinho" element={<StorefrontCartPage />} />
-          <Route path="checkout" element={<StorefrontCheckoutPage />} />
-        </Route>
-        <Route path="/loja/:slug" element={<StorefrontLayout />}>
-          <Route index element={<StorefrontCatalogPage />} />
-          <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
-          <Route path="perfil" element={<StorefrontProfilePage />} />
-          <Route path="carrinho" element={<StorefrontCartPage />} />
-          <Route path="checkout" element={<StorefrontCheckoutPage />} />
-        </Route>
-        <Route path="/bilheteria/:slug" element={<StorefrontLayout />}>
-          <Route index element={<StorefrontCatalogPage />} />
-          <Route path="eventos/:eventSlug" element={<StorefrontEventDetailPage />} />
           <Route path="perfil" element={<StorefrontProfilePage />} />
           <Route path="carrinho" element={<StorefrontCartPage />} />
           <Route path="checkout" element={<StorefrontCheckoutPage />} />
@@ -294,6 +285,9 @@ export function AppRoutes() {
             <Route path="/vendas-manuais" element={<PermissionRoute requirement={ACCESS.salesRead}><SaleListPage /></PermissionRoute>} />
             <Route path="/vendas/nova" element={<Navigate to="/vendas-manuais/nova" replace />} />
             <Route path="/vendas-manuais/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
+            <Route path="/caixa" element={<PermissionRoute requirement={ACCESS.cashSessionsRead}><CashSessionPage /></PermissionRoute>} />
+            <Route path="/listas-de-convidados" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListsPage /></PermissionRoute>} />
+            <Route path="/listas-de-convidados/:uuid" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListDetailPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />

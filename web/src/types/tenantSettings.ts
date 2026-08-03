@@ -3,11 +3,6 @@ import type { StorefrontCatalogLayout } from './storefront'
 
 export interface TenantSettings {
   uuid: string
-  send_tracking_link_whatsapp: boolean
-  /** `null` = sem valor mínimo configurado (não bloqueia nada no checkout online). */
-  minimum_order_value: number | null
-  /** `null` = sem estimativa configurada. */
-  estimated_preparation_minutes: number | null
   /** Formas de pagamento aceitas (`cash|pix|credit_card|debit_card`); `[]` = nenhuma configurada. */
   accepted_payment_methods: PaymentMethod[]
   /** Como a empresa recebe os pagamentos combinados fora do gateway da plataforma. */
@@ -21,9 +16,6 @@ export interface TenantSettings {
 }
 
 export interface UpdateTenantSettingsPayload {
-  send_tracking_link_whatsapp: boolean
-  minimum_order_value: number | null
-  estimated_preparation_minutes: number | null
   accepted_payment_methods: PaymentMethod[]
   payment_receiving_method: 'manual' | 'pix_key'
   payment_pix_key: string | null

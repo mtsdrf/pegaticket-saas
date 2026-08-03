@@ -2,7 +2,14 @@ import { unwrap } from './apiClient'
 import { portalApiClient } from './portalApiClient'
 import type { ApiSuccess } from '../types/api'
 import type { SalePayment } from '../types/sale'
-import type { CreatePortalLinkPayload, PortalLink, PortalSaleSummary, PortalResaleItem, PortalTicket } from '../types/portal'
+import type {
+  CreatePortalLinkPayload,
+  PortalLink,
+  PortalSaleSummary,
+  PortalResaleItem,
+  PortalTicket,
+  TransferTicketPayload,
+} from '../types/portal'
 
 /** Lista agregada de compras entre todas as empresas vinculadas, mais recente primeiro. */
 export function listPortalSales(): Promise<PortalSaleSummary[]> {
@@ -51,4 +58,13 @@ export function createSalePixCharge(saleUuid: string): Promise<SalePayment> {
 /** "Meus ingressos" — ingressos emitidos para uma compra específica do comprador autenticado. */
 export function listSaleTickets(saleUuid: string): Promise<PortalTicket[]> {
   return unwrap(portalApiClient.get<ApiSuccess<PortalTicket[]>>(`/portal/sales/${saleUuid}/tickets`))
+}
+
+/**
+ * "Titularidade e transferência" — troca o participante do ingresso e
+ * invalida o QR anterior (backend rotaciona `qr_token`/`code`). Backend
+ * rejeita (422 `INVALID_TICKET_STATE`) se o ingresso não estiver `ativo`.
+ */
+export function transferTicket(ticketUuid: string, payload: TransferTicketPayload): Promise<PortalTicket> {
+  return unwrap(portalApiClient.post<ApiSuccess<PortalTicket>>(`/portal/tickets/${ticketUuid}/transfer`, payload))
 }

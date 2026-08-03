@@ -5,6 +5,8 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
+import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
+import CardGiftcardOutlinedIcon from '@mui/icons-material/CardGiftcardOutlined'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
@@ -92,6 +94,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   { kind: 'link', to: '/portaria', label: 'Portaria', icon: QrCodeScannerOutlinedIcon, access: ACCESS.ticketsCheckin },
   { kind: 'link', to: '/vendas-manuais', label: 'Vendas manuais', icon: ReceiptLongOutlinedIcon, access: ACCESS.salesRead },
+  { kind: 'link', to: '/caixa', label: 'Caixa', icon: PointOfSaleOutlinedIcon, access: ACCESS.cashSessionsRead },
+  { kind: 'link', to: '/listas-de-convidados', label: 'Listas de convidados', icon: CardGiftcardOutlinedIcon, access: ACCESS.eventsRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalActivityOutlinedIcon, access: ACCESS.storefrontSalesRead },
   {
     kind: 'group',

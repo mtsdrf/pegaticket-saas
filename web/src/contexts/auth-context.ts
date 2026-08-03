@@ -5,7 +5,7 @@ import type { AccessProfile, PermissionRequirement } from '../types/access'
 export interface AuthContextValue {
   isAuthenticated: boolean
   activeTenantUuid: string | null
-  /** Empresa ativa dentro de `tenants` (mesmo payload de `auth/my-tenants`) — inclui `send_tracking_link_whatsapp`, sem chamada extra a `/tenant-settings`. */
+  /** Empresa ativa dentro de `tenants` (mesmo payload de `auth/my-tenants`). */
   activeTenant: MyTenant | null
   tenants: MyTenant[] | null
   tenantsError: string | null

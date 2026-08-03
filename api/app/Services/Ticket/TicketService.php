@@ -2,13 +2,17 @@
 
 namespace App\Services\Ticket;
 
+use App\DTOs\Ticket\TransferTicketDTO;
 use App\Events\Ticket\TicketResent;
+use App\Events\Ticket\TicketTransferred;
+use App\Exceptions\InvalidTicketStateException;
 use App\Models\Ticket\Ticket;
 use App\Models\Ticket\TicketCheckin;
-use Illuminate\Database\Eloquent\Collection;
 use App\Repositories\Contracts\TicketRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Leitura/reenvio de Ticket — sem create()/update() próprios: emissão é
@@ -18,13 +22,14 @@ use Illuminate\Support\Facades\Auth;
 class TicketService
 {
     public const EAGER_RELATIONS = ['ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale'];
-    private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
-    private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
+
+    public const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
+
+    public const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
 
     public function __construct(
         private TicketRepositoryInterface $repository
-    ) {
-    }
+    ) {}
 
     public function find(Ticket $ticket): Ticket
     {
@@ -45,27 +50,27 @@ class TicketService
             ->whereNull('tickets.deleted_at')
             ->with(self::EAGER_RELATIONS);
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('tickets.status', $filters['status']);
         }
 
-        if (!empty($filters['ticket_type_uuid'])) {
-            $query->whereHas('ticketType', fn($q) => $q->where('uuid', $filters['ticket_type_uuid']));
+        if (! empty($filters['ticket_type_uuid'])) {
+            $query->whereHas('ticketType', fn ($q) => $q->where('uuid', $filters['ticket_type_uuid']));
         }
 
-        if (!empty($filters['event_uuid'])) {
-            $query->whereHas('ticketType.event', fn($q) => $q->where('uuid', $filters['event_uuid']));
+        if (! empty($filters['event_uuid'])) {
+            $query->whereHas('ticketType.event', fn ($q) => $q->where('uuid', $filters['event_uuid']));
         }
 
-        if (!empty($filters['event_session_uuid'])) {
-            $query->whereHas('ticketType.session', fn($q) => $q->where('uuid', $filters['event_session_uuid']));
+        if (! empty($filters['event_session_uuid'])) {
+            $query->whereHas('ticketType.session', fn ($q) => $q->where('uuid', $filters['event_session_uuid']));
         }
 
-        if (!empty($filters['sale_uuid'])) {
-            $query->whereHas('saleItem.sale', fn($q) => $q->where('uuid', $filters['sale_uuid']));
+        if (! empty($filters['sale_uuid'])) {
+            $query->whereHas('saleItem.sale', fn ($q) => $q->where('uuid', $filters['sale_uuid']));
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('tickets.code', 'like', "%{$search}%")
@@ -98,6 +103,39 @@ class TicketService
         return $ticket;
     }
 
+    /**
+     * "Titularidade e transferência" (roadmap Fase 4, autosserviço via
+     * Portal): só ingresso `ativo` (não usado, não cancelado/estornado/
+     * bloqueado) pode trocar de participante. code/qr_token são rotacionados
+     * — quem tinha o QR antigo salvo/printado não consegue mais usá-lo.
+     */
+    public function transfer(Ticket $ticket, TransferTicketDTO $dto, ?string $finalCustomerUuid = null): Ticket
+    {
+        $this->assertBelongsToCurrentTenant($ticket);
+
+        if ($ticket->status !== 'ativo') {
+            throw new InvalidTicketStateException(__('messages.ticket.not_transferable'));
+        }
+
+        return DB::transaction(function () use ($ticket, $dto, $finalCustomerUuid) {
+            $previousAttendeeName = $ticket->attendee_name;
+
+            $ticket->attendee_name = $dto->attendeeName;
+            $ticket->attendee_document = $dto->attendeeDocument;
+            $ticket->rotateAccessCredentials();
+            $ticket->save();
+
+            event(new TicketTransferred(
+                ticketUuid: $ticket->uuid,
+                previousAttendeeName: $previousAttendeeName,
+                newAttendeeName: $dto->attendeeName,
+                finalCustomerUuid: $finalCustomerUuid,
+            ));
+
+            return $ticket;
+        });
+    }
+
     public function checkinHistory(Ticket $ticket): Collection
     {
         $this->assertBelongsToCurrentTenant($ticket);
@@ -115,15 +153,15 @@ class TicketService
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->when(
-                !empty($filters['gate_name']),
+                ! empty($filters['gate_name']),
                 fn ($query) => $query->where('gate_name', trim((string) $filters['gate_name']))
             )
             ->when(
-                !empty($filters['event_uuid']),
+                ! empty($filters['event_uuid']),
                 fn ($query) => $query->whereHas('ticket.ticketType.event', fn ($eventQuery) => $eventQuery->where('uuid', $filters['event_uuid']))
             )
             ->when(
-                !empty($filters['event_session_uuid']),
+                ! empty($filters['event_session_uuid']),
                 fn ($query) => $query->whereHas('ticket.ticketType.session', fn ($sessionQuery) => $sessionQuery->where('uuid', $filters['event_session_uuid']))
             );
 

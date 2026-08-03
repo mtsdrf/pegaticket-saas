@@ -5,7 +5,6 @@ function storefrontTenant(slug: string, name: string) {
     slug,
     name,
     logo_url: null,
-    estimated_preparation_minutes: 25,
     average_rating: 4.8,
     ratings_count: 18,
     email: `contato@${slug}.com`,
@@ -354,7 +353,7 @@ test.describe('Carrinho público da loja', () => {
       })
     })
 
-    await page.goto('/loja/loja-a')
+    await page.goto('/eventos/loja-a')
 
     await expect(page.getByText('Loja A', { exact: true })).toBeVisible()
     await expect(page.getByText('Festival de Inverno').first()).toBeVisible()

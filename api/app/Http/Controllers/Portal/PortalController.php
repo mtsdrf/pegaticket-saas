@@ -3,22 +3,26 @@
 namespace App\Http\Controllers\Portal;
 
 use App\DTOs\Sale\RequestSaleCancellationDTO;
+use App\DTOs\Ticket\TransferTicketDTO;
 use App\Exceptions\InvalidSaleStateException;
-use App\Exceptions\SaleAlreadyRatedException;
+use App\Exceptions\InvalidTicketStateException;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
+use App\Exceptions\SaleAlreadyRatedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\RateSaleRequest;
 use App\Http\Requests\Portal\RequestSaleCancellationRequest;
-use App\Http\Resources\Sale\SalePaymentResource;
+use App\Http\Requests\Portal\TransferTicketRequest;
 use App\Http\Resources\Portal\PortalMeResource;
 use App\Http\Resources\Portal\PortalSaleResource;
 use App\Http\Resources\Portal\PortalTicketResource;
+use App\Http\Resources\Sale\SalePaymentResource;
 use App\Services\APIResponse;
-use App\Services\Sale\SalePaymentService;
 use App\Services\Portal\PortalCustomerService;
 use App\Services\Portal\PortalSaleCancellationService;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Storefront\SaleRatingService;
+use App\Services\Ticket\TicketService;
 
 class PortalController extends Controller
 {
@@ -27,8 +31,8 @@ class PortalController extends Controller
         private SaleRatingService $ratingService,
         private PortalSaleCancellationService $cancellationService,
         private SalePaymentService $paymentService,
-    ) {
-    }
+        private TicketService $ticketService,
+    ) {}
 
     public function sales()
     {
@@ -61,11 +65,38 @@ class PortalController extends Controller
         $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
         $sale->load(['items.tickets.ticketType.event', 'items.tickets.ticketType.session', 'items.tickets.seat']);
 
-        $tickets = $sale->items->flatMap(fn($item) => $item->tickets);
+        $tickets = $sale->items->flatMap(fn ($item) => $item->tickets);
 
         return APIResponse::success(
             PortalTicketResource::collection($tickets),
             __('messages.portal.tickets_shown')
+        );
+    }
+
+    /**
+     * "Titularidade e transferência" (roadmap Fase 4) — posse verificada
+     * via findOwnedTicket() (navega Ticket -> SaleItem -> Sale), mesmo
+     * padrão de findOwnedOrder() usado no resto do Portal. tenant_id
+     * vinculado manualmente (rota do portal não passa pelo middleware
+     * `tenant`), mesma necessidade de paymentCharge().
+     */
+    public function transferTicket(TransferTicketRequest $request, string $uuid)
+    {
+        $ticket = $this->service->findOwnedTicket(portal_customer()->id, $uuid);
+
+        app()->instance('tenant_id', $ticket->tenant_id);
+
+        $dto = TransferTicketDTO::fromArray($request->validated());
+
+        try {
+            $ticket = $this->ticketService->transfer($ticket, $dto, portal_customer()->uuid);
+        } catch (InvalidTicketStateException $e) {
+            return APIResponse::error($e->getMessage(), 422, 'INVALID_TICKET_STATE');
+        }
+
+        return APIResponse::success(
+            new PortalTicketResource($ticket),
+            __('messages.ticket.transferred')
         );
     }
 

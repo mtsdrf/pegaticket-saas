@@ -56,6 +56,10 @@ export const ACCESS = {
   /** Estorno externo (spec 5.14) — registro de estorno já feito fora do sistema (PagBank), functionality própria `sale_refunds`. */
   saleRefundsRead: tenant('sale_refunds', 'read'),
   saleRefundsCreate: tenant('sale_refunds', 'create'),
+  /** Caixa (roadmap Fase 2 — bilheteria presencial), functionality própria `cash_sessions`. */
+  cashSessionsRead: tenant('cash_sessions', 'read'),
+  cashSessionsOpen: tenant('cash_sessions', 'open'),
+  cashSessionsClose: tenant('cash_sessions', 'close'),
   /** Tela dedicada de vendas online (`/vendas-online`) — permissão própria, independente de `sales,*`. */
   storefrontSalesRead: tenant('storefront-sales', 'read'),
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),

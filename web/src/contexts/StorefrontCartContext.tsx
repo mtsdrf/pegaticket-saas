@@ -180,6 +180,48 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
     })
   }, [])
 
+  const addAutoSeatSelection = useCallback((
+    event: StorefrontEvent,
+    ticketType: StorefrontTicketType,
+    quantity: number,
+    sectorName: string,
+    session?: { uuid: string; name: string } | null,
+  ) => {
+    setItems((current) => {
+      const normalizedSessionUuid = session?.uuid ?? null
+      const existing = current.find(
+        (item) =>
+          item.ticket_type_uuid === ticketType.uuid &&
+          (item.session_uuid ?? null) === normalizedSessionUuid &&
+          item.seat_uuid === null &&
+          item.seat_sector_name === sectorName,
+      )
+      if (existing) {
+        return current.map((item) => (item.id === existing.id ? { ...item, quantity: item.quantity + quantity } : item))
+      }
+      return [
+        ...current,
+        {
+          id: createCartItemId(),
+          ticket_type_uuid: ticketType.uuid,
+          name: ticketType.name,
+          event_name: event.name,
+          event_slug: event.slug,
+          session_uuid: session?.uuid ?? null,
+          session_name: session?.name ?? null,
+          seat_uuid: null,
+          seat_label: null,
+          seat_sector_name: sectorName,
+          seat_kind: null,
+          seat_capacity: null,
+          unit_price: ticketType.price,
+          image_url: ticketType.image_url,
+          quantity,
+        },
+      ]
+    })
+  }, [])
+
   const addEventProduct = useCallback((
     event: StorefrontEvent,
     eventProduct: StorefrontEventProduct,
@@ -269,6 +311,7 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       totalQuantity,
       totalAmount,
       addTicketType,
+      addAutoSeatSelection,
       addEventProduct,
       removeItem,
       updateQuantity,
@@ -282,6 +325,7 @@ export function StorefrontCartProvider({ slug, children }: { slug: string; child
       totalQuantity,
       totalAmount,
       addTicketType,
+      addAutoSeatSelection,
       addEventProduct,
       removeItem,
       updateQuantity,

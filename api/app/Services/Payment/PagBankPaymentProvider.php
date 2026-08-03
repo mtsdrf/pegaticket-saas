@@ -13,6 +13,7 @@ use App\Models\Subscription\Subscription;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -24,28 +25,34 @@ use Illuminate\Support\Facades\Http;
  * de PaymentProviderInterface para SalePaymentService.
  *
  * ==========================================================================
- * STATUS DESTA CLASSE: STRUCTURAL STUB, NÃO INTEGRAÇÃO REAL.
- * ==========================================================================
- * Não há credenciais PagBank fornecidas nesta sessão, então nenhuma chamada
- * HTTP real à API do PagBank foi implementada — os métodos abaixo têm a
- * assinatura, o fluxo de validação, o tratamento de erro e o ponto de
- * configuração já prontos (mesmo formato de retorno de
- * MercadoPagoPaymentProvider/ManualPaymentProvider), mas o corpo da
- * chamada HTTP está marcado explicitamente com `// TODO PAGBANK REAL:` —
- * é o único trecho que falta quando as credenciais reais existirem. Nenhum
- * endpoint, payload ou nome de campo da API do PagBank foi inventado; os
- * DTOs em App\DTOs\Payment\PagBank* são placeholders internos, não uma
- * cópia da API real.
+ * INTEGRAÇÃO REAL — API de Pedidos (Orders) do PagBank, confirmada contra
+ * a documentação oficial em developer.pagbank.com.br (2026-08-02):
+ * - Criar pedido com QR Code Pix: POST /orders (developer.pagbank.com.br/
+ *   reference/criar-pedido-pedido-com-qr-code).
+ * - Consultar pedido: GET /orders/{id} (developer.pagbank.com.br/docs/
+ *   pedidos-e-pagamentos-order).
+ * - Cancelar/estornar charge: POST /charges/{charge_id}/cancel
+ *   (developer.pagbank.com.br/reference/consultar-pagamento e discussões
+ *   oficiais — PagBank decide sozinho parcial/total pela presença de
+ *   `amount`).
+ * - Autenticidade do webhook: header `x-authenticity-token` = SHA-256(
+ *   token + '-' + payload_bruto) (developer.pagbank.com.br/reference/
+ *   confirmar-autenticidade-da-notificacao). O payload do webhook é o
+ *   próprio Order (mesmo shape do GET /orders/{id}) — por isso o efeito
+ *   local NUNCA confia no corpo da notificação: só usa `id` para localizar
+ *   o Payment e sempre reconsulta via getPayment() antes de aplicar
+ *   qualquer mudança de estado (mesma postura de MercadoPagoPaymentProvider).
  *
- * Enquanto ficar neste estado, createPixChargeForOrder() se comporta como
- * o ManualPaymentProvider (registra um Payment `pending`, sem cobrar nada
- * de verdade) — o pedido segue exigindo conciliação manual até a
- * integração real ser feita, exatamente como já acontece hoje com
- * PAYMENT_PROVIDER=manual.
+ * Sem token configurado (`PAGBANK_TOKEN_SANDBOX`/`PAGBANK_TOKEN_PROD`), o
+ * provider continua se comportando como o ManualPaymentProvider (Payment
+ * `pending` local, sem chamada de rede) — permite ligar
+ * SALE_PAYMENT_PROVIDER=pagbank antes das credenciais existirem sem
+ * quebrar o checkout.
  */
 class PagBankPaymentProvider implements PaymentProviderInterface
 {
     private const BASE_URL_SANDBOX = 'https://sandbox.api.pagseguro.com';
+
     private const BASE_URL_PRODUCTION = 'https://api.pagseguro.com';
 
     public function createPixCharge(Invoice $invoice): array
@@ -83,43 +90,133 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     public function refund(Payment $payment, string|int|float|null $amount = null): array
     {
         $refundAmount = $amount !== null ? Money::normalize($amount) : Money::normalize((string) $payment->amount);
+        $token = (string) config('services.pagbank.token', '');
+        $orderId = (string) $payment->provider_charge_id;
 
-        // TODO PAGBANK REAL: chamar o endpoint de estorno da API de Pedidos
-        // do PagBank (charge/order id em $payment->provider_charge_id) e
-        // propagar o status real da resposta. Sem credenciais, apenas
-        // registra a intenção — mesmo comportamento defensivo do
-        // ManualPaymentProvider::refund().
-        return [
-            'status' => 'requested',
-            'amount' => $refundAmount,
-        ];
+        if ($token === '' || $orderId === '') {
+            // Sem credencial ou sem id de pedido remoto (cobrança nasceu
+            // pending local, nunca chegou a existir no PagBank) — só
+            // registra a intenção, mesma postura do ManualPaymentProvider.
+            return ['status' => 'requested', 'amount' => $refundAmount];
+        }
+
+        try {
+            $chargeId = $this->resolveChargeId($orderId);
+
+            if ($chargeId === null) {
+                // Pedido ainda não tem charge paga no PagBank (nunca foi
+                // pago) — nada a estornar de fato.
+                return ['status' => 'requested', 'amount' => $refundAmount];
+            }
+
+            $body = array_filter([
+                'amount' => ['value' => Money::toMinor($refundAmount)],
+            ]);
+
+            $response = $this->client()->post("/charges/{$chargeId}/cancel", $body);
+            $this->assertSuccessful($response, 'cancelCharge');
+
+            $status = (string) $response->json('status', '');
+
+            return [
+                'status' => $status === 'CANCELED' ? 'refunded' : 'requested',
+                'amount' => $refundAmount,
+            ];
+        } catch (PaymentProviderException $e) {
+            return ['status' => 'requested', 'amount' => $refundAmount, 'error' => $e->getMessage()];
+        }
     }
 
     public function validateWebhook(Request $request): bool
     {
-        $secret = (string) config('services.pagbank.webhook_secret', '');
+        $token = (string) config('services.pagbank.token', '');
+        $header = (string) $request->header('x-authenticity-token', '');
 
-        // TODO PAGBANK REAL: sem o formato oficial de assinatura de webhook
-        // do PagBank confirmado nesta sessão, não há validação segura
-        // possível — recusar tudo é a única postura correta até isso ser
-        // implementado (nunca aceitar um webhook sem validar assinatura).
-        if ($secret === '') {
+        if ($token === '' || $header === '') {
             return false;
         }
 
-        return false;
+        $rawPayload = $request->getContent();
+        $expected = hash('sha256', $token.'-'.$rawPayload);
+
+        return hash_equals($expected, $header);
     }
 
     public function getPayment(string $providerChargeId): array
     {
-        // TODO PAGBANK REAL: GET no recurso de pedido/cobrança do PagBank
-        // por $providerChargeId e mapear o status real. Sem credenciais,
-        // retorna um snapshot 'pending' — o caller (reconciliação) trata
-        // isso como "ainda sem confirmação", nunca como sucesso.
-        return [
-            'provider_charge_id' => $providerChargeId,
-            'status' => 'pending',
-        ];
+        $token = (string) config('services.pagbank.token', '');
+
+        if ($token === '' || $providerChargeId === '') {
+            return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
+        }
+
+        try {
+            $response = $this->client()->get("/orders/{$providerChargeId}");
+            $this->assertSuccessful($response, 'getOrder');
+
+            $charges = (array) $response->json('charges', []);
+            $firstCharge = $charges[0] ?? null;
+
+            if ($firstCharge === null) {
+                // Pedido criado mas ainda sem cobrança paga (Pix aguardando
+                // o comprador escanear o QR Code).
+                return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
+            }
+
+            return [
+                'provider_charge_id' => $providerChargeId,
+                'status' => $this->mapStatus((string) ($firstCharge['status'] ?? '')),
+                'amount' => isset($firstCharge['amount']['value'])
+                    ? Money::normalize(((int) $firstCharge['amount']['value']) / 100)
+                    : null,
+                'raw_status' => $firstCharge['status'] ?? null,
+            ];
+        } catch (PaymentProviderException) {
+            return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
+        }
+    }
+
+    /**
+     * Vocabulário interno usado por SalePaymentService/reconciliação (mesmo
+     * de MercadoPagoPaymentProvider::mapStatus) — mapeado a partir dos
+     * status documentados de charge (PAID/AUTHORIZED/IN_ANALYSIS/DECLINED/
+     * CANCELED/WAITING, developer.pagbank.com.br/reference/objeto-order).
+     */
+    private function mapStatus(string $pagBankStatus): string
+    {
+        return match ($pagBankStatus) {
+            'PAID', 'AUTHORIZED' => 'paid',
+            'DECLINED' => 'failed',
+            'CANCELED' => 'refunded',
+            default => 'pending', // inclui WAITING, IN_ANALYSIS, ''
+        };
+    }
+
+    /**
+     * Resolve o charge_id necessário para POST /charges/{id}/cancel a
+     * partir do order_id salvo em provider_charge_id — o cancelamento é
+     * por charge, não por order (developer.pagbank.com.br/reference/
+     * consultar-pagamento). Retorna null quando o pedido não tem nenhuma
+     * charge paga ainda.
+     */
+    private function resolveChargeId(string $orderId): ?string
+    {
+        $response = $this->client()->get("/orders/{$orderId}");
+        $this->assertSuccessful($response, 'getOrder');
+
+        $charges = (array) $response->json('charges', []);
+        $paidCharge = null;
+
+        foreach ($charges as $charge) {
+            if (($charge['status'] ?? null) === 'PAID') {
+                $paidCharge = $charge;
+                break;
+            }
+        }
+
+        $chargeId = $paidCharge['id'] ?? null;
+
+        return $chargeId !== null ? (string) $chargeId : null;
     }
 
     public function createPreapproval(Subscription $subscription, string $operationPrefix = 'preapproval_create', ?string $cardTokenId = null): array
@@ -174,23 +271,18 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
-     * Ponto único de chamada HTTP ao PagBank. Hoje não chama rede nenhuma
-     * — retorna uma resposta `pending` sintética, o mesmo estado seguro que
-     * o ManualPaymentProvider persiste hoje (pedido aguarda conciliação
-     * manual). Quando a integração real for feita, o corpo marcado abaixo
-     * é o único trecho a substituir; a assinatura do método e o contrato de
-     * retorno (PagBankChargeResponseDTO) já ficam prontos para receber o
-     * mapeamento da resposta real.
+     * Ponto único de chamada HTTP ao PagBank — POST /orders com qr_codes
+     * (Pix), formato confirmado em developer.pagbank.com.br/reference/
+     * criar-pedido-pedido-com-qr-code. Sem token configurado, a cobrança
+     * nasce pending local (mesmo comportamento seguro do
+     * ManualPaymentProvider) em vez de falhar — permite ligar o provider
+     * via config antes das credenciais existirem, sem quebrar o checkout.
      */
     private function callPagBank(PagBankChargeRequestDTO $request): PagBankChargeResponseDTO
     {
         $token = (string) config('services.pagbank.token', '');
 
         if ($token === '') {
-            // Sem credencial configurada, a cobrança nasce pending local
-            // (mesmo comportamento seguro do ManualPaymentProvider) em vez
-            // de falhar — permite ligar o provider via config antes das
-            // credenciais existirem, sem quebrar o checkout.
             return PagBankChargeResponseDTO::fromArray([
                 'id' => '',
                 'status' => 'pending',
@@ -199,19 +291,49 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ]);
         }
 
-        // TODO PAGBANK REAL: substituir o bloco abaixo pela chamada real,
-        // por exemplo algo no formato:
-        //   $response = $this->client()->post('/orders', $request->toArray());
-        //   $this->assertSuccessful($response, 'createOrder');
-        //   return PagBankChargeResponseDTO::fromArray($response->json());
-        // Nenhum endpoint/payload real foi confirmado contra a documentação
-        // oficial do PagBank nesta sessão — não inventar aqui.
-        return PagBankChargeResponseDTO::fromArray([
-            'id' => '',
-            'status' => 'pending',
-            'method' => $request->method,
-            'metadata' => ['note' => 'pagbank_stub_credentials_present_but_http_call_not_implemented'],
+        $amountCents = Money::toMinor($request->amount);
+
+        $body = array_filter([
+            'reference_id' => $request->referenceId,
+            'customer' => array_filter([
+                'name' => $request->payer['name'] ?? null,
+                'email' => $request->payer['email'] ?? null,
+            ]) ?: null,
+            'items' => [[
+                'name' => 'Compra '.$request->referenceId,
+                'quantity' => 1,
+                'unit_amount' => $amountCents,
+            ]],
+            'qr_codes' => [[
+                'amount' => ['value' => $amountCents],
+            ]],
+            'notification_urls' => [url('/api/v1/webhooks/payments/pagbank')],
         ]);
+
+        try {
+            $response = $this->client()->post('/orders', $body);
+            $this->assertSuccessful($response, 'createOrder');
+
+            $qrCode = $response->json('qr_codes.0', []);
+
+            return PagBankChargeResponseDTO::fromArray([
+                'id' => $response->json('id', ''),
+                'status' => 'pending',
+                'method' => $request->method,
+                'metadata' => [
+                    'qr_code_text' => $qrCode['text'] ?? null,
+                    'qr_code_id' => $qrCode['id'] ?? null,
+                    'expiration_date' => $qrCode['expiration_date'] ?? null,
+                ],
+            ]);
+        } catch (PaymentProviderException) {
+            return PagBankChargeResponseDTO::fromArray([
+                'id' => '',
+                'status' => 'failed',
+                'method' => $request->method,
+                'metadata' => ['note' => 'pagbank_order_creation_failed'],
+            ]);
+        }
     }
 
     /**
@@ -281,7 +403,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      * real (ver TODO PAGBANK REAL). Lança PaymentProviderException com um
      * código curto interno, mesmo padrão do adapter Mercado Pago.
      */
-    private function assertSuccessful(\Illuminate\Http\Client\Response $response, string $operation): void
+    private function assertSuccessful(Response $response, string $operation): void
     {
         if ($response->successful()) {
             return;

@@ -121,6 +121,11 @@ export function StorefrontCartPage() {
                           {item.seat_sector_name ? ` • ${item.seat_sector_name}` : ''}
                         </Typography>
                       )}
+                      {!item.seat_uuid && item.seat_sector_name && (
+                        <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                          Melhor lugar automático • {item.seat_sector_name}
+                        </Typography>
+                      )}
                       {item.seat_uuid && isExclusiveSeatKind(item.seat_kind) && (
                         <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
                           Reserva exclusiva para {Math.max(1, item.seat_capacity ?? item.quantity)} pessoa(s)

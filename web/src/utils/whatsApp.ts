@@ -12,9 +12,7 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 
 /**
  * Resumo completo da compra, enviado na criação da venda (`SaleFormPage`) — lista de itens, total
- * e status de pagamento no momento da criação. `trackingUrl` é opcional (toggle `tenant_settings.
- * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando omitido, a linha do link some
- * e o restante da mensagem sai igual a antes.
+ * e status de pagamento no momento da criação.
  */
 export function buildSaleCreatedWhatsAppMessage(params: {
   clientName: string
@@ -22,29 +20,25 @@ export function buildSaleCreatedWhatsAppMessage(params: {
   total: number
   isPaid: boolean
   paidAmount: number | null
-  trackingUrl?: string
 }): string {
-  const { clientName, items, total, isPaid, paidAmount, trackingUrl } = params
+  const { clientName, items, total, isPaid, paidAmount } = params
 
   const productLines = items.map((item) => `• ${item.quantity} ${item.name} – ${formatCurrency(item.unitPrice)}`).join('\n')
   const statusLine = isPaid ? '✅ *Status:* Pago' : '❗ *Status:* Ainda não pago'
   const paidLine = isPaid && paidAmount !== null ? `\n💵 *Valor pago:* ${formatCurrency(paidAmount)}` : ''
-  const trackingBlock = trackingUrl ? `🎟️ *Acompanhe sua compra:* ${trackingUrl}\n\n` : ''
 
   return (
     `🧾 *Resumo da sua compra, ${clientName}!*\n\n` +
     `📦 Produtos:\n${productLines}\n\n` +
     `💰 *Total:* ${formatCurrency(total)}\n` +
     `${statusLine}${paidLine}\n\n` +
-    `${trackingBlock}` +
     `Qualquer dúvida, estamos à disposição! 😊`
   )
 }
 
 /**
- * Resumo da compra enviado sob demanda — `trackingUrl` é opcional (toggle `tenant_settings.
- * send_tracking_link_whatsapp`, ver `AuthContext.tsx`/`activeTenant`) — quando
- * omitido, a mensagem sai igual a antes, sem linha de rastreio.
+ * Resumo da compra enviado sob demanda — `trackingUrl` é opcional; quando
+ * omitido, a mensagem sai sem linha de rastreio.
  */
 export function buildSaleSummaryWhatsAppMessage(params: {
   codigo: string

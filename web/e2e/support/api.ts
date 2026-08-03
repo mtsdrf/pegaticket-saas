@@ -41,7 +41,6 @@ interface ShellMockOptions {
     role_slug?: string | null
     plan_slug?: string | null
     plan_name?: string | null
-    send_tracking_link_whatsapp?: boolean
     logo_url?: string | null
   }>
 }
@@ -167,7 +166,6 @@ export async function mockAuthenticatedApiBootstrap(page: Page, options: ShellMo
         role_slug: options.isTenantOwner ? 'owner' : 'operator',
         plan_slug: 'pegaticket',
         plan_name: 'PegaTicket',
-        send_tracking_link_whatsapp: true,
         logo_url: null,
       },
     ]
@@ -202,7 +200,6 @@ export async function mockAuthenticatedApiBootstrap(page: Page, options: ShellMo
       role_slug: tenant.role_slug ?? null,
       plan_slug: tenant.plan_slug ?? 'pegaticket',
       plan_name: tenant.plan_name ?? 'PegaTicket',
-      send_tracking_link_whatsapp: tenant.send_tracking_link_whatsapp ?? true,
       logo_url: tenant.logo_url ?? null,
     })),
   })

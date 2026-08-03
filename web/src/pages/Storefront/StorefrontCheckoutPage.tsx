@@ -365,6 +365,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         ticket_type_uuid: item.ticket_type_uuid,
         event_product_uuid: item.event_product_uuid,
         seat_uuid: item.seat_uuid ?? undefined,
+        sector_name: !item.seat_uuid && item.seat_sector_name ? item.seat_sector_name : undefined,
         quantity: item.quantity,
       })),
     [items],

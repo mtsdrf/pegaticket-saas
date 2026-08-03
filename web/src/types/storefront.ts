@@ -7,7 +7,6 @@ export interface StorefrontTenant {
   slug: string
   name: string
   logo_url: string | null
-  estimated_preparation_minutes: number | null
   /** Delivery Fase 4 — agregado de `SaleRatingService::tenantSummary()`; `null` quando `ratings_count === 0` (nunca `0.0`). */
   average_rating: number | null
   ratings_count: number
@@ -345,6 +344,8 @@ export interface StorefrontCreateHoldPayload {
     ticket_type_uuid?: string
     event_product_uuid?: string
     seat_uuid?: string
+    /** "Melhor assento disponível"/assentos contíguos (roadmap Fase 3) — alternativa a `seat_uuid`: back-end escolhe N assentos livres nesse setor. */
+    sector_name?: string
     quantity: number
   }>
 }

@@ -31,8 +31,7 @@ class StorefrontController extends Controller
         private StorefrontCheckoutService $checkoutService,
         private CouponService $couponService,
         private SaleRatingService $ratingService,
-    ) {
-    }
+    ) {}
 
     public function show(string $slug)
     {
@@ -44,7 +43,6 @@ class StorefrontController extends Controller
         return APIResponse::success(
             new StorefrontTenantResource(
                 $tenant,
-                $settings->estimated_preparation_minutes,
                 $ratingSummary['average_rating'],
                 $ratingSummary['ratings_count'],
                 $settings->accepted_payment_methods ?? [],
@@ -64,7 +62,7 @@ class StorefrontController extends Controller
         $tenant = $this->service->findTenantBySlug($slug);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
 
-        if (!$settings->storefront_enabled) {
+        if (! $settings->storefront_enabled) {
             abort(404);
         }
 
@@ -87,7 +85,7 @@ class StorefrontController extends Controller
                     'per_page' => $list->perPage(),
                     'total' => $list->total(),
                     'last_page' => $list->lastPage(),
-                ]
+                ],
             ]
         );
     }
@@ -101,7 +99,7 @@ class StorefrontController extends Controller
         $tenant = $this->service->findTenantBySlug($slug);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
 
-        if (!$settings->storefront_enabled) {
+        if (! $settings->storefront_enabled) {
             abort(404);
         }
 
@@ -122,12 +120,12 @@ class StorefrontController extends Controller
         $tenant = $this->service->findTenantBySlug($slug);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
 
-        if (!$settings->storefront_enabled) {
+        if (! $settings->storefront_enabled) {
             abort(404);
         }
 
         $categories = $this->service->listAvailableCategories($tenant->id)
-            ->map(fn($category) => ['uuid' => $category->uuid, 'name' => $category->name])
+            ->map(fn ($category) => ['uuid' => $category->uuid, 'name' => $category->name])
             ->values();
 
         return APIResponse::success($categories, __('messages.storefront.categories_listed'));
@@ -143,7 +141,7 @@ class StorefrontController extends Controller
         $tenant = $this->service->findTenantBySlug($slug);
         $settings = $this->tenantSettingsService->getForTenant($tenant->id);
 
-        if (!$settings->storefront_enabled) {
+        if (! $settings->storefront_enabled) {
             abort(404);
         }
 
@@ -152,7 +150,7 @@ class StorefrontController extends Controller
         $subtotalCents = 0;
 
         foreach ($data['items'] as $item) {
-            $sellable = !empty($item['ticket_type_uuid'])
+            $sellable = ! empty($item['ticket_type_uuid'])
                 ? TicketType::where('uuid', $item['ticket_type_uuid'])->where('tenant_id', $tenant->id)->whereNull('deleted_at')->firstOrFail()
                 : EventProduct::where('uuid', $item['event_product_uuid'])->where('tenant_id', $tenant->id)->whereNull('deleted_at')->firstOrFail();
 

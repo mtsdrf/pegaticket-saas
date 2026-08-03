@@ -8,6 +8,10 @@
 
     <?php if($mode === 'resent'): ?>
         <p>Reenviamos os dados do seu ingresso da venda <strong>#<?php echo e($sale->codigo); ?></strong>.</p>
+    <?php elseif($mode === 'reminder'): ?>
+        <p>Seu evento está chegando! Aqui está o lembrete dos ingressos da venda <strong>#<?php echo e($sale->codigo); ?></strong>.</p>
+    <?php elseif($mode === 'transferred'): ?>
+        <p>A titularidade de um ingresso da venda <strong>#<?php echo e($sale->codigo); ?></strong> foi transferida. Segue o novo QR Code — o anterior não é mais válido.</p>
     <?php else: ?>
         <p>Seu pagamento foi confirmado e seus ingressos da venda <strong>#<?php echo e($sale->codigo); ?></strong> já estão prontos.</p>
     <?php endif; ?>

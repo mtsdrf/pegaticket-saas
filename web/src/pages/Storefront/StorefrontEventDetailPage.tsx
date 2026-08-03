@@ -1,3 +1,4 @@
+import AccessibleOutlinedIcon from '@mui/icons-material/AccessibleOutlined'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined'
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
@@ -34,14 +35,16 @@ import { formatCurrency } from '../../utils/format'
 export function StorefrontEventDetailPage() {
   const navigate = useNavigate()
   const { slug, eventSlug } = useParams<{ slug: string; eventSlug: string }>()
-  const { items, totalQuantity, addTicketType, addEventProduct, updateQuantity } = useStorefrontCart()
+  const { items, totalQuantity, addTicketType, addAutoSeatSelection, addEventProduct, updateQuantity } = useStorefrontCart()
 
   const [event, setEvent] = useState<StorefrontEvent | null>(null)
   const [availability, setAvailability] = useState<StorefrontAvailabilityResult | null>(null)
   const [selectedSessionUuid, setSelectedSessionUuid] = useState<string | null>(null)
   const [selectedSeatTicketTypeUuid, setSelectedSeatTicketTypeUuid] = useState<string | null>(null)
   const [selectedSeatSector, setSelectedSeatSector] = useState<string>('all')
+  const [autoSeatQuantity, setAutoSeatQuantity] = useState(1)
   const [seatAvailabilityFilter, setSeatAvailabilityFilter] = useState<'all' | 'available'>('all')
+  const [accessibleSeatsOnly, setAccessibleSeatsOnly] = useState(false)
   const [mapZoom, setMapZoom] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(true)
@@ -95,9 +98,25 @@ export function StorefrontEventDetailPage() {
           return false
         }
 
+        if (accessibleSeatsOnly && !seat.is_accessible) {
+          return false
+        }
+
         return true
       }),
-    [displayedSeats, selectedSeatSector, seatAvailabilityFilter],
+    [displayedSeats, selectedSeatSector, seatAvailabilityFilter, accessibleSeatsOnly],
+  )
+  const autoSectorAvailableCount = useMemo(
+    () =>
+      selectedSeatSector === 'all'
+        ? 0
+        : displayedSeats.filter(
+            (seat) =>
+              (seat.sector_name?.trim() ?? '') === selectedSeatSector &&
+              seat.kind === 'assento' &&
+              seat.availability_status === 'disponivel',
+          ).length,
+    [displayedSeats, selectedSeatSector],
   )
   const canRenderSeatMap = Boolean(
     venueMap &&
@@ -188,6 +207,10 @@ export function StorefrontEventDetailPage() {
       return firstAvailableUuid
     })
   }, [seatRequiredTicketTypes])
+
+  useEffect(() => {
+    setAutoSeatQuantity(1)
+  }, [selectedSeatSector, selectedSeatTicketTypeUuid])
 
   useEffect(() => {
     setSelectedSeatSector('all')
@@ -429,7 +452,14 @@ export function StorefrontEventDetailPage() {
       >
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{seat.label}</Typography>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{seat.label}</Typography>
+              {seat.is_accessible && (
+                <Tooltip title="Lugar acessível" arrow>
+                  <AccessibleOutlinedIcon fontSize="small" sx={{ color: 'var(--pt-primary)' }} />
+                </Tooltip>
+              )}
+            </Stack>
             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
               {[seat.sector_name, seat.kind].filter(Boolean).join(' • ') || 'Lugar marcado'}
             </Typography>
@@ -549,10 +579,14 @@ export function StorefrontEventDetailPage() {
       border = '1px solid rgba(239, 68, 68, 0.38)'
     }
 
+    if (seat.is_accessible && !isSelected) {
+      border = '2px solid var(--pt-primary)'
+    }
+
     return (
       <Tooltip
         key={seat.uuid}
-        title={`${seat.label}${seat.sector_name ? ` • ${seat.sector_name}` : ''}`}
+        title={`${seat.label}${seat.sector_name ? ` • ${seat.sector_name}` : ''}${seat.is_accessible ? ' • acessível' : ''}`}
         arrow
         placement="top"
       >
@@ -931,6 +965,76 @@ export function StorefrontEventDetailPage() {
                             ))}
                           </Stack>
 
+                          {selectedSeatSector !== 'all' && (
+                            <Paper variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.25 }}>
+                              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                                  Melhor lugar automático em {selectedSeatSector}
+                                </Typography>
+                                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => setAutoSeatQuantity((quantity) => Math.max(1, quantity - 1))}
+                                    disabled={autoSeatQuantity <= 1}
+                                    sx={{ ...SOFT_PANEL_SX }}
+                                  >
+                                    <RemoveIcon fontSize="small" />
+                                  </IconButton>
+                                  <Typography sx={{ minWidth: 20, textAlign: 'center' }}>{autoSeatQuantity}</Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      setAutoSeatQuantity((quantity) => Math.min(Math.max(1, autoSectorAvailableCount), quantity + 1))
+                                    }
+                                    disabled={autoSeatQuantity >= autoSectorAvailableCount}
+                                    sx={{ ...SOFT_PANEL_SX }}
+                                  >
+                                    <AddIcon fontSize="small" />
+                                  </IconButton>
+                                </Stack>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  disabled={
+                                    !event ||
+                                    !selectedSeatTicketType ||
+                                    autoSectorAvailableCount < autoSeatQuantity ||
+                                    cartHasMixedSessions ||
+                                    (availability?.requires_session_selection && !selectedSessionUuid)
+                                  }
+                                  onClick={() => {
+                                    if (!event || !selectedSeatTicketType) return
+                                    addAutoSeatSelection(
+                                      event,
+                                      {
+                                        uuid: selectedSeatTicketType.uuid,
+                                        name: selectedSeatTicketType.name,
+                                        description: selectedSeatTicketType.description,
+                                        price: selectedSeatTicketType.effective_price,
+                                        image_url: null,
+                                        quantity_available: selectedSeatTicketType.available_quantity,
+                                        min_per_order: selectedSeatTicketType.min_per_order,
+                                        max_per_order: selectedSeatTicketType.max_per_order,
+                                        sales_start_at: selectedSeatTicketType.sales_start_at,
+                                        sales_end_at: selectedSeatTicketType.sales_end_at,
+                                        status: 'ativo',
+                                      },
+                                      autoSeatQuantity,
+                                      selectedSeatSector,
+                                      selectedSession ? { uuid: selectedSession.uuid, name: selectedSession.name } : null,
+                                    )
+                                  }}
+                                  sx={{ minHeight: 36 }}
+                                >
+                                  Adicionar {autoSeatQuantity} lugar(es)
+                                </Button>
+                                <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                                  {autoSectorAvailableCount} livre(s) neste setor
+                                </Typography>
+                              </Stack>
+                            </Paper>
+                          )}
+
                           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
                             <Chip
                               label="Mostrar tudo"
@@ -945,6 +1049,14 @@ export function StorefrontEventDetailPage() {
                               color={seatAvailabilityFilter === 'available' ? 'primary' : 'default'}
                               variant={seatAvailabilityFilter === 'available' ? 'filled' : 'outlined'}
                               onClick={() => setSeatAvailabilityFilter('available')}
+                            />
+                            <Chip
+                              icon={<AccessibleOutlinedIcon fontSize="small" />}
+                              label="Acessível"
+                              clickable
+                              color={accessibleSeatsOnly ? 'primary' : 'default'}
+                              variant={accessibleSeatsOnly ? 'filled' : 'outlined'}
+                              onClick={() => setAccessibleSeatsOnly((current) => !current)}
                             />
                             <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
                               {filteredDisplayedSeats.length} lugar(es) visível(is)

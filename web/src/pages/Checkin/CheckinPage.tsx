@@ -31,7 +31,8 @@ import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import * as eventService from '../../services/eventService'
 import * as eventSessionService from '../../services/eventSessionService'
 import { checkinTicket, getCheckinSummary, getTicketCheckinHistory } from '../../services/ticketService'
-import { getApiErrorMessage } from '../../types/api'
+import { ApiRequestError, getApiErrorMessage } from '../../types/api'
+import { enqueueCheckin, getQueuedCheckins, removeQueuedCheckin, type QueuedCheckin } from '../../utils/offlineCheckinQueue'
 import {
   CHECKIN_RESULT_LABELS,
   checkinResultTone,
@@ -264,6 +265,9 @@ export function CheckinPage() {
   const [summary, setSummary] = useState<CheckinSummary>(createEmptySummary)
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [queuedCheckins, setQueuedCheckins] = useState<QueuedCheckin[]>(() => getQueuedCheckins())
+  const [isSyncingQueue, setIsSyncingQueue] = useState(false)
+  const [offlineNotice, setOfflineNotice] = useState<string | null>(null)
 
   const currentOption = SEARCH_MODE_OPTIONS.find((option) => option.value === searchMode)!
   const cooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -375,20 +379,61 @@ export function CheckinPage() {
     return () => window.clearInterval(intervalId)
   }, [loadSummary])
 
+  // Sincroniza a fila offline (roadmap Fase 2 — "modo offline controlado
+  // para acesso"): reenvia em ordem, um por vez, parando no primeiro erro
+  // que não seja de rede (ex.: ticket já usado por outra portaria enquanto
+  // offline — fica na fila pra revisão manual, não trava a sincronização
+  // dos itens seguintes).
+  const syncQueuedCheckins = useCallback(async () => {
+    if (isSyncingQueue) return
+    const queue = getQueuedCheckins()
+    if (queue.length === 0) return
+
+    setIsSyncingQueue(true)
+    for (const item of queue) {
+      try {
+        await checkinTicket(item.payload)
+        removeQueuedCheckin(item.id)
+      } catch (error) {
+        if (!(error instanceof ApiRequestError)) {
+          // Ainda sem rede de verdade — para aqui, tenta de novo depois.
+          break
+        }
+        // Erro de negócio (ex.: já utilizado) — remove da fila mesmo
+        // assim, o servidor já tem o estado real do ticket.
+        removeQueuedCheckin(item.id)
+      }
+    }
+    setQueuedCheckins(getQueuedCheckins())
+    setIsSyncingQueue(false)
+    void loadSummary()
+  }, [isSyncingQueue, loadSummary])
+
+  useEffect(() => {
+    const handleOnline = () => void syncQueuedCheckins()
+    window.addEventListener('online', handleOnline)
+    if (navigator.onLine) void syncQueuedCheckins()
+    return () => window.removeEventListener('online', handleOnline)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function runCheckin(payload: CheckinTicketPayload) {
     setIsSubmitting(true)
     setErrorMessage(null)
+    setOfflineNotice(null)
     setResult(null)
     setHistory([])
 
+    const fullPayload: CheckinTicketPayload = {
+      ...payload,
+      event_uuid: selectedEventUuid || undefined,
+      event_session_uuid: selectedSessionUuid || undefined,
+      gate_name: gateName.trim() || undefined,
+      device_info: navigator.userAgent,
+    }
+
     try {
-      const response = await checkinTicket({
-        ...payload,
-        event_uuid: selectedEventUuid || undefined,
-        event_session_uuid: selectedSessionUuid || undefined,
-        gate_name: gateName.trim() || undefined,
-        device_info: navigator.userAgent,
-      })
+      const response = await checkinTicket(fullPayload)
       setResult(response)
       setReentryReason('')
       void loadSummary()
@@ -405,7 +450,15 @@ export function CheckinPage() {
         setSearchValue('')
       }
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error, 'Não foi possível processar o check-in agora. Tente novamente.'))
+      if (!(error instanceof ApiRequestError)) {
+        enqueueCheckin(fullPayload)
+        setQueuedCheckins(getQueuedCheckins())
+        setErrorMessage(null)
+        setOfflineNotice('Sem conexão — check-in registrado offline e será sincronizado automaticamente.')
+        setSearchValue('')
+      } else {
+        setErrorMessage(getApiErrorMessage(error, 'Não foi possível processar o check-in agora. Tente novamente.'))
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -451,6 +504,23 @@ export function CheckinPage() {
       <PageHeader title="Portaria" subtitle="Faça o check-in dos participantes na entrada do evento." />
 
       <Stack spacing={2.5} sx={{ maxWidth: 560 }}>
+        {offlineNotice && (
+          <Alert severity="info" onClose={() => setOfflineNotice(null)}>
+            {offlineNotice}
+          </Alert>
+        )}
+        {queuedCheckins.length > 0 && (
+          <Alert
+            severity="warning"
+            action={
+              <Button color="inherit" size="small" disabled={isSyncingQueue} onClick={() => void syncQueuedCheckins()}>
+                {isSyncingQueue ? 'Sincronizando…' : 'Sincronizar agora'}
+              </Button>
+            }
+          >
+            {queuedCheckins.length} check-in(s) pendente(s) de sincronização.
+          </Alert>
+        )}
         <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
           <Stack spacing={1.5}>
             <Typography sx={{ fontWeight: 700 }}>Resumo do turno</Typography>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Sale\SaleResource;
 use App\Services\APIResponse;
+use App\Services\Report\OperationSnapshotService;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
 
@@ -22,8 +23,16 @@ class ReportController extends Controller
     ];
 
     public function __construct(
-        private ReportService $service
-    ) {
+        private ReportService $service,
+        private OperationSnapshotService $operationSnapshotService,
+    ) {}
+
+    public function operationSnapshot()
+    {
+        return APIResponse::success(
+            $this->operationSnapshotService->snapshot((int) app('tenant_id')),
+            __('messages.report.operation_snapshot')
+        );
     }
 
     public function indicators(Request $request)
@@ -68,7 +77,7 @@ class ReportController extends Controller
                     'per_page' => $list->perPage(),
                     'total' => $list->total(),
                     'last_page' => $list->lastPage(),
-                ]
+                ],
             ]
         );
     }
@@ -108,10 +117,9 @@ class ReportController extends Controller
         );
 
         return response()->streamDownload(
-            fn() => print($pdf['content']),
+            fn () => print ($pdf['content']),
             $pdf['filename'],
             ['Content-Type' => 'application/pdf']
         );
     }
-
 }

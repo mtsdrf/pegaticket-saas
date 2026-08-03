@@ -41,8 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Único ponto de carga de `auth/my-tenants` (fonte central, evita repetir o
    * fetch em `TenantMenu`/`TenantUserFormPage` — ambos passaram a ler daqui
-   * via `useTenants`). Também é de onde `activeTenant.send_tracking_link_whatsapp`
-   * é derivado, sem chamada extra a `/tenant-settings` (ver `useTenants.ts`).
+   * via `useTenants`).
    */
   const loadTenants = useCallback(async () => {
     if (!localStorage.getItem(STORAGE_KEYS.accessToken)) {

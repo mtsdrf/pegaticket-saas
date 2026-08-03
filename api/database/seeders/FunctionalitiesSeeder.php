@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Functionality\Functionality;
+use Illuminate\Database\Seeder;
 
 class FunctionalitiesSeeder extends Seeder
 {
@@ -27,6 +27,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Assentos e Mesas', 'slug' => 'seats', 'description' => 'Gestão de assentos, mesas, áreas e camarotes', 'is_active' => true],
             ['name' => 'Pedidos', 'slug' => 'sales', 'description' => 'Gestão de pedidos', 'is_active' => true],
             ['name' => 'Estornos', 'slug' => 'sale_refunds', 'description' => 'Registro de estorno externo de pedidos (spec 5.14)', 'is_active' => true],
+            ['name' => 'Caixa', 'slug' => 'cash_sessions', 'description' => 'Abertura e fechamento de caixa da bilheteria presencial', 'is_active' => true],
             ['name' => 'Ingressos', 'slug' => 'tickets', 'description' => 'Ingressos digitais emitidos e controle de acesso/check-in', 'is_active' => true],
             ['name' => 'Compradores', 'slug' => 'customers', 'description' => 'Busca de compradores (FinalCustomer) pelo staff, usada no pedido manual', 'is_active' => true],
             ['name' => 'Vendas Online', 'slug' => 'storefront-sales', 'description' => 'Gestão das vendas geradas pela bilheteria online (aprovar, cancelar, despachar, entregar)', 'is_active' => true],
@@ -48,9 +49,10 @@ class FunctionalitiesSeeder extends Seeder
             // inclui soft-deletados, pois você usa soft delete sempre
             $record = Functionality::withTrashed()->where('slug', $data['slug'])->first();
 
-            if (!$record) {
+            if (! $record) {
                 // create -> dispara creating -> HasUuid preenche uuid
                 Functionality::create($data);
+
                 continue;
             }
 

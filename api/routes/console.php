@@ -30,6 +30,22 @@ Schedule::command('subscriptions:enforce-grace-period')->daily();
 // em que um pagamento já aprovado no PSP ainda aparece pendente aqui.
 Schedule::command('payments:reconcile-mercadopago-sales --limit=100')->everyFifteenMinutes();
 
+// Mesma rede de segurança acima, para o rail comprador -> tenant via
+// PagBank (venda de ingresso). Ver PagBankPaymentProvider/
+// PaymentWebhookController::handlePagBank.
+Schedule::command('payments:reconcile-pagbank-sales --limit=100')->everyFifteenMinutes();
+
+// Varredura proativa de holds vencidos (spec 5.9) — StorefrontHoldService
+// já expira "on read" por tenant+evento; isso só fecha o gap de holds de
+// eventos que ninguém mais consulta, pra observabilidade/relatório não
+// mostrar reserva vencida como ativa. Ver ExpireInventoryHoldsCommand.
+Schedule::command('inventory:expire-holds')->everyFiveMinutes();
+
+// Comunicação transacional mínima (roadmap Fase 1) — lembrete de evento por
+// e-mail 24h antes, para vendas pagas ainda não lembradas. Ver
+// SendEventReminderMailsCommand.
+Schedule::command('sales:send-event-reminders --hours-ahead=24')->hourly();
+
 // Reconciliação ativa das assinaturas/preapprovals no Mercado Pago. Não
 // substitui o webhook de cobrança do ciclo; sincroniza o status estrutural
 // do vínculo recorrente (`authorized`, `cancelled`, etc.) como rede de

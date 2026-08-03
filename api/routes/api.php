@@ -1,75 +1,77 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Health\HealthController;
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\AuditLog\AuditLogController;
+use App\Http\Controllers\Auth\AcceptTenantUserInviteController;
 use App\Http\Controllers\Auth\AuthAccessController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\AuthTenantController;
+use App\Http\Controllers\Auth\ConfirmEmailController;
+use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Auth\SelfSignupController;
-use App\Http\Controllers\Plan\PlanController;
-use App\Http\Controllers\Plan\PlanFunctionalityController;
-use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\Group\GroupController;
-use App\Http\Controllers\Functionality\FunctionalityController;
-use App\Http\Controllers\AuditLog\AuditLogController;
-use App\Http\Controllers\Tenant\TenantController;
-use App\Http\Controllers\Tenant\TenantFeatureOverrideController;
-use App\Http\Controllers\Tenant\TenantProfileController;
-use App\Http\Controllers\Tenant\TenantDataExportController;
-use App\Http\Controllers\Tenant\TenantRoleController;
-use App\Http\Controllers\Tenant\TenantRolePermissionController;
-use App\Http\Controllers\Tenant\TenantUserController;
-use App\Http\Controllers\Tenant\TenantUserInviteController;
-use App\Http\Controllers\Auth\AcceptTenantUserInviteController;
-use App\Http\Controllers\Auth\AuthTenantController;
-use App\Http\Controllers\Auth\ProfileController;
-use App\Http\Controllers\Auth\ConfirmEmailController;
-use App\Http\Controllers\Legal\LegalDocumentController;
-use App\Http\Controllers\Legal\ReleaseNoteController;
-use App\Http\Controllers\Privacy\PrivacyRequestController;
-use App\Http\Controllers\Subscription\SubscriptionController;
-use App\Http\Controllers\Subscription\PaymentWebhookController;
-use App\Http\Controllers\Subscription\RefundController;
-use App\Http\Controllers\Payment\PaymentIssueController;
+use App\Http\Controllers\CashSession\CashSessionController;
 use App\Http\Controllers\Event\EventCategoryController;
 use App\Http\Controllers\Event\EventController;
 use App\Http\Controllers\Event\EventImageController;
-use App\Http\Controllers\Event\EventSessionController;
-use App\Http\Controllers\Event\TicketTypeController;
-use App\Http\Controllers\Event\TicketBatchController;
-use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\Event\EventProductController;
-use App\Http\Controllers\Ticket\TicketController;
+use App\Http\Controllers\Event\EventSessionController;
+use App\Http\Controllers\Event\TicketBatchController;
+use App\Http\Controllers\Event\TicketTypeController;
+use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
-use App\Http\Controllers\TenantSettings\TenantSettingsController;
+use App\Http\Controllers\Finance\ReconciliationController;
+use App\Http\Controllers\Functionality\FunctionalityController;
+use App\Http\Controllers\Group\GroupController;
+use App\Http\Controllers\GuestList\GuestInviteController;
+use App\Http\Controllers\GuestList\GuestListController;
+use App\Http\Controllers\Health\HealthController;
+use App\Http\Controllers\Legal\LegalDocumentController;
+use App\Http\Controllers\Legal\ReleaseNoteController;
 use App\Http\Controllers\Onboarding\OnboardingController;
+use App\Http\Controllers\Payment\PaymentIssueController;
+use App\Http\Controllers\Plan\PlanController;
+use App\Http\Controllers\Plan\PlanFunctionalityController;
+use App\Http\Controllers\Portal\PortalAuthController;
+use App\Http\Controllers\Portal\PortalController;
+use App\Http\Controllers\Portal\PortalCouponController;
+use App\Http\Controllers\Portal\PortalFavoriteController;
+use App\Http\Controllers\Portal\PortalLinkController;
+use App\Http\Controllers\Portal\PushSubscriptionController;
+use App\Http\Controllers\Privacy\PrivacyRequestController;
+use App\Http\Controllers\Report\AnalyticsController;
+use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\Sale\SaleInstallmentController;
 use App\Http\Controllers\Sale\SaleRefundController;
 use App\Http\Controllers\Sale\SaleTrackingController;
-use App\Http\Controllers\Report\ReportController;
-use App\Http\Controllers\Report\AnalyticsController;
-use App\Http\Controllers\Finance\ReconciliationController;
-use App\Http\Controllers\Portal\PortalAuthController;
-use App\Http\Controllers\Portal\PortalLinkController;
-use App\Http\Controllers\Portal\PortalCouponController;
-use App\Http\Controllers\Portal\PortalController;
-use App\Http\Controllers\Portal\PortalFavoriteController;
-use App\Http\Controllers\Portal\PushSubscriptionController;
-use App\Http\Controllers\User\UserAvatarController;
-use App\Http\Controllers\Tenant\TenantLogoController;
-use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\CartEventController;
+use App\Http\Controllers\Storefront\CouponController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
+use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontHoldController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
-use App\Http\Controllers\Storefront\CouponController;
+use App\Http\Controllers\Subscription\PaymentWebhookController;
+use App\Http\Controllers\Subscription\RefundController;
+use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Support\HelpRequestController;
-use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
+use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\Tenant\TenantDataExportController;
+use App\Http\Controllers\Tenant\TenantFeatureOverrideController;
+use App\Http\Controllers\Tenant\TenantLogoController;
+use App\Http\Controllers\Tenant\TenantProfileController;
+use App\Http\Controllers\Tenant\TenantRoleController;
+use App\Http\Controllers\Tenant\TenantRolePermissionController;
+use App\Http\Controllers\Tenant\TenantUserController;
+use App\Http\Controllers\Tenant\TenantUserInviteController;
+use App\Http\Controllers\TenantSettings\TenantSettingsController;
+use App\Http\Controllers\Ticket\TicketController;
+use App\Http\Controllers\User\UserAvatarController;
+use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Venue\SeatController;
 use App\Http\Controllers\Venue\VenueController;
 use App\Http\Controllers\Venue\VenueImageController;
+use App\Http\Controllers\Workflow\WorkflowTransitionLogController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
@@ -131,6 +133,15 @@ Route::prefix('v1')->group(function () {
     Route::get('/rastreio/{sale:uuid}', [SaleTrackingController::class, 'show'])
         ->middleware('throttle:60,1,sale-tracking-public');
 
+    // Autoatendimento de convite/cortesia (roadmap Fase 4) — 100% público,
+    // protegido pelo token individual imprevisível (mesmo padrão de
+    // rastreio público acima). Ver App\Services\GuestList\GuestListService.
+    Route::get('/convites/{token}', [GuestInviteController::class, 'show'])
+        ->middleware('throttle:60,1,guest-invite-show');
+
+    Route::post('/convites/{token}/resgatar', [GuestInviteController::class, 'redeem'])
+        ->middleware('throttle:20,1,guest-invite-redeem');
+
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
     // arquivo estático em /storage/*, sem passar por middleware nenhum;
     // agora são lidas do banco e servidas por rota de API, 100% pública
@@ -160,8 +171,6 @@ Route::prefix('v1')->group(function () {
     // App\Services\Storefront\StorefrontCatalogService.
     Route::get('/loja/{slug}', [StorefrontController::class, 'show'])
         ->middleware('throttle:100,1,storefront-show');
-    Route::get('/bilheteria/{slug}', [StorefrontController::class, 'show'])
-        ->middleware('throttle:100,1,storefront-show');
 
     // customer.jwt.optional (roadmap Delivery, Fase 4 — retenção): rota
     // continua 100% pública, mas quando o cliente final está autenticado o
@@ -170,51 +179,33 @@ Route::prefix('v1')->group(function () {
     // App\Http\Middleware\OptionalCustomerJwtMiddleware.
     Route::get('/loja/{slug}/eventos', [StorefrontController::class, 'events'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-products']);
-    Route::get('/bilheteria/{slug}/eventos', [StorefrontController::class, 'events'])
-        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-products']);
 
     // Detalhe público de um evento, com ticket_types/event_products
     // aninhados (NOVO — não existia equivalente no catálogo de comércio).
     Route::get('/loja/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
         ->middleware('throttle:100,1,storefront-event-show');
-    Route::get('/bilheteria/{slug}/eventos/{eventSlug}', [StorefrontController::class, 'event'])
-        ->middleware('throttle:100,1,storefront-event-show');
 
     Route::get('/loja/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
-        ->middleware('throttle:100,1,storefront-event-availability');
-    Route::get('/bilheteria/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
         ->middleware('throttle:100,1,storefront-event-availability');
 
     Route::post('/loja/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
-    Route::post('/bilheteria/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
-        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
 
     Route::get('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
-        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
-    Route::get('/bilheteria/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
 
     Route::post('/loja/{slug}/holds/{holdUuid}/renovar', [StorefrontHoldController::class, 'renew'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-renew']);
-    Route::post('/bilheteria/{slug}/holds/{holdUuid}/renovar', [StorefrontHoldController::class, 'renew'])
-        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-renew']);
 
     Route::delete('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'destroy'])
-        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-destroy']);
-    Route::delete('/bilheteria/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'destroy'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-destroy']);
 
     // Categorias com evento disponível (vitrine) — mesmo espírito de
     // /loja/{slug}/eventos.
     Route::get('/loja/{slug}/categorias', [StorefrontController::class, 'categories'])
         ->middleware('throttle:100,1,storefront-categories');
-    Route::get('/bilheteria/{slug}/categorias', [StorefrontController::class, 'categories'])
-        ->middleware('throttle:100,1,storefront-categories');
 
     Route::get('/loja/{slug}/manifest.webmanifest', [StorefrontManifestController::class, 'show'])
-        ->middleware('throttle:100,1,storefront-manifest');
-    Route::get('/bilheteria/{slug}/manifest.webmanifest', [StorefrontManifestController::class, 'show'])
         ->middleware('throttle:100,1,storefront-manifest');
 
     // Prévia pública de cupom — o frontend chama ao digitar o código no
@@ -224,16 +215,12 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Storefront\StorefrontController::validateCoupon().
     Route::post('/loja/{slug}/cupons/validar', [StorefrontController::class, 'validateCoupon'])
         ->middleware('throttle:100,1,storefront-coupon-validate');
-    Route::post('/bilheteria/{slug}/cupons/validar', [StorefrontController::class, 'validateCoupon'])
-        ->middleware('throttle:100,1,storefront-coupon-validate');
 
     // Telemetria de abandono de carrinho (roadmap A3.14) — 100% público,
     // mesmo espírito de /loja/{slug}/cupons/validar. Captura client-side no
     // checkout da loja; sem tela de leitura ainda, só o registro. Ver
     // App\Http\Controllers\Storefront\CartEventController.
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
-        ->middleware('throttle:60,1,storefront-cart-events');
-    Route::post('/bilheteria/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
     // Portal do cliente final (roadmap 5.2) — login sem senha por OTP de
     // e-mail. Identidade própria (App\Models\FinalCustomer\FinalCustomer),
@@ -278,6 +265,11 @@ Route::prefix('v1')->group(function () {
         // ver App\Http\Controllers\Portal\PortalController::saleTickets().
         Route::get('/sales/{uuid}/tickets', [PortalController::class, 'saleTickets'])
             ->middleware('throttle:60,1,portal-sale-tickets');
+
+        // Titularidade e transferência (roadmap Fase 4) — troca o
+        // participante do ingresso e rotaciona code/qr_token.
+        Route::post('/tickets/{uuid}/transfer', [PortalController::class, 'transferTicket'])
+            ->middleware('throttle:20,1,portal-tickets-transfer');
 
         // Avaliação de compra concluída — 1 avaliação por venda.
         Route::post('/sales/{uuid}/rating', [PortalController::class, 'rate'])
@@ -651,6 +643,24 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:events,delete', 'throttle:10,1,events-delete']);
         });
 
+        // "Cortesias estruturadas" (roadmap Fase 4) — reaproveita a
+        // permissão de events (mesmo escopo de quem gerencia o evento),
+        // sem criar Functionality própria. Ver
+        // App\Services\GuestList\GuestListService.
+        Route::prefix('guest-lists')->group(function () {
+            Route::get('/', [GuestListController::class, 'index'])
+                ->middleware(['tenant', 'perm:events,read', 'throttle:100,1,guest-lists-list']);
+
+            Route::post('/', [GuestListController::class, 'store'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,guest-lists-create']);
+
+            Route::get('/{uuid}', [GuestListController::class, 'show'])
+                ->middleware(['tenant', 'perm:events,read', 'throttle:100,1,guest-lists-show']);
+
+            Route::post('/{uuid}/entries', [GuestListController::class, 'addEntry'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:60,1,guest-lists-add-entry']);
+        });
+
         Route::prefix('events/{event}/sessions')->group(function () {
             Route::get('/', [EventSessionController::class, 'index'])
                 ->middleware(['tenant', 'perm:event_sessions,read', 'throttle:100,1,event-sessions-list']);
@@ -857,6 +867,25 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:sales,read', 'throttle:120,1,sales-workflow-transitions']);
         });
 
+        // Caixa (roadmap Fase 2 — bilheteria presencial). Functionality
+        // própria (cash_sessions), ações 'read'/'open'/'close' (as duas
+        // últimas reaproveitadas de ActionsSeeder — já existiam órfãs desde
+        // o domínio anterior, "Abrir/Fechar operação"). Ver
+        // CashSessionController.
+        Route::prefix('cash-sessions')->group(function () {
+            Route::get('/', [CashSessionController::class, 'index'])
+                ->middleware(['tenant', 'perm:cash_sessions,read', 'throttle:60,1,cash-sessions-list']);
+
+            Route::get('/current', [CashSessionController::class, 'current'])
+                ->middleware(['tenant', 'perm:cash_sessions,read', 'throttle:100,1,cash-sessions-current']);
+
+            Route::post('/open', [CashSessionController::class, 'open'])
+                ->middleware(['tenant', 'perm:cash_sessions,open', 'throttle:20,1,cash-sessions-open']);
+
+            Route::post('/close', [CashSessionController::class, 'close'])
+                ->middleware(['tenant', 'perm:cash_sessions,close', 'throttle:20,1,cash-sessions-close']);
+        });
+
         // Ticket = ingresso digital emitido (spec 5.15/5.16). Emissão é
         // automática (TicketIssuanceService, ouvindo SalePaid/SaleCancelled)
         // — sem rota de create/update manual aqui.
@@ -916,6 +945,12 @@ Route::prefix('v1')->group(function () {
         Route::prefix('reports')->group(function () {
             Route::get('/indicators', [ReportController::class, 'indicators'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-indicators']);
+
+            // Dashboard operacional em tempo quase real (roadmap Fase 2) —
+            // throttle mais generoso, pensado pra polling curto (ver
+            // OperationSnapshotService).
+            Route::get('/operation-snapshot', [ReportController::class, 'operationSnapshot'])
+                ->middleware(['tenant', 'perm:dashboard,read', 'throttle:200,1,reports-operation-snapshot']);
 
             Route::get('/charts', [ReportController::class, 'charts'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-charts']);

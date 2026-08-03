@@ -20,6 +20,7 @@ class StorefrontCreateHoldRequest extends FormRequest
             'items.*.ticket_type_uuid' => ['nullable', 'uuid'],
             'items.*.event_product_uuid' => ['nullable', 'uuid'],
             'items.*.seat_uuid' => ['nullable', 'uuid'],
+            'items.*.sector_name' => ['nullable', 'string', 'max:120'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ];
     }

@@ -85,9 +85,16 @@ export interface PortalTicket {
   qr_token: string
   status: string
   attendee_name: string | null
+  attendee_document: string | null
   issued_at: string | null
   ticket_type?: { uuid: string; name: string }
   event?: { uuid: string; name: string } | null
   session?: { uuid: string; name: string; starts_at: string | null } | null
   seat?: { label: string; sector_name: string | null } | null
+}
+
+/** "Titularidade e transferência" (roadmap Fase 4) — só ingresso `status: 'ativo'` aceita, ver `TicketService::transfer()`. */
+export interface TransferTicketPayload {
+  attendee_name: string
+  attendee_document?: string
 }

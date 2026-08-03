@@ -7,7 +7,9 @@ use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\SaleRating;
+use App\Models\Subscription\Payment;
 use App\Models\Tenant\Tenant;
+use App\Models\User\User;
 use Illuminate\Support\Facades\DB;
 
 class Sale extends BaseModel
@@ -30,6 +32,7 @@ class Sale extends BaseModel
         'paid_amount',
         'is_paid',
         'paid_at',
+        'reminder_sent_at',
         'due_date',
         'cancelled_at',
         'cancellation_reason',
@@ -54,6 +57,7 @@ class Sale extends BaseModel
         'change_for_amount' => 'decimal:2',
         'is_paid' => 'boolean',
         'paid_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
         'due_date' => 'date',
         'cancelled_at' => 'datetime',
     ];
@@ -89,7 +93,7 @@ class Sale extends BaseModel
         parent::booted();
 
         static::creating(function (Sale $order) {
-            if ($order->codigo || !$order->tenant_id) {
+            if ($order->codigo || ! $order->tenant_id) {
                 return;
             }
 
@@ -102,7 +106,7 @@ class Sale extends BaseModel
         });
 
         static::saving(function (Sale $order) {
-            if ($order->is_paid && !$order->paid_at) {
+            if ($order->is_paid && ! $order->paid_at) {
                 $order->paid_at = now();
             }
         });
@@ -148,7 +152,7 @@ class Sale extends BaseModel
      */
     public function operator()
     {
-        return $this->belongsTo(\App\Models\User\User::class, 'operated_by');
+        return $this->belongsTo(User::class, 'operated_by');
     }
 
     public function items()
@@ -173,6 +177,6 @@ class Sale extends BaseModel
      */
     public function payments()
     {
-        return $this->morphMany(\App\Models\Subscription\Payment::class, 'payable');
+        return $this->morphMany(Payment::class, 'payable');
     }
 }
