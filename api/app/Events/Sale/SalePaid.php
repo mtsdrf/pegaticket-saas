@@ -6,7 +6,7 @@ class SalePaid
 {
     public function __construct(
         public string $saleUuid,
-        public int $actorId
+        public ?int $actorId
     ) {
     }
 }
