@@ -967,7 +967,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/sales/summary', [ReportController::class, 'salesSummary'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales-summary']);
 
-            // Resultado por canal (roadmap A1.3) — drill-down até o pedido
+            // Resultado por canal (roadmap A1.3) — drill-down até a venda
             // via GET /sales?origin=X&date_from=Y&date_to=Z (já existente).
             Route::get('/by-channel', [ReportController::class, 'byChannel'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-by-channel']);
@@ -1077,7 +1077,7 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'tenant.owner', 'perm:subscription,read', 'throttle:60,1,subscription-history']);
         });
 
-        // Estornos do PRÓPRIO tenant (roadmap 2026-07-24) — pedido pago
+        // Estornos do PRÓPRIO tenant (roadmap 2026-07-24) — venda pago
         // cancelado, arrependimento de assinatura e contestação, todos
         // reunidos numa única visão para o proprietário (hoje espalhados
         // entre /sales e /subscription sem lista dedicada).

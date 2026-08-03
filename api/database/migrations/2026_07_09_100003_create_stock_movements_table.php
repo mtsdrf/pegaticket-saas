@@ -39,7 +39,7 @@ return new class extends Migration {
             $table->string('reason');
             $table->text('notes')->nullable();
 
-            // Reservado para o Pedido apontar pra cá na Fase 5, e usado já
+            // Reservado para o Venda apontar pra cá na Fase 5, e usado já
             // agora por reserve_cancel para apontar para o StockMovement
             // tipo reserve original.
             $table->string('source_type')->nullable();

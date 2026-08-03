@@ -35,7 +35,7 @@ interface FinalCustomerTenantLinkRepositoryInterface
 
     /**
      * Busca paginada de compradores ativos do tenant pro staff (fluxo de
-     * pedido manual, SaleFormPage). $search casa por LIKE contra nome/
+     * venda manual, SaleFormPage). $search casa por LIKE contra nome/
      * email do FinalCustomer relacionado e cpf_cnpj/phone_primary do link.
      */
     public function searchActiveForTenant(int $tenantId, ?string $search, int $perPage): LengthAwarePaginator;

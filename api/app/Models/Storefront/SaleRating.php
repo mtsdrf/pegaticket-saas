@@ -8,9 +8,9 @@ use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Avaliação do cliente final sobre um pedido entregue — sem BaseModel de
+ * Avaliação do cliente final sobre uma venda entregue — sem BaseModel de
  * propósito (mesmo desvio de ProductFavorite/CouponRedemption). Unique em
- * sale_id (schema) garante 1 avaliação por pedido; SaleRatingService checa
+ * sale_id (schema) garante 1 avaliação por compra; SaleRatingService checa
  * antes de deixar o DB estourar. Só created_at faz sentido (sem edição de
  * avaliação nesta fatia) — UPDATED_AT desligado.
  */

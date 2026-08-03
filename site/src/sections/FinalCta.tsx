@@ -16,7 +16,7 @@ export function FinalCta() {
           Sua operação não precisa continuar desorganizada
         </Typography>
         <Typography sx={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', mb: 3.5 }}>
-          Centralize pedidos, estoque e clientes, e tenha mais clareza para fazer o negócio crescer.
+          Centralize eventos, ingressos, bilheteria e operação, e tenha mais clareza para fazer o negócio crescer.
         </Typography>
         <Button
           size="large"

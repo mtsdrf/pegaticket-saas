@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Schema;
  * 2026-08-01: PegaTicket é bilheteria de eventos, não delivery/comércio
  * físico (resíduo do produto antigo "Maskats"). Mantém propositalmente:
  * - is_delivered/delivered_at: continuam sendo o gate de conclusão do
- *   pedido usado na cascata de pagamento (payInstallment/performDelivery)
+ *   venda usado na cascata de pagamento (payInstallment/performDelivery)
  *   e nos relatórios de operação/financeiro — não são exclusivos de
- *   entrega física, remover exige redesenho do estado do pedido
+ *   entrega física, remover exige redesenho do estado da venda
  *   (decisão de produto pendente, ver relatório da tarefa).
  * - needs_change/change_for_amount: troco de pagamento em dinheiro,
  *   aplicável também a venda presencial (guichê), não é exclusivo de

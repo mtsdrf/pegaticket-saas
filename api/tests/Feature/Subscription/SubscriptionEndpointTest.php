@@ -517,7 +517,7 @@ class SubscriptionEndpointTest extends TestCase
      * Achado de auditoria: findCurrentForTenant() não filtra por status —
      * um duplo-clique/replay no endpoint de arrependimento encontrava a
      * MESMA assinatura já cancelada e criava um SEGUNDO Refund local (e
-     * disparava um segundo pedido de estorno real no PSP a cada chamada).
+     * disparava um segunda venda de estorno real no PSP a cada chamada).
      */
     #[Test]
     public function withdrawal_cannot_be_requested_twice_for_the_same_subscription(): void
@@ -880,7 +880,7 @@ class SubscriptionEndpointTest extends TestCase
 
         $functionalityId = DB::table('functionalities')->insertGetId([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'Pedidos',
+            'name' => 'Vendas',
             'slug' => 'sales-' . \Illuminate\Support\Str::random(6),
             'created_at' => now(),
             'updated_at' => now(),

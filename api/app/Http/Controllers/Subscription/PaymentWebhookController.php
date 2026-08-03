@@ -42,7 +42,7 @@ use Illuminate\Http\Request;
  * (PegaTicket → tenant, Preapproval — roadmap Fase B item 1) é dirigido pelo
  * campo `type` da notificação (`subscription_authorized_payment` — cobrança
  * de ciclo aprovada/rejeitada), porque a cobrança recorrente do Preapproval
- * não passa por um Payment local pré-criado como no fluxo de pedido; o
+ * não passa por um Payment local pré-criado como no fluxo de venda; o
  * SubscriptionService confirma/inicia período de graça a partir daí.
  */
 class PaymentWebhookController extends Controller

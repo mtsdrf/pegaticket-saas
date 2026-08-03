@@ -12,7 +12,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Leitura agregada de Sale/Client, sem tabela própria. Pedido cancelado
+ * Leitura agregada de Sale/Client, sem tabela própria. Venda cancelado
  * (cancelled_at preenchido) nunca conta em nenhum indicador/gráfico/
  * relatório — decisão registrada em `.claude/memory/architecture-decisions.md`.
  * Toda query aqui filtra `tenant_id` explicitamente (sem exceção) e usa
@@ -110,13 +110,13 @@ class ReportService
     }
 
     /**
-     * Resumo agregado (não paginado) do relatório de pedidos, sobre a
+     * Resumo agregado (não paginado) do relatório de vendas, sobre a
      * MESMA base filtrada de filteredOrders() (salesEloquentQuery), só
      * trocando paginação por contagem.
      *
-     * overdue_percentage é uma definição SIMPLIFICADA: só pedidos com
+     * overdue_percentage é uma definição SIMPLIFICADA: só vendas com
      * `is_paid = false AND is_installment = false AND due_date < hoje` —
-     * NÃO cobre parcelas atrasadas de pedido parcelado (essa lógica de
+     * NÃO cobre parcelas atrasadas de venda parcelado (essa lógica de
      * union por installment vive em overdueOrdersCount() e não é replicada
      * aqui para não duplicá-la; este summary usa apenas o campo direto
      * sales.due_date, consistente com o resto de salesEloquentQuery).
@@ -154,9 +154,9 @@ class ReportService
     /**
      * Resultado por canal (roadmap A1.3, `sales.origin`) — agregado por
      * origin (staff/storefront e canais históricos), sobre a MESMA base de
-     * salesQuery() (pedido cancelado/soft-deletado sempre excluído, mesmo
+     * salesQuery() (venda cancelado/soft-deletado sempre excluído, mesmo
      * filtro de período por created_at dos outros indicadores). Um bucket
-     * por origin com pedido no período, ordenado por revenue desc.
+     * por origin com venda no período, ordenado por revenue desc.
      *
      * @return list<array{origin: string, order_count: int, total_amount: string, average_ticket: string}>
      */
@@ -199,12 +199,12 @@ class ReportService
 
         return [
             'content' => $pdf->output(),
-            'filename' => 'relatorio-pedidos-' . now()->format('Ymd_His') . '.pdf',
+            'filename' => 'relatorio-vendas-' . now()->format('Ymd_His') . '.pdf',
         ];
     }
 
     /**
-     * Base de pedidos ativos (não cancelados, não soft-deletados) do
+     * Base de vendas ativos (não cancelados, não soft-deletados) do
      * tenant, com filtro opcional de período por `created_at`.
      */
     private function salesQuery(int $tenantId, ?string $dateFrom, ?string $dateTo): QueryBuilder
@@ -218,10 +218,10 @@ class ReportService
     }
 
     /**
-     * Valor recebido = soma de total_amount dos pedidos não-parcelados
+     * Valor recebido = soma de total_amount dos vendas não-parcelados
      * pagos + soma de amount das parcelas pagas (via join com sales não
      * cancelados do tenant). Sempre agregado via SQL (sum/join), nunca
-     * carregando pedidos um a um em PHP.
+     * carreganda vendas um a um em PHP.
      */
     private function amountReceived(int $tenantId, ?string $dateFrom, ?string $dateTo): float
     {
@@ -249,7 +249,7 @@ class ReportService
      * (`created_at`) já filtrada por tenant/período/cancelamento no SQL —
      * evita função de data específica de engine (`DATE_FORMAT` do MySQL
      * vs `strftime` do SQLite usado nos testes), sem carregar as linhas
-     * inteiras de pedido em memória.
+     * inteiras de venda em memória.
      */
     private function salesByMonth(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {

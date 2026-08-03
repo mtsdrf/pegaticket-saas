@@ -20,7 +20,7 @@ use Tests\TestCase;
  * Webhook do Mercado Pago (roadmap Fase B, item 1; migrado para a API de
  * Orders). Cobre validação da assinatura x-signature (HMAC-SHA256), rejeição
  * sem assinatura válida, idempotência (mesmo evento 2x não reprocessa) e
- * reconciliação do pagamento de um pedido via GET /v1/orders/{id} (mockado).
+ * reconciliação do pagamento de uma venda via GET /v1/orders/{id} (mockado).
  * `data.id` agora é o id alfanumérico da order (ex. "ORD01JQ...").
  */
 class MercadoPagoWebhookTest extends TestCase

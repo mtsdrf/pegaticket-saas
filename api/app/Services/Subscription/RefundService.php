@@ -6,7 +6,7 @@ use App\Repositories\Contracts\RefundRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Visão do PRÓPRIO tenant sobre seus estornos (pedido pago cancelado,
+ * Visão do PRÓPRIO tenant sobre seus estornos (venda pago cancelado,
  * arrependimento de assinatura, contestação) — roadmap 2026-07-24.
  */
 class RefundService

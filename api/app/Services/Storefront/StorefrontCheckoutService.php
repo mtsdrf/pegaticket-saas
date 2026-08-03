@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\DB;
  * registro POR-TENANT do cliente já autenticado via OTP), sem
  * tocar em PortalLinkService::link() (caminho de vínculo por sale_uuid
  * pré-existente, continua intocado). Toda a lógica de preço/criação de
- * pedido é 100% reaproveitada de SaleService::create() — este
+ * venda é 100% reaproveitada de SaleService::create() — este
  * service só garante o link e monta o CreateSaleDTO com
  * origin='storefront'/status='pending_approval'.
  */
@@ -86,7 +86,7 @@ class StorefrontCheckoutService
             // desconto.
             $subtotalCents = $this->calculateCartSubtotalCents($tenant->id, $dto->items);
 
-            // Guard 2: pedido mínimo (quando configurado).
+            // Guard 2: valor mínimo da compra (quando configurado).
             if ($settings->minimum_order_value !== null) {
                 $minimumCents = (int) round($settings->minimum_order_value * 100);
 
@@ -134,7 +134,7 @@ class StorefrontCheckoutService
             // resolução interna de SaleService::create(), já documentado no
             // DTO desde a Fase 1) — garante que o preço resolvido AQUI
             // (resolveEffectiveUnitPrice()) seja exatamente o praticado no
-            // pedido criado, sem depender de SaleService recalcular.
+            // venda criado, sem depender de SaleService recalcular.
             $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
 
             $orderDto = new CreateSaleDTO(
@@ -282,7 +282,7 @@ class StorefrontCheckoutService
     /**
      * Reaproveita resolveEffectiveUnitPrice() para montar o array de itens
      * do CreateSaleDTO com unit_price explícito por item — garante que o
-     * pedido criado por SaleService::create() pratique exatamente o mesmo
+     * venda criado por SaleService::create() pratique exatamente o mesmo
      * preço que passou pelo guard de mínimo acima, sem duplicar a
      * resolução de preço numa segunda camada.
      *

@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  * Extraído de SaleTest.php (2026-07-12) pra ser reaproveitado também por
  * SaleInstallmentTest.php, sem duplicar os ~60 linhas de fixture de
  * Client/Product — mesma ideia de SetsUpTenantScopedUser, só que
- * específico da árvore de fixtures de Pedido.
+ * específico da árvore de fixtures de Venda.
  *
  * Migrado de Product para TicketType (roadmap PegaTicket seção 4A,
  * 2026-07-31) — createProduct() mantido como NOME (chamado por dezenas de
@@ -62,7 +62,7 @@ trait CreatesSaleFixtures
      * FinalCustomer absorveu Client (2026-07-31): cria a identidade global
      * (FinalCustomer) + o vínculo por-tenant confirmado (FinalCustomerTenantLink)
      * — o retorno continua sendo o que os testes usam pra
-     * montar o payload de criação de pedido (agora via `final_customer_uuid`
+     * montar o payload de criação de venda (agora via `final_customer_uuid`
      * em vez de `client_uuid`).
      */
     protected function createClient(int $tenantId): FinalCustomer

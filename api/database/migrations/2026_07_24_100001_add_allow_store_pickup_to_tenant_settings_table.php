@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Retirada na loja (roadmap Delivery) — habilita a opção do cliente final
- * retirar o pedido em vez de receber entrega. default false preserva 100%
+ * retirar a venda em vez de receber entrega. default false preserva 100%
  * o comportamento atual (nenhuma loja ganha pickup sem configurar).
  */
 return new class extends Migration {

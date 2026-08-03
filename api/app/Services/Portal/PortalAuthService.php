@@ -9,6 +9,7 @@ use App\Events\Portal\PortalOtpRequested;
 use App\Events\Portal\PortalOtpVerificationFailed;
 use App\Events\Portal\PortalOtpVerified;
 use App\Exceptions\InvalidOtpException;
+use App\Exceptions\PortalOtpDeliveryException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Mail\PortalOtpMail;
 use App\Models\FinalCustomer\FinalCustomer;
@@ -17,6 +18,7 @@ use App\Repositories\Contracts\FinalCustomerRepositoryInterface;
 use App\Services\Auth\CustomerJWTService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Login sem senha do cliente final (Fase 5.2 do roadmap): código de 6
@@ -63,7 +65,7 @@ class PortalAuthService
             }
 
             // Invalida qualquer código anterior ainda válido — só o último
-            // código pedido pode ser usado, evita ambiguidade/confusão e
+            // códiga venda pode ser usado, evita ambiguidade/confusão e
             // reduz a superfície de força bruta (um attempts counter ativo
             // por vez, não vários acumulando).
             FinalCustomerOtp::where('final_customer_id', $customer->id)
@@ -78,7 +80,11 @@ class PortalAuthService
                 'expires_at' => now()->addMinutes(self::EXPIRES_IN_MINUTES),
             ]);
 
-            Mail::to($customer->email)->send(new PortalOtpMail($code, self::EXPIRES_IN_MINUTES));
+            try {
+                Mail::to($customer->email)->send(new PortalOtpMail($code, self::EXPIRES_IN_MINUTES));
+            } catch (TransportExceptionInterface $e) {
+                throw new PortalOtpDeliveryException(__('messages.portal.otp_delivery_unavailable'), previous: $e);
+            }
 
             event(new PortalOtpRequested(finalCustomerUuid: $customer->uuid));
         });

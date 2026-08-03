@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Retirada na loja (roadmap Delivery) — 'delivery'|'pickup', persistido no
- * pedido (imutável depois de criado, mesmo espírito de origin/status).
+ * venda (imutável depois de criado, mesmo espírito de origin/status).
  * default 'delivery' preserva 100% o comportamento atual.
  */
 return new class extends Migration {

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * cashback_redeemed_amount congelado no pedido, mesmo espírito de
+ * cashback_redeemed_amount congelado na venda, mesmo espírito de
  * discount_amount — nunca recalculado depois de criado.
  */
 return new class extends Migration {

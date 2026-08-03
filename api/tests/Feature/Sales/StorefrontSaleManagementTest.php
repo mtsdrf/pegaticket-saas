@@ -31,7 +31,7 @@ class StorefrontSaleManagementTest extends TestCase
         $this->grantPermission('storefront-sales', 'read');
         $this->grantPermission('storefront-sales', 'approve');
         $this->grantPermission('storefront-sales', 'cancel');
-        // 'create' pra poder criar o pedido de fixture via POST /sales normal.
+        // 'create' pra poder criar a venda de fixture via POST /sales normal.
         $this->grantPermission('sales', 'create');
     }
 
@@ -154,7 +154,7 @@ class StorefrontSaleManagementTest extends TestCase
 
     /**
      * Tela genérica /vendas (SaleListPage) passou a filtrar
-     * origin=staff sempre — pedidos do canal online agora só aparecem em
+     * origin=staff sempre — vendas do canal online agora só aparecem em
      * /vendas-online. Filtro já existia no backend (SaleService::paginate),
      * só faltava o whitelist de SaleController::index() aceitar o
      * parâmetro.

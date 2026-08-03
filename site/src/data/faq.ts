@@ -28,7 +28,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Funciona para o meu tipo de negócio?',
     answer:
-      'O PegaTicket atende operacoes com catalogo, pedidos, loja online, estoque, integracoes e governanca fiscal em um plano unico, com tudo liberado.',
+      'O PegaTicket atende operacoes com eventos, ingressos, lotes, bilheteria online, check-in, pagamentos e governanca operacional em um plano unico, com tudo liberado.',
   },
   {
     question: 'Posso ter mais de uma unidade/filial?',

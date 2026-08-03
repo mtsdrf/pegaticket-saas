@@ -5,10 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Avaliação do cliente final sobre um pedido já entregue (roadmap Delivery,
+ * Avaliação do cliente final sobre uma venda já entregue (roadmap Delivery,
  * Fase 4 — retenção). Mesmo desvio deliberado de product_favorites: sem
  * BaseModel/soft delete/created_by. Unique em sale_id garante 1 avaliação
- * por pedido (OrderRatingService checa antes de deixar o DB estourar).
+ * por compra (OrderRatingService checa antes de deixar o DB estourar).
  */
 return new class extends Migration {
     public function up(): void

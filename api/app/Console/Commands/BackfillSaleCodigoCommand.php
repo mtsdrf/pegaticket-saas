@@ -7,19 +7,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Backfill de sales.codigo (2026-07-15) — pedidos criados antes do campo
+ * Backfill de sales.codigo (2026-07-15) — vendas criados antes do campo
  * existir não têm código de exibição. Por tenant, atribui sequencialmente
- * a partir de 1000 + (quantidade de pedidos daquele tenant que já têm
+ * a partir de 1000 + (quantidade de vendas daquele tenant que já têm
  * código), na ordem de criação (sales.id asc), e ao final sincroniza
  * tenants.next_sale_code para o próximo valor livre — mesma regra de
- * sequência usada em SaleService::create(). Idempotente: pedidos que já
+ * sequência usada em SaleService::create(). Idempotente: vendas que já
  * têm codigo são ignorados.
  */
 class BackfillSaleCodigoCommand extends Command
 {
     protected $signature = 'sales:backfill-codigo';
 
-    protected $description = 'Atribui sales.codigo sequencial (por tenant) aos pedidos que ainda não têm.';
+    protected $description = 'Atribui sales.codigo sequencial (por tenant) aos vendas que ainda não têm.';
 
     public function handle(): int
     {
@@ -64,7 +64,7 @@ class BackfillSaleCodigoCommand extends Command
             $totalAssigned += $assigned;
         }
 
-        $this->info("{$totalAssigned} pedido(s) com código atribuído em " . $tenantIds->count() . " tenant(s).");
+        $this->info("{$totalAssigned} venda(s) com código atribuído em " . $tenantIds->count() . " tenant(s).");
 
         return self::SUCCESS;
     }

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Observação/recado por item do carrinho (roadmap Delivery — gap-analysis
- * de catálogo/cardápio) — distinto de sales.notes (recado do pedido
+ * de catálogo/cardápio) — distinto de sales.notes (recado da venda
  * inteiro, já existente). Ex: "sem cebola", "bem passado".
  */
 return new class extends Migration {

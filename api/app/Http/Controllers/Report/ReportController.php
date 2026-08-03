@@ -94,7 +94,7 @@ class ReportController extends Controller
 
     /**
      * Resultado por canal (roadmap A1.3) — agregado por sales.origin.
-     * Drill-down até o pedido reaproveita GET /sales?origin=X&date_from=
+     * Drill-down até a venda reaproveita GET /sales?origin=X&date_from=
      * Y&date_to=Z, que já aceita esses filtros (nenhuma mudança necessária
      * ali, ver architecture-decisions.md).
      */

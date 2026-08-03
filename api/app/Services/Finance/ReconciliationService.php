@@ -36,7 +36,7 @@ class ReconciliationService
     {
         $query = Payment::query()
             ->whereNull('deleted_at')
-            ->where('payable_type', Sale::class)
+            ->where('payments.payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
                     ->from('sales')
@@ -46,19 +46,19 @@ class ReconciliationService
             ->with(['refunds' => fn($q) => $q->whereNull('deleted_at'), 'payable']);
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('payments.status', $filters['status']);
         }
 
         if (!empty($filters['method'])) {
-            $query->where('method', $filters['method']);
+            $query->where('payments.method', $filters['method']);
         }
 
         if (!empty($filters['from'])) {
-            $query->whereDate('created_at', '>=', $filters['from']);
+            $query->whereDate('payments.created_at', '>=', $filters['from']);
         }
 
         if (!empty($filters['to'])) {
-            $query->whereDate('created_at', '<=', $filters['to']);
+            $query->whereDate('payments.created_at', '<=', $filters['to']);
         }
 
         $paginator = $query->orderByDesc('id')->paginate($perPage);
@@ -111,7 +111,7 @@ class ReconciliationService
     {
         $base = Payment::query()
             ->whereNull('payments.deleted_at')
-            ->where('payable_type', Sale::class)
+            ->where('payments.payable_type', Sale::class)
             ->whereIn('payable_id', function ($sub) use ($tenantId) {
                 $sub->select('id')
                     ->from('sales')
@@ -120,11 +120,11 @@ class ReconciliationService
             });
 
         if (!empty($filters['from'])) {
-            $base->whereDate('created_at', '>=', $filters['from']);
+            $base->whereDate('payments.created_at', '>=', $filters['from']);
         }
 
         if (!empty($filters['to'])) {
-            $base->whereDate('created_at', '<=', $filters['to']);
+            $base->whereDate('payments.created_at', '<=', $filters['to']);
         }
 
         $rows = (clone $base)

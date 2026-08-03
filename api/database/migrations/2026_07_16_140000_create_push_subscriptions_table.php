@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * próprio cliente final, nunca por staff), sem updated_at (subscribe é
  * upsert por endpoint, nunca update parcial de outros campos).
  * Escopado GLOBALMENTE por final_customer_id, não por tenant — o mesmo
- * cliente pode receber push de qualquer loja onde tiver pedido.
+ * cliente pode receber push de qualquer loja onde tiver venda.
  *
  * `endpoint` como chave única: string(500) é suficiente para os endpoints
  * reais de push service (FCM/Mozilla/etc, tipicamente bem abaixo de 500

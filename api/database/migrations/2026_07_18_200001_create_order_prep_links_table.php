@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Link temporário de preparo do pedido (roadmap Loja) — token curto e
+ * Link temporário de preparo da venda (roadmap Loja) — token curto e
  * expira sozinho, aberto sem login pelo celular (QR code). Mesmo desvio
  * deliberado de coupon_redemptions/final_customer_tenant_links: sem
  * BaseModel/soft delete/created_by — só o sistema cria essas linhas, nunca

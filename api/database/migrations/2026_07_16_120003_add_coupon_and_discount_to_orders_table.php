@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * coupon_id usa nullOnDelete() (não cascade): pedido histórico não pode
+ * coupon_id usa nullOnDelete() (não cascade): venda histórico não pode
  * sumir se o cupom for removido depois — diferente de todas as outras FKs
  * de sales (client/stock_location), que são obrigatórias por natureza.
  * discount_amount default 0 preserva 100% o fluxo staff existente (nunca

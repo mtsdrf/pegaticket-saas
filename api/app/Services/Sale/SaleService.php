@@ -39,8 +39,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Módulo mais complexo do projeto: Pedido/Venda, com cascata de quitação
- * (última parcela paga marca o pedido inteiro como pago+entregue).
+ * Módulo mais complexo do projeto: Venda/Venda, com cascata de quitação
+ * (última parcela paga marca a venda inteiro como pago+entregue).
  * Controle de quantidade de ingresso vendida é responsabilidade de
  * TicketType/TicketBatch (quantity_available/quantity_sold), não deste
  * service — não há mais integração com estoque físico. Ver
@@ -53,8 +53,8 @@ class SaleService
     // que só é correto em acesso LAZY sobre uma instância real já
     // carregada — com with()/load(), Eloquent constrói a query da relation
     // a partir de um model "stub" vazio (tenant_id null), o que zeraria o
-    // resultado pra todo pedido. Resources acessam
-    // $order->finalCustomerLink diretamente (lazy, 1 query por pedido),
+    // resultado pra toda venda. Resources acessam
+    // $order->finalCustomerLink diretamente (lazy, 1 query por compra),
     // nunca via este array.
     public const EAGER_RELATIONS = ['finalCustomer', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon', 'rating'];
     public const LIST_EAGER_RELATIONS = ['finalCustomer'];
@@ -184,7 +184,7 @@ class SaleService
         }
 
         // Recorte operacional canônico da central de operação — mantém a
-        // origem do pedido como atributo e expõe o "estágio de trabalho"
+        // origem da venda como atributo e expõe o "estágio de trabalho"
         // atual para o frontend sem obrigar a UI a reconstruir isso a partir
         // de múltiplas flags/combinações no cliente.
         if (!empty($filters['stage'])) {
@@ -336,14 +336,14 @@ class SaleService
     }
 
     /**
-     * Edição de itens/cabeçalho de um pedido já criado — escopo
+     * Edição de itens/cabeçalho de uma venda já criado — escopo
      * deliberadamente limitado (não reabre client_uuid/is_installment,
-     * ver architecture-decisions.md), só permitida enquanto o pedido não
+     * ver architecture-decisions.md), só permitida enquanto a venda não
      * está entregue/pago/cancelado. Estruturalmente análogo a
      * SaleInstallmentService::reallocate() (diff do array inteiro contra
      * o estado atual via uuid).
      *
-     * Pedido parcelado: total_amount muda mas as installments NÃO são
+     * Venda parcelado: total_amount muda mas as installments NÃO são
      * recalculadas automaticamente aqui (decisão intencional — usuário
      * ajusta via PUT /sales/{order}/installments depois).
      */
@@ -462,10 +462,10 @@ class SaleService
     }
 
     /**
-     * Pedido de origem storefront (Fase 1) nasce `pending_approval` e só
+     * Venda de origem storefront (Fase 1) nasce `pending_approval` e só
      * pode ser pago depois que o staff aprova (status vira `confirmed`) —
      * sem essa checagem, payInstallment() contorna a fila de aprovação por
-     * completo (achado de code review: um pedido nunca aprovado, ou
+     * completo (achado de code review: uma venda nunca aprovado, ou
      * explicitamente `rejected`, podia ser pago normalmente sem nunca ter
      * passado pela aprovação).
      */
@@ -481,7 +481,7 @@ class SaleService
     }
 
     /**
-     * Cascata de quitação: ao pagar a última parcela pendente, o pedido
+     * Cascata de quitação: ao pagar a última parcela pendente, a venda
      * inteiro vira is_paid=true.
      */
     public function payInstallment(Sale $order, SaleInstallment $installment, ?string $paidAt = null): Sale
@@ -533,7 +533,7 @@ class SaleService
 
     /**
      * Desfaz payInstallment() de UMA parcela. Reversão de cascata: se o
-     * pedido tinha virado is_paid=true (só acontece quando TODAS as
+     * venda tinha virado is_paid=true (só acontece quando TODAS as
      * parcelas estavam pagas), volta para false já que agora nem todas
      * estão.
      */
@@ -578,8 +578,8 @@ class SaleService
     }
 
     /**
-     * Pedido inteiro, não item a item. Bloqueado se qualquer parcela (ou
-     * o pedido não parcelado) já estiver paga.
+     * Venda inteiro, não item a item. Bloqueado se qualquer parcela (ou
+     * a venda não parcelado) já estiver paga.
      */
     public function cancel(Sale $order, CancelSaleDTO $dto): Sale
     {
@@ -615,7 +615,7 @@ class SaleService
             $order->cancellation_reason = $dto->cancellationReason;
             $order->save();
 
-            // Pedido pago via Pix sendo cancelado: gera um Refund pendente
+            // Venda pago via Pix sendo cancelado: gera um Refund pendente
             // (não apaga o pagamento) — roadmap 2A.
             if ($paidPixCharge !== null) {
                 $this->paymentService->createRefundForPaidCancellation($order);
@@ -635,9 +635,9 @@ class SaleService
     }
 
     /**
-     * Fila de aprovação do staff (roadmap Delivery, Fase 1) — todo pedido
+     * Fila de aprovação do staff (roadmap Delivery, Fase 1) — toda venda
      * nascido da loja (origin='storefront') nasce status='pending_approval'
-     * e precisa passar por aqui antes de virar 'confirmed'. Pedido
+     * e precisa passar por aqui antes de virar 'confirmed'. Venda
      * origin='staff' já nasce 'confirmed' (default do DTO), nunca passa por
      * este método no fluxo normal.
      */
@@ -668,7 +668,7 @@ class SaleService
     }
 
     /**
-     * Recusa um pedido pendente de aprovação. NÃO seta cancelled_at (fica
+     * Recusa uma venda pendente de aprovação. NÃO seta cancelled_at (fica
      * null) — a distinção "recusado" fica só no campo status, pra não
      * colidir com relatórios que hoje derivam "foi cancelado" de
      * cancelled_at !== null.
@@ -684,7 +684,7 @@ class SaleService
                 throw new InvalidSaleStateException(__('messages.sale.not_pending_approval'));
             }
 
-            // Pedido recusado nunca deve consumir o limite de uso do
+            // Venda recusado nunca deve consumir o limite de uso do
             // cliente sobre um cupom — roadmap Delivery, Fase 3.
             if ($order->coupon_id !== null) {
                 CouponRedemption::where('sale_id', $order->id)->delete();
@@ -711,9 +711,9 @@ class SaleService
      * Solicitação de cancelamento pelo CLIENTE FINAL via Portal (roadmap
      * A4 — "aprovar cancelamento"). Chamado sem tenant resolvido
      * (rotas /portal/* não têm middleware `tenant`) — de propósito, SEM
-     * assertBelongsToCurrentTenant(): a posse do pedido já foi validada
+     * assertBelongsToCurrentTenant(): a posse da venda já foi validada
      * antes de chegar aqui via
-     * PortalCustomerService::findOwnedOrder() (pedido pertence a um
+     * PortalCustomerService::findOwnedOrder() (venda pertence a um
      * Client vinculado ao FinalCustomer via link confirmado). Não muda
      * estoque/pagamento ainda — só marca a intenção; cancel() de verdade
      * só roda em approveCancellationRequest(), quando o staff aprova.
@@ -742,8 +742,8 @@ class SaleService
 
     /**
      * Só o cliente final pode solicitar (decisão de produto), e só
-     * enquanto o pedido não está pago (finalização é automática — webhook
-     * do PagBank), não pelo enum de status. Pedido já `rejected`/já
+     * enquanto a venda não está pago (finalização é automática — webhook
+     * do PagBank), não pelo enum de status. Venda já `rejected`/já
      * cancelado/já com solicitação em aberto também bloqueiam (nada a
      * cancelar/duplicar).
      */
@@ -839,7 +839,7 @@ class SaleService
     }
 
     /**
-     * Marca o pedido como pago integralmente. Sem guard/lock próprios —
+     * Marca a venda como pago integralmente. Sem guard/lock próprios —
      * reaproveitado por create() (venda manual não parcelada), pela
      * cascata de payInstallment() e pela reconciliação de webhook
      * (SalePaymentService::reconcileWebhookPayment, venda online).
@@ -1002,7 +1002,7 @@ class SaleService
      * mapeados no código: create() e updateItems(), sempre que o item traz
      * `unit_price` explícito no payload (override manual de preço — o
      * único mecanismo de "desconto manual" que hoje existe, tanto pra
-     * pedidos internos quanto pra edição de pedido já criado). Compara o
+     * vendas internos quanto pra edição de venda já criado). Compara o
      * unit_price informado contra o preço que teria sido resolvido sem
      * override ($this->pricingService->resolvePrice, mesmo preço "cheio"
      * usado como fallback) — a diferença pra baixo é o desconto sendo
@@ -1052,7 +1052,7 @@ class SaleService
     /**
      * Trava a linha do Sale antes de qualquer leitura de estado
      * (cancelled_at/is_paid) dentro de payInstallment/cancel — sem isso,
-     * duas ações concorrentes no mesmo pedido podem ambas ler o estado
+     * duas ações concorrentes no mesma venda podem ambas ler o estado
      * "antigo" antes de qualquer uma commitar, causando dupla transição a
      * partir do mesmo estado.
      */
@@ -1063,7 +1063,7 @@ class SaleService
 
     /**
      * Guard de updateItems(): edição de item só é permitida enquanto o
-     * pedido não está pago/cancelado (escopo deliberadamente limitado,
+     * venda não está pago/cancelado (escopo deliberadamente limitado,
      * ver PHPDoc de updateItems()).
      */
     private function assertSaleItemsEditable(Sale $order): void
@@ -1093,8 +1093,8 @@ class SaleService
     /**
      * {order}/installments/{installment} não usa scoped bindings (rota
      * declarada manualmente, não Route::resource) — sem esta checagem, um
-     * usuário do mesmo tenant poderia pagar a parcela de um pedido usando
-     * o uuid de outro pedido na URL.
+     * usuário do mesmo tenant poderia pagar a parcela de uma venda usando
+     * o uuid de outra venda na URL.
      */
     private function assertInstallmentBelongsToOrder(Sale $order, SaleInstallment $installment): void
     {

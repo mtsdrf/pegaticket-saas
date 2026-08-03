@@ -219,7 +219,7 @@ class SaleRefundTest extends TestCase
         $response = $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/refunds", [
             'type' => 'parcial',
             'amount' => 25,
-            'reason' => 'Ticket de outro pedido',
+            'reason' => 'Ticket de outra venda',
             'refunded_at' => '2026-08-01',
             'ticket_uuids' => [$foreignTicket->uuid],
         ]);
@@ -314,7 +314,7 @@ class SaleRefundTest extends TestCase
     /**
      * Decisão técnica documentada em SaleRefundService: a disponibilidade
      * de assento é calculada em StorefrontHoldService::buildSeatAvailability()
-     * somando sale_items.seat_id não-nulo de pedidos não cancelados —
+     * somando sale_items.seat_id não-nulo de vendas não cancelados —
      * NUNCA olha para Ticket.status. "Liberar lugar" só tem efeito real se
      * o seat_id do order_item (e do ticket) for nulado; sem
      * release_seats=true, o item some do ticket mas o vínculo com o

@@ -1,7 +1,6 @@
 import { Box, CircularProgress } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { AgeVerificationGate } from '../components/storefront/AgeVerificationGate'
 import { StorefrontBottomNav, STOREFRONT_BOTTOM_NAV_HEIGHT } from '../components/storefront/StorefrontBottomNav'
 import { FLOATING_CHECKOUT_BAR_HEIGHT } from '../components/storefront/FloatingCheckoutBar'
 import { InstallPrompt } from '../components/pwa/InstallPrompt'
@@ -128,21 +127,19 @@ export function StorefrontLayout() {
   return (
     <PortalAuthProvider>
       <StorefrontCartProvider slug={slug}>
-        <AgeVerificationGate slug={slug}>
-          {/* Reserva espaço para o nav fixo (altura + safe-area) — o conteúdo
-              nunca fica escondido atrás dele; a região do padding fica atrás
-              da barra fixa, então não sobra faixa visível. */}
-          <Box sx={{ pb: `calc(${STOREFRONT_BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))` }}>
-            <Outlet />
-          </Box>
-          <InstallPrompt
-            title={tenant?.name ? `Instalar a loja da ${tenant.name}` : 'Instalar esta loja'}
-            description="Acesse o catálogo mais rápido, direto da tela inicial do aparelho."
-            iosDescription='Toque em Compartilhar e depois em "Adicionar à Tela de Início".'
-            dismissKeySuffix={slug}
-          />
-          <StorefrontChrome slug={slug} tenant={tenant} />
-        </AgeVerificationGate>
+        {/* Reserva espaço para o nav fixo (altura + safe-area) — o conteúdo
+            nunca fica escondido atrás dele; a região do padding fica atrás
+            da barra fixa, então não sobra faixa visível. */}
+        <Box sx={{ pb: `calc(${STOREFRONT_BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))` }}>
+          <Outlet />
+        </Box>
+        <InstallPrompt
+          title={tenant?.name ? `Instalar a loja da ${tenant.name}` : 'Instalar esta loja'}
+          description="Acesse o catálogo mais rápido, direto da tela inicial do aparelho."
+          iosDescription='Toque em Compartilhar e depois em "Adicionar à Tela de Início".'
+          dismissKeySuffix={slug}
+        />
+        <StorefrontChrome slug={slug} tenant={tenant} />
       </StorefrontCartProvider>
     </PortalAuthProvider>
   )

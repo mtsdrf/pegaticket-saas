@@ -74,7 +74,7 @@ class SalePushNotificationTest extends TestCase
     {
         // createClient() (CreatesSaleFixtures) já cria o FinalCustomer com
         // um FinalCustomerTenantLink CONFIRMADO pra este tenant — desde que
-        // FinalCustomer absorveu Client (2026-07-31), o "cliente" do pedido
+        // FinalCustomer absorveu Client (2026-07-31), o "cliente" da venda
         // JÁ É o customer notificável, sem indireção por um Client
         // separado como antes.
         $client = $this->createClient($this->tenant->id);

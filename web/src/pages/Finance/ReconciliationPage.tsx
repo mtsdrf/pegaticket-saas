@@ -110,7 +110,7 @@ export function ReconciliationPage() {
     () => [
       {
         field: 'order',
-        headerName: 'Pedido',
+        headerName: 'Venda',
         width: 130,
         filterType: 'none',
         sortable: false,

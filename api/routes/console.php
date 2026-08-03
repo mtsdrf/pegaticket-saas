@@ -24,7 +24,7 @@ Schedule::command('subscriptions:process-trial')->daily();
 // `schedule:run` acima.
 Schedule::command('subscriptions:enforce-grace-period')->daily();
 
-// Reconciliação ativa de cobranças Mercado Pago de pedidos. Não substitui
+// Reconciliação ativa de cobranças Mercado Pago de vendas. Não substitui
 // o webhook; atua como rede de segurança para atraso/perda de notificação
 // ou timeout ambíguo de criação. Rodar em intervalos curtos reduz a janela
 // em que um pagamento já aprovado no PSP ainda aparece pendente aqui.

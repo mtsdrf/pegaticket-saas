@@ -3,8 +3,8 @@
 namespace App\Exceptions;
 
 /**
- * Ação de Pedido inválida para o estado atual (já cancelado, já pago,
- * parcela já paga, ação de parcela chamada num pedido não parcelado,
+ * Ação de Venda inválida para o estado atual (já cancelado, já pago,
+ * parcela já paga, ação de parcela chamada numa venda não parcelado,
  * reserva de estoque ausente, etc.) — distinta de \RuntimeException
  * genérica pelo mesmo motivo de DuplicateNameException/InsufficientStockException:
  * exceções HTTP do Symfony (abort()/ModelNotFoundException) também

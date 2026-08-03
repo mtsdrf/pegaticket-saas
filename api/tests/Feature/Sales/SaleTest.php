@@ -48,7 +48,7 @@ class SaleTest extends TestCase
             'items' => [
                 // total_amount não é um campo de item válido (só
                 // ticket_type_uuid/quantity/unit_price) — sempre ignorado, o
-                // total do pedido é sempre recalculado no backend.
+                // total da venda é sempre recalculado no backend.
                 ['ticket_type_uuid' => $product->uuid, 'quantity' => 3, 'total_amount' => 999],
             ],
         ]);
@@ -149,7 +149,7 @@ class SaleTest extends TestCase
     /**
      * Fase 8 (migração de dados reais) encontrou produto vendido por peso
      * (ex.: queijo/doces por kg) com quantidade fracionária real nos
-     * pedidos. R$50,00/kg * 0,5kg precisa bater exato em R$25,00, sem erro
+     * vendas. R$50,00/kg * 0,5kg precisa bater exato em R$25,00, sem erro
      * de arredondamento (preço continua em centavos inteiros internamente,
      * só a quantidade é fracionária).
      */
@@ -383,7 +383,7 @@ class SaleTest extends TestCase
         $paidResponse->assertStatus(200)
             ->assertJsonPath('data.is_paid', true);
 
-        // Desfaz o pagamento da última parcela: is_paid do pedido volta
+        // Desfaz o pagamento da última parcela: is_paid da venda volta
         // para false (nem todas as parcelas pagas mais).
         $unpaidResponse = $this->auth()->patchJson("/api/v1/sales/{$order['uuid']}/installments/{$installments[1]['uuid']}/unpay");
         $unpaidResponse->assertStatus(200)
@@ -470,7 +470,7 @@ class SaleTest extends TestCase
     }
 
     /**
-     * Rede de segurança do Model (Sale::booted()) contra pedidos com
+     * Rede de segurança do Model (Sale::booted()) contra vendas com
      * is_paid=true e paid_at nulo — achado real em produção no import
      * legado (data de origem vazia/inválida). Todo fluxo da aplicação
      * (create()/payInstallment()/reconciliação de webhook) já seta a data
@@ -867,7 +867,7 @@ class SaleTest extends TestCase
 
     /**
      * sales.codigo (2026-07-15): número sequencial de exibição por
-     * tenant, via tenants.next_sale_code. Primeiro pedido do tenant
+     * tenant, via tenants.next_sale_code. Primeira venda do tenant
      * recebe "1000", segundo "1001", etc.
      */
     #[Test]
@@ -942,7 +942,7 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 10,
             'is_paid' => false,
-            'notes' => 'Pedido direto 1',
+            'notes' => 'Venda direto 1',
             'status' => 'confirmed',
             'origin' => 'staff',
         ]);
@@ -953,7 +953,7 @@ class SaleTest extends TestCase
             'is_installment' => false,
             'total_amount' => 20,
             'is_paid' => false,
-            'notes' => 'Pedido direto 2',
+            'notes' => 'Venda direto 2',
             'status' => 'confirmed',
             'origin' => 'staff',
         ]);
@@ -986,7 +986,7 @@ class SaleTest extends TestCase
             ])->assertStatus(201);
         }
 
-        // Simula pedidos legados: apaga codigo e reseta o contador do tenant.
+        // Simula vendas legados: apaga codigo e reseta o contador do tenant.
         Sale::where('tenant_id', $tenantA->id)->update(['codigo' => null]);
         DB::table('tenants')->where('id', $tenantA->id)->update(['next_sale_code' => 1000]);
 
@@ -1025,7 +1025,7 @@ class SaleTest extends TestCase
         $this->assertEquals(1001, DB::table('tenants')->where('id', $tenantA->id)->value('next_sale_code'));
         $this->assertEquals(1000, DB::table('tenants')->where('id', $tenantB->id)->value('next_sale_code'));
 
-        // Pedido criado depois do backfill não colide com os códigos
+        // Venda criado depois do backfill não colide com os códigos
         // recém-atribuídos.
         $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $clientB->uuid,
@@ -1037,11 +1037,11 @@ class SaleTest extends TestCase
     }
 
     /**
-     * Guards do checkout público (horário de funcionamento e pedido mínimo)
+     * Guards do checkout público (horário de funcionamento e valor mínimo da compra)
      * vivem inteiramente em StorefrontCheckoutService::checkout(), nunca em
      * SaleService::create(). POST /sales (fluxo staff) não passa por esse
      * Service, então StoreBusinessHour e minimum_order_value não bloqueiam
-     * o pedido manual.
+     * a venda manual.
      */
     #[Test]
     public function staff_order_creation_is_unaffected_by_checkout_phase_2_guards(): void
@@ -1053,7 +1053,7 @@ class SaleTest extends TestCase
 
         // Nenhum StoreBusinessHour ou minimum_order_value configurado pra
         // este tenant — se algum guard do checkout vazasse pro fluxo staff,
-        // este pedido seria bloqueado.
+        // esta venda seria bloqueado.
         $response = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
             'is_installment' => false,

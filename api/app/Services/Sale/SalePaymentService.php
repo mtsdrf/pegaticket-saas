@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
  * ManualPaymentProvider, sem PSP real).
  *
  * Casos especiais tratados como regra de negócio testável mesmo sem PSP real:
- * - duplicado: nunca há 2 cobranças Pix `pending` ativas pro mesmo pedido;
+ * - duplicado: nunca há 2 cobranças Pix `pending` ativas pro mesma venda;
  * - cancelado-após-pago: vira um Refund `requested` (não apaga o pagamento);
  * - valor divergente: webhook que reporte valor diferente marca a cobrança
  *   como `divergent` em vez de confirmar (reconcileWebhookPayment).
@@ -39,7 +39,7 @@ class SalePaymentService
     }
 
     /**
-     * Cria uma cobrança Pix vinculada ao pedido. Rejeita se o pedido está
+     * Cria uma cobrança Pix vinculada aa venda. Rejeita se a venda está
      * cancelado, já pago, ou já tem uma cobrança Pix ativa (`pending`).
      */
     public function createPixChargeForOrder(Sale $order): Payment
@@ -110,7 +110,7 @@ class SalePaymentService
         return $this->paymentProvider->getCheckoutConfig();
     }
     /**
-     * Cobrança ativa (status `pending`) do pedido, se houver. Usada tanto
+     * Cobrança ativa (status `pending`) da venda, se houver. Usada tanto
      * pelo guard de duplicidade quanto pela decisão de reaproveitar em vez de
      * criar uma segunda.
      */
@@ -126,7 +126,7 @@ class SalePaymentService
     }
 
     /**
-     * Pagamento confirmado (status `paid`) do pedido, se houver — usado pelo
+     * Pagamento confirmado (status `paid`) da venda, se houver — usado pelo
      * fluxo de cancelamento para decidir entre bloquear (pagamento manual
      * legado, sem registro em `payments`) e gerar estorno (pagamento Pix).
      */
@@ -146,7 +146,7 @@ class SalePaymentService
      * ainda sem provedor real emitindo). Valida o valor reportado contra o
      * esperado ANTES de confirmar: divergência marca a cobrança como
      * `divergent` (nunca confirma sozinho, exige conferência humana). Valor
-     * batendo confirma o pagamento e propaga para o pedido (is_paid).
+     * batendo confirma o pagamento e propaga para a venda (is_paid).
      */
     public function reconcileWebhookPayment(Payment $payment, string|int|float $reportedAmount): Payment
     {
@@ -226,7 +226,7 @@ class SalePaymentService
     }
 
     /**
-     * Estorno de um pedido pago que está sendo cancelado (roadmap 2A). Gera
+     * Estorno de uma venda pago que está sendo cancelado (roadmap 2A). Gera
      * um Refund `requested` amarrado ao pagamento confirmado — NÃO apaga o
      * pagamento. Retorna null quando não há pagamento Pix confirmado (nesse
      * caso o cancelamento segue seu guard normal em SaleService).
@@ -242,7 +242,7 @@ class SalePaymentService
         $refund = Refund::create([
             'tenant_id' => $order->tenant_id,
             'payment_id' => $payment->id,
-            'reason' => 'Cancelamento de pedido pago',
+            'reason' => 'Cancelamento de venda pago',
             'amount' => Money::normalize((string) $payment->amount),
             'type' => 'total',
             'requested_by' => Auth::id(),
@@ -264,7 +264,7 @@ class SalePaymentService
                 $refund->fill(['status' => 'failed']);
                 $refund->save();
 
-                ApplicationLogger::error('Falha ao solicitar estorno no PSP para cancelamento de pedido', [
+                ApplicationLogger::error('Falha ao solicitar estorno no PSP para cancelamento de venda', [
                     'sale_uuid' => $order->uuid,
                     'payment_uuid' => $payment->uuid,
                 ]);
@@ -295,14 +295,14 @@ class SalePaymentService
     }
 
     /**
-     * Pagamento manual declarado pelo operador no fechamento do pedido.
+     * Pagamento manual declarado pelo operador no fechamento da venda.
      * Diferente de createPixChargeForOrder(): não há PSP nem webhook, então a
      * linha nasce `paid` imediatamente. Cria SÓ a linha em `payments`
      * (payable=Sale, provider='manual', status='paid'); NÃO mexe em
      * `sales.is_paid` — quem chama valida a soma de TODAS as formas contra o
-     * total e decide marcar o pedido como pago só quando bate. Sem
+     * total e decide marcar a venda como pago só quando bate. Sem
      * transação/guard próprios: sempre chamado de dentro da transação do
-     * fluxo operacional que fecha o pedido.
+     * fluxo operacional que fecha a venda.
      */
     public function registerManualPayment(Sale $order, string $method, float $amount): Payment
     {

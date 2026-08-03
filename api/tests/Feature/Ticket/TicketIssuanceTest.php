@@ -145,7 +145,7 @@ class TicketIssuanceTest extends TestCase
 
         $orderModel = Sale::where('uuid', $order['uuid'])->first();
 
-        // Sale::cancel() bloqueia cancelamento de pedido pago sem cobrança
+        // Sale::cancel() bloqueia cancelamento de venda pago sem cobrança
         // Pix associada (regra de negócio existente, ver
         // SaleService::cancel()) — para exercitar o espelhamento de status
         // em Ticket sem depender do fluxo completo de Pix/webhook, o teste

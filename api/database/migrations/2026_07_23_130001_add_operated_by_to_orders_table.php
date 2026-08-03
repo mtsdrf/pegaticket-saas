@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
  * registrou a venda interna da época — distinto de `created_by` (sempre o
  * usuário do JWT da sessão) e de `cash_sessions.opened_by` (quem abriu o
  * caixa naquele fluxo legado). Nullable: só era setado quando aquele fluxo
- * operacional informava um operador resolvido; pedido comum permanece null.
+ * operacional informava um operador resolvido; venda comum permanece null.
  */
 return new class extends Migration {
     public function up(): void

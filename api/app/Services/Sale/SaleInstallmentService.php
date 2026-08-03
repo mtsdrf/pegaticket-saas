@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Gestão manual de parcela — lacuna do legado (`Pedido/Parcela`, CRUD
+ * Gestão manual de parcela — lacuna do legado (`Venda/Parcela`, CRUD
  * livre, inclusive de parcela já paga, sem validar se a soma bate com o
- * total do pedido) replicada de forma corrigida: mesmas 3 operações
+ * total da venda) replicada de forma corrigida: mesmas 3 operações
  * (criar/editar/excluir), mas parcela paga é imutável e toda operação
  * precisa manter a soma de todas as parcelas exatamente igual a
  * `sales.total_amount` — é a correção do bug de integridade do legado,
@@ -129,7 +129,7 @@ class SaleInstallmentService
     }
 
     /**
-     * Substituição em lote das parcelas NÃO PAGAS do pedido — resolve a
+     * Substituição em lote das parcelas NÃO PAGAS da venda — resolve a
      * limitação matemática dos 3 métodos acima (soma validada a cada
      * chamada isolada torna redistribuição entre parcelas impossível sem
      * um 422 intermediário, achado registrado em
@@ -139,7 +139,7 @@ class SaleInstallmentService
      * final precisa bater com `sales.total_amount`.
      *
      * @param array<int, array{uuid?: string, installment_number: int, amount: float, due_date: string}> $items
-     * @return \Illuminate\Support\Collection<int, SaleInstallment> Todas as parcelas ativas do pedido após a operação (pagas + as recém-processadas), ordenadas por installment_number.
+     * @return \Illuminate\Support\Collection<int, SaleInstallment> Todas as parcelas ativas da venda após a operação (pagas + as recém-processadas), ordenadas por installment_number.
      */
     public function reallocate(Sale $order, array $items): \Illuminate\Support\Collection
     {
@@ -150,9 +150,9 @@ class SaleInstallmentService
 
             $this->assertMutable($order);
 
-            // Trava TODAS as parcelas do pedido (pagas + não pagas) —
+            // Trava TODAS as parcelas da venda (pagas + não pagas) —
             // serializa reallocate() concorrente com payInstallment()/os
-            // 3 endpoints individuais sobre o mesmo pedido.
+            // 3 endpoints individuais sobre o mesma venda.
             $existing = SaleInstallment::where('sale_id', $order->id)
                 ->whereNull('deleted_at')
                 ->lockForUpdate()
@@ -321,7 +321,7 @@ class SaleInstallmentService
     }
 
     /**
-     * Regra 1 (só pedido parcelado) + regra 3 (pedido cancelado bloqueia
+     * Regra 1 (só venda parcelado) + regra 3 (venda cancelado bloqueia
      * tudo) — mesma checagem de estado já usada em deliver/pay/cancel.
      */
     private function assertMutable(Sale $order): void
@@ -346,7 +346,7 @@ class SaleInstallmentService
     }
 
     /**
-     * Regra 5: installment_number único por pedido — valida antes de
+     * Regra 5: installment_number único por compra — valida antes de
      * criar/editar pra dar 422 amigável em vez de estourar a constraint
      * `uniq_order_installment_number` do banco.
      */
@@ -406,7 +406,7 @@ class SaleInstallmentService
     /**
      * Mesmo motivo/documentação de SaleService::lockOrder() — trava a
      * linha do Sale antes de qualquer leitura/mutação de parcela, pra
-     * serializar operações concorrentes sobre o mesmo pedido (incluindo
+     * serializar operações concorrentes sobre o mesma venda (incluindo
      * concorrência com deliver/pay/payInstallment/cancel, que já travam
      * a mesma linha).
      */

@@ -16,7 +16,7 @@ use Tests\TestCase;
  * entrada real de "desconto manual" mapeado no código: override de
  * items[].unit_price abaixo do preço resolvido, em SaleService::create()
  * (fluxo interno atual, incluindo origem legada normalizada) e
- * SaleService::updateItems() (edição de pedido já criado).
+ * SaleService::updateItems() (edição de venda já criado).
  * Ver architecture-decisions.md pra investigação completa (coupon-based
  * discount do storefront não passa por aqui — é ator FinalCustomer, sem
  * TenantRole).
@@ -55,7 +55,7 @@ class SaleDiscountLimitTest extends TestCase
         $funcId = DB::table('functionalities')->where('slug', 'sales')->value('id')
             ?? DB::table('functionalities')->insertGetId([
                 'uuid' => (string) \Illuminate\Support\Str::uuid(),
-                'name' => 'Pedidos',
+                'name' => 'Vendas',
                 'slug' => 'sales',
                 'created_at' => now(),
                 'updated_at' => now(),

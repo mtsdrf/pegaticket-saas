@@ -32,7 +32,7 @@ class SalePublicTrackingResource extends JsonResource
             // (pending_approval|confirmed|rejected) permite o frontend
             // distinguir "aguardando aprovação"/"recusado" de "em
             // preparação"; antes só existia is_cancelled (cancelled_at !==
-            // null), que nunca cobria status=rejected (pedido recusado
+            // null), que nunca cobria status=rejected (venda recusado
             // aparecia pro cliente como "em preparação" — bug real).
             'status' => $this->status,
             'is_cancelled' => $this->cancelled_at !== null,

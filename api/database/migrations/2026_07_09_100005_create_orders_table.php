@@ -28,8 +28,8 @@ return new class extends Migration {
             $table->boolean('is_delivered')->default(false)->index();
             $table->timestamp('delivered_at')->nullable();
 
-            // Só relevante para pedido não parcelado (calculado no backend);
-            // pedido parcelado tem vencimento por parcela em sale_installments.
+            // Só relevante para venda não parcelado (calculado no backend);
+            // venda parcelado tem vencimento por parcela em sale_installments.
             $table->date('due_date')->nullable();
 
             $table->timestamp('cancelled_at')->nullable();

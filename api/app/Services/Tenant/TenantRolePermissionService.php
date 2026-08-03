@@ -50,7 +50,7 @@ class TenantRolePermissionService
     }
 
     /**
-     * Núcleo do bloqueio pedido: só administrador da plataforma
+     * Núcleo do bloqueia venda: só administrador da plataforma
      * ('administrators') pode alterar as permissões do perfil "owner" de
      * uma tenant. O dono da empresa (grupo global 'clients'), mesmo tendo
      * tenant_roles:update na própria tenant, não pode enfraquecer/alterar

@@ -52,7 +52,7 @@ class StorefrontCheckoutRequest extends FormRequest
                 }),
             ],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
-            // Observação por item — distinta de `notes` (recado do pedido
+            // Observação por item — distinta de `notes` (recado da venda
             // inteiro, abaixo).
             'items.*.notes' => ['nullable', 'string', 'max:200'],
 

@@ -15,7 +15,7 @@ use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\TestCase;
 
 /**
- * Cobrança Pix de pedido via MercadoPagoPaymentProvider (roadmap Fase B,
+ * Cobrança Pix de venda via MercadoPagoPaymentProvider (roadmap Fase B,
  * item 1 — PSP real). O client HTTP do Mercado Pago é mockado (Http::fake)
  * — nenhuma chamada de rede real acontece em teste.
  */
@@ -203,7 +203,7 @@ class MercadoPagoSalePaymentTest extends TestCase
      * FinalCustomer vinculado" do desenho antigo (Client nunca tinha
      * e-mail). POST /v1/orders exige `payer` com ao menos 1 propriedade
      * preenchida; aqui é sempre satisfeito pelo e-mail do próprio
-     * comprador do pedido.
+     * comprador da venda.
      */
     #[Test]
     public function pix_charge_uses_the_final_customers_email_as_payer(): void

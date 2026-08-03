@@ -16,7 +16,7 @@ class InventoryHold extends BaseModel
     public const STATUS_RESERVED = 'reservado';
     public const STATUS_EXPIRED = 'expirado';
     public const STATUS_ABANDONED = 'abandonado';
-    public const STATUS_CONVERTED = 'convertido_em_pedido';
+    public const STATUS_CONVERTED = 'convertido_em_venda';
 
     protected $table = 'inventory_holds';
 

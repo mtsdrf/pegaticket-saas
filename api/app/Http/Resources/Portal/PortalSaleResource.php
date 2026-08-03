@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Mesmo shape enxuto de SalePublicTrackingResource (Fase 5.1), sem
  * items/installments — listagem agregada entre lojas, detalhe completo de
- * um pedido continua sendo GET /rastreio/{uuid} (link que o cliente já tem).
+ * uma venda continua sendo GET /rastreio/{uuid} (link que o cliente já tem).
  */
 class PortalSaleResource extends JsonResource
 {

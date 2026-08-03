@@ -6,7 +6,7 @@
 <body style="font-family: Arial, sans-serif; color: #1a1a1a;">
     <p>Olá, {{ $user->name }}.</p>
 
-    <p>Recebemos um pedido para redefinir a senha da sua conta no PegaTicket.</p>
+    <p>Recebemos uma solicitação para redefinir a senha da sua conta no PegaTicket.</p>
 
     <p>
         <a href="{{ $resetUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">

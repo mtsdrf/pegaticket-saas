@@ -10,8 +10,8 @@ return new class extends Migration {
         Schema::table('tenants', function (Blueprint $table) {
             // Guarda o ÚLTIMO sales.codigo emitido pelo tenant (não o
             // próximo) — OrderService::create() faz increment() ANTES de
-            // ler o valor (atômico), então o codigo do pedido = valor já
-            // incrementado. Default 999 pra que o PRIMEIRO pedido do
+            // ler o valor (atômico), então o codigo da venda = valor já
+            // incrementado. Default 999 pra que o PRIMEIRA venda do
             // tenant (increment 999->1000) receba codigo "1000". Ver
             // também o comando sales:backfill-codigo (mesma convenção).
             $table->unsignedInteger('next_sale_code')->default(999);

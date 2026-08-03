@@ -9,7 +9,7 @@ namespace App\DTOs\Payment;
  * exato de `toArray()` (nomes de campo, aninhamento) NÃO é garantido pela
  * documentação oficial do PagBank nesta implementação — é um placeholder
  * estruturado para o dia em que a integração real for feita, não uma
- * cópia do payload real da API de Pedidos do PagBank.
+ * cópia do payload real da API de Vendas do PagBank.
  */
 final class PagBankChargeRequestDTO
 {

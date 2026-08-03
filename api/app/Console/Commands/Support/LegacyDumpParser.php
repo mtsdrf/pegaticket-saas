@@ -6,7 +6,7 @@ namespace App\Console\Commands\Support;
  * Parser dedicado de dump mysqldump (`INSERT INTO \`table\` (\`col\`, ...)
  * VALUES (...), (...), ...;`), sem depender de subir um servidor MySQL nem
  * de `str_getcsv`/regex ingênuo — campos de texto livre do legado (ex.:
- * `pedido.observacao`) podem conter vírgula e quebra de linha dentro da
+ * `venda.observacao`) podem conter vírgula e quebra de linha dentro da
  * própria string, o que quebraria um split por linha/vírgula simples.
  *
  * Varre o arquivo inteiro em memória (23MB, folga confortável) e, para cada

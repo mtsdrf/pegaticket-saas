@@ -50,8 +50,8 @@ class PushNotificationServiceTest extends TestCase
 
         app(PushNotificationService::class)->notifyFinalCustomer(
             $customer->id,
-            'Pedido aprovado',
-            'Seu pedido foi aprovado!',
+            'Venda aprovado',
+            'Seu venda foi aprovado!',
             '/rastreio/abc'
         );
 
@@ -70,8 +70,8 @@ class PushNotificationServiceTest extends TestCase
 
         app(PushNotificationService::class)->notifyFinalCustomer(
             $customer->id,
-            'Pedido recusado',
-            'Seu pedido foi recusado.',
+            'Venda recusado',
+            'Seu venda foi recusado.',
             '/rastreio/abc'
         );
 
@@ -95,8 +95,8 @@ class PushNotificationServiceTest extends TestCase
 
         app(PushNotificationService::class)->notifyFinalCustomer(
             $customer->id,
-            'Pedido entregue',
-            'Seu pedido foi entregue!',
+            'Venda entregue',
+            'Seu venda foi entregue!',
             '/rastreio/abc'
         );
 
@@ -114,8 +114,8 @@ class PushNotificationServiceTest extends TestCase
 
         app(PushNotificationService::class)->notifyFinalCustomer(
             $customer->id,
-            'Pedido aprovado',
-            'Seu pedido foi aprovado!',
+            'Venda aprovado',
+            'Seu venda foi aprovado!',
             '/rastreio/abc'
         );
 

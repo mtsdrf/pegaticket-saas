@@ -30,7 +30,7 @@ export function Hero() {
       >
         <Box>
           <Chip
-            label="Loja online, pedidos, estoque, clientes e cashback em um só sistema"
+            label="Eventos, ingressos, bilheteria online e check-in em um só sistema"
             sx={{
               mb: 2.5,
               fontWeight: 600,
@@ -49,8 +49,8 @@ export function Hero() {
           </Typography>
 
           <Typography sx={{ fontSize: { xs: 16, md: 18 }, color: 'var(--pt-muted)', maxWidth: 560, mb: 4 }}>
-            Loja online, pedidos, clientes, estoque e relatórios em um único sistema — feito para atacado, varejo,
-            laticínios, distribuidoras de bebidas, bares e casas noturnas.
+            Eventos, ingressos, lotes, bilheteria online, pagamentos e relatórios em um único sistema, com operação
+            pensada para organizadores, produtores e casas de evento.
           </Typography>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2.5 }}>
@@ -93,7 +93,7 @@ export function Hero() {
 }
 
 /**
- * Composição estilizada do painel + notificação de pedido — ilustração
+ * Composição estilizada do painel + notificação de venda — ilustração
  * própria (tokens `--pt-*`), não um screenshot real do produto (nenhum
  * disponível para uso público nesta entrega).
  */
@@ -186,7 +186,7 @@ function HeroMockup() {
         }}
       >
         <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'var(--pt-success)' }} />
-        <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: 'var(--pt-text)' }}>Novo pedido recebido</Typography>
+        <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: 'var(--pt-text)' }}>Nova venda confirmada</Typography>
       </Box>
     </Box>
   )

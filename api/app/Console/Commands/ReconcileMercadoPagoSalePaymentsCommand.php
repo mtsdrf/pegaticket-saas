@@ -9,7 +9,7 @@ use App\Services\Payment\PaymentReconciliationService;
 use Illuminate\Console\Command;
 
 /**
- * Reconciliação ativa de cobranças Mercado Pago de pedidos.
+ * Reconciliação ativa de cobranças Mercado Pago de vendas.
  *
  * Objetivo: não depender exclusivamente de webhook para atualizar estados
  * locais. Reconsulta a API oficial para cobranças do provider Mercado Pago
@@ -24,7 +24,7 @@ class ReconcileMercadoPagoSalePaymentsCommand extends Command
 {
     protected $signature = 'payments:reconcile-mercadopago-sales {--limit=100} {--payment_uuid=}';
 
-    protected $description = 'Reconcilia cobranças Mercado Pago de pedidos ainda pendentes/divergentes/falhas não revisadas.';
+    protected $description = 'Reconcilia cobranças Mercado Pago de vendas ainda pendentes/divergentes/falhas não revisadas.';
 
     public function __construct(
         private PaymentReconciliationService $reconciliationService,

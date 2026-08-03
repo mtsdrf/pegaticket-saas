@@ -10,7 +10,7 @@ use ZipArchive;
 
 /**
  * Exportação self-service dos dados do tenant (roadmap A1.2) — generaliza
- * os exports por tela já existentes (PDF de pedidos/clientes em
+ * os exports por tela já existentes (PDF de vendas/clientes em
  * ReportService) num pacote único, 1 CSV por entidade principal. Não
  * reaproveita ReportService (que é focado em relatório filtrado/paginado
  * pra tela); aqui é sempre o dado bruto e completo do tenant, sem filtro.

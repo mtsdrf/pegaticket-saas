@@ -13,9 +13,9 @@ use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
- * Avaliação de pedido entregue (roadmap Delivery, Fase 4 — retenção):
+ * Avaliação de venda entregue (roadmap Delivery, Fase 4 — retenção):
  * POST /portal/sales/{uuid}/rating. Exige is_paid=true, 1 avaliação
- * por pedido, e a mesma checagem de posse do reorder.
+ * por compra, e a mesma checagem de posse do reorder.
  */
 class PortalSaleRatingTest extends TestCase
 {

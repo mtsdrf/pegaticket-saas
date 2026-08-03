@@ -69,7 +69,7 @@ Estão implementados parcialmente, porém ainda abaixo da especificação:
 - **Inventário**: ticket types, batches e holds existem, mas faltam virada automática de lote, lista de espera, melhor assento, assentos contíguos, combos e upgrade real.
 - **Checkout**: existe fluxo público consistente, mas faltam guest checkout maduro, formulários por ingresso, split de pagamento, retentativas completas e jornada de alta demanda.
 - **Pagamentos**: Pix e integração real existem, mas faltam múltiplos gateways ativos, roteamento inteligente, antifraude e split/payout financeiro real.
-- **Pedidos/Vendas**: o domínio base existe, mas exportações, documentos operacionais, importação e busca operacional avançada ainda estão incompletos.
+- **Vendas/Vendas**: o domínio base existe, mas exportações, documentos operacionais, importação e busca operacional avançada ainda estão incompletos.
 - **Tickets pós-compra**: emissão e check-in existem, porém faltam wallet passes, transferência, titularidade, revenda oficial e QR rotativo.
 - **Promoções**: cupom existe, mas links promocionais, cortesias estruturadas, listas de convidados e campanhas condicionais ainda não.
 - **Comunicação**: já há eventos e alguma mensageria operacional, mas falta hub transacional completo com templates, fallback e tracking unificado.
@@ -93,7 +93,7 @@ Resumo:
 - inventário base;
 - checkout base;
 - pagamentos base;
-- vendas/pedidos;
+- vendas/vendas;
 - tickets;
 - check-in;
 - suporte;

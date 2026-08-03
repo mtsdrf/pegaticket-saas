@@ -130,7 +130,7 @@ Clube
         ├── Estacionamento
         ├── Produtos adicionais
         ├── Cupons
-        ├── Pedidos
+        ├── Vendas
         ├── Pagamentos
         ├── Participantes
         ├── Ingressos
@@ -296,8 +296,8 @@ ARQUIVADO
 
 ### Configurações de venda
 
-- quantidade mínima por pedido;
-- quantidade máxima por pedido;
+- quantidade mínima por compra;
+- quantidade máxima por compra;
 - quantidade máxima por CPF;
 - permitir compra sem login;
 - exigir identificação do comprador;
@@ -317,7 +317,7 @@ ARQUIVADO
 
 ### Regras
 
-- Evento com pedidos ou ingressos emitidos não poderá ser excluído.
+- Evento com vendas ou ingressos emitidos não poderá ser excluído.
 - Eventos com histórico deverão ser arquivados.
 - Alterações relevantes após vendas deverão gerar registro de auditoria.
 - Alterações de data, horário ou local deverão permitir comunicação aos compradores.
@@ -375,8 +375,8 @@ Um evento poderá possuir uma ou várias sessões.
 - classificação como ingresso ou inscrição;
 - valor base;
 - quantidade disponível;
-- quantidade mínima por pedido;
-- quantidade máxima por pedido;
+- quantidade mínima por compra;
+- quantidade máxima por compra;
 - quantidade máxima por CPF;
 - início da venda;
 - término da venda;
@@ -394,8 +394,8 @@ Um evento poderá possuir uma ou várias sessões.
 
 ### Regras
 
-- O valor utilizado no pedido deve ser copiado para o item do pedido.
-- Alterações posteriores no ingresso não devem modificar pedidos existentes.
+- O valor utilizado na venda deve ser copiado para o item da venda.
+- Alterações posteriores no ingresso não devem modificar vendas existentes.
 - Tipos com vendas não deverão ser excluídos fisicamente.
 
 ---
@@ -488,7 +488,7 @@ INDISPONIVEL
 
 - A reserva deverá ser registrada no servidor.
 - Um lugar não poderá possuir duas reservas ativas.
-- Um lugar não poderá ser vendido para dois pedidos.
+- Um lugar não poderá ser vendido para dois vendas.
 - O bloqueio deverá possuir data e hora de expiração.
 - Reservas expiradas deverão liberar automaticamente o estoque.
 - Um pagamento em processamento poderá receber tolerância configurável.
@@ -510,7 +510,7 @@ O estacionamento será vendido junto ao evento como item adicional.
 - valor;
 - quantidade de vagas;
 - início e fim das vendas;
-- máximo por pedido;
+- máximo por compra;
 - sessão relacionada;
 - exigir placa;
 - exigir modelo;
@@ -534,7 +534,7 @@ O estacionamento será vendido junto ao evento como item adicional.
 ### Regras
 
 - O estoque do estacionamento será independente do estoque de ingressos.
-- O estacionamento deverá aparecer no mesmo pedido.
+- O estacionamento deverá aparecer no mesma venda.
 - O estacionamento poderá gerar ingresso ou voucher próprio.
 - Um evento poderá possuir vários tipos de estacionamento.
 
@@ -562,7 +562,7 @@ ABANDONADO
 - O sistema deverá alertar novamente quando restar 1 minuto.
 - Ao expirar, o checkout deverá ser invalidado.
 - Mesas, assentos, ingressos e adicionais deverão ser liberados.
-- Um pedido expirado não poderá ser pago sem nova validação de estoque.
+- Uma venda expirado não poderá ser pago sem nova validação de estoque.
 
 ### Dados da reserva
 
@@ -643,7 +643,7 @@ Exibir:
 
 ### Etapa 5 — Confirmação
 
-- número do pedido;
+- número da venda;
 - status do pagamento;
 - instruções de acesso;
 - acesso aos ingressos;
@@ -682,7 +682,7 @@ Cada clube deverá conectar sua própria conta PagBank, garantindo que os valore
 
 ```text
 Cliente finaliza o checkout
-→ sistema cria o pedido local
+→ sistema cria a venda local
 → sistema cria a cobrança no PagBank
 → cliente efetua o pagamento
 → PagBank envia webhook
@@ -705,9 +705,9 @@ Cliente finaliza o checkout
 
 ---
 
-## 5.12 Pedidos
+## 5.12 Vendas
 
-### Dados do pedido
+### Dados da venda
 
 - número;
 - tenant;
@@ -736,7 +736,7 @@ Cliente finaliza o checkout
 - data de pagamento;
 - data de cancelamento.
 
-### Status do pedido
+### Status da venda
 
 ```text
 CRIADO
@@ -764,10 +764,10 @@ IMPORTACAO
 
 ### Regras
 
-- Status do pedido e do pagamento devem ser separados.
+- Status da venda e do pagamento devem ser separados.
 - Itens e valores devem ser imutáveis após confirmação, exceto por processos auditados.
-- Pedido pago deverá confirmar estoque antes de emitir ingressos.
-- Pedidos expirados deverão liberar reservas.
+- Venda pago deverá confirmar estoque antes de emitir ingressos.
+- Vendas expirados deverão liberar reservas.
 - Operações manuais deverão registrar usuário, data e motivo.
 
 ---
@@ -791,7 +791,7 @@ ERRO
 
 ### Dados
 
-- pedido;
+- venda;
 - provedor;
 - identificador externo;
 - método;
@@ -812,7 +812,7 @@ Na primeira versão, o sistema não efetuará o estorno diretamente no PagBank.
 ### Fluxo
 
 1. comprador entra em contato com o clube;
-2. operador localiza o pedido;
+2. operador localiza a venda;
 3. clube analisa a solicitação;
 4. clube realiza o estorno no PagBank;
 5. operador registra o estorno no sistema;
@@ -823,7 +823,7 @@ Na primeira versão, o sistema não efetuará o estorno diretamente no PagBank.
 
 ### Campos
 
-- pedido;
+- venda;
 - tipo total ou parcial;
 - valor;
 - motivo;
@@ -852,7 +852,7 @@ Na primeira versão, o sistema não efetuará o estorno diretamente no PagBank.
 - identificador único;
 - código alfanumérico;
 - QR Code;
-- pedido;
+- venda;
 - participante;
 - evento;
 - sessão;
@@ -909,7 +909,7 @@ Preferencialmente web responsiva ou PWA.
 - ler QR Code pela câmera;
 - buscar por nome;
 - buscar por CPF;
-- buscar por número do pedido;
+- buscar por número da venda;
 - buscar por código do ingresso;
 - realizar check-in manual;
 - desfazer check-in com permissão;
@@ -965,9 +965,9 @@ NAO_ENCONTRADO
 ### Regras
 
 - Cupons não poderão gerar total negativo.
-- O uso deverá ser registrado por pedido e comprador.
+- O uso deverá ser registrado por compra e comprador.
 - O sistema deverá impedir uso além do limite.
-- Reversão de pedido deverá devolver o uso quando configurado.
+- Reversão de venda deverá devolver o uso quando configurado.
 
 ---
 
@@ -1021,11 +1021,11 @@ Funcionalidade preparada para integração futura com o cadastro do clube.
 
 ### Eventos de comunicação
 
-- pedido criado;
+- venda criado;
 - Pix gerado;
 - pagamento aprovado;
 - pagamento recusado;
-- pedido expirado;
+- venda expirado;
 - ingresso emitido;
 - reenvio de ingresso;
 - evento alterado;
@@ -1118,15 +1118,15 @@ Indicadores principais:
 
 - vendas brutas;
 - receita líquida estimada;
-- pedidos pagos;
+- vendas pagos;
 - ingressos vendidos;
 - ticket médio;
 - ocupação;
 - check-ins;
 - estornos;
 - vendas de estacionamento;
-- pedidos pendentes;
-- pedidos expirados.
+- vendas pendentes;
+- vendas expirados.
 
 ## 7.2 Gráficos
 
@@ -1137,7 +1137,7 @@ Indicadores principais:
 - vendas por forma de pagamento;
 - ocupação por setor;
 - ocupação por mesa;
-- pedidos pagos versus expirados;
+- vendas pagos versus expirados;
 - abandono de checkout;
 - associados versus não associados;
 - estacionamento vendido versus disponível.
@@ -1174,7 +1174,7 @@ VISUALIZOU_EVENTO
 
 ## 7.5 Relatório financeiro
 
-- pedido;
+- venda;
 - data;
 - comprador;
 - evento;
@@ -1218,7 +1218,7 @@ Eventos
 └── Estacionamento e adicionais
 
 Vendas
-├── Pedidos
+├── Vendas
 ├── Pagamentos
 ├── Participantes
 ├── Ingressos
@@ -1276,8 +1276,8 @@ Configurações
 11. mesas e assentos;
 12. estacionamento e adicionais;
 13. configuração de pagamentos;
-14. pedidos;
-15. detalhes do pedido;
+14. vendas;
+15. detalhes da venda;
 16. participantes;
 17. ingressos;
 18. estornos externos;
@@ -1305,7 +1305,7 @@ Configurações
 15. compra confirmada;
 16. compra recusada;
 17. reserva expirada;
-18. meus pedidos;
+18. meus vendas;
 19. meus ingressos;
 20. ingresso digital;
 21. ajuda.
@@ -1411,9 +1411,9 @@ Cliente acessa a loja
 → sistema reserva o estoque
 → inicia contagem regressiva
 → cliente informa os dados
-→ revisa o pedido
+→ revisa a venda
 → escolhe o pagamento
-→ sistema cria o pedido
+→ sistema cria a venda
 → PagBank processa o pagamento
 → webhook confirma o pagamento
 → sistema confirma o estoque
@@ -1427,7 +1427,7 @@ Cliente acessa a loja
 ```text
 Prazo encerra
 → carrinho é marcado como expirado
-→ pedido pendente é expirado
+→ venda pendente é expirado
 → reservas são removidas
 → mesas e assentos voltam a ficar disponíveis
 → comprador precisa reiniciar a seleção
@@ -1468,13 +1468,13 @@ Operador seleciona evento e portaria
 6. O pagamento somente emitirá ingressos após confirmação confiável.
 7. Webhooks deverão ser idempotentes.
 8. Webhooks repetidos não poderão emitir ingressos duplicados.
-9. Pedidos expirados não poderão confirmar estoque sem nova validação.
+9. Vendas expirados não poderão confirmar estoque sem nova validação.
 10. Ingressos cancelados ou estornados deverão ser invalidados.
 11. Check-in repetido deverá ser identificado.
 12. Operações manuais deverão registrar usuário, data e motivo.
 13. Evento com vendas não poderá ser excluído.
-14. Valores históricos deverão ser preservados no pedido.
-15. Configurações futuras não poderão modificar pedidos antigos.
+14. Valores históricos deverão ser preservados na venda.
+15. Configurações futuras não poderão modificar vendas antigos.
 16. O mapa utilizado pelo evento deverá possuir versão congelada.
 17. Alterar mapas com vendas exigirá procedimento controlado.
 18. O estacionamento terá estoque independente.
@@ -1553,7 +1553,7 @@ Operador seleciona evento e portaria
 - cartão de débito, caso tecnicamente habilitado;
 - integração PagBank;
 - webhook;
-- pedidos;
+- vendas;
 - pagamentos;
 - ingressos com QR Code;
 - área de ingressos;
@@ -1640,20 +1640,20 @@ Operador seleciona evento e portaria
 
 - Comprador visualiza todas as etapas e o tempo restante.
 - Valor apresentado no frontend é validado no backend.
-- Pedido armazena valores históricos.
-- O sistema impede finalizar pedido sem estoque disponível.
+- Venda armazena valores históricos.
+- O sistema impede finalizar venda sem estoque disponível.
 
 ### Pagamento
 
 - Clube consegue conectar sua conta PagBank.
 - Clube consegue configurar Pix e cartão.
-- Pagamento aprovado por webhook confirma o pedido.
-- Webhook repetido não duplica pedido, pagamento ou ingresso.
+- Pagamento aprovado por webhook confirma a venda.
+- Webhook repetido não duplica venda, pagamento ou ingresso.
 - Pagamento recusado não emite ingresso.
 
 ### Ingresso
 
-- Pedido aprovado gera um ingresso único por participante ou item configurado.
+- Venda aprovado gera um ingresso único por participante ou item configurado.
 - Ingresso possui QR Code.
 - Comprador consegue acessar o ingresso.
 - Administrador consegue reenviar o ingresso.
@@ -1661,9 +1661,9 @@ Operador seleciona evento e portaria
 
 ### Estacionamento
 
-- Comprador consegue adicionar estacionamento no mesmo pedido.
+- Comprador consegue adicionar estacionamento no mesma venda.
 - Estoque do estacionamento é controlado separadamente.
-- O item aparece no pedido e nos relatórios.
+- O item aparece na venda e nos relatórios.
 
 ### Check-in
 
@@ -1765,13 +1765,13 @@ Recomenda-se:
 - reserva temporária;
 - expiração.
 
-### Sprint 3 — Checkout e pedidos
+### Sprint 3 — Checkout e vendas
 
 - carrinho;
 - identificação;
 - participantes;
 - conferência;
-- pedidos;
+- vendas;
 - estacionamento.
 
 ### Sprint 4 — PagBank

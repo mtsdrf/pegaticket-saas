@@ -15,7 +15,7 @@ use Throwable;
  * config('services.vapid')) — nunca instanciado direto aqui, para permitir
  * mock/fake em teste sem bater no provedor de push real.
  *
- * Crítico: envio de push NUNCA pode quebrar o fluxo principal do pedido —
+ * Crítico: envio de push NUNCA pode quebrar o fluxo principal da venda —
  * qualquer falha (exceção, timeout, subscription expirada) é capturada e
  * logada, nunca propagada.
  */

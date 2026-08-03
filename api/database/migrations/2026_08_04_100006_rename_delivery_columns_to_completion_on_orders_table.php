@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * `is_delivered`/`delivered_at` nunca representou entrega física (já
- * removida em 2026_08_01) — era o gate de conclusão do pedido (edição de
+ * removida em 2026_08_01) — era o gate de conclusão da venda (edição de
  * itens, quitação de parcela, elegibilidade de cancelamento, relatório
  * financeiro). Renomeado para refletir a semântica real.
  */

@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::table('sales', function (Blueprint $table) {
             // Número sequencial de exibição pro cliente, por tenant (via
             // tenants.next_sale_code, ver OrderService::create()) —
-            // nullable pra não quebrar pedidos já existentes; preenchido
+            // nullable pra não quebrar vendas já existentes; preenchido
             // via `php artisan sales:backfill-codigo`.
             $table->string('codigo')->nullable()->after('uuid');
 

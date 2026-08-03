@@ -14,7 +14,7 @@ use Tests\TestCase;
 /**
  * Fila de aprovação do staff (Delivery Fase 1) — POST /sales/{order}/approve
  * e /sales/{order}/reject, extensão do SaleController/SaleService
- * existentes (não um controller/service novo). Todo pedido origin=storefront
+ * existentes (não um controller/service novo). Toda venda origin=storefront
  * nasce status=pending_approval e precisa passar por aqui.
  */
 class SaleApprovalQueueTest extends TestCase
@@ -40,7 +40,7 @@ class SaleApprovalQueueTest extends TestCase
     }
 
     /**
-     * Cria um pedido de verdade via POST /sales (reserva de estoque real,
+     * Cria uma venda de verdade via POST /sales (reserva de estoque real,
      * origin=staff/status=confirmed por default) e simula que ele "nasceu"
      * da loja, virando pending_approval — mesmo estado que
      * StorefrontCheckoutService produz, só que aqui com uma reserva real

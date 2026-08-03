@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  * Sale/SaleItem/SaleInstallment/Client, sem tabela própria.
  *
  * Regras fixas deste módulo:
- * - Pedido cancelado (cancelled_at preenchido) NUNCA conta em nenhuma
+ * - Venda cancelado (cancelled_at preenchido) NUNCA conta em nenhuma
  *   agregação, igual ao ReportService.
  * - Toda query filtra tenant_id explicitamente e usa Query Builder com
  *   binding (nunca interpolação de valor vindo do request).
@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsService
 {
     /**
-     * Dias sem comprar a partir dos quais um cliente com 2+ pedidos é
+     * Dias sem comprar a partir dos quais um cliente com 2+ vendas é
      * considerado "churned" (evadido) em churnClients().
      */
     private const CHURN_INACTIVITY_DAYS = 60;
@@ -36,7 +36,7 @@ class AnalyticsService
     private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
 
     /**
-     * Por bucket (dia ou mês): qtd de pedidos, faturamento e ticket
+     * Por bucket (dia ou mês): qtd de vendas, faturamento e ticket
      * médio, mais o período imediatamente anterior de mesma duração no
      * mesmo shape (comparativo).
      */
@@ -93,7 +93,7 @@ class AnalyticsService
     }
 
     /**
-     * Matriz ano × mês com TODOS os anos que têm pedido (sem filtro de
+     * Matriz ano × mês com TODOS os anos que têm venda (sem filtro de
      * período — histórico completo por definição). Meses sem venda
      * entram zerados; anos em ordem decrescente.
      */
@@ -132,11 +132,11 @@ class AnalyticsService
     }
 
     /**
-     * Top clientes por valor total no período, com nº de pedidos,
+     * Top clientes por valor total no período, com nº de vendas,
      * última compra e rótulo RFM simples.
      *
      * Regra do rótulo (tercis calculados sobre TODOS os clientes com
-     * pedido ativo no período, não só o top N):
+     * venda ativo no período, não só o top N):
      * - R (recência), F (frequência) e M (monetário) recebem score
      *   1..3 pelo tercil da distribuição (3 = melhor: comprou mais
      *   recentemente / mais vezes / gastou mais).
@@ -191,7 +191,7 @@ class AnalyticsService
 
     /**
      * Média de dias entre criação (created_at) e pagamento (paid_at) por
-     * cliente — só pedidos pagos — ordenado do mais lento pro mais rápido.
+     * cliente — só vendas pagos — ordenado do mais lento pro mais rápido.
      */
     public function paymentDelays(int $tenantId, ?string $from, ?string $to, int $limit = 10): array
     {
@@ -217,10 +217,10 @@ class AnalyticsService
     }
 
     /**
-     * Pedidos em atraso de pagamento, paginado, ordenado por dias de
-     * atraso desc: parcela vencida não paga (agregado por pedido: valor
+     * Vendas em atraso de pagamento, paginado, ordenado por dias de
+     * atraso desc: parcela vencida não paga (agregado por compra: valor
      * em aberto = soma das parcelas vencidas não pagas, dias = maior
-     * atraso) OU pedido não parcelado com due_date vencido e não pago
+     * atraso) OU venda não parcelado com due_date vencido e não pago
      * (valor em aberto = total_amount).
      */
     public function overdueOrders(int $tenantId, ?string $from, ?string $to, int $perPage = 15): LengthAwarePaginator
@@ -361,11 +361,11 @@ class AnalyticsService
     }
 
     /**
-     * Comparação de ticket médio de pedidos COM cupom vs SEM cupom no
+     * Comparação de ticket médio de vendas COM cupom vs SEM cupom no
      * período, mais o desconto total concedido.
      *
      * ATENÇÃO: isto é uma comparação descritiva de ticket médio, NÃO uma
-     * medição causal de retorno sobre investimento — pedidos com cupom
+     * medição causal de retorno sobre investimento — vendas com cupom
      * podem ter ticket maior por autosseleção (clientes que já comprariam
      * mais), não por efeito do cupom. Nunca rotular como "ROI real" na UI.
      */
@@ -436,9 +436,9 @@ class AnalyticsService
 
     /**
      * Clientes evadidos (churn): identificados por sales.final_customer_id, com
-     * 2+ pedidos ativos e cujo último pedido é anterior a
+     * 2+ vendas ativos e cujo última venda é anterior a
      * CHURN_INACTIVITY_DAYS. Receita mensal em risco por cliente = soma
-     * dos pedidos nos 90 dias que antecedem o último pedido, dividida por
+     * dos vendas nos 90 dias que antecedem o última venda, dividida por
      * 3 (média mensal daquela janela).
      */
     public function churnClients(int $tenantId): array
@@ -512,7 +512,7 @@ class AnalyticsService
 
     /**
      * Mapa de calor de vendas por dia da semana × hora do dia no período.
-     * Retorna só as células com pedido (frontend completa a grade 7×24 com
+     * Retorna só as células com venda (frontend completa a grade 7×24 com
      * zero). day_of_week 1..7 (padrão MySQL DAYOFWEEK: 1=domingo), hour
      * 0..23.
      */

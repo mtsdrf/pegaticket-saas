@@ -8,7 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Busca de compradores (FinalCustomerTenantLink) pro staff — fluxo de
- * pedido manual (SaleFormPage), equivalente ao antigo GET /clients do
+ * venda manual (SaleFormPage), equivalente ao antigo GET /clients do
  * ClientController removido. Read-only, sem Event/auditoria (mesmo padrão
  * de ProductTypeService::paginate() / ProductCategoryService::paginate()).
  */

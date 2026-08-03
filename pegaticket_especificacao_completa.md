@@ -67,7 +67,7 @@ O produto deve buscar superar concorrentes pelos seguintes eixos:
 
 1. **Operação unificada:** venda, acesso, credenciamento, consumo, suporte e financeiro no mesmo ambiente.
 2. **Automação:** lotes, campanhas, alertas, repasses, comunicações e conciliações automatizadas.
-3. **Transparência financeira:** taxas, reservas, chargebacks, antecipações e repasses detalhados por pedido.
+3. **Transparência financeira:** taxas, reservas, chargebacks, antecipações e repasses detalhados por compra.
 4. **Alta disponibilidade:** checkout, fila e check-in preparados para eventos de alta demanda.
 5. **Segurança nativa:** QR rotativo, bloqueio de fraude, autenticação forte e trilha completa de auditoria.
 6. **Dados acionáveis:** indicadores em tempo real e recomendações práticas de venda e operação.
@@ -82,7 +82,7 @@ O produto deve buscar superar concorrentes pelos seguintes eixos:
 
 ### 3.1 Comprador
 
-Pessoa que pesquisa eventos, realiza pedidos, efetua pagamentos, recebe e administra ingressos.
+Pessoa que pesquisa eventos, realiza vendas, efetua pagamentos, recebe e administra ingressos.
 
 ### 3.2 Participante ou portador
 
@@ -106,7 +106,7 @@ Responsável por conciliação, repasses, estornos, documentos e relatórios fin
 
 ### 3.7 Operador de atendimento
 
-Responsável por solicitações de compradores, pedidos, ingressos, reembolsos e ocorrências.
+Responsável por solicitações de compradores, vendas, ingressos, reembolsos e ocorrências.
 
 ### 3.8 Operador de bilheteria
 
@@ -142,7 +142,7 @@ Gateway, adquirente, antifraude, mensageria, ERP, CRM, catraca, carteira digital
 
 ### RF-MT-001 — Isolamento por organização
 
-O sistema deve isolar dados, configurações, usuários, eventos, pedidos, ingressos, recebíveis e relatórios por organização.
+O sistema deve isolar dados, configurações, usuários, eventos, vendas, ingressos, recebíveis e relatórios por organização.
 
 ### RF-MT-002 — Usuário em múltiplas organizações
 
@@ -320,7 +320,7 @@ Mapas e configurações de local devem ser reutilizáveis entre eventos.
 
 ### RF-LOC-005 — Versionamento de mapa
 
-Alterações após início de vendas devem gerar versão controlada e preservar pedidos existentes.
+Alterações após início de vendas devem gerar versão controlada e preservar vendas existentes.
 
 ### RF-LOC-006 — Visão do assento
 
@@ -486,7 +486,7 @@ Permitir bloquear temporária ou permanentemente assentos e quantidades, com mot
 
 ### RF-INV-007 — Limites de compra
 
-Configurar mínimo e máximo por pedido, CPF, conta, cartão, telefone, endereço, dispositivo ou período.
+Configurar mínimo e máximo por compra, CPF, conta, cartão, telefone, endereço, dispositivo ou período.
 
 ### RF-INV-008 — Regras de elegibilidade
 
@@ -646,7 +646,7 @@ Solicitar apenas os dados necessários em cada etapa.
 
 ### RF-CHK-007 — Formulários personalizados
 
-Permitir perguntas por pedido, ingresso ou participante, com:
+Permitir perguntas por compra, ingresso ou participante, com:
 
 - texto curto e longo;
 - número;
@@ -690,11 +690,11 @@ Integrar-se à fila virtual e controlar taxa de entrada no checkout.
 
 ### RF-CHK-015 — Idempotência
 
-Reenvios ou callbacks duplicados não podem gerar pedidos ou cobranças duplicadas.
+Reenvios ou callbacks duplicados não podem gerar vendas ou cobranças duplicadas.
 
 ### RF-CHK-016 — Confirmação
 
-Após pagamento, informar estado do pedido, próximos passos e canais de suporte.
+Após pagamento, informar estado da venda, próximos passos e canais de suporte.
 
 ### RF-CHK-017 — Compra em grupo
 
@@ -794,15 +794,15 @@ Processar notificações com assinatura, idempotência, ordenação tolerante e 
 
 ### RF-PAY-015 — Conciliação
 
-Conciliar pedido, pagamento, taxa, recebível, liquidação, estorno e repasse.
+Conciliar venda, pagamento, taxa, recebível, liquidação, estorno e repasse.
 
 ### RF-PAY-016 — Falha de provedor
 
-Permitir contingência e troca de rota sem corromper pedidos.
+Permitir contingência e troca de rota sem corromper vendas.
 
 ### RF-PAY-017 — Link de pagamento
 
-Gerar link para reserva, pedido administrativo ou cobrança complementar.
+Gerar link para reserva, venda administrativo ou cobrança complementar.
 
 ### RF-PAY-018 — Pagamento presencial
 
@@ -810,13 +810,13 @@ Integrar terminais, TEF ou adquirentes para bilheteria e pontos móveis.
 
 ---
 
-## 13. Pedidos
+## 13. Vendas
 
 ### RF-ORD-001 — Número e identificador
 
-Cada pedido deve possuir identificador interno imutável e código amigável.
+Cada venda deve possuir identificador interno imutável e código amigável.
 
-### RF-ORD-002 — Estados do pedido
+### RF-ORD-002 — Estados da venda
 
 No mínimo:
 
@@ -844,13 +844,13 @@ Registrar canal, campanha, afiliado, dispositivo, operador e ponto de venda.
 
 Alterações devem ser permissionadas, justificadas e auditadas.
 
-### RF-ORD-006 — Pedido manual
+### RF-ORD-006 — Venda manual
 
-Operadores autorizados podem gerar pedidos, reservas, cobranças, cortesias e vendas assistidas.
+Operadores autorizados podem gerar vendas, reservas, cobranças, cortesias e vendas assistidas.
 
 ### RF-ORD-007 — Importação
 
-Importar pedidos ou participantes de outros sistemas com validação, deduplicação e relatório de erros.
+Importar vendas ou participantes de outros sistemas com validação, deduplicação e relatório de erros.
 
 ### RF-ORD-008 — Exportação
 
@@ -862,7 +862,7 @@ Gerar comprovante, recibo, declaração, invoice ou documento fiscal conforme co
 
 ### RF-ORD-010 — Busca operacional
 
-Pesquisar por pedido, nome, e-mail, telefone, documento, ingresso, pagamento, cartão mascarado ou código.
+Pesquisar por compra, nome, e-mail, telefone, documento, ingresso, pagamento, cartão mascarado ou código.
 
 ---
 
@@ -870,7 +870,7 @@ Pesquisar por pedido, nome, e-mail, telefone, documento, ingresso, pagamento, ca
 
 ### RF-TKT-001 — Ingresso único
 
-Cada ingresso deve possuir identificador único e vínculo com pedido, evento, produto e portador.
+Cada ingresso deve possuir identificador único e vínculo com venda, evento, produto e portador.
 
 ### RF-TKT-002 — Código de validação
 
@@ -1022,7 +1022,7 @@ Calcular comissão fixa, percentual, por faixa, meta, ingresso ou receita líqui
 
 ### RF-AFF-005 — Painel do afiliado
 
-Exibir cliques, pedidos, vendas, cancelamentos, comissões e pagamentos.
+Exibir cliques, vendas, vendas, cancelamentos, comissões e pagamentos.
 
 ### RF-AFF-006 — Metas e ranking
 
@@ -1119,7 +1119,7 @@ Enviar NPS, CSAT e pesquisas personalizadas.
 
 ### RF-COM-001 — Eventos de comunicação
 
-Enviar notificações para cadastro, pedido, pagamento, emissão, transferência, reembolso, alteração e acesso.
+Enviar notificações para cadastro, venda, pagamento, emissão, transferência, reembolso, alteração e acesso.
 
 ### RF-COM-002 — Múltiplos canais
 
@@ -1283,7 +1283,7 @@ Realizar troca de sessão, setor ou categoria conforme regras.
 
 ### RF-POS-010 — Atendimento de exceção
 
-Reemitir, localizar pedido, corrigir portador e encaminhar suporte.
+Reemitir, localizar venda, corrigir portador e encaminhar suporte.
 
 ### RF-POS-011 — Permissões por estação
 
@@ -1387,7 +1387,7 @@ Cada adicional pode ter estoque, período, preço, canal e elegibilidade.
 
 ### RF-ADD-003 — Associação ao ingresso
 
-Vincular adicional a evento, sessão, ingresso, portador ou pedido.
+Vincular adicional a evento, sessão, ingresso, portador ou venda.
 
 ### RF-ADD-004 — Upsell
 
@@ -1467,7 +1467,7 @@ Registrar solicitações com categoria, prioridade, SLA, responsável, anexos e 
 
 ### RF-SUP-003 — Contexto automático
 
-Associar pedido, evento, ingresso, pagamento e usuário ao atendimento.
+Associar venda, evento, ingresso, pagamento e usuário ao atendimento.
 
 ### RF-SUP-004 — Omnichannel
 
@@ -1515,7 +1515,7 @@ Comprador pode solicitar conforme prazo, política e legislação.
 
 ### RF-REF-002 — Reembolso total ou parcial
 
-Permitir reembolso de pedido, ingresso, taxa ou adicional conforme regra.
+Permitir reembolso de venda, ingresso, taxa ou adicional conforme regra.
 
 ### RF-REF-003 — Método de devolução
 
@@ -1547,7 +1547,7 @@ Trocar ingresso por outro evento, sessão, setor ou data, calculando diferenças
 
 ### RF-REF-010 — Automação
 
-Pedidos elegíveis podem ser reembolsados automaticamente; exceções seguem para análise.
+Vendas elegíveis podem ser reembolsados automaticamente; exceções seguem para análise.
 
 ### RF-REF-011 — Comunicação
 
@@ -1555,7 +1555,7 @@ Informar estado, prazo e valor de cada reembolso.
 
 ### RF-REF-012 — Reconciliação
 
-Reembolso deve refletir em pedido, pagamento, recebíveis, repasses, comissão e relatórios.
+Reembolso deve refletir em venda, pagamento, recebíveis, repasses, comissão e relatórios.
 
 ---
 
@@ -1571,7 +1571,7 @@ Exibir saldo previsto, disponível, reservado, bloqueado, antecipado e pago.
 
 ### RF-FIN-003 — Recebíveis
 
-Detalhar por pedido, parcela, meio, agenda, taxa, retenção e evento.
+Detalhar por compra, parcela, meio, agenda, taxa, retenção e evento.
 
 ### RF-FIN-004 — Repasse
 
@@ -1663,7 +1663,7 @@ Consolidar bases, taxas, comissões e repasses.
 
 ### RF-FIS-007 — Integração ERP
 
-Enviar pedidos, clientes, serviços, recebimentos e documentos.
+Enviar vendas, clientes, serviços, recebimentos e documentos.
 
 ---
 
@@ -1671,7 +1671,7 @@ Enviar pedidos, clientes, serviços, recebimentos e documentos.
 
 ### RF-ANA-001 — Indicadores em tempo real
 
-Exibir vendas, receita, ocupação, pedidos, conversão, pagamentos e check-ins.
+Exibir vendas, receita, ocupação, vendas, conversão, pagamentos e check-ins.
 
 ### RF-ANA-002 — Funil
 
@@ -1858,7 +1858,7 @@ Credenciais devem possuir escopos granulares por recurso e ação.
 Publicar eventos de domínio como:
 
 - evento criado ou alterado;
-- pedido criado;
+- venda criado;
 - pagamento atualizado;
 - ingresso emitido, transferido ou cancelado;
 - check-in realizado;
@@ -1923,7 +1923,7 @@ Permitir instalação, autorização, configuração, revisão e revogação de 
 
 ### RF-MIG-001 — Importação de eventos
 
-Importar eventos, lotes, assentos, participantes, pedidos e ingressos de sistemas externos.
+Importar eventos, lotes, assentos, participantes, vendas e ingressos de sistemas externos.
 
 ### RF-MIG-002 — Mapeamento
 
@@ -2244,7 +2244,7 @@ Inventário deve usar concorrência segura, transações, locks ou modelo equiva
 
 ### RNF-DAT-002 — Fonte de verdade
 
-Definir sistema de registro para pedido, pagamento, ingresso, inventário e financeiro.
+Definir sistema de registro para venda, pagamento, ingresso, inventário e financeiro.
 
 ### RNF-DAT-003 — Consistência eventual explícita
 
@@ -2272,7 +2272,7 @@ Dados financeiros, auditoria e estados relevantes devem preservar histórico.
 
 ### RNF-OBS-001 — Logs estruturados
 
-Registrar correlação, serviço, organização, evento, pedido e resultado sem expor dados sensíveis.
+Registrar correlação, serviço, organização, evento, venda e resultado sem expor dados sensíveis.
 
 ### RNF-OBS-002 — Métricas
 
@@ -2468,11 +2468,11 @@ Inventário reservado só se torna vendido após condição de confirmação def
 
 ### RB-002 — Pagamento aprovado deve ser reconciliado
 
-Se houver pagamento aprovado sem pedido confirmado, uma rotina deve identificar e corrigir ou encaminhar exceção.
+Se houver pagamento aprovado sem venda confirmado, uma rotina deve identificar e corrigir ou encaminhar exceção.
 
-### RB-003 — Pedido confirmado deve possuir cobertura financeira
+### RB-003 — Venda confirmado deve possuir cobertura financeira
 
-Pedido pago deve estar ligado a pagamento ou saldo válido, salvo cortesia ou faturamento autorizado.
+Venda pago deve estar ligado a pagamento ou saldo válido, salvo cortesia ou faturamento autorizado.
 
 ### RB-004 — Ingresso cancelado não pode validar
 
@@ -2496,7 +2496,7 @@ Soma de vendido, reservado válido, bloqueios relevantes e acessos deve respeita
 
 ### RB-009 — Reembolso afeta toda a cadeia financeira
 
-Pedido, ingresso, pagamento, recebível, comissão, repasse e fiscal devem permanecer coerentes.
+Venda, ingresso, pagamento, recebível, comissão, repasse e fiscal devem permanecer coerentes.
 
 ### RB-010 — Alterações críticas são auditadas
 
@@ -2520,7 +2520,7 @@ Aplicar validação, carência ou aprovação para mitigar fraude.
 
 ### RB-015 — Regras vigentes são versionadas
 
-Pedido e ingresso devem referenciar versões de preço, política e termos aplicados no momento da compra.
+Venda e ingresso devem referenciar versões de preço, política e termos aplicados no momento da compra.
 
 ---
 
@@ -2657,7 +2657,7 @@ Devem existir máquinas de estado explícitas para:
 - sessão;
 - lote;
 - reserva;
-- pedido;
+- venda;
 - pagamento;
 - reembolso;
 - ingresso;
@@ -2688,7 +2688,7 @@ Obrigatório:
 - estoque geral;
 - checkout responsivo;
 - Pix e cartão;
-- pedidos e ingressos QR;
+- vendas e ingressos QR;
 - e-mail transacional;
 - check-in online e offline;
 - vendas e entradas em tempo real;
@@ -2756,7 +2756,7 @@ Adicionar:
 - reserva atômica;
 - checkout;
 - Pix e cartão;
-- pedidos;
+- vendas;
 - emissão de ingresso;
 - check-in online/offline;
 - financeiro e repasse;
@@ -2826,7 +2826,7 @@ Adicionar:
 - receita por visitante;
 - ticket médio;
 - uso de cupom;
-- upsell por pedido.
+- upsell por compra.
 
 ### Inventário
 
@@ -2955,7 +2955,7 @@ O sistema completo deve ser desenvolvido como uma plataforma transacional e oper
 
 O núcleo mais importante é a consistência entre:
 
-> inventário → reserva → pagamento → pedido → ingresso → acesso → financeiro → repasse.
+> inventário → reserva → pagamento → venda → ingresso → acesso → financeiro → repasse.
 
 Sobre esse núcleo devem ser construídos os diferenciais de mercado:
 

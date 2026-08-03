@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Régua de reativação de cliente (roadmap A5, item 18) — tabela singleton
  * por tenant, mesmo padrão de tenant_settings (findOrCreateForTenant):
- * cliente sem pedido há days_without_order dias recebe cupom automático
+ * cliente sem venda há days_without_order dias recebe cupom automático
  * (coupon_type/coupon_value/coupon_validity_days) + push nativo, via
  * comando agendado reactivation:process. is_active=false (default) não
  * dispara nada — tenant precisa configurar e ativar explicitamente.

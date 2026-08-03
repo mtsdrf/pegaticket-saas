@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Confirmação explícita de vínculo entre o cliente final (autenticado no
- * Portal) e uma loja (tenant), a partir de um pedido que ele já tem em
+ * Portal) e uma loja (tenant), a partir de uma venda que ele já tem em
  * mãos (sale_uuid já validado no FormRequest via Rule::exists — mesmo
  * padrão de FK cross-tabela do resto do projeto) — o sale_uuid é só PROVA
- * de que ele é cliente real dessa loja, não precisa ser um pedido feito
- * por ESTE FinalCustomer (order.final_customer_id não muda aqui: o pedido
+ * de que ele é cliente real dessa loja, não precisa ser uma venda feito
+ * por ESTE FinalCustomer (order.final_customer_id não muda aqui: a venda
  * já nasceu vinculado ao seu comprador original em SaleService::create()
  * ou StorefrontCheckoutService::checkout()). Idempotente: chamar de novo
  * para o mesmo tenant não duplica nem dispara evento de novo, só retorna o

@@ -458,7 +458,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
     /**
      * Busca uma order por `external_reference` (`GET /v1/orders/search`) —
      * mesmo propósito de `searchPreapprovalByExternalReference`, aplicado
-     * ao fluxo de cobrança de pedido/fatura.
+     * ao fluxo de cobrança de venda/fatura.
      *
      * @return array<string, mixed>|null
      */

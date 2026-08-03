@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Relatório de Pedidos</title>
+    <title>Relatório de Vendas</title>
     @include('reports.partials.pdf-styles')
 </head>
 <body>
-    @include('reports.partials.pdf-header', ['pdfTitle' => 'Relatório de Pedidos', 'tenantName' => $tenantName ?? null, 'generatedAt' => $generatedAt])
+    @include('reports.partials.pdf-header', ['pdfTitle' => 'Relatório de Vendas', 'tenantName' => $tenantName ?? null, 'generatedAt' => $generatedAt])
 
     <table>
         <thead>
@@ -29,13 +29,13 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5">Nenhum pedido encontrado para os filtros informados.</td>
+                    <td colspan="5">Nenhuma venda encontrada para os filtros informados.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    <p class="totals">Total de pedidos: {{ $sales->count() }}</p>
+    <p class="totals">Total de vendas: {{ $sales->count() }}</p>
 
     @include('reports.partials.pdf-footer')
 </body>

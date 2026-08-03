@@ -5,7 +5,7 @@ namespace App\Http\Requests\Sale;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Substituição em lote das parcelas NÃO PAGAS de um pedido — resolve a
+ * Substituição em lote das parcelas NÃO PAGAS de uma venda — resolve a
  * limitação matemática de POST/PUT/DELETE individuais (soma validada a
  * cada chamada isolada torna redistribuição entre parcelas impossível
  * sem 422 intermediário). Aqui a soma só é validada UMA VEZ, no final da

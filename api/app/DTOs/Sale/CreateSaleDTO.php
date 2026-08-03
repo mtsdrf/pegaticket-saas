@@ -13,7 +13,7 @@ class CreateSaleDTO
      *   o Product.price atual (comportamento padrão, nunca confia no
      *   request); quando presente, sobrescreve o preço praticado do item.
      *   notes é opcional — recado por item (ex: "sem cebola"), distinto de
-     *   $notes (recado do pedido inteiro, abaixo).
+     *   $notes (recado da venda inteiro, abaixo).
      */
     public function __construct(
         public readonly int $tenantId,
@@ -29,7 +29,7 @@ class CreateSaleDTO
         public readonly float $discountAmount = 0.0,
         // Meio de pagamento pretendido pelo cliente no checkout público
         // (StorefrontCheckoutDTO->paymentMethod) — só informativo, persistido
-        // no pedido a partir desta feature. null preserva o fluxo staff, que
+        // na venda a partir desta feature. null preserva o fluxo staff, que
         // não coleta esse dado.
         public readonly ?string $paymentMethod = null,
         // Troco (checkout público, pagamento em dinheiro) —

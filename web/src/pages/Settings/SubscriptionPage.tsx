@@ -728,7 +728,7 @@ export function SubscriptionPage() {
             >
               <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5 }}>Reembolsos</Typography>
               <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2 }}>
-                Pedidos cancelados com pagamento já feito, arrependimento dentro do prazo e contestações de cobrança
+                Vendas canceladas com pagamento já feito, arrependimento dentro do prazo e contestações de cobrança
                 aparecem juntos aqui.
               </Typography>
 

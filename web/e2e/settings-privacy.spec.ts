@@ -237,12 +237,12 @@ test.describe('Dados e privacidade', () => {
 
     await page.getByLabel('Nome do solicitante').fill('João do Financeiro')
     await page.getByLabel('E-mail do solicitante').fill('joao.financeiro@empresa.com')
-    await page.getByLabel('Assunto').fill('Pedido de correção cadastral')
+    await page.getByLabel('Assunto').fill('Venda de correção cadastral')
     await page.getByLabel('Descrição da solicitação').fill('A empresa solicitou correção do e-mail e revisão dos dados exportados.')
     await page.getByRole('button', { name: 'Registrar solicitação' }).click()
 
     await expect(page.getByText('Solicitação registrada. Agora você já tem um histórico interno para acompanhar esse atendimento.')).toBeVisible()
-    await expect(page.getByText('Pedido de correção cadastral')).toBeVisible()
+    await expect(page.getByText('Venda de correção cadastral')).toBeVisible()
     await expect(page.getByText('João do Financeiro · joao.financeiro@empresa.com')).toBeVisible()
 
     await page.getByRole('button', { name: 'Exportar meus dados' }).click()

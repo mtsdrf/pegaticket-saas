@@ -27,7 +27,7 @@ use Illuminate\Support\Collection;
  * Decisão técnica sobre "liberar lugar" (spec item 7, investigada antes
  * de implementar): a disponibilidade de assento hoje é calculada em
  * StorefrontHoldService::buildSeatAvailability() somando
- * `sale_items.quantity` (via SaleItem) para pedidos não cancelados —
+ * `sale_items.quantity` (via SaleItem) para vendas não cancelados —
  * ela NUNCA olha para Ticket.status. Seat.status é estrutural/admin
  * (compartilhado por todas as vendas daquele assento) e não pode virar
  * um "liberado por venda" sem virar uma mudança perigosa e global.
@@ -36,8 +36,8 @@ use Illuminate\Support\Collection;
  * forma correta e mínima de "devolver o lugar ao mapa" dentro da
  * arquitetura existente é nular o `seat_id` do Ticket estornado E do
  * SaleItem (order_item) de origem — isso remove a linha da soma de
- * "vendido" sem apagar o item do pedido (total_amount/relatórios
- * financeiros do pedido continuam intactos, só o vínculo com o assento
+ * "vendido" sem apagar o item da venda (total_amount/relatórios
+ * financeiros da venda continuam intactos, só o vínculo com o assento
  * é desfeito). Sem essa mudança, marcar o ticket como estornado sozinho
  * NÃO libera o lugar para nova venda.
  */
@@ -133,9 +133,9 @@ class SaleRefundService
     }
 
     /**
-     * Regras: total -> todos os tickets ainda não estornados do pedido;
+     * Regras: total -> todos os tickets ainda não estornados da venda;
      * parcial -> exatamente os tickets informados, todos precisam
-     * pertencer ao pedido/tenant e não estar estornados ainda.
+     * pertencer aa venda/tenant e não estar estornados ainda.
      */
     private function resolveAffectedTickets(Sale $order, CreateSaleRefundDTO $dto): Collection
     {

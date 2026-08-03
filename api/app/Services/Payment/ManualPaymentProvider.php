@@ -105,7 +105,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
 
     /**
      * Registra um Payment pending polimórfico — o payable é uma Invoice
-     * (cobrança de assinatura) OU um Sale (pagamento de pedido).
+     * (cobrança de assinatura) OU um Sale (pagamento de venda).
      *
      * @return array<string, mixed>
      */

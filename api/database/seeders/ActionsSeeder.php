@@ -26,18 +26,18 @@ class ActionsSeeder extends Seeder
             // só semeando a permissão para não precisar de migration depois.
             ['key' => 'approve_inventory', 'name' => 'Aprovar inventário'],
             ['key' => 'reverse', 'name' => 'Estornar'],
-            // Ações de Pedido (sales,{action}) — Fase 5.
+            // Ações de Venda (sales,{action}) — Fase 5.
             // Key técnica 'deliver'/'undeliver' mantida (grupos já têm essa
             // permissão atribuída em produção); nome exibido atualizado —
-            // não é entrega física, é o gate de conclusão do pedido.
-            ['key' => 'deliver', 'name' => 'Concluir pedido'],
+            // não é entrega física, é o gate de conclusão da venda.
+            ['key' => 'deliver', 'name' => 'Concluir venda'],
             ['key' => 'pay', 'name' => 'Pagar'],
             ['key' => 'cancel', 'name' => 'Cancelar'],
             // Ações da tela dedicada de vendas online (storefront-sales,{action}).
-            // 'pay'/'deliver'/'cancel' já existem acima (Ações de Pedido) e
+            // 'pay'/'deliver'/'cancel' já existem acima (Ações de Venda) e
             // são reaproveitadas por storefront-sales,{pay,deliver,cancel}.
             ['key' => 'approve', 'name' => 'Aprovar'],
-            ['key' => 'undeliver', 'name' => 'Reabrir pedido'],
+            ['key' => 'undeliver', 'name' => 'Reabrir venda'],
             // Ação de Relatórios (reports,export_pdf) — Fase 6. 'read' já existe.
             ['key' => 'export_pdf', 'name' => 'Exportar PDF'],
             // Ação do acesso do contador (accounting-access,revoke). 'read'/

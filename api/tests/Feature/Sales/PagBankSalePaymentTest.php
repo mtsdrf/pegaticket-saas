@@ -17,8 +17,8 @@ use Tests\Support\PagBankTestCards;
 use Tests\TestCase;
 
 /**
- * Cobrança Pix de pedido via PagBankPaymentProvider (integração real contra
- * a API de Pedidos do PagBank, confirmada via documentação oficial
+ * Cobrança Pix de venda via PagBankPaymentProvider (integração real contra
+ * a API de Vendas do PagBank, confirmada via documentação oficial
  * developer.pagbank.com.br). Client HTTP mockado (Http::fake) — nenhuma
  * chamada de rede real acontece em teste.
  */

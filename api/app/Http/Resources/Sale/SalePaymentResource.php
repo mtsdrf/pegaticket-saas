@@ -5,7 +5,7 @@ namespace App\Http\Resources\Sale;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Saída de uma cobrança de pagamento de pedido (roadmap 2A). Expõe só o que
+ * Saída de uma cobrança de pagamento de venda (roadmap 2A). Expõe só o que
  * o frontend precisa pra montar a tela de pagamento; nunca vaza payable_id
  * interno (já oculto no model Payment).
  */

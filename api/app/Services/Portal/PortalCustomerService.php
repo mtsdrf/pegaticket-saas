@@ -11,7 +11,7 @@ use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Support\Collection;
 
 /**
- * Leitura agregada do cliente final autenticado: pedidos de todas as lojas
+ * Leitura agregada do cliente final autenticado: vendas de todas as lojas
  * vinculadas E confirmadas, e o perfil básico (GET /portal/sales,
  * GET /portal/me).
  */
@@ -50,11 +50,11 @@ class PortalCustomerService
     }
 
     /**
-     * Checagem de posse compartilhada por qualquer recurso "meu pedido" do
-     * portal (reorder, avaliação): o pedido precisa pertencer a um Client
+     * Checagem de posse compartilhada por qualquer recurso "minha compra" do
+     * portal (reorder, avaliação): a venda precisa pertencer a um Client
      * vinculado a este FinalCustomer via FinalCustomerTenantLink confirmado
      * — mesma lógica de listOrders(), sem duplicar. 404 (não 403) tanto
-     * para uuid inexistente quanto para pedido de outra loja não vinculada,
+     * para uuid inexistente quanto para venda de outra loja não vinculada,
      * nunca vazando qual dos dois casos é.
      */
     public function findOwnedOrder(int $finalCustomerId, string $saleUuid): Sale
@@ -104,8 +104,8 @@ class PortalCustomerService
 
     /**
      * "Pedir de novo" (roadmap Delivery, Fase 4 — retenção): itens do
-     * pedido antigo, com preço ATUAL do ingresso/produto do evento (não o
-     * preço congelado no pedido) e disponibilidade atual. withTrashed()
+     * venda antigo, com preço ATUAL do ingresso/produto do evento (não o
+     * preço congelado na venda) e disponibilidade atual. withTrashed()
      * porque o nome histórico do item precisa aparecer mesmo se o item
      * foi removido desde então — nesse caso is_available fica false.
      */

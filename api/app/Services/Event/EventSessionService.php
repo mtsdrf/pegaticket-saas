@@ -139,7 +139,7 @@ class EventSessionService
     /**
      * Spec 5.4: "uma sessão com vendas não poderá ser removida sem
      * procedimento de cancelamento" — bloqueia soft delete se existir
-     * TicketType vinculado a esta sessão com algum item de pedido já
+     * TicketType vinculado a esta sessão com algum item de venda já
      * vendido (via ticket_types.event_session_id -> sale_items).
      */
     public function delete(EventSession $eventSession): void

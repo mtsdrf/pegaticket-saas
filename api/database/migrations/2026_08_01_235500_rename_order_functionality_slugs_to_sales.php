@@ -32,8 +32,8 @@ return new class extends Migration
             ->where('slug', 'sales')
             ->update([
                 'slug' => 'sales',
-                'name' => 'Pedidos',
-                'description' => 'Gestão de pedidos',
+                'name' => 'Vendas',
+                'description' => 'Gestão de vendas',
                 'updated_at' => now(),
             ]);
 

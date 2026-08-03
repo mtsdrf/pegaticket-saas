@@ -8,10 +8,10 @@ use App\Models\Storefront\SaleRating;
 use App\Services\Portal\PortalCustomerService;
 
 /**
- * Avaliação do cliente final sobre um pedido entregue (roadmap Delivery,
+ * Avaliação do cliente final sobre uma venda entregue (roadmap Delivery,
  * Fase 4 — retenção). Sem Repository dedicado, mesma decisão de
  * ProductFavoriteService. Reaproveita
- * PortalCustomerService::findOwnedOrder() para a checagem de posse (pedido
+ * PortalCustomerService::findOwnedOrder() para a checagem de posse (venda
  * precisa pertencer a um Client vinculado a este FinalCustomer via
  * FinalCustomerTenantLink confirmado) — mesma lógica usada pelo reorder,
  * sem duplicar.

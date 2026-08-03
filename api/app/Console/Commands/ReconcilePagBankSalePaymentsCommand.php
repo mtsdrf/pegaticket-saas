@@ -10,7 +10,7 @@ use App\Services\Sale\SalePaymentService;
 use Illuminate\Console\Command;
 
 /**
- * Reconciliação ativa de cobranças PagBank de pedidos — rede de segurança
+ * Reconciliação ativa de cobranças PagBank de vendas — rede de segurança
  * equivalente a ReconcileMercadoPagoSalePaymentsCommand para o rail
  * comprador -> tenant, para o caso do webhook (PaymentWebhookController::
  * handlePagBank) atrasar/se perder. Reconsulta GET /orders/{id} antes de
@@ -21,7 +21,7 @@ class ReconcilePagBankSalePaymentsCommand extends Command
 {
     protected $signature = 'payments:reconcile-pagbank-sales {--limit=100} {--payment_uuid=}';
 
-    protected $description = 'Reconcilia cobranças PagBank de pedidos ainda pendentes/divergentes/falhas não revisadas.';
+    protected $description = 'Reconcilia cobranças PagBank de vendas ainda pendentes/divergentes/falhas não revisadas.';
 
     public function __construct(
         private PagBankPaymentProvider $provider,

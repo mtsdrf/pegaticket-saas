@@ -18,7 +18,7 @@ class ReconciliationEntryResource extends JsonResource
             'status' => $this->status,
             'paid_at' => $this->paid_at,
             'created_at' => $this->created_at,
-            'order' => $this->when($this->payable !== null, fn() => [
+            'sale' => $this->when($this->payable !== null, fn() => [
                 'uuid' => $this->payable->uuid,
                 'codigo' => $this->payable->codigo,
             ]),

@@ -268,6 +268,7 @@ export function CheckinPage() {
   const [queuedCheckins, setQueuedCheckins] = useState<QueuedCheckin[]>(() => getQueuedCheckins())
   const [isSyncingQueue, setIsSyncingQueue] = useState(false)
   const [offlineNotice, setOfflineNotice] = useState<string | null>(null)
+  const summaryData = summary ?? createEmptySummary()
 
   const currentOption = SEARCH_MODE_OPTIONS.find((option) => option.value === searchMode)!
   const cooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -360,8 +361,9 @@ export function CheckinPage() {
         limit: 5,
       })
 
-      setSummary(operationalSummary)
+      setSummary(operationalSummary ?? createEmptySummary())
     } catch (error) {
+      setSummary((current) => current ?? createEmptySummary())
       setSummaryError(getApiErrorMessage(error, 'Não foi possível carregar o resumo operacional agora.'))
     } finally {
       setIsLoadingSummary(false)
@@ -503,308 +505,320 @@ export function CheckinPage() {
     <Box sx={PAGE_CONTAINER_SX}>
       <PageHeader title="Portaria" subtitle="Faça o check-in dos participantes na entrada do evento." />
 
-      <Stack spacing={2.5} sx={{ maxWidth: 560 }}>
-        {offlineNotice && (
-          <Alert severity="info" onClose={() => setOfflineNotice(null)}>
-            {offlineNotice}
-          </Alert>
-        )}
-        {queuedCheckins.length > 0 && (
-          <Alert
-            severity="warning"
-            action={
-              <Button color="inherit" size="small" disabled={isSyncingQueue} onClick={() => void syncQueuedCheckins()}>
-                {isSyncingQueue ? 'Sincronizando…' : 'Sincronizar agora'}
-              </Button>
-            }
-          >
-            {queuedCheckins.length} check-in(s) pendente(s) de sincronização.
-          </Alert>
-        )}
-        <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-          <Stack spacing={1.5}>
-            <Typography sx={{ fontWeight: 700 }}>Resumo do turno</Typography>
-            {summaryError && <Alert severity="warning" variant="outlined">{summaryError}</Alert>}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' },
-                gap: 1,
-              }}
-            >
-              {[
-                { label: 'Leituras', value: summary.counters.total, color: 'var(--pt-text)' },
-                { label: 'Liberados', value: summary.counters.granted, color: 'var(--pt-success)' },
-                { label: 'Atenção', value: summary.counters.warning, color: 'var(--pt-warning)' },
-                { label: 'Bloqueados', value: summary.counters.blocked, color: 'var(--pt-danger)' },
-              ].map((item) => (
-                <Box
-                  key={item.label}
-                  sx={{
-                    p: 1.25,
-                    borderRadius: 2,
-                    border: '1px solid var(--pt-divider)',
-                    backgroundColor: 'var(--pt-surface-soft)',
-                  }}
-                >
-                  <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{item.label}</Typography>
-                  <Typography sx={{ fontSize: 24, fontWeight: 800, color: item.color }}>{item.value}</Typography>
-                </Box>
-              ))}
-            </Box>
-
-            {isLoadingSummary && summary.recent.length === 0 && (
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)' }}>
-                <CircularProgress size={14} />
-                <Typography sx={{ fontSize: 12.5 }}>Carregando visão compartilhada da portaria...</Typography>
-              </Stack>
-            )}
-
-            {summary.recent.length > 0 && (
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--pt-muted)', mb: 1 }}>
-                  Últimas leituras compartilhadas
-                </Typography>
-                <Stack spacing={0.75}>
-                  {summary.recent.map((entry: CheckinSummaryEntry) => (
-                    <Box
-                      key={entry.uuid}
-                      sx={{
-                        p: 1,
-                        borderRadius: 2,
-                        border: '1px solid var(--pt-divider)',
-                        backgroundColor: 'var(--pt-surface-soft)',
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
-                        {CHECKIN_RESULT_LABELS[entry.result]}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12.5 }}>
-                        {entry.ticket?.attendee_name || entry.ticket?.code || 'Ingresso não localizado'}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
-                        {[entry.ticket?.event?.name, entry.ticket?.session?.name].filter(Boolean).join(' · ') || 'Sem contexto'}
-                        {entry.checked_in_at ? ` · ${new Date(entry.checked_in_at).toLocaleTimeString('pt-BR')}` : ''}
-                        {entry.gate_name ? ` · ${entry.gate_name}` : ''}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </Stack>
-        </Paper>
-
-        <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-          <Stack spacing={1.5}>
-            <Typography sx={{ fontWeight: 700 }}>Contexto da portaria</Typography>
-            <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-              Selecionar evento e sessão ajuda a impedir leitura válida no acesso errado.
-            </Typography>
-
-            {contextError && <Alert severity="warning" variant="outlined">{contextError}</Alert>}
-
-            <LocalAutocomplete
-              label="Evento"
-              options={eventOptions}
-              value={eventOptions.find((event) => event.uuid === selectedEventUuid) ?? null}
-              onChange={(option) => setSelectedEventUuid(option?.uuid ?? '')}
-              getOptionLabel={(option) => option.name}
-              getOptionKey={(option) => option.uuid}
-              fullWidth
-              loading={isLoadingContext}
-              helperText="Opcional, mas recomendado em operação com múltiplos eventos."
-            />
-
-            <LocalAutocomplete
-              label="Sessão"
-              options={sessionOptions}
-              value={sessionOptions.find((session) => session.uuid === selectedSessionUuid) ?? null}
-              onChange={(option) => setSelectedSessionUuid(option?.uuid ?? '')}
-              getOptionLabel={(option) => option.name || new Date(option.starts_at).toLocaleString('pt-BR')}
-              getOptionKey={(option) => option.uuid}
-              fullWidth
-              disabled={!selectedEventUuid || isLoadingSessions || sessionOptions.length === 0}
-              loading={isLoadingSessions}
-              helperText={
-                !selectedEventUuid
-                  ? 'Selecione um evento primeiro.'
-                  : sessionOptions.length === 0
-                    ? 'Este evento não possui sessões ativas cadastradas.'
-                    : 'Opcional. Se informada, o ingresso precisa pertencer exatamente a esta sessão.'
-              }
-            />
-
-            {isLoadingSessions && (
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)' }}>
-                <CircularProgress size={14} />
-                <Typography sx={{ fontSize: 12.5 }}>Carregando sessões…</Typography>
-              </Stack>
-            )}
-          </Stack>
-        </Paper>
-
-        <ToggleButtonGroup
-          value={inputMode}
-          exclusive
-          onChange={handleInputModeChange}
-          fullWidth
-          sx={{
-            '& .MuiToggleButton-root': {
-              minHeight: UI_SIZE.control,
-              textTransform: 'none',
-              fontWeight: 600,
-              gap: 0.75,
-            },
-          }}
-        >
-          <ToggleButton value="camera">
-            <CameraAltOutlinedIcon fontSize="small" />
-            Ler QR Code (câmera)
-          </ToggleButton>
-          <ToggleButton value="manual">
-            <KeyboardOutlinedIcon fontSize="small" />
-            Buscar manualmente
-          </ToggleButton>
-        </ToggleButtonGroup>
-
-        <TextField
-          label="Portão / posto (opcional)"
-          value={gateName}
-          onChange={(event) => setGateName(event.target.value)}
-          fullWidth
-          size="small"
-        />
-
-        {inputMode === 'camera' ? (
-          <QrCodeScannerPanel
-            paused={isSubmitting || cameraCooldown}
-            onDetected={(text) => void handleQrDetected(text)}
-            onSwitchToManual={() => handleInputModeChange(null, 'manual')}
-          />
-        ) : (
-          <Paper elevation={0} sx={{ p: 2.5, ...ELEVATED_SURFACE_SX }}>
-            <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-              <Stack spacing={2}>
-                <TextField
-                  select
-                  label="Buscar por"
-                  value={searchMode}
-                  onChange={(event) => {
-                    setSearchMode(event.target.value as SearchMode)
-                    setSearchValue('')
-                  }}
-                  fullWidth
-                  size="small"
-                >
-                  {SEARCH_MODE_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-
-                <TextField
-                  label={currentOption.label}
-                  placeholder={currentOption.placeholder}
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                  fullWidth
-                  autoFocus
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Box sx={{ display: 'flex', mr: 1, color: 'var(--pt-muted)' }}>
-                          {searchMode === 'attendee_name' || searchMode === 'attendee_document' ? (
-                            <BadgeOutlinedIcon fontSize="small" />
-                          ) : (
-                            <QrCodeScannerOutlinedIcon fontSize="small" />
-                          )}
-                        </Box>
-                      ),
-                    },
-                  }}
-                />
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={isSubmitting || !searchValue.trim()}
-                  sx={{ minHeight: UI_SIZE.controlLarge }}
-                >
-                  {isSubmitting ? 'Verificando…' : 'Fazer check-in'}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', xl: 'minmax(0, 1.4fr) minmax(360px, 0.9fr)' },
+          gap: 2.5,
+          alignItems: 'start',
+        }}
+      >
+        <Stack spacing={2.5} sx={{ minWidth: 0 }}>
+          {offlineNotice && (
+            <Alert severity="info" onClose={() => setOfflineNotice(null)}>
+              {offlineNotice}
+            </Alert>
+          )}
+          {queuedCheckins.length > 0 && (
+            <Alert
+              severity="warning"
+              action={
+                <Button color="inherit" size="small" disabled={isSyncingQueue} onClick={() => void syncQueuedCheckins()}>
+                  {isSyncingQueue ? 'Sincronizando…' : 'Sincronizar agora'}
                 </Button>
-              </Stack>
-            </Box>
-          </Paper>
-        )}
+              }
+            >
+              {queuedCheckins.length} check-in(s) pendente(s) de sincronização.
+            </Alert>
+          )}
 
-        {errorMessage && (
-          <Alert severity="error" variant="outlined" role="alert">
-            {errorMessage}
-          </Alert>
-        )}
+          <ToggleButtonGroup
+            value={inputMode}
+            exclusive
+            onChange={handleInputModeChange}
+            fullWidth
+            sx={{
+              '& .MuiToggleButton-root': {
+                minHeight: UI_SIZE.control,
+                textTransform: 'none',
+                fontWeight: 600,
+                gap: 0.75,
+              },
+            }}
+          >
+            <ToggleButton value="camera">
+              <CameraAltOutlinedIcon fontSize="small" />
+              Ler QR Code (câmera)
+            </ToggleButton>
+            <ToggleButton value="manual">
+              <KeyboardOutlinedIcon fontSize="small" />
+              Buscar manualmente
+            </ToggleButton>
+          </ToggleButtonGroup>
 
-        {mismatchMessage && (
-          <Alert severity="warning" variant="outlined">
-            {mismatchMessage}
-          </Alert>
-        )}
+          <TextField
+            label="Portão / posto (opcional)"
+            value={gateName}
+            onChange={(event) => setGateName(event.target.value)}
+            fullWidth
+            size="small"
+          />
 
-        {result && (
-          <Stack spacing={1.5}>
-            <ResultCard result={result} history={history} />
-
-            {(result.result === 'ja_utilizado'
-              || result.result === 'reentrada_nao_permitida'
-              || result.result === 'reentrada_limite_excedido'
-              || result.result === 'reentrada_intervalo_nao_atingido') && result.ticket && (
-              <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
-                <Stack spacing={1.5}>
-                  <Typography sx={{ fontWeight: 700 }}>Ação de reentrada</Typography>
-                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                    Se a operação decidir liberar novo acesso, registre o motivo e autorize a reentrada sem sair da portaria.
-                  </Typography>
+          {inputMode === 'camera' ? (
+            <QrCodeScannerPanel
+              paused={isSubmitting || cameraCooldown}
+              onDetected={(text) => void handleQrDetected(text)}
+              onSwitchToManual={() => handleInputModeChange(null, 'manual')}
+            />
+          ) : (
+            <Paper elevation={0} sx={{ p: 2.5, ...ELEVATED_SURFACE_SX }}>
+              <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+                <Stack spacing={2}>
                   <TextField
-                    label="Motivo da reentrada"
-                    value={reentryReason}
-                    onChange={(event) => setReentryReason(event.target.value)}
-                    placeholder="Ex.: saiu para fumar, retorno autorizado pela produção, ajuste operacional"
+                    select
+                    label="Buscar por"
+                    value={searchMode}
+                    onChange={(event) => {
+                      setSearchMode(event.target.value as SearchMode)
+                      setSearchValue('')
+                    }}
                     fullWidth
                     size="small"
-                  />
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Button
-                      variant="contained"
-                      onClick={() => void handleAuthorizeReentry()}
-                      disabled={isSubmitting}
-                      startIcon={<BadgeOutlinedIcon />}
-                    >
-                      Autorizar reentrada
-                    </Button>
-                    {isLoadingHistory && (
-                      <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                        Atualizando histórico...
-                      </Typography>
-                    )}
-                  </Stack>
-                </Stack>
-              </Paper>
-            )}
-          </Stack>
-        )}
+                  >
+                    {SEARCH_MODE_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-        {!result && !errorMessage && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)', px: 0.5 }}>
-            <InfoOutlinedIcon sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: 12.5 }}>
-              O resultado do check-in aparece aqui: verde para entrada liberada, amarelo para ingresso já utilizado,
-              vermelho para bloqueios e com histórico imediato para apoiar a decisão da portaria.
-            </Typography>
-          </Stack>
-        )}
-      </Stack>
+                  <TextField
+                    label={currentOption.label}
+                    placeholder={currentOption.placeholder}
+                    value={searchValue}
+                    onChange={(event) => setSearchValue(event.target.value)}
+                    fullWidth
+                    autoFocus
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <Box sx={{ display: 'flex', mr: 1, color: 'var(--pt-muted)' }}>
+                            {searchMode === 'attendee_name' || searchMode === 'attendee_document' ? (
+                              <BadgeOutlinedIcon fontSize="small" />
+                            ) : (
+                              <QrCodeScannerOutlinedIcon fontSize="small" />
+                            )}
+                          </Box>
+                        ),
+                      },
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={isSubmitting || !searchValue.trim()}
+                    sx={{ minHeight: UI_SIZE.controlLarge }}
+                  >
+                    {isSubmitting ? 'Verificando…' : 'Fazer check-in'}
+                  </Button>
+                </Stack>
+              </Box>
+            </Paper>
+          )}
+
+          {errorMessage && (
+            <Alert severity="error" variant="outlined" role="alert">
+              {errorMessage}
+            </Alert>
+          )}
+
+          {mismatchMessage && (
+            <Alert severity="warning" variant="outlined">
+              {mismatchMessage}
+            </Alert>
+          )}
+
+          {result && (
+            <Stack spacing={1.5}>
+              <ResultCard result={result} history={history} />
+
+              {(result.result === 'ja_utilizado'
+                || result.result === 'reentrada_nao_permitida'
+                || result.result === 'reentrada_limite_excedido'
+                || result.result === 'reentrada_intervalo_nao_atingido') && result.ticket && (
+                <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
+                  <Stack spacing={1.5}>
+                    <Typography sx={{ fontWeight: 700 }}>Ação de reentrada</Typography>
+                    <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
+                      Se a operação decidir liberar novo acesso, registre o motivo e autorize a reentrada sem sair da portaria.
+                    </Typography>
+                    <TextField
+                      label="Motivo da reentrada"
+                      value={reentryReason}
+                      onChange={(event) => setReentryReason(event.target.value)}
+                      placeholder="Ex.: saiu para fumar, retorno autorizado pela produção, ajuste operacional"
+                      fullWidth
+                      size="small"
+                    />
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => void handleAuthorizeReentry()}
+                        disabled={isSubmitting}
+                        startIcon={<BadgeOutlinedIcon />}
+                      >
+                        Autorizar reentrada
+                      </Button>
+                      {isLoadingHistory && (
+                        <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
+                          Atualizando histórico...
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Paper>
+              )}
+            </Stack>
+          )}
+
+          {!result && !errorMessage && (
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)', px: 0.5 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 18 }} />
+              <Typography sx={{ fontSize: 12.5 }}>
+                O resultado do check-in aparece aqui: verde para entrada liberada, amarelo para ingresso já utilizado,
+                vermelho para bloqueios e com histórico imediato para apoiar a decisão da portaria.
+              </Typography>
+            </Stack>
+          )}
+        </Stack>
+
+        <Stack spacing={2.5} sx={{ minWidth: 0 }}>
+          <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
+            <Stack spacing={1.5}>
+              <Typography sx={{ fontWeight: 700 }}>Resumo do turno</Typography>
+              {summaryError && <Alert severity="warning" variant="outlined">{summaryError}</Alert>}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))', xl: 'repeat(2, minmax(0, 1fr))' },
+                  gap: 1,
+                }}
+              >
+                {[
+                  { label: 'Leituras', value: summaryData.counters.total, color: 'var(--pt-text)' },
+                  { label: 'Liberados', value: summaryData.counters.granted, color: 'var(--pt-success)' },
+                  { label: 'Atenção', value: summaryData.counters.warning, color: 'var(--pt-warning)' },
+                  { label: 'Bloqueados', value: summaryData.counters.blocked, color: 'var(--pt-danger)' },
+                ].map((item) => (
+                  <Box
+                    key={item.label}
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 2,
+                      border: '1px solid var(--pt-divider)',
+                      backgroundColor: 'var(--pt-surface-soft)',
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>{item.label}</Typography>
+                    <Typography sx={{ fontSize: 24, fontWeight: 800, color: item.color }}>{item.value}</Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              {isLoadingSummary && summaryData.recent.length === 0 && (
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)' }}>
+                  <CircularProgress size={14} />
+                  <Typography sx={{ fontSize: 12.5 }}>Carregando visão compartilhada da portaria...</Typography>
+                </Stack>
+              )}
+
+              {summaryData.recent.length > 0 && (
+                <Box>
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'var(--pt-muted)', mb: 1 }}>
+                    Últimas leituras compartilhadas
+                  </Typography>
+                  <Stack spacing={0.75}>
+                    {summaryData.recent.map((entry: CheckinSummaryEntry) => (
+                      <Box
+                        key={entry.uuid}
+                        sx={{
+                          p: 1,
+                          borderRadius: 2,
+                          border: '1px solid var(--pt-divider)',
+                          backgroundColor: 'var(--pt-surface-soft)',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
+                          {CHECKIN_RESULT_LABELS[entry.result]}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12.5 }}>
+                          {entry.ticket?.attendee_name || entry.ticket?.code || 'Ingresso não localizado'}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                          {[entry.ticket?.event?.name, entry.ticket?.session?.name].filter(Boolean).join(' · ') || 'Sem contexto'}
+                          {entry.checked_in_at ? ` · ${new Date(entry.checked_in_at).toLocaleTimeString('pt-BR')}` : ''}
+                          {entry.gate_name ? ` · ${entry.gate_name}` : ''}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper elevation={0} sx={{ p: 2, ...ELEVATED_SURFACE_SX }}>
+            <Stack spacing={1.5}>
+              <Typography sx={{ fontWeight: 700 }}>Contexto da portaria</Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
+                Selecionar evento e sessão ajuda a impedir leitura válida no acesso errado.
+              </Typography>
+
+              {contextError && <Alert severity="warning" variant="outlined">{contextError}</Alert>}
+
+              <LocalAutocomplete
+                label="Evento"
+                options={eventOptions}
+                value={eventOptions.find((event) => event.uuid === selectedEventUuid) ?? null}
+                onChange={(option) => setSelectedEventUuid(option?.uuid ?? '')}
+                getOptionLabel={(option) => option.name}
+                getOptionKey={(option) => option.uuid}
+                fullWidth
+                loading={isLoadingContext}
+                helperText="Opcional, mas recomendado em operação com múltiplos eventos."
+              />
+
+              <LocalAutocomplete
+                label="Sessão"
+                options={sessionOptions}
+                value={sessionOptions.find((session) => session.uuid === selectedSessionUuid) ?? null}
+                onChange={(option) => setSelectedSessionUuid(option?.uuid ?? '')}
+                getOptionLabel={(option) => option.name || new Date(option.starts_at).toLocaleString('pt-BR')}
+                getOptionKey={(option) => option.uuid}
+                fullWidth
+                disabled={!selectedEventUuid || isLoadingSessions || sessionOptions.length === 0}
+                loading={isLoadingSessions}
+                helperText={
+                  !selectedEventUuid
+                    ? 'Selecione um evento primeiro.'
+                    : sessionOptions.length === 0
+                      ? 'Este evento não possui sessões ativas cadastradas.'
+                      : 'Opcional. Se informada, o ingresso precisa pertencer exatamente a esta sessão.'
+                }
+              />
+
+              {isLoadingSessions && (
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'var(--pt-muted)' }}>
+                  <CircularProgress size={14} />
+                  <Typography sx={{ fontSize: 12.5 }}>Carregando sessões…</Typography>
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+        </Stack>
+      </Box>
     </Box>
   )
 }

@@ -16,7 +16,7 @@ use Tests\TestCase;
 /**
  * "Pedir de novo" (roadmap Delivery, Fase 4 — retenção):
  * GET /portal/sales/{uuid}/items, preço/disponibilidade ATUAIS do produto,
- * nunca o preço congelado no pedido antigo.
+ * nunca o preço congelado na venda antigo.
  */
 class PortalResaleTest extends TestCase
 {

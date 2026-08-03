@@ -121,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
         // performance, não obrigatórias) — o HandleExceptions do Laravel
         // converte QUALQUER notice em ErrorException real, o que faria a
         // simples resolução do container (ex.: dentro de um listener)
-        // quebrar o fluxo principal do pedido só por causa de uma extensão
+        // quebrar o fluxo principal da venda só por causa de uma extensão
         // opcional ausente. Suprimir aqui é seguro: a lib já tem fallback
         // funcional (bcmath/gmp são só otimização de performance).
         //
@@ -133,11 +133,11 @@ class AppServiceProvider extends ServiceProvider
         // lançada de propósito. Sem o catch, essa exception derruba a
         // resolução do container inteira (o listener de push é resolvido
         // de forma síncrona dentro da mesma transação de
-        // deliver/approve/reject de pedido), causando rollback + 500 num
+        // deliver/approve/reject de venda), causando rollback + 500 num
         // fluxo que não tem nada a ver com push notification. Falha real
-        // 2026-07-17: "Entregar pedido" 500 em produção porque o .env novo
+        // 2026-07-17: "Entregar venda" 500 em produção porque o .env novo
         // ainda não tinha as chaves VAPID preenchidas — mesmo bug atingia
-        // aprovar/rejeitar pedido pelo mesmo motivo. Com o catch, o
+        // aprovar/rejeitar venda pelo mesmo motivo. Com o catch, o
         // WebPush é construído sem VAPID (envio de fato falha depois,
         // dentro do try/catch já existente em
         // PushNotificationService::sendToSubscription(), que é o lugar

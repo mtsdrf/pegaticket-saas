@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Ledger de crédito de cashback (roadmap Delivery, Fase 5) — 1 linha por
- * pedido pago que gerou crédito. remaining_amount começa igual a amount e
+ * venda pago que gerou crédito. remaining_amount começa igual a amount e
  * só decresce via resgate (cashback_redemptions) ou zera na expiração/
  * reversão — nunca sobrescrito fora desse fluxo. status pending→available
  * é promovido pelo comando agendado cashback:process (carência configurável

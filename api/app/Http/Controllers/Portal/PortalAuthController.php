@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\DTOs\Portal\RequestOtpDTO;
 use App\DTOs\Portal\VerifyOtpDTO;
 use App\Exceptions\InvalidOtpException;
+use App\Exceptions\PortalOtpDeliveryException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\RequestOtpRequest;
@@ -23,7 +24,11 @@ class PortalAuthController extends Controller
     {
         $dto = RequestOtpDTO::fromArray($request->validated());
 
-        $this->service->requestOtp($dto);
+        try {
+            $this->service->requestOtp($dto);
+        } catch (PortalOtpDeliveryException $e) {
+            return APIResponse::error($e->getMessage(), 503, 'OTP_DELIVERY_UNAVAILABLE');
+        }
 
         // Resposta genérica SEMPRE, independente do e-mail já ter conta ou
         // não — nunca revelar existência de cadastro (mesma lógica de

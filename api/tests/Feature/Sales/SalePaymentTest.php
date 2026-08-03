@@ -151,7 +151,7 @@ class SalePaymentTest extends TestCase
 
         $this->assertSame('divergent', $result->status);
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'divergent']);
-        // Pedido NÃO é confirmado automaticamente numa divergência.
+        // Venda NÃO é confirmado automaticamente numa divergência.
         $this->assertFalse((bool) Sale::where('uuid', $order['uuid'])->value('is_paid'));
     }
 
@@ -160,7 +160,7 @@ class SalePaymentTest extends TestCase
     {
         $this->grantPermission('sales', 'update');
 
-        // Pedido de OUTRO tenant, montado direto (o usuário autenticado é do
+        // Venda de OUTRO tenant, montado direto (o usuário autenticado é do
         // tenant do setUp).
         $otherTenant = Tenant::create([
             'uuid' => (string) \Illuminate\Support\Str::uuid(),

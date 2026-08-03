@@ -65,7 +65,7 @@ class StoreSaleRequest extends FormRequest
             // o preço atual do ingresso/produto do evento, nunca confiado
             // no request).
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
-            // Observação por item — distinta de `notes` (recado do pedido
+            // Observação por item — distinta de `notes` (recado da venda
             // inteiro, acima).
             'items.*.notes' => ['nullable', 'string', 'max:200'],
         ];

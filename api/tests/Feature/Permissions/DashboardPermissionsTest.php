@@ -16,7 +16,7 @@ use Tests\TestCase;
  * `dashboard:read` (Visão Geral) foi separada de `reports:read` em
  * 2026-07-13 — antes, /reports/indicators e /reports/charts eram
  * protegidas pela mesma permissão usada por Análises e pelos relatórios
- * de pedidos/clientes/recebíveis. Estes testes provam que a nova
+ * de vendas/clientes/recebíveis. Estes testes provam que a nova
  * permissão é realmente independente (não só cosmética) e que o backfill
  * do role `owner` de tenants já existentes funciona.
  */

@@ -9,9 +9,9 @@ use App\Services\Storefront\PushNotificationService;
 
 /**
  * Web Push real (roadmap Delivery, Fase 4 — última fatia). Só age para
- * pedido origin='storefront' (pedido de staff não tem cliente final para
+ * venda origin='storefront' (venda de staff não tem cliente final para
  * notificar). Resolve o FinalCustomer via vínculo CONFIRMADO
- * (tenant_id+final_customer_id do pedido) — sem vínculo confirmado, silencioso
+ * (tenant_id+final_customer_id da venda) — sem vínculo confirmado, silencioso
  * (não é erro). Envio de push em si nunca lança exceção (ver
  * PushNotificationService::notifyFinalCustomer).
  */

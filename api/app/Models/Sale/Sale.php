@@ -84,7 +84,7 @@ class Sale extends BaseModel
      * import legado (2026-07) podia gravar is_paid=true com data nula
      * quando o campo de data de origem vinha vazio/inválido (ver
      * ImportLegacyJsQueijosCommand, sanitizeDate() retornando null) — 10
-     * pedidos sem paid_at encontrados em produção e corrigidos
+     * vendas sem paid_at encontrados em produção e corrigidos
      * manualmente; este guard evita repetir o mesmo padrão de novo (regra
      * de não repetição de erro).
      */
@@ -100,7 +100,7 @@ class Sale extends BaseModel
             // Rede de segurança para qualquer criação que passe por
             // `Sale::create()` direto (fora de SaleService::create()):
             // mantém a mesma convenção por tenant (999 -> 1000) e evita
-            // pedidos novos sem código de exibição.
+            // vendas novos sem código de exibição.
             DB::table('tenants')->where('id', $order->tenant_id)->increment('next_sale_code');
             $order->codigo = (string) DB::table('tenants')->where('id', $order->tenant_id)->value('next_sale_code');
         });
@@ -133,7 +133,7 @@ class Sale extends BaseModel
 
     /**
      * Resolve o FinalCustomerTenantLink (dados por-tenant: telefone,
-     * endereço, documento) do MESMO tenant deste pedido.
+     * endereço, documento) do MESMO tenant desta venda.
      */
     public function finalCustomerLink()
     {
@@ -171,7 +171,7 @@ class Sale extends BaseModel
     }
 
     /**
-     * Cobranças de pagamento do pedido (roadmap 2A) — recebimento do tenant
+     * Cobranças de pagamento da venda (roadmap 2A) — recebimento do tenant
      * (cliente final → tenant), via a mesma tabela polimórfica `payments`
      * usada pela cobrança de assinatura da PegaTicket.
      */

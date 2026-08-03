@@ -17,7 +17,7 @@ use Tests\Support\PagBankTestCards;
 use Tests\TestCase;
 
 /**
- * Cobrança Pix do PRÓPRIO pedido via Portal (roadmap Fase B, item 1 —
+ * Cobrança Pix do PRÓPRIA venda via Portal (roadmap Fase B, item 1 —
  * checkout Pix na loja pública): POST /portal/sales/{uuid}/payment-charge.
  * Usa ManualPaymentProvider (config default), a integração real com
  * MercadoPagoPaymentProvider já é coberta por MercadoPagoSalePaymentTest.

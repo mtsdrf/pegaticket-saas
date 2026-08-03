@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * staff. Usado para checar max_uses_total (count por coupon_id) e
  * max_uses_per_customer (count por coupon_id+final_customer_id) em
  * CouponService::validateForCheckout(). Removido por
- * OrderService::reject() quando o pedido recusado tinha cupom — pedido
+ * OrderService::reject() quando a venda recusado tinha cupom — venda
  * recusado nunca deve consumir o limite de uso do cliente.
  */
 return new class extends Migration {

@@ -7,7 +7,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 interface RefundRepositoryInterface extends BaseRepositoryInterface
 {
     /**
-     * Estornos do tenant (pedido pago cancelado, arrependimento de
+     * Estornos do tenant (venda pago cancelado, arrependimento de
      * assinatura, contestação/chargeback) — visão consolidada do
      * proprietário, mais recentes primeiro.
      */

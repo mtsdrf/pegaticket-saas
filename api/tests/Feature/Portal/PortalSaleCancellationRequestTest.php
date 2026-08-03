@@ -15,7 +15,7 @@ use Tests\TestCase;
 /**
  * Solicitação de cancelamento pelo cliente final (roadmap A4 — "aprovar
  * cancelamento"): POST /portal/sales/{uuid}/request-cancellation. Só
- * pedido origin=storefront, só enquanto não saiu para entrega/entregue.
+ * venda origin=storefront, só enquanto não saiu para entrega/entregue.
  */
 class PortalSaleCancellationRequestTest extends TestCase
 {
@@ -74,7 +74,7 @@ class PortalSaleCancellationRequestTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/portal/sales/' . $order->uuid . '/request-cancellation', [
-                'reason' => 'Pedido errado',
+                'reason' => 'Venda incorreta',
             ]);
 
         $response->assertStatus(200)
@@ -84,7 +84,7 @@ class PortalSaleCancellationRequestTest extends TestCase
             'id' => $order->id,
             'status' => 'cancellation_requested',
             'status_before_cancellation_request' => 'confirmed',
-            'cancellation_reason' => 'Pedido errado',
+            'cancellation_reason' => 'Venda incorreta',
             'cancelled_at' => null,
         ]);
 

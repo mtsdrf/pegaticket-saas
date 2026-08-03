@@ -5,7 +5,7 @@ namespace App\Http\Resources\FinalCustomer;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Shape de comprador pro staff (fluxo de pedido manual, SaleFormPage):
+ * Shape de comprador pro staff (fluxo de venda manual, SaleFormPage):
  * combina a identidade global (FinalCustomer, eager-loaded) com os campos
  * por-tenant (FinalCustomerTenantLink). uuid retornado é o do LINK — é ele
  * quem carrega os dados do tenant atual e é o que o staff usa pra

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * `is_completed`/`completed_at` era um gate manual de conclusão sem
  * efeito de negócio real (nunca mexeu em estoque/tickets) — removido a
- * pedido do usuário: venda online só finaliza via retorno do PagBank
+ * venda do usuário: venda online só finaliza via retorno do PagBank
  * (is_paid, webhook), venda manual já nasce paga.
  */
 return new class extends Migration

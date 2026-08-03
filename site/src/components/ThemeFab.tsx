@@ -5,7 +5,7 @@ import { useThemeMode } from '../hooks/useThemeMode'
 
 /**
  * Toggle de tema flutuante, fixo no canto inferior direito — diferente do
- * app principal (`web/`, toggle no AppBar): pedido explícito do usuário
+ * app principal (`web/`, toggle no AppBar): venda explícito do usuário
  * para a landing (ver CLAUDE.md, seção "Tema claro/escuro + toggle
  * flutuante"). Ciclo simples de 2 estados; o estado inicial (antes do
  * primeiro clique) já vem resolvido de `prefers-color-scheme` via

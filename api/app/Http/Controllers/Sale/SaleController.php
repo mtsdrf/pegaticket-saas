@@ -37,9 +37,9 @@ class SaleController extends Controller
     }
 
     /**
-     * Cria uma cobrança Pix para o pedido (roadmap 2A — recebimento do
+     * Cria uma cobrança Pix para a venda (roadmap 2A — recebimento do
      * tenant). Reaproveita perm:sales,update. Rejeita cobrança duplicada
-     * ativa, pedido já pago ou cancelado (INVALID_ORDER_STATE / 422).
+     * ativa, venda já pago ou cancelado (INVALID_ORDER_STATE / 422).
      */
     public function paymentCheckoutConfig(Sale $sale)
     {

@@ -5,7 +5,7 @@ namespace App\Services\Sale;
 use Carbon\Carbon;
 
 /**
- * Calcula o vencimento de uma parcela (ou do pedido não parcelado):
+ * Calcula o vencimento de uma parcela (ou da venda não parcelado):
  * dia configurado (`config('pegaticket.parcela_vencimento_dia')`) no mês
  * seguinte ao mês de referência informado.
  *

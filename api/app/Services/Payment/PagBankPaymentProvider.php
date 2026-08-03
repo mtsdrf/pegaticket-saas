@@ -27,12 +27,12 @@ use Illuminate\Support\Str;
  * de PaymentProviderInterface para SalePaymentService.
  *
  * ==========================================================================
- * INTEGRAÇÃO REAL — API de Pedidos (Orders) do PagBank, confirmada contra
+ * INTEGRAÇÃO REAL — API de Vendas (Orders) do PagBank, confirmada contra
  * a documentação oficial em developer.pagbank.com.br (2026-08-02):
- * - Criar pedido com QR Code Pix: POST /orders (developer.pagbank.com.br/
- *   reference/criar-pedido-pedido-com-qr-code).
- * - Consultar pedido: GET /orders/{id} (developer.pagbank.com.br/docs/
- *   pedidos-e-pagamentos-order).
+ * - Criar venda com QR Code Pix: POST /orders (developer.pagbank.com.br/
+ *   reference/criar-venda-venda-com-qr-code).
+ * - Consultar venda: GET /orders/{id} (developer.pagbank.com.br/docs/
+ *   vendas-e-pagamentos-order).
  * - Cancelar/estornar charge: POST /charges/{charge_id}/cancel
  *   (developer.pagbank.com.br/reference/consultar-pagamento e discussões
  *   oficiais — PagBank decide sozinho parcial/total pela presença de
@@ -93,7 +93,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     public function createCardCharge(Invoice $invoice, array $cardToken): array
     {
         // Cartão de fatura de assinatura não é usado por este adapter
-        // (rail comprador->tenant só cobra Pix de pedido nesta onda,
+        // (rail comprador->tenant só cobra Pix de venda nesta onda,
         // espelhando o escopo atual de SalePaymentService). Implementado
         // de forma estrutural só para satisfazer a interface.
         return $this->registerPendingCharge($invoice, (string) $invoice->amount_net, 'card');
@@ -106,7 +106,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         $orderId = (string) $payment->provider_charge_id;
 
         if ($token === '' || $orderId === '') {
-            // Sem credencial ou sem id de pedido remoto (cobrança nasceu
+            // Sem credencial ou sem id de venda remoto (cobrança nasceu
             // pending local, nunca chegou a existir no PagBank) — só
             // registra a intenção, mesma postura do ManualPaymentProvider.
             return ['status' => 'requested', 'amount' => $refundAmount];
@@ -116,7 +116,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $chargeId = $this->resolveChargeId($orderId);
 
             if ($chargeId === null) {
-                // Pedido ainda não tem charge paga no PagBank (nunca foi
+                // Venda ainda não tem charge paga no PagBank (nunca foi
                 // pago) — nada a estornar de fato.
                 return ['status' => 'requested', 'amount' => $refundAmount];
             }
@@ -170,7 +170,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $firstCharge = $charges[0] ?? null;
 
             if ($firstCharge === null) {
-                // Pedido criado mas ainda sem cobrança paga (Pix aguardando
+                // Venda criado mas ainda sem cobrança paga (Pix aguardando
                 // o comprador escanear o QR Code).
                 return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
             }
@@ -242,7 +242,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      * Resolve o charge_id necessário para POST /charges/{id}/cancel a
      * partir do order_id salvo em provider_charge_id — o cancelamento é
      * por charge, não por order (developer.pagbank.com.br/reference/
-     * consultar-pagamento). Retorna null quando o pedido não tem nenhuma
+     * consultar-pagamento). Retorna null quando a venda não tem nenhuma
      * charge paga ainda.
      */
     private function resolveChargeId(string $orderId): ?string

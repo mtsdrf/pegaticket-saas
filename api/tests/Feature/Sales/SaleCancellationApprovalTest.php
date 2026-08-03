@@ -36,7 +36,7 @@ class SaleCancellationApprovalTest extends TestCase
     }
 
     /**
-     * Cria um pedido real via POST /sales (reserva de estoque real),
+     * Cria uma venda real via POST /sales (reserva de estoque real),
      * marca origin=storefront e simula que o cliente já solicitou o
      * cancelamento (status=cancellation_requested,
      * status_before_cancellation_request='confirmed').
@@ -64,7 +64,7 @@ class SaleCancellationApprovalTest extends TestCase
         $order->paid_at = null;
         $order->status = 'cancellation_requested';
         $order->status_before_cancellation_request = 'confirmed';
-        $order->cancellation_reason = 'Pedido errado';
+        $order->cancellation_reason = 'Venda incorreta';
         $order->save();
 
         return $order->fresh();
@@ -79,7 +79,7 @@ class SaleCancellationApprovalTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.status', 'confirmed')
-            ->assertJsonPath('data.cancellation_reason', 'Pedido errado');
+            ->assertJsonPath('data.cancellation_reason', 'Venda incorreta');
 
         $order->refresh();
 

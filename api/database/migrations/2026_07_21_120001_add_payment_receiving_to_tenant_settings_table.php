@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Recebimento de pagamento de pedido pelo tenant (roadmap 2A, Modelo A — sem
+ * Recebimento de pagamento de venda pelo tenant (roadmap 2A, Modelo A — sem
  * custódia, o dinheiro nunca passa pela PegaTicket). `payment_receiving_method`
  * = manual (conciliação manual, default) | pix_key (chave Pix própria do
  * tenant). `payment_pix_key` é criptografada em repouso (cast `encrypted` do

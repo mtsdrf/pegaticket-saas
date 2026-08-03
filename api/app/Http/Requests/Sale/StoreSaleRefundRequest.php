@@ -25,7 +25,7 @@ class StoreSaleRefundRequest extends FormRequest
             'receipt' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
             // Obrigatório só quando type=parcial — validado aqui (formato)
             // e de novo em SaleRefundService (regra de negócio: precisa
-            // pertencer ao pedido e não ter sido estornado antes).
+            // pertencer aa venda e não ter sido estornado antes).
             'ticket_uuids' => ['required_if:type,parcial', 'array', 'min:1'],
             'ticket_uuids.*' => ['uuid'],
         ];

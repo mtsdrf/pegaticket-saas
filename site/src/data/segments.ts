@@ -4,36 +4,36 @@ export interface SegmentInfo {
   description: string
 }
 
-/** Público real do produto (ver CLAUDE.md) — nenhum segmento genérico "para qualquer empresa". */
+/** Público real do produto para a fase atual do PegaTicket. */
 export const SEGMENTS: SegmentInfo[] = [
   {
-    key: 'atacado',
-    title: 'Atacado',
-    description: 'Pedidos por categoria e cliente, com controle de estoque por depósito e rotas de entrega.',
+    key: 'shows',
+    title: 'Shows e festivais',
+    description: 'Venda de ingressos, setores, lotes, assentos e operação de check-in para grandes públicos.',
   },
   {
-    key: 'varejo',
-    title: 'Varejo',
-    description: 'Loja online integrada ao mesmo catálogo, estoque e operação de pedidos da empresa.',
+    key: 'houses',
+    title: 'Casas de evento',
+    description: 'Bilheteria online integrada à operação local, com vendas manuais, listas e acesso na portaria.',
   },
   {
-    key: 'laticinios',
-    title: 'Laticínios',
-    description: 'Catálogo de produtos por categoria, clientes recorrentes e relatórios de vendas por período.',
+    key: 'sports',
+    title: 'Esportes e arenas',
+    description: 'Controle de capacidade, setores, assentos e validação de ingressos em múltiplos acessos.',
   },
   {
-    key: 'distribuidoras-bebidas',
-    title: 'Distribuidoras de bebidas',
-    description: 'Pedidos de grandes volumes, controle de estoque e planejamento de rotas de entrega.',
+    key: 'theaters',
+    title: 'Teatros e auditórios',
+    description: 'Mapeamento de assentos, sessões e regras de ocupação com experiência de compra guiada.',
   },
   {
-    key: 'bares',
-    title: 'Bares',
-    description: 'Operação centralizada de pedidos, estoque e campanhas de fidelização para atendimento recorrente.',
+    key: 'producers',
+    title: 'Produtores independentes',
+    description: 'Gestão completa de eventos, ingressos, cupons, pagamentos e acompanhamento financeiro.',
   },
   {
-    key: 'casas-noturnas',
-    title: 'Casas noturnas',
-    description: 'Controle de estoque, relatórios e gestão operacional para picos intensos de venda em poucas horas.',
+    key: 'experiences',
+    title: 'Experiências e eventos especiais',
+    description: 'Venda por turma, mesa, vaga ou lote com jornadas flexíveis para diferentes formatos de evento.',
   },
 ]
