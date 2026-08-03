@@ -37,7 +37,7 @@ class ReconciliationTest extends TestCase
         return $this->withHeader('Authorization', 'Bearer ' . $this->token);
     }
 
-    protected function createOrderForTenant(int $tenantId): Sale
+    protected function createSaleForTenant(int $tenantId): Sale
     {
         $client = $this->createClient($tenantId);
 
@@ -52,12 +52,12 @@ class ReconciliationTest extends TestCase
         ]);
     }
 
-    protected function createPaymentForOrder(Sale $order, array $overrides = []): Payment
+    protected function createPaymentForSale(Sale $sale, array $overrides = []): Payment
     {
         return Payment::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'payable_type' => Sale::class,
-            'payable_id' => $order->id,
+            'payable_id' => $sale->id,
             'provider' => 'manual',
             'provider_charge_id' => 'charge-' . Str::random(8),
             'method' => 'pix',
@@ -70,8 +70,8 @@ class ReconciliationTest extends TestCase
     #[Test]
     public function lists_payments_scoped_to_the_current_tenant(): void
     {
-        $order = $this->createOrderForTenant($this->tenant->id);
-        $payment = $this->createPaymentForOrder($order);
+        $sale = $this->createSaleForTenant($this->tenant->id);
+        $payment = $this->createPaymentForSale($sale);
 
         $otherTenant = \App\Models\Tenant\Tenant::create([
             'uuid' => (string) Str::uuid(),
@@ -79,8 +79,8 @@ class ReconciliationTest extends TestCase
             'slug' => 'other-tenant-' . Str::random(8),
             'is_active' => true,
         ]);
-        $otherOrder = $this->createOrderForTenant($otherTenant->id);
-        $this->createPaymentForOrder($otherOrder);
+        $otherSale = $this->createSaleForTenant($otherTenant->id);
+        $this->createPaymentForSale($otherSale);
 
         $response = $this->auth()->getJson('/api/v1/finance/reconciliation');
 
@@ -88,15 +88,15 @@ class ReconciliationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.uuid', $payment->uuid)
-            ->assertJsonPath('data.0.order.uuid', $order->uuid);
+            ->assertJsonPath('data.0.sale.uuid', $sale->uuid);
     }
 
     #[Test]
     public function includes_refunds_and_filters_by_status(): void
     {
-        $order = $this->createOrderForTenant($this->tenant->id);
-        $paidPayment = $this->createPaymentForOrder($order, ['status' => 'paid']);
-        $failedPayment = $this->createPaymentForOrder($order, ['status' => 'failed']);
+        $sale = $this->createSaleForTenant($this->tenant->id);
+        $paidPayment = $this->createPaymentForSale($sale, ['status' => 'paid']);
+        $failedPayment = $this->createPaymentForSale($sale, ['status' => 'failed']);
 
         Refund::create([
             'uuid' => (string) Str::uuid(),
@@ -120,8 +120,8 @@ class ReconciliationTest extends TestCase
     #[Test]
     public function matches_webhook_event_by_provider_charge_id(): void
     {
-        $order = $this->createOrderForTenant($this->tenant->id);
-        $payment = $this->createPaymentForOrder($order, ['provider_charge_id' => 'charge-abc']);
+        $sale = $this->createSaleForTenant($this->tenant->id);
+        $payment = $this->createPaymentForSale($sale, ['provider_charge_id' => 'charge-abc']);
 
         WebhookEvent::create([
             'provider' => 'manual',
@@ -139,10 +139,10 @@ class ReconciliationTest extends TestCase
     #[Test]
     public function summary_groups_amount_by_status(): void
     {
-        $order = $this->createOrderForTenant($this->tenant->id);
-        $this->createPaymentForOrder($order, ['status' => 'paid', 'amount' => 50.0]);
-        $this->createPaymentForOrder($order, ['status' => 'paid', 'amount' => 25.0]);
-        $this->createPaymentForOrder($order, ['status' => 'failed', 'amount' => 10.0]);
+        $sale = $this->createSaleForTenant($this->tenant->id);
+        $this->createPaymentForSale($sale, ['status' => 'paid', 'amount' => 50.0]);
+        $this->createPaymentForSale($sale, ['status' => 'paid', 'amount' => 25.0]);
+        $this->createPaymentForSale($sale, ['status' => 'failed', 'amount' => 10.0]);
 
         $response = $this->auth()->getJson('/api/v1/finance/reconciliation/summary');
 
