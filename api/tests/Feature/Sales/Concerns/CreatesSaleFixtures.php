@@ -77,6 +77,8 @@ trait CreatesSaleFixtures
             'uuid' => (string) Str::uuid(),
             'final_customer_id' => $finalCustomer->id,
             'tenant_id' => $tenantId,
+            'cpf_cnpj' => '12345678909',
+            'phone_primary' => '11999999999',
             'is_trusted' => true,
             'is_active' => true,
             'confirmed_at' => now(),

@@ -27,6 +27,14 @@ class PaymentProviderException extends \RuntimeException
         return match ($this->getMessage()) {
             'mercadopago.payer_collector_mismatch' => __('messages.payment.payer_collector_mismatch'),
             'mercadopago.card_authorization_failed' => __('messages.payment.card_authorization_failed'),
+            'pagbank.card_authorization_failed' => __('messages.payment.card_authorization_failed'),
+            'pagbank.missing_payer_tax_id' => __('messages.payment.payer_tax_id_required'),
+            'pagbank.missing_card_encrypted' => __('messages.payment.card_data_required'),
+            'pagbank.missing_card_holder_name' => __('messages.payment.card_holder_name_required'),
+            'pagbank.missing_card_holder_tax_id' => __('messages.payment.card_holder_tax_id_required'),
+            'pagbank.missing_card_installments' => __('messages.payment.installments_required'),
+            'pagbank.missing_debit_authentication' => __('messages.payment.debit_authentication_required'),
+            'payment_method_not_supported' => __('messages.payment.method_not_supported'),
             default => __('messages.payment.provider_unavailable'),
         };
     }

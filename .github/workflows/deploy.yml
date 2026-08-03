@@ -10,6 +10,49 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  frontend-card-checkout-gate:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: npm ci (web/)
+        working-directory: web
+        run: npm ci
+
+      - name: Build web (web/)
+        working-directory: web
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
+        run: npm run build
+
+      - name: Instalar Chromium do Playwright (web/)
+        working-directory: web
+        run: npx playwright install chromium
+
+      - name: Rodar E2E do checkout com cartão (web/)
+        working-directory: web
+        env:
+          CI: '1'
+          PLAYWRIGHT_SKIP_BUILD: '1'
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
+          VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
+        run: npm run test:e2e:storefront-payments
+
   build-and-deploy:
     # Hostinger bloqueia conexão SSH vinda do IP dinâmico do runner
     # hospedado pelo GitHub (confirmado: teste manual do mesmo host/porta
@@ -19,6 +62,7 @@ jobs:
     # que a Hostinger já aceita (a mesma de onde o SSH manual já funciona).
     # Setup do runner: ver docs/self-hosted-runner-setup.md.
     runs-on: self-hosted
+    needs: frontend-card-checkout-gate
     env:
       SMOKE_LOGIN_EMAIL: ${{ secrets.SMOKE_LOGIN_EMAIL }}
       SMOKE_LOGIN_PASSWORD: ${{ secrets.SMOKE_LOGIN_PASSWORD }}
@@ -154,7 +198,7 @@ jobs:
       # teste no contexto errado — ele já roda certo, com PLAYWRIGHT_BASE_URL
       # apontando pro domínio real, no step "Smoke autenticado pós-deploy"
       # mais abaixo (depois do deploy). Excluído daqui pra não falhar sempre.
-      - name: Rodar E2E do frontend (web/)
+      - name: Rodar restante dos E2E do frontend (web/)
         working-directory: web
         env:
           CI: '1'
@@ -167,7 +211,7 @@ jobs:
           VITE_MERCADOPAGO_ENVIRONMENT: ${{ secrets.VITE_MERCADOPAGO_ENVIRONMENT || 'production' }}
           VITE_MERCADOPAGO_PUBLIC_KEY_TEST: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_TEST }}
           VITE_MERCADOPAGO_PUBLIC_KEY_PROD: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY_PROD }}
-        run: npm run test:e2e -- --grep-invert "autentica com credenciais reais"
+        run: npm run test:e2e -- --grep-invert "autentica com credenciais reais|Checkout público com cartão"
 
       # SSH: chave dedicada ao deploy (não a pessoal do usuário), pública
       # cadastrada em ~/.ssh/authorized_keys no servidor Hostinger.
@@ -354,6 +398,10 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           PAYMENT_PROVIDER: ${{ secrets.PAYMENT_PROVIDER }}
+          SALE_PAYMENT_PROVIDER: ${{ secrets.SALE_PAYMENT_PROVIDER }}
+          PAGBANK_ENVIRONMENT: ${{ secrets.PAGBANK_ENVIRONMENT }}
+          PAGBANK_TOKEN_SANDBOX: ${{ secrets.PAGBANK_TOKEN_SANDBOX }}
+          PAGBANK_TOKEN_PROD: ${{ secrets.PAGBANK_TOKEN_PROD }}
           R2_ENABLED: ${{ secrets.R2_ENABLED }}
           MEDIA_AVATARS_DISK: ${{ secrets.MEDIA_AVATARS_DISK }}
           MEDIA_TICKET_TYPES_DISK: ${{ secrets.MEDIA_TICKET_TYPES_DISK }}
@@ -391,7 +439,7 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          envs: PAYMENT_PROVIDER,R2_ENABLED,MEDIA_AVATARS_DISK,MEDIA_TICKET_TYPES_DISK,MEDIA_EVENTS_DISK,MEDIA_TENANTS_DISK,MEDIA_VENUES_DISK,MEDIA_USE_DIRECT_PUBLIC_URLS,MEDIA_PUBLIC_CACHE_SECONDS,R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET,R2_PREFIX_AVATARS,R2_PREFIX_EVENTS,R2_PREFIX_TENANTS,R2_PREFIX_TICKET_TYPES,R2_PREFIX_VENUES,R2_ENDPOINT,R2_REGION,R2_USE_PATH_STYLE_ENDPOINT,FRONTEND_URL,MERCADOPAGO_ENVIRONMENT,MERCADOPAGO_ACCESS_TOKEN_TEST,MERCADOPAGO_PUBLIC_KEY_TEST,MERCADOPAGO_TEST_PAYER_EMAIL,MERCADOPAGO_ACCESS_TOKEN_PROD,MERCADOPAGO_PUBLIC_KEY_PROD,MERCADOPAGO_WEBHOOK_SECRET
+          envs: PAYMENT_PROVIDER,SALE_PAYMENT_PROVIDER,PAGBANK_ENVIRONMENT,PAGBANK_TOKEN_SANDBOX,PAGBANK_TOKEN_PROD,R2_ENABLED,MEDIA_AVATARS_DISK,MEDIA_TICKET_TYPES_DISK,MEDIA_EVENTS_DISK,MEDIA_TENANTS_DISK,MEDIA_VENUES_DISK,MEDIA_USE_DIRECT_PUBLIC_URLS,MEDIA_PUBLIC_CACHE_SECONDS,R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET,R2_PREFIX_AVATARS,R2_PREFIX_EVENTS,R2_PREFIX_TENANTS,R2_PREFIX_TICKET_TYPES,R2_PREFIX_VENUES,R2_ENDPOINT,R2_REGION,R2_USE_PATH_STYLE_ENDPOINT,FRONTEND_URL,MERCADOPAGO_ENVIRONMENT,MERCADOPAGO_ACCESS_TOKEN_TEST,MERCADOPAGO_PUBLIC_KEY_TEST,MERCADOPAGO_TEST_PAYER_EMAIL,MERCADOPAGO_ACCESS_TOKEN_PROD,MERCADOPAGO_PUBLIC_KEY_PROD,MERCADOPAGO_WEBHOOK_SECRET
           script: |
             cd "${{ secrets.DEPLOY_API_PATH }}"
             /opt/alt/php85/usr/bin/php <<'PHP'
@@ -406,6 +454,10 @@ jobs:
 
             $variables = [
                 'PAYMENT_PROVIDER' => getenv('PAYMENT_PROVIDER') ?: null,
+                'SALE_PAYMENT_PROVIDER' => getenv('SALE_PAYMENT_PROVIDER') ?: null,
+                'PAGBANK_ENVIRONMENT' => getenv('PAGBANK_ENVIRONMENT') ?: null,
+                'PAGBANK_TOKEN_SANDBOX' => getenv('PAGBANK_TOKEN_SANDBOX') ?: null,
+                'PAGBANK_TOKEN_PROD' => getenv('PAGBANK_TOKEN_PROD') ?: null,
                 'R2_ENABLED' => getenv('R2_ENABLED') ?: null,
                 'MEDIA_AVATARS_DISK' => getenv('MEDIA_AVATARS_DISK') ?: null,
                 'MEDIA_TICKET_TYPES_DISK' => getenv('MEDIA_TICKET_TYPES_DISK') ?: null,

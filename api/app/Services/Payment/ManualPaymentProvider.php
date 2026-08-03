@@ -32,6 +32,13 @@ class ManualPaymentProvider implements PaymentProviderInterface
         return $this->createPendingPayment($order, (string) $order->total_amount, 'pix');
     }
 
+    public function createChargeForOrder(Sale $order, array $payload): array
+    {
+        $method = (string) ($payload['method'] ?? 'pix');
+
+        return $this->createPendingPayment($order, (string) $order->total_amount, $method);
+    }
+
     public function createCardCharge(Invoice $invoice, array $cardToken): array
     {
         return $this->createPendingPayment($invoice, (string) $invoice->amount_net, 'card');
@@ -56,6 +63,18 @@ class ManualPaymentProvider implements PaymentProviderInterface
         return [
             'provider_charge_id' => $providerChargeId,
             'status' => 'pending',
+        ];
+    }
+
+    public function getCheckoutConfig(): array
+    {
+        return [
+            'provider' => 'manual',
+            'available' => false,
+            'environment' => null,
+            'public_key' => null,
+            'three_ds_session' => null,
+            'three_ds_session_expires_at' => null,
         ];
     }
 

@@ -31,7 +31,7 @@ import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
-import type { SalePayment } from '../../types/sale'
+import type { SalePayment, SalePaymentCheckoutConfig } from '../../types/sale'
 import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
@@ -43,6 +43,95 @@ import {
 } from '../../types/storefront'
 import { formatCurrency } from '../../utils/format'
 type CouponStatus = 'idle' | 'loading' | 'applied' | 'invalid'
+type PaymentFlowMethod = 'pix' | 'credit_card' | 'debit_card'
+
+type PaymentFlowPayer = {
+  name: string
+  email: string
+  phone: string
+  taxId: string
+}
+
+type PaymentFlowState = {
+  saleUuid: string
+  method: PaymentFlowMethod
+  amount: string
+  payer: PaymentFlowPayer
+}
+
+type PagSeguroEncryptResult = {
+  encryptedCard?: string
+  hasErrors: boolean
+  errors?: Array<{ message?: string }>
+}
+
+type PagSeguroSetUpPayload = {
+  session: string
+  env: 'SANDBOX' | 'PROD'
+}
+
+type PagSeguroAuthenticate3DSPayload = {
+  customer: {
+    name: string
+    email: string
+    phones: Array<{
+      country: string
+      area: string
+      number: string
+      type: 'MOBILE' | 'HOME' | 'WORK'
+    }>
+    taxId?: string
+  }
+  paymentMethod: {
+    type: 'DEBIT_CARD'
+    installments: number
+    card: {
+      number: string
+      expMonth: string
+      expYear: string
+      holder: {
+        name: string
+      }
+    }
+  }
+  amount: {
+    value: number
+    currency: 'BRL'
+  }
+  billingAddress: {
+    line1: string
+    line2?: string
+    city: string
+    regionCode: string
+    country: 'BRA'
+    postalCode: string
+  }
+  dataOnly: false
+}
+
+type PagSeguroAuthenticate3DSResult = {
+  status?: string
+  id?: string
+}
+
+type PagSeguroGlobal = {
+  setUp: (payload: PagSeguroSetUpPayload) => void
+  encryptCard: (payload: {
+    publicKey: string
+    holder: string
+    number: string
+    expMonth: string
+    expYear: string
+    securityCode: string
+  }) => PagSeguroEncryptResult
+  authenticate3DS: (payload: PagSeguroAuthenticate3DSPayload) => Promise<PagSeguroAuthenticate3DSResult>
+}
+
+declare global {
+  interface Window {
+    PagSeguro?: PagSeguroGlobal
+  }
+}
 
 const HOLD_RENEW_INTERVAL_MS = 60_000
 /** Avisos visuais de expiração da reserva (spec: aviso a 5min e a 1min). */
@@ -80,6 +169,45 @@ function getHoldSecondsLeft(hold: StorefrontInventoryHold | null): number {
   }
 
   return Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
+}
+
+let pagSeguroSdkPromise: Promise<void> | null = null
+
+function loadPagSeguroSdk(scriptUrl: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('window_unavailable'))
+  }
+
+  if (window.PagSeguro) {
+    return Promise.resolve()
+  }
+
+  if (pagSeguroSdkPromise) {
+    return pagSeguroSdkPromise
+  }
+
+  pagSeguroSdkPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-pagseguro-sdk="true"]')
+
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true })
+      existing.addEventListener('error', () => reject(new Error('sdk_load_failed')), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = scriptUrl
+    script.async = true
+    script.dataset.pagseguroSdk = 'true'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('sdk_load_failed'))
+    document.body.appendChild(script)
+  }).catch((error) => {
+    pagSeguroSdkPromise = null
+    throw error
+  })
+
+  return pagSeguroSdkPromise
 }
 
 function PageShell({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -281,9 +409,494 @@ function PixPaymentPanel({ saleUuid }: { saleUuid: string }) {
   )
 }
 
+function CreditCardPaymentPanel({ saleUuid, payer }: { saleUuid: string; payer: PaymentFlowPayer }) {
+  const navigate = useNavigate()
+  const [config, setConfig] = useState<SalePaymentCheckoutConfig | null>(null)
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true)
+  const [configError, setConfigError] = useState<string | null>(null)
+  const [sdkReady, setSdkReady] = useState(false)
+
+  const [payerTaxId, setPayerTaxId] = useState(payer.taxId)
+  const [holderName, setHolderName] = useState(payer.name)
+  const [holderTaxId, setHolderTaxId] = useState(payer.taxId)
+  const [cardNumber, setCardNumber] = useState('')
+  const [expMonth, setExpMonth] = useState('')
+  const [expYear, setExpYear] = useState('')
+  const [securityCode, setSecurityCode] = useState('')
+  const [installments, setInstallments] = useState('1')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    setIsLoadingConfig(true)
+    setConfigError(null)
+
+    portalSaleService
+      .getSalePaymentCheckoutConfig(saleUuid)
+      .then(async (result) => {
+        setConfig(result)
+
+        if (!result.available || !result.public_key || !result.sdk_script_url) {
+          throw new Error('checkout_unavailable')
+        }
+
+        await loadPagSeguroSdk(result.sdk_script_url)
+        setSdkReady(true)
+      })
+      .catch((error: unknown) => {
+        setConfigError(getApiErrorMessage(error, 'Não foi possível preparar o pagamento com cartão agora.'))
+      })
+      .finally(() => setIsLoadingConfig(false))
+  }, [saleUuid])
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+
+    if (!config?.public_key || !window.PagSeguro) {
+      setFormError('O checkout do cartão ainda não está pronto. Atualize a página e tente novamente.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const encrypted = window.PagSeguro.encryptCard({
+        publicKey: config.public_key,
+        holder: holderName.trim(),
+        number: cardNumber.replace(/\D+/g, ''),
+        expMonth: expMonth.replace(/\D+/g, ''),
+        expYear: expYear.replace(/\D+/g, ''),
+        securityCode: securityCode.replace(/\D+/g, ''),
+      })
+
+      if (encrypted.hasErrors || !encrypted.encryptedCard) {
+        const firstError = encrypted.errors?.[0]?.message?.trim()
+        throw new Error(firstError || 'Não foi possível criptografar os dados do cartão.')
+      }
+
+      await portalSaleService.createSalePaymentCharge(saleUuid, {
+        method: 'credit_card',
+        payer_tax_id: payerTaxId.replace(/\D+/g, ''),
+        payer_name: payer.name,
+        payer_email: payer.email,
+        payer_phone: payer.phone,
+        card: {
+          encrypted: encrypted.encryptedCard,
+          holder_name: holderName.trim(),
+          holder_tax_id: holderTaxId.replace(/\D+/g, ''),
+          installments: Number(installments),
+        },
+      })
+
+      navigate(`/rastreio/${saleUuid}`)
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o cartão agora.'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 } }}>
+      <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 0.5 }}>Pagar com cartão de crédito</Typography>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2.5 }}>
+        Seus dados são criptografados no navegador antes do envio ao PagBank.
+      </Typography>
+
+      {isLoadingConfig && (
+        <Stack sx={{ alignItems: 'center', py: 4 }} spacing={1.5}>
+          <CircularProgress size={28} />
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Preparando ambiente seguro do cartão…</Typography>
+        </Stack>
+      )}
+
+      {!isLoadingConfig && configError && (
+        <Stack spacing={2}>
+          <Alert severity="error" variant="outlined">
+            {configError}
+          </Alert>
+          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+            Ver status da compra
+          </Button>
+        </Stack>
+      )}
+
+      {!isLoadingConfig && !configError && (
+        <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+          <Stack spacing={2}>
+            {!sdkReady && (
+              <Alert severity="warning" variant="outlined">
+                O SDK de pagamento ainda está carregando. Aguarde alguns instantes.
+              </Alert>
+            )}
+
+            {formError && (
+              <Alert severity="error" variant="outlined">
+                {formError}
+              </Alert>
+            )}
+
+            <TextField
+              label="CPF/CNPJ do pagador"
+              value={payerTaxId}
+              onChange={(event) => setPayerTaxId(event.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+            <TextField
+              label="Nome do titular do cartão"
+              value={holderName}
+              onChange={(event) => setHolderName(event.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+            <TextField
+              label="CPF/CNPJ do titular"
+              value={holderTaxId}
+              onChange={(event) => setHolderTaxId(event.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+            <TextField
+              label="Número do cartão"
+              value={cardNumber}
+              onChange={(event) => setCardNumber(event.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField
+                label="Mês"
+                value={expMonth}
+                onChange={(event) => setExpMonth(event.target.value)}
+                size="small"
+                fullWidth
+                required
+              />
+              <TextField
+                label="Ano"
+                value={expYear}
+                onChange={(event) => setExpYear(event.target.value)}
+                size="small"
+                fullWidth
+                required
+              />
+              <TextField
+                label="CVV"
+                value={securityCode}
+                onChange={(event) => setSecurityCode(event.target.value)}
+                size="small"
+                fullWidth
+                required
+              />
+            </Stack>
+            <TextField
+              select
+              label="Parcelas"
+              value={installments}
+              onChange={(event) => setInstallments(event.target.value)}
+              size="small"
+              fullWidth
+            >
+              {Array.from({ length: 12 }, (_, index) => (
+                <MenuItem key={index + 1} value={String(index + 1)}>
+                  {index + 1}x
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Button
+              variant="contained"
+              size="large"
+              type="submit"
+              disabled={isSubmitting || !sdkReady}
+              sx={{ minHeight: UI_SIZE.controlLarge }}
+            >
+              {isSubmitting ? 'Processando…' : 'Pagar com cartão'}
+            </Button>
+            <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+              Ver status da compra
+            </Button>
+          </Stack>
+        </Box>
+      )}
+    </Paper>
+  )
+}
+
+function DebitCardPaymentPanel({ saleUuid, amount, payer }: { saleUuid: string; amount: string; payer: PaymentFlowPayer }) {
+  const navigate = useNavigate()
+  const [config, setConfig] = useState<SalePaymentCheckoutConfig | null>(null)
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true)
+  const [configError, setConfigError] = useState<string | null>(null)
+  const [sdkReady, setSdkReady] = useState(false)
+
+  const [payerTaxId, setPayerTaxId] = useState(payer.taxId)
+  const [holderName, setHolderName] = useState(payer.name)
+  const [holderTaxId, setHolderTaxId] = useState(payer.taxId)
+  const [payerPhone, setPayerPhone] = useState(payer.phone)
+  const [cardNumber, setCardNumber] = useState('')
+  const [expMonth, setExpMonth] = useState('')
+  const [expYear, setExpYear] = useState('')
+  const [securityCode, setSecurityCode] = useState('')
+  const [addressLine1, setAddressLine1] = useState('')
+  const [addressNumber, setAddressNumber] = useState('')
+  const [addressComplement, setAddressComplement] = useState('')
+  const [addressDistrict, setAddressDistrict] = useState('')
+  const [addressCity, setAddressCity] = useState('')
+  const [addressState, setAddressState] = useState('')
+  const [addressZipCode, setAddressZipCode] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    setIsLoadingConfig(true)
+    setConfigError(null)
+
+    portalSaleService
+      .getSalePaymentCheckoutConfig(saleUuid)
+      .then(async (result) => {
+        setConfig(result)
+
+        if (!result.available || !result.public_key || !result.sdk_script_url || !result.three_ds_session || !result.environment) {
+          throw new Error('checkout_unavailable')
+        }
+
+        await loadPagSeguroSdk(result.sdk_script_url)
+
+        if (!window.PagSeguro) {
+          throw new Error('sdk_unavailable')
+        }
+
+        window.PagSeguro.setUp({
+          session: result.three_ds_session,
+          env: result.environment,
+        })
+
+        setSdkReady(true)
+      })
+      .catch((error: unknown) => {
+        setConfigError(getApiErrorMessage(error, 'Não foi possível preparar o débito com cartão agora.'))
+      })
+      .finally(() => setIsLoadingConfig(false))
+  }, [saleUuid])
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormError(null)
+
+    if (!config?.public_key || !window.PagSeguro) {
+      setFormError('O checkout do débito ainda não está pronto. Atualize a página e tente novamente.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const normalizedPhone = payerPhone.replace(/\D+/g, '')
+      const normalizedTaxId = payerTaxId.replace(/\D+/g, '')
+      const normalizedCardNumber = cardNumber.replace(/\D+/g, '')
+      const normalizedZipCode = addressZipCode.replace(/\D+/g, '')
+
+      if (normalizedPhone.length < 10) {
+        throw new Error('Informe um telefone celular válido para autenticar o cartão.')
+      }
+
+      if (
+        addressLine1.trim().length < 3 ||
+        addressNumber.trim().length < 1 ||
+        addressDistrict.trim().length < 2 ||
+        addressCity.trim().length < 2 ||
+        addressState.trim().length !== 2 ||
+        normalizedZipCode.length !== 8
+      ) {
+        throw new Error('Preencha o endereço de cobrança completo para autenticar o cartão.')
+      }
+
+      const encrypted = window.PagSeguro.encryptCard({
+        publicKey: config.public_key,
+        holder: holderName.trim(),
+        number: normalizedCardNumber,
+        expMonth: expMonth.replace(/\D+/g, ''),
+        expYear: expYear.replace(/\D+/g, ''),
+        securityCode: securityCode.replace(/\D+/g, ''),
+      })
+
+      if (encrypted.hasErrors || !encrypted.encryptedCard) {
+        const firstError = encrypted.errors?.[0]?.message?.trim()
+        throw new Error(firstError || 'Não foi possível criptografar os dados do cartão.')
+      }
+
+      const threeDsResult = await window.PagSeguro.authenticate3DS({
+        customer: {
+          name: payer.name,
+          email: payer.email,
+          taxId: normalizedTaxId,
+          phones: [
+            {
+              country: '55',
+              area: normalizedPhone.slice(0, 2),
+              number: normalizedPhone.slice(2),
+              type: 'MOBILE',
+            },
+          ],
+        },
+        paymentMethod: {
+          type: 'DEBIT_CARD',
+          installments: 1,
+          card: {
+            number: normalizedCardNumber,
+            expMonth: expMonth.replace(/\D+/g, ''),
+            expYear: expYear.replace(/\D+/g, ''),
+            holder: {
+              name: holderName.trim(),
+            },
+          },
+        },
+        amount: {
+          value: Math.round(Number(amount) * 100),
+          currency: 'BRL',
+        },
+        billingAddress: {
+          line1: `${addressLine1.trim()}, ${addressNumber.trim()} - ${addressDistrict.trim()}`,
+          line2: addressComplement.trim() || undefined,
+          city: addressCity.trim(),
+          regionCode: addressState.trim().toUpperCase(),
+          country: 'BRA',
+          postalCode: normalizedZipCode,
+        },
+        dataOnly: false,
+      })
+
+      if (threeDsResult.status !== 'AUTH_FLOW_COMPLETED' || !threeDsResult.id) {
+        throw new Error('A autenticação do débito não foi concluída. Tente outro cartão ou finalize com Pix.')
+      }
+
+      await portalSaleService.createSalePaymentCharge(saleUuid, {
+        method: 'debit_card',
+        payer_tax_id: normalizedTaxId,
+        payer_name: payer.name,
+        payer_email: payer.email,
+        payer_phone: normalizedPhone,
+        card: {
+          encrypted: encrypted.encryptedCard,
+          holder_name: holderName.trim(),
+          holder_tax_id: holderTaxId.replace(/\D+/g, ''),
+        },
+        authentication_method: {
+          type: 'THREEDS',
+          id: threeDsResult.id,
+        },
+      })
+
+      navigate(`/rastreio/${saleUuid}`)
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o débito agora.'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 } }}>
+      <Typography sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 600, mb: 0.5 }}>Cartão de débito</Typography>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 2.5 }}>
+        O PagBank valida o débito com autenticação 3DS antes de concluir a cobrança.
+      </Typography>
+
+      {isLoadingConfig && (
+        <Stack sx={{ alignItems: 'center', py: 4 }} spacing={1.5}>
+          <CircularProgress size={28} />
+          <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>Preparando autenticação segura do débito…</Typography>
+        </Stack>
+      )}
+
+      {!isLoadingConfig && configError && (
+        <Stack spacing={2}>
+          <Alert severity="error" variant="outlined">
+            {configError}
+          </Alert>
+          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+            Ver status da compra
+          </Button>
+        </Stack>
+      )}
+
+      {!isLoadingConfig && !configError && (
+        <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+          <Stack spacing={2}>
+            {!sdkReady && (
+              <Alert severity="warning" variant="outlined">
+                O ambiente seguro do PagBank ainda está carregando. Aguarde alguns instantes.
+              </Alert>
+            )}
+
+            {formError && (
+              <Alert severity="error" variant="outlined">
+                {formError}
+              </Alert>
+            )}
+
+            <TextField label="CPF/CNPJ do pagador" value={payerTaxId} onChange={(event) => setPayerTaxId(event.target.value)} size="small" fullWidth required />
+            <TextField label="Telefone do pagador" value={payerPhone} onChange={(event) => setPayerPhone(event.target.value)} size="small" fullWidth required />
+            <TextField label="Nome do titular do cartão" value={holderName} onChange={(event) => setHolderName(event.target.value)} size="small" fullWidth required />
+            <TextField label="CPF/CNPJ do titular" value={holderTaxId} onChange={(event) => setHolderTaxId(event.target.value)} size="small" fullWidth required />
+            <TextField label="Número do cartão" value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} size="small" fullWidth required />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField label="Mês" value={expMonth} onChange={(event) => setExpMonth(event.target.value)} size="small" fullWidth required />
+              <TextField label="Ano" value={expYear} onChange={(event) => setExpYear(event.target.value)} size="small" fullWidth required />
+              <TextField label="CVV" value={securityCode} onChange={(event) => setSecurityCode(event.target.value)} size="small" fullWidth required />
+            </Stack>
+
+            <Typography sx={{ fontSize: 14, fontWeight: 600, pt: 0.5 }}>Endereço de cobrança</Typography>
+
+            <TextField label="Rua / avenida" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} size="small" fullWidth required />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField label="Número" value={addressNumber} onChange={(event) => setAddressNumber(event.target.value)} size="small" fullWidth required />
+              <TextField label="Complemento" value={addressComplement} onChange={(event) => setAddressComplement(event.target.value)} size="small" fullWidth />
+            </Stack>
+            <TextField label="Bairro" value={addressDistrict} onChange={(event) => setAddressDistrict(event.target.value)} size="small" fullWidth required />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField label="Cidade" value={addressCity} onChange={(event) => setAddressCity(event.target.value)} size="small" fullWidth required />
+              <TextField label="UF" value={addressState} onChange={(event) => setAddressState(event.target.value)} size="small" fullWidth required />
+              <TextField label="CEP" value={addressZipCode} onChange={(event) => setAddressZipCode(event.target.value)} size="small" fullWidth required />
+            </Stack>
+
+            <Button variant="contained" size="large" type="submit" disabled={isSubmitting || !sdkReady} sx={{ minHeight: UI_SIZE.controlLarge }}>
+              {isSubmitting ? 'Autenticando…' : 'Pagar com débito'}
+            </Button>
+            <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+              Ver status da compra
+            </Button>
+          </Stack>
+        </Box>
+      )}
+    </Paper>
+  )
+}
+
+function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
+  if (flow.method === 'pix') {
+    return <PixPaymentPanel saleUuid={flow.saleUuid} />
+  }
+
+  if (flow.method === 'credit_card') {
+    return <CreditCardPaymentPanel saleUuid={flow.saleUuid} payer={flow.payer} />
+  }
+
+  return <DebitCardPaymentPanel saleUuid={flow.saleUuid} amount={flow.amount} payer={flow.payer} />
+}
+
 /** Passo 2: dados de contato + resumo + confirmação. */
 function DetailsAndReviewStep({ slug }: { slug: string }) {
   const navigate = useNavigate()
+  const { customer } = usePortalAuth()
   const { items, totalAmount, clear, sessionId } = useStorefrontCart()
   const { markCompleted } = useCartAbandonmentTelemetry(slug)
 
@@ -302,18 +915,12 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const [appliedDiscount, setAppliedDiscount] = useState(0)
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null)
 
-  // Checkout Pix (roadmap Fase B, item 1) — só oferecido se a loja aceita
-  // Pix (`tenant_settings.accepted_payment_methods`). Escolha é só local:
-  // o backend de checkout não recebe forma de pagamento, a cobrança Pix é
-  // gerada à parte, depois da venda criada (ver handleSubmit).
+  // O checkout público já persiste `payment_method` na venda e o backend
+  // expõe endpoints próprios para configuração/cobrança do PSP por venda.
+  // Aqui a UI decide se segue direto pro rastreio (dinheiro) ou se abre o
+  // passo de pagamento online (Pix/crédito/débito).
   const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<PaymentMethod[]>([])
-  // Radio "combinar na entrega" vs "Pagar com Pix agora" foi removido
-  // temporariamente (sistema não processa pagamento ainda) — `paymentMethod`
-  // fica fixo em 'delivery'. O bloco `if ((paymentMethod as string) === 'pix')` em
-  // handleSubmit vira código dormente, não é dead-code deletável agora (é
-  // feature desligada, não removida).
-  const paymentMethod: 'delivery' | 'pix' = 'delivery'
-  const [paidSaleUuid, setPaidSaleUuid] = useState<string | null>(null)
+  const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState | null>(null)
 
   // Meio de pagamento pretendido (roadmap cupom por meio de pagamento) —
   // distinto do `paymentMethod` acima (que só decide "pagar Pix agora" vs
@@ -664,13 +1271,20 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       const result = await storefrontCheckoutService.checkout(slug, payload)
       shouldReleaseHoldRef.current = false
       markCompleted()
-      clear()
-      if ((paymentMethod as string) === 'pix') {
-        // Venda já criada com sucesso a partir daqui — trocar de tela pra
-        // gerar o Pix, nunca perder a compra se a cobrança falhar (o
-        // PixPaymentPanel sempre oferece "continuar sem pagar agora").
-      setPaidSaleUuid(result.sale.uuid)
+      if (intendedPaymentMethod === 'pix' || intendedPaymentMethod === 'credit_card' || intendedPaymentMethod === 'debit_card') {
+        setPaymentFlow({
+          saleUuid: result.sale.uuid,
+          method: intendedPaymentMethod,
+          amount: String(Math.max(0, totalAmount - (couponStatus === 'applied' ? appliedDiscount : 0))),
+          payer: {
+            name: `${clientName.trim()} ${clientLastName.trim()}`.trim(),
+            email: customer?.email ?? '',
+            phone: clientPhone.trim(),
+            taxId: '',
+          },
+        })
       } else {
+        clear()
         navigate(`/rastreio/${result.sale.uuid}`)
       }
     } catch (error) {
@@ -717,8 +1331,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     }
   }
 
-  if (paidSaleUuid) {
-    return <PixPaymentPanel saleUuid={paidSaleUuid} />
+  if (paymentFlow) {
+    return <PaymentStepPanel flow={paymentFlow} />
   }
 
   return (
@@ -1024,7 +1638,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
         disabled={isSubmitting || (holdContext.eligible && (isPreparingHold || !hasActiveHold))}
         sx={{ minHeight: UI_SIZE.controlLarge }}
       >
-        {isSubmitting ? 'Confirmando…' : (paymentMethod as string) === 'pix' ? 'Confirmar e gerar Pix' : 'Confirmar compra'}
+        {isSubmitting ? 'Confirmando…' : intendedPaymentMethod === 'pix' ? 'Confirmar e gerar Pix' : 'Confirmar compra'}
       </Button>
     </Box>
   )

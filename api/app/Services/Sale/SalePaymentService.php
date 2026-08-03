@@ -44,6 +44,19 @@ class SalePaymentService
      */
     public function createPixChargeForOrder(Sale $order): Payment
     {
+        return $this->createChargeForOrder($order, ['method' => 'pix']);
+    }
+
+    /**
+     * Cria uma cobrança vinculada à venda usando o método informado
+     * (`pix|credit_card|debit_card`). Mantém os mesmos guards de estado da
+     * cobrança Pix para preservar idempotência e evitar cobranças ativas
+     * duplicadas da mesma venda.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public function createChargeForOrder(Sale $order, array $payload): Payment
+    {
         $this->assertBelongsToCurrentTenant($order);
 
         // Guard de estado validado sob lock, mas a transação FECHA antes
@@ -70,7 +83,7 @@ class SalePaymentService
             }
         });
 
-        $result = $this->paymentProvider->createPixChargeForOrder($order);
+        $result = $this->paymentProvider->createChargeForOrder($order, $payload);
 
         $payment = Payment::where('uuid', $result['payment_uuid'])->firstOrFail();
 
@@ -85,7 +98,19 @@ class SalePaymentService
     }
 
     /**
-     * Cobrança Pix ativa (status `pending`) do pedido, se houver. Usada tanto
+     * Metadados necessários para inicializar o checkout do PSP no frontend
+     * (chave pública, ambiente e sessão 3DS quando aplicável).
+     *
+     * @return array<string, mixed>
+     */
+    public function checkoutConfigForOrder(Sale $order): array
+    {
+        $this->assertBelongsToCurrentTenant($order);
+
+        return $this->paymentProvider->getCheckoutConfig();
+    }
+    /**
+     * Cobrança ativa (status `pending`) do pedido, se houver. Usada tanto
      * pelo guard de duplicidade quanto pela decisão de reaproveitar em vez de
      * criar uma segunda.
      */

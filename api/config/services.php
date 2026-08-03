@@ -104,12 +104,13 @@ return [
     | PagBank (rail comprador->clube — venda de ingresso)
     |--------------------------------------------------------------------------
     |
-    | Adapter STUB (App\Services\Payment\PagBankPaymentProvider) — sem
-    | credenciais reais nesta onda, a chamada HTTP à API do PagBank ainda
-    | não existe (ver TODO PAGBANK REAL no adapter). Chaves abaixo já
-    | preparadas para quando as credenciais reais existirem; até lá ficam
-    | vazias e o adapter se comporta como o ManualPaymentProvider (cobrança
-    | nasce 'pending', conciliação manual).
+    | Integração real via API de Orders do PagBank.
+    |
+    | Neste fluxo atual de vendas do PegaTicket, a autenticidade do webhook
+    | usa o header `x-authenticity-token` validado a partir do PRÓPRIO token
+    | de autenticação do seller (mesma regra documentada pelo PagBank para
+    | Orders/Webhooks). Por isso não mantemos um `PAGBANK_WEBHOOK_SECRET`
+    | separado aqui: a fonte de verdade é `token`.
     |
     */
     'pagbank' => [
@@ -117,7 +118,6 @@ return [
         'token' => env('PAGBANK_ENVIRONMENT', 'sandbox') === 'production'
             ? env('PAGBANK_TOKEN_PROD')
             : env('PAGBANK_TOKEN_SANDBOX'),
-        'webhook_secret' => env('PAGBANK_WEBHOOK_SECRET'),
     ],
 
 ];

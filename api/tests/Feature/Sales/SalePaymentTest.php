@@ -31,6 +31,7 @@ class SalePaymentTest extends TestCase
         parent::setUp();
 
         Config::set('pegaticket.parcela_vencimento_dia', 10);
+        Config::set('services.payments.sale_provider', 'manual');
 
         $this->setUpTenantScopedUser('order-payment-user@test.com');
     }

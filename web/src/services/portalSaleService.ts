@@ -1,7 +1,7 @@
 import { unwrap } from './apiClient'
 import { portalApiClient } from './portalApiClient'
 import type { ApiSuccess } from '../types/api'
-import type { SalePayment } from '../types/sale'
+import type { SalePayment, SalePaymentChargePayload, SalePaymentCheckoutConfig } from '../types/sale'
 import type {
   CreatePortalLinkPayload,
   PortalLink,
@@ -52,7 +52,19 @@ export function requestSaleCancellation(saleUuid: string, reason?: string): Prom
  * uma cobrança nova.
  */
 export function createSalePixCharge(saleUuid: string): Promise<SalePayment> {
-  return unwrap(portalApiClient.post<ApiSuccess<SalePayment>>(`/portal/sales/${saleUuid}/payment-charge`))
+  return createSalePaymentCharge(saleUuid, { method: 'pix' })
+}
+
+/** Configuração do PSP para o checkout da venda (PagBank: public key + sessão 3DS). */
+export function getSalePaymentCheckoutConfig(saleUuid: string): Promise<SalePaymentCheckoutConfig> {
+  return unwrap(
+    portalApiClient.get<ApiSuccess<SalePaymentCheckoutConfig>>(`/portal/sales/${saleUuid}/payment-checkout-config`),
+  )
+}
+
+/** Cobrança da venda com o meio configurado (`pix|credit_card|debit_card`). */
+export function createSalePaymentCharge(saleUuid: string, payload: SalePaymentChargePayload): Promise<SalePayment> {
+  return unwrap(portalApiClient.post<ApiSuccess<SalePayment>>(`/portal/sales/${saleUuid}/payment-charge`, payload))
 }
 
 /** "Meus ingressos" — ingressos emitidos para uma compra específica do comprador autenticado. */

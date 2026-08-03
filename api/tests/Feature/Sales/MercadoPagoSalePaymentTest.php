@@ -31,6 +31,7 @@ class MercadoPagoSalePaymentTest extends TestCase
 
         Config::set('pegaticket.parcela_vencimento_dia', 10);
         Config::set('services.payments.provider', 'mercadopago');
+        Config::set('services.payments.sale_provider', 'mercadopago');
         Config::set('services.mercadopago.access_token', 'TEST-fake-token');
         Config::set('services.mercadopago.webhook_secret', 'fake-secret');
 

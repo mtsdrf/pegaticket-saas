@@ -9,9 +9,11 @@ use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
+use Tests\Support\PagBankTestCards;
 use Tests\TestCase;
 
 /**
@@ -23,6 +25,7 @@ use Tests\TestCase;
 class PagBankSalePaymentTest extends TestCase
 {
     use CreatesSaleFixtures;
+    use PagBankTestCards;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
 
@@ -99,8 +102,176 @@ class PagBankSalePaymentTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
                 && $request->hasHeader('Authorization', 'Bearer fake-pagbank-token')
+                && $request['customer']['tax_id'] === '12345678909'
                 && $request['qr_codes'][0]['amount']['value'] === 8000
                 && $request['notification_urls'][0] === url('/api/v1/webhooks/payments/pagbank');
+        });
+    }
+
+    #[Test]
+    public function returns_pagbank_checkout_config_with_public_key_and_three_ds_session(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_1',
+                'public_key' => 'PAGBANK_PUBLIC_KEY_SANDBOX',
+            ], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'PAGBANK_3DS_SESSION_SANDBOX',
+            ], 200),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 30, qty: 1);
+
+        $response = $this->auth()->getJson("/api/v1/sales/{$order['uuid']}/payment-checkout-config");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.provider', 'pagbank')
+            ->assertJsonPath('data.available', true)
+            ->assertJsonPath('data.environment', 'SANDBOX')
+            ->assertJsonPath('data.public_key', 'PAGBANK_PUBLIC_KEY_SANDBOX')
+            ->assertJsonPath('data.three_ds_session', 'PAGBANK_3DS_SESSION_SANDBOX');
+    }
+
+    /**
+     * @return array<string, array{0: array{brand:string,number:string,cvv:string,expiration:string,encrypted:string}}>
+     */
+    public static function sandboxCreditCardsProvider(): array
+    {
+        $datasets = [];
+
+        foreach (self::pagBankSandboxCards() as $card) {
+            $datasets['sandbox_card_'.strtolower($card['brand'])] = [$card];
+        }
+
+        return $datasets;
+    }
+
+    #[Test]
+    #[DataProvider('sandboxCreditCardsProvider')]
+    public function creates_a_credit_card_order_via_pagbank_using_the_pagbank_sandbox_cards(array $card): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_CARD_1',
+                'charges' => [[
+                    'id' => 'CHAR_CARD_1',
+                    'status' => 'PAID',
+                    'payment_response' => [
+                        'code' => '20000',
+                        'message' => 'SUCESSO',
+                    ],
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                        'installments' => 3,
+                        'capture' => true,
+                        'card' => [
+                            'brand' => 'visa',
+                            'first_digits' => '411111',
+                            'last_digits' => '1111',
+                        ],
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 75, qty: 1);
+
+        $response = $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => $card['encrypted'],
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 3,
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'paid')
+            ->assertJsonPath('data.method', 'credit_card');
+
+        Http::assertSent(function ($request) use ($card) {
+            return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
+                && $request['customer']['tax_id'] === '12345678909'
+                && $request['customer']['email'] === 'mreisf.contato@gmail.com'
+                && $request['customer']['phones'][0]['number'] === '999999999'
+                && $request['charges'][0]['payment_method']['type'] === 'CREDIT_CARD'
+                && $request['charges'][0]['payment_method']['installments'] === 3
+                && $request['charges'][0]['payment_method']['card']['encrypted'] === $card['encrypted']
+                && $request['charges'][0]['payment_method']['holder']['tax_id'] === '65544332211';
+        });
+
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertDatabaseHas('payments', [
+            'payable_type' => Sale::class,
+            'payable_id' => $saleId,
+            'provider' => 'pagbank',
+            'provider_charge_id' => 'ORDE_CARD_1',
+            'method' => 'credit_card',
+            'status' => 'paid',
+        ]);
+    }
+
+    #[Test]
+    public function creates_a_debit_card_order_via_pagbank_using_three_ds_authentication_id(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_DEBIT_1',
+                'charges' => [[
+                    'id' => 'CHAR_DEBIT_1',
+                    'status' => 'PAID',
+                    'payment_response' => [
+                        'code' => '20000',
+                        'message' => 'SUCESSO',
+                    ],
+                    'payment_method' => [
+                        'type' => 'DEBIT_CARD',
+                        'installments' => 1,
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 60, qty: 1);
+
+        $response = $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'debit_card',
+            'payer_tax_id' => '12345678909',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_DEBIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '12345678909',
+            ],
+            'authentication_method' => [
+                'type' => 'THREEDS',
+                'id' => '3DS_AUTH_123',
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'paid')
+            ->assertJsonPath('data.method', 'debit_card');
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
+                && $request['customer']['tax_id'] === '12345678909'
+                && $request['customer']['phones'][0]['area'] === '11'
+                && $request['charges'][0]['payment_method']['type'] === 'DEBIT_CARD'
+                && $request['charges'][0]['payment_method']['installments'] === 1
+                && $request['charges'][0]['payment_method']['card']['encrypted'] === 'ENCRYPTED_DEBIT_CARD_PAYLOAD'
+                && $request['charges'][0]['payment_method']['authentication_method']['type'] === 'THREEDS'
+                && $request['charges'][0]['payment_method']['authentication_method']['id'] === '3DS_AUTH_123';
         });
     }
 

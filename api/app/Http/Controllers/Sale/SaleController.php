@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\PayInstallmentRequest;
 use App\Http\Requests\Sale\RejectSaleRequest;
+use App\Http\Requests\Sale\SalePaymentChargeRequest;
 use App\Http\Requests\Sale\StoreSaleRequest;
 use App\Http\Requests\Sale\UpdateSaleItemsRequest;
 use App\DTOs\Sale\UpdateSaleItemsDTO;
@@ -40,10 +41,24 @@ class SaleController extends Controller
      * tenant). Reaproveita perm:sales,update. Rejeita cobrança duplicada
      * ativa, pedido já pago ou cancelado (INVALID_ORDER_STATE / 422).
      */
-    public function paymentCharge(Sale $sale)
+    public function paymentCheckoutConfig(Sale $sale)
     {
         try {
-            $payment = $this->paymentService->createPixChargeForOrder($sale);
+            $config = $this->paymentService->checkoutConfigForOrder($sale);
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $config,
+            __('messages.sale.payment_checkout_config_loaded')
+        );
+    }
+
+    public function paymentCharge(SalePaymentChargeRequest $request, Sale $sale)
+    {
+        try {
+            $payment = $this->paymentService->createChargeForOrder($sale, $request->validated());
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {

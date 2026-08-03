@@ -9,9 +9,11 @@ use App\Models\Tenant\Tenant;
 use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
+use Tests\Support\PagBankTestCards;
 use Tests\TestCase;
 
 /**
@@ -22,6 +24,7 @@ use Tests\TestCase;
  */
 class PortalSalePaymentChargeTest extends TestCase
 {
+    use PagBankTestCards;
     use RefreshDatabase;
     use CreatesSaleFixtures;
 
@@ -29,7 +32,7 @@ class PortalSalePaymentChargeTest extends TestCase
     {
         parent::setUp();
 
-        Config::set('services.payments.provider', 'manual');
+        Config::set('services.payments.sale_provider', 'manual');
     }
 
     private function authenticatedCustomer(string $email): array
@@ -150,6 +153,65 @@ class PortalSalePaymentChargeTest extends TestCase
             ->assertJsonPath('code', 'INVALID_ORDER_STATE');
 
         $this->assertSame(1, Payment::where('payable_type', Sale::class)->where('payable_id', $order->id)->count());
+    }
+
+    #[Test]
+    public function creates_a_credit_card_charge_for_the_customers_own_order_via_pagbank(): void
+    {
+        Config::set('services.payments.sale_provider', 'pagbank');
+        Config::set('services.pagbank.environment', 'sandbox');
+        Config::set('services.pagbank.token', 'fake-pagbank-token');
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_PORTAL_CARD_1',
+                'charges' => [[
+                    'id' => 'CHAR_PORTAL_CARD_1',
+                    'status' => 'PAID',
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                        'installments' => 1,
+                        'card' => [
+                            'brand' => 'visa',
+                            'last_digits' => '2097',
+                        ],
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $card = self::pagBankSandboxCards()[0];
+
+        [$customer, $token] = $this->authenticatedCustomer('mreisf.contato@gmail.com');
+        $tenant = $this->createTenant();
+        $order = $this->createOrder($tenant, $customer, ['total_amount' => 120]);
+
+        $this->linkCustomerToOrder($token, $order->uuid);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/v1/portal/sales/' . $order->uuid . '/payment-charge', [
+                'method' => 'credit_card',
+                'payer_name' => 'Maria Reis',
+                'payer_email' => 'mreisf.contato@gmail.com',
+                'payer_phone' => '11999999999',
+                'card' => [
+                    'encrypted' => $card['encrypted'],
+                    'holder_name' => 'Maria Reis',
+                    'holder_tax_id' => '12345678909',
+                    'installments' => 1,
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'paid')
+            ->assertJsonPath('data.method', 'credit_card');
+
+        Http::assertSent(function ($request) use ($card) {
+            return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
+                && $request['customer']['email'] === 'mreisf.contato@gmail.com'
+                && $request['charges'][0]['payment_method']['type'] === 'CREDIT_CARD'
+                && $request['charges'][0]['payment_method']['card']['encrypted'] === $card['encrypted'];
+        });
     }
 
     #[Test]

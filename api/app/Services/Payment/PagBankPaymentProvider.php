@@ -6,6 +6,7 @@ use App\Contracts\Payment\PaymentProviderInterface;
 use App\DTOs\Payment\PagBankChargeRequestDTO;
 use App\DTOs\Payment\PagBankChargeResponseDTO;
 use App\Exceptions\Payment\PaymentProviderException;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
@@ -16,6 +17,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 /**
  * Adapter PagBank para o rail comprador -> tenant (venda de ingresso,
@@ -55,6 +57,10 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     private const BASE_URL_PRODUCTION = 'https://api.pagseguro.com';
 
+    private const SDK_BASE_URL_SANDBOX = 'https://sandbox.sdk.pagseguro.com';
+
+    private const SDK_BASE_URL_PRODUCTION = 'https://sdk.pagseguro.com';
+
     public function createPixCharge(Invoice $invoice): array
     {
         // Rail de assinatura (fatura PegaTicket->tenant) não usa PagBank
@@ -67,12 +73,18 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     public function createPixChargeForOrder(Sale $order): array
     {
+        return $this->createChargeForOrder($order, ['method' => 'pix']);
+    }
+
+    public function createChargeForOrder(Sale $order, array $payload): array
+    {
+        $method = (string) ($payload['method'] ?? 'pix');
         $request = PagBankChargeRequestDTO::fromArray([
             'reference_id' => (string) $order->uuid,
             'amount' => Money::normalize((string) $order->total_amount),
-            'method' => 'pix',
-            'payer' => $this->resolveOrderPayer($order),
-            'payment_method' => ['type' => 'pix'],
+            'method' => $method,
+            'payer' => $this->resolveOrderPayer($order, $payload),
+            'payment_method' => $this->resolvePaymentMethodPayload($method, $payload),
         ]);
 
         return $this->chargeAndPersist($order, $request);
@@ -176,6 +188,40 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
     }
 
+    public function getCheckoutConfig(): array
+    {
+        $token = (string) config('services.pagbank.token', '');
+        $environment = (string) config('services.pagbank.environment', 'sandbox');
+
+        if ($token === '') {
+            return [
+                'provider' => 'pagbank',
+                'available' => false,
+                'environment' => $environment === 'production' ? 'PROD' : 'SANDBOX',
+                'public_key' => null,
+                'three_ds_session' => null,
+                'three_ds_session_expires_at' => null,
+                'sdk_script_url' => 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js',
+            ];
+        }
+
+        $publicKeyResponse = $this->client()->post('/public-keys', ['type' => 'card']);
+        $this->assertSuccessful($publicKeyResponse, 'createPublicKey');
+
+        $sessionResponse = $this->sdkClient()->post('/checkout-sdk/sessions');
+        $this->assertSuccessful($sessionResponse, 'createThreeDsSession');
+
+        return [
+            'provider' => 'pagbank',
+            'available' => true,
+            'environment' => $environment === 'production' ? 'PROD' : 'SANDBOX',
+            'public_key' => (string) ($publicKeyResponse->json('public_key') ?? $publicKeyResponse->json('publicKey') ?? ''),
+            'three_ds_session' => (string) ($sessionResponse->json('session') ?? ''),
+            'three_ds_session_expires_at' => now()->addMinutes(30)->toIso8601String(),
+            'sdk_script_url' => 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js',
+        ];
+    }
+
     /**
      * Vocabulário interno usado por SalePaymentService/reconciliação (mesmo
      * de MercadoPagoPaymentProvider::mapStatus) — mapeado a partir dos
@@ -271,12 +317,8 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
-     * Ponto único de chamada HTTP ao PagBank — POST /orders com qr_codes
-     * (Pix), formato confirmado em developer.pagbank.com.br/reference/
-     * criar-pedido-pedido-com-qr-code. Sem token configurado, a cobrança
-     * nasce pending local (mesmo comportamento seguro do
-     * ManualPaymentProvider) em vez de falhar — permite ligar o provider
-     * via config antes das credenciais existirem, sem quebrar o checkout.
+     * Ponto único de chamada HTTP ao PagBank — POST /orders tanto para Pix
+     * quanto para cartão, usando a API de Orders oficial.
      */
     private function callPagBank(PagBankChargeRequestDTO $request): PagBankChargeResponseDTO
     {
@@ -298,15 +340,37 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'customer' => array_filter([
                 'name' => $request->payer['name'] ?? null,
                 'email' => $request->payer['email'] ?? null,
+                'tax_id' => $request->payer['tax_id'] ?? null,
+                'phones' => !empty($request->payer['phone'])
+                    ? [[
+                        'country' => '55',
+                        'area' => substr($this->normalizeDocument((string) $request->payer['phone']), 0, 2),
+                        'number' => substr($this->normalizeDocument((string) $request->payer['phone']), 2),
+                        'type' => 'MOBILE',
+                    ]]
+                    : null,
             ]) ?: null,
             'items' => [[
                 'name' => 'Compra '.$request->referenceId,
                 'quantity' => 1,
                 'unit_amount' => $amountCents,
             ]],
-            'qr_codes' => [[
-                'amount' => ['value' => $amountCents],
-            ]],
+            'qr_codes' => $request->method === 'pix'
+                ? [[
+                    'amount' => ['value' => $amountCents],
+                ]]
+                : null,
+            'charges' => $request->method !== 'pix'
+                ? [[
+                    'reference_id' => 'charge-'.Str::lower(Str::random(12)),
+                    'description' => 'Venda '.$request->referenceId,
+                    'amount' => [
+                        'value' => $amountCents,
+                        'currency' => 'BRL',
+                    ],
+                    'payment_method' => $request->paymentMethod,
+                ]]
+                : null,
             'notification_urls' => [url('/api/v1/webhooks/payments/pagbank')],
         ]);
 
@@ -314,16 +378,21 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $response = $this->client()->post('/orders', $body);
             $this->assertSuccessful($response, 'createOrder');
 
+            $firstCharge = $response->json('charges.0', []);
             $qrCode = $response->json('qr_codes.0', []);
+            $chargeStatus = (string) ($firstCharge['status'] ?? '');
 
             return PagBankChargeResponseDTO::fromArray([
                 'id' => $response->json('id', ''),
-                'status' => 'pending',
+                'status' => $request->method === 'pix' ? 'pending' : $this->mapStatus($chargeStatus),
                 'method' => $request->method,
                 'metadata' => [
                     'qr_code_text' => $qrCode['text'] ?? null,
                     'qr_code_id' => $qrCode['id'] ?? null,
                     'expiration_date' => $qrCode['expiration_date'] ?? null,
+                    'raw_status' => $chargeStatus !== '' ? $chargeStatus : null,
+                    'payment_response' => $firstCharge['payment_response'] ?? null,
+                    'card' => $firstCharge['payment_method']['card'] ?? null,
                 ],
             ]);
         } catch (PaymentProviderException) {
@@ -339,20 +408,108 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     /**
      * @return array<string, mixed>
      */
-    private function resolveOrderPayer(Sale $order): array
+    private function resolveOrderPayer(Sale $order, array $payload = []): array
     {
-        $order->loadMissing('finalCustomer');
+        $order->loadMissing(['finalCustomer', 'finalCustomerLink']);
 
         $customer = $order->finalCustomer;
+        $customerLink = $order->finalCustomerLink;
+
+        if ($customerLink === null && $order->final_customer_id !== null) {
+            $customerLink = FinalCustomerTenantLink::query()
+                ->where('final_customer_id', $order->final_customer_id)
+                ->where('tenant_id', $order->tenant_id)
+                ->first();
+        }
 
         if ($customer === null) {
             return [];
         }
 
+        $taxId = $this->normalizeDocument(
+            (string) ($payload['payer_tax_id'] ?? $customerLink?->cpf_cnpj ?? $payload['card']['holder_tax_id'] ?? '')
+        );
+
+        if ($taxId === '') {
+            throw new PaymentProviderException('pagbank.missing_payer_tax_id');
+        }
+
         return array_filter([
-            'email' => $customer->email ?: null,
-            'name' => $customer->name ?: null,
+            'email' => ($payload['payer_email'] ?? null) ?: ($customer->email ?: null),
+            'name' => ($payload['payer_name'] ?? null)
+                ?: (trim(($customer->name ?? '').' '.($customer->last_name ?? '')) ?: ($customer->name ?: null)),
+            'phone' => ($payload['payer_phone'] ?? null) ?: ($customerLink?->phone_primary ?: null),
+            'tax_id' => $taxId,
         ], static fn ($value) => $value !== null);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function resolvePaymentMethodPayload(string $method, array $payload): array
+    {
+        if ($method === 'pix') {
+            return ['type' => 'PIX'];
+        }
+
+        $encryptedCard = (string) ($payload['card']['encrypted'] ?? '');
+        $holderName = trim((string) ($payload['card']['holder_name'] ?? ''));
+        $holderTaxId = $this->normalizeDocument((string) ($payload['card']['holder_tax_id'] ?? ''));
+
+        if ($encryptedCard === '') {
+            throw new PaymentProviderException('pagbank.missing_card_encrypted');
+        }
+
+        if ($holderName === '') {
+            throw new PaymentProviderException('pagbank.missing_card_holder_name');
+        }
+
+        if ($holderTaxId === '') {
+            throw new PaymentProviderException('pagbank.missing_card_holder_tax_id');
+        }
+
+        $paymentMethod = [
+            'type' => $method === 'debit_card' ? 'DEBIT_CARD' : 'CREDIT_CARD',
+            'card' => [
+                'encrypted' => $encryptedCard,
+                'store' => false,
+            ],
+            'holder' => [
+                'name' => $holderName,
+                'tax_id' => $holderTaxId,
+            ],
+        ];
+
+        if ($method === 'credit_card') {
+            $installments = (int) ($payload['card']['installments'] ?? 0);
+
+            if ($installments < 1 || $installments > 12) {
+                throw new PaymentProviderException('pagbank.missing_card_installments');
+            }
+
+            $paymentMethod['installments'] = $installments;
+            $paymentMethod['capture'] = true;
+        }
+
+        if ($method === 'debit_card') {
+            $authenticationMethod = (array) ($payload['authentication_method'] ?? []);
+
+            foreach (['type', 'id'] as $requiredField) {
+                if (!isset($authenticationMethod[$requiredField]) || (string) $authenticationMethod[$requiredField] === '') {
+                    throw new PaymentProviderException('pagbank.missing_debit_authentication');
+                }
+            }
+
+            $paymentMethod['authentication_method'] = array_filter([
+                'type' => (string) $authenticationMethod['type'],
+                'id' => (string) $authenticationMethod['id'],
+            ], static fn ($value) => $value !== null && $value !== '');
+
+            $paymentMethod['installments'] = 1;
+        }
+
+        return $paymentMethod;
     }
 
     /**
@@ -398,6 +555,17 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ->timeout(15);
     }
 
+    private function sdkClient(): PendingRequest
+    {
+        $environment = (string) config('services.pagbank.environment', 'sandbox');
+        $baseUrl = $environment === 'production' ? self::SDK_BASE_URL_PRODUCTION : self::SDK_BASE_URL_SANDBOX;
+        $token = (string) config('services.pagbank.token', '');
+
+        return Http::withToken($token)
+            ->baseUrl($baseUrl)
+            ->timeout(15);
+    }
+
     /**
      * Mantido por simetria com MercadoPagoPaymentProvider — ainda sem uso
      * real (ver TODO PAGBANK REAL). Lança PaymentProviderException com um
@@ -410,5 +578,10 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         throw new PaymentProviderException('pagbank.request_failed');
+    }
+
+    private function normalizeDocument(?string $document): string
+    {
+        return preg_replace('/\D+/', '', (string) $document) ?? '';
     }
 }

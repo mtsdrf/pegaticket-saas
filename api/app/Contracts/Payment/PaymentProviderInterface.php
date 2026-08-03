@@ -37,6 +37,16 @@ interface PaymentProviderInterface
     public function createPixChargeForOrder(Sale $order): array;
 
     /**
+     * Cria uma cobrança para uma venda usando o meio de pagamento indicado
+     * (`pix|credit_card|debit_card`) e os dados complementares necessários
+     * para o PSP.
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function createChargeForOrder(Sale $order, array $payload): array;
+
+    /**
      * Cria uma cobrança de cartão para a fatura via API de Orders do PSP.
      *
      * @param array<string, mixed> $cardToken
@@ -65,6 +75,14 @@ interface PaymentProviderInterface
      * @return array<string, mixed>
      */
     public function getPayment(string $providerChargeId): array;
+
+    /**
+     * Metadados necessários para inicializar o checkout do PSP no frontend
+     * (ex.: chave pública e sessão 3DS).
+     *
+     * @return array<string, mixed>
+     */
+    public function getCheckoutConfig(): array;
 
     /**
      * Cria a assinatura recorrente automática (Preapproval no Mercado

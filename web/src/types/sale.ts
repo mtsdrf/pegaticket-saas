@@ -194,3 +194,33 @@ export interface SalePayment {
     ticket_url?: string | null
   } | null
 }
+
+export interface SalePaymentCheckoutConfig {
+  provider: string
+  available: boolean
+  environment: 'SANDBOX' | 'PROD' | null
+  public_key: string | null
+  three_ds_session: string | null
+  three_ds_session_expires_at: string | null
+  sdk_script_url: string | null
+}
+
+export interface SalePaymentAuthenticationMethodPayload {
+  type: 'THREEDS' | 'INAPP'
+  id: string
+}
+
+export interface SalePaymentChargePayload {
+  method?: 'pix' | 'credit_card' | 'debit_card'
+  payer_tax_id?: string
+  payer_name?: string
+  payer_email?: string
+  payer_phone?: string
+  card?: {
+    encrypted: string
+    holder_name: string
+    holder_tax_id: string
+    installments?: number
+  }
+  authentication_method?: SalePaymentAuthenticationMethodPayload
+}

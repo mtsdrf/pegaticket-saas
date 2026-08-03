@@ -73,6 +73,17 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         ], $this->resolveOrderPayer($order));
     }
 
+    public function createChargeForOrder(Sale $order, array $payload): array
+    {
+        $method = (string) ($payload['method'] ?? 'pix');
+
+        if ($method === 'pix') {
+            return $this->createPixChargeForOrder($order);
+        }
+
+        throw new PaymentProviderException('payment_method_not_supported');
+    }
+
     public function createCardCharge(Invoice $invoice, array $cardToken): array
     {
         $token = (string) ($cardToken['token'] ?? '');
@@ -593,6 +604,18 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
             'status' => $this->mapStatus($transaction['status'] ?? $body['status'] ?? null),
             'amount' => Money::normalize((string) ($body['total_amount'] ?? 0)),
             'raw_status' => $transaction['status'] ?? $body['status'] ?? null,
+        ];
+    }
+
+    public function getCheckoutConfig(): array
+    {
+        return [
+            'provider' => 'mercadopago',
+            'available' => false,
+            'environment' => null,
+            'public_key' => null,
+            'three_ds_session' => null,
+            'three_ds_session_expires_at' => null,
         ];
     }
 

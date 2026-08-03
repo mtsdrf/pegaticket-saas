@@ -285,6 +285,9 @@ Route::prefix('v1')->group(function () {
         // SalePaymentService (mesma regra
         // de negócio do endpoint de staff), posse verificada via
         // PortalCustomerService::findOwnedOrder(), ver PortalController.
+        Route::get('/sales/{uuid}/payment-checkout-config', [PortalController::class, 'paymentCheckoutConfig'])
+            ->middleware('throttle:20,1,portal-sales-payment-checkout-config');
+
         Route::post('/sales/{uuid}/payment-charge', [PortalController::class, 'paymentCharge'])
             ->middleware('throttle:20,1,portal-sales-payment-charge');
 
@@ -796,6 +799,9 @@ Route::prefix('v1')->group(function () {
             // do tenant). Reaproveita perm:sales,update (mesma permissão já
             // usada na gestão manual de parcela/itens), sem nova
             // Functionality.
+            Route::get('/{sale}/payment-checkout-config', [SaleController::class, 'paymentCheckoutConfig'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-payment-checkout-config']);
+
             Route::post('/{sale}/payment-charge', [SaleController::class, 'paymentCharge'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-payment-charge']);
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\RateSaleRequest;
 use App\Http\Requests\Portal\RequestSaleCancellationRequest;
 use App\Http\Requests\Portal\TransferTicketRequest;
+use App\Http\Requests\Sale\SalePaymentChargeRequest;
 use App\Http\Resources\Portal\PortalMeResource;
 use App\Http\Resources\Portal\PortalSaleResource;
 use App\Http\Resources\Portal\PortalTicketResource;
@@ -146,14 +147,32 @@ class PortalController extends Controller
      * `tenant` (o cliente final não pertence a um único tenant) — mesmo
      * valor que `assertBelongsToCurrentTenant` do Service exige.
      */
-    public function paymentCharge(string $uuid)
+    public function paymentCheckoutConfig(string $uuid)
     {
         $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
 
         app()->instance('tenant_id', $sale->tenant_id);
 
         try {
-            $payment = $this->paymentService->createPixChargeForOrder($sale);
+            $config = $this->paymentService->checkoutConfigForOrder($sale);
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $config,
+            __('messages.sale.payment_checkout_config_loaded')
+        );
+    }
+
+    public function paymentCharge(SalePaymentChargeRequest $request, string $uuid)
+    {
+        $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+
+        app()->instance('tenant_id', $sale->tenant_id);
+
+        try {
+            $payment = $this->paymentService->createChargeForOrder($sale, $request->validated());
         } catch (InvalidSaleStateException $e) {
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
