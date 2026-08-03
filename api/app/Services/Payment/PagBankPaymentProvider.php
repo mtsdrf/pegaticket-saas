@@ -61,6 +61,11 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     private const SDK_BASE_URL_PRODUCTION = 'https://sdk.pagseguro.com';
 
+    public function __construct(
+        private PagBankTransactionLogger $transactionLogger,
+    ) {
+    }
+
     public function createPixCharge(Invoice $invoice): array
     {
         // Rail de assinatura (fatura PegaTicket->tenant) não usa PagBank
@@ -128,6 +133,15 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $response = $this->client()->post("/charges/{$chargeId}/cancel", $body);
             $this->assertSuccessful($response, 'cancelCharge');
 
+            $this->transactionLogger->info('pagbank.cancel_charge.response', [
+                'order_id' => $orderId,
+                'charge_id' => $chargeId,
+                'payment_uuid' => $payment->uuid,
+                'sale_uuid' => $payment->payable instanceof Sale ? $payment->payable->uuid : null,
+                'http_status' => $response->status(),
+                'response_body' => $response->json(),
+            ]);
+
             $status = (string) $response->json('status', '');
 
             return [
@@ -135,6 +149,13 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'amount' => $refundAmount,
             ];
         } catch (PaymentProviderException $e) {
+            $this->transactionLogger->error('pagbank.cancel_charge.failed', [
+                'order_id' => $orderId,
+                'payment_uuid' => $payment->uuid,
+                'sale_uuid' => $payment->payable instanceof Sale ? $payment->payable->uuid : null,
+                'exception' => $e,
+            ]);
+
             return ['status' => 'requested', 'amount' => $refundAmount, 'error' => $e->getMessage()];
         }
     }
@@ -166,6 +187,12 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $response = $this->client()->get("/orders/{$providerChargeId}");
             $this->assertSuccessful($response, 'getOrder');
 
+            $this->transactionLogger->info('pagbank.get_order.response', [
+                'order_id' => $providerChargeId,
+                'http_status' => $response->status(),
+                'response_body' => $response->json(),
+            ]);
+
             $charges = (array) $response->json('charges', []);
             $firstCharge = $charges[0] ?? null;
 
@@ -182,8 +209,16 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                     ? Money::normalize(((int) $firstCharge['amount']['value']) / 100)
                     : null,
                 'raw_status' => $firstCharge['status'] ?? null,
+                'charge_id' => $firstCharge['id'] ?? null,
+                'paid_at' => $firstCharge['paid_at'] ?? null,
+                'raw_payload' => $response->json(),
             ];
-        } catch (PaymentProviderException) {
+        } catch (PaymentProviderException $e) {
+            $this->transactionLogger->error('pagbank.get_order.failed', [
+                'order_id' => $providerChargeId,
+                'exception' => $e,
+            ]);
+
             return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
         }
     }
@@ -231,9 +266,11 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     private function mapStatus(string $pagBankStatus): string
     {
         return match ($pagBankStatus) {
-            'PAID', 'AUTHORIZED' => 'paid',
+            'PAID' => 'paid',
+            'AUTHORIZED' => 'authorized',
+            'IN_ANALYSIS' => 'in_analysis',
             'DECLINED' => 'failed',
-            'CANCELED' => 'refunded',
+            'CANCELED' => 'canceled',
             default => 'pending', // inclui WAITING, IN_ANALYSIS, ''
         };
     }
@@ -334,6 +371,12 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         $amountCents = Money::toMinor($request->amount);
+        $sale = Sale::query()
+            ->where('uuid', $request->referenceId)
+            ->with(['tenant', 'items.ticketType', 'items.eventProduct'])
+            ->first();
+        $description = $this->buildSaleDescription($sale, $request->referenceId);
+        $items = $this->buildSaleItemsPayload($sale, $request->referenceId, $amountCents);
 
         $body = array_filter([
             'reference_id' => $request->referenceId,
@@ -350,11 +393,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                     ]]
                     : null,
             ]) ?: null,
-            'items' => [[
-                'name' => 'Compra '.$request->referenceId,
-                'quantity' => 1,
-                'unit_amount' => $amountCents,
-            ]],
+            'items' => $items,
             'qr_codes' => $request->method === 'pix'
                 ? [[
                     'amount' => ['value' => $amountCents],
@@ -363,7 +402,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'charges' => $request->method !== 'pix'
                 ? [[
                     'reference_id' => 'charge-'.Str::lower(Str::random(12)),
-                    'description' => 'Venda '.$request->referenceId,
+                    'description' => $description,
                     'amount' => [
                         'value' => $amountCents,
                         'currency' => 'BRL',
@@ -378,6 +417,13 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $response = $this->client()->post('/orders', $body);
             $this->assertSuccessful($response, 'createOrder');
 
+            $this->transactionLogger->info('pagbank.create_order.response', [
+                'reference_id' => $request->referenceId,
+                'request_body' => $body,
+                'http_status' => $response->status(),
+                'response_body' => $response->json(),
+            ]);
+
             $firstCharge = $response->json('charges.0', []);
             $qrCode = $response->json('qr_codes.0', []);
             $chargeStatus = (string) ($firstCharge['status'] ?? '');
@@ -390,12 +436,22 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                     'qr_code_text' => $qrCode['text'] ?? null,
                     'qr_code_id' => $qrCode['id'] ?? null,
                     'expiration_date' => $qrCode['expiration_date'] ?? null,
+                    'provider_status' => $chargeStatus !== '' ? $chargeStatus : ($request->method === 'pix' ? 'WAITING' : null),
                     'raw_status' => $chargeStatus !== '' ? $chargeStatus : null,
+                    'charge_id' => $firstCharge['id'] ?? null,
+                    'paid_at' => $firstCharge['paid_at'] ?? null,
                     'payment_response' => $firstCharge['payment_response'] ?? null,
                     'card' => $firstCharge['payment_method']['card'] ?? null,
+                    'provider_response' => $response->json(),
                 ],
             ]);
-        } catch (PaymentProviderException) {
+        } catch (PaymentProviderException $e) {
+            $this->transactionLogger->error('pagbank.create_order.failed', [
+                'reference_id' => $request->referenceId,
+                'request_body' => $body,
+                'exception' => $e,
+            ]);
+
             return PagBankChargeResponseDTO::fromArray([
                 'id' => '',
                 'status' => 'failed',
@@ -403,6 +459,51 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'metadata' => ['note' => 'pagbank_order_creation_failed'],
             ]);
         }
+    }
+
+    private function buildSaleDescription(?Sale $sale, string $referenceId): string
+    {
+        if ($sale === null) {
+            return 'Compra ingresso + '.$referenceId;
+        }
+
+        $itemLabel = $sale->items
+            ->map(fn ($item) => $item->ticketType?->name ?? $item->eventProduct?->name)
+            ->filter()
+            ->first() ?? 'ingresso';
+
+        $tenantName = $sale->tenant?->name ?? 'PegaTicket';
+
+        return Str::limit("Compra {$itemLabel} + {$tenantName}", 120, '');
+    }
+
+    /**
+     * @return array<int, array{name: string, quantity: int, unit_amount: int}>
+     */
+    private function buildSaleItemsPayload(?Sale $sale, string $referenceId, int $fallbackAmountCents): array
+    {
+        if ($sale === null || $sale->items->isEmpty()) {
+            return [[
+                'name' => 'Compra ingresso',
+                'quantity' => 1,
+                'unit_amount' => $fallbackAmountCents,
+            ]];
+        }
+
+        return $sale->items
+            ->map(function ($item) {
+                $name = $item->ticketType?->name ?? $item->eventProduct?->name ?? 'Item da compra';
+                $quantity = max(1, (int) round((float) $item->quantity));
+                $unitAmount = Money::toMinor((string) $item->unit_price);
+
+                return [
+                    'name' => Str::limit($name, 120, ''),
+                    'quantity' => $quantity,
+                    'unit_amount' => $unitAmount,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**

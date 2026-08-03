@@ -36,6 +36,12 @@ class SalePublicTrackingResource extends JsonResource
             // aparecia pro cliente como "em preparação" — bug real).
             'status' => $this->status,
             'is_cancelled' => $this->cancelled_at !== null,
+            'latest_payment' => $this->whenLoaded('latestPayment', fn() => $this->latestPayment ? [
+                'status' => $this->latestPayment->status,
+                'provider_status' => $this->latestPayment->metadata['provider_status'] ?? $this->latestPayment->metadata['raw_status'] ?? null,
+                'method' => $this->latestPayment->method,
+                'paid_at' => $this->latestPayment->paid_at,
+            ] : null),
             'created_at' => $this->created_at,
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'ticket_type_name' => $item->ticketType?->name ?? $item->eventProduct?->name,

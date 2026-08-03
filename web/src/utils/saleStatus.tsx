@@ -34,6 +34,12 @@ export interface SaleStatusSource {
   is_installment?: boolean
   paid_at?: string | null
   status?: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
+  latest_payment?: {
+    status: string
+    provider_status?: string | null
+    method?: string | null
+    paid_at?: string | null
+  } | null
 }
 
 /**
@@ -43,6 +49,9 @@ export interface SaleStatusSource {
  * já nasce paga. Único lugar dessa lógica no frontend.
  */
 export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
+  const paymentStatus = sale.latest_payment?.status ?? null
+  const providerStatus = sale.latest_payment?.provider_status ?? null
+
   if (sale.is_cancelled) {
     return {
       label: 'Venda cancelada',
@@ -79,6 +88,42 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
     }
   }
 
+  if (paymentStatus === 'in_analysis' || providerStatus === 'IN_ANALYSIS') {
+    return {
+      label: 'Pagamento em análise',
+      caption: 'O PagBank está analisando sua transação. Avisaremos assim que houver uma definição.',
+      tone: 'info',
+      icon: <HourglassEmptyIcon />,
+    }
+  }
+
+  if (paymentStatus === 'authorized' || providerStatus === 'AUTHORIZED') {
+    return {
+      label: 'Pagamento autorizado',
+      caption: 'A transação foi autorizada e está aguardando a confirmação final do PagBank.',
+      tone: 'info',
+      icon: <HourglassEmptyIcon />,
+    }
+  }
+
+  if (paymentStatus === 'failed' || providerStatus === 'DECLINED') {
+    return {
+      label: 'Pagamento recusado',
+      caption: 'O PagBank recusou a transação. Revise os dados ou tente outro meio de pagamento.',
+      tone: 'warning',
+      icon: <CancelOutlinedIcon />,
+    }
+  }
+
+  if (paymentStatus === 'canceled' || providerStatus === 'CANCELED') {
+    return {
+      label: 'Pagamento cancelado',
+      caption: 'A cobrança foi cancelada no PagBank. Você pode tentar novamente se ainda quiser concluir a compra.',
+      tone: 'warning',
+      icon: <CancelOutlinedIcon />,
+    }
+  }
+
   if (sale.is_paid) {
     return {
       label: 'Venda concluída',
@@ -92,7 +137,9 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
     label: sale.is_installment ? 'Pagamento parcelado em andamento' : 'Aguardando confirmação do pagamento',
     caption: sale.is_installment
       ? 'Acompanhe as parcelas abaixo.'
-      : 'A confirmação do pagamento é automática.',
+      : providerStatus === 'WAITING'
+        ? 'O PagBank ainda está aguardando a conclusão do pagamento.'
+        : 'A confirmação do pagamento é automática.',
     tone: 'info',
     icon: <HourglassEmptyIcon />,
   }

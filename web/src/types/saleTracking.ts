@@ -29,6 +29,12 @@ export interface SaleTracking {
   /** `cancellation_requested` (roadmap A4) — solicitação feita via Portal autenticado, não por aqui (rota pública sem login). */
   status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
   is_cancelled: boolean
+  latest_payment?: {
+    status: string
+    provider_status: string | null
+    method: string | null
+    paid_at: string | null
+  } | null
   created_at: string
   items: SaleTrackingItem[]
   installments: SaleTrackingInstallment[]

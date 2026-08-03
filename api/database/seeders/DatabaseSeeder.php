@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             AdminPermissionsSeeder::class,
             LegalDocumentsSeeder::class,
             PlanPricesSeeder::class,
+            PegaTicketDemoSeeder::class,
+            PegaTicketDemoOperationsSeeder::class,
         ]);
     }
 

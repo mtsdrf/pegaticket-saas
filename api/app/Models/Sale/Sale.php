@@ -179,4 +179,9 @@ class Sale extends BaseModel
     {
         return $this->morphMany(Payment::class, 'payable');
     }
+
+    public function latestPayment()
+    {
+        return $this->morphOne(Payment::class, 'payable')->latestOfMany();
+    }
 }

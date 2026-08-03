@@ -1,5 +1,5 @@
 /** Espelha `ReconciliationRequest`/`ReconciliationEntryResource` do backend (roadmap A3.12). */
-export type ReconciliationStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'divergent'
+export type ReconciliationStatus = 'pending' | 'paid' | 'authorized' | 'in_analysis' | 'failed' | 'canceled' | 'refunded' | 'divergent'
 
 export interface ReconciliationFilters {
   from?: string

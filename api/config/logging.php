@@ -71,6 +71,28 @@ return [
 
         /*
         |--------------------------------------------------
+        | PagBank Transactions (JSON estruturado)
+        |--------------------------------------------------
+        */
+        'pagbank_transactions' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'info'),
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => storage_path('logs/pagbank-transactions.log'),
+            ],
+            'formatter' => JsonFormatter::class,
+            'formatter_with' => [
+                'batch_mode' => JsonFormatter::BATCH_MODE_JSON,
+                'append_newline' => true,
+            ],
+            'processors' => [
+                PsrLogMessageProcessor::class,
+            ],
+        ],
+
+        /*
+        |--------------------------------------------------
         | Single (mantido)
         |--------------------------------------------------
         */

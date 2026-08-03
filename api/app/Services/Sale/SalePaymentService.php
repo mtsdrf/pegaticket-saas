@@ -87,6 +87,11 @@ class SalePaymentService
 
         $payment = Payment::where('uuid', $result['payment_uuid'])->firstOrFail();
 
+        if ($payment->status !== 'pending') {
+            $this->reconcileRemotePayment($payment, (string) $payment->status, (string) $payment->amount, $payment->metadata ?? []);
+            $payment->refresh();
+        }
+
         event(new SalePaymentCharged(
             saleUuid: $order->uuid,
             paymentUuid: $payment->uuid,
@@ -184,10 +189,11 @@ class SalePaymentService
      * - `refunded`: espelha o estado remoto localmente
      * - `pending`: não muda nada
      */
-    public function reconcileRemotePayment(Payment $payment, string $remoteStatus, string|int|float $reportedAmount): Payment
+    public function reconcileRemotePayment(Payment $payment, string $remoteStatus, string|int|float $reportedAmount, array $providerSnapshot = []): Payment
     {
-        return DB::transaction(function () use ($payment, $remoteStatus, $reportedAmount) {
+        return DB::transaction(function () use ($payment, $remoteStatus, $reportedAmount, $providerSnapshot) {
             $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+            $this->mergeProviderSnapshot($payment, $providerSnapshot);
 
             if ($remoteStatus === 'paid') {
                 if (!Money::equals((string) $payment->amount, $reportedAmount)) {
@@ -197,11 +203,46 @@ class SalePaymentService
                     return $payment;
                 }
 
-                if ($payment->status !== 'paid') {
+                $shouldPersistPaid = $payment->status !== 'paid' || $payment->paid_at === null;
+                $order = $payment->payable instanceof Sale ? $payment->payable : null;
+                $shouldConfirmSale = $order instanceof Sale
+                    && ($order->status === 'pending_approval' || ! $order->is_paid);
+
+                if ($shouldPersistPaid) {
                     $payment->status = 'paid';
-                    $payment->paid_at = now();
+                    $payment->paid_at ??= now();
                     $payment->save();
+                }
+
+                if ($shouldConfirmSale) {
                     $this->markOrderPaid($payment);
+                }
+
+                return $payment;
+            }
+
+            if ($remoteStatus === 'authorized') {
+                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                    $payment->status = 'authorized';
+                    $payment->save();
+                }
+
+                return $payment;
+            }
+
+            if ($remoteStatus === 'in_analysis') {
+                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                    $payment->status = 'in_analysis';
+                    $payment->save();
+                }
+
+                return $payment;
+            }
+
+            if ($remoteStatus === 'canceled') {
+                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                    $payment->status = 'canceled';
+                    $payment->save();
                 }
 
                 return $payment;
@@ -325,15 +366,30 @@ class SalePaymentService
         }
 
         $order = $payment->payable;
+        $shouldAutoApprove = $order->origin === 'storefront' && $order->status === 'pending_approval';
 
-        if ($order->is_paid) {
+        if ($order->is_paid && ! $shouldAutoApprove) {
             return;
         }
 
+        if ($shouldAutoApprove) {
+            $order->status = 'confirmed';
+        }
+
         $order->is_paid = true;
-        $order->paid_at = now();
+        $order->paid_at ??= now();
         $order->paid_amount = $order->total_amount;
         $order->save();
+
+        if ($shouldAutoApprove) {
+            event(new \App\Events\Sale\SaleApproved(
+                saleId: $order->id,
+                saleUuid: $order->uuid,
+                fromStage: 'approval',
+                toStage: 'confirmed',
+                actorId: Auth::id()
+            ));
+        }
 
         event(new SalePaid(
             saleUuid: $order->uuid,
@@ -344,6 +400,16 @@ class SalePaymentService
     private function generateProtocol(): string
     {
         return 'REF-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6));
+    }
+
+    private function mergeProviderSnapshot(Payment $payment, array $providerSnapshot): void
+    {
+        if ($providerSnapshot === []) {
+            return;
+        }
+
+        $payment->metadata = array_merge($payment->metadata ?? [], $providerSnapshot);
+        $payment->save();
     }
 
     /**

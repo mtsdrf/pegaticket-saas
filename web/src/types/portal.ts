@@ -39,6 +39,12 @@ export interface PortalSaleSummary {
   status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancellation_requested'
   total_amount: string
   is_cancelled: boolean
+  latest_payment?: {
+    status: string
+    provider_status: string | null
+    method: string | null
+    paid_at: string | null
+  } | null
   created_at: string
 }
 

@@ -20,7 +20,7 @@ class ReconciliationRequest extends FormRequest
         return [
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
-            'status' => ['nullable', 'string', 'in:pending,paid,failed,refunded,divergent'],
+            'status' => ['nullable', 'string', 'in:pending,paid,authorized,in_analysis,failed,canceled,refunded,divergent'],
             'method' => ['nullable', 'string', 'max:20'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

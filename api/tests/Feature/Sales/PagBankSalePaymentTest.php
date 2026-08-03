@@ -8,6 +8,7 @@ use App\Models\Subscription\WebhookEvent;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +40,7 @@ class PagBankSalePaymentTest extends TestCase
         Config::set('services.pagbank.token', 'fake-pagbank-token');
 
         $this->setUpTenantScopedUser('pagbank-order-payment-user@test.com');
+        File::delete(storage_path('logs/pagbank-transactions.log'));
     }
 
     protected function auth()
@@ -197,14 +199,20 @@ class PagBankSalePaymentTest extends TestCase
             ->assertJsonPath('data.method', 'credit_card');
 
         Http::assertSent(function ($request) use ($card) {
+            $description = (string) ($request['charges'][0]['description'] ?? '');
+            $itemName = (string) ($request['items'][0]['name'] ?? '');
+
             return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
                 && $request['customer']['tax_id'] === '12345678909'
                 && $request['customer']['email'] === 'mreisf.contato@gmail.com'
                 && $request['customer']['phones'][0]['number'] === '999999999'
+                && $itemName !== ''
                 && $request['charges'][0]['payment_method']['type'] === 'CREDIT_CARD'
                 && $request['charges'][0]['payment_method']['installments'] === 3
                 && $request['charges'][0]['payment_method']['card']['encrypted'] === $card['encrypted']
-                && $request['charges'][0]['payment_method']['holder']['tax_id'] === '65544332211';
+                && $request['charges'][0]['payment_method']['holder']['tax_id'] === '65544332211'
+                && str_starts_with($description, 'Compra ')
+                && str_contains($description, ' + Test Tenant');
         });
 
         $saleId = Sale::where('uuid', $order['uuid'])->value('id');
@@ -215,6 +223,11 @@ class PagBankSalePaymentTest extends TestCase
             'provider_charge_id' => 'ORDE_CARD_1',
             'method' => 'credit_card',
             'status' => 'paid',
+        ]);
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'status' => 'confirmed',
+            'is_paid' => true,
         ]);
     }
 
@@ -264,15 +277,28 @@ class PagBankSalePaymentTest extends TestCase
             ->assertJsonPath('data.method', 'debit_card');
 
         Http::assertSent(function ($request) {
+            $description = (string) ($request['charges'][0]['description'] ?? '');
+            $itemName = (string) ($request['items'][0]['name'] ?? '');
+
             return $request->url() === 'https://sandbox.api.pagseguro.com/orders'
                 && $request['customer']['tax_id'] === '12345678909'
                 && $request['customer']['phones'][0]['area'] === '11'
+                && $itemName !== ''
                 && $request['charges'][0]['payment_method']['type'] === 'DEBIT_CARD'
                 && $request['charges'][0]['payment_method']['installments'] === 1
                 && $request['charges'][0]['payment_method']['card']['encrypted'] === 'ENCRYPTED_DEBIT_CARD_PAYLOAD'
                 && $request['charges'][0]['payment_method']['authentication_method']['type'] === 'THREEDS'
-                && $request['charges'][0]['payment_method']['authentication_method']['id'] === '3DS_AUTH_123';
+                && $request['charges'][0]['payment_method']['authentication_method']['id'] === '3DS_AUTH_123'
+                && str_starts_with($description, 'Compra ')
+                && str_contains($description, ' + Test Tenant');
         });
+
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'status' => 'confirmed',
+            'is_paid' => true,
+        ]);
     }
 
     #[Test]
@@ -391,5 +417,229 @@ class PagBankSalePaymentTest extends TestCase
             'provider' => 'pagbank',
             'external_id' => $orderId,
         ]);
+    }
+
+    #[Test]
+    public function credit_card_charge_with_authorized_status_keeps_sale_unpaid_and_exposes_payment_status(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_AUTH_1',
+                'charges' => [[
+                    'id' => 'CHAR_AUTH_1',
+                    'status' => 'AUTHORIZED',
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 90, qty: 1);
+
+        $response = $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'authorized');
+
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertDatabaseHas('payments', [
+            'payable_type' => Sale::class,
+            'payable_id' => $saleId,
+            'provider_charge_id' => 'ORDE_AUTH_1',
+            'status' => 'authorized',
+        ]);
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'status' => 'confirmed',
+            'is_paid' => false,
+        ]);
+    }
+
+    #[Test]
+    public function credit_card_charge_in_analysis_keeps_sale_unpaid_and_exposes_payment_status(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_ANALYSIS_1',
+                'charges' => [[
+                    'id' => 'CHAR_ANALYSIS_1',
+                    'status' => 'IN_ANALYSIS',
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 95, qty: 1);
+
+        $response = $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'in_analysis');
+
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+        $this->assertDatabaseHas('payments', [
+            'payable_type' => Sale::class,
+            'payable_id' => $saleId,
+            'provider_charge_id' => 'ORDE_ANALYSIS_1',
+            'status' => 'in_analysis',
+        ]);
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'status' => 'confirmed',
+            'is_paid' => false,
+        ]);
+    }
+
+    #[Test]
+    #[DataProvider('webhookTerminalStatusesProvider')]
+    public function webhook_reconciliation_persists_non_paid_pagbank_statuses_without_leaving_the_sale_without_feedback(
+        string $providerStatus,
+        string $localStatus
+    ): void {
+        $orderId = 'ORDE_STATUS_1';
+
+        Http::fake([
+            "sandbox.api.pagseguro.com/orders/{$orderId}" => Http::response([
+                'id' => $orderId,
+                'charges' => [[
+                    'id' => 'CHAR_STATUS_1',
+                    'status' => $providerStatus,
+                    'amount' => ['value' => 8000, 'currency' => 'BRL'],
+                ]],
+            ], 200),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 80, qty: 1);
+        $saleId = Sale::where('uuid', $order['uuid'])->value('id');
+
+        Payment::create([
+            'payable_type' => Sale::class,
+            'payable_id' => $saleId,
+            'provider' => 'pagbank',
+            'provider_charge_id' => $orderId,
+            'method' => 'pix',
+            'amount' => '80.00',
+            'status' => 'pending',
+        ]);
+
+        $rawPayload = json_encode(['id' => $orderId, 'charges' => [['status' => $providerStatus]]]);
+        $signature = hash('sha256', 'fake-pagbank-token-'.$rawPayload);
+
+        $response = $this->call(
+            'POST',
+            '/api/v1/webhooks/payments/pagbank',
+            [],
+            [],
+            [],
+            [
+                'HTTP_x-authenticity-token' => $signature,
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            $rawPayload
+        );
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('payments', [
+            'payable_type' => Sale::class,
+            'payable_id' => $saleId,
+            'provider_charge_id' => $orderId,
+            'status' => $localStatus,
+        ]);
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'is_paid' => false,
+        ]);
+    }
+
+    public static function webhookTerminalStatusesProvider(): array
+    {
+        return [
+            'waiting' => ['WAITING', 'pending'],
+            'declined' => ['DECLINED', 'failed'],
+            'canceled' => ['CANCELED', 'canceled'],
+            'authorized' => ['AUTHORIZED', 'authorized'],
+            'in_analysis' => ['IN_ANALYSIS', 'in_analysis'],
+        ];
+    }
+
+    #[Test]
+    public function writes_a_dedicated_pagbank_transaction_log_with_sanitized_data(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_LOG_1',
+                'charges' => [[
+                    'id' => 'CHAR_LOG_1',
+                    'status' => 'PAID',
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                        'card' => [
+                            'brand' => 'visa',
+                            'first_digits' => '411111',
+                            'last_digits' => '1111',
+                        ],
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 77, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ])->assertStatus(201);
+
+        $logPath = storage_path('logs/pagbank-transactions.log');
+
+        $this->assertFileExists($logPath);
+
+        $contents = File::get($logPath);
+
+        $this->assertStringContainsString('pagbank.create_order.response', $contents);
+        $this->assertStringContainsString('"encrypted":"***"', $contents);
+        $this->assertStringContainsString('"tax_id":"***"', $contents);
+        $this->assertStringContainsString('"email":"***"', $contents);
+        $this->assertStringContainsString('"phones":"***"', $contents);
+        $this->assertStringNotContainsString('ENCRYPTED_CREDIT_CARD_PAYLOAD', $contents);
+        $this->assertStringNotContainsString('mreisf.contato@gmail.com', $contents);
     }
 }

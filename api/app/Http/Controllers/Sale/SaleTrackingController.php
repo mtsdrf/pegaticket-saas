@@ -20,7 +20,7 @@ class SaleTrackingController extends Controller
 {
     public function show(Sale $sale)
     {
-        $sale->load(['finalCustomer', 'tenant', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon']);
+        $sale->load(['finalCustomer', 'tenant', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon', 'latestPayment']);
 
         return APIResponse::success(
             new SalePublicTrackingResource($sale),

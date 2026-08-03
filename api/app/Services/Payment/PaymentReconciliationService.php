@@ -46,6 +46,13 @@ class PaymentReconciliationService
             $payment,
             (string) ($remote['status'] ?? 'pending'),
             $remote['amount'] ?? (string) $payment->amount,
+            [
+                'provider_status' => $remote['raw_status'] ?? null,
+                'raw_status' => $remote['raw_status'] ?? null,
+                'charge_id' => $remote['charge_id'] ?? null,
+                'paid_at' => $remote['paid_at'] ?? null,
+                'provider_response' => $remote['raw_payload'] ?? null,
+            ],
         );
     }
 

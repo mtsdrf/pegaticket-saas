@@ -20,7 +20,10 @@ const STATUS_OPTIONS: { value: ReconciliationStatus | ''; label: string }[] = [
   { value: '', label: 'Todos os status' },
   { value: 'pending', label: 'Pendente' },
   { value: 'paid', label: 'Pago' },
+  { value: 'authorized', label: 'Autorizado' },
+  { value: 'in_analysis', label: 'Em análise' },
   { value: 'failed', label: 'Falhou' },
+  { value: 'canceled', label: 'Cancelado' },
   { value: 'refunded', label: 'Estornado' },
   { value: 'divergent', label: 'Divergente' },
 ]
@@ -28,7 +31,10 @@ const STATUS_OPTIONS: { value: ReconciliationStatus | ''; label: string }[] = [
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pendente',
   paid: 'Pago',
+  authorized: 'Autorizado',
+  in_analysis: 'Em análise',
   failed: 'Falhou',
+  canceled: 'Cancelado',
   refunded: 'Estornado',
   divergent: 'Divergente',
 }
@@ -36,7 +42,10 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_TONE: Record<string, { bg: string; color: string }> = {
   pending: { bg: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)', color: 'var(--pt-warning)' },
   paid: { bg: 'color-mix(in srgb, var(--pt-success) 14%, transparent)', color: 'var(--pt-success)' },
+  authorized: { bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)', color: 'var(--pt-info)' },
+  in_analysis: { bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)', color: 'var(--pt-info)' },
   failed: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', color: 'var(--pt-danger)' },
+  canceled: { bg: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)', color: 'var(--pt-warning)' },
   refunded: { bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)', color: 'var(--pt-info)' },
   divergent: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', color: 'var(--pt-danger)' },
 }

@@ -13,6 +13,7 @@ use App\Services\APIResponse;
 use App\Services\Logging\ApplicationLogger;
 use App\Services\Payment\MercadoPagoPaymentProvider;
 use App\Services\Payment\PagBankPaymentProvider;
+use App\Services\Payment\PagBankTransactionLogger;
 use App\Services\Sale\SalePaymentService;
 use App\Services\Subscription\InvoicePaymentService;
 use App\Services\Subscription\SubscriptionService;
@@ -51,6 +52,7 @@ class PaymentWebhookController extends Controller
         private SalePaymentService $orderPaymentService,
         private SubscriptionService $subscriptionService,
         private InvoicePaymentService $invoicePaymentService,
+        private PagBankTransactionLogger $pagBankTransactionLogger,
     ) {}
 
     public function handle(Request $request, string $provider)
@@ -235,6 +237,11 @@ class PaymentWebhookController extends Controller
                 'has_signature_header' => $request->hasHeader('x-authenticity-token'),
             ]);
 
+            $this->pagBankTransactionLogger->warning('pagbank.webhook.invalid_signature', [
+                'has_signature_header' => $request->hasHeader('x-authenticity-token'),
+                'payload' => $this->sanitizedPayload($request),
+            ]);
+
             return APIResponse::error(
                 __('messages.webhook.invalid_signature'),
                 401,
@@ -243,6 +250,11 @@ class PaymentWebhookController extends Controller
         }
 
         $orderId = (string) ($request->input('id') ?? '');
+
+        $this->pagBankTransactionLogger->info('pagbank.webhook.received', [
+            'order_id' => $orderId !== '' ? $orderId : null,
+            'payload' => $this->sanitizedPayload($request),
+        ]);
 
         if ($orderId === '') {
             return APIResponse::success(null, __('messages.webhook.received'));
@@ -263,10 +275,18 @@ class PaymentWebhookController extends Controller
 
         if ($payment !== null && $payment->payable_type === Sale::class) {
             $remote = $pagBank->getPayment($orderId);
-
-            if (($remote['status'] ?? null) === 'paid') {
-                $this->orderPaymentService->reconcileWebhookPayment($payment, (string) ($remote['amount'] ?? '0'));
-            }
+            $this->orderPaymentService->reconcileRemotePayment(
+                $payment,
+                (string) ($remote['status'] ?? 'pending'),
+                (string) ($remote['amount'] ?? '0'),
+                [
+                    'provider_status' => $remote['raw_status'] ?? null,
+                    'raw_status' => $remote['raw_status'] ?? null,
+                    'charge_id' => $remote['charge_id'] ?? null,
+                    'paid_at' => $remote['paid_at'] ?? null,
+                    'provider_response' => $remote['raw_payload'] ?? null,
+                ]
+            );
         }
 
         $event->processed_at = now();

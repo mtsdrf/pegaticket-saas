@@ -185,13 +185,17 @@ export interface SalePayment {
   provider_charge_id: string | null
   method: string
   amount: string
-  status: 'pending' | 'paid' | 'divergent' | 'failed' | 'requested' | string
+  status: 'pending' | 'paid' | 'authorized' | 'in_analysis' | 'divergent' | 'failed' | 'canceled' | 'requested' | string
   paid_at: string | null
   created_at: string
   metadata: {
     qr_code?: string | null
     qr_code_base64?: string | null
     ticket_url?: string | null
+    provider_status?: string | null
+    raw_status?: string | null
+    charge_id?: string | null
+    provider_response?: unknown
   } | null
 }
 

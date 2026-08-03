@@ -35,7 +35,7 @@ class PortalCustomerService
             ->whereNull('deleted_at')
             ->where('final_customer_id', $customer->id)
             ->whereIn('tenant_id', $tenantIds)
-            ->with(['tenant', 'coupon'])
+            ->with(['tenant', 'coupon', 'latestPayment'])
             ->orderByDesc('created_at')
             ->get();
     }
