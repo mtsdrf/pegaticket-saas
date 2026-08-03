@@ -15,6 +15,7 @@
 /api/public/hot
 /api/public/storage
 /api/storage/*.key
+/api/storage/logs/
 /api/storage/pail
 /api/auth.json
 /api/database/database.sqlite
@@ -24,6 +25,10 @@
 /web/dist
 /web/dev-dist
 /web/dist-ssr
+/web/logs
+/web/*.log
+/web/test-results/
+/web/playwright-report/
 /web/*.local
 /web/.env
 
@@ -31,8 +36,18 @@
 /site/node_modules
 /site/dist
 /site/dist-ssr
+/site/logs
+/site/*.log
+/site/test-results/
+/site/playwright-report/
 /site/*.local
 /site/.env
+
+# Logs e artefatos locais de teste/execução
+/logs/
+/*.log
+/test-results/
+/playwright-report/
 
 # Configurações locais do Claude Code (não versionar)
 .claude/settings.local.json
