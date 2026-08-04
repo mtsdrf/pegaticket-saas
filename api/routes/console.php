@@ -71,6 +71,12 @@ Schedule::command('inventory:expire-holds')->everyFiveMinutes();
 // SendEventReminderMailsCommand.
 Schedule::command('sales:send-event-reminders --hours-ahead=24')->hourly();
 
+// Automação de recompra (roadmap Fase 6) — "sentimos sua falta" para
+// compradores cuja venda paga mais recente já passou de 60 dias (default
+// técnico, não validado com o usuário) sem nova compra. Ver
+// SendRecompraNudgeMailsCommand.
+Schedule::command('sales:send-recompra-nudges --days=60')->daily();
+
 // Reconciliação ativa das assinaturas/preapprovals no Mercado Pago. Não
 // substitui o webhook de cobrança do ciclo; sincroniza o status estrutural
 // do vínculo recorrente (`authorized`, `cancelled`, etc.) como rede de

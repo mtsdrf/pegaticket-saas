@@ -489,6 +489,8 @@ return [
     */
     'customers' => [
         'listed' => 'Lista de compradores.',
+        'crm_listed' => 'Lista de compradores (CRM) exibida com sucesso.',
+        'recompra_mail_subject' => 'Sentimos sua falta na :tenant!',
     ],
 
     /*

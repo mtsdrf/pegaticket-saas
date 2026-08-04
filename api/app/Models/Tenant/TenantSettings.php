@@ -23,6 +23,8 @@ class TenantSettings extends BaseModel
         'catalog_layout',
         'hold_duration_minutes',
         'affiliate_default_commission_percentage',
+        'meta_pixel_id',
+        'google_analytics_id',
     ];
 
     protected $casts = [

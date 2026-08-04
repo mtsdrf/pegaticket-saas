@@ -27,6 +27,7 @@ import * as portalSaleService from '../../services/portalSaleService'
 import * as storefrontCheckoutService from '../../services/storefrontCheckoutService'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
+import { getStorefrontTracking } from '../../utils/marketingTracking'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
@@ -1074,6 +1075,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           session_token: sessionId,
           session_uuid: holdContext.sessionUuid ?? undefined,
           items: holdPayloadItems,
+          affiliate_code: getStorefrontTracking(slug)?.affiliate_code ?? undefined,
         })
 
         createdHoldUuid = createdHold.uuid
@@ -1236,6 +1238,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     setFieldErrors({})
     setIsSubmitting(true)
 
+    const tracking = getStorefrontTracking(slug)
+
     const payload: StorefrontCheckoutPayload = {
       items: items.map((item) => {
         const rawParticipants = item.ticket_type_uuid ? participantsByItem[item.id] : undefined
@@ -1265,6 +1269,13 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       needs_change: (intendedPaymentMethod === 'cash' && needsChange) || undefined,
       change_for_amount:
         intendedPaymentMethod === 'cash' && needsChange ? Number(changeForAmount) : undefined,
+      // Fallback de afiliado (só usado quando o checkout não passou por um hold —
+      // o caminho principal já é o hold carregar o affiliate_code, ver syncHold acima)
+      // + UTM de campanha, ambos vindos da atribuição salva em localStorage.
+      affiliate_code: !holdContext.eligible ? tracking?.affiliate_code ?? undefined : undefined,
+      utm_source: tracking?.utm_source ?? undefined,
+      utm_medium: tracking?.utm_medium ?? undefined,
+      utm_campaign: tracking?.utm_campaign ?? undefined,
     }
 
     try {

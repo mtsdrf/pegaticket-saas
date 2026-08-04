@@ -2,6 +2,7 @@
 
 namespace App\Services\FinalCustomer;
 
+use App\DTOs\FinalCustomer\CrmFinalCustomerFilterDTO;
 use App\DTOs\FinalCustomer\SearchFinalCustomerDTO;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,14 +17,29 @@ class FinalCustomerService
 {
     public function __construct(
         private FinalCustomerTenantLinkRepositoryInterface $repository
-    ) {
-    }
+    ) {}
 
     public function paginate(int $tenantId, SearchFinalCustomerDTO $dto): LengthAwarePaginator
     {
         return $this->repository->searchActiveForTenant(
             $tenantId,
             $dto->search,
+            $dto->perPage
+        );
+    }
+
+    /**
+     * CRM básico (Fase 6, fatia final) — agregação de total gasto/compras/
+     * última compra por comprador, com filtros de segmentação simples.
+     */
+    public function crm(int $tenantId, CrmFinalCustomerFilterDTO $dto): LengthAwarePaginator
+    {
+        return $this->repository->crmSummaryForTenant(
+            $tenantId,
+            $dto->search,
+            $dto->minSpent,
+            $dto->minPurchases,
+            $dto->inactiveDays,
             $dto->perPage
         );
     }

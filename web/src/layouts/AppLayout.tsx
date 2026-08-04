@@ -5,6 +5,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
+import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined'
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined'
 import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import CardGiftcardOutlinedIcon from '@mui/icons-material/CardGiftcardOutlined'
@@ -99,6 +100,7 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/listas-de-convidados', label: 'Listas de convidados', icon: CardGiftcardOutlinedIcon, access: ACCESS.eventsRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalActivityOutlinedIcon, access: ACCESS.storefrontSalesRead },
   { kind: 'link', to: '/afiliados', label: 'Afiliados', icon: PersonAddAltOutlinedIcon, access: ACCESS.affiliatesRead },
+  { kind: 'link', to: '/clientes', label: 'Clientes', icon: GroupOutlinedIcon, access: ACCESS.customersRead },
   {
     kind: 'group',
     label: 'Relatórios',

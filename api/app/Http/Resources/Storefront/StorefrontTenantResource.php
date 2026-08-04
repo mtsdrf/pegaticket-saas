@@ -20,6 +20,8 @@ class StorefrontTenantResource extends JsonResource
         private ?array $acceptedPaymentMethods = null,
         private bool $storefrontEnabled = true,
         private string $catalogLayout = 'list',
+        private ?string $metaPixelId = null,
+        private ?string $googleAnalyticsId = null,
     ) {
         parent::__construct($resource);
     }
@@ -53,6 +55,11 @@ class StorefrontTenantResource extends JsonResource
             'accepted_payment_methods' => $this->acceptedPaymentMethods ?? [],
             'storefront_enabled' => $this->storefrontEnabled,
             'catalog_layout' => $this->catalogLayout,
+            // Pixels de marketing (Fase 6, fatia 3) — opt-in por tenant;
+            // null quando não configurado, o frontend só injeta o script
+            // correspondente quando o campo vem preenchido.
+            'meta_pixel_id' => $this->metaPixelId,
+            'google_analytics_id' => $this->googleAnalyticsId,
         ];
     }
 }

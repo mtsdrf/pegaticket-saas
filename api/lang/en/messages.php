@@ -482,6 +482,8 @@ return [
     */
     'customers' => [
         'listed' => 'Customers list.',
+        'crm_listed' => 'Customers list (CRM) shown successfully.',
+        'recompra_mail_subject' => 'We miss you at :tenant!',
     ],
 
     /*

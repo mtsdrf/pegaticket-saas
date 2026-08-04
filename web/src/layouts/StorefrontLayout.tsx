@@ -11,6 +11,8 @@ import { useStorefrontCart } from '../hooks/useStorefrontCart'
 import * as storefrontService from '../services/storefrontService'
 import { CART_CHECKOUT_BAR_HEIGHT } from '../styles/layoutStandards'
 import type { StorefrontTenant } from '../types/storefront'
+import { captureStorefrontTrackingFromUrl } from '../utils/marketingTracking'
+import { injectGoogleAnalytics, injectMetaPixel, removeInjectedMarketingPixels } from '../utils/marketingPixels'
 
 /**
  * Nav + toggle de tema — precisa estar DENTRO do `StorefrontCartProvider`
@@ -78,9 +80,28 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticke
  */
 export function StorefrontLayout() {
   const { slug } = useParams<{ slug: string }>()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const navigate = useNavigate()
   const [tenant, setTenant] = useState<StorefrontTenant | null>(null)
+
+  // Rastreio de marketing (Fase 6) — captura ?ref=/&utm_source=/&utm_medium=/&utm_campaign=
+  // de qualquer página da loja, uma vez por navegação; sem efeito quando a URL não traz
+  // nenhum desses parâmetros (não apaga uma atribuição já salva numa visita anterior).
+  useEffect(() => {
+    if (!slug) return
+    captureStorefrontTrackingFromUrl(slug, search)
+  }, [slug, search])
+
+  // Pixels de marketing (Fase 6) — opt-in por tenant, injeta só quando configurado;
+  // remove ao sair da loja pública pra não vazar pro resto do app.
+  useEffect(() => {
+    if (tenant?.meta_pixel_id) injectMetaPixel(tenant.meta_pixel_id)
+    if (tenant?.google_analytics_id) injectGoogleAnalytics(tenant.google_analytics_id)
+
+    return () => {
+      removeInjectedMarketingPixels()
+    }
+  }, [tenant?.meta_pixel_id, tenant?.google_analytics_id])
 
   useEffect(() => {
     if (!slug) return

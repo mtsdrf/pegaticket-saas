@@ -17,6 +17,8 @@ class UpdateTenantSettingsDTO
         public readonly string $catalogLayout = 'list',
         public readonly ?int $holdDurationMinutes = null,
         public readonly ?float $affiliateDefaultCommissionPercentage = null,
+        public readonly ?string $metaPixelId = null,
+        public readonly ?string $googleAnalyticsId = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -49,6 +51,12 @@ class UpdateTenantSettingsDTO
             holdDurationMinutes: isset($data['hold_duration_minutes']) ? (int) $data['hold_duration_minutes'] : null,
             affiliateDefaultCommissionPercentage: isset($data['affiliate_default_commission_percentage'])
                 ? (float) $data['affiliate_default_commission_percentage']
+                : null,
+            metaPixelId: isset($data['meta_pixel_id']) && $data['meta_pixel_id'] !== ''
+                ? (string) $data['meta_pixel_id']
+                : null,
+            googleAnalyticsId: isset($data['google_analytics_id']) && $data['google_analytics_id'] !== ''
+                ? (string) $data['google_analytics_id']
                 : null,
         );
     }

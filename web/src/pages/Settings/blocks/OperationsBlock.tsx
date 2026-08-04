@@ -1,4 +1,4 @@
-import { Alert, Button, FormControlLabel, Radio, RadioGroup, Skeleton, Stack, Switch, Typography } from '@mui/material'
+import { Alert, Button, FormControlLabel, Radio, RadioGroup, Skeleton, Stack, Switch, TextField, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useTenantSettingsData } from './useTenantSettingsData'
 import * as tenantSettingsService from '../../../services/tenantSettingsService'
@@ -16,6 +16,8 @@ export function OperationsBlock() {
 
   const [storefrontEnabled, setStorefrontEnabled] = useState(true)
   const [catalogLayout, setCatalogLayout] = useState<StorefrontCatalogLayout>('list')
+  const [metaPixelId, setMetaPixelId] = useState('')
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -24,6 +26,8 @@ export function OperationsBlock() {
     if (!settings) return
     setStorefrontEnabled(settings.storefront_enabled)
     setCatalogLayout(settings.catalog_layout)
+    setMetaPixelId(settings.meta_pixel_id ?? '')
+    setGoogleAnalyticsId(settings.google_analytics_id ?? '')
   }, [settings])
 
   async function handleSubmit() {
@@ -42,6 +46,8 @@ export function OperationsBlock() {
         pagbank_integration_mode: settings.pagbank_integration_mode,
         pagbank_environment: settings.pagbank_environment,
         pagbank_receiver_account_id: settings.pagbank_receiver_account_id,
+        meta_pixel_id: metaPixelId.trim() || null,
+        google_analytics_id: googleAnalyticsId.trim() || null,
       })
       setSettings(updated)
       setSuccessMessage('Configurações salvas com sucesso.')
@@ -129,6 +135,30 @@ export function OperationsBlock() {
           sx={{ alignItems: 'flex-start', mt: 1 }}
         />
       </RadioGroup>
+
+      <Typography sx={{ fontWeight: 600, fontSize: 16, mt: 3, mb: 0.5 }}>Pixels de marketing</Typography>
+      <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', mb: 1.5 }}>
+        Opcional — quando preenchido, a loja pública injeta o script correspondente para rastrear campanhas. Deixe em
+        branco para não carregar nenhum script extra.
+      </Typography>
+      <Stack spacing={2}>
+        <TextField
+          label="Meta Pixel ID"
+          value={metaPixelId}
+          onChange={(event) => setMetaPixelId(event.target.value)}
+          size="small"
+          fullWidth
+          placeholder="Ex.: 1234567890"
+        />
+        <TextField
+          label="Google Analytics 4 (Measurement ID)"
+          value={googleAnalyticsId}
+          onChange={(event) => setGoogleAnalyticsId(event.target.value)}
+          size="small"
+          fullWidth
+          placeholder="Ex.: G-XXXXXXXXXX"
+        />
+      </Stack>
 
       <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
         <Button variant="contained" disabled={isSubmitting} onClick={() => void handleSubmit()} sx={{ minWidth: 140 }}>

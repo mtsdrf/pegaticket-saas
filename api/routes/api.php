@@ -830,6 +830,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/final-customers', [FinalCustomerController::class, 'index'])
             ->middleware(['tenant', 'perm:customers,read', 'throttle:100,1,final-customers-list']);
 
+        // CRM básico do comprador (Fase 6) — agregação de total gasto/
+        // compras/última compra + filtros de segmentação simples.
+        Route::get('/final-customers/crm', [FinalCustomerController::class, 'crm'])
+            ->middleware(['tenant', 'perm:customers,read', 'throttle:100,1,final-customers-crm']);
+
         Route::prefix('sales')->group(function () {
             Route::get('/', [SaleController::class, 'index'])
                 ->middleware(['tenant', 'perm:sales,read', 'throttle:100,1,sales-list']);

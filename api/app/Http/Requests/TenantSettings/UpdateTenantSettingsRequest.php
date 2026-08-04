@@ -26,6 +26,11 @@ class UpdateTenantSettingsRequest extends FormRequest
             'catalog_layout' => ['nullable', 'string', 'in:grid,list'],
             'hold_duration_minutes' => ['nullable', 'integer', 'min:1', 'max:120'],
             'affiliate_default_commission_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Pixels de marketing (Fase 6, fatia 3) — só formato aqui;
+            // provedor decide o formato do ID, não validamos regex
+            // específica pra não travar tenant com pixel de outro país/conta.
+            'meta_pixel_id' => ['nullable', 'string', 'max:40'],
+            'google_analytics_id' => ['nullable', 'string', 'max:40'],
         ];
     }
 }

@@ -39,4 +39,20 @@ interface FinalCustomerTenantLinkRepositoryInterface
      * email do FinalCustomer relacionado e cpf_cnpj/phone_primary do link.
      */
     public function searchActiveForTenant(int $tenantId, ?string $search, int $perPage): LengthAwarePaginator;
+
+    /**
+     * CRM básico (Fase 6, fatia final) — um registro por comprador ativo do
+     * tenant, com total gasto/quantidade de compras/última compra
+     * agregados a partir de `sales` (só vendas pagas, não canceladas).
+     * Filtros de segmentação combináveis: $minSpent, $minPurchases,
+     * $inactiveDays (dias desde a última compra paga).
+     */
+    public function crmSummaryForTenant(
+        int $tenantId,
+        ?string $search,
+        ?float $minSpent,
+        ?int $minPurchases,
+        ?int $inactiveDays,
+        int $perPage
+    ): LengthAwarePaginator;
 }

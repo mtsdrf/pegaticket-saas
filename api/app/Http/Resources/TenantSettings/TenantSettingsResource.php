@@ -23,6 +23,8 @@ class TenantSettingsResource extends JsonResource
             'affiliate_default_commission_percentage' => $this->affiliate_default_commission_percentage !== null
                 ? (float) $this->affiliate_default_commission_percentage
                 : null,
+            'meta_pixel_id' => $this->meta_pixel_id,
+            'google_analytics_id' => $this->google_analytics_id,
         ];
     }
 }

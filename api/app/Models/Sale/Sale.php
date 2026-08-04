@@ -48,6 +48,10 @@ class Sale extends BaseModel
         'operated_by',
         'client_sale_uuid',
         'affiliate_id',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'recompra_nudge_sent_at',
     ];
 
     protected $casts = [
@@ -61,6 +65,7 @@ class Sale extends BaseModel
         'is_paid' => 'boolean',
         'paid_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'recompra_nudge_sent_at' => 'datetime',
         'due_date' => 'date',
         'cancelled_at' => 'datetime',
     ];

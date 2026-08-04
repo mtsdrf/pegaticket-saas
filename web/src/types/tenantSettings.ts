@@ -21,6 +21,9 @@ export interface TenantSettings {
   storefront_enabled: boolean
   /** Layout do catálogo público — `list` (padrão) ou `grid` (cards com foto grande). */
   catalog_layout: StorefrontCatalogLayout
+  /** Pixels de marketing (Fase 6) — opt-in, `null` quando não configurado. */
+  meta_pixel_id: string | null
+  google_analytics_id: string | null
 }
 
 export interface UpdateTenantSettingsPayload {
@@ -33,4 +36,6 @@ export interface UpdateTenantSettingsPayload {
   pagbank_receiver_account_id: string | null
   storefront_enabled: boolean
   catalog_layout: StorefrontCatalogLayout
+  meta_pixel_id?: string | null
+  google_analytics_id?: string | null
 }

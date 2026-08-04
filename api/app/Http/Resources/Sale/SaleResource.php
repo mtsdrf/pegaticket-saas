@@ -16,7 +16,7 @@ class SaleResource extends JsonResource
             'total_amount' => $this->total_amount,
             'service_fee' => (float) $this->service_fee,
             'discount_amount' => (float) $this->discount_amount,
-            'coupon_code' => $this->whenLoaded('coupon', fn() => $this->coupon?->code),
+            'coupon_code' => $this->whenLoaded('coupon', fn () => $this->coupon?->code),
             'paid_amount' => $this->paid_amount !== null ? (float) $this->paid_amount : null,
             'is_paid' => $this->is_paid,
             'paid_at' => $this->paid_at,
@@ -29,6 +29,13 @@ class SaleResource extends JsonResource
             'change_for_amount' => $this->change_for_amount !== null ? (float) $this->change_for_amount : null,
             'status' => $this->status,
             'origin' => Sale::normalizeOrigin($this->origin),
+            // Rastreio de campanha/afiliado (Fase 6) — só informativo pro
+            // staff enxergar de onde veio a venda, nunca exposto pro
+            // comprador (PortalSaleResource/SalePublicTrackingResource).
+            'affiliate_name' => $this->whenLoaded('affiliate', fn () => $this->affiliate?->name),
+            'utm_source' => $this->utm_source,
+            'utm_medium' => $this->utm_medium,
+            'utm_campaign' => $this->utm_campaign,
             'rating' => $this->rating?->rating,
             'rating_comment' => $this->rating?->comment,
             'final_customer' => $this->whenLoaded('finalCustomer', function () {
@@ -42,11 +49,11 @@ class SaleResource extends JsonResource
                     'endereco' => null,
                 ];
             }),
-            'operator' => $this->whenLoaded('operator', fn() => $this->operator ? [
+            'operator' => $this->whenLoaded('operator', fn () => $this->operator ? [
                 'uuid' => $this->operator->uuid,
                 'name' => $this->operator->name,
             ] : null),
-            'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
+            'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'uuid' => $item->uuid,
                 'ticket_type' => $item->ticketType ? [
                     'uuid' => $item->ticketType->uuid,
@@ -70,10 +77,10 @@ class SaleResource extends JsonResource
             ])),
             'installments' => $this->when(
                 $this->is_installment,
-                fn() => $this->whenLoaded('installments', fn() => $this->installments
+                fn () => $this->whenLoaded('installments', fn () => $this->installments
                     ->sortBy('installment_number')
                     ->values()
-                    ->map(fn($installment) => [
+                    ->map(fn ($installment) => [
                         'uuid' => $installment->uuid,
                         'installment_number' => $installment->installment_number,
                         'amount' => $installment->amount,

@@ -41,6 +41,8 @@ class TenantSettingsService
                 'catalog_layout' => $dto->catalogLayout,
                 'hold_duration_minutes' => $dto->holdDurationMinutes,
                 'affiliate_default_commission_percentage' => $dto->affiliateDefaultCommissionPercentage,
+                'meta_pixel_id' => $dto->metaPixelId,
+                'google_analytics_id' => $dto->googleAnalyticsId,
             ]);
 
             $changes = array_diff_assoc($settings->getAttributes(), $original);

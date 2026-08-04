@@ -94,6 +94,8 @@ export const ACCESS = {
   affiliatesRead: tenant('affiliates', 'read'),
   affiliatesCreate: tenant('affiliates', 'create'),
   affiliatesUpdate: tenant('affiliates', 'update'),
+  /** CRM básico do comprador (roadmap Fase 6) — reaproveita a functionality `customers` já usada pela busca de comprador na venda manual. */
+  customersRead: tenant('customers', 'read'),
   storefrontUpdate: tenant('storefront', 'update'),
   /** Só `GET /coupons` exige `storefront:read` (diferente do resto da área de bilheteria online, que usa só `update` para leitura e escrita). */
   storefrontRead: tenant('storefront', 'read'),

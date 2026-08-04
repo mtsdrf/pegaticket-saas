@@ -80,6 +80,13 @@ class StorefrontCheckoutRequest extends FormRequest
             // affiliate_id capturado em StorefrontHoldService::createHold).
             'affiliate_code' => ['nullable', 'string', 'max:40'],
 
+            // UTM de campanha (Fase 6, fatia 2) — só formato aqui, texto
+            // livre vindo de qualquer provedor de anúncio (sem whitelist de
+            // valores, diferente de payment_method).
+            'utm_source' => ['nullable', 'string', 'max:100'],
+            'utm_medium' => ['nullable', 'string', 'max:100'],
+            'utm_campaign' => ['nullable', 'string', 'max:100'],
+
             // Meio de pagamento pretendido (roadmap cupom por meio de
             // pagamento) — só formato aqui, nullable: nem todo checkout usa
             // cupom restrito, não adiciona fricção por padrão. A Service

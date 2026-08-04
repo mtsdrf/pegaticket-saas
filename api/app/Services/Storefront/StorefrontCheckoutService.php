@@ -163,6 +163,9 @@ class StorefrontCheckoutService
                     needsChange: $dto->needsChange,
                     changeForAmount: $dto->changeForAmount,
                     affiliateId: $affiliateId,
+                    utmSource: $dto->utmSource,
+                    utmMedium: $dto->utmMedium,
+                    utmCampaign: $dto->utmCampaign,
                 );
 
                 $order = $this->orderService->create($orderDto);

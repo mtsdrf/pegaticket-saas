@@ -41,6 +41,13 @@ class CreateSaleDTO
         // (StorefrontCheckoutService, via hold ou affiliate_code direto).
         // null preserva 100% os fluxos existentes (staff nunca atribui).
         public readonly ?int $affiliateId = null,
+        // UTM de campanha (Fase 6, fatia 2) — capturado pelo frontend da
+        // loja pública a partir da URL, resolvido pelo caller
+        // (StorefrontCheckoutService) a partir do StorefrontCheckoutDTO.
+        // null preserva 100% os fluxos existentes (staff nunca envia UTM).
+        public readonly ?string $utmSource = null,
+        public readonly ?string $utmMedium = null,
+        public readonly ?string $utmCampaign = null,
     ) {}
 
     public static function fromArray(array $data, int $tenantId): self

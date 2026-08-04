@@ -104,6 +104,9 @@ const GuestListsPage = lazy(() => import('../pages/GuestList/GuestListsPage').th
 const GuestListDetailPage = lazy(() => import('../pages/GuestList/GuestListDetailPage').then((m) => ({ default: m.GuestListDetailPage })))
 const GuestInvitePage = lazy(() => import('../pages/GuestList/GuestInvitePage').then((m) => ({ default: m.GuestInvitePage })))
 const AffiliateListPage = lazy(() => import('../pages/Affiliate/AffiliateListPage').then((m) => ({ default: m.AffiliateListPage })))
+const FinalCustomerCrmListPage = lazy(() =>
+  import('../pages/FinalCustomer/FinalCustomerCrmListPage').then((m) => ({ default: m.FinalCustomerCrmListPage })),
+)
 const StorefrontSaleManagementPage = lazy(() =>
   import('../pages/Sale/StorefrontSaleManagementPage').then((m) => ({ default: m.StorefrontSaleManagementPage })),
 )
@@ -296,6 +299,7 @@ export function AppRoutes() {
             <Route path="/listas-de-convidados" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListsPage /></PermissionRoute>} />
             <Route path="/listas-de-convidados/:uuid" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListDetailPage /></PermissionRoute>} />
             <Route path="/afiliados" element={<PermissionRoute requirement={ACCESS.affiliatesRead}><AffiliateListPage /></PermissionRoute>} />
+            <Route path="/clientes" element={<PermissionRoute requirement={ACCESS.customersRead}><FinalCustomerCrmListPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />

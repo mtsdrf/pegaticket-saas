@@ -33,3 +33,13 @@ export function storefrontCartStorageKey(slug: string): string {
 export function checkinContextStorageKey(tenantUuid: string | null | undefined): string {
   return `${STORAGE_KEYS.checkinContext}.${tenantUuid ?? 'global'}`
 }
+
+/**
+ * Rastreio de marketing da loja pública (Fase 6) — código de afiliado
+ * (`?ref=`) e UTM (`?utm_source=/utm_medium=/utm_campaign=`), chave por
+ * SLUG (mesmo motivo do carrinho acima: cada loja é uma atribuição
+ * distinta). Ver `utils/marketingTracking.ts`.
+ */
+export function storefrontTrackingStorageKey(slug: string): string {
+  return `pegaticket.storefront_tracking.${slug}`
+}

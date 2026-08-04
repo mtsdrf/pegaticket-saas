@@ -26,6 +26,9 @@ export interface StorefrontTenant {
   storefront_enabled: boolean
   /** Layout do catálogo escolhido pela empresa (`tenant_settings.catalog_layout`) — mantido no contrato do tenant; o catálogo público de eventos usa sempre 1 cartão por evento, sem alternância grid/lista. */
   catalog_layout: StorefrontCatalogLayout
+  /** Pixels de marketing (Fase 6) — `null` quando o tenant não configurou; `StorefrontLayout` só injeta o script correspondente quando preenchido. */
+  meta_pixel_id: string | null
+  google_analytics_id: string | null
 }
 
 export type StorefrontCatalogLayout = 'grid' | 'list'
@@ -197,6 +200,12 @@ export interface StorefrontCheckoutPayload {
   needs_change?: boolean
   /** Obrigatório numericamente quando `needs_change: true` — valor da nota/cédula que o cliente vai usar para pagar. */
   change_for_amount?: number
+  /** Fallback de atribuição de afiliado quando o checkout não veio de um hold (o caminho principal é o hold já carregar o código, ver `StorefrontCreateHoldPayload`). Preenchido automaticamente a partir da atribuição salva em `localStorage` (`utils/marketingTracking.ts`). */
+  affiliate_code?: string
+  /** UTM de campanha (Fase 6) — capturado da URL e persistido em `localStorage`, enviado automaticamente no checkout. */
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
 }
 
 /** `POST /loja/{slug}/checkout` devolve só `{ sale: { uuid } }` — o frontend redireciona pro rastreio público, não cria tela de status própria da venda. */
@@ -348,6 +357,8 @@ export interface StorefrontCreateHoldPayload {
     sector_name?: string
     quantity: number
   }>
+  /** Código de rastreio do afiliado/promotor (`?ref=` na URL da loja, ver `utils/marketingTracking.ts`) — silenciosamente ignorado pelo backend se inativo/inexistente. */
+  affiliate_code?: string
 }
 
 /** Delivery Fase 2 — códigos de erro do checkout (`StorefrontCheckoutController`). */

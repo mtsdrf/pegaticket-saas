@@ -48,6 +48,8 @@ class StorefrontController extends Controller
                 $settings->accepted_payment_methods ?? [],
                 (bool) $settings->storefront_enabled,
                 $settings->catalog_layout ?? 'list',
+                $settings->meta_pixel_id,
+                $settings->google_analytics_id,
             ),
             __('messages.storefront.tenant_shown')
         );

@@ -23,6 +23,12 @@ class StorefrontCheckoutDTO
         public readonly ?string $paymentMethod = null,
         public readonly bool $needsChange = false,
         public readonly ?float $changeForAmount = null,
+        // UTM de campanha (Fase 6, fatia 2) — capturado pelo frontend a
+        // partir de ?utm_source=/&utm_medium=/&utm_campaign= na URL da loja
+        // e persistido em localStorage (mesmo espírito de affiliateCode).
+        public readonly ?string $utmSource = null,
+        public readonly ?string $utmMedium = null,
+        public readonly ?string $utmCampaign = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -40,6 +46,9 @@ class StorefrontCheckoutDTO
             paymentMethod: $data['payment_method'] ?? null,
             needsChange: (bool) ($data['needs_change'] ?? false),
             changeForAmount: isset($data['change_for_amount']) ? (float) $data['change_for_amount'] : null,
+            utmSource: $data['utm_source'] ?? null,
+            utmMedium: $data['utm_medium'] ?? null,
+            utmCampaign: $data['utm_campaign'] ?? null,
         );
     }
 }
