@@ -3,6 +3,7 @@
 namespace App\Services\Sale;
 
 use App\Contracts\Payment\PaymentProviderInterface;
+use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SalePaid;
 use App\Events\Sale\SalePaymentCharged;
 use App\Events\Sale\SalePaymentRefundRequested;
@@ -10,6 +11,7 @@ use App\Exceptions\InvalidSaleStateException;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
+use App\Services\Finance\ExternalReviewFinancialAdjustmentService;
 use App\Services\Logging\ApplicationLogger;
 use App\Support\Money;
 use App\Support\Payment\ExternalPaymentReviewRegistrar;
@@ -35,8 +37,8 @@ class SalePaymentService
     public function __construct(
         private PaymentProviderInterface $paymentProvider,
         private ExternalPaymentReviewRegistrar $externalReviewRegistrar,
-    ) {
-    }
+        private ExternalReviewFinancialAdjustmentService $externalReviewFinancialAdjustmentService,
+    ) {}
 
     /**
      * Cria uma cobrança Pix vinculada aa venda. Rejeita se a venda está
@@ -53,7 +55,7 @@ class SalePaymentService
      * cobrança Pix para preservar idempotência e evitar cobranças ativas
      * duplicadas da mesma venda.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createChargeForOrder(Sale $order, array $payload): Payment
     {
@@ -112,8 +114,9 @@ class SalePaymentService
     {
         $this->assertBelongsToCurrentTenant($order);
 
-        return $this->paymentProvider->getCheckoutConfig();
+        return $this->paymentProvider->getCheckoutConfig($order);
     }
+
     /**
      * Cobrança ativa (status `pending`) da venda, se houver. Usada tanto
      * pelo guard de duplicidade quanto pela decisão de reaproveitar em vez de
@@ -162,7 +165,7 @@ class SalePaymentService
                 return $payment;
             }
 
-            if (!Money::equals((string) $payment->amount, $reportedAmount)) {
+            if (! Money::equals((string) $payment->amount, $reportedAmount)) {
                 $payment->status = 'divergent';
                 $payment->save();
 
@@ -196,7 +199,7 @@ class SalePaymentService
             $this->mergeProviderSnapshot($payment, $providerSnapshot);
 
             if ($remoteStatus === 'paid') {
-                if (!Money::equals((string) $payment->amount, $reportedAmount)) {
+                if (! Money::equals((string) $payment->amount, $reportedAmount)) {
                     $payment->status = 'divergent';
                     $payment->save();
 
@@ -222,7 +225,7 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'authorized') {
-                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
                     $payment->status = 'authorized';
                     $payment->save();
                 }
@@ -231,7 +234,7 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'in_analysis') {
-                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
                     $payment->status = 'in_analysis';
                     $payment->save();
                 }
@@ -240,7 +243,7 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'canceled') {
-                if (!in_array($payment->status, ['paid', 'refunded'], true)) {
+                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
                     $payment->status = 'canceled';
                     $payment->save();
                 }
@@ -257,7 +260,7 @@ class SalePaymentService
                 return $payment;
             }
 
-            if ($remoteStatus === 'failed' && !in_array($payment->status, ['paid', 'refunded'], true)) {
+            if ($remoteStatus === 'failed' && ! in_array($payment->status, ['paid', 'refunded'], true)) {
                 $payment->status = 'failed';
                 $payment->save();
             }
@@ -332,7 +335,13 @@ class SalePaymentService
         ?string $externalReference = null,
         string|int|float|null $amount = null
     ): Refund {
-        return $this->externalReviewRegistrar->register($payment, $reason, $externalReference, $amount);
+        $refund = $this->externalReviewRegistrar->register($payment, $reason, $externalReference, $amount);
+
+        if ($payment->payable_type === Sale::class) {
+            $this->externalReviewFinancialAdjustmentService->handleRefundReview($refund);
+        }
+
+        return $refund;
     }
 
     /**
@@ -361,7 +370,7 @@ class SalePaymentService
 
     private function markOrderPaid(Payment $payment): void
     {
-        if (!$payment->payable instanceof Sale) {
+        if (! $payment->payable instanceof Sale) {
             return;
         }
 
@@ -382,7 +391,7 @@ class SalePaymentService
         $order->save();
 
         if ($shouldAutoApprove) {
-            event(new \App\Events\Sale\SaleApproved(
+            event(new SaleApproved(
                 saleId: $order->id,
                 saleUuid: $order->uuid,
                 fromStage: 'approval',
@@ -399,7 +408,7 @@ class SalePaymentService
 
     private function generateProtocol(): string
     {
-        return 'REF-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6));
+        return 'REF-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6));
     }
 
     private function mergeProviderSnapshot(Payment $payment, array $providerSnapshot): void

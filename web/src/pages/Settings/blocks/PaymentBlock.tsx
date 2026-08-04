@@ -10,8 +10,12 @@ export function PaymentBlock() {
   const { settings, setSettings, isLoading, loadError, reload } = useTenantSettingsData()
 
   const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<PaymentMethod[]>([])
-  const [paymentReceivingMethod, setPaymentReceivingMethod] = useState<'manual' | 'pix_key'>('manual')
+  const [paymentReceivingMethod, setPaymentReceivingMethod] = useState<'manual' | 'pix_key' | 'pagbank_token'>('manual')
   const [paymentPixKey, setPaymentPixKey] = useState('')
+  const [pagbankEnvironment, setPagbankEnvironment] = useState<'sandbox' | 'production'>('sandbox')
+  const [pagbankAccessToken, setPagbankAccessToken] = useState('')
+  const [hasPagbankAccessToken, setHasPagbankAccessToken] = useState(false)
+  const [pagbankReceiverAccountId, setPagbankReceiverAccountId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -22,6 +26,10 @@ export function PaymentBlock() {
     setAcceptedPaymentMethods(settings.accepted_payment_methods ?? [])
     setPaymentReceivingMethod(settings.payment_receiving_method ?? 'manual')
     setPaymentPixKey(settings.payment_pix_key ?? '')
+    setPagbankEnvironment(settings.pagbank_environment ?? 'sandbox')
+    setPagbankAccessToken('')
+    setHasPagbankAccessToken(settings.has_pagbank_access_token ?? false)
+    setPagbankReceiverAccountId(settings.pagbank_receiver_account_id ?? '')
   }, [settings])
 
   async function handleSubmit() {
@@ -37,6 +45,13 @@ export function PaymentBlock() {
       return
     }
 
+    if (paymentReceivingMethod === 'pagbank_token' && !hasPagbankAccessToken && !pagbankAccessToken.trim()) {
+      setFieldErrors({
+        pagbank_access_token: ['Informe o token PagBank da empresa para habilitar o recebimento direto.'],
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -46,8 +61,16 @@ export function PaymentBlock() {
         accepted_payment_methods: acceptedPaymentMethods,
         payment_receiving_method: paymentReceivingMethod,
         payment_pix_key: paymentReceivingMethod === 'pix_key' ? paymentPixKey.trim() || null : null,
+        pagbank_integration_mode: paymentReceivingMethod === 'pagbank_token' ? 'manual_token' : 'disabled',
+        pagbank_environment: pagbankEnvironment,
+        pagbank_access_token: paymentReceivingMethod === 'pagbank_token'
+          ? (pagbankAccessToken.trim() || undefined)
+          : null,
+        pagbank_receiver_account_id: pagbankReceiverAccountId.trim() || null,
       })
       setSettings(updated)
+      setPagbankAccessToken('')
+      setHasPagbankAccessToken(updated.has_pagbank_access_token ?? false)
       setSuccessMessage('Formas de pagamento salvas com sucesso.')
     } catch (error) {
       setFormError(getApiErrorMessage(error, 'Não foi possível salvar as formas de pagamento agora.'))
@@ -122,12 +145,13 @@ export function PaymentBlock() {
           select
           label="Recebimento da empresa"
           value={paymentReceivingMethod}
-          onChange={(event) => setPaymentReceivingMethod(event.target.value as 'manual' | 'pix_key')}
+          onChange={(event) => setPaymentReceivingMethod(event.target.value as 'manual' | 'pix_key' | 'pagbank_token')}
           helperText="Escolha como sua empresa recebe pagamentos combinados fora do gateway da plataforma."
           fullWidth
         >
           <MenuItem value="manual">Combinado manualmente</MenuItem>
           <MenuItem value="pix_key">Por chave Pix da empresa</MenuItem>
+          <MenuItem value="pagbank_token">PagBank direto na conta da empresa</MenuItem>
         </TextField>
 
         {paymentReceivingMethod === 'pix_key' && (
@@ -144,6 +168,57 @@ export function PaymentBlock() {
             fullWidth
             slotProps={{ htmlInput: { maxLength: 140 } }}
           />
+        )}
+
+        {paymentReceivingMethod === 'pagbank_token' && (
+          <>
+            <Alert severity="info">
+              O valor da venda será processado com a conta PagBank da própria empresa. Nesse modelo, o dinheiro não passa pela plataforma.
+            </Alert>
+
+            <TextField
+              select
+              label="Ambiente PagBank"
+              value={pagbankEnvironment}
+              onChange={(event) => setPagbankEnvironment(event.target.value as 'sandbox' | 'production')}
+              helperText="Use sandbox para homologação e production quando a empresa já estiver pronta para operar."
+              fullWidth
+            >
+              <MenuItem value="sandbox">Sandbox</MenuItem>
+              <MenuItem value="production">Produção</MenuItem>
+            </TextField>
+
+            <TextField
+              label="Conta recebedora PagBank"
+              placeholder="Ex.: ACCO_12345678-1234-1234-1234-123456789012"
+              value={pagbankReceiverAccountId}
+              onChange={(event) => setPagbankReceiverAccountId(event.target.value)}
+              error={Boolean(fieldErrors.pagbank_receiver_account_id)}
+              helperText={
+                fieldErrors.pagbank_receiver_account_id?.[0]
+                ?? 'Conta PagBank da empresa usada no split com custódia quando a plataforma operar como recebedora primária.'
+              }
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 80 } }}
+            />
+
+            <TextField
+              label={hasPagbankAccessToken ? 'Novo token PagBank da empresa' : 'Token PagBank da empresa'}
+              placeholder="Cole o token de autenticação da conta PagBank da empresa"
+              value={pagbankAccessToken}
+              onChange={(event) => setPagbankAccessToken(event.target.value)}
+              error={Boolean(fieldErrors.pagbank_access_token)}
+              helperText={
+                fieldErrors.pagbank_access_token?.[0]
+                ?? (hasPagbankAccessToken
+                  ? 'Já existe um token salvo. Preencha este campo apenas se quiser substituí-lo.'
+                  : 'O token será salvo de forma protegida no backend e usado nas cobranças da empresa.')
+              }
+              type="password"
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 4096 } }}
+            />
+          </>
         )}
       </Stack>
 

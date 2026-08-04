@@ -6,6 +6,9 @@ use App\DTOs\Sale\CancelSaleDTO;
 use App\DTOs\Sale\CreateSaleDTO;
 use App\DTOs\Sale\UpdateSaleItemsDTO;
 use App\Events\Sale\SaleApproved;
+use App\Events\Sale\SaleCancellationApproved;
+use App\Events\Sale\SaleCancellationRejected;
+use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
 use App\Events\Sale\SaleInstallmentPaid;
@@ -14,25 +17,24 @@ use App\Events\Sale\SaleItemsUpdated;
 use App\Events\Sale\SalePaid;
 use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SaleUnpaid;
-use App\Events\Sale\SaleCancellationRequested;
-use App\Events\Sale\SaleCancellationApproved;
-use App\Events\Sale\SaleCancellationRejected;
+use App\Exceptions\DiscountLimitExceededException;
 use App\Exceptions\InvalidSaleStateException;
 use App\Models\BaseModel;
+use App\Models\Event\EventProduct;
+use App\Models\Event\TicketType;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleInstallment;
 use App\Models\Sale\SaleItem;
 use App\Models\Sale\SalePrepLink;
-use App\Models\Event\EventProduct;
-use App\Models\Event\TicketType;
 use App\Models\Storefront\CouponRedemption;
-use App\Exceptions\DiscountLimitExceededException;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Permission\PermissionService;
 use App\Services\Workflow\WorkflowTransitionLogger;
 use App\Support\GridQuery;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +59,7 @@ class SaleService
     // $order->finalCustomerLink diretamente (lazy, 1 query por compra),
     // nunca via este array.
     public const EAGER_RELATIONS = ['finalCustomer', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon', 'rating'];
+
     public const LIST_EAGER_RELATIONS = ['finalCustomer'];
 
     public function __construct(
@@ -65,8 +68,7 @@ class SaleService
         private SalePaymentService $paymentService,
         private PermissionService $permissionService,
         private WorkflowTransitionLogger $workflowTransitionLogger,
-    ) {
-    }
+    ) {}
 
     public function find(Sale $order): Sale
     {
@@ -99,8 +101,7 @@ class SaleService
         int $perPage = 15,
         ?string $sortBy = null,
         string $sortDir = 'desc'
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         $sortable = [
             'client_name' => 'final_customers.name',
             'total_amount' => 'sales.total_amount',
@@ -134,12 +135,12 @@ class SaleService
             $query->leftJoin('final_customers', 'final_customers.id', '=', 'sales.final_customer_id');
         }
 
-        if (!empty($filters['client_name'])) {
-            $query->whereHas('finalCustomer', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
+        if (! empty($filters['client_name'])) {
+            $query->whereHas('finalCustomer', fn ($q) => $q->where('name', 'like', '%'.$filters['client_name'].'%'));
         }
 
-        if (!empty($filters['client_uuid'])) {
-            $query->whereHas('finalCustomer', fn($q) => $q->where('uuid', $filters['client_uuid']));
+        if (! empty($filters['client_uuid'])) {
+            $query->whereHas('finalCustomer', fn ($q) => $q->where('uuid', $filters['client_uuid']));
         }
 
         if (isset($filters['total_amount_min']) && $filters['total_amount_min'] !== '') {
@@ -167,13 +168,13 @@ class SaleService
         // Fila de aprovação do staff (roadmap Delivery, Fase 1) — filtro por
         // status (pending_approval|confirmed|rejected), tela dedicada usa
         // status=pending_approval.
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('sales.status', $filters['status']);
         }
 
         // Tela dedicada de gestão de vendas online (storefront-sales,*)
         // força origin=storefront no controller, nunca lido cru do request.
-        if (!empty($filters['origin'])) {
+        if (! empty($filters['origin'])) {
             $normalizedOrigin = Sale::normalizeOrigin((string) $filters['origin']);
 
             if ($normalizedOrigin === 'staff') {
@@ -187,7 +188,7 @@ class SaleService
         // origem da venda como atributo e expõe o "estágio de trabalho"
         // atual para o frontend sem obrigar a UI a reconstruir isso a partir
         // de múltiplas flags/combinações no cliente.
-        if (!empty($filters['stage'])) {
+        if (! empty($filters['stage'])) {
             match ($filters['stage']) {
                 'approval' => $query
                     ->whereNull('sales.cancelled_at')
@@ -287,6 +288,7 @@ class SaleService
                 'total_amount' => $this->centsToDecimal($totalCents),
                 'service_fee' => $dto->serviceFee,
                 'coupon_id' => $dto->couponId,
+                'affiliate_id' => $dto->affiliateId,
                 'discount_amount' => $dto->discountAmount,
                 'is_paid' => false,
                 'due_date' => $dueDate,
@@ -327,7 +329,7 @@ class SaleService
             // "marcar como paga" depois. Venda online (origin=storefront)
             // só é paga quando o PagBank confirma via webhook
             // (SalePaymentService::reconcileWebhookPayment) — nunca aqui.
-            if ($dto->origin === 'staff' && !$dto->isInstallment) {
+            if ($dto->origin === 'staff' && ! $dto->isInstallment) {
                 $order = $this->performPayment($order);
             }
 
@@ -380,7 +382,7 @@ class SaleService
                 }
                 $seenUuids[] = $uuid;
 
-                if (!$currentItems->has($uuid)) {
+                if (! $currentItems->has($uuid)) {
                     throw new InvalidSaleStateException(__('messages.sale.item_not_found_in_order'));
                 }
             }
@@ -490,7 +492,7 @@ class SaleService
         $this->assertBelongsToCurrentTenant($installment);
         $this->assertInstallmentBelongsToOrder($order, $installment);
 
-        if (!$order->is_installment) {
+        if (! $order->is_installment) {
             throw new InvalidSaleStateException(__('messages.sale.not_installment'));
         }
 
@@ -509,7 +511,7 @@ class SaleService
             }
 
             $installment->is_paid = true;
-            $installment->paid_at = $paidAt ? \Carbon\Carbon::parse($paidAt) : now();
+            $installment->paid_at = $paidAt ? Carbon::parse($paidAt) : now();
             $installment->save();
 
             event(new SaleInstallmentPaid(
@@ -524,7 +526,7 @@ class SaleService
                 ->doesntExist();
 
             if ($allInstallmentsPaid) {
-                $order = $this->performPayment($order, $paidAt ? \Carbon\Carbon::parse($paidAt) : null);
+                $order = $this->performPayment($order, $paidAt ? Carbon::parse($paidAt) : null);
             }
 
             return $order->fresh();
@@ -543,7 +545,7 @@ class SaleService
         $this->assertBelongsToCurrentTenant($installment);
         $this->assertInstallmentBelongsToOrder($order, $installment);
 
-        if (!$order->is_installment) {
+        if (! $order->is_installment) {
             throw new InvalidSaleStateException(__('messages.sale.not_installment'));
         }
 
@@ -555,7 +557,7 @@ class SaleService
                 throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
             }
 
-            if (!$installment->is_paid) {
+            if (! $installment->is_paid) {
                 throw new InvalidSaleStateException(__('messages.sale.installment_not_paid'));
             }
 
@@ -844,7 +846,7 @@ class SaleService
      * cascata de payInstallment() e pela reconciliação de webhook
      * (SalePaymentService::reconcileWebhookPayment, venda online).
      */
-    private function performPayment(Sale $order, ?\Carbon\CarbonInterface $paidAt = null): Sale
+    private function performPayment(Sale $order, ?CarbonInterface $paidAt = null): Sale
     {
         $order->is_paid = true;
         $order->paid_at = $paidAt ?? now();
@@ -885,9 +887,9 @@ class SaleService
     }
 
     /**
-     * @param int $totalCents Soma exata dos sale_items em centavos.
-     * Divisão igual entre as N parcelas, última parcela absorve o resto
-     * do arredondamento para a soma bater exatamente com total_amount.
+     * @param  int  $totalCents  Soma exata dos sale_items em centavos.
+     *                           Divisão igual entre as N parcelas, última parcela absorve o resto
+     *                           do arredondamento para a soma bater exatamente com total_amount.
      */
     private function createInstallments(Sale $order, int $installmentsCount, int $totalCents): void
     {
@@ -940,7 +942,7 @@ class SaleService
     }
 
     /**
-     * @param array<string, mixed> $item
+     * @param  array<string, mixed>  $item
      * @return array{
      *   sellable: TicketType|EventProduct,
      *   is_ticket_type: bool,
@@ -987,7 +989,7 @@ class SaleService
             // Participantes do checkout (spec 5.10) — só faz sentido para
             // item de TicketType, consumido por TicketIssuanceService na
             // emissão. array vazio normalizado para null.
-            'attendee_data' => $isTicketType && !empty($item['attendee_data']) ? array_values($item['attendee_data']) : null,
+            'attendee_data' => $isTicketType && ! empty($item['attendee_data']) ? array_values($item['attendee_data']) : null,
         ];
     }
 
@@ -1016,13 +1018,13 @@ class SaleService
      */
     private function assertDiscountWithinLimit(TicketType|EventProduct $sellable, FinalCustomer $client, int $unitPriceCents): void
     {
-        if (!app()->bound('tenant_role')) {
+        if (! app()->bound('tenant_role')) {
             return;
         }
 
         $tenantRole = app('tenant_role');
 
-        if (!$tenantRole) {
+        if (! $tenantRole) {
             return;
         }
 

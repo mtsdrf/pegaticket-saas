@@ -6,19 +6,19 @@ use App\DTOs\Sale\CreateSaleDTO;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\StorefrontDisabledException;
-use App\Models\FinalCustomer\FinalCustomer;
-use App\Models\FinalCustomer\FinalCustomerTenantLink;
-use App\Models\Sale\Sale;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketType;
+use App\Models\FinalCustomer\FinalCustomer;
+use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Inventory\InventoryHold;
-use App\Models\Inventory\InventoryHoldItem;
+use App\Models\Sale\Sale;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
-use App\Services\Sale\SaleService;
+use App\Services\Affiliate\AffiliateService;
 use App\Services\Permission\PermissionService;
-use App\Services\Tenant\TenantSettingsService;
+use App\Services\Sale\SaleService;
 use App\Services\Tenant\TenantExecutionContext;
+use App\Services\Tenant\TenantSettingsService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -44,8 +44,8 @@ class StorefrontCheckoutService
         private CouponService $couponService,
         private StorefrontHoldService $holdService,
         private TenantExecutionContext $tenantExecutionContext,
-    ) {
-    }
+        private AffiliateService $affiliateService,
+    ) {}
 
     public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto): Sale
     {
@@ -56,123 +56,135 @@ class StorefrontCheckoutService
                 // Defesa em profundidade: findTenantBySlug() já checou o plano
                 // fora da transação, re-checa aqui dentro dela antes de mutar
                 // qualquer coisa.
-                if (!$this->permissionService->tenantPlanAllowsFunctionality($tenant->id, 'storefront')) {
+                if (! $this->permissionService->tenantPlanAllowsFunctionality($tenant->id, 'storefront')) {
                     abort(404);
                 }
 
                 $settings = $this->tenantSettingsService->getForTenant($tenant->id);
 
-                if (!$settings->storefront_enabled) {
+                if (! $settings->storefront_enabled) {
                     throw new StorefrontDisabledException(__('messages.storefront.storefront_disabled'));
                 }
 
                 $hold = $dto->holdUuid ? $this->resolveCheckoutHold($tenant->id, $dto->holdUuid, $dto->sessionToken, $customer) : null;
 
-            // Guards (roadmap Delivery, Fase 2), sempre ANTES de
-            // resolver/criar Client+Endereco+Link e montar o CreateSaleDTO
-            // — nenhum efeito colateral acontece se qualquer um bloquear.
-            //
-            // Guard 1B (retirada na loja física / tenant_settings.allow_store_pickup)
-            // REMOVIDO em 2026-08-01 (roadmap PegaTicket, MVP compra de
-            // ingresso) — resquício de checkout de loja física sem
-            // equivalente no domínio de ingresso (não existe "retirada" de
-            // Ticket digital). Coluna allow_store_pickup dropada em
-            // 2026-08-04 (migration drop_allow_store_pickup_from_tenant_settings_table).
+                // Guards (roadmap Delivery, Fase 2), sempre ANTES de
+                // resolver/criar Client+Endereco+Link e montar o CreateSaleDTO
+                // — nenhum efeito colateral acontece se qualquer um bloquear.
+                //
+                // Guard 1B (retirada na loja física / tenant_settings.allow_store_pickup)
+                // REMOVIDO em 2026-08-01 (roadmap PegaTicket, MVP compra de
+                // ingresso) — resquício de checkout de loja física sem
+                // equivalente no domínio de ingresso (não existe "retirada" de
+                // Ticket digital). Coluna allow_store_pickup dropada em
+                // 2026-08-04 (migration drop_allow_store_pickup_from_tenant_settings_table).
 
-            // Calculado incondicionalmente (não só quando há mínimo
-            // configurado) — Guard 4 (cupom) também precisa deste mesmo
-            // subtotal (com promoção/desconto por atacado já aplicado)
-            // para checar coupons.minimum_order_value e calcular o
-            // desconto.
-            $subtotalCents = $this->calculateCartSubtotalCents($tenant->id, $dto->items);
+                // Calculado incondicionalmente (não só quando há mínimo
+                // configurado) — Guard 4 (cupom) também precisa deste mesmo
+                // subtotal (com promoção/desconto por atacado já aplicado)
+                // para checar coupons.minimum_order_value e calcular o
+                // desconto.
+                $subtotalCents = $this->calculateCartSubtotalCents($tenant->id, $dto->items);
 
-            // Guard 2: valor mínimo da compra (quando configurado).
-            if ($settings->minimum_order_value !== null) {
-                $minimumCents = (int) round($settings->minimum_order_value * 100);
+                // Guard 2: valor mínimo da compra (quando configurado).
+                if ($settings->minimum_order_value !== null) {
+                    $minimumCents = (int) round($settings->minimum_order_value * 100);
 
-                if ($subtotalCents < $minimumCents) {
-                    $missing = number_format(($minimumCents - $subtotalCents) / 100, 2, ',', '.');
+                    if ($subtotalCents < $minimumCents) {
+                        $missing = number_format(($minimumCents - $subtotalCents) / 100, 2, ',', '.');
 
-                    throw new BelowMinimumSaleException(
-                        __('messages.storefront.below_minimum_order', ['missing' => $missing])
-                    );
+                        throw new BelowMinimumSaleException(
+                            __('messages.storefront.below_minimum_order', ['missing' => $missing])
+                        );
+                    }
                 }
-            }
 
-            // Guard 4: cupom (roadmap Delivery, Fase 3) — opcional, só roda
-            // quando dto->couponCode vem preenchido. $customer->id já é
-            // conhecido desde o início do checkout (identidade resolvida
-            // pelo OTP), diferente da prévia pública (validatePreview(),
-            // sem check de limite por cliente).
-            $couponId = null;
-            $discountAmountCents = 0;
+                // Guard 4: cupom (roadmap Delivery, Fase 3) — opcional, só roda
+                // quando dto->couponCode vem preenchido. $customer->id já é
+                // conhecido desde o início do checkout (identidade resolvida
+                // pelo OTP), diferente da prévia pública (validatePreview(),
+                // sem check de limite por cliente).
+                $couponId = null;
+                $discountAmountCents = 0;
 
-            if ($dto->couponCode !== null && $dto->couponCode !== '') {
-                $coupon = $this->couponService->validateForCheckout(
-                    $tenant->id,
-                    $dto->couponCode,
-                    $customer->id,
-                    $subtotalCents,
-                    $dto->paymentMethod
+                if ($dto->couponCode !== null && $dto->couponCode !== '') {
+                    $coupon = $this->couponService->validateForCheckout(
+                        $tenant->id,
+                        $dto->couponCode,
+                        $customer->id,
+                        $subtotalCents,
+                        $dto->paymentMethod
+                    );
+
+                    $discountAmountCents = $this->couponService->calculateDiscountCents(
+                        $coupon,
+                        $subtotalCents,
+                        0
+                    );
+                    $couponId = $coupon->id;
+                }
+
+                $this->ensureCustomerLink($tenant->id, $customer, $dto);
+
+                if ($hold) {
+                    $this->validateHoldMatchesCheckout($hold, $dto->items);
+                }
+
+                // unit_price explícito por item (prioridade máxima sobre a
+                // resolução interna de SaleService::create(), já documentado no
+                // DTO desde a Fase 1) — garante que o preço resolvido AQUI
+                // (resolveEffectiveUnitPrice()) seja exatamente o praticado no
+                // venda criado, sem depender de SaleService recalcular.
+                $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
+
+                // Atribuição de afiliado (Fase 6, fatia 1): caminho principal é
+                // o hold já carregar affiliate_id (capturado na criação do
+                // hold, ver StorefrontHoldService::createHold); fallback só
+                // quando não há hold e o checkout informa affiliate_code
+                // diretamente.
+                $affiliateId = $hold?->affiliate_id;
+
+                if ($affiliateId === null && $dto->affiliateCode !== null && $dto->affiliateCode !== '') {
+                    $affiliateId = $this->affiliateService->findActiveByTrackingCode($tenant->id, $dto->affiliateCode)?->id;
+                }
+
+                $orderDto = new CreateSaleDTO(
+                    tenantId: $tenant->id,
+                    finalCustomerUuid: $customer->uuid,
+                    isInstallment: false,
+                    installmentsCount: null,
+                    notes: $dto->notes,
+                    items: $items,
+                    origin: 'storefront',
+                    status: 'pending_approval',
+                    couponId: $couponId,
+                    discountAmount: $discountAmountCents / 100,
+                    paymentMethod: $dto->paymentMethod,
+                    needsChange: $dto->needsChange,
+                    changeForAmount: $dto->changeForAmount,
+                    affiliateId: $affiliateId,
                 );
 
-                $discountAmountCents = $this->couponService->calculateDiscountCents(
-                    $coupon,
-                    $subtotalCents,
-                    0
-                );
-                $couponId = $coupon->id;
-            }
+                $order = $this->orderService->create($orderDto);
 
-            $this->ensureCustomerLink($tenant->id, $customer, $dto);
+                if ($hold) {
+                    $this->consumeHold($hold, $order);
+                }
 
-            if ($hold) {
-                $this->validateHoldMatchesCheckout($hold, $dto->items);
-            }
+                // CouponRedemption criado só depois do Sale existir com
+                // sucesso, na MESMA transação — se qualquer coisa acima falhar
+                // (ex: estoque insuficiente), nada de cupom é consumido.
+                if ($orderDto->couponId !== null) {
+                    CouponRedemption::create([
+                        'tenant_id' => $tenant->id,
+                        'coupon_id' => $orderDto->couponId,
+                        'final_customer_id' => $customer->id,
+                        'sale_id' => $order->id,
+                        'redeemed_at' => now(),
+                    ]);
+                }
 
-            // unit_price explícito por item (prioridade máxima sobre a
-            // resolução interna de SaleService::create(), já documentado no
-            // DTO desde a Fase 1) — garante que o preço resolvido AQUI
-            // (resolveEffectiveUnitPrice()) seja exatamente o praticado no
-            // venda criado, sem depender de SaleService recalcular.
-            $items = $this->resolveItemsWithEffectivePrice($tenant->id, $dto->items);
-
-            $orderDto = new CreateSaleDTO(
-                tenantId: $tenant->id,
-                finalCustomerUuid: $customer->uuid,
-                isInstallment: false,
-                installmentsCount: null,
-                notes: $dto->notes,
-                items: $items,
-                origin: 'storefront',
-                status: 'pending_approval',
-                couponId: $couponId,
-                discountAmount: $discountAmountCents / 100,
-                paymentMethod: $dto->paymentMethod,
-                needsChange: $dto->needsChange,
-                changeForAmount: $dto->changeForAmount,
-            );
-
-            $order = $this->orderService->create($orderDto);
-
-            if ($hold) {
-                $this->consumeHold($hold, $order);
-            }
-
-            // CouponRedemption criado só depois do Sale existir com
-            // sucesso, na MESMA transação — se qualquer coisa acima falhar
-            // (ex: estoque insuficiente), nada de cupom é consumido.
-            if ($orderDto->couponId !== null) {
-                CouponRedemption::create([
-                    'tenant_id' => $tenant->id,
-                    'coupon_id' => $orderDto->couponId,
-                    'final_customer_id' => $customer->id,
-                    'sale_id' => $order->id,
-                    'redeemed_at' => now(),
-                ]);
-            }
-
-            return $order;
+                return $order;
             });
         });
     }
@@ -246,7 +258,7 @@ class StorefrontCheckoutService
      * descartados junto com o split Product -> TicketType/EventProduct
      * (roadmap seção 4A) — fora do MVP de ingresso.
      *
-     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float}> $items
+     * @param  array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float}>  $items
      */
     private function calculateCartSubtotalCents(int $tenantId, array $items): int
     {
@@ -266,7 +278,7 @@ class StorefrontCheckoutService
 
     private function resolveSellable(int $tenantId, array $item): TicketType|EventProduct
     {
-        if (!empty($item['ticket_type_uuid'])) {
+        if (! empty($item['ticket_type_uuid'])) {
             return TicketType::where('uuid', $item['ticket_type_uuid'])
                 ->where('tenant_id', $tenantId)
                 ->whereNull('deleted_at')
@@ -286,7 +298,7 @@ class StorefrontCheckoutService
      * preço que passou pelo guard de mínimo acima, sem duplicar a
      * resolução de preço numa segunda camada.
      *
-     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string}> $items
+     * @param  array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string}>  $items
      * @return array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, unit_price: float, notes: ?string}>
      */
     private function resolveItemsWithEffectivePrice(int $tenantId, array $items): array
@@ -330,7 +342,7 @@ class StorefrontCheckoutService
         $customerMatches = (int) $hold->final_customer_id === (int) $customer->id;
         $sessionMatches = $sessionToken !== null && $hold->session_token === $sessionToken;
 
-        if (!$customerMatches && !$sessionMatches) {
+        if (! $customerMatches && ! $sessionMatches) {
             abort(404);
         }
 
@@ -369,7 +381,7 @@ class StorefrontCheckoutService
             $sameEventProduct = $holdItem->eventProduct?->uuid === $payloadEventProductUuid;
             $sameQuantity = (int) $holdItem->quantity === $payloadQuantity;
 
-            if (!$sameQuantity || (!$sameTicketType && !$sameEventProduct)) {
+            if (! $sameQuantity || (! $sameTicketType && ! $sameEventProduct)) {
                 abort(422, __('messages.inventory_hold.checkout_mismatch'));
             }
         }
@@ -385,7 +397,7 @@ class StorefrontCheckoutService
         foreach ($holdItems as $index => $holdItem) {
             $saleItem = $saleItems[$index] ?? null;
 
-            if (!$saleItem) {
+            if (! $saleItem) {
                 abort(422, __('messages.inventory_hold.checkout_mismatch'));
             }
 

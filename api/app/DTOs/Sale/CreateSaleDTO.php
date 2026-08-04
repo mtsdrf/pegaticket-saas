@@ -5,15 +5,15 @@ namespace App\DTOs\Sale;
 class CreateSaleDTO
 {
     /**
-     * @param array<int, array{product_uuid: string, quantity: float, unit_price?: float, notes?: string, attendee_data?: array<int, array{name?: string, document?: string}>}> $items
-     *   attendee_data (spec 5.10 Etapa 2) é opcional e só considerado para
-     *   item de ticket_type — TicketIssuanceService consome 1 registro por
-     *   Ticket emitido, na ordem informada.
-     *   unit_price é opcional — quando ausente, SaleService::create() usa
-     *   o Product.price atual (comportamento padrão, nunca confia no
-     *   request); quando presente, sobrescreve o preço praticado do item.
-     *   notes é opcional — recado por item (ex: "sem cebola"), distinto de
-     *   $notes (recado da venda inteiro, abaixo).
+     * @param  array<int, array{product_uuid: string, quantity: float, unit_price?: float, notes?: string, attendee_data?: array<int, array{name?: string, document?: string}>}>  $items
+     *                                                                                                                                                                                    attendee_data (spec 5.10 Etapa 2) é opcional e só considerado para
+     *                                                                                                                                                                                    item de ticket_type — TicketIssuanceService consome 1 registro por
+     *                                                                                                                                                                                    Ticket emitido, na ordem informada.
+     *                                                                                                                                                                                    unit_price é opcional — quando ausente, SaleService::create() usa
+     *                                                                                                                                                                                    o Product.price atual (comportamento padrão, nunca confia no
+     *                                                                                                                                                                                    request); quando presente, sobrescreve o preço praticado do item.
+     *                                                                                                                                                                                    notes é opcional — recado por item (ex: "sem cebola"), distinto de
+     *                                                                                                                                                                                    $notes (recado da venda inteiro, abaixo).
      */
     public function __construct(
         public readonly int $tenantId,
@@ -37,8 +37,11 @@ class CreateSaleDTO
         // preserva 100% os fluxos existentes.
         public readonly bool $needsChange = false,
         public readonly ?float $changeForAmount = null,
-    ) {
-    }
+        // Afiliado atribuído (Fase 6, fatia 1) — resolvido pelo caller
+        // (StorefrontCheckoutService, via hold ou affiliate_code direto).
+        // null preserva 100% os fluxos existentes (staff nunca atribui).
+        public readonly ?int $affiliateId = null,
+    ) {}
 
     public static function fromArray(array $data, int $tenantId): self
     {

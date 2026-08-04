@@ -2,6 +2,7 @@
 
 namespace App\Models\Inventory;
 
+use App\Models\Affiliate\Affiliate;
 use App\Models\BaseModel;
 use App\Models\Event\Event;
 use App\Models\Event\EventSession;
@@ -14,8 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class InventoryHold extends BaseModel
 {
     public const STATUS_RESERVED = 'reservado';
+
     public const STATUS_EXPIRED = 'expirado';
+
     public const STATUS_ABANDONED = 'abandonado';
+
     public const STATUS_CONVERTED = 'convertido_em_venda';
 
     protected $table = 'inventory_holds';
@@ -23,6 +27,7 @@ class InventoryHold extends BaseModel
     protected $fillable = [
         'tenant_id',
         'final_customer_id',
+        'affiliate_id',
         'event_id',
         'event_session_id',
         'converted_sale_id',
@@ -40,6 +45,7 @@ class InventoryHold extends BaseModel
         'id',
         'tenant_id',
         'final_customer_id',
+        'affiliate_id',
         'event_id',
         'event_session_id',
         'converted_sale_id',
@@ -57,6 +63,11 @@ class InventoryHold extends BaseModel
     public function finalCustomer(): BelongsTo
     {
         return $this->belongsTo(FinalCustomer::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     public function event(): BelongsTo

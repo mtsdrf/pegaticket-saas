@@ -5,7 +5,7 @@ namespace App\DTOs\Storefront;
 class StorefrontCheckoutDTO
 {
     /**
-     * @param array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string, participants?: array<int, array{name?: string, document?: string}>}> $items
+     * @param  array<int, array{ticket_type_uuid?: string, event_product_uuid?: string, quantity: float, notes?: string, participants?: array<int, array{name?: string, document?: string}>}>  $items
      */
     public function __construct(
         public readonly array $items,
@@ -16,11 +16,14 @@ class StorefrontCheckoutDTO
         public readonly string $clientPhone,
         public readonly ?string $notes,
         public readonly ?string $couponCode = null,
+        // Fallback de atribuição de afiliado quando não há hold (o caminho
+        // principal é o hold já carregar affiliate_id, capturado na
+        // criação — ver StorefrontHoldService::createHold()).
+        public readonly ?string $affiliateCode = null,
         public readonly ?string $paymentMethod = null,
         public readonly bool $needsChange = false,
         public readonly ?float $changeForAmount = null,
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -33,6 +36,7 @@ class StorefrontCheckoutDTO
             clientPhone: $data['client_phone'],
             notes: $data['notes'] ?? null,
             couponCode: $data['coupon_code'] ?? null,
+            affiliateCode: $data['affiliate_code'] ?? null,
             paymentMethod: $data['payment_method'] ?? null,
             needsChange: (bool) ($data['needs_change'] ?? false),
             changeForAmount: isset($data['change_for_amount']) ? (float) $data['change_for_amount'] : null,

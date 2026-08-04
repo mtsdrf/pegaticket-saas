@@ -12,6 +12,7 @@ use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
 use App\Models\Sale\SaleItem;
 use App\Models\Venue\Seat;
+use App\Services\Affiliate\AffiliateService;
 use App\Services\Tenant\TenantSettingsService;
 use App\Support\MediaUrl;
 use Carbon\CarbonInterface;
@@ -26,6 +27,7 @@ class StorefrontHoldService
         private StorefrontCatalogService $catalogService,
         private TenantSettingsService $tenantSettingsService,
         private SeatAllocationService $seatAllocationService,
+        private AffiliateService $affiliateService,
     ) {}
 
     /**
@@ -111,9 +113,14 @@ class StorefrontHoldService
 
             $this->assertNoDuplicateSeats($items);
 
+            $affiliate = ! empty($payload['affiliate_code'])
+                ? $this->affiliateService->findActiveByTrackingCode($tenant->id, (string) $payload['affiliate_code'])
+                : null;
+
             $hold = InventoryHold::create([
                 'tenant_id' => $tenant->id,
                 'final_customer_id' => $customer?->id,
+                'affiliate_id' => $affiliate?->id,
                 'event_id' => $event->id,
                 'event_session_id' => $session?->id,
                 'session_token' => $payload['session_token'],

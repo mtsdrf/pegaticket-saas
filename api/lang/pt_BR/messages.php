@@ -425,6 +425,14 @@ return [
         'already_redeemed' => 'Este convite já foi resgatado.',
     ],
 
+    'affiliate' => [
+        'list' => 'Afiliados exibidos com sucesso.',
+        'created' => 'Afiliado criado com sucesso.',
+        'show' => 'Afiliado exibido com sucesso.',
+        'updated' => 'Afiliado atualizado com sucesso.',
+        'commissions_list' => 'Comissões do afiliado exibidas com sucesso.',
+    ],
+
     'ticket_checkin' => [
         'history' => 'Histórico de check-ins exibido com sucesso.',
         'summary' => 'Resumo operacional da portaria exibido com sucesso.',
@@ -869,8 +877,29 @@ return [
     ],
 
     'finance' => [
+        'dashboard_loaded' => 'Painel financeiro carregado com sucesso.',
+        'admin_dashboard_loaded' => 'Painel financeiro administrativo carregado com sucesso.',
+        'receivables_listed' => 'Recebíveis listados com sucesso.',
+        'admin_receivables_listed' => 'Recebíveis administrativos listados com sucesso.',
+        'receivables_summary' => 'Resumo dos recebíveis obtido com sucesso.',
+        'settlements_listed' => 'Repasses listados com sucesso.',
+        'admin_settlements_listed' => 'Repasses administrativos listados com sucesso.',
+        'settlements_summary' => 'Resumo dos repasses obtido com sucesso.',
         'reconciliation_listed' => 'Conciliação financeira listada com sucesso.',
         'reconciliation_summary' => 'Resumo da conciliação financeira obtido com sucesso.',
+        'adjustments_listed' => 'Ajustes financeiros listados com sucesso.',
+        'admin_adjustments_listed' => 'Ajustes financeiros administrativos listados com sucesso.',
+        'adjustments_summary' => 'Resumo dos ajustes financeiros obtido com sucesso.',
+        'adjustment_manual_created' => 'Ajuste manual financeiro registrado com sucesso.',
+        'adjustment_recovery_resolved' => 'Pendência de recuperação resolvida com sucesso.',
+        'adjustment_review_resolved' => 'Pendência de revisão resolvida com sucesso.',
+        'adjustment_negative_receivable' => 'O ajuste manual deixaria o recebível com valor líquido negativo.',
+        'adjustment_negative_settlement' => 'O ajuste manual deixaria o settlement com valor líquido negativo.',
+        'adjustment_not_pending_recovery' => 'Este ajuste não está pendente de recuperação.',
+        'adjustment_not_pending_review' => 'Este ajuste não está pendente de revisão.',
+        'adjustment_invalid_recovery_resolution' => 'Tipo de resolução inválido para pendência de recuperação.',
+        'adjustment_invalid_review_resolution' => 'Tipo de resolução inválido para pendência de revisão.',
+        'event_closeout_loaded' => 'Fechamento financeiro do evento carregado com sucesso.',
     ],
 
     'payment_admin' => [

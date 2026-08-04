@@ -44,13 +44,13 @@ Este repositório **não deve mais ser lido como um SaaS genérico de comércio/
 
 ## Estado Atual
 
-Diagnóstico consolidado em **2 de agosto de 2026**:
+Diagnóstico consolidado em **3 de agosto de 2026**:
 
 - backend com base funcional madura para multiempresa, eventos, vendas, tickets e portal;
 - frontend com operação autenticada, loja pública, checkout, tickets, analytics e administração;
-- pagamentos reais via Mercado Pago;
-- suíte backend verde e base E2E web já implantada;
-- produto em **beta controlada**, ainda em fechamento do núcleo Must Have da plataforma de ticketing.
+- pagamentos reais via Mercado Pago (assinatura) e PagBank (venda);
+- suíte backend validada em **3 de agosto de 2026** com **612 testes passando (2155 assertions)**;
+- produto em **beta controlada**, com Fases 1 a 4 essencialmente fechadas e **Fase 5 (financeiro)** já iniciada em modo de desenho + primeira fatia técnica.
 
 O mapeamento mais recente do estado do produto está em:
 
@@ -95,7 +95,7 @@ Observações importantes:
 | Autenticação | JWT (`php-open-source-saver/jwt-auth`) |
 | Documentação de API | L5-Swagger |
 | Frontend | React 19 · TypeScript · Vite · MUI · react-router-dom v7 · axios |
-| Pagamentos | Mercado Pago |
+| Pagamentos | Mercado Pago · PagBank |
 | Armazenamento de mídia | Cloudflare R2 + storage público/privado híbrido |
 | Infra atual | Hostinger · GitHub Actions · rsync/SSH |
 
@@ -108,12 +108,13 @@ Hoje o produto já possui base funcional para:
 - **Eventos**: categorias, venues, assentos, sessões, lotes, tipos de ingresso e adicionais simples.
 - **Storefront**: catálogo público de eventos, detalhes, favoritos, carrinho, hold e checkout.
 - **Vendas**: vendas manuais, vendas online, parcelas, cancelamento e refund estruturado.
-- **Tickets**: emissão, listagem, QR/token e ciclo básico de check-in.
-- **Portal do comprador**: login OTP, perfil, favoritos, vouchers e minhas vendas.
+- **Tickets**: emissão, listagem, QR/token, transferência de titularidade e ciclo operacional básico de check-in.
+- **Portal do comprador**: login OTP, perfil, favoritos, vouchers, minhas vendas e autosserviço pós-compra inicial.
 - **Analytics**: visão geral, produtos/adicionais, locais, sazonalidade, clientes e atrasos.
 - **Financeiro base**: reconciliação e gestão de pendências de pagamento.
 - **Assinatura SaaS**: planos, invoices, cobrança recorrente e telas administrativas.
 - **Administração global**: usuários, grupos, planos, funcionalidades, tenants e auditoria.
+- **Operação presencial**: caixa (`cash session`), comprovante imprimível e trilha inicial de bilheteria.
 - **Privacidade e suporte**: documentos legais, solicitações de privacidade e tickets de ajuda.
 
 ## Como Rodar Localmente
@@ -192,7 +193,9 @@ layouts/     -> shells autenticado e público
 
 Integração principal atual:
 
-- **Mercado Pago** para Pix e fluxos de pagamento online;
+- **Mercado Pago** para assinatura e parte da trilha já existente;
+- **PagBank** para cobrança de venda de ingresso (Pix, crédito e débito);
+- modo em evolução para **PagBank direto por empresa**, com token próprio salvo por tenant e recebimento indo direto para a conta da empresa;
 - webhooks assinados;
 - reconciliação e tratamento de inconsistências;
 - idempotência nas operações sensíveis.

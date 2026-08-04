@@ -39,6 +39,9 @@ export function OperationsBlock() {
         accepted_payment_methods: settings.accepted_payment_methods,
         payment_receiving_method: settings.payment_receiving_method,
         payment_pix_key: settings.payment_pix_key,
+        pagbank_integration_mode: settings.pagbank_integration_mode,
+        pagbank_environment: settings.pagbank_environment,
+        pagbank_receiver_account_id: settings.pagbank_receiver_account_id,
       })
       setSettings(updated)
       setSuccessMessage('Configurações salvas com sucesso.')

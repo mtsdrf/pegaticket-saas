@@ -6,23 +6,21 @@ use App\Contracts\Payment\PaymentProviderInterface;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Models\Sale\Sale;
-use App\Models\Payment\PaymentIdempotencyKey;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use App\Repositories\Contracts\IdempotencyRepositoryInterface;
 use App\Repositories\Contracts\TenantUserRepositoryInterface;
+use App\Services\Logging\ApplicationLogger;
 use App\Support\Money;
 use App\Support\Payment\IdempotencyOutcome;
-use App\Services\Logging\ApplicationLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 /**
  * Adapter Mercado Pago (roadmap Fase B, item 1 — PSP real). Chama a API
@@ -43,8 +41,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         private FinalCustomerTenantLinkRepositoryInterface $finalCustomerTenantLinkRepository,
         private TenantUserRepositoryInterface $tenantUserRepository,
         private IdempotencyRepositoryInterface $idempotencyRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * billing_period do plan_price -> [frequency, frequency_type] do
@@ -152,14 +149,14 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
 
         [$frequency, $frequencyType] = self::FREQUENCY_BY_PERIOD[$subscription->billing_period] ?? [1, 'months'];
 
-        $operation = $operationPrefix . ':' . $subscription->uuid;
+        $operation = $operationPrefix.':'.$subscription->uuid;
         $idempotency = $this->acquireIdempotency((int) $subscription->tenant_id, $operation);
 
         $payload = [
-            'reason' => 'Assinatura PegaTicket — ' . ($subscription->plan?->name ?? $subscription->billing_period),
+            'reason' => 'Assinatura PegaTicket — '.($subscription->plan?->name ?? $subscription->billing_period),
             'external_reference' => $subscription->uuid,
             'payer_email' => $payerEmail,
-            'back_url' => rtrim((string) config('app.frontend_url', config('app.url')), '/') . '/subscription',
+            'back_url' => rtrim((string) config('app.frontend_url', config('app.url')), '/').'/subscription',
             'auto_recurring' => [
                 'frequency' => $frequency,
                 'frequency_type' => $frequencyType,
@@ -279,7 +276,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         // isso, um retry (timeout ambíguo, job de fila reprocessando) criaria
         // um SEGUNDO estorno real no Mercado Pago. Reexecutar o estorno do
         // MESMO pagamento com o MESMO valor sempre reusa a mesma chave.
-        $idempotencyKey = 'refund:' . $payment->uuid . ':' . ($refundAmount ?? Money::normalize((string) $payment->amount));
+        $idempotencyKey = 'refund:'.$payment->uuid.':'.($refundAmount ?? Money::normalize((string) $payment->amount));
 
         // Estorno TOTAL: corpo vazio "{}" (doc oficial) — json_encode([]) do
         // Laravel gera "[]", não "{}", por isso o corpo é enviado como raw
@@ -607,7 +604,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         ];
     }
 
-    public function getCheckoutConfig(): array
+    public function getCheckoutConfig(?Sale $order = null): array
     {
         return [
             'provider' => 'mercadopago',
@@ -626,10 +623,10 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
      * `$paymentMethod` é o objeto `payment_method` documentado (id/type e,
      * conforme o método, token/installments ou expiration_time).
      *
-     * @param array<string, mixed> $paymentMethod
-     * @param array<string, mixed> $payer objeto `payer` da API de Orders
-     *        (já resolvido pelo caller — nunca vazio quando enviado, a API
-     *        exige ao menos 1 propriedade preenchida em `payer`).
+     * @param  array<string, mixed>  $paymentMethod
+     * @param  array<string, mixed>  $payer  objeto `payer` da API de Orders
+     *                                       (já resolvido pelo caller — nunca vazio quando enviado, a API
+     *                                       exige ao menos 1 propriedade preenchida em `payer`).
      * @return array<string, mixed>
      */
     private function createOrder(Model $payable, string|int|float $amount, string $method, array $paymentMethod, array $payer = []): array
@@ -641,7 +638,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         // casos — Sale/Invoice sempre existem antes de uma cobrança ser
         // tentada), nunca uma chave aleatória nova a cada tentativa.
         $operationPrefix = $payable instanceof Sale ? 'order_charge' : 'invoice_charge';
-        $operation = $operationPrefix . ':' . $payable->uuid;
+        $operation = $operationPrefix.':'.$payable->uuid;
         $idempotency = $this->acquireIdempotency((int) $payable->tenant_id, $operation);
 
         $payload = array_filter([
@@ -719,13 +716,13 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
 
         $payer = [];
 
-        if (!empty($customer->email)) {
+        if (! empty($customer->email)) {
             $payer['email'] = $customer->email;
         }
 
         $link = $order->finalCustomerLink;
 
-        if ($link && !empty($link->cpf_cnpj)) {
+        if ($link && ! empty($link->cpf_cnpj)) {
             $digits = (string) $link->cpf_cnpj;
 
             $payer['identification'] = [
@@ -734,10 +731,10 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
             ];
         }
 
-        if ($payer === [] && !empty($customer->name)) {
+        if ($payer === [] && ! empty($customer->name)) {
             $payer['first_name'] = $customer->name;
 
-            if (!empty($customer->last_name)) {
+            if (! empty($customer->last_name)) {
                 $payer['last_name'] = $customer->last_name;
             }
         }
@@ -1016,6 +1013,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         foreach ($payload as $key => $value) {
             if (in_array(strtolower((string) $key), $sensitiveKeys, true)) {
                 $sanitized[$key] = '***';
+
                 continue;
             }
 

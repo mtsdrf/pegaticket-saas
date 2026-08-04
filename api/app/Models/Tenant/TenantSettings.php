@@ -13,11 +13,16 @@ class TenantSettings extends BaseModel
         'accepted_payment_methods',
         'payment_receiving_method',
         'payment_pix_key',
+        'pagbank_integration_mode',
+        'pagbank_environment',
+        'pagbank_access_token',
+        'pagbank_receiver_account_id',
         'service_fee_percent',
         'service_fee_mandatory',
         'storefront_enabled',
         'catalog_layout',
         'hold_duration_minutes',
+        'affiliate_default_commission_percentage',
     ];
 
     protected $casts = [
@@ -25,10 +30,12 @@ class TenantSettings extends BaseModel
         // Chave Pix do tenant criptografada em repouso (cast nativo do
         // Eloquent, sem serviço externo) — roadmap 2A.
         'payment_pix_key' => 'encrypted',
+        'pagbank_access_token' => 'encrypted',
         'service_fee_percent' => 'float',
         'service_fee_mandatory' => 'boolean',
         'storefront_enabled' => 'boolean',
         'hold_duration_minutes' => 'integer',
+        'affiliate_default_commission_percentage' => 'decimal:2',
     ];
 
     protected $hidden = [

@@ -2,17 +2,19 @@
 
 namespace Tests\Feature\Subscription;
 
+use App\Models\Finance\Receivable;
+use App\Models\Finance\Settlement;
 use App\Models\Sale\Sale;
+use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
-use App\Models\Subscription\Subscription;
 use App\Models\Subscription\WebhookEvent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Subscription\Concerns\CreatesSubscriptionFixtures;
 use Tests\TestCase;
 
@@ -25,10 +27,10 @@ use Tests\TestCase;
  */
 class MercadoPagoWebhookTest extends TestCase
 {
-    use RefreshDatabase;
-    use SetsUpTenantScopedUser;
     use CreatesSaleFixtures;
     use CreatesSubscriptionFixtures;
+    use RefreshDatabase;
+    use SetsUpTenantScopedUser;
 
     private const SECRET = 'whsec_test_123';
 
@@ -45,7 +47,7 @@ class MercadoPagoWebhookTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     private function signedHeaders(string $dataId, string $requestId, ?int $ts = null): array
@@ -56,7 +58,7 @@ class MercadoPagoWebhookTest extends TestCase
         // alfanuméricos (ex. "ORD01JQ..."), diferente dos ids de payment
         // (só numéricos), então o manifest de teste precisa reproduzir o
         // mesmo lowercase para a assinatura bater.
-        $manifest = 'id:' . strtolower($dataId) . ";request-id:{$requestId};ts:{$ts};";
+        $manifest = 'id:'.strtolower($dataId).";request-id:{$requestId};ts:{$ts};";
         $v1 = hash_hmac('sha256', $manifest, self::SECRET);
 
         return [
@@ -70,7 +72,6 @@ class MercadoPagoWebhookTest extends TestCase
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => 75.5]);
-
 
         $orderData = $this->auth()->postJson('/api/v1/sales', [
             'final_customer_uuid' => $client->uuid,
@@ -96,14 +97,61 @@ class MercadoPagoWebhookTest extends TestCase
         return [$order, $payment];
     }
 
+    private function createReceivableForOrder(
+        Sale $order,
+        float $grossAmount,
+        float $platformFeeAmount,
+        float $netAmount,
+        string $status = 'awaiting_release',
+        ?Settlement $settlement = null,
+    ): Receivable {
+        $receivable = Receivable::query()->where('sale_id', $order->id)->first();
+
+        if ($receivable === null) {
+            return Receivable::create([
+                'tenant_id' => $order->tenant_id,
+                'sale_id' => $order->id,
+                'event_id' => null,
+                'settlement_id' => $settlement?->id,
+                'status' => $status,
+                'currency' => 'BRL',
+                'gross_amount' => number_format($grossAmount, 2, '.', ''),
+                'platform_fee_amount' => number_format($platformFeeAmount, 2, '.', ''),
+                'processor_fee_amount' => '0.00',
+                'net_amount' => number_format($netAmount, 2, '.', ''),
+                'settlement_reference' => 'event_end_d_plus_1',
+                'event_ends_at' => now()->subDay(),
+                'available_at' => now()->subHour(),
+                'provider' => 'mercadopago',
+                'provider_charge_id' => 'ORD_MP_RECEIVABLE',
+                'provider_split_id' => null,
+            ]);
+        }
+
+        $receivable->fill([
+            'settlement_id' => $settlement?->id,
+            'status' => $status,
+            'gross_amount' => number_format($grossAmount, 2, '.', ''),
+            'platform_fee_amount' => number_format($platformFeeAmount, 2, '.', ''),
+            'processor_fee_amount' => '0.00',
+            'net_amount' => number_format($netAmount, 2, '.', ''),
+            'provider' => 'mercadopago',
+            'provider_charge_id' => 'ORD_MP_RECEIVABLE',
+            'provider_split_id' => null,
+        ]);
+        $receivable->save();
+
+        return $receivable->fresh();
+    }
+
     /**
-     * @return array{0: \App\Models\Subscription\Invoice, 1: Payment}
+     * @return array{0: Invoice, 1: Payment}
      */
     private function makeInvoicePayment(): array
     {
         $subscription = $this->createSubscription(['tenant_id' => $this->tenant->id]);
 
-        $invoice = \App\Models\Subscription\Invoice::create([
+        $invoice = Invoice::create([
             'subscription_id' => $subscription->id,
             'tenant_id' => $this->tenant->id,
             'competence_period' => now()->format('Y-m'),
@@ -115,7 +163,7 @@ class MercadoPagoWebhookTest extends TestCase
         ]);
 
         $payment = Payment::create([
-            'payable_type' => \App\Models\Subscription\Invoice::class,
+            'payable_type' => Invoice::class,
             'payable_id' => $invoice->id,
             'provider' => 'mercadopago',
             'provider_charge_id' => 'MP_CYCLE_1',
@@ -138,7 +186,7 @@ class MercadoPagoWebhookTest extends TestCase
             'data' => ['id' => 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3'],
         ], [
             'x-request-id' => (string) Str::uuid(),
-            'x-signature' => 'ts=' . time() . ',v1=deadbeef',
+            'x-signature' => 'ts='.time().',v1=deadbeef',
         ])
             ->assertStatus(401)
             ->assertJsonPath('code', 'WEBHOOK_INVALID_SIGNATURE');
@@ -164,7 +212,7 @@ class MercadoPagoWebhookTest extends TestCase
             'data' => ['id' => 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3'],
         ], [
             'x-request-id' => (string) Str::uuid(),
-            'x-signature' => 'ts=' . time() . ',v1=deadbeef',
+            'x-signature' => 'ts='.time().',v1=deadbeef',
         ])->assertStatus(401);
 
         $this->assertSame(
@@ -299,12 +347,25 @@ class MercadoPagoWebhookTest extends TestCase
     #[Test]
     public function valid_chargeback_webhook_flags_the_order_payment_for_review_and_creates_a_refund_record(): void
     {
-        [, $payment] = $this->makeOrderPayment();
+        [$order, $payment] = $this->makeOrderPayment();
         $payment->update([
             'status' => 'paid',
             'paid_at' => now(),
             'metadata' => ['transaction_id' => 'txn_chargeback_1'],
         ]);
+
+        $settlement = Settlement::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'SET-CHB-OPEN',
+            'status' => 'scheduled',
+            'scheduled_for' => now()->addDay(),
+            'gross_amount' => 75.50,
+            'platform_fee_amount' => 10.00,
+            'processor_fee_amount' => 0,
+            'net_amount' => 65.50,
+        ]);
+
+        $receivable = $this->createReceivableForOrder($order, 75.50, 10.00, 65.50, 'awaiting_release', $settlement);
 
         Http::fake([
             'api.mercadopago.com/v1/chargebacks/chb_1' => Http::response([
@@ -331,6 +392,18 @@ class MercadoPagoWebhookTest extends TestCase
             'payment_id' => $payment->id,
             'provider_refund_id' => 'chb_1',
             'status' => 'requested',
+        ]);
+        $this->assertDatabaseHas('settlement_adjustments', [
+            'receivable_id' => $receivable->id,
+            'type' => 'chargeback_organizer_exposure',
+            'status' => 'applied',
+            'amount' => 65.50,
+        ]);
+        $this->assertDatabaseHas('settlement_adjustments', [
+            'receivable_id' => $receivable->id,
+            'type' => 'chargeback_platform_exposure',
+            'status' => 'pending_review',
+            'amount' => 10.00,
         ]);
     }
 
@@ -403,11 +476,25 @@ class MercadoPagoWebhookTest extends TestCase
     #[Test]
     public function fraud_alert_webhook_flags_the_order_payment_for_review(): void
     {
-        [, $payment] = $this->makeOrderPayment();
+        [$order, $payment] = $this->makeOrderPayment();
         $payment->update([
             'status' => 'paid',
             'paid_at' => now(),
         ]);
+
+        $settlement = Settlement::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'SET-CHB-RELEASED',
+            'status' => 'released',
+            'scheduled_for' => now()->subDay(),
+            'released_at' => now()->subHours(3),
+            'gross_amount' => 75.50,
+            'platform_fee_amount' => 70.00,
+            'processor_fee_amount' => 0,
+            'net_amount' => 5.50,
+        ]);
+
+        $receivable = $this->createReceivableForOrder($order, 75.50, 70.00, 5.50, 'released', $settlement);
 
         $requestId = (string) Str::uuid();
         $headers = $this->signedHeaders('ORD01JQ4S4KY8HWQ6NA5PXB65B3D3', $requestId);
@@ -425,6 +512,18 @@ class MercadoPagoWebhookTest extends TestCase
             'payment_id' => $payment->id,
             'provider_refund_id' => 'fraud-alert:ORD01JQ4S4KY8HWQ6NA5PXB65B3D3',
             'status' => 'requested',
+        ]);
+        $this->assertDatabaseHas('settlement_adjustments', [
+            'receivable_id' => $receivable->id,
+            'type' => 'chargeback_organizer_exposure',
+            'status' => 'pending_recovery',
+            'amount' => 5.50,
+        ]);
+        $this->assertDatabaseHas('settlement_adjustments', [
+            'receivable_id' => $receivable->id,
+            'type' => 'chargeback_platform_exposure',
+            'status' => 'pending_review',
+            'amount' => 70.00,
         ]);
     }
 

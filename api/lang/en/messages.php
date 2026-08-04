@@ -418,6 +418,14 @@ return [
         'already_redeemed' => 'This invite has already been redeemed.',
     ],
 
+    'affiliate' => [
+        'list' => 'Affiliates shown successfully.',
+        'created' => 'Affiliate created successfully.',
+        'show' => 'Affiliate shown successfully.',
+        'updated' => 'Affiliate updated successfully.',
+        'commissions_list' => 'Affiliate commissions shown successfully.',
+    ],
+
     'ticket_checkin' => [
         'history' => 'Check-in history loaded successfully.',
         'summary' => 'Operational gate summary loaded successfully.',
@@ -862,8 +870,29 @@ return [
     ],
 
     'finance' => [
+        'dashboard_loaded' => 'Financial dashboard loaded successfully.',
+        'admin_dashboard_loaded' => 'Administrative financial dashboard loaded successfully.',
+        'receivables_listed' => 'Receivables listed successfully.',
+        'admin_receivables_listed' => 'Administrative receivables listed successfully.',
+        'receivables_summary' => 'Receivables summary retrieved successfully.',
+        'settlements_listed' => 'Settlements listed successfully.',
+        'admin_settlements_listed' => 'Administrative settlements listed successfully.',
+        'settlements_summary' => 'Settlements summary retrieved successfully.',
         'reconciliation_listed' => 'Financial reconciliation listed successfully.',
         'reconciliation_summary' => 'Financial reconciliation summary retrieved successfully.',
+        'adjustments_listed' => 'Financial adjustments listed successfully.',
+        'admin_adjustments_listed' => 'Administrative financial adjustments listed successfully.',
+        'adjustments_summary' => 'Financial adjustments summary retrieved successfully.',
+        'adjustment_manual_created' => 'Manual financial adjustment recorded successfully.',
+        'adjustment_recovery_resolved' => 'Recovery exception resolved successfully.',
+        'adjustment_review_resolved' => 'Review exception resolved successfully.',
+        'adjustment_negative_receivable' => 'The manual adjustment would leave the receivable with a negative net amount.',
+        'adjustment_negative_settlement' => 'The manual adjustment would leave the settlement with a negative net amount.',
+        'adjustment_not_pending_recovery' => 'This adjustment is not pending recovery.',
+        'adjustment_not_pending_review' => 'This adjustment is not pending review.',
+        'adjustment_invalid_recovery_resolution' => 'Invalid resolution type for a recovery exception.',
+        'adjustment_invalid_review_resolution' => 'Invalid resolution type for a review exception.',
+        'event_closeout_loaded' => 'Event financial closeout loaded successfully.',
     ],
 
     'payment_admin' => [

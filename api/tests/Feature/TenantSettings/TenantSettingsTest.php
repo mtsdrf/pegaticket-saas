@@ -31,7 +31,7 @@ class TenantSettingsTest extends TestCase
             'tenant_id' => $this->tenant->id,
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson('/api/v1/tenant-settings')
             ->assertStatus(200);
 
@@ -48,7 +48,7 @@ class TenantSettingsTest extends TestCase
     {
         $this->grantPermission('tenant_settings', 'update');
 
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->putJson('/api/v1/tenant-settings', [
                 'storefront_enabled' => false,
             ])
@@ -66,7 +66,7 @@ class TenantSettingsTest extends TestCase
     {
         $this->grantPermission('tenant_settings', 'update');
 
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->putJson('/api/v1/tenant-settings', [
                 'accepted_payment_methods' => ['pix', 'cash', 'credit_card'],
             ])
@@ -82,7 +82,7 @@ class TenantSettingsTest extends TestCase
     {
         $this->grantPermission('tenant_settings', 'update');
 
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->putJson('/api/v1/tenant-settings', [
                 'accepted_payment_methods' => ['boleto'],
             ])
@@ -94,7 +94,7 @@ class TenantSettingsTest extends TestCase
     {
         $this->grantPermission('tenant_settings', 'update');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->putJson('/api/v1/tenant-settings', [
                 'payment_receiving_method' => 'pix_key',
                 'payment_pix_key' => 'pix@empresa.com',
@@ -111,6 +111,37 @@ class TenantSettingsTest extends TestCase
     }
 
     #[Test]
+    public function update_persists_pagbank_direct_integration_without_exposing_the_token_back(): void
+    {
+        $this->grantPermission('tenant_settings', 'update');
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->putJson('/api/v1/tenant-settings', [
+                'payment_receiving_method' => 'pagbank_token',
+                'pagbank_integration_mode' => 'manual_token',
+                'pagbank_environment' => 'production',
+                'pagbank_access_token' => 'pagbank-token-empresa-123',
+                'pagbank_receiver_account_id' => 'ACCO_TENANT_123',
+            ])
+            ->assertStatus(200);
+
+        $response->assertJsonPath('data.payment_receiving_method', 'pagbank_token');
+        $response->assertJsonPath('data.pagbank_integration_mode', 'manual_token');
+        $response->assertJsonPath('data.pagbank_environment', 'production');
+        $response->assertJsonPath('data.has_pagbank_access_token', true);
+        $response->assertJsonPath('data.pagbank_receiver_account_id', 'ACCO_TENANT_123');
+        $response->assertJsonMissingPath('data.pagbank_access_token');
+
+        $settings = TenantSettings::where('tenant_id', $this->tenant->id)->firstOrFail();
+        $this->assertSame('pagbank_token', $settings->payment_receiving_method);
+        $this->assertSame('manual_token', $settings->pagbank_integration_mode);
+        $this->assertSame('production', $settings->pagbank_environment);
+        $this->assertSame('pagbank-token-empresa-123', $settings->pagbank_access_token);
+        $this->assertSame('ACCO_TENANT_123', $settings->pagbank_receiver_account_id);
+        $this->assertNotSame('pagbank-token-empresa-123', $settings->getRawOriginal('pagbank_access_token'));
+    }
+
+    #[Test]
     public function tenants_are_isolated_from_each_other(): void
     {
         $this->grantPermission('tenant_settings', 'read');
@@ -118,7 +149,7 @@ class TenantSettingsTest extends TestCase
         $otherTenant = Tenant::create([
             'uuid' => (string) Str::uuid(),
             'name' => 'Other Tenant',
-            'slug' => 'other-tenant-' . Str::random(8),
+            'slug' => 'other-tenant-'.Str::random(8),
             'is_active' => true,
             'trial_ends_at' => now()->addDays(30),
         ]);
@@ -129,7 +160,7 @@ class TenantSettingsTest extends TestCase
             'storefront_enabled' => false,
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson('/api/v1/tenant-settings')
             ->assertStatus(200);
 
@@ -141,7 +172,7 @@ class TenantSettingsTest extends TestCase
     #[Test]
     public function user_without_permission_cannot_view_settings(): void
     {
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson('/api/v1/tenant-settings')
             ->assertStatus(403);
     }
@@ -149,7 +180,7 @@ class TenantSettingsTest extends TestCase
     #[Test]
     public function user_without_permission_cannot_update_settings(): void
     {
-        $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->putJson('/api/v1/tenant-settings', [
                 'storefront_enabled' => false,
             ])

@@ -7,15 +7,19 @@ use App\DTOs\Payment\PagBankChargeRequestDTO;
 use App\DTOs\Payment\PagBankChargeResponseDTO;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
+use App\Models\Finance\PlatformFinanceSettings;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
+use App\Models\Tenant\TenantSettings;
 use App\Support\Money;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -63,8 +67,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     public function __construct(
         private PagBankTransactionLogger $transactionLogger,
-    ) {
-    }
+    ) {}
 
     public function createPixCharge(Invoice $invoice): array
     {
@@ -84,6 +87,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     public function createChargeForOrder(Sale $order, array $payload): array
     {
         $method = (string) ($payload['method'] ?? 'pix');
+        $credentials = $this->resolveOrderCredentials($order);
         $request = PagBankChargeRequestDTO::fromArray([
             'reference_id' => (string) $order->uuid,
             'amount' => Money::normalize((string) $order->total_amount),
@@ -92,7 +96,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'payment_method' => $this->resolvePaymentMethodPayload($method, $payload),
         ]);
 
-        return $this->chargeAndPersist($order, $request);
+        return $this->chargeAndPersist($order, $request, $credentials);
     }
 
     public function createCardCharge(Invoice $invoice, array $cardToken): array
@@ -107,8 +111,10 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     public function refund(Payment $payment, string|int|float|null $amount = null): array
     {
         $refundAmount = $amount !== null ? Money::normalize($amount) : Money::normalize((string) $payment->amount);
-        $token = (string) config('services.pagbank.token', '');
         $orderId = (string) $payment->provider_charge_id;
+        $tenantId = $payment->payable instanceof Sale ? (int) $payment->payable->tenant_id : null;
+        $credentials = $this->resolveCredentials($tenantId);
+        $token = $credentials['token'];
 
         if ($token === '' || $orderId === '') {
             // Sem credencial ou sem id de venda remoto (cobrança nasceu
@@ -118,7 +124,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         try {
-            $chargeId = $this->resolveChargeId($orderId);
+            $chargeId = $this->resolveChargeId($orderId, $credentials);
 
             if ($chargeId === null) {
                 // Venda ainda não tem charge paga no PagBank (nunca foi
@@ -130,7 +136,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'amount' => ['value' => Money::toMinor($refundAmount)],
             ]);
 
-            $response = $this->client()->post("/charges/{$chargeId}/cancel", $body);
+            $response = $this->client($credentials)->post("/charges/{$chargeId}/cancel", $body);
             $this->assertSuccessful($response, 'cancelCharge');
 
             $this->transactionLogger->info('pagbank.cancel_charge.response', [
@@ -162,7 +168,15 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     public function validateWebhook(Request $request): bool
     {
-        $token = (string) config('services.pagbank.token', '');
+        return $this->validateWebhookWithToken(
+            $request,
+            $this->resolveCredentials(null)['token']
+        );
+    }
+
+    public function validateWebhookWithToken(Request $request, ?string $tokenOverride = null): bool
+    {
+        $token = $tokenOverride ?? $this->resolveCredentials(null)['token'];
         $header = (string) $request->header('x-authenticity-token', '');
 
         if ($token === '' || $header === '') {
@@ -175,16 +189,27 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         return hash_equals($expected, $header);
     }
 
+    public function getWebhookTokenForTenant(?int $tenantId): string
+    {
+        return $this->resolveCredentials($tenantId)['token'];
+    }
+
     public function getPayment(string $providerChargeId): array
     {
-        $token = (string) config('services.pagbank.token', '');
+        return $this->getPaymentForTenant($providerChargeId, null);
+    }
+
+    public function getPaymentForTenant(string $providerChargeId, ?int $tenantId): array
+    {
+        $credentials = $this->resolveCredentials($tenantId);
+        $token = $credentials['token'];
 
         if ($token === '' || $providerChargeId === '') {
             return ['provider_charge_id' => $providerChargeId, 'status' => 'pending'];
         }
 
         try {
-            $response = $this->client()->get("/orders/{$providerChargeId}");
+            $response = $this->client($credentials)->get("/orders/{$providerChargeId}");
             $this->assertSuccessful($response, 'getOrder');
 
             $this->transactionLogger->info('pagbank.get_order.response', [
@@ -223,10 +248,70 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
     }
 
-    public function getCheckoutConfig(): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function getSplit(string $splitId): array
     {
-        $token = (string) config('services.pagbank.token', '');
-        $environment = (string) config('services.pagbank.environment', 'sandbox');
+        $credentials = $this->resolveCredentials(null);
+
+        if ($splitId === '' || $credentials['token'] === '') {
+            return ['id' => $splitId, 'receivers' => []];
+        }
+
+        $response = $this->client($credentials)->get("/splits/{$splitId}");
+        $this->assertSuccessful($response, 'getSplit');
+
+        $this->transactionLogger->info('pagbank.get_split.response', [
+            'split_id' => $splitId,
+            'http_status' => $response->status(),
+            'response_body' => $response->json(),
+        ]);
+
+        return (array) $response->json();
+    }
+
+    /**
+     * @param  array<int, string>  $receiverAccountIds
+     */
+    public function releaseSplitCustody(string $splitId, array $receiverAccountIds): bool
+    {
+        $credentials = $this->resolveCredentials(null);
+
+        if ($splitId === '' || $credentials['token'] === '' || $receiverAccountIds === []) {
+            return false;
+        }
+
+        $body = [
+            'receivers' => array_map(
+                static fn (string $accountId) => [
+                    'account' => [
+                        'id' => $accountId,
+                    ],
+                ],
+                array_values(array_unique(array_filter($receiverAccountIds)))
+            ),
+        ];
+
+        $response = $this->client($credentials)->post("/splits/{$splitId}/custody/release", $body);
+        $this->assertSuccessful($response, 'releaseSplitCustody');
+
+        $this->transactionLogger->info('pagbank.release_split_custody.response', [
+            'split_id' => $splitId,
+            'request_body' => $body,
+            'http_status' => $response->status(),
+        ]);
+
+        return true;
+    }
+
+    public function getCheckoutConfig(?Sale $order = null): array
+    {
+        $credentials = $order !== null
+            ? $this->resolveOrderCredentials($order)
+            : $this->resolveCredentials(null);
+        $token = $credentials['token'];
+        $environment = $credentials['environment'];
 
         if ($token === '') {
             return [
@@ -240,10 +325,10 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ];
         }
 
-        $publicKeyResponse = $this->client()->post('/public-keys', ['type' => 'card']);
+        $publicKeyResponse = $this->client($credentials)->post('/public-keys', ['type' => 'card']);
         $this->assertSuccessful($publicKeyResponse, 'createPublicKey');
 
-        $sessionResponse = $this->sdkClient()->post('/checkout-sdk/sessions');
+        $sessionResponse = $this->sdkClient($credentials)->post('/checkout-sdk/sessions');
         $this->assertSuccessful($sessionResponse, 'createThreeDsSession');
 
         return [
@@ -282,9 +367,9 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      * consultar-pagamento). Retorna null quando a venda não tem nenhuma
      * charge paga ainda.
      */
-    private function resolveChargeId(string $orderId): ?string
+    private function resolveChargeId(string $orderId, array $credentials): ?string
     {
-        $response = $this->client()->get("/orders/{$orderId}");
+        $response = $this->client($credentials)->get("/orders/{$orderId}");
         $this->assertSuccessful($response, 'getOrder');
 
         $charges = (array) $response->json('charges', []);
@@ -330,9 +415,9 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      *
      * @return array<string, mixed>
      */
-    private function chargeAndPersist(Model $payable, PagBankChargeRequestDTO $request): array
+    private function chargeAndPersist(Model $payable, PagBankChargeRequestDTO $request, array $credentials): array
     {
-        $response = $this->callPagBank($request);
+        $response = $this->callPagBank($request, $credentials);
 
         $payment = Payment::create([
             'payable_type' => $payable->getMorphClass(),
@@ -357,9 +442,9 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      * Ponto único de chamada HTTP ao PagBank — POST /orders tanto para Pix
      * quanto para cartão, usando a API de Orders oficial.
      */
-    private function callPagBank(PagBankChargeRequestDTO $request): PagBankChargeResponseDTO
+    private function callPagBank(PagBankChargeRequestDTO $request, array $credentials): PagBankChargeResponseDTO
     {
-        $token = (string) config('services.pagbank.token', '');
+        $token = $credentials['token'];
 
         if ($token === '') {
             return PagBankChargeResponseDTO::fromArray([
@@ -375,6 +460,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ->where('uuid', $request->referenceId)
             ->with(['tenant', 'items.ticketType', 'items.eventProduct'])
             ->first();
+        $split = $sale !== null ? $this->buildSplitPayload($sale, $amountCents) : null;
         $description = $this->buildSaleDescription($sale, $request->referenceId);
         $items = $this->buildSaleItemsPayload($sale, $request->referenceId, $amountCents);
 
@@ -384,7 +470,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'name' => $request->payer['name'] ?? null,
                 'email' => $request->payer['email'] ?? null,
                 'tax_id' => $request->payer['tax_id'] ?? null,
-                'phones' => !empty($request->payer['phone'])
+                'phones' => ! empty($request->payer['phone'])
                     ? [[
                         'country' => '55',
                         'area' => substr($this->normalizeDocument((string) $request->payer['phone']), 0, 2),
@@ -397,6 +483,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'qr_codes' => $request->method === 'pix'
                 ? [[
                     'amount' => ['value' => $amountCents],
+                    'splits' => $split,
                 ]]
                 : null,
             'charges' => $request->method !== 'pix'
@@ -408,13 +495,14 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                         'currency' => 'BRL',
                     ],
                     'payment_method' => $request->paymentMethod,
+                    'splits' => $split,
                 ]]
                 : null,
             'notification_urls' => [url('/api/v1/webhooks/payments/pagbank')],
         ]);
 
         try {
-            $response = $this->client()->post('/orders', $body);
+            $response = $this->client($credentials)->post('/orders', $body);
             $this->assertSuccessful($response, 'createOrder');
 
             $this->transactionLogger->info('pagbank.create_order.response', [
@@ -427,6 +515,13 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $firstCharge = $response->json('charges.0', []);
             $qrCode = $response->json('qr_codes.0', []);
             $chargeStatus = (string) ($firstCharge['status'] ?? '');
+            $splitId = $this->extractSplitIdFromResponse($response->json());
+            $splitReleaseScheduled = null;
+
+            if ($split !== null) {
+                $lastReceiver = $split['receivers'][count($split['receivers']) - 1] ?? null;
+                $splitReleaseScheduled = $lastReceiver['configurations']['custody']['release']['scheduled'] ?? null;
+            }
 
             return PagBankChargeResponseDTO::fromArray([
                 'id' => $response->json('id', ''),
@@ -439,6 +534,8 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                     'provider_status' => $chargeStatus !== '' ? $chargeStatus : ($request->method === 'pix' ? 'WAITING' : null),
                     'raw_status' => $chargeStatus !== '' ? $chargeStatus : null,
                     'charge_id' => $firstCharge['id'] ?? null,
+                    'split_id' => $splitId,
+                    'split_release_scheduled' => $splitReleaseScheduled,
                     'paid_at' => $firstCharge['paid_at'] ?? null,
                     'payment_response' => $firstCharge['payment_response'] ?? null,
                     'card' => $firstCharge['payment_method']['card'] ?? null,
@@ -507,6 +604,154 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    private function buildSplitPayload(Sale $sale, int $grossAmountCents): ?array
+    {
+        $settings = $this->resolveSplitSettings((int) $sale->tenant_id);
+
+        if ($settings === null) {
+            return null;
+        }
+
+        $platformFeeAmountCents = min($grossAmountCents, Money::toMinor((string) $settings['platform_fee_fixed_amount']));
+        $tenantNetAmountCents = max(0, $grossAmountCents - $platformFeeAmountCents);
+        $releaseScheduled = $this->resolveSplitReleaseAt($sale, (int) $settings['default_settlement_offset_days']);
+
+        $receivers = [];
+
+        if ($platformFeeAmountCents > 0) {
+            $receivers[] = [
+                'account' => [
+                    'id' => $settings['platform_account_id'],
+                ],
+                'amount' => [
+                    'value' => $platformFeeAmountCents,
+                ],
+                'reason' => 'Taxa fixa da plataforma',
+                'configurations' => [
+                    'custody' => [
+                        'apply' => false,
+                    ],
+                ],
+            ];
+        }
+
+        $tenantReceiver = [
+            'account' => [
+                'id' => $settings['tenant_account_id'],
+            ],
+            'amount' => [
+                'value' => $tenantNetAmountCents,
+            ],
+            'reason' => 'Repasse do organizador',
+            'configurations' => [
+                'custody' => [
+                    'apply' => (bool) $settings['split_custody_enabled'],
+                ],
+            ],
+        ];
+
+        if ((bool) $settings['split_custody_enabled']) {
+            $tenantReceiver['configurations']['custody']['release'] = [
+                'scheduled' => $releaseScheduled,
+            ];
+        }
+
+        $receivers[] = $tenantReceiver;
+
+        return [
+            'method' => 'FIXED',
+            'receivers' => $receivers,
+        ];
+    }
+
+    /**
+     * @return array{platform_account_id:string,tenant_account_id:string,platform_fee_fixed_amount:string,default_settlement_offset_days:int,split_custody_enabled:bool}|null
+     */
+    private function resolveSplitSettings(int $tenantId): ?array
+    {
+        $platformSettings = PlatformFinanceSettings::query()
+            ->whereNull('deleted_at')
+            ->first();
+
+        $tenantSettings = TenantSettings::query()
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        $platformAccountId = trim((string) ($platformSettings?->pagbank_primary_account_id ?? ''));
+        $tenantAccountId = trim((string) ($tenantSettings?->pagbank_receiver_account_id ?? ''));
+
+        if ($platformAccountId === '' || $tenantAccountId === '') {
+            return null;
+        }
+
+        return [
+            'platform_account_id' => $platformAccountId,
+            'tenant_account_id' => $tenantAccountId,
+            'platform_fee_fixed_amount' => (string) ($platformSettings?->platform_fee_fixed_amount ?? '0'),
+            'default_settlement_offset_days' => (int) ($platformSettings?->default_settlement_offset_days ?? 1),
+            'split_custody_enabled' => (bool) ($platformSettings?->split_custody_enabled ?? true),
+        ];
+    }
+
+    /**
+     * @return array{token:string,environment:string}
+     */
+    private function resolveOrderCredentials(Sale $order): array
+    {
+        if ($this->resolveSplitSettings((int) $order->tenant_id) !== null) {
+            return $this->resolveCredentials(null);
+        }
+
+        return $this->resolveCredentials((int) $order->tenant_id);
+    }
+
+    private function resolveSplitReleaseAt(Sale $sale, int $offsetDays): string
+    {
+        $sale->loadMissing([
+            'items.ticketType.event',
+            'items.eventProduct.event',
+        ]);
+
+        $eventEnd = $sale->items
+            ->map(fn ($item) => $item->ticketType?->event?->ends_at ?? $item->eventProduct?->event?->ends_at)
+            ->filter()
+            ->sortByDesc(fn (CarbonInterface $endsAt) => $endsAt->getTimestamp())
+            ->first();
+
+        $baseDate = $eventEnd instanceof CarbonInterface
+            ? $eventEnd->copy()
+            : ($sale->paid_at ?? now())->copy();
+
+        return $baseDate
+            ->addDays(max(1, $offsetDays))
+            ->startOfDay()
+            ->toIso8601String();
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractSplitIdFromResponse(array $payload): ?string
+    {
+        foreach (Arr::wrap(data_get($payload, 'charges.0.links', [])) as $link) {
+            if (($link['rel'] ?? null) !== 'SPLIT') {
+                continue;
+            }
+
+            $href = (string) ($link['href'] ?? '');
+
+            if (preg_match('/(SPLI_[A-Z0-9_-]+)/', $href, $matches) === 1) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function resolveOrderPayer(Sale $order, array $payload = []): array
@@ -545,7 +790,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function resolvePaymentMethodPayload(string $method, array $payload): array
@@ -597,7 +842,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $authenticationMethod = (array) ($payload['authentication_method'] ?? []);
 
             foreach (['type', 'id'] as $requiredField) {
-                if (!isset($authenticationMethod[$requiredField]) || (string) $authenticationMethod[$requiredField] === '') {
+                if (! isset($authenticationMethod[$requiredField]) || (string) $authenticationMethod[$requiredField] === '') {
                     throw new PaymentProviderException('pagbank.missing_debit_authentication');
                 }
             }
@@ -645,26 +890,63 @@ class PagBankPaymentProvider implements PaymentProviderInterface
      * Ponto de configuração pronto para quando a chamada real existir —
      * ainda não usado (ver TODO PAGBANK REAL em callPagBank()).
      */
-    private function client(): PendingRequest
+    private function client(array $credentials = []): PendingRequest
     {
-        $environment = (string) config('services.pagbank.environment', 'sandbox');
+        $environment = (string) ($credentials['environment'] ?? config('services.pagbank.environment', 'sandbox'));
         $baseUrl = $environment === 'production' ? self::BASE_URL_PRODUCTION : self::BASE_URL_SANDBOX;
-        $token = (string) config('services.pagbank.token', '');
+        $token = (string) ($credentials['token'] ?? config('services.pagbank.token', ''));
 
         return Http::withToken($token)
             ->baseUrl($baseUrl)
             ->timeout(15);
     }
 
-    private function sdkClient(): PendingRequest
+    private function sdkClient(array $credentials = []): PendingRequest
     {
-        $environment = (string) config('services.pagbank.environment', 'sandbox');
+        $environment = (string) ($credentials['environment'] ?? config('services.pagbank.environment', 'sandbox'));
         $baseUrl = $environment === 'production' ? self::SDK_BASE_URL_PRODUCTION : self::SDK_BASE_URL_SANDBOX;
-        $token = (string) config('services.pagbank.token', '');
+        $token = (string) ($credentials['token'] ?? config('services.pagbank.token', ''));
 
         return Http::withToken($token)
             ->baseUrl($baseUrl)
             ->timeout(15);
+    }
+
+    /**
+     * @return array{token:string,environment:string}
+     */
+    private function resolveCredentials(?int $tenantId): array
+    {
+        $fallbackEnvironment = (string) config('services.pagbank.environment', 'sandbox');
+        $fallbackToken = (string) config('services.pagbank.token', '');
+
+        if ($tenantId === null) {
+            return [
+                'token' => $fallbackToken,
+                'environment' => $fallbackEnvironment,
+            ];
+        }
+
+        $settings = TenantSettings::query()
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (
+            $settings === null
+            || ($settings->pagbank_integration_mode ?? 'disabled') !== 'manual_token'
+            || empty($settings->pagbank_access_token)
+        ) {
+            return [
+                'token' => $fallbackToken,
+                'environment' => $fallbackEnvironment,
+            ];
+        }
+
+        return [
+            'token' => (string) $settings->pagbank_access_token,
+            'environment' => (string) ($settings->pagbank_environment ?: $fallbackEnvironment),
+        ];
     }
 
     /**

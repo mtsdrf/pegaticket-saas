@@ -1,7 +1,14 @@
 # Roadmap de migração Maskats → PegaTicket
 
-Status: reauditado em 2026-07-31 contra o estado real do código (o documento anterior — que só descrevia o plano de 2026-07-30 — estava desatualizado; várias fases já tinham progresso, uma teve regressão). **Pivot pra plataforma de ingressos reconfirmado em 2026-07-31** depois de um desvio (ver seção 6).
+Status: documento **histórico de migração**, não mais a descrição principal do estado atual do produto. Última contextualização ampla em **3 de agosto de 2026**.
 Base: inventário real do código em `api/app/Http/Controllers`, `web/src/pages`, `database/seeders/FunctionalitiesSeeder.php`/`InitialPlansSeeder.php`, `routes/api.php`, `.claude/memory/architecture-decisions.md`, cruzado com `especificacao-plataforma-ingressos.md` (raiz).
+
+> Para o estado atual do produto, usar primeiro:
+>
+> - [docs/product-current-map.md](/home/mtsdrf/workspace/pegaticket-saas/docs/product-current-map.md)
+> - [docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md](/home/mtsdrf/workspace/pegaticket-saas/docs/roadmap/2026-08-02-pegaticket-global-gap-roadmap.md)
+>
+> Este arquivo continua útil como trilha de decisões da migração, mas vários trechos abaixo não representam mais o estado corrente do código.
 
 ---
 

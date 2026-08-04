@@ -24,7 +24,7 @@ class AuditLog extends Model
         'user_agent',
         'old_values',
         'new_values',
-        'meta'
+        'meta',
     ];
 
     protected $casts = [
@@ -35,11 +35,6 @@ class AuditLog extends Model
 
     /**
      * Registra auditoria técnica ou semântica.
-     *
-     * @param string      $event
-     * @param Model|null $model
-     * @param array       $meta
-     * @param int|null    $actorId
      */
     public static function record(
         string $event,
@@ -85,6 +80,7 @@ class AuditLog extends Model
                 'password_reset_token_hash',
                 'totp_secret',
                 'payment_pix_key',
+                'pagbank_access_token',
                 'avatar_data',
                 'pin_hash',
                 'key_hash',

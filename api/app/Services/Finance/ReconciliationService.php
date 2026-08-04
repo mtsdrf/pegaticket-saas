@@ -2,6 +2,7 @@
 
 namespace App\Services\Finance;
 
+use App\Models\Finance\SettlementAdjustment;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\WebhookEvent;
@@ -32,6 +33,10 @@ use Illuminate\Support\Facades\DB;
  */
 class ReconciliationService
 {
+    public function __construct(
+        private FinancialIntegrityReconciliationService $integrityService,
+    ) {}
+
     public function list(int $tenantId, array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = Payment::query()
@@ -43,21 +48,21 @@ class ReconciliationService
                     ->where('tenant_id', $tenantId)
                     ->whereNull('deleted_at');
             })
-            ->with(['refunds' => fn($q) => $q->whereNull('deleted_at'), 'payable']);
+            ->with(['refunds' => fn ($q) => $q->whereNull('deleted_at'), 'payable']);
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('payments.status', $filters['status']);
         }
 
-        if (!empty($filters['method'])) {
+        if (! empty($filters['method'])) {
             $query->where('payments.method', $filters['method']);
         }
 
-        if (!empty($filters['from'])) {
+        if (! empty($filters['from'])) {
             $query->whereDate('payments.created_at', '>=', $filters['from']);
         }
 
-        if (!empty($filters['to'])) {
+        if (! empty($filters['to'])) {
             $query->whereDate('payments.created_at', '<=', $filters['to']);
         }
 
@@ -119,11 +124,11 @@ class ReconciliationService
                     ->whereNull('deleted_at');
             });
 
-        if (!empty($filters['from'])) {
+        if (! empty($filters['from'])) {
             $base->whereDate('payments.created_at', '>=', $filters['from']);
         }
 
-        if (!empty($filters['to'])) {
+        if (! empty($filters['to'])) {
             $base->whereDate('payments.created_at', '<=', $filters['to']);
         }
 
@@ -138,12 +143,18 @@ class ReconciliationService
             ->sum('refunds.amount');
 
         return [
-            'by_status' => $rows->map(fn($row) => [
+            'by_status' => $rows->map(fn ($row) => [
                 'status' => $row->status,
                 'count' => (int) $row->total_count,
                 'amount' => round((float) $row->total_amount, 2),
             ])->values()->all(),
             'total_refunded_amount' => round((float) $refundedAmount, 2),
+            'open_adjustments_amount' => round((float) SettlementAdjustment::query()
+                ->where('tenant_id', $tenantId)
+                ->whereNull('deleted_at')
+                ->whereIn('status', ['pending_recovery', 'pending_review'])
+                ->sum('amount'), 2),
+            'integrity' => $this->integrityService->buildReport($tenantId)['summary'],
         ];
     }
 }

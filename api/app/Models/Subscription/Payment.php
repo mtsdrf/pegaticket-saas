@@ -3,7 +3,9 @@
 namespace App\Models\Subscription;
 
 use App\Models\BaseModel;
+use App\Models\Finance\Receivable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Payment extends BaseModel
@@ -51,5 +53,10 @@ class Payment extends BaseModel
     public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
+    }
+
+    public function receivable(): HasOne
+    {
+        return $this->hasOne(Receivable::class);
     }
 }

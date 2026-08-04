@@ -75,6 +75,11 @@ class StorefrontCheckoutRequest extends FormRequest
             // checkout (guard 4), não na validação do request.
             'coupon_code' => ['nullable', 'string', 'max:50'],
 
+            // Fallback de atribuição de afiliado quando o checkout não
+            // veio de um hold (o caminho principal é o hold já carregar o
+            // affiliate_id capturado em StorefrontHoldService::createHold).
+            'affiliate_code' => ['nullable', 'string', 'max:40'],
+
             // Meio de pagamento pretendido (roadmap cupom por meio de
             // pagamento) — só formato aqui, nullable: nem todo checkout usa
             // cupom restrito, não adiciona fricção por padrão. A Service

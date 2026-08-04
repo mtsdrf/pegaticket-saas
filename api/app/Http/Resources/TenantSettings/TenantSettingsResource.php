@@ -13,9 +13,16 @@ class TenantSettingsResource extends JsonResource
             'accepted_payment_methods' => $this->accepted_payment_methods ?? [],
             'payment_receiving_method' => $this->payment_receiving_method ?? 'manual',
             'payment_pix_key' => $this->payment_pix_key,
+            'pagbank_integration_mode' => $this->pagbank_integration_mode ?? 'disabled',
+            'pagbank_environment' => $this->pagbank_environment ?? 'sandbox',
+            'has_pagbank_access_token' => ! empty($this->pagbank_access_token),
+            'pagbank_receiver_account_id' => $this->pagbank_receiver_account_id,
             'storefront_enabled' => $this->storefront_enabled,
             'catalog_layout' => $this->catalog_layout ?? 'list',
             'hold_duration_minutes' => $this->hold_duration_minutes,
+            'affiliate_default_commission_percentage' => $this->affiliate_default_commission_percentage !== null
+                ? (float) $this->affiliate_default_commission_percentage
+                : null,
         ];
     }
 }

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Sales;
 
+use App\Models\Finance\PlatformFinanceSettings;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\WebhookEvent;
+use App\Models\Tenant\TenantSettings;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -68,6 +70,38 @@ class PagBankSalePaymentTest extends TestCase
         Sale::where('uuid', $order['uuid'])->update(['is_paid' => false, 'paid_at' => null]);
 
         return $order;
+    }
+
+    private function configureTenantPagBankDirect(string $token, string $environment = 'sandbox'): void
+    {
+        TenantSettings::updateOrCreate(
+            ['tenant_id' => $this->tenant->id],
+            [
+                'payment_receiving_method' => 'pagbank_token',
+                'pagbank_integration_mode' => 'manual_token',
+                'pagbank_environment' => $environment,
+                'pagbank_access_token' => $token,
+            ]
+        );
+    }
+
+    private function configureSplitAccounts(string $platformAccountId, string $tenantAccountId, float $platformFee = 5): void
+    {
+        PlatformFinanceSettings::create([
+            'platform_fee_fixed_amount' => $platformFee,
+            'default_settlement_offset_days' => 1,
+            'settlement_reference' => 'event_end',
+            'split_custody_enabled' => true,
+            'extra_reserve_enabled' => false,
+            'pagbank_primary_account_id' => $platformAccountId,
+        ]);
+
+        TenantSettings::updateOrCreate(
+            ['tenant_id' => $this->tenant->id],
+            [
+                'pagbank_receiver_account_id' => $tenantAccountId,
+            ]
+        );
     }
 
     #[Test]
@@ -134,6 +168,118 @@ class PagBankSalePaymentTest extends TestCase
             ->assertJsonPath('data.environment', 'SANDBOX')
             ->assertJsonPath('data.public_key', 'PAGBANK_PUBLIC_KEY_SANDBOX')
             ->assertJsonPath('data.three_ds_session', 'PAGBANK_3DS_SESSION_SANDBOX');
+    }
+
+    #[Test]
+    public function tenant_pagbank_token_overrides_the_global_fallback_for_order_checkout_and_charge(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+
+        Http::fake([
+            'api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_TENANT',
+                'public_key' => 'TENANT_PUBLIC_KEY',
+            ], 201),
+            'sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'TENANT_3DS_SESSION',
+            ], 200),
+            'api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_TENANT_1',
+                'qr_codes' => [[
+                    'id' => 'QRCO_TENANT_1',
+                    'text' => '00020126...tenant...6304ABCD',
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 35, qty: 1);
+
+        $this->auth()
+            ->getJson("/api/v1/sales/{$order['uuid']}/payment-checkout-config")
+            ->assertStatus(200)
+            ->assertJsonPath('data.environment', 'PROD')
+            ->assertJsonPath('data.public_key', 'TENANT_PUBLIC_KEY');
+
+        $this->auth()
+            ->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'pending');
+
+        Http::assertSent(function ($request) {
+            return in_array($request->url(), [
+                'https://api.pagseguro.com/public-keys',
+                'https://sdk.pagseguro.com/checkout-sdk/sessions',
+                'https://api.pagseguro.com/orders',
+            ], true)
+                && $request->hasHeader('Authorization', 'Bearer tenant-token-123');
+        });
+    }
+
+    #[Test]
+    public function split_configuration_uses_the_platform_token_and_builds_pix_split_with_custody(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_TENANT_1', 7.5);
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_PLATFORM',
+                'public_key' => 'PLATFORM_PUBLIC_KEY',
+            ], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'PLATFORM_3DS_SESSION',
+            ], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_SPLIT_1',
+                'charges' => [[
+                    'links' => [[
+                        'rel' => 'SPLIT',
+                        'href' => 'https://sandbox.api.pagseguro.com/splits/SPLI_SPLIT_1',
+                    ]],
+                ]],
+                'qr_codes' => [[
+                    'id' => 'QRCO_SPLIT_1',
+                    'text' => '00020126...split...6304ABCD',
+                    'expiration_date' => '2026-08-03T12:00:00-03:00',
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 2);
+
+        $this->auth()
+            ->getJson("/api/v1/sales/{$order['uuid']}/payment-checkout-config")
+            ->assertStatus(200)
+            ->assertJsonPath('data.environment', 'SANDBOX')
+            ->assertJsonPath('data.public_key', 'PLATFORM_PUBLIC_KEY');
+
+        $this->auth()
+            ->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'pending');
+
+        $payment = Payment::query()->where('provider_charge_id', 'ORDE_SPLIT_1')->firstOrFail();
+        $this->assertSame('SPLI_SPLIT_1', $payment->metadata['split_id'] ?? null);
+        $this->assertNotEmpty($payment->metadata['split_release_scheduled'] ?? null);
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://sandbox.api.pagseguro.com/orders') {
+                return false;
+            }
+
+            $receivers = $request['qr_codes'][0]['splits']['receivers'] ?? [];
+
+            return $request->hasHeader('Authorization', 'Bearer fake-pagbank-token')
+                && ($request['qr_codes'][0]['splits']['method'] ?? null) === 'FIXED'
+                && ($receivers[0]['account']['id'] ?? null) === 'ACCO_PLATFORM_1'
+                && ($receivers[0]['amount']['value'] ?? null) === 750
+                && ($receivers[1]['account']['id'] ?? null) === 'ACCO_TENANT_1'
+                && ($receivers[1]['amount']['value'] ?? null) === 7250
+                && ($receivers[1]['configurations']['custody']['apply'] ?? null) === true
+                && ! empty($receivers[1]['configurations']['custody']['release']['scheduled'] ?? null);
+        });
     }
 
     /**

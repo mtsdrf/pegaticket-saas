@@ -103,6 +103,7 @@ const CashSessionPage = lazy(() => import('../pages/CashSession/CashSessionPage'
 const GuestListsPage = lazy(() => import('../pages/GuestList/GuestListsPage').then((m) => ({ default: m.GuestListsPage })))
 const GuestListDetailPage = lazy(() => import('../pages/GuestList/GuestListDetailPage').then((m) => ({ default: m.GuestListDetailPage })))
 const GuestInvitePage = lazy(() => import('../pages/GuestList/GuestInvitePage').then((m) => ({ default: m.GuestInvitePage })))
+const AffiliateListPage = lazy(() => import('../pages/Affiliate/AffiliateListPage').then((m) => ({ default: m.AffiliateListPage })))
 const StorefrontSaleManagementPage = lazy(() =>
   import('../pages/Sale/StorefrontSaleManagementPage').then((m) => ({ default: m.StorefrontSaleManagementPage })),
 )
@@ -118,6 +119,12 @@ const ChannelReportPage = lazy(() =>
 )
 const ReconciliationPage = lazy(() =>
   import('../pages/Finance/ReconciliationPage').then((m) => ({ default: m.ReconciliationPage })),
+)
+const FinanceOperationsPage = lazy(() =>
+  import('../pages/Finance/FinanceOperationsPage').then((m) => ({ default: m.FinanceOperationsPage })),
+)
+const AdminFinanceOperationsPage = lazy(() =>
+  import('../pages/Admin/AdminFinanceOperationsPage').then((m) => ({ default: m.AdminFinanceOperationsPage })),
 )
 const UserListPage = lazy(() => import('../pages/Admin/UserListPage').then((m) => ({ default: m.UserListPage })))
 const UserFormPage = lazy(() => import('../pages/Admin/UserFormPage').then((m) => ({ default: m.UserFormPage })))
@@ -288,11 +295,13 @@ export function AppRoutes() {
             <Route path="/caixa" element={<PermissionRoute requirement={ACCESS.cashSessionsRead}><CashSessionPage /></PermissionRoute>} />
             <Route path="/listas-de-convidados" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListsPage /></PermissionRoute>} />
             <Route path="/listas-de-convidados/:uuid" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListDetailPage /></PermissionRoute>} />
+            <Route path="/afiliados" element={<PermissionRoute requirement={ACCESS.affiliatesRead}><AffiliateListPage /></PermissionRoute>} />
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
             <Route path="/relatorios/vendas" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />
+            <Route path="/financeiro/operacao" element={<PermissionRoute requirement={ACCESS.financeRead}><FinanceOperationsPage /></PermissionRoute>} />
             <Route path="/financeiro/conciliacao" element={<PermissionRoute requirement={ACCESS.financeRead}><ReconciliationPage /></PermissionRoute>} />
 
             <Route path="/admin/usuarios" element={<PermissionRoute requirement={ACCESS.adminUsersRead}><UserListPage /></PermissionRoute>} />
@@ -318,6 +327,7 @@ export function AppRoutes() {
             <Route path="/admin/tenant-users/convidar" element={<PermissionRoute requirement={ACCESS.tenantUsersCreate}><TenantUserInviteFormPage /></PermissionRoute>} />
             <Route path="/admin/tenant-users/:uuid/editar" element={<PermissionRoute requirement={ACCESS.tenantUsersUpdate}><TenantUserFormPage /></PermissionRoute>} />
             <Route path="/admin/auditoria" element={<PermissionRoute requirement={ACCESS.adminAuditLogsRead}><AuditLogListPage /></PermissionRoute>} />
+            <Route path="/admin/financeiro" element={<PermissionRoute requirement={ACCESS.adminFinanceRead}><AdminFinanceOperationsPage /></PermissionRoute>} />
             <Route path="/admin/pagamentos-pendencias" element={<PermissionRoute requirement={ACCESS.adminPaymentIssuesRead}><PaymentIssuesListPage /></PermissionRoute>} />
             {/* Hub de Configurações (2026-07-24) — índice + drill-down por bloco,
                 cada bloco gated pela própria permissão (não pela página

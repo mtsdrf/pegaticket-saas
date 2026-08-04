@@ -102,13 +102,24 @@ class GuestListService
      */
     public function redeem(string $token, RedeemGuestListEntryDTO $dto): GuestListEntry
     {
-        $entry = $this->findByToken($token);
+        // Checagem otimista antes da transação (404 rápido pra token
+        // inexistente sem travar linha à toa) — a checagem que realmente
+        // vale, contra corrida de duas requisições simultâneas pro mesmo
+        // convite (endpoint público, sem login), é a de dentro da
+        // transação com lockForUpdate() logo abaixo.
+        $this->findByToken($token);
 
-        if ($entry->redeemed_at !== null) {
-            throw new GuestListEntryAlreadyRedeemedException(__('messages.guest_list.already_redeemed'));
-        }
+        return DB::transaction(function () use ($token, $dto) {
+            $entry = GuestListEntry::where('token', $token)
+                ->whereNull('deleted_at')
+                ->with(['guestList.event', 'guestList.session', 'guestList.ticketType'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        return DB::transaction(function () use ($entry, $dto) {
+            if ($entry->redeemed_at !== null) {
+                throw new GuestListEntryAlreadyRedeemedException(__('messages.guest_list.already_redeemed'));
+            }
+
             $guestList = $entry->guestList;
             $tenantId = (int) $guestList->tenant_id;
 

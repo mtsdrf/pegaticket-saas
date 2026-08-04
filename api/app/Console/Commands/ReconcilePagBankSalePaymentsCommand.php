@@ -41,6 +41,7 @@ class ReconcilePagBankSalePaymentsCommand extends Command
             ->where('payable_type', Sale::class)
             ->whereNotNull('provider_charge_id')
             ->whereIn('status', ['pending', 'divergent', 'failed'])
+            ->with('payable')
             ->orderBy('id');
 
         if (is_string($paymentUuid) && $paymentUuid !== '') {
@@ -56,7 +57,12 @@ class ReconcilePagBankSalePaymentsCommand extends Command
 
         foreach ($payments as $payment) {
             try {
-                $remote = $this->provider->getPayment((string) $payment->provider_charge_id);
+                $remote = $payment->payable instanceof Sale
+                    ? $this->provider->getPaymentForTenant(
+                        (string) $payment->provider_charge_id,
+                        (int) $payment->payable->tenant_id
+                    )
+                    : $this->provider->getPayment((string) $payment->provider_charge_id);
 
                 $this->orderPaymentService->reconcileRemotePayment(
                     $payment,

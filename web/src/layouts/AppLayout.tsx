@@ -5,6 +5,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined'
 import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import CardGiftcardOutlinedIcon from '@mui/icons-material/CardGiftcardOutlined'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
@@ -97,6 +98,7 @@ const NAV_ITEMS: NavItem[] = [
   { kind: 'link', to: '/caixa', label: 'Caixa', icon: PointOfSaleOutlinedIcon, access: ACCESS.cashSessionsRead },
   { kind: 'link', to: '/listas-de-convidados', label: 'Listas de convidados', icon: CardGiftcardOutlinedIcon, access: ACCESS.eventsRead },
   { kind: 'link', to: '/vendas-online', label: 'Vendas Online', icon: LocalActivityOutlinedIcon, access: ACCESS.storefrontSalesRead },
+  { kind: 'link', to: '/afiliados', label: 'Afiliados', icon: PersonAddAltOutlinedIcon, access: ACCESS.affiliatesRead },
   {
     kind: 'group',
     label: 'Relatórios',
@@ -105,6 +107,7 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/analises', label: 'Análises', access: ACCESS.reportsRead },
       { to: '/relatorios/canais', label: 'Resultado por canal', access: ACCESS.reportsRead },
       { to: '/relatorios/vendas', label: 'Relatório de vendas', access: ACCESS.reportsRead },
+      { to: '/financeiro/operacao', label: 'Operação financeira', access: ACCESS.financeRead },
       { to: '/financeiro/conciliacao', label: 'Conciliação financeira', access: ACCESS.financeRead },
     ],
   },
@@ -121,6 +124,7 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/admin/tenant-roles', label: 'Perfis da empresa', access: ACCESS.tenantRolesRead },
       { to: '/admin/tenant-users', label: 'Usuários da empresa', access: ACCESS.tenantUsersRead },
       { to: '/admin/auditoria', label: 'Auditoria', access: ACCESS.adminAuditLogsRead },
+      { to: '/admin/financeiro', label: 'Financeiro admin', access: ACCESS.adminFinanceRead },
       { to: '/admin/pagamentos-pendencias', label: 'Pendências de pagamento', access: ACCESS.adminPaymentIssuesRead },
     ],
   },

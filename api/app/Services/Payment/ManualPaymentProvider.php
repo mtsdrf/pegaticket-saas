@@ -66,7 +66,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
         ];
     }
 
-    public function getCheckoutConfig(): array
+    public function getCheckoutConfig(?Sale $order = null): array
     {
         return [
             'provider' => 'manual',

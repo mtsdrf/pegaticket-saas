@@ -3,6 +3,7 @@
 namespace App\Models\Event;
 
 use App\Models\BaseModel;
+use App\Models\Finance\Receivable;
 use App\Models\Tenant\Tenant;
 use App\Models\Venue\VenueMapVersion;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -87,5 +88,10 @@ class Event extends BaseModel
     public function venueMapVersion(): BelongsTo
     {
         return $this->belongsTo(VenueMapVersion::class);
+    }
+
+    public function receivables(): HasMany
+    {
+        return $this->hasMany(Receivable::class);
     }
 }

@@ -43,6 +43,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Financeiro', 'slug' => 'finance', 'description' => 'Conciliação financeira (pagamentos, estornos e eventos de webhook)', 'is_active' => true],
             ['name' => 'Central de Chamados', 'slug' => 'support', 'description' => 'Abertura e listagem de chamados de suporte, com diagnóstico automático opcional', 'is_active' => true],
             ['name' => 'Operação de Pagamentos', 'slug' => 'payment_admin', 'description' => 'Painel cross-tenant do staff da PegaTicket para pendências de pagamento/assinatura (divergências, idempotência ambígua, contestações, webhooks falhos) e reprocessamento manual', 'is_active' => true],
+            ['name' => 'Afiliados', 'slug' => 'affiliates', 'description' => 'Gestão de afiliados/promotores, link rastreável e comissão sobre vendas atribuídas (roadmap Fase 6)', 'is_active' => true],
         ];
 
         foreach ($items as $data) {

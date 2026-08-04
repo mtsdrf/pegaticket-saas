@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Affiliate\AffiliateController;
 use App\Http\Controllers\AuditLog\AuditLogController;
 use App\Http\Controllers\Auth\AcceptTenantUserInviteController;
 use App\Http\Controllers\Auth\AuthAccessController;
@@ -19,7 +20,12 @@ use App\Http\Controllers\Event\TicketBatchController;
 use App\Http\Controllers\Event\TicketTypeController;
 use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
+use App\Http\Controllers\Finance\AdminFinanceOperationsController;
+use App\Http\Controllers\Finance\EventFinancialCloseoutController;
+use App\Http\Controllers\Finance\FinanceOperationsController;
+use App\Http\Controllers\Finance\PlatformFinanceSettingsController;
 use App\Http\Controllers\Finance\ReconciliationController;
+use App\Http\Controllers\Finance\SettlementAdjustmentController;
 use App\Http\Controllers\Functionality\FunctionalityController;
 use App\Http\Controllers\Group\GroupController;
 use App\Http\Controllers\GuestList\GuestInviteController;
@@ -429,6 +435,28 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['perm:payment_admin,update', 'throttle:20,1,payment-admin-issues-reprocess']);
         });
 
+        Route::prefix('finance/platform-settings')->group(function () {
+            Route::get('/', [PlatformFinanceSettingsController::class, 'show'])
+                ->middleware(['perm:payment_admin,read', 'throttle:60,1,finance-platform-settings-show']);
+
+            Route::put('/', [PlatformFinanceSettingsController::class, 'update'])
+                ->middleware(['perm:payment_admin,update', 'throttle:20,1,finance-platform-settings-update']);
+        });
+
+        Route::prefix('finance/admin')->group(function () {
+            Route::get('/dashboard', [AdminFinanceOperationsController::class, 'dashboard'])
+                ->middleware(['perm:payment_admin,read', 'throttle:60,1,finance-admin-dashboard']);
+
+            Route::get('/receivables', [AdminFinanceOperationsController::class, 'receivables'])
+                ->middleware(['perm:payment_admin,read', 'throttle:60,1,finance-admin-receivables']);
+
+            Route::get('/settlements', [AdminFinanceOperationsController::class, 'settlements'])
+                ->middleware(['perm:payment_admin,read', 'throttle:60,1,finance-admin-settlements']);
+
+            Route::get('/adjustments', [AdminFinanceOperationsController::class, 'adjustments'])
+                ->middleware(['perm:payment_admin,read', 'throttle:60,1,finance-admin-adjustments']);
+        });
+
         Route::prefix('tenants')->group(function () {
             Route::get('/', [TenantController::class, 'index'])
                 ->middleware(['perm:tenants,read', 'throttle:100,1,tenants-list']);
@@ -644,6 +672,12 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{event}', [EventController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:events,delete', 'throttle:10,1,events-delete']);
+
+            Route::get('/{event}/finance/closeout', [EventFinancialCloseoutController::class, 'show'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,event-finance-closeout']);
+
+            Route::get('/{event}/finance/bordereau', [EventFinancialCloseoutController::class, 'bordereau'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:20,1,event-finance-bordereau']);
         });
 
         // "Cortesias estruturadas" (roadmap Fase 4) — reaproveita a
@@ -662,6 +696,25 @@ Route::prefix('v1')->group(function () {
 
             Route::post('/{uuid}/entries', [GuestListController::class, 'addEntry'])
                 ->middleware(['tenant', 'perm:events,update', 'throttle:60,1,guest-lists-add-entry']);
+        });
+
+        // Afiliados/promotores (roadmap Fase 6, fatia 1) — link rastreável,
+        // atribuição de venda e comissão. Ver App\Services\Affiliate.
+        Route::prefix('affiliates')->group(function () {
+            Route::get('/', [AffiliateController::class, 'index'])
+                ->middleware(['tenant', 'perm:affiliates,read', 'throttle:100,1,affiliates-list']);
+
+            Route::post('/', [AffiliateController::class, 'store'])
+                ->middleware(['tenant', 'perm:affiliates,create', 'throttle:30,1,affiliates-create']);
+
+            Route::get('/{uuid}', [AffiliateController::class, 'show'])
+                ->middleware(['tenant', 'perm:affiliates,read', 'throttle:100,1,affiliates-show']);
+
+            Route::put('/{uuid}', [AffiliateController::class, 'update'])
+                ->middleware(['tenant', 'perm:affiliates,update', 'throttle:30,1,affiliates-update']);
+
+            Route::get('/{uuid}/commissions', [AffiliateController::class, 'commissions'])
+                ->middleware(['tenant', 'perm:affiliates,read', 'throttle:100,1,affiliates-commissions']);
         });
 
         Route::prefix('events/{event}/sessions')->group(function () {
@@ -1028,11 +1081,41 @@ Route::prefix('v1')->group(function () {
         // 2A/1B. Functionality própria `finance`, reaproveita a action
         // `read` já existente. Ver App\Services\Finance\ReconciliationService.
         Route::prefix('finance')->group(function () {
+            Route::get('/dashboard', [FinanceOperationsController::class, 'dashboard'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-dashboard']);
+
+            Route::get('/receivables', [FinanceOperationsController::class, 'receivables'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-receivables']);
+
+            Route::get('/receivables/summary', [FinanceOperationsController::class, 'receivablesSummary'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-receivables-summary']);
+
+            Route::get('/settlements', [FinanceOperationsController::class, 'settlements'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-settlements']);
+
+            Route::get('/settlements/summary', [FinanceOperationsController::class, 'settlementsSummary'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-settlements-summary']);
+
             Route::get('/reconciliation', [ReconciliationController::class, 'index'])
                 ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-reconciliation']);
 
             Route::get('/reconciliation/summary', [ReconciliationController::class, 'summary'])
                 ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-reconciliation-summary']);
+
+            Route::get('/adjustments', [SettlementAdjustmentController::class, 'index'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-adjustments']);
+
+            Route::get('/adjustments/summary', [SettlementAdjustmentController::class, 'summary'])
+                ->middleware(['tenant', 'perm:finance,read', 'throttle:60,1,finance-adjustments-summary']);
+
+            Route::post('/adjustments/manual', [SettlementAdjustmentController::class, 'storeManual'])
+                ->middleware(['tenant', 'perm:finance,update', 'throttle:20,1,finance-adjustments-manual']);
+
+            Route::post('/adjustments/{uuid}/resolve-recovery', [SettlementAdjustmentController::class, 'resolveRecovery'])
+                ->middleware(['tenant', 'perm:finance,update', 'throttle:20,1,finance-adjustments-resolve-recovery']);
+
+            Route::post('/adjustments/{uuid}/resolve-review', [SettlementAdjustmentController::class, 'resolveReview'])
+                ->middleware(['tenant', 'perm:finance,update', 'throttle:20,1,finance-adjustments-resolve-review']);
         });
 
         // Assinatura da empresa (roadmap 1B — cobrança de planos).

@@ -3,6 +3,9 @@
 namespace Tests\Feature\Sales;
 
 use App\Models\AuditLog;
+use App\Models\Finance\Receivable;
+use App\Models\Finance\Settlement;
+use App\Models\Finance\SettlementAdjustment;
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleItem;
 use App\Models\Ticket\Ticket;
@@ -11,7 +14,9 @@ use App\Models\Venue\Venue;
 use App\Models\Venue\VenueMapVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
@@ -25,9 +30,9 @@ use Tests\TestCase;
  */
 class SaleRefundTest extends TestCase
 {
+    use CreatesSaleFixtures;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -41,23 +46,23 @@ class SaleRefundTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     /**
-     * @return array{order: array, tickets: \Illuminate\Support\Collection<int, Ticket>}
+     * @return array{order: array, tickets: Collection<int, Ticket>}
      */
     private function createSeat(string $label): Seat
     {
         $venue = Venue::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'name' => 'Venue ' . \Illuminate\Support\Str::random(6),
+            'name' => 'Venue '.Str::random(6),
             'is_active' => true,
         ]);
 
         $mapVersion = VenueMapVersion::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'venue_id' => $venue->id,
             'version_number' => 1,
@@ -65,7 +70,7 @@ class SaleRefundTest extends TestCase
         ]);
 
         return Seat::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'venue_map_version_id' => $mapVersion->id,
             'label' => $label,
@@ -93,9 +98,58 @@ class SaleRefundTest extends TestCase
         ])->assertStatus(201)->json('data');
 
         $saleId = Sale::where('uuid', $order['uuid'])->value('id');
-        $tickets = Ticket::whereHas('saleItem', fn($q) => $q->where('sale_id', $saleId))->get();
+        $tickets = Ticket::whereHas('saleItem', fn ($q) => $q->where('sale_id', $saleId))->get();
 
         return ['order' => $order, 'tickets' => $tickets];
+    }
+
+    private function createReceivableForOrderUuid(
+        string $orderUuid,
+        float $grossAmount,
+        float $platformFeeAmount,
+        float $netAmount,
+        ?string $status = 'scheduled',
+        ?Settlement $settlement = null,
+    ): Receivable {
+        $sale = Sale::where('uuid', $orderUuid)->firstOrFail();
+
+        $receivable = Receivable::where('sale_id', $sale->id)->first();
+
+        if ($receivable === null) {
+            return Receivable::create([
+                'tenant_id' => $sale->tenant_id,
+                'sale_id' => $sale->id,
+                'event_id' => null,
+                'settlement_id' => $settlement?->id,
+                'status' => $status,
+                'currency' => 'BRL',
+                'gross_amount' => number_format($grossAmount, 2, '.', ''),
+                'platform_fee_amount' => number_format($platformFeeAmount, 2, '.', ''),
+                'processor_fee_amount' => '0.00',
+                'net_amount' => number_format($netAmount, 2, '.', ''),
+                'settlement_reference' => 'event_end_d_plus_1',
+                'event_ends_at' => now()->subDay(),
+                'available_at' => now()->subHour(),
+                'provider' => 'pagbank',
+                'provider_charge_id' => 'ORDE_REFUND_TEST',
+                'provider_split_id' => 'SPLI_REFUND_TEST',
+            ]);
+        }
+
+        $receivable->fill([
+            'settlement_id' => $settlement?->id,
+            'status' => $status,
+            'gross_amount' => number_format($grossAmount, 2, '.', ''),
+            'platform_fee_amount' => number_format($platformFeeAmount, 2, '.', ''),
+            'processor_fee_amount' => '0.00',
+            'net_amount' => number_format($netAmount, 2, '.', ''),
+            'provider' => 'pagbank',
+            'provider_charge_id' => 'ORDE_REFUND_TEST',
+            'provider_split_id' => 'SPLI_REFUND_TEST',
+        ]);
+        $receivable->save();
+
+        return $receivable->fresh();
     }
 
     #[Test]
@@ -404,5 +458,120 @@ class SaleRefundTest extends TestCase
         $this->flushHeaders();
         $this->getJson("/api/v1/sales/{$order['uuid']}/refunds/{$refundUuid}/receipt")
             ->assertStatus(401);
+    }
+
+    #[Test]
+    public function refund_before_release_creates_an_applied_financial_adjustment_and_reduces_open_amounts(): void
+    {
+        ['order' => $order] = $this->createPaidOrderWithTickets(1, 25);
+
+        $settlement = Settlement::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'SET-REFUND-OPEN',
+            'status' => 'scheduled',
+            'scheduled_for' => now()->addDay(),
+            'gross_amount' => 25,
+            'platform_fee_amount' => 5,
+            'processor_fee_amount' => 0,
+            'net_amount' => 20,
+        ]);
+
+        $receivable = $this->createReceivableForOrderUuid(
+            orderUuid: $order['uuid'],
+            grossAmount: 25,
+            platformFeeAmount: 5,
+            netAmount: 20,
+            status: 'awaiting_release',
+            settlement: $settlement,
+        );
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/refunds", [
+            'type' => 'total',
+            'amount' => 10,
+            'reason' => 'Estorno antes do repasse',
+            'refunded_at' => '2026-08-03',
+        ])->assertStatus(201);
+
+        $receivable->refresh();
+        $settlement->refresh();
+
+        $adjustment = SettlementAdjustment::query()
+            ->where('receivable_id', $receivable->id)
+            ->firstOrFail();
+
+        $this->assertSame('refund_organizer_deduction', $adjustment->type);
+        $this->assertSame('applied', $adjustment->status);
+        $this->assertSame('10.00', $adjustment->amount);
+        $this->assertSame('10.00', $receivable->net_amount);
+        $this->assertSame('10.00', $settlement->net_amount);
+        $this->assertDatabaseHas('ledger_entries', [
+            'settlement_adjustment_id' => $adjustment->id,
+            'entry_type' => 'refund_adjustment_applied',
+            'amount' => 10,
+        ]);
+    }
+
+    #[Test]
+    public function refund_after_release_creates_pending_recovery_and_platform_exposure_when_needed(): void
+    {
+        ['order' => $order] = $this->createPaidOrderWithTickets(1, 25);
+
+        $settlement = Settlement::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'SET-REFUND-RELEASED',
+            'status' => 'released',
+            'scheduled_for' => now()->subDay(),
+            'released_at' => now()->subHours(2),
+            'gross_amount' => 25,
+            'platform_fee_amount' => 5,
+            'processor_fee_amount' => 0,
+            'net_amount' => 5,
+        ]);
+
+        $receivable = $this->createReceivableForOrderUuid(
+            orderUuid: $order['uuid'],
+            grossAmount: 25,
+            platformFeeAmount: 20,
+            netAmount: 5,
+            status: 'released',
+            settlement: $settlement,
+        );
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/refunds", [
+            'type' => 'total',
+            'amount' => 12,
+            'reason' => 'Estorno apos repasse',
+            'refunded_at' => '2026-08-03',
+        ])->assertStatus(201);
+
+        $receivable->refresh();
+        $settlement->refresh();
+
+        $organizerAdjustment = SettlementAdjustment::query()
+            ->where('receivable_id', $receivable->id)
+            ->where('type', 'refund_organizer_deduction')
+            ->firstOrFail();
+
+        $platformExposure = SettlementAdjustment::query()
+            ->where('receivable_id', $receivable->id)
+            ->where('type', 'refund_platform_exposure')
+            ->firstOrFail();
+
+        $this->assertSame('pending_recovery', $organizerAdjustment->status);
+        $this->assertSame('5.00', $organizerAdjustment->amount);
+        $this->assertSame('pending_review', $platformExposure->status);
+        $this->assertSame('7.00', $platformExposure->amount);
+        $this->assertSame('5.00', $receivable->net_amount);
+        $this->assertSame('5.00', $settlement->net_amount);
+        $this->assertDatabaseHas('ledger_entries', [
+            'settlement_adjustment_id' => $organizerAdjustment->id,
+            'entry_type' => 'refund_recovery_pending',
+            'amount' => 5,
+        ]);
+        $this->assertDatabaseHas('ledger_entries', [
+            'settlement_adjustment_id' => $platformExposure->id,
+            'entry_type' => 'refund_platform_exposure',
+            'amount' => 7,
+        ]);
     }
 }

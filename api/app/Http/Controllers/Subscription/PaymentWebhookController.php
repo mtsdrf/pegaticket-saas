@@ -230,8 +230,18 @@ class PaymentWebhookController extends Controller
     private function handlePagBank(Request $request)
     {
         $pagBank = app(PagBankPaymentProvider::class);
+        $orderId = (string) ($request->input('id') ?? '');
+        $payment = $orderId !== ''
+            ? Payment::where('provider', 'pagbank')
+                ->where('provider_charge_id', $orderId)
+                ->first()
+            : null;
+        $sale = $payment?->payable instanceof Sale ? $payment->payable : null;
 
-        if (! $pagBank->validateWebhook($request)) {
+        if (! $pagBank->validateWebhookWithToken(
+            $request,
+            $pagBank->getWebhookTokenForTenant($sale?->tenant_id !== null ? (int) $sale->tenant_id : null)
+        )) {
             ApplicationLogger::warning('Webhook PagBank rejeitado: assinatura inválida', [
                 'provider' => 'pagbank',
                 'has_signature_header' => $request->hasHeader('x-authenticity-token'),
@@ -248,8 +258,6 @@ class PaymentWebhookController extends Controller
                 'WEBHOOK_INVALID_SIGNATURE'
             );
         }
-
-        $orderId = (string) ($request->input('id') ?? '');
 
         $this->pagBankTransactionLogger->info('pagbank.webhook.received', [
             'order_id' => $orderId !== '' ? $orderId : null,
@@ -269,12 +277,8 @@ class PaymentWebhookController extends Controller
             return APIResponse::success(null, __('messages.webhook.received'));
         }
 
-        $payment = Payment::where('provider', 'pagbank')
-            ->where('provider_charge_id', $orderId)
-            ->first();
-
         if ($payment !== null && $payment->payable_type === Sale::class) {
-            $remote = $pagBank->getPayment($orderId);
+            $remote = $pagBank->getPaymentForTenant($orderId, (int) $payment->payable->tenant_id);
             $this->orderPaymentService->reconcileRemotePayment(
                 $payment,
                 (string) ($remote['status'] ?? 'pending'),

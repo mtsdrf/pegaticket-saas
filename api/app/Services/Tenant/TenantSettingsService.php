@@ -13,8 +13,7 @@ class TenantSettingsService
 {
     public function __construct(
         private TenantSettingsRepositoryInterface $repository
-    ) {
-    }
+    ) {}
 
     public function getForTenant(int $tenantId): TenantSettings
     {
@@ -32,14 +31,21 @@ class TenantSettingsService
                 'accepted_payment_methods' => $dto->acceptedPaymentMethods,
                 'payment_receiving_method' => $dto->paymentReceivingMethod,
                 'payment_pix_key' => $dto->paymentPixKey,
+                'pagbank_integration_mode' => $dto->pagBankIntegrationMode,
+                'pagbank_environment' => $dto->pagBankEnvironment,
+                'pagbank_access_token' => $dto->hasPagBankAccessTokenInput
+                    ? $dto->pagBankAccessToken
+                    : $settings->pagbank_access_token,
+                'pagbank_receiver_account_id' => $dto->pagBankReceiverAccountId,
                 'storefront_enabled' => $dto->storefrontEnabled,
                 'catalog_layout' => $dto->catalogLayout,
                 'hold_duration_minutes' => $dto->holdDurationMinutes,
+                'affiliate_default_commission_percentage' => $dto->affiliateDefaultCommissionPercentage,
             ]);
 
             $changes = array_diff_assoc($settings->getAttributes(), $original);
 
-            if (!empty($changes)) {
+            if (! empty($changes)) {
                 event(new TenantSettingsUpdated(
                     tenantId: $tenantId,
                     actorId: Auth::id(),

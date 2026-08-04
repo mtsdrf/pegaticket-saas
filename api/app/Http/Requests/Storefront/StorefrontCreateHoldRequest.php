@@ -22,6 +22,12 @@ class StorefrontCreateHoldRequest extends FormRequest
             'items.*.seat_uuid' => ['nullable', 'uuid'],
             'items.*.sector_name' => ['nullable', 'string', 'max:120'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            // Código de rastreio do afiliado/promotor (ex: ?ref=CODIGO na
+            // URL da loja pública, capturado pelo frontend e repassado aqui
+            // na criação do hold — mesmo ponto da jornada onde
+            // session_token já é persistido). Silenciosamente ignorado se o
+            // código não existir/estiver inativo (StorefrontHoldService).
+            'affiliate_code' => ['nullable', 'string', 'max:40'],
         ];
     }
 }

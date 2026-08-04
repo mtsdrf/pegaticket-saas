@@ -90,6 +90,10 @@ export const ACCESS = {
   /** Central de chamados nativa (roadmap A4, item 17) — functionality `support`, reaproveita actions `read`/`create` já existentes. */
   helpRequestsRead: tenant('support', 'read'),
   helpRequestsCreate: tenant('support', 'create'),
+  /** Afiliados/promotores, link rastreável e comissão (roadmap Fase 6, fatia 1) — functionality própria `affiliates`. */
+  affiliatesRead: tenant('affiliates', 'read'),
+  affiliatesCreate: tenant('affiliates', 'create'),
+  affiliatesUpdate: tenant('affiliates', 'update'),
   storefrontUpdate: tenant('storefront', 'update'),
   /** Só `GET /coupons` exige `storefront:read` (diferente do resto da área de bilheteria online, que usa só `update` para leitura e escrita). */
   storefrontRead: tenant('storefront', 'read'),
@@ -117,4 +121,5 @@ export const ACCESS = {
   /** Painel de pendências de pagamento/assinatura (roadmap 2026-07-24) — cross-tenant, exclusivo do staff interno da PegaTicket; functionality própria `payment_admin`, separada de `finance` (tenant-facing). */
   adminPaymentIssuesRead: global('payment_admin', 'read'),
   adminPaymentIssuesUpdate: global('payment_admin', 'update'),
+  adminFinanceRead: global('payment_admin', 'read'),
 } as const

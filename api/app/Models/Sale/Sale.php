@@ -2,9 +2,11 @@
 
 namespace App\Models\Sale;
 
+use App\Models\Affiliate\Affiliate;
 use App\Models\BaseModel;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
+use App\Models\Finance\Receivable;
 use App\Models\Storefront\Coupon;
 use App\Models\Storefront\SaleRating;
 use App\Models\Subscription\Payment;
@@ -45,6 +47,7 @@ class Sale extends BaseModel
         'origin',
         'operated_by',
         'client_sale_uuid',
+        'affiliate_id',
     ];
 
     protected $casts = [
@@ -69,6 +72,7 @@ class Sale extends BaseModel
         'coupon_id',
         'operated_by',
         'client_sale_uuid',
+        'affiliate_id',
         'deleted_at',
         'created_by',
         'updated_by',
@@ -146,6 +150,11 @@ class Sale extends BaseModel
         return $this->belongsTo(Coupon::class);
     }
 
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
     /**
      * Operador identificado por PIN que concluiu a operação — distinto de
      * created_by (usuário do JWT da sessão).
@@ -183,5 +192,10 @@ class Sale extends BaseModel
     public function latestPayment()
     {
         return $this->morphOne(Payment::class, 'payable')->latestOfMany();
+    }
+
+    public function receivable()
+    {
+        return $this->hasOne(Receivable::class);
     }
 }

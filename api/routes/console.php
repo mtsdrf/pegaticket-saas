@@ -35,6 +35,31 @@ Schedule::command('payments:reconcile-mercadopago-sales --limit=100')->everyFift
 // PaymentWebhookController::handlePagBank.
 Schedule::command('payments:reconcile-pagbank-sales --limit=100')->everyFifteenMinutes();
 
+// Agrupa recebíveis já elegíveis (D+1 pós-evento no desenho atual) em
+// lotes locais de repasse. A liberação externa via PagBank vem na etapa
+// seguinte; aqui fechamos o vínculo auditável entre receivable e
+// settlement.
+Schedule::command('finance:generate-settlements')->hourly();
+
+// Tenta liberar settlements já vencidos. Quando houver split com
+// custódia, chama a API do PagBank; fora disso, fecha a baixa localmente.
+Schedule::command('finance:release-settlements')->hourly();
+
+// Consolida settlements já marcados como release_requested, cobrindo o
+// atraso entre a solicitação de liberação e a materialização do status
+// RELEASED no PagBank.
+Schedule::command('finance:reconcile-settlement-releases')->everyFifteenMinutes();
+
+// Varredura de integridade financeira interna: destaca recebíveis sem
+// agrupamento, settlements divergentes e ajustes ainda abertos.
+Schedule::command('finance:reconcile-financial-integrity')->hourly();
+
+// Libera reserva de risco retida sobre recebíveis (extra_reserve_enabled)
+// quando o prazo configurado em extra_reserve_release_offset_days vence.
+// Percentual/prazo default (5%, D+30) ainda não são decisão de negócio
+// validada — ver PlatformFinanceSettingsService::getCurrent().
+Schedule::command('finance:release-risk-reserves')->hourly();
+
 // Varredura proativa de holds vencidos (spec 5.9) — StorefrontHoldService
 // já expira "on read" por tenant+evento; isso só fecha o gap de holds de
 // eventos que ninguém mais consulta, pra observabilidade/relatório não

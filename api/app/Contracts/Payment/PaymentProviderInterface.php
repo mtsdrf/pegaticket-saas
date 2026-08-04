@@ -41,7 +41,7 @@ interface PaymentProviderInterface
      * (`pix|credit_card|debit_card`) e os dados complementares necessários
      * para o PSP.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function createChargeForOrder(Sale $order, array $payload): array;
@@ -49,7 +49,7 @@ interface PaymentProviderInterface
     /**
      * Cria uma cobrança de cartão para a fatura via API de Orders do PSP.
      *
-     * @param array<string, mixed> $cardToken
+     * @param  array<string, mixed>  $cardToken
      * @return array<string, mixed>
      */
     public function createCardCharge(Invoice $invoice, array $cardToken): array;
@@ -82,7 +82,7 @@ interface PaymentProviderInterface
      *
      * @return array<string, mixed>
      */
-    public function getCheckoutConfig(): array;
+    public function getCheckoutConfig(?Sale $order = null): array;
 
     /**
      * Cria a assinatura recorrente automática (Preapproval no Mercado
@@ -123,7 +123,7 @@ interface PaymentProviderInterface
      * pelo MP.js no frontend — nunca dado de cartão cru). Retorna ao menos
      * ['status' => string].
      *
-     * @param array<string, mixed> $cardToken
+     * @param  array<string, mixed>  $cardToken
      * @return array<string, mixed>
      */
     public function updatePreapprovalPaymentMethod(Subscription $subscription, array $cardToken): array;

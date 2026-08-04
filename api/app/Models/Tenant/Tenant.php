@@ -3,6 +3,10 @@
 namespace App\Models\Tenant;
 
 use App\Models\BaseModel;
+use App\Models\Finance\Receivable;
+use App\Models\Finance\Settlement;
+use App\Models\Plan\Plan;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends BaseModel
 {
@@ -47,6 +51,16 @@ class Tenant extends BaseModel
 
     public function plan()
     {
-        return $this->belongsTo(\App\Models\Plan\Plan::class, 'plan_id');
+        return $this->belongsTo(Plan::class, 'plan_id');
+    }
+
+    public function receivables(): HasMany
+    {
+        return $this->hasMany(Receivable::class);
+    }
+
+    public function settlements(): HasMany
+    {
+        return $this->hasMany(Settlement::class);
     }
 }

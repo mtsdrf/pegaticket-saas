@@ -3,16 +3,17 @@
 namespace Tests\Feature\Subscription;
 
 use App\Console\Commands\ReconcilePaymentIdempotencyCommand;
-use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -23,15 +24,16 @@ use Tests\TestCase;
  */
 class PaymentIdempotencyTest extends TestCase
 {
+    use CreatesSaleFixtures;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         Config::set('services.payments.provider', 'mercadopago');
+        Config::set('services.payments.sale_provider', 'mercadopago');
         Config::set('services.mercadopago.access_token', 'TEST-fake-token');
         Config::set('services.mercadopago.webhook_secret', 'fake-secret');
         Config::set('services.mercadopago.idempotency_lock_seconds', 120);
@@ -41,7 +43,7 @@ class PaymentIdempotencyTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     private function createConfirmedOrder(float $price = 40): array
@@ -49,7 +51,6 @@ class PaymentIdempotencyTest extends TestCase
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
-
 
         // Venda manual não parcelada nasce já paga — desfaz aqui pra
         // simular uma venda ainda não paga (pré-condição de
@@ -159,7 +160,7 @@ class PaymentIdempotencyTest extends TestCase
         $record = PaymentIdempotencyKey::create([
             'tenant_id' => $this->tenant->id,
             'operation' => "order_charge:{$order['uuid']}",
-            'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
+            'idempotency_key' => (string) Str::uuid(),
             'status' => 'pending',
             'locked_until' => now()->subMinutes(5),
         ]);
