@@ -26,6 +26,11 @@ export const ACCESS = {
   eventSessionsCreate: tenant('event_sessions', 'create'),
   eventSessionsUpdate: tenant('event_sessions', 'update'),
   eventSessionsDelete: tenant('event_sessions', 'delete'),
+  /** Portarias/postos de acesso do evento (roadmap check-in multi-portão) — functionality própria `event_gates`. */
+  eventGatesRead: tenant('event_gates', 'read'),
+  eventGatesCreate: tenant('event_gates', 'create'),
+  eventGatesUpdate: tenant('event_gates', 'update'),
+  eventGatesDelete: tenant('event_gates', 'delete'),
   ticketTypesRead: tenant('ticket_types', 'read'),
   ticketTypesCreate: tenant('ticket_types', 'create'),
   ticketTypesUpdate: tenant('ticket_types', 'update'),

@@ -377,6 +377,14 @@ return [
         'has_sales' => 'Esta sessão já possui vendas vinculadas e não pode ser removida.',
     ],
 
+    'event_gate' => [
+        'list' => 'Lista de portarias.',
+        'show' => 'Portaria exibida com sucesso.',
+        'created' => 'Portaria criada com sucesso.',
+        'updated' => 'Portaria atualizada com sucesso.',
+        'deleted' => 'Portaria removida com sucesso.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Tipo de ingresso
@@ -447,6 +455,7 @@ return [
         'bloqueado' => 'Este ingresso está bloqueado.',
         'evento_incorreto' => 'Ingresso não pertence a este evento.',
         'sessao_incorreta' => 'Ingresso não pertence a esta sessão.',
+        'portaria_incorreta' => 'Este tipo de ingresso não pode entrar por esta portaria.',
         'nao_encontrado' => 'Ingresso não encontrado.',
     ],
 
@@ -598,6 +607,9 @@ return [
     */
     'sale' => [
         'risk_multiple_purchases_reason' => 'Este cliente fez :count compras pagas para o mesmo evento nas últimas :hours horas (possível revenda/scalping automatizado). Apenas um alerta — revise manualmente antes de agir.',
+        'risk_failed_payment_velocity_reason' => 'Este cliente teve :count tentativas de pagamento recusadas/falhas nos últimos :minutes minutos (possível teste de cartão roubado). Apenas um alerta — revise manualmente antes de agir.',
+        'risk_multiple_cards_reason' => 'Este cliente usou :count cartões diferentes nos últimos :minutes minutos (possível teste de cartão roubado). Apenas um alerta — revise manualmente antes de agir.',
+        'risk_card_shared_across_customers_reason' => 'O cartão usado nesta compra foi usado por :count clientes diferentes nos últimos :minutes minutos (possível cartão roubado sendo testado em múltiplas contas). Apenas um alerta — revise manualmente antes de agir.',
         'list' => 'Lista de vendas.',
         'show' => 'Venda exibida com sucesso.',
         'fiscal_preview' => 'Prévia fiscal da venda exibida com sucesso.',

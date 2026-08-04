@@ -9,6 +9,7 @@ use App\Repositories\Contracts\CashSessionRepositoryInterface;
 use App\Repositories\Contracts\CouponRepositoryInterface;
 use App\Repositories\Contracts\EventCategoryRepositoryInterface;
 // Repository Interfaces
+use App\Repositories\Contracts\EventGateRepositoryInterface;
 use App\Repositories\Contracts\EventProductRepositoryInterface;
 use App\Repositories\Contracts\EventRepositoryInterface;
 use App\Repositories\Contracts\EventSessionRepositoryInterface;
@@ -50,6 +51,7 @@ use App\Repositories\Eloquent\CashSessionRepository;
 use App\Repositories\Eloquent\CouponRepository;
 use App\Repositories\Eloquent\EventCategoryRepository;
 // Repository Implementations
+use App\Repositories\Eloquent\EventGateRepository;
 use App\Repositories\Eloquent\EventProductRepository;
 use App\Repositories\Eloquent\EventRepository;
 use App\Repositories\Eloquent\EventSessionRepository;
@@ -277,6 +279,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             EventSessionRepositoryInterface::class,
             EventSessionRepository::class
+        );
+
+        // Event Gate Repository
+        $this->app->bind(
+            EventGateRepositoryInterface::class,
+            EventGateRepository::class
         );
 
         // Ticket Batch Repository

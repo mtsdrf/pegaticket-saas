@@ -9,6 +9,7 @@ import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -28,6 +29,7 @@ import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
 import { checkinContextStorageKey } from '../../constants/storage'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
+import * as eventGateService from '../../services/eventGateService'
 import * as eventService from '../../services/eventService'
 import * as eventSessionService from '../../services/eventSessionService'
 import { checkinTicket, getCheckinSummary, getTicketCheckinHistory } from '../../services/ticketService'
@@ -256,6 +258,7 @@ export function CheckinPage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [eventOptions, setEventOptions] = useState<Event[]>([])
   const [sessionOptions, setSessionOptions] = useState<EventSession[]>([])
+  const [gateOptions, setGateOptions] = useState<string[]>([])
   const [selectedEventUuid, setSelectedEventUuid] = useState('')
   const [selectedSessionUuid, setSelectedSessionUuid] = useState('')
   const [pendingSessionUuid, setPendingSessionUuid] = useState('')
@@ -331,6 +334,18 @@ export function CheckinPage() {
       .catch(() => setSessionOptions([]))
       .finally(() => setIsLoadingSessions(false))
   }, [pendingSessionUuid, selectedEventUuid])
+
+  useEffect(() => {
+    if (!selectedEventUuid) {
+      setGateOptions([])
+      return
+    }
+
+    eventGateService
+      .listEventGates(selectedEventUuid, { is_active: true })
+      .then((response) => setGateOptions(response.items.map((gate) => gate.name)))
+      .catch(() => setGateOptions([]))
+  }, [selectedEventUuid])
 
   useEffect(() => {
     try {
@@ -556,12 +571,24 @@ export function CheckinPage() {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          <TextField
-            label="Portão / posto (opcional)"
-            value={gateName}
-            onChange={(event) => setGateName(event.target.value)}
-            fullWidth
+          <Autocomplete
+            freeSolo
             size="small"
+            fullWidth
+            options={gateOptions}
+            inputValue={gateName}
+            onInputChange={(_event, value) => setGateName(value)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Portão / posto (opcional)"
+                helperText={
+                  selectedEventUuid && gateOptions.length === 0
+                    ? 'Este evento não tem portarias cadastradas — pode digitar livremente.'
+                    : 'Selecione uma portaria cadastrada ou digite um valor livre.'
+                }
+              />
+            )}
           />
 
           {inputMode === 'camera' ? (

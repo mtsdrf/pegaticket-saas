@@ -31,6 +31,9 @@ use App\Events\Event\EventCreated;
 |--------------------------------------------------------------------------
 */
 use App\Events\Event\EventDeleted;
+use App\Events\Event\EventGateCreated;
+use App\Events\Event\EventGateDeleted;
+use App\Events\Event\EventGateUpdated;
 use App\Events\Event\EventProductCreated;
 use App\Events\Event\EventProductDeleted;
 use App\Events\Event\EventProductUpdated;
@@ -201,6 +204,9 @@ use App\Listeners\Event\AuditEventCategoryDeleted;
 use App\Listeners\Event\AuditEventCategoryUpdated;
 use App\Listeners\Event\AuditEventCreated;
 use App\Listeners\Event\AuditEventDeleted;
+use App\Listeners\Event\AuditEventGateCreated;
+use App\Listeners\Event\AuditEventGateDeleted;
+use App\Listeners\Event\AuditEventGateUpdated;
 use App\Listeners\Event\AuditEventProductCreated;
 use App\Listeners\Event\AuditEventProductDeleted;
 use App\Listeners\Event\AuditEventProductUpdated;
@@ -483,6 +489,15 @@ class EventServiceProvider extends ServiceProvider
         EventSessionCreated::class => [AuditEventSessionCreated::class],
         EventSessionUpdated::class => [AuditEventSessionUpdated::class],
         EventSessionDeleted::class => [AuditEventSessionDeleted::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Event Gate
+        |--------------------------------------------------------------------------
+        */
+        EventGateCreated::class => [AuditEventGateCreated::class],
+        EventGateUpdated::class => [AuditEventGateUpdated::class],
+        EventGateDeleted::class => [AuditEventGateDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

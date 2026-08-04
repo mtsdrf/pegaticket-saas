@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
+import MeetingRoomOutlinedIcon from '@mui/icons-material/MeetingRoomOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import { Avatar, Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
@@ -132,6 +133,18 @@ export function EventListPage() {
                   sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
                 >
                   <ScheduleOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+            {can(ACCESS.eventGatesRead) ? (
+              <Tooltip title="Gerenciar portarias" arrow>
+                <IconButton
+                  size="small"
+                  aria-label={`Gerenciar portarias de ${row.name}`}
+                  onClick={() => navigate(`/eventos/${row.uuid}/portarias`)}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
+                >
+                  <MeetingRoomOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             ) : null}

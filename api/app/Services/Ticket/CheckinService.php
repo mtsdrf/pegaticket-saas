@@ -5,6 +5,7 @@ namespace App\Services\Ticket;
 use App\DTOs\Ticket\CheckinResultDTO;
 use App\DTOs\Ticket\CheckinTicketDTO;
 use App\Events\Ticket\TicketCheckedIn;
+use App\Models\Event\EventGate;
 use App\Models\Ticket\Ticket;
 use App\Models\Ticket\TicketCheckin;
 use Carbon\CarbonInterface;
@@ -21,7 +22,9 @@ use Illuminate\Support\Facades\DB;
 class CheckinService
 {
     private const ACCESS_TYPE_ENTRY = 'entrada';
+
     private const ACCESS_TYPE_REENTRY = 'reentrada';
+
     private const ACCESS_TYPE_ATTEMPT = 'tentativa';
 
     /**
@@ -41,7 +44,7 @@ class CheckinService
     {
         $ticket = $this->locateTicket($tenantId, $dto);
 
-        if (!$ticket) {
+        if (! $ticket) {
             event(new TicketCheckedIn(ticketUuid: null, result: 'nao_encontrado', actorId: $operatorId));
 
             return new CheckinResultDTO('nao_encontrado', null, null);
@@ -74,11 +77,17 @@ class CheckinService
                 );
             }
 
+            $gateResult = $this->checkGateRestriction($ticket, $dto, $operatorId);
+
+            if ($gateResult !== null) {
+                return $gateResult;
+            }
+
             if ($ticket->status === 'utilizado') {
                 if ($dto->allowReentry) {
                     $policy = $this->resolveReentryPolicy($ticket);
 
-                    if (!$policy['enabled']) {
+                    if (! $policy['enabled']) {
                         return $this->recordAttempt(
                             $ticket,
                             'reentrada_nao_permitida',
@@ -149,7 +158,7 @@ class CheckinService
                     $dto,
                     $operatorId,
                     self::ACCESS_TYPE_ATTEMPT,
-                    'status_' . $ticket->status
+                    'status_'.$ticket->status
                 );
             }
 
@@ -162,7 +171,7 @@ class CheckinService
                     $dto,
                     $operatorId,
                     self::ACCESS_TYPE_ATTEMPT,
-                    'status_' . $ticket->status
+                    'status_'.$ticket->status
                 );
             }
 
@@ -173,6 +182,52 @@ class CheckinService
         });
     }
 
+    /**
+     * Validação OPT-IN de portaria formal (EventGate). `gate_name` continua
+     * uma string livre — só passa a validar quando bate com o `name` de um
+     * EventGate ativo cadastrado NO EVENTO do ingresso. Evento não usa
+     * portarias formais (nenhum EventGate cadastrado, ou nenhum bate o
+     * nome digitado) => sem validação, comportamento antigo preservado.
+     * Gate encontrado mas sem nenhum ticket type restrito => aceita
+     * qualquer tipo (comportamento aberto por padrão).
+     */
+    private function checkGateRestriction(Ticket $ticket, CheckinTicketDTO $dto, int $operatorId): ?CheckinResultDTO
+    {
+        if ($dto->gateName === null || $dto->gateName === '') {
+            return null;
+        }
+
+        $gate = EventGate::where('tenant_id', $ticket->tenant_id)
+            ->where('event_id', $ticket->ticketType->event_id)
+            ->where('name', $dto->gateName)
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $gate) {
+            return null;
+        }
+
+        $gate->loadMissing('allowedTicketTypes');
+
+        if ($gate->allowedTicketTypes->isEmpty()) {
+            return null;
+        }
+
+        if ($gate->allowedTicketTypes->contains('id', $ticket->ticket_type_id)) {
+            return null;
+        }
+
+        return $this->recordAttempt(
+            $ticket,
+            'portaria_incorreta',
+            $dto,
+            $operatorId,
+            self::ACCESS_TYPE_ATTEMPT,
+            'portaria_incorreta'
+        );
+    }
+
     private function recordAttempt(
         Ticket $ticket,
         string $result,
@@ -180,8 +235,7 @@ class CheckinService
         int $operatorId,
         string $accessType,
         ?string $reason
-    ): CheckinResultDTO
-    {
+    ): CheckinResultDTO {
         $checkin = TicketCheckin::create([
             'tenant_id' => $ticket->tenant_id,
             'ticket_id' => $ticket->id,
@@ -212,11 +266,11 @@ class CheckinService
         }
 
         if ($dto->saleUuid !== null) {
-            $query->whereHas('saleItem.sale', fn($q) => $q->where('uuid', $dto->saleUuid));
+            $query->whereHas('saleItem.sale', fn ($q) => $q->where('uuid', $dto->saleUuid));
         }
 
         if ($dto->attendeeName !== null) {
-            $query->where('attendee_name', 'like', '%' . $dto->attendeeName . '%');
+            $query->where('attendee_name', 'like', '%'.$dto->attendeeName.'%');
         }
 
         if ($dto->attendeeDocument !== null) {

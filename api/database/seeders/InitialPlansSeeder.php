@@ -26,6 +26,7 @@ class InitialPlansSeeder extends Seeder
                     'event_categories',
                     'events',
                     'event_sessions',
+                    'event_gates',
                     'ticket_types',
                     'ticket_batches',
                     'event_products',

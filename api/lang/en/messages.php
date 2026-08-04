@@ -370,6 +370,14 @@ return [
         'has_sales' => 'This session already has linked sales and cannot be deleted.',
     ],
 
+    'event_gate' => [
+        'list' => 'Gates list.',
+        'show' => 'Gate shown successfully.',
+        'created' => 'Gate created successfully.',
+        'updated' => 'Gate updated successfully.',
+        'deleted' => 'Gate deleted successfully.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Ticket type
@@ -440,6 +448,7 @@ return [
         'bloqueado' => 'This ticket is blocked.',
         'evento_incorreto' => 'Ticket does not belong to this event.',
         'sessao_incorreta' => 'Ticket does not belong to this session.',
+        'portaria_incorreta' => 'This ticket type is not allowed through this gate.',
         'nao_encontrado' => 'Ticket not found.',
     ],
 
@@ -591,6 +600,9 @@ return [
     */
     'sale' => [
         'risk_multiple_purchases_reason' => 'This customer made :count paid purchases for the same event in the last :hours hours (possible automated scalping/reselling). This is only an alert — review manually before acting.',
+        'risk_failed_payment_velocity_reason' => 'This customer had :count failed/declined payment attempts in the last :minutes minutes (possible stolen card testing). This is only an alert — review manually before acting.',
+        'risk_multiple_cards_reason' => 'This customer used :count different cards in the last :minutes minutes (possible stolen card testing). This is only an alert — review manually before acting.',
+        'risk_card_shared_across_customers_reason' => 'The card used in this purchase was used by :count different customers in the last :minutes minutes (possible stolen card being tested across multiple accounts). This is only an alert — review manually before acting.',
         'list' => 'Order list.',
         'show' => 'Order shown successfully.',
         'fiscal_preview' => 'Order fiscal preview shown successfully.',

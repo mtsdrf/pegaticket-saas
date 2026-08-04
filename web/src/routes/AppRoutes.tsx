@@ -70,6 +70,9 @@ const EventSessionListPage = lazy(() =>
 const EventSessionFormPage = lazy(() =>
   import('../pages/EventSession/EventSessionFormPage').then((m) => ({ default: m.EventSessionFormPage })),
 )
+const EventGateListPage = lazy(() =>
+  import('../pages/EventGate/EventGateListPage').then((m) => ({ default: m.EventGateListPage })),
+)
 const TicketTypeListPage = lazy(() =>
   import('../pages/TicketType/TicketTypeListPage').then((m) => ({ default: m.TicketTypeListPage })),
 )
@@ -267,6 +270,7 @@ export function AppRoutes() {
             <Route path="/eventos/:eventUuid/sessoes" element={<PermissionRoute requirement={ACCESS.eventSessionsRead}><EventSessionListPage /></PermissionRoute>} />
             <Route path="/eventos/:eventUuid/sessoes/nova" element={<PermissionRoute requirement={ACCESS.eventSessionsCreate}><EventSessionFormPage /></PermissionRoute>} />
             <Route path="/eventos/:eventUuid/sessoes/:sessionUuid/editar" element={<PermissionRoute requirement={ACCESS.eventSessionsUpdate}><EventSessionFormPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/portarias" element={<PermissionRoute requirement={ACCESS.eventGatesRead}><EventGateListPage /></PermissionRoute>} />
             <Route path="/eventos/categorias" element={<PermissionRoute requirement={ACCESS.eventCategoriesRead}><EventCategoryListPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/nova" element={<PermissionRoute requirement={ACCESS.eventCategoriesCreate}><EventCategoryFormPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventCategoriesUpdate}><EventCategoryFormPage /></PermissionRoute>} />

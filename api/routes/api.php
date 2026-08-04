@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\SelfSignupController;
 use App\Http\Controllers\CashSession\CashSessionController;
 use App\Http\Controllers\Event\EventCategoryController;
 use App\Http\Controllers\Event\EventController;
+use App\Http\Controllers\Event\EventGateController;
 use App\Http\Controllers\Event\EventImageController;
 use App\Http\Controllers\Event\EventProductController;
 use App\Http\Controllers\Event\EventSessionController;
@@ -739,6 +740,27 @@ Route::prefix('v1')->group(function () {
 
             Route::delete('/{session}', [EventSessionController::class, 'destroy'])
                 ->middleware(['tenant', 'perm:event_sessions,delete', 'throttle:10,1,event-sessions-delete']);
+        });
+
+        // "Portarias" formais e opcionais de um evento — ver
+        // App\Services\Event\EventGateService e
+        // App\Services\Ticket\CheckinService (validação opt-in de
+        // ticket_type por portaria no check-in).
+        Route::prefix('events/{event}/gates')->group(function () {
+            Route::get('/', [EventGateController::class, 'index'])
+                ->middleware(['tenant', 'perm:event_gates,read', 'throttle:100,1,event-gates-list']);
+
+            Route::post('/', [EventGateController::class, 'store'])
+                ->middleware(['tenant', 'perm:event_gates,create', 'throttle:30,1,event-gates-create']);
+
+            Route::get('/{gate}', [EventGateController::class, 'show'])
+                ->middleware(['tenant', 'perm:event_gates,read', 'throttle:100,1,event-gates-show']);
+
+            Route::put('/{gate}', [EventGateController::class, 'update'])
+                ->middleware(['tenant', 'perm:event_gates,update', 'throttle:30,1,event-gates-update']);
+
+            Route::delete('/{gate}', [EventGateController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:event_gates,delete', 'throttle:10,1,event-gates-delete']);
         });
 
         Route::prefix('ticket-types')->group(function () {
