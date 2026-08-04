@@ -37,6 +37,8 @@ class Event extends BaseModel
         'reentry_enabled',
         'max_reentries',
         'reentry_cooldown_minutes',
+        'high_demand_mode',
+        'virtual_queue_admission_batch_size',
     ];
 
     protected $casts = [
@@ -46,6 +48,8 @@ class Event extends BaseModel
         'reentry_enabled' => 'boolean',
         'max_reentries' => 'integer',
         'reentry_cooldown_minutes' => 'integer',
+        'high_demand_mode' => 'boolean',
+        'virtual_queue_admission_batch_size' => 'integer',
     ];
 
     protected $hidden = [

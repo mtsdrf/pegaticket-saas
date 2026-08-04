@@ -9,12 +9,14 @@ use App\Http\Requests\GuestList\RedeemGuestListEntryRequest;
 use App\Http\Resources\GuestList\GuestInviteResource;
 use App\Services\APIResponse;
 use App\Services\GuestList\GuestListService;
+use App\Services\Security\AntiBotGuardService;
 
 /** Autoatendimento público (sem login) do convite — token individual por convidado. */
 class GuestInviteController extends Controller
 {
     public function __construct(
-        private GuestListService $service
+        private GuestListService $service,
+        private AntiBotGuardService $antiBotGuard,
     ) {}
 
     public function show(string $token)
@@ -29,6 +31,11 @@ class GuestInviteController extends Controller
 
     public function redeem(RedeemGuestListEntryRequest $request, string $token)
     {
+        $this->antiBotGuard->assertHuman(
+            $request->validated('website'),
+            $request->validated('form_rendered_at')
+        );
+
         $dto = RedeemGuestListEntryDTO::fromArray($request->validated());
 
         try {

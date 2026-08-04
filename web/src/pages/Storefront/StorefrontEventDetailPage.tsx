@@ -27,18 +27,23 @@ import type {
   StorefrontAvailabilityTicketType,
   StorefrontEvent,
   StorefrontEventProduct,
+  StorefrontQueueStatus,
   StorefrontTicketType,
 } from '../../types/storefront'
 import { formatCurrency } from '../../utils/format'
+
+/** Fila virtual (roadmap Fase 7) — mesmo espírito de polling do OperationSnapshotCard (dashboard operacional). */
+const QUEUE_POLL_INTERVAL_MS = 15_000
 
 /** Detalhe público de um evento (NOVO — não existia equivalente no catálogo de comércio) — lista `ticket_types`/`event_products` com controle de quantidade. */
 export function StorefrontEventDetailPage() {
   const navigate = useNavigate()
   const { slug, eventSlug } = useParams<{ slug: string; eventSlug: string }>()
-  const { items, totalQuantity, addTicketType, addAutoSeatSelection, addEventProduct, updateQuantity } = useStorefrontCart()
+  const { items, totalQuantity, addTicketType, addAutoSeatSelection, addEventProduct, updateQuantity, sessionId } = useStorefrontCart()
 
   const [event, setEvent] = useState<StorefrontEvent | null>(null)
   const [availability, setAvailability] = useState<StorefrontAvailabilityResult | null>(null)
+  const [queueStatus, setQueueStatus] = useState<StorefrontQueueStatus | null>(null)
   const [selectedSessionUuid, setSelectedSessionUuid] = useState<string | null>(null)
   const [selectedSeatTicketTypeUuid, setSelectedSeatTicketTypeUuid] = useState<string | null>(null)
   const [selectedSeatSector, setSelectedSeatSector] = useState<string>('all')
@@ -191,6 +196,40 @@ export function StorefrontEventDetailPage() {
     }
   }, [slug, eventSlug, selectedSessionUuid, lockedCartSessionUuid])
 
+  const highDemandMode = availability?.event.high_demand_mode ?? false
+
+  // Fila virtual para alta demanda (roadmap Fase 7) — só entra em ação
+  // quando a disponibilidade já confirmou `high_demand_mode=true` para
+  // este evento; eventos comuns nunca chamam este endpoint.
+  useEffect(() => {
+    if (!slug || !eventSlug || !highDemandMode) {
+      setQueueStatus(null)
+      return
+    }
+
+    let cancelled = false
+
+    function poll() {
+      if (!slug || !eventSlug) return
+      storefrontHoldService
+        .getQueueStatus(slug, eventSlug, sessionId)
+        .then((result) => {
+          if (!cancelled) setQueueStatus(result)
+        })
+        .catch(() => undefined)
+    }
+
+    poll()
+    const interval = window.setInterval(poll, QUEUE_POLL_INTERVAL_MS)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [slug, eventSlug, highDemandMode, sessionId])
+
+  const canPurchase = !highDemandMode || queueStatus?.status === 'admitted'
+
   useEffect(() => {
     if (seatRequiredTicketTypes.length === 0) {
       setSelectedSeatTicketTypeUuid(null)
@@ -316,7 +355,8 @@ export function StorefrontEventDetailPage() {
     const isDisabled =
       cartHasMixedSessions ||
       (availability?.requires_session_selection && !selectedSessionUuid) ||
-      isLoadingAvailability
+      isLoadingAvailability ||
+      !canPurchase
     return (
       <Paper key={ticketType.uuid} variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -375,7 +415,8 @@ export function StorefrontEventDetailPage() {
     const isDisabled =
       cartHasMixedSessions ||
       (availability?.requires_session_selection && !selectedSessionUuid) ||
-      isLoadingAvailability
+      isLoadingAvailability ||
+      !canPurchase
     return (
       <Paper key={eventProduct.uuid} variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -437,6 +478,7 @@ export function StorefrontEventDetailPage() {
       cartHasMixedSessions ||
       isLoadingAvailability ||
       !isAvailable ||
+      !canPurchase ||
       (availability?.requires_session_selection && !selectedSessionUuid)
 
     return (
@@ -555,6 +597,7 @@ export function StorefrontEventDetailPage() {
       cartHasMixedSessions ||
       isLoadingAvailability ||
       !isAvailable ||
+      !canPurchase ||
       (availability?.requires_session_selection && !selectedSessionUuid)
 
     const left = `${(seat.pos_x / venueMap.width) * 100}%`
@@ -819,6 +862,23 @@ export function StorefrontEventDetailPage() {
             {availabilityError && (
               <Alert severity="warning" variant="outlined">
                 {availabilityError}
+              </Alert>
+            )}
+
+            {highDemandMode && queueStatus && queueStatus.status !== 'admitted' && (
+              <Alert severity="info" variant="outlined" sx={{ alignItems: 'flex-start' }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+                  Este evento está com procura muito alta agora.
+                </Typography>
+                <Typography sx={{ fontSize: 13.5, mt: 0.25 }}>
+                  {queueStatus.status === 'expired'
+                    ? 'Sua vez na fila expirou. Atualize a página para entrar novamente.'
+                    : queueStatus.position
+                      ? `Você está na posição ${queueStatus.position} da fila${
+                          queueStatus.waiting_ahead > 0 ? ` (${queueStatus.waiting_ahead} pessoa(s) na sua frente)` : ''
+                        }. Assim que for sua vez, a compra libera automaticamente aqui.`
+                      : 'Aguarde, estamos organizando sua entrada na fila.'}
+                </Typography>
               </Alert>
             )}
 

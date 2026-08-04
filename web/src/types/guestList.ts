@@ -52,6 +52,10 @@ export interface RedeemGuestInvitePayload {
   name: string
   email: string
   document?: string
+  /** Honeypot anti-bot (roadmap Fase 7) — deve permanecer vazio; nunca visível para um usuário real. */
+  website?: string
+  /** Timestamp de quando o formulário carregou, para checagem de tempo mínimo de preenchimento (roadmap Fase 7). */
+  form_rendered_at?: string
 }
 
 export interface RedeemGuestInviteResult {

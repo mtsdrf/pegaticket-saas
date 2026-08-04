@@ -19,7 +19,9 @@ class SaleListResource extends JsonResource
             'cancelled_at' => $this->cancelled_at,
             'status' => $this->status,
             'origin' => Sale::normalizeOrigin($this->origin),
-            'final_customer' => $this->whenLoaded('finalCustomer', fn() => [
+            'risk_flagged' => (bool) $this->risk_flagged,
+            'risk_reason' => $this->risk_reason,
+            'final_customer' => $this->whenLoaded('finalCustomer', fn () => [
                 'uuid' => $this->finalCustomer->uuid,
                 'name' => $this->finalCustomer->name,
             ]),

@@ -2,6 +2,8 @@ import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined'
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined'
 import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined'
+import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined'
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import { Box, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { MetricCard } from './MetricCard'
@@ -93,6 +95,24 @@ export function OperationSnapshotCard() {
           tone={snapshot.checkins_today.warning > 0 ? 'warning' : 'accent'}
           index={3}
         />
+        <MetricCard
+          icon={ErrorOutlineOutlinedIcon}
+          label="Erro de checkout"
+          value={`${snapshot.checkout.error_rate_percent}%`}
+          caption={`${snapshot.checkout.completed}/${snapshot.checkout.started} concluídos (${snapshot.checkout.window_hours}h)`}
+          tone={snapshot.checkout.error_rate_percent > 30 ? 'warning' : 'primary'}
+          index={4}
+        />
+        {snapshot.virtual_queue.waiting + snapshot.virtual_queue.admitted > 0 && (
+          <MetricCard
+            icon={GroupsOutlinedIcon}
+            label="Fila virtual"
+            value={String(snapshot.virtual_queue.waiting)}
+            caption={`${snapshot.virtual_queue.admitted} admitido(s) agora`}
+            tone="accent"
+            index={5}
+          />
+        )}
       </Box>
     </Box>
   )

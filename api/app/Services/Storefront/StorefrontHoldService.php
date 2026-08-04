@@ -28,6 +28,7 @@ class StorefrontHoldService
         private TenantSettingsService $tenantSettingsService,
         private SeatAllocationService $seatAllocationService,
         private AffiliateService $affiliateService,
+        private VirtualQueueService $virtualQueueService,
     ) {}
 
     /**
@@ -62,6 +63,11 @@ class StorefrontHoldService
                 'uuid' => $event->uuid,
                 'name' => $event->name,
                 'slug' => $event->slug,
+                // Fila virtual (roadmap Fase 7) — o frontend só ativa a
+                // tela de fila (StorefrontEventDetailPage) quando este
+                // flag vier true. Ver App\Services\Storefront\
+                // VirtualQueueService.
+                'high_demand_mode' => (bool) $event->high_demand_mode,
                 'venue' => $event->venueMapVersion?->venue ? [
                     'uuid' => $event->venueMapVersion->venue->uuid,
                     'name' => $event->venueMapVersion->venue->name,
@@ -103,6 +109,10 @@ class StorefrontHoldService
     {
         $tenant = $this->catalogService->findTenantBySlug($slug);
         $event = $this->findReservableEvent($tenant->id, $eventSlug);
+
+        if ($event->high_demand_mode && ! $this->virtualQueueService->isAdmitted($tenant->id, $event->id, (string) $payload['session_token'])) {
+            abort(403, __('messages.virtual_queue.not_admitted'));
+        }
 
         return DB::transaction(function () use ($tenant, $event, $payload, $customer) {
             $this->expireHolds($tenant->id, $event->id);

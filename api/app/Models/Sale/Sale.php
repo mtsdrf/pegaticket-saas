@@ -52,6 +52,8 @@ class Sale extends BaseModel
         'utm_medium',
         'utm_campaign',
         'recompra_nudge_sent_at',
+        'risk_flagged',
+        'risk_reason',
     ];
 
     protected $casts = [
@@ -68,6 +70,7 @@ class Sale extends BaseModel
         'recompra_nudge_sent_at' => 'datetime',
         'due_date' => 'date',
         'cancelled_at' => 'datetime',
+        'risk_flagged' => 'boolean',
     ];
 
     protected $hidden = [

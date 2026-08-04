@@ -268,6 +268,7 @@ use App\Listeners\Sale\AuditSaleUnpaid;
 use App\Listeners\Sale\CancelTicketsOnSaleCancelled;
 use App\Listeners\Sale\CreateAffiliateCommissionOnSalePaid;
 use App\Listeners\Sale\CreateReceivableOnSalePaid;
+use App\Listeners\Sale\FlagRiskOnSalePaid;
 use App\Listeners\Sale\IssueTicketsOnSalePaid;
 use App\Listeners\Sale\RegisterFinancialAdjustmentOnSaleRefund;
 use App\Listeners\Sale\SendPushOnSaleApproved;
@@ -511,7 +512,7 @@ class EventServiceProvider extends ServiceProvider
         |--------------------------------------------------------------------------
         */
         SaleCreated::class => [AuditSaleCreated::class, WriteWorkflowTransitionLog::class],
-        SalePaid::class => [AuditSalePaid::class, IssueTicketsOnSalePaid::class, CreateReceivableOnSalePaid::class, CreateAffiliateCommissionOnSalePaid::class, WriteWorkflowTransitionLog::class],
+        SalePaid::class => [AuditSalePaid::class, IssueTicketsOnSalePaid::class, CreateReceivableOnSalePaid::class, CreateAffiliateCommissionOnSalePaid::class, FlagRiskOnSalePaid::class, WriteWorkflowTransitionLog::class],
         SaleUnpaid::class => [AuditSaleUnpaid::class],
         SaleInstallmentPaid::class => [AuditSaleInstallmentPaid::class],
         SaleInstallmentUnpaid::class => [AuditSaleInstallmentUnpaid::class],

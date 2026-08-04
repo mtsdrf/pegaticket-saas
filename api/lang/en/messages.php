@@ -590,6 +590,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'sale' => [
+        'risk_multiple_purchases_reason' => 'This customer made :count paid purchases for the same event in the last :hours hours (possible automated scalping/reselling). This is only an alert — review manually before acting.',
         'list' => 'Order list.',
         'show' => 'Order shown successfully.',
         'fiscal_preview' => 'Order fiscal preview shown successfully.',
@@ -721,6 +722,15 @@ return [
         'insufficient_availability' => 'There is not enough availability for one or more selected items.',
         'not_active' => 'This temporary hold is no longer active.',
         'checkout_mismatch' => 'The checkout items no longer match the active temporary hold.',
+    ],
+
+    'virtual_queue' => [
+        'status_shown' => 'Queue status shown successfully.',
+        'not_admitted' => 'You have not been admitted to reserve this event yet. Please wait your turn in the queue.',
+    ],
+
+    'security' => [
+        'suspicious_submission' => 'We could not process your request. Please try again.',
     ],
 
     'table_reservation' => [

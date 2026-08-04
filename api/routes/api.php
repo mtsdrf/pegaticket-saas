@@ -194,6 +194,13 @@ Route::prefix('v1')->group(function () {
     Route::get('/loja/{slug}/eventos/{eventSlug}/disponibilidade', [StorefrontHoldController::class, 'availability'])
         ->middleware('throttle:100,1,storefront-event-availability');
 
+    // Fila virtual para alta demanda (roadmap Fase 7) — só relevante para
+    // eventos com high_demand_mode=true (ver App\Services\Storefront\
+    // VirtualQueueService); polling do frontend, mesmo espírito de
+    // throttle generoso de disponibilidade.
+    Route::get('/loja/{slug}/eventos/{eventSlug}/fila', [StorefrontHoldController::class, 'queueStatus'])
+        ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-event-queue-status']);
+
     Route::post('/loja/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
         ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
 

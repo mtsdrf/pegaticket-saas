@@ -284,6 +284,30 @@ export function SaleListPage() {
         cellRenderer: (row) => formatCurrency(row.total_amount),
         exportValue: (row) => formatCurrency(row.total_amount),
       },
+      {
+        // Motor de risco básico (roadmap Fase 7) — só um alerta pro staff
+        // revisar manualmente, nunca bloqueia a venda automaticamente.
+        field: 'risk_flagged',
+        headerName: 'Risco',
+        width: 90,
+        sortable: false,
+        filterType: 'none',
+        cellRenderer: (row) =>
+          row.risk_flagged ? (
+            <Tooltip title={row.risk_reason ?? 'Padrão de compra suspeito — revise manualmente.'}>
+              <Chip
+                size="small"
+                label="Revisar"
+                sx={{
+                  fontWeight: 700,
+                  color: 'var(--pt-warning)',
+                  bgcolor: 'color-mix(in srgb, var(--pt-warning) 14%, transparent)',
+                }}
+              />
+            </Tooltip>
+          ) : null,
+        exportValue: (row) => (row.risk_flagged ? 'Sim' : 'Não'),
+      },
       ...(!isManualOrdersPage
         ? [{
             field: 'status',

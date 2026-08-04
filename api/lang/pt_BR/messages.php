@@ -597,6 +597,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'sale' => [
+        'risk_multiple_purchases_reason' => 'Este cliente fez :count compras pagas para o mesmo evento nas últimas :hours horas (possível revenda/scalping automatizado). Apenas um alerta — revise manualmente antes de agir.',
         'list' => 'Lista de vendas.',
         'show' => 'Venda exibida com sucesso.',
         'fiscal_preview' => 'Prévia fiscal da venda exibida com sucesso.',
@@ -728,6 +729,15 @@ return [
         'insufficient_availability' => 'Não há disponibilidade suficiente para um ou mais itens selecionados.',
         'not_active' => 'Esta reserva temporária não está mais ativa.',
         'checkout_mismatch' => 'Os itens do checkout não correspondem mais à reserva temporária ativa.',
+    ],
+
+    'virtual_queue' => [
+        'status_shown' => 'Status da fila exibido com sucesso.',
+        'not_admitted' => 'Você ainda não foi liberado para reservar este evento. Aguarde sua vez na fila.',
+    ],
+
+    'security' => [
+        'suspicious_submission' => 'Não foi possível processar sua solicitação. Tente novamente.',
     ],
 
     'table_reservation' => [

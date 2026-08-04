@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Logo } from '../../components/ui/Logo'
 import { ThemeFab } from '../../components/ThemeFab'
@@ -23,6 +23,12 @@ export function GuestInvitePage() {
   const [document, setDocument] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Anti-bot básico (roadmap Fase 7) — `website` é honeypot (campo
+  // invisível que só um bot preenche); `formRenderedAtRef` marca quando o
+  // formulário carregou, para a checagem de tempo mínimo de preenchimento.
+  // Ver App\Services\Security\AntiBotGuardService.
+  const [website, setWebsite] = useState('')
+  const formRenderedAtRef = useRef(new Date().toISOString())
 
   useEffect(() => {
     if (!token) return
@@ -50,6 +56,8 @@ export function GuestInvitePage() {
         name: name.trim(),
         email: email.trim(),
         document: document.trim() || undefined,
+        website,
+        form_rendered_at: formRenderedAtRef.current,
       })
       navigate(`/rastreio/${result.sale_uuid}`)
     } catch (error) {
@@ -113,6 +121,17 @@ export function GuestInvitePage() {
                   </Alert>
                 )}
                 <Stack spacing={1.75}>
+                  {/* Honeypot anti-bot (roadmap Fase 7) — invisível e fora da navegação por teclado/leitor de tela; só bots que preenchem tudo cegamente tendem a marcar este campo. */}
+                  <TextField
+                    label="Website"
+                    name="website"
+                    value={website}
+                    onChange={(event) => setWebsite(event.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    sx={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+                  />
                   <TextField label="Nome" value={name} onChange={(event) => setName(event.target.value)} fullWidth required />
                   <TextField
                     label="E-mail"

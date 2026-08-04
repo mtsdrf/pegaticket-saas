@@ -5,6 +5,7 @@ import type {
   StorefrontAvailabilityResult,
   StorefrontCreateHoldPayload,
   StorefrontInventoryHold,
+  StorefrontQueueStatus,
 } from '../types/storefront'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.pegaticket.com/api/v1'
@@ -17,6 +18,15 @@ export function getStorefrontAvailability(
   return unwrap(
     portalApiClient.get<ApiSuccess<StorefrontAvailabilityResult>>(`/loja/${slug}/eventos/${eventSlug}/disponibilidade`, {
       params: sessionUuid ? { session_uuid: sessionUuid } : undefined,
+    }),
+  )
+}
+
+/** Fila virtual para alta demanda (roadmap Fase 7) — polling da tela de detalhe do evento enquanto `high_demand_mode=true` e `status !== 'admitted'`. */
+export function getQueueStatus(slug: string, eventSlug: string, sessionToken: string): Promise<StorefrontQueueStatus> {
+  return unwrap(
+    portalApiClient.get<ApiSuccess<StorefrontQueueStatus>>(`/loja/${slug}/eventos/${eventSlug}/fila`, {
+      params: { session_token: sessionToken },
     }),
   )
 }

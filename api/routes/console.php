@@ -88,3 +88,8 @@ Schedule::command('subscriptions:reconcile-mercadopago --limit=100')->hourly();
 // contra o Mercado Pago antes que um retry manual do usuário possa gerar
 // uma cobrança/assinatura duplicada.
 Schedule::command('payments:reconcile-idempotency --limit=100')->everyFiveMinutes();
+
+// Fila virtual para alta demanda (roadmap Fase 7) — promove lotes de
+// entradas aguardando para admitido respeitando o limite configurado por
+// evento. Ver AdmitVirtualQueueEntriesCommand.
+Schedule::command('storefront:admit-virtual-queue-entries')->everyMinute();

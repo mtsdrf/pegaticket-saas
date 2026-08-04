@@ -29,6 +29,10 @@ class SaleResource extends JsonResource
             'change_for_amount' => $this->change_for_amount !== null ? (float) $this->change_for_amount : null,
             'status' => $this->status,
             'origin' => Sale::normalizeOrigin($this->origin),
+            // Motor de risco básico (roadmap Fase 7) — só um sinal pro
+            // staff revisar manualmente, nunca bloqueia a venda sozinho.
+            'risk_flagged' => (bool) $this->risk_flagged,
+            'risk_reason' => $this->risk_reason,
             // Rastreio de campanha/afiliado (Fase 6) — só informativo pro
             // staff enxergar de onde veio a venda, nunca exposto pro
             // comprador (PortalSaleResource/SalePublicTrackingResource).

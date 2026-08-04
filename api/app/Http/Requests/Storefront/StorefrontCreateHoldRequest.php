@@ -28,6 +28,12 @@ class StorefrontCreateHoldRequest extends FormRequest
             // session_token já é persistido). Silenciosamente ignorado se o
             // código não existir/estiver inativo (StorefrontHoldService).
             'affiliate_code' => ['nullable', 'string', 'max:40'],
+            // Anti-bot básico (roadmap Fase 7) — ver App\Services\Security\
+            // AntiBotGuardService. `website` é honeypot (deve ficar vazio
+            // no formulário real); `form_rendered_at` é o timestamp de
+            // quando o formulário carregou, enviado pelo frontend.
+            'website' => ['nullable', 'string', 'max:255'],
+            'form_rendered_at' => ['nullable', 'date'],
         ];
     }
 }

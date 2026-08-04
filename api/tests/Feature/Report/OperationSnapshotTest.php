@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Report;
 
+use App\Models\Inventory\InventoryHold;
 use App\Models\Sale\Sale;
+use App\Models\Storefront\VirtualQueueEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
@@ -94,5 +97,68 @@ class OperationSnapshotTest extends TestCase
         $response->assertStatus(200)->assertJsonPath('data.sales_pending_approval_count', 1);
 
         $this->assertNotNull($sale->id);
+    }
+
+    #[Test]
+    public function reports_checkout_error_rate_from_the_hold_funnel(): void
+    {
+        $product = $this->createProduct($this->tenant->id, ['price' => 40]);
+        $event = $product->event;
+
+        InventoryHold::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'session_token' => 'sess-'.Str::random(8),
+            'status' => InventoryHold::STATUS_CONVERTED,
+            'origin' => 'storefront',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        InventoryHold::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'session_token' => 'sess-'.Str::random(8),
+            'status' => InventoryHold::STATUS_EXPIRED,
+            'origin' => 'storefront',
+            'expires_at' => now()->subMinutes(5),
+        ]);
+
+        $response = $this->auth()->getJson('/api/v1/reports/operation-snapshot');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.checkout.started', 2)
+            ->assertJsonPath('data.checkout.completed', 1)
+            ->assertJsonPath('data.checkout.error_rate_percent', 50);
+    }
+
+    #[Test]
+    public function reports_the_current_virtual_queue_size(): void
+    {
+        $product = $this->createProduct($this->tenant->id, ['price' => 40]);
+        $event = $product->event;
+        $event->update(['high_demand_mode' => true]);
+
+        VirtualQueueEntry::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'session_token' => 'sess-waiting',
+            'position' => 1,
+            'status' => VirtualQueueEntry::STATUS_WAITING,
+        ]);
+
+        VirtualQueueEntry::create([
+            'tenant_id' => $this->tenant->id,
+            'event_id' => $event->id,
+            'session_token' => 'sess-admitted',
+            'position' => 2,
+            'status' => VirtualQueueEntry::STATUS_ADMITTED,
+            'admitted_at' => now(),
+        ]);
+
+        $response = $this->auth()->getJson('/api/v1/reports/operation-snapshot');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.virtual_queue.waiting', 1)
+            ->assertJsonPath('data.virtual_queue.admitted', 1);
     }
 }

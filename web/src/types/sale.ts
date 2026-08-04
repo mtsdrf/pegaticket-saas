@@ -79,6 +79,9 @@ export interface Sale {
   change_for_amount?: number | null
   status: SaleStatus
   origin: SaleOrigin
+  /** Motor de risco básico (roadmap Fase 7) — só um alerta pro staff revisar manualmente, nunca bloqueia a venda. */
+  risk_flagged?: boolean
+  risk_reason?: string | null
   final_customer?: SaleFinalCustomerRef
   items?: SaleItem[]
   installments?: SaleInstallment[]

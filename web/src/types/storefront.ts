@@ -279,6 +279,8 @@ export interface StorefrontAvailabilityResult {
     uuid: string
     name: string
     slug: string
+    /** Fila virtual para alta demanda (roadmap Fase 7) — quando true, a tela deve consultar `getQueueStatus` antes de liberar a compra normal. */
+    high_demand_mode: boolean
     venue: {
       uuid: string
       name: string
@@ -359,6 +361,19 @@ export interface StorefrontCreateHoldPayload {
   }>
   /** Código de rastreio do afiliado/promotor (`?ref=` na URL da loja, ver `utils/marketingTracking.ts`) — silenciosamente ignorado pelo backend se inativo/inexistente. */
   affiliate_code?: string
+  /** Honeypot anti-bot (roadmap Fase 7) — campo invisível no formulário real, deve ficar vazio sempre. Ver `AntiBotHoneypotField`. */
+  website?: string
+  /** Timestamp de quando o formulário carregou, para checagem de tempo mínimo de preenchimento (roadmap Fase 7). */
+  form_rendered_at?: string
+}
+
+/** Fila virtual para alta demanda (roadmap Fase 7) — `GET /loja/{slug}/eventos/{eventSlug}/fila`, usado em polling pela tela de detalhe do evento enquanto `status !== 'admitted'`. */
+export interface StorefrontQueueStatus {
+  high_demand_mode: boolean
+  status: 'waiting' | 'admitted' | 'expired'
+  position: number | null
+  waiting_ahead: number
+  admitted_at: string | null
 }
 
 /** Delivery Fase 2 — códigos de erro do checkout (`StorefrontCheckoutController`). */

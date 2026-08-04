@@ -32,6 +32,14 @@ Importante:
 - parte do conteúdo abaixo descreve fases antigas, módulos herdados ou frentes que **não representam mais o recorte principal do produto**;
 - usar o restante deste documento como contexto histórico, não como roadmap oficial vigente.
 
+## Fase 7 do roadmap — risco, antifraude e alta demanda (2026-08-03)
+
+Implementado como CÓDIGO, com testes Feature (682 passed no total, era 668): fila virtual opt-in por evento (`events.high_demand_mode`+`virtual_queue_admission_batch_size`, tabela `virtual_queue_entries`, `App\Services\Storefront\VirtualQueueService`, `AdmitVirtualQueueEntriesCommand` a cada minuto, endpoint `GET /loja/{slug}/eventos/{eventSlug}/fila`, gate em `StorefrontHoldService::createHold`, UI de posição em `StorefrontEventDetailPage.tsx`); honeypot anti-bot sem fornecedor externo (`App\Services\Security\AntiBotGuardService`, campo `website`+`form_rendered_at`, aplicado em criação de hold e resgate de convite, com campo invisível real em `GuestInvitePage.tsx`); motor de risco básico (`sales.risk_flagged`/`risk_reason`, `App\Services\Risk\RiskEngineService` via listener `FlagRiskOnSalePaid` em `SalePaid` — só alerta, nunca bloqueia, badge "Revisar" em `SaleListPage.tsx`); extensão do `OperationSnapshotService`/`OperationSnapshotCard` com `checkout.error_rate_percent` (derivado do funil de `InventoryHold`) e `virtual_queue.waiting/admitted`.
+
+Defaults técnicos NÃO validados com o usuário: `virtual_queue_admission_batch_size=50`, `VirtualQueueService::ADMISSION_WINDOW_MINUTES=20`, `RiskEngineService::PURCHASE_COUNT_THRESHOLD=3`/`WINDOW_HOURS=6`, `AntiBotGuardService::MIN_FILL_SECONDS=2`, `OperationSnapshotService::CHECKOUT_WINDOW_HOURS=6`.
+
+Documentado como RUNBOOK (não código) em `docs/runbooks/`: `alta-demanda-evento-grande.md`, `contingencia-integracoes-pagamento.md`, `plano-de-freeze.md`, `testes-de-carga.md` (como rodar k6/Artillery, não executado aqui). "Regras adaptativas" (throttle dinâmico por carga real) e teste de carga real ficaram fora de escopo desta rodada — dependem de decisão de arquitetura própria/infra externa.
+
 ## Estado atual (2026-07-05)
 - Nova passagem global de QA consolidada e fechada em **28 de julho de 2026** com base na skill `testing`, consolidada em:
   - [docs/quality/2026-07-27-production-certification-audit.md](/home/mtsdrf/workspace/pegaticket-saas/docs/quality/2026-07-27-production-certification-audit.md)
