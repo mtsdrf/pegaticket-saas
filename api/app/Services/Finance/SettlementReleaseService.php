@@ -112,7 +112,8 @@ class SettlementReleaseService
 
     public function releaseSettlement(string $settlementUuid): string
     {
-        return DB::transaction(function () use ($settlementUuid) {
+        // Passo (a): transação curta só para travar, ler e validar o estado atual.
+        $prepared = DB::transaction(function () use ($settlementUuid) {
             /** @var Settlement|null $settlement */
             $settlement = Settlement::query()
                 ->where('uuid', $settlementUuid)
@@ -147,34 +148,58 @@ class SettlementReleaseService
                 );
             }
 
-            $releasedSplitIds = [];
-            $releaseRequested = false;
+            return ['receiverAccountId' => $receiverAccountId, 'splitIds' => $splitIds];
+        });
 
-            foreach ($splitIds as $splitId) {
-                $splitPayload = $this->pagBankPaymentProvider->getSplit((string) $splitId);
-                $receiver = $this->findReceiverByAccountId((array) ($splitPayload['receivers'] ?? []), $receiverAccountId);
-                $custodyStatus = $receiver['configurations']['custody']['status'] ?? null;
-                $releasedAt = $receiver['configurations']['custody']['release']['released_at'] ?? null;
+        if (is_string($prepared)) {
+            return $prepared;
+        }
 
-                if ($custodyStatus === 'RELEASED') {
-                    $releasedSplitIds[] = (string) $splitId;
+        // Passo (c): chamadas HTTP ao PagBank fora de qualquer lock de banco.
+        $receiverAccountId = $prepared['receiverAccountId'];
+        $splitIds = $prepared['splitIds'];
+        $releasedSplitIds = [];
+        $releaseRequested = false;
 
-                    continue;
-                }
+        foreach ($splitIds as $splitId) {
+            $splitPayload = $this->pagBankPaymentProvider->getSplit((string) $splitId);
+            $receiver = $this->findReceiverByAccountId((array) ($splitPayload['receivers'] ?? []), $receiverAccountId);
+            $custodyStatus = $receiver['configurations']['custody']['status'] ?? null;
+            $releasedAt = $receiver['configurations']['custody']['release']['released_at'] ?? null;
 
-                $this->pagBankPaymentProvider->releaseSplitCustody((string) $splitId, [$receiverAccountId]);
-                $afterReleasePayload = $this->pagBankPaymentProvider->getSplit((string) $splitId);
-                $afterReceiver = $this->findReceiverByAccountId((array) ($afterReleasePayload['receivers'] ?? []), $receiverAccountId);
-                $afterStatus = $afterReceiver['configurations']['custody']['status'] ?? null;
-                $afterReleasedAt = $afterReceiver['configurations']['custody']['release']['released_at'] ?? null;
+            if ($custodyStatus === 'RELEASED') {
+                $releasedSplitIds[] = (string) $splitId;
 
-                if ($afterStatus === 'RELEASED' && $afterReleasedAt !== null) {
-                    $releasedSplitIds[] = (string) $splitId;
+                continue;
+            }
 
-                    continue;
-                }
+            $this->pagBankPaymentProvider->releaseSplitCustody((string) $splitId, [$receiverAccountId]);
+            $afterReleasePayload = $this->pagBankPaymentProvider->getSplit((string) $splitId);
+            $afterReceiver = $this->findReceiverByAccountId((array) ($afterReleasePayload['receivers'] ?? []), $receiverAccountId);
+            $afterStatus = $afterReceiver['configurations']['custody']['status'] ?? null;
+            $afterReleasedAt = $afterReceiver['configurations']['custody']['release']['released_at'] ?? null;
 
-                $releaseRequested = true;
+            if ($afterStatus === 'RELEASED' && $afterReleasedAt !== null) {
+                $releasedSplitIds[] = (string) $splitId;
+
+                continue;
+            }
+
+            $releaseRequested = true;
+        }
+
+        // Passo (d): segunda transação curta só para persistir, revalidando o estado atual
+        // para não sobrescrever uma mudança concorrente ocorrida entre os dois locks.
+        return DB::transaction(function () use ($settlementUuid, $releasedSplitIds, $releaseRequested) {
+            /** @var Settlement|null $settlement */
+            $settlement = Settlement::query()
+                ->where('uuid', $settlementUuid)
+                ->whereNull('deleted_at')
+                ->lockForUpdate()
+                ->first();
+
+            if ($settlement === null || $settlement->status === 'released') {
+                return 'skipped';
             }
 
             if ($releaseRequested) {

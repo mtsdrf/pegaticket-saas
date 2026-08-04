@@ -113,17 +113,30 @@ class TicketService
     {
         $this->assertBelongsToCurrentTenant($ticket);
 
-        if ($ticket->status !== 'ativo') {
-            throw new InvalidTicketStateException(__('messages.ticket.not_transferable'));
-        }
-
         return DB::transaction(function () use ($ticket, $dto, $finalCustomerUuid) {
-            $previousAttendeeName = $ticket->attendee_name;
+            // Re-lê com lockForUpdate() dentro da transação: o objeto
+            // recebido pode ter sido carregado antes do lock (ex: via route
+            // model binding), então a checagem de status precisa ser contra
+            // a linha travada, não contra o estado em memória — duas
+            // transferências concorrentes pro mesmo ticket (duplo-clique,
+            // replay) não podem ambas passar no check-then-act.
+            $locked = Ticket::query()
+                ->whereKey($ticket->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $ticket->attendee_name = $dto->attendeeName;
-            $ticket->attendee_document = $dto->attendeeDocument;
-            $ticket->rotateAccessCredentials();
-            $ticket->save();
+            if ($locked->status !== 'ativo') {
+                throw new InvalidTicketStateException(__('messages.ticket.not_transferable'));
+            }
+
+            $previousAttendeeName = $locked->attendee_name;
+
+            $locked->attendee_name = $dto->attendeeName;
+            $locked->attendee_document = $dto->attendeeDocument;
+            $locked->rotateAccessCredentials();
+            $locked->save();
+
+            $ticket = $locked;
 
             event(new TicketTransferred(
                 ticketUuid: $ticket->uuid,

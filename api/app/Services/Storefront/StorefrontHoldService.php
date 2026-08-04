@@ -142,7 +142,7 @@ class StorefrontHoldService
             foreach ($items as $item) {
                 $ticketType = ! empty($item['ticket_type_uuid']) ? $this->lockTicketType($tenant->id, $event->id, $item['ticket_type_uuid']) : null;
                 $eventProduct = ! empty($item['event_product_uuid']) ? $this->lockEventProduct($tenant->id, $event->id, $item['event_product_uuid']) : null;
-                $seat = ! empty($item['seat_uuid']) ? $this->lockSeatForEvent($event, $item['seat_uuid']) : null;
+                $seat = ! empty($item['seat_uuid']) ? $this->lockSeatForEvent($tenant->id, $event, $item['seat_uuid']) : null;
                 $quantity = (int) $item['quantity'];
 
                 $this->assertValidHoldItem($event, $session, $ticketType, $eventProduct, $seat, $quantity);
@@ -632,7 +632,7 @@ class StorefrontHoldService
             }
 
             $quantity = (int) $item['quantity'];
-            $availableSeats = $this->lockAvailableSeatsInSector($event, (string) $item['sector_name']);
+            $availableSeats = $this->lockAvailableSeatsInSector($tenantId, $event, (string) $item['sector_name']);
             $selected = $this->seatAllocationService->selectBest($availableSeats, $quantity);
 
             if ($selected->count() < $quantity) {
@@ -647,13 +647,14 @@ class StorefrontHoldService
         });
     }
 
-    private function lockAvailableSeatsInSector(Event $event, string $sectorName): Collection
+    private function lockAvailableSeatsInSector(int $tenantId, Event $event, string $sectorName): Collection
     {
         if (! $event->venueMapVersion) {
             return collect();
         }
 
         return Seat::query()
+            ->where('tenant_id', $tenantId)
             ->where('venue_map_version_id', $event->venueMapVersion->id)
             ->where('sector_name', $sectorName)
             ->where('kind', 'assento')
@@ -704,13 +705,14 @@ class StorefrontHoldService
             ->firstOrFail();
     }
 
-    private function lockSeatForEvent(Event $event, string $uuid): Seat
+    private function lockSeatForEvent(int $tenantId, Event $event, string $uuid): Seat
     {
         if (! $event->venueMapVersion) {
             abort(422, __('messages.inventory_hold.invalid_seat'));
         }
 
         return Seat::query()
+            ->where('tenant_id', $tenantId)
             ->where('venue_map_version_id', $event->venueMapVersion->id)
             ->where('uuid', $uuid)
             ->whereNull('deleted_at')

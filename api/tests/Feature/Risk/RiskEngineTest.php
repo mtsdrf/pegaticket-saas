@@ -65,6 +65,53 @@ class RiskEngineTest extends TestCase
         return $sale;
     }
 
+    private function createFreeCourtesySale(int $tenantId, int $finalCustomerId, int $ticketTypeId, ?CarbonInterface $paidAt = null): Sale
+    {
+        $sale = Sale::create([
+            'tenant_id' => $tenantId,
+            'final_customer_id' => $finalCustomerId,
+            'is_installment' => false,
+            'total_amount' => 0,
+            'is_paid' => true,
+            'paid_at' => $paidAt ?? now(),
+            'status' => 'confirmed',
+            'origin' => 'staff',
+        ]);
+
+        SaleItem::create([
+            'tenant_id' => $tenantId,
+            'sale_id' => $sale->id,
+            'ticket_type_id' => $ticketTypeId,
+            'quantity' => 1,
+            'unit_price' => 0,
+            'line_total' => 0,
+        ]);
+
+        return $sale;
+    }
+
+    #[Test]
+    public function does_not_flag_repeated_zero_amount_courtesy_sales_for_the_same_event(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'guest-list@test.com']);
+
+        $sale1 = $this->createFreeCourtesySale($tenant->id, $customer->id, $ticketType->id);
+        $sale2 = $this->createFreeCourtesySale($tenant->id, $customer->id, $ticketType->id);
+        $sale3 = $this->createFreeCourtesySale($tenant->id, $customer->id, $ticketType->id);
+
+        app(RiskEngineService::class)->evaluateSalePaid($sale3->uuid);
+
+        $sale1->refresh();
+        $sale2->refresh();
+        $sale3->refresh();
+        $this->assertFalse((bool) $sale1->risk_flagged);
+        $this->assertFalse((bool) $sale2->risk_flagged);
+        $this->assertFalse((bool) $sale3->risk_flagged);
+        $this->assertNull($sale3->risk_reason);
+    }
+
     #[Test]
     public function flags_a_sale_when_the_same_customer_buys_repeatedly_for_the_same_event_in_a_short_window(): void
     {

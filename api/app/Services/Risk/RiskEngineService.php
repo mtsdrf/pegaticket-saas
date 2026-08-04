@@ -36,6 +36,10 @@ class RiskEngineService
             return;
         }
 
+        if ((float) $sale->total_amount === 0.0) {
+            return;
+        }
+
         $eventIds = $sale->items
             ->map(fn ($item) => $item->ticketType?->event_id ?? $item->eventProduct?->event_id)
             ->filter()
