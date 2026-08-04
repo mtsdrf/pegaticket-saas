@@ -966,11 +966,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const [holdRetryNonce, setHoldRetryNonce] = useState(0)
   const shouldReleaseHoldRef = useRef(true)
   const lastReleasedHoldUuidRef = useRef<string | null>(null)
-  // Anti-bot básico (roadmap Fase 7) — timestamp de quando este passo do
-  // checkout carregou, para a checagem de tempo mínimo de preenchimento no
-  // backend (App\Services\Security\AntiBotGuardService). `website` nunca é
-  // preenchido por um usuário real (não existe campo visível para ele).
-  const formRenderedAtRef = useRef(new Date().toISOString())
 
   const holdPayloadItems = useMemo<StorefrontCreateHoldPayload['items']>(
     () =>
@@ -1081,8 +1076,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           session_uuid: holdContext.sessionUuid ?? undefined,
           items: holdPayloadItems,
           affiliate_code: getStorefrontTracking(slug)?.affiliate_code ?? undefined,
-          website: '',
-          form_rendered_at: formRenderedAtRef.current,
         })
 
         createdHoldUuid = createdHold.uuid

@@ -8,6 +8,11 @@ const saleUuid = 'sale-card-flow-1'
 const holdUuid = 'hold-card-flow-1'
 const portalToken = 'portal-token-playwright'
 
+/** Datas relativas ao momento do teste — evita que fixtures com timestamp fixo expirem sozinhas quando o dia virar. */
+function minutesFromNow(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString()
+}
+
 function mockPagSeguroSdkSource() {
   return `
     (() => {
@@ -144,7 +149,7 @@ async function mockAuthenticatedStorefrontCheckout(page: Parameters<typeof test>
         data: {
           uuid: holdUuid,
           status: 'reservado',
-          expires_at: '2026-08-03T23:59:59-03:00',
+          expires_at: minutesFromNow(30),
           remaining_seconds: 600,
         },
         meta: {},
@@ -167,7 +172,7 @@ async function mockAuthenticatedStorefrontCheckout(page: Parameters<typeof test>
         data: {
           uuid: holdUuid,
           status: 'reservado',
-          expires_at: '2026-08-03T23:59:59-03:00',
+          expires_at: minutesFromNow(30),
           remaining_seconds: 600,
         },
         meta: {},
@@ -255,7 +260,7 @@ test.describe('Checkout público com cartão', () => {
             environment: 'SANDBOX',
             public_key: 'PAGBANK_PUBLIC_KEY_SANDBOX',
             three_ds_session: 'PAGBANK_3DS_SESSION_SANDBOX',
-            three_ds_session_expires_at: '2026-08-03T13:00:00-03:00',
+            three_ds_session_expires_at: minutesFromNow(30),
             sdk_script_url: 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js',
           },
           meta: {},
@@ -364,7 +369,7 @@ test.describe('Checkout público com cartão', () => {
             environment: 'SANDBOX',
             public_key: 'PAGBANK_PUBLIC_KEY_SANDBOX',
             three_ds_session: 'PAGBANK_3DS_SESSION_SANDBOX',
-            three_ds_session_expires_at: '2026-08-03T13:00:00-03:00',
+            three_ds_session_expires_at: minutesFromNow(30),
             sdk_script_url: 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js',
           },
           meta: {},
