@@ -48,6 +48,11 @@ class CreateSaleDTO
         public readonly ?string $utmSource = null,
         public readonly ?string $utmMedium = null,
         public readonly ?string $utmCampaign = null,
+        // IP do comprador (roadmap Fase 7, velocity por IP) — resolvido pelo
+        // controller via $request->ip(), NUNCA a partir do corpo da
+        // requisição (não é input confiável). null preserva 100% o fluxo
+        // staff (venda manual não tem "comprador" fazendo requisição HTTP).
+        public readonly ?string $purchaserIp = null,
     ) {}
 
     public static function fromArray(array $data, int $tenantId): self

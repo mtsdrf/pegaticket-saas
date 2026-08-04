@@ -603,6 +603,8 @@ return [
         'risk_failed_payment_velocity_reason' => 'This customer had :count failed/declined payment attempts in the last :minutes minutes (possible stolen card testing). This is only an alert — review manually before acting.',
         'risk_multiple_cards_reason' => 'This customer used :count different cards in the last :minutes minutes (possible stolen card testing). This is only an alert — review manually before acting.',
         'risk_card_shared_across_customers_reason' => 'The card used in this purchase was used by :count different customers in the last :minutes minutes (possible stolen card being tested across multiple accounts). This is only an alert — review manually before acting.',
+        'risk_ip_velocity_reason' => ':count different customers completed a paid purchase from the same IP address in the last :minutes minutes (possible bot/fraud buying at scale disguised as multiple customers). This is only an alert — review manually before acting.',
+        'risk_refund_abuse_reason' => 'This customer had :count refunds registered in the last :days days (possible refund abuse / preventive chargeback pattern). This is only an alert — review manually before acting.',
         'list' => 'Order list.',
         'show' => 'Order shown successfully.',
         'fiscal_preview' => 'Order fiscal preview shown successfully.',

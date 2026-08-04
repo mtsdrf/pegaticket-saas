@@ -610,6 +610,8 @@ return [
         'risk_failed_payment_velocity_reason' => 'Este cliente teve :count tentativas de pagamento recusadas/falhas nos últimos :minutes minutos (possível teste de cartão roubado). Apenas um alerta — revise manualmente antes de agir.',
         'risk_multiple_cards_reason' => 'Este cliente usou :count cartões diferentes nos últimos :minutes minutos (possível teste de cartão roubado). Apenas um alerta — revise manualmente antes de agir.',
         'risk_card_shared_across_customers_reason' => 'O cartão usado nesta compra foi usado por :count clientes diferentes nos últimos :minutes minutos (possível cartão roubado sendo testado em múltiplas contas). Apenas um alerta — revise manualmente antes de agir.',
+        'risk_ip_velocity_reason' => ':count clientes diferentes concluíram uma compra paga a partir do mesmo IP nos últimos :minutes minutos (possível bot/fraude comprando em massa disfarçado de vários clientes). Apenas um alerta — revise manualmente antes de agir.',
+        'risk_refund_abuse_reason' => 'Este cliente teve :count reembolsos registrados nos últimos :days dias (possível abuso de reembolso / padrão de chargeback preventivo). Apenas um alerta — revise manualmente antes de agir.',
         'list' => 'Lista de vendas.',
         'show' => 'Venda exibida com sucesso.',
         'fiscal_preview' => 'Prévia fiscal da venda exibida com sucesso.',

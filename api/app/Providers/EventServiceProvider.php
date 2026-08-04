@@ -253,6 +253,7 @@ use App\Listeners\Plan\AuditPlanDeleted;
 use App\Listeners\Plan\AuditPlanFunctionalitiesSynced;
 use App\Listeners\Plan\AuditPlanUpdated;
 use App\Listeners\Portal\WritePortalAuditLog;
+use App\Listeners\Risk\FlagRiskOnSaleRefundCreated;
 use App\Listeners\Sale\AuditSaleApproved;
 use App\Listeners\Sale\AuditSaleCancellationApproved;
 use App\Listeners\Sale\AuditSaleCancellationRejected;
@@ -534,6 +535,7 @@ class EventServiceProvider extends ServiceProvider
         SaleRefundCreated::class => [
             AuditSaleRefundCreated::class,
             RegisterFinancialAdjustmentOnSaleRefund::class,
+            FlagRiskOnSaleRefundCreated::class,
         ],
         CashSessionOpened::class => [AuditCashSessionOpened::class],
         CashSessionClosed::class => [AuditCashSessionClosed::class],

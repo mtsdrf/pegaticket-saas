@@ -3,6 +3,7 @@
 namespace App\Services\Risk;
 
 use App\Models\Sale\Sale;
+use App\Models\Sale\SaleRefund;
 use App\Models\Subscription\Payment;
 use Illuminate\Support\Collection;
 
@@ -32,6 +33,26 @@ use Illuminate\Support\Collection;
  *    avaliada aparece em mais de CARD_REUSE_THRESHOLD FinalCustomers/
  *    e-mails diferentes dentro do tenant em CARD_VELOCITY_WINDOW_MINUTES
  *    minutos — sinal de cartão roubado sendo testado em múltiplas contas.
+ * 5. Velocity de checkout por IP: o mesmo `sales.purchaser_ip` (capturado
+ *    em StorefrontCheckoutController::store() via $request->ip(), só no
+ *    checkout público) aparece em mais de IP_VELOCITY_THRESHOLD vendas
+ *    PAGAS de FinalCustomers/e-mails DIFERENTES em
+ *    IP_VELOCITY_WINDOW_MINUTES minutos — sinal de bot/fraude comprando
+ *    em massa disfarçado de vários "clientes" distintos a partir da mesma
+ *    máquina/rede. Vendas sem purchaser_ip (fluxo staff, ou vendas criadas
+ *    antes desta coluna existir) nunca disparam esta heurística.
+ *
+ * 6. Abuso de reembolso: o mesmo FinalCustomer (ou e-mail) teve mais de
+ *    REFUND_COUNT_THRESHOLD SaleRefunds registrados em
+ *    REFUND_WINDOW_HOURS horas — sinal de "comprar e sempre pedir
+ *    reembolso"/chargeback preventivo. Disparado por
+ *    evaluateRefund(), chamado pelo listener FlagRiskOnSaleRefundCreated
+ *    no evento SaleRefundCreated (SaleRefundService::create() — todo
+ *    SaleRefund já nasce com status=registrado, não existe fluxo de
+ *    aprovação separado neste domínio, ver SaleRefund::STATUS_REGISTERED
+ *    e docblock de SaleRefundService). Flag vai para a VENDA original do
+ *    reembolso mais recente (mesma convenção das heurísticas 1-5: marca
+ *    a Sale, não o SaleRefund).
  *
  * Lacuna de dado conhecida: o PagBank (ver PagBankPaymentProvider::
  * callPagBank) só devolve `payment_method.card` com brand/first_digits/
@@ -62,7 +83,73 @@ class RiskEngineService
 
     public const CARD_VELOCITY_WINDOW_MINUTES = 60;
 
+    public const IP_VELOCITY_THRESHOLD = 4;
+
+    public const IP_VELOCITY_WINDOW_MINUTES = 30;
+
+    public const REFUND_COUNT_THRESHOLD = 3;
+
+    public const REFUND_WINDOW_HOURS = 720;
+
     private const FAILED_PAYMENT_STATUSES = ['failed', 'declined'];
+
+    /**
+     * Heurística 6 (abuso de reembolso) — chamada por
+     * FlagRiskOnSaleRefundCreated no evento SaleRefundCreated.
+     * REFUND_WINDOW_HOURS=720 (30 dias) é bem mais longo que as outras
+     * janelas (minutos/poucas horas) DE PROPÓSITO: reembolso é um evento
+     * raro por natureza (ao contrário de tentativa de pagamento ou
+     * compra), então "repetir" precisa de uma janela maior pra fazer
+     * sentido como sinal de abuso recorrente, não só uma sequência rápida.
+     */
+    public function evaluateRefund(string $saleRefundUuid): void
+    {
+        $refund = SaleRefund::query()
+            ->where('uuid', $saleRefundUuid)
+            ->with('sale.finalCustomer')
+            ->first();
+
+        $sale = $refund?->sale;
+
+        if (! $refund || ! $sale || ! $sale->final_customer_id) {
+            return;
+        }
+
+        $tenantId = (int) $sale->tenant_id;
+        $finalCustomerId = (int) $sale->final_customer_id;
+        $email = $sale->finalCustomer?->email;
+
+        $count = $this->countRecentRefundsForCustomer($tenantId, $finalCustomerId, $email);
+
+        if ($count < self::REFUND_COUNT_THRESHOLD) {
+            return;
+        }
+
+        $this->flag($sale, __('messages.sale.risk_refund_abuse_reason', [
+            'count' => $count,
+            'days' => (int) (self::REFUND_WINDOW_HOURS / 24),
+        ]));
+    }
+
+    private function countRecentRefundsForCustomer(int $tenantId, int $finalCustomerId, ?string $email): int
+    {
+        return SaleRefund::query()
+            ->join('sales', 'sales.id', '=', 'sale_refunds.sale_id')
+            ->leftJoin('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->whereNull('sale_refunds.deleted_at')
+            ->whereNull('sales.deleted_at')
+            ->where('sales.tenant_id', $tenantId)
+            ->where('sale_refunds.created_at', '>=', now()->subHours(self::REFUND_WINDOW_HOURS))
+            ->where(function ($query) use ($finalCustomerId, $email) {
+                $query->where('sales.final_customer_id', $finalCustomerId);
+
+                if ($email) {
+                    $query->orWhere('final_customers.email', $email);
+                }
+            })
+            ->distinct('sale_refunds.id')
+            ->count('sale_refunds.id');
+    }
 
     public function evaluateSalePaid(string $saleUuid): void
     {
@@ -91,7 +178,11 @@ class RiskEngineService
             return;
         }
 
-        $this->evaluateCardSharedAcrossCustomers($sale, $tenantId, $finalCustomerId, $email);
+        if ($this->evaluateCardSharedAcrossCustomers($sale, $tenantId, $finalCustomerId, $email)) {
+            return;
+        }
+
+        $this->evaluateIpVelocity($sale, $tenantId);
     }
 
     private function evaluateRepeatedPurchases(Sale $sale, int $tenantId, int $finalCustomerId, ?string $email): bool
@@ -165,6 +256,26 @@ class RiskEngineService
         return $this->flag($sale, __('messages.sale.risk_card_shared_across_customers_reason', [
             'count' => $distinctCustomers,
             'minutes' => self::CARD_VELOCITY_WINDOW_MINUTES,
+        ]));
+    }
+
+    private function evaluateIpVelocity(Sale $sale, int $tenantId): bool
+    {
+        $ip = $sale->purchaser_ip;
+
+        if (! $ip) {
+            return false;
+        }
+
+        $distinctCustomers = $this->recentDistinctCustomersForIp($tenantId, $ip);
+
+        if ($distinctCustomers < self::IP_VELOCITY_THRESHOLD) {
+            return false;
+        }
+
+        return $this->flag($sale, __('messages.sale.risk_ip_velocity_reason', [
+            'count' => $distinctCustomers,
+            'minutes' => self::IP_VELOCITY_WINDOW_MINUTES,
         ]));
     }
 
@@ -258,6 +369,30 @@ class RiskEngineService
         return $rows
             ->filter(fn ($row) => $this->cardFingerprint($row->metadata) === $fingerprint)
             ->pluck('final_customer_id')
+            ->unique()
+            ->count();
+    }
+
+    /**
+     * Quantos FinalCustomers/e-mails DISTINTOS pagaram uma venda a partir
+     * do mesmo IP, dentro do tenant, em IP_VELOCITY_WINDOW_MINUTES
+     * minutos. Dedupe por e-mail quando disponível (mesmo espírito das
+     * outras heurísticas: dois FinalCustomers com o mesmo e-mail contam
+     * como um só), senão por final_customer_id.
+     */
+    private function recentDistinctCustomersForIp(int $tenantId, string $ip): int
+    {
+        return Sale::query()
+            ->leftJoin('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->where('sales.purchaser_ip', $ip)
+            ->where('sales.is_paid', true)
+            ->whereNull('sales.deleted_at')
+            ->whereNotNull('sales.final_customer_id')
+            ->where('sales.paid_at', '>=', now()->subMinutes(self::IP_VELOCITY_WINDOW_MINUTES))
+            ->select('sales.final_customer_id', 'final_customers.email')
+            ->get()
+            ->map(fn ($row) => $row->email ?: 'id:'.$row->final_customer_id)
             ->unique()
             ->count();
     }

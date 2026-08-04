@@ -16,15 +16,14 @@ class StorefrontCheckoutController extends Controller
 {
     public function __construct(
         private StorefrontCheckoutService $service
-    ) {
-    }
+    ) {}
 
     public function store(string $slug, StorefrontCheckoutRequest $request)
     {
         $dto = StorefrontCheckoutDTO::fromArray($request->validated());
 
         try {
-            $sale = $this->service->checkout($slug, portal_customer(), $dto);
+            $sale = $this->service->checkout($slug, portal_customer(), $dto, $request->ip());
         } catch (StorefrontDisabledException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
         } catch (BelowMinimumSaleException $e) {

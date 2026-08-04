@@ -45,6 +45,7 @@ class Sale extends BaseModel
         'status',
         'status_before_cancellation_request',
         'origin',
+        'purchaser_ip',
         'operated_by',
         'client_sale_uuid',
         'affiliate_id',

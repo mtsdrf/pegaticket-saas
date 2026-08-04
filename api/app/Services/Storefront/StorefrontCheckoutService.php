@@ -47,12 +47,18 @@ class StorefrontCheckoutService
         private AffiliateService $affiliateService,
     ) {}
 
-    public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto): Sale
+    /**
+     * $purchaserIp (roadmap Fase 7, velocity por IP) vem do controller via
+     * $request->ip() — NUNCA do corpo da requisição/DTO validado, para não
+     * confiar em input do cliente. null preserva 100% chamadas antigas
+     * (ex.: testes que não passam IP).
+     */
+    public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto, ?string $purchaserIp = null): Sale
     {
         $tenant = $this->catalogService->findTenantBySlug($slug);
 
-        return $this->tenantExecutionContext->run($tenant, function () use ($tenant, $customer, $dto) {
-            return DB::transaction(function () use ($tenant, $customer, $dto) {
+        return $this->tenantExecutionContext->run($tenant, function () use ($tenant, $customer, $dto, $purchaserIp) {
+            return DB::transaction(function () use ($tenant, $customer, $dto, $purchaserIp) {
                 // Defesa em profundidade: findTenantBySlug() já checou o plano
                 // fora da transação, re-checa aqui dentro dela antes de mutar
                 // qualquer coisa.
@@ -166,6 +172,7 @@ class StorefrontCheckoutService
                     utmSource: $dto->utmSource,
                     utmMedium: $dto->utmMedium,
                     utmCampaign: $dto->utmCampaign,
+                    purchaserIp: $purchaserIp,
                 );
 
                 $order = $this->orderService->create($orderDto);

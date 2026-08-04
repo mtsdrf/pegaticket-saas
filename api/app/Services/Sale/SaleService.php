@@ -301,6 +301,7 @@ class SaleService
                 'change_for_amount' => $dto->changeForAmount,
                 'status' => $dto->status,
                 'origin' => $dto->origin,
+                'purchaser_ip' => $dto->purchaserIp,
             ]);
 
             foreach ($lines as $line) {

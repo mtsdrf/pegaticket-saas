@@ -5,6 +5,7 @@ namespace Tests\Feature\Risk;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
 use App\Models\Sale\SaleItem;
+use App\Models\Sale\SaleRefund;
 use App\Models\Subscription\Payment;
 use App\Models\Tenant\Tenant;
 use App\Services\Risk\RiskEngineService;
@@ -113,6 +114,51 @@ class RiskEngineTest extends TestCase
         ]);
 
         return $sale;
+    }
+
+    private function createPaidSaleWithIp(int $tenantId, int $finalCustomerId, int $ticketTypeId, string $ip, ?CarbonInterface $paidAt = null): Sale
+    {
+        $sale = Sale::create([
+            'tenant_id' => $tenantId,
+            'final_customer_id' => $finalCustomerId,
+            'is_installment' => false,
+            'total_amount' => 50,
+            'is_paid' => true,
+            'paid_at' => $paidAt ?? now(),
+            'status' => 'confirmed',
+            'origin' => 'storefront',
+            'purchaser_ip' => $ip,
+        ]);
+
+        SaleItem::create([
+            'tenant_id' => $tenantId,
+            'sale_id' => $sale->id,
+            'ticket_type_id' => $ticketTypeId,
+            'quantity' => 1,
+            'unit_price' => 50,
+            'line_total' => 50,
+        ]);
+
+        return $sale;
+    }
+
+    private function createSaleRefund(Sale $sale, ?CarbonInterface $createdAt = null): SaleRefund
+    {
+        $refund = SaleRefund::create([
+            'tenant_id' => $sale->tenant_id,
+            'sale_id' => $sale->id,
+            'type' => SaleRefund::TYPE_TOTAL,
+            'amount' => $sale->total_amount,
+            'reason' => 'Cliente desistiu',
+            'refunded_at' => $createdAt ?? now(),
+            'status' => SaleRefund::STATUS_REGISTERED,
+        ]);
+
+        if ($createdAt) {
+            $refund->forceFill(['created_at' => $createdAt, 'updated_at' => $createdAt])->save();
+        }
+
+        return $refund;
     }
 
     private function createPaymentForSale(Sale $sale, string $status, ?array $card = null, ?CarbonInterface $createdAt = null): Payment
@@ -386,5 +432,169 @@ class RiskEngineTest extends TestCase
 
         $sale3->refresh();
         $this->assertFalse((bool) $sale3->risk_flagged);
+    }
+
+    #[Test]
+    public function flags_a_sale_when_many_different_customers_pay_from_the_same_ip_in_a_short_window(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+        $ip = '203.0.113.9';
+
+        $customerA = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'bot-a@test.com']);
+        $customerB = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'bot-b@test.com']);
+        $customerC = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'bot-c@test.com']);
+        $customerD = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'bot-d@test.com']);
+
+        $this->createPaidSaleWithIp($tenant->id, $customerA->id, $ticketType->id, $ip);
+        $this->createPaidSaleWithIp($tenant->id, $customerB->id, $ticketType->id, $ip);
+        $this->createPaidSaleWithIp($tenant->id, $customerC->id, $ticketType->id, $ip);
+        $sale4 = $this->createPaidSaleWithIp($tenant->id, $customerD->id, $ticketType->id, $ip);
+
+        app(RiskEngineService::class)->evaluateSalePaid($sale4->uuid);
+
+        $sale4->refresh();
+        $this->assertTrue((bool) $sale4->risk_flagged);
+        $this->assertStringContainsString('mesmo IP', (string) $sale4->risk_reason);
+    }
+
+    #[Test]
+    public function does_not_flag_ip_velocity_when_same_customer_buys_repeatedly_from_the_same_ip(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+        $ip = '203.0.113.20';
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'regular@test.com']);
+
+        // Só 2 compras (abaixo de PURCHASE_COUNT_THRESHOLD=3) pra não
+        // acionar a heurística 1 (compras repetidas) antes da de IP —
+        // o objetivo aqui é isolar especificamente a heurística de IP:
+        // 1 único cliente no IP nunca bate IP_VELOCITY_THRESHOLD=4.
+        $this->createPaidSaleWithIp($tenant->id, $customer->id, $ticketType->id, $ip);
+        $sale2 = $this->createPaidSaleWithIp($tenant->id, $customer->id, $ticketType->id, $ip);
+
+        app(RiskEngineService::class)->evaluateSalePaid($sale2->uuid);
+
+        $sale2->refresh();
+        $this->assertFalse((bool) $sale2->risk_flagged);
+    }
+
+    #[Test]
+    public function does_not_flag_ip_velocity_across_different_tenants_sharing_the_same_ip(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+        [$otherTenant, $otherTicketType] = $this->tenantAndTicketType();
+        $ip = '203.0.113.30';
+
+        for ($i = 0; $i < 4; $i++) {
+            $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => "other-tenant-$i@test.com"]);
+            $this->createPaidSaleWithIp($otherTenant->id, $customer->id, $otherTicketType->id, $ip);
+        }
+
+        $customerA = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'lone-a@test.com']);
+        $customerB = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'lone-b@test.com']);
+
+        $this->createPaidSaleWithIp($tenant->id, $customerA->id, $ticketType->id, $ip);
+        $sale2 = $this->createPaidSaleWithIp($tenant->id, $customerB->id, $ticketType->id, $ip);
+
+        app(RiskEngineService::class)->evaluateSalePaid($sale2->uuid);
+
+        $sale2->refresh();
+        $this->assertFalse((bool) $sale2->risk_flagged);
+    }
+
+    #[Test]
+    public function does_not_flag_a_sale_without_purchaser_ip(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'staff-sale@test.com']);
+        $sale = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+
+        app(RiskEngineService::class)->evaluateSalePaid($sale->uuid);
+
+        $sale->refresh();
+        $this->assertFalse((bool) $sale->risk_flagged);
+    }
+
+    #[Test]
+    public function flags_the_sale_when_the_same_customer_has_multiple_refunds_in_the_window(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'refund-abuser@test.com']);
+
+        $sale1 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+        $sale2 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+        $sale3 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+
+        $this->createSaleRefund($sale1);
+        $this->createSaleRefund($sale2);
+        $refund3 = $this->createSaleRefund($sale3);
+
+        app(RiskEngineService::class)->evaluateRefund($refund3->uuid);
+
+        $sale3->refresh();
+        $this->assertTrue((bool) $sale3->risk_flagged);
+        $this->assertStringContainsString('reembolsos', (string) $sale3->risk_reason);
+    }
+
+    #[Test]
+    public function does_not_flag_refund_abuse_for_a_single_refund(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'one-time-refund@test.com']);
+        $sale = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+        $refund = $this->createSaleRefund($sale);
+
+        app(RiskEngineService::class)->evaluateRefund($refund->uuid);
+
+        $sale->refresh();
+        $this->assertFalse((bool) $sale->risk_flagged);
+    }
+
+    #[Test]
+    public function does_not_flag_refund_abuse_outside_the_window(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+
+        $customer = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'old-refunder@test.com']);
+
+        $sale1 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+        $sale2 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+        $sale3 = $this->createPaidSale($tenant->id, $customer->id, $ticketType->id);
+
+        $this->createSaleRefund($sale1, now()->subDays(60));
+        $this->createSaleRefund($sale2, now()->subDays(45));
+        $refund3 = $this->createSaleRefund($sale3, now());
+
+        app(RiskEngineService::class)->evaluateRefund($refund3->uuid);
+
+        $sale3->refresh();
+        $this->assertFalse((bool) $sale3->risk_flagged);
+    }
+
+    #[Test]
+    public function does_not_flag_refund_abuse_across_different_tenants(): void
+    {
+        [$tenant, $ticketType] = $this->tenantAndTicketType();
+        [$otherTenant, $otherTicketType] = $this->tenantAndTicketType();
+
+        $customerElsewhere = FinalCustomer::create(['uuid' => (string) Str::uuid(), 'email' => 'elsewhere@test.com']);
+        $otherSale1 = $this->createPaidSale($otherTenant->id, $customerElsewhere->id, $otherTicketType->id);
+        $otherSale2 = $this->createPaidSale($otherTenant->id, $customerElsewhere->id, $otherTicketType->id);
+        $this->createSaleRefund($otherSale1);
+        $this->createSaleRefund($otherSale2);
+
+        // Mesmo FinalCustomer (mesma linha) comprando em outro tenant —
+        // só 1 reembolso NESTE tenant, os 2 reembolsos de lá não devem
+        // contar aqui mesmo sendo o mesmo cliente (isolamento por tenant).
+        $sale = $this->createPaidSale($tenant->id, $customerElsewhere->id, $ticketType->id);
+        $refund = $this->createSaleRefund($sale);
+
+        app(RiskEngineService::class)->evaluateRefund($refund->uuid);
+
+        $sale->refresh();
+        $this->assertFalse((bool) $sale->risk_flagged);
     }
 }
