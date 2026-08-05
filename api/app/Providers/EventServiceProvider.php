@@ -67,23 +67,23 @@ use App\Events\Group\AuditGroupUpdated;
 use App\Events\Group\GroupPermissionsSynced;
 use App\Events\Group\GroupUsersSynced;
 use App\Events\GuestList\GuestListEntryRedeemed;
+use App\Events\Legal\ReleaseNoteCreated;
 /*
 |--------------------------------------------------------------------------
 | Tenant Roles
 |--------------------------------------------------------------------------
 */
-use App\Events\Legal\ReleaseNoteCreated;
 use App\Events\Legal\ReleaseNoteDeleted;
 use App\Events\Legal\ReleaseNoteUpdated;
 use App\Events\Plan\PlanCreated;
 use App\Events\Plan\PlanDeleted;
 use App\Events\Plan\PlanFunctionalitiesSynced;
+use App\Events\Plan\PlanUpdated;
 /*
 |--------------------------------------------------------------------------
 | Tenant Role Permissions
 |--------------------------------------------------------------------------
 */
-use App\Events\Plan\PlanUpdated;
 use App\Events\Portal\FinalCustomerRegistered;
 use App\Events\Portal\PortalLinkConfirmed;
 use App\Events\Portal\PortalOtpRequested;
@@ -95,23 +95,23 @@ use App\Events\Sale\SaleCancellationRejected;
 use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
+use App\Events\Sale\SaleInstallmentCreated;
 /*
 |--------------------------------------------------------------------------
 | Tenant User
 |--------------------------------------------------------------------------
 */
-use App\Events\Sale\SaleInstallmentCreated;
 use App\Events\Sale\SaleInstallmentDeleted;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
 use App\Events\Sale\SaleInstallmentUpdated;
 use App\Events\Sale\SaleItemsUpdated;
+use App\Events\Sale\SalePaid;
 /*
 |--------------------------------------------------------------------------
 | Tenant User Invite
 |--------------------------------------------------------------------------
 */
-use App\Events\Sale\SalePaid;
 use App\Events\Sale\SalePaymentCharged;
 use App\Events\Sale\SalePaymentRefundRequested;
 use App\Events\Sale\SaleRefundCreated;
@@ -123,23 +123,23 @@ use App\Events\Storefront\CouponUpdated;
 use App\Events\Subscription\SubscriptionCanceled;
 use App\Events\Subscription\SubscriptionCreated;
 use App\Events\Subscription\SubscriptionPlanChanged;
+use App\Events\Subscription\SubscriptionWithdrawalRequested;
 /*
 |--------------------------------------------------------------------------
 | Event Category
 |--------------------------------------------------------------------------
 */
-use App\Events\Subscription\SubscriptionWithdrawalRequested;
 use App\Events\Support\HelpRequestCreated;
 use App\Events\Tenant\TenantCreated;
 use App\Events\Tenant\TenantDataExported;
 use App\Events\Tenant\TenantDeleted;
 use App\Events\Tenant\TenantFeatureOverridesSynced;
+use App\Events\Tenant\TenantRoleCreated;
 /*
 |--------------------------------------------------------------------------
 | Event
 |--------------------------------------------------------------------------
 */
-use App\Events\Tenant\TenantRoleCreated;
 use App\Events\Tenant\TenantRoleDeleted;
 use App\Events\Tenant\TenantRolePermissionsSynced;
 use App\Events\Tenant\TenantRoleUpdated;
@@ -147,12 +147,12 @@ use App\Events\Tenant\TenantUpdated;
 use App\Events\Tenant\TenantUserCreated;
 use App\Events\Tenant\TenantUserDeleted;
 use App\Events\Tenant\TenantUserInviteAccepted;
+use App\Events\Tenant\TenantUserInvited;
 /*
 |--------------------------------------------------------------------------
 | Ticket Type
 |--------------------------------------------------------------------------
 */
-use App\Events\Tenant\TenantUserInvited;
 use App\Events\Tenant\TenantUserUpdated;
 use App\Events\TenantSettings\TenantSettingsUpdated;
 use App\Events\Ticket\TicketCheckedIn;
@@ -160,6 +160,7 @@ use App\Events\Ticket\TicketResent;
 use App\Events\Ticket\TicketsCancelled;
 use App\Events\Ticket\TicketsIssued;
 use App\Events\Ticket\TicketTransferred;
+use App\Events\TicketTypeWaitlist\TicketTypeWaitlistEntryCreated;
 /*
 |--------------------------------------------------------------------------
 | Event Product (adicional/estacionamento)
@@ -240,12 +241,12 @@ use App\Listeners\Functionality\AuditFunctionalityCreated;
 use App\Listeners\Functionality\AuditFunctionalityDeleted;
 use App\Listeners\Functionality\AuditFunctionalityUpdated;
 use App\Listeners\GuestList\AuditGuestListEntryRedeemed;
+use App\Listeners\Legal\AuditReleaseNoteCreated;
 /*
 |--------------------------------------------------------------------------
 | Sale
 |--------------------------------------------------------------------------
 */
-use App\Listeners\Legal\AuditReleaseNoteCreated;
 use App\Listeners\Legal\AuditReleaseNoteDeleted;
 use App\Listeners\Legal\AuditReleaseNoteUpdated;
 use App\Listeners\Plan\AuditPlanCreated;
@@ -308,6 +309,7 @@ use App\Listeners\Ticket\AuditTicketTransferred;
 use App\Listeners\Ticket\SendIssuedTicketsMail;
 use App\Listeners\Ticket\SendResentTicketMail;
 use App\Listeners\Ticket\SendTransferredTicketMail;
+use App\Listeners\TicketTypeWaitlist\AuditTicketTypeWaitlistEntryCreated;
 use App\Listeners\User\AuditUserCreated;
 /*
 |--------------------------------------------------------------------------
@@ -563,6 +565,7 @@ class EventServiceProvider extends ServiceProvider
         TicketCheckedIn::class => [AuditTicketCheckedIn::class],
         TicketTransferred::class => [AuditTicketTransferred::class, SendTransferredTicketMail::class],
         GuestListEntryRedeemed::class => [AuditGuestListEntryRedeemed::class],
+        TicketTypeWaitlistEntryCreated::class => [AuditTicketTypeWaitlistEntryCreated::class],
 
         /*
         |--------------------------------------------------------------------------

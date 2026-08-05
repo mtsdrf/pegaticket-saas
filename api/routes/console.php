@@ -98,3 +98,9 @@ Schedule::command('payments:reconcile-idempotency --limit=100')->everyFiveMinute
 // entradas aguardando para admitido respeitando o limite configurado por
 // evento. Ver AdmitVirtualQueueEntriesCommand.
 Schedule::command('storefront:admit-virtual-queue-entries')->everyMinute();
+
+// Lista de espera de TicketType esgotado (roadmap inventário) —
+// disponibilidade é calculada dinamicamente (não é coluna), então a
+// notificação de "voltou a ter vaga" é varredura periódica, mesmo padrão
+// de SendRecompraNudgeMailsCommand. Ver NotifyTicketTypeWaitlistCommand.
+Schedule::command('ticket-types:notify-waitlist')->everyFiveMinutes();

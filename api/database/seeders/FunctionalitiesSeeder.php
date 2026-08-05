@@ -22,6 +22,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Sessões do Evento', 'slug' => 'event_sessions', 'description' => 'Gestão de sessões e datas operacionais do evento', 'is_active' => true],
             ['name' => 'Portarias do Evento', 'slug' => 'event_gates', 'description' => 'Gestão de portarias formais e restrição opcional de tipo de ingresso por portaria', 'is_active' => true],
             ['name' => 'Tipos de Ingresso', 'slug' => 'ticket_types', 'description' => 'Gestão de tipos de ingresso', 'is_active' => true],
+            ['name' => 'Lista de Espera', 'slug' => 'ticket_waitlist', 'description' => 'Consulta da lista de espera de tipos de ingresso esgotados', 'is_active' => true],
             ['name' => 'Lotes de Ingresso', 'slug' => 'ticket_batches', 'description' => 'Gestão de lotes de venda por tipo de ingresso', 'is_active' => true],
             ['name' => 'Produtos do Evento', 'slug' => 'event_products', 'description' => 'Gestão de adicionais e estacionamento do evento', 'is_active' => true],
             ['name' => 'Locais', 'slug' => 'venues', 'description' => 'Gestão de locais e mapas de evento', 'is_active' => true],

@@ -8,8 +8,8 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import ZoomOutIcon from '@mui/icons-material/ZoomOut'
-import { Alert, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { Alert, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '../../components/layout/EmptyState'
 import { FloatingCheckoutBar, FLOATING_CHECKOUT_BAR_HEIGHT } from '../../components/storefront/FloatingCheckoutBar'
@@ -17,6 +17,7 @@ import { STOREFRONT_BOTTOM_NAV_HEIGHT } from '../../components/storefront/Storef
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
+import * as ticketWaitlistService from '../../services/ticketWaitlistService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type {
@@ -34,6 +35,121 @@ import { formatCurrency } from '../../utils/format'
 
 /** Fila virtual (roadmap Fase 7) — mesmo espírito de polling do OperationSnapshotCard (dashboard operacional). */
 const QUEUE_POLL_INTERVAL_MS = 15_000
+
+/**
+ * CTA de lista de espera (roadmap inventário) — aparece só quando o tipo de
+ * ingresso está esgotado (`available_quantity === 0`). Formulário curto
+ * (nome + e-mail), mesmo padrão anti-bot de GuestInvitePage (honeypot +
+ * tempo mínimo de preenchimento). Estado próprio por linha, não acopla ao
+ * carrinho/estado da página inteira.
+ */
+function TicketTypeWaitlistCta({ slug, ticketTypeUuid }: { slug: string; ticketTypeUuid: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [website, setWebsite] = useState('')
+  const formRenderedAtRef = useRef(new Date().toISOString())
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!name.trim() || !email.trim()) return
+
+    setSubmitError(null)
+    setIsSubmitting(true)
+    try {
+      await ticketWaitlistService.joinTicketTypeWaitlist(slug, {
+        ticket_type_uuid: ticketTypeUuid,
+        name: name.trim(),
+        email: email.trim(),
+        website,
+        form_rendered_at: formRenderedAtRef.current,
+      })
+      setIsSubmitted(true)
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Não foi possível entrar na lista de espera agora.'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isSubmitted) {
+    return (
+      <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'var(--pt-success)', mt: 0.5 }}>
+        Você entrou na lista de espera. Avisaremos por e-mail se houver vaga.
+      </Typography>
+    )
+  }
+
+  if (!isOpen) {
+    return (
+      <Button
+        size="small"
+        variant="text"
+        onClick={() => setIsOpen(true)}
+        sx={{ fontSize: 12, fontWeight: 600, textTransform: 'none', px: 0, minHeight: 44, justifyContent: 'flex-start' }}
+      >
+        Avise-me quando tiver vaga
+      </Button>
+    )
+  }
+
+  return (
+    <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate sx={{ mt: 1 }}>
+      {/* Honeypot anti-bot — invisível e fora da navegação por teclado/leitor de tela. */}
+      <TextField
+        label="Website"
+        name="website"
+        value={website}
+        onChange={(event) => setWebsite(event.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        sx={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+      />
+      <Stack spacing={1}>
+        {submitError && (
+          <Alert severity="error" variant="outlined" sx={{ fontSize: 12 }}>
+            {submitError}
+          </Alert>
+        )}
+        <TextField
+          size="small"
+          label="Nome"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          fullWidth
+          required
+        />
+        <TextField
+          size="small"
+          label="E-mail"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          fullWidth
+          required
+        />
+        <Stack direction="row" spacing={1}>
+          <Button
+            type="submit"
+            size="small"
+            variant="contained"
+            disabled={isSubmitting}
+            sx={{ minHeight: 44 }}
+          >
+            {isSubmitting ? 'Enviando…' : 'Entrar na lista'}
+          </Button>
+          <Button size="small" variant="text" onClick={() => setIsOpen(false)} disabled={isSubmitting} sx={{ minHeight: 44 }}>
+            Cancelar
+          </Button>
+        </Stack>
+      </Stack>
+    </Box>
+  )
+}
 
 /** Detalhe público de um evento (NOVO — não existia equivalente no catálogo de comércio) — lista `ticket_types`/`event_products` com controle de quantidade. */
 export function StorefrontEventDetailPage() {
@@ -370,8 +486,11 @@ export function StorefrontEventDetailPage() {
             </Typography>
             {'available_quantity' in ticketType && (
               <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)', mt: 0.25 }}>
-                {ticketType.available_quantity > 0 ? `${ticketType.available_quantity} disponível(is)` : 'Sem disponibilidade no momento'}
+                {ticketType.available_quantity > 0 ? `${ticketType.available_quantity} disponível(is)` : 'Esgotado'}
               </Typography>
+            )}
+            {'available_quantity' in ticketType && ticketType.available_quantity <= 0 && slug && (
+              <TicketTypeWaitlistCta slug={slug} ticketTypeUuid={ticketType.uuid} />
             )}
           </Box>
           {isSaleClosed ? (

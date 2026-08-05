@@ -20,6 +20,7 @@ use App\Http\Controllers\Event\EventSessionController;
 use App\Http\Controllers\Event\TicketBatchController;
 use App\Http\Controllers\Event\TicketTypeController;
 use App\Http\Controllers\Event\TicketTypeImageController;
+use App\Http\Controllers\Event\TicketTypeWaitlistController;
 use App\Http\Controllers\FinalCustomer\FinalCustomerController;
 use App\Http\Controllers\Finance\AdminFinanceOperationsController;
 use App\Http\Controllers\Finance\EventFinancialCloseoutController;
@@ -57,6 +58,7 @@ use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontHoldController;
 use App\Http\Controllers\Storefront\StorefrontManifestController;
+use App\Http\Controllers\Storefront\StorefrontTicketWaitlistController;
 use App\Http\Controllers\Subscription\PaymentWebhookController;
 use App\Http\Controllers\Subscription\RefundController;
 use App\Http\Controllers\Subscription\SubscriptionController;
@@ -236,6 +238,13 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Storefront\CartEventController.
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
+
+    // Lista de espera de TicketType esgotado (roadmap inventário) — 100%
+    // público, mesmo espírito de /loja/{slug}/eventos-carrinho. Anti-bot
+    // via App\Services\Security\AntiBotGuardService (honeypot + tempo
+    // mínimo). Ver App\Services\TicketTypeWaitlist\TicketTypeWaitlistService.
+    Route::post('/loja/{slug}/lista-espera', [StorefrontTicketWaitlistController::class, 'store'])
+        ->middleware('throttle:30,1,storefront-ticket-waitlist-create');
     // Portal do cliente final (roadmap 5.2) — login sem senha por OTP de
     // e-mail. Identidade própria (App\Models\FinalCustomer\FinalCustomer),
     // NÃO é App\Models\User\User (staff). Nunca revela se o e-mail já tinha
@@ -782,6 +791,13 @@ Route::prefix('v1')->group(function () {
             // Atalho pra alternar status ativo/pausado sem payload inteiro.
             Route::patch('/{ticketType}/toggle-status', [TicketTypeController::class, 'toggleStatus'])
                 ->middleware(['tenant', 'perm:ticket_types,update', 'throttle:60,1,ticket-types-toggle-status']);
+
+            // Lista de espera (roadmap inventário) — quem se cadastrou
+            // enquanto o tipo de ingresso estava esgotado, útil pra medir
+            // demanda represada. Ver
+            // App\Services\TicketTypeWaitlist\TicketTypeWaitlistService.
+            Route::get('/{ticketType}/lista-espera', [TicketTypeWaitlistController::class, 'index'])
+                ->middleware(['tenant', 'perm:ticket_waitlist,read', 'throttle:100,1,ticket-types-waitlist-list']);
         });
 
         Route::prefix('ticket-types/{ticketType}/batches')->group(function () {

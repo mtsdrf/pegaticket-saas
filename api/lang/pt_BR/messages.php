@@ -433,6 +433,12 @@ return [
         'already_redeemed' => 'Este convite já foi resgatado.',
     ],
 
+    'ticket_type_waitlist' => [
+        'list' => 'Lista de espera exibida com sucesso.',
+        'entry_created' => 'Você entrou na lista de espera. Avisaremos por e-mail se houver vaga.',
+        'mail_subject' => 'Vaga disponível: :ticket_type',
+    ],
+
     'affiliate' => [
         'list' => 'Afiliados exibidos com sucesso.',
         'created' => 'Afiliado criado com sucesso.',

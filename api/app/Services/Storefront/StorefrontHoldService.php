@@ -378,6 +378,21 @@ class StorefrontHoldService
         return $this->resolveBatchForStorefront($ticketType);
     }
 
+    /**
+     * Ponto único de disponibilidade reaproveitado fora do fluxo de loja
+     * (NotifyTicketTypeWaitlistCommand) — mesma conta exata mostrada em
+     * /loja/{slug}/eventos/{eventSlug}/disponibilidade, pra não ter dois
+     * cálculos de "esgotado" divergentes.
+     */
+    public function availableQuantityForTicketType(TicketType $ticketType): int
+    {
+        $ticketType->loadMissing('batches');
+
+        $batch = $this->findActiveBatch($ticketType);
+
+        return max(0, $this->resolveTicketTypeAvailability($ticketType, $batch));
+    }
+
     private function selectBatchForTicketType(TicketType $ticketType, int $quantity): ?TicketBatch
     {
         return $this->resolveBatchForStorefront($ticketType, $quantity);

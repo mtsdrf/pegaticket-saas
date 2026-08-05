@@ -426,6 +426,12 @@ return [
         'already_redeemed' => 'This invite has already been redeemed.',
     ],
 
+    'ticket_type_waitlist' => [
+        'list' => 'Waitlist entries shown successfully.',
+        'entry_created' => 'You have joined the waitlist. We will email you if a spot opens up.',
+        'mail_subject' => 'Spot available: :ticket_type',
+    ],
+
     'affiliate' => [
         'list' => 'Affiliates shown successfully.',
         'created' => 'Affiliate created successfully.',
