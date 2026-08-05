@@ -41,6 +41,9 @@ use Illuminate\Support\Collection;
  *    em massa disfarçado de vários "clientes" distintos a partir da mesma
  *    máquina/rede. Vendas sem purchaser_ip (fluxo staff, ou vendas criadas
  *    antes desta coluna existir) nunca disparam esta heurística.
+ *    Confirmado com o usuário (2026-08-04): produção é Hostinger direto,
+ *    sem CDN/proxy reverso na frente — $request->ip() já é o IP real do
+ *    cliente, TrustProxies não se aplica aqui.
  *
  * 6. Abuso de reembolso: o mesmo FinalCustomer (ou e-mail) teve mais de
  *    REFUND_COUNT_THRESHOLD SaleRefunds registrados em

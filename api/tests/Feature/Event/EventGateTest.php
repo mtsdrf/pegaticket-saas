@@ -217,4 +217,30 @@ class EventGateTest extends TestCase
             'name' => 'Tentativa de invasão',
         ])->assertStatus(404);
     }
+
+    #[Test]
+    public function a_gate_from_another_event_in_the_same_tenant_cannot_be_shown_updated_or_deleted(): void
+    {
+        $ticketTypeA = $this->createProduct($this->tenant->id);
+        $eventA = Event::findOrFail($ticketTypeA->event_id);
+
+        $ticketTypeB = $this->createProduct($this->tenant->id);
+        $eventB = Event::findOrFail($ticketTypeB->event_id);
+
+        $gateUuid = $this->auth()->postJson("/api/v1/events/{$eventA->uuid}/gates", [
+            'name' => 'Portão A',
+        ])->assertStatus(201)->json('data.uuid');
+
+        $this->auth()->getJson("/api/v1/events/{$eventB->uuid}/gates/{$gateUuid}")
+            ->assertStatus(404);
+
+        $this->auth()->putJson("/api/v1/events/{$eventB->uuid}/gates/{$gateUuid}", [
+            'name' => 'Tentativa via evento errado',
+        ])->assertStatus(404);
+
+        $this->auth()->deleteJson("/api/v1/events/{$eventB->uuid}/gates/{$gateUuid}")
+            ->assertStatus(404);
+
+        $this->assertDatabaseHas('event_gates', ['uuid' => $gateUuid, 'name' => 'Portão A', 'deleted_at' => null]);
+    }
 }

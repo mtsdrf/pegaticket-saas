@@ -43,7 +43,12 @@ Schedule::command('finance:generate-settlements')->hourly();
 
 // Tenta liberar settlements já vencidos. Quando houver split com
 // custódia, chama a API do PagBank; fora disso, fecha a baixa localmente.
-Schedule::command('finance:release-settlements')->hourly();
+// withoutOverlapping(): SettlementReleaseService::releaseSettlement() não
+// segura lock durante a chamada HTTP ao PagBank (de propósito, pra não
+// travar a linha durante I/O externo) — sem isso, uma execução lenta
+// sobreposta pelo próximo tick poderia chamar releaseSplitCustody() duas
+// vezes pro mesmo settlement antes de qualquer uma persistir o resultado.
+Schedule::command('finance:release-settlements')->hourly()->withoutOverlapping();
 
 // Consolida settlements já marcados como release_requested, cobrindo o
 // atraso entre a solicitação de liberação e a materialização do status

@@ -34,6 +34,16 @@
         -->
         <env name="APP_KEY" value="base64:E8wQpjiWUhVr8aJFi56RJc0q0urjsAw+bbeEh6QVXMo="/>
         <env name="JWT_SECRET" value="fd7c210772c68e7998eab922e9bbe9d0e0e64043b5fbf921a9435b75ad6752c2"/>
+        <!--
+            Sem isso, config('app.locale') cai no default de fábrica do
+            Laravel ('en', config/app.php) sempre que não houver .env real
+            com APP_LOCALE=pt_BR — verdade no CI (deploy.yml só faz `touch
+            .env`, arquivo vazio). Testes que checam o texto traduzido de
+            risk_reason (RiskEngineTest) passavam local e falhavam só no CI
+            por causa disso — nada a ver com o código sendo testado.
+        -->
+        <env name="APP_LOCALE" value="pt_BR"/>
+        <env name="APP_FALLBACK_LOCALE" value="pt_BR"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

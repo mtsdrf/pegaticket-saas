@@ -77,12 +77,6 @@ class CheckinService
                 );
             }
 
-            $gateResult = $this->checkGateRestriction($ticket, $dto, $operatorId);
-
-            if ($gateResult !== null) {
-                return $gateResult;
-            }
-
             if ($ticket->status === 'utilizado') {
                 if ($dto->allowReentry) {
                     $policy = $this->resolveReentryPolicy($ticket);
@@ -129,6 +123,12 @@ class CheckinService
                         }
                     }
 
+                    $gateResult = $this->checkGateRestriction($ticket, $dto, $operatorId);
+
+                    if ($gateResult !== null) {
+                        return $gateResult;
+                    }
+
                     return $this->recordAttempt(
                         $ticket,
                         'reentrada_autorizada',
@@ -173,6 +173,12 @@ class CheckinService
                     self::ACCESS_TYPE_ATTEMPT,
                     'status_'.$ticket->status
                 );
+            }
+
+            $gateResult = $this->checkGateRestriction($ticket, $dto, $operatorId);
+
+            if ($gateResult !== null) {
+                return $gateResult;
             }
 
             $ticket->status = 'utilizado';

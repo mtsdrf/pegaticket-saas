@@ -52,6 +52,7 @@ class EventGateController extends Controller
     public function show(Event $event, EventGate $gate)
     {
         $gate = $this->service->find($gate);
+        $this->assertBelongsToEvent($gate, $event);
         $gate->load(EventGateService::EAGER_RELATIONS);
 
         return APIResponse::success(
@@ -80,6 +81,8 @@ class EventGateController extends Controller
 
     public function update(UpdateEventGateRequest $request, Event $event, EventGate $gate)
     {
+        $this->assertBelongsToEvent($gate, $event);
+
         $dto = UpdateEventGateDTO::fromArray($request->validated());
 
         $gate = $this->service->update($gate, $dto);
@@ -93,6 +96,8 @@ class EventGateController extends Controller
 
     public function destroy(Event $event, EventGate $gate)
     {
+        $this->assertBelongsToEvent($gate, $event);
+
         $this->service->delete($gate);
 
         return APIResponse::success(
@@ -100,5 +105,17 @@ class EventGateController extends Controller
             __('messages.event_gate.deleted'),
             204
         );
+    }
+
+    /**
+     * {gate} da rota nunca é comparado ao {event} pelo route model binding
+     * — sem isso, dentro do mesmo tenant seria possível editar/desativar um
+     * gate de outro evento acertando a URL errada.
+     */
+    private function assertBelongsToEvent(EventGate $gate, Event $event): void
+    {
+        if ((int) $gate->event_id !== (int) $event->id) {
+            abort(404);
+        }
     }
 }
