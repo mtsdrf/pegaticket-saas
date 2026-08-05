@@ -18,6 +18,14 @@ export const STORAGE_KEYS = {
   offlineDeviceId: 'pegaticket.offline_device_id',
   /** Último contexto operacional escolhido na portaria neste navegador. */
   checkinContext: 'pegaticket.checkin_context',
+  /**
+   * Atribuição de marketing do app autenticado (login/futuro self-signup) —
+   * DIFERENTE da chave por-slug da loja (`storefrontTrackingStorageKey`
+   * abaixo): aqui não há tenant ainda, é atribuição de quem está chegando
+   * pra criar conta, capturada a partir do link de saída do `site/`
+   * (ver `site/src/utils/marketingTracking.ts`, mesmo padrão/janela).
+   */
+  appMarketingTracking: 'pegaticket.app_marketing_tracking',
 } as const
 
 /**

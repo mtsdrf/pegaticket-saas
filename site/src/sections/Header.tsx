@@ -2,7 +2,7 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import { AppBar, Box, Button, Drawer, IconButton, List, ListItemButton, Stack, Toolbar } from '@mui/material'
 import { useState } from 'react'
 import { Logo } from '../components/Logo'
-import { APP_URL } from '../constants/app'
+import { useAppUrlWithTracking } from '../hooks/useAppUrlWithTracking'
 import { trackEvent } from '../utils/analytics'
 
 /**
@@ -21,6 +21,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const appUrl = useAppUrlWithTracking()
 
   return (
     <AppBar
@@ -64,7 +65,7 @@ export function Header() {
         <Button
           variant="contained"
           color="primary"
-          href={APP_URL}
+          href={appUrl}
           onClick={() => trackEvent({ name: 'hero_cta_click', target: 'primary' })}
           sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
@@ -92,7 +93,7 @@ export function Header() {
               fullWidth
               variant="contained"
               color="primary"
-              href={APP_URL}
+              href={appUrl}
               onClick={() => trackEvent({ name: 'hero_cta_click', target: 'primary' })}
             >
               Entrar no painel

@@ -1,12 +1,14 @@
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded'
 import { Box, Button, Chip, Stack, Typography } from '@mui/material'
-import { APP_URL } from '../constants/app'
+import { useAppUrlWithTracking } from '../hooks/useAppUrlWithTracking'
 import { trackEvent } from '../utils/analytics'
 
 const RISK_REDUCERS = ['14 dias de teste', 'Cancele quando quiser', 'Suporte na implantação']
 
 export function Hero() {
+  const appUrl = useAppUrlWithTracking()
+
   return (
     <Box
       id="topo"
@@ -58,7 +60,7 @@ export function Hero() {
               variant="contained"
               color="primary"
               size="large"
-              href={APP_URL}
+              href={appUrl}
               onClick={() => trackEvent({ name: 'hero_cta_click', target: 'primary' })}
               sx={{ px: 3.5 }}
             >

@@ -6,4 +6,5 @@
  */
 export const STORAGE_KEYS = {
   themeModePreference: 'pegaticket.site.theme_mode',
+  marketingTracking: 'pegaticket.site.marketing_tracking',
 } as const

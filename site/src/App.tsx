@@ -1,10 +1,11 @@
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { ThemeFab } from './components/ThemeFab'
 import { ThemeModeProvider } from './contexts/ThemeModeProvider'
 import { useThemeMode } from './hooks/useThemeMode'
 import { buildPegaTicketTheme } from './theme'
+import { captureSiteMarketingTrackingFromUrl } from './utils/marketingTracking'
 
 interface AppProps {
   children: ReactNode
@@ -32,6 +33,10 @@ function ThemedApp({ children }: AppProps) {
  * Cada página injeta seu próprio conteúdo via `children`.
  */
 export function App({ children }: AppProps) {
+  useEffect(() => {
+    captureSiteMarketingTrackingFromUrl(window.location.search)
+  }, [])
+
   return (
     <ThemeModeProvider>
       <ThemedApp>{children}</ThemedApp>

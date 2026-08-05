@@ -1,8 +1,10 @@
 import { Box, Button, Stack, Typography } from '@mui/material'
-import { APP_URL } from '../constants/app'
+import { useAppUrlWithTracking } from '../hooks/useAppUrlWithTracking'
 import { trackEvent } from '../utils/analytics'
 
 export function FinalCta() {
+  const appUrl = useAppUrlWithTracking()
+
   return (
     <Box
       component="section"
@@ -21,7 +23,7 @@ export function FinalCta() {
         <Button
           size="large"
           variant="contained"
-          href={APP_URL}
+          href={appUrl}
           onClick={() => trackEvent({ name: 'hero_cta_click', target: 'primary' })}
           sx={{
             backgroundColor: '#FFFFFF',

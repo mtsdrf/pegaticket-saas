@@ -1,6 +1,6 @@
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { ConnectionStatusBanner } from '../components/shared/ConnectionStatusBanner'
 import { AuthProvider } from '../contexts/AuthContext'
@@ -9,10 +9,15 @@ import { UserProfileProvider } from '../contexts/UserProfileContext'
 import { useThemeMode } from '../hooks/useThemeMode'
 import { AppRoutes } from '../routes/AppRoutes'
 import { buildPegaTicketTheme } from '../theme'
+import { captureAppMarketingTrackingFromUrl } from '../utils/appMarketingTracking'
 
 function ThemedApp() {
   const { resolvedMode } = useThemeMode()
   const theme = useMemo(() => buildPegaTicketTheme(resolvedMode), [resolvedMode])
+
+  useEffect(() => {
+    captureAppMarketingTrackingFromUrl(window.location.search)
+  }, [])
 
   return (
     <ThemeProvider theme={theme}>
