@@ -22,6 +22,10 @@ class CreateTicketTypeWaitlistEntryRequest extends FormRequest
             // mesmo padrão de RedeemGuestListEntryRequest/StorefrontCreateHoldRequest.
             'website' => ['nullable', 'string', 'max:255'],
             'form_rendered_at' => ['nullable', 'date'],
+            // Token do widget Cloudflare Turnstile (App\Services\Security\
+            // TurnstileVerificationService) — nullable pois o frontend não
+            // renderiza o widget sem VITE_TURNSTILE_SITE_KEY configurado.
+            'turnstile_token' => ['nullable', 'string', 'max:2048'],
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Tenant\Tenant;
+use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -27,10 +28,22 @@ class RecompraNudgeMail extends Mailable
 
     public function build(): self
     {
-        return $this
-            ->subject(__('messages.customers.recompra_mail_subject', ['tenant' => $this->tenant->name]))
-            ->view('emails.recompra-nudge')
-            ->with([
+        $placeholders = [
+            'cliente' => $this->finalCustomer->name,
+            'empresa' => $this->tenant->name,
+            'link' => $this->storefrontUrl,
+        ];
+
+        $resolver = app(EmailTemplateResolverService::class);
+        $defaultSubject = __('messages.customers.recompra_mail_subject', ['tenant' => $this->tenant->name]);
+        $subject = $resolver->resolveSubject('recompra_nudge', $this->tenant->id, $defaultSubject, $placeholders);
+        $bodyHtml = $resolver->resolveBodyHtml('recompra_nudge', $this->tenant->id, $placeholders);
+
+        $mail = $this->subject($subject);
+
+        return $bodyHtml !== null
+            ? $mail->html($bodyHtml)
+            : $mail->view('emails.recompra-nudge')->with([
                 'tenant' => $this->tenant,
                 'finalCustomer' => $this->finalCustomer,
                 'storefrontUrl' => $this->storefrontUrl,

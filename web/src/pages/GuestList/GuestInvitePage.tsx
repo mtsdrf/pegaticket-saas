@@ -2,6 +2,7 @@ import { Alert, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Logo } from '../../components/ui/Logo'
+import { TurnstileWidget } from '../../components/security/TurnstileWidget'
 import { ThemeFab } from '../../components/ThemeFab'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import * as guestInviteService from '../../services/guestInviteService'
@@ -29,6 +30,9 @@ export function GuestInvitePage() {
   // Ver App\Services\Security\AntiBotGuardService.
   const [website, setWebsite] = useState('')
   const formRenderedAtRef = useRef(new Date().toISOString())
+  // Cloudflare Turnstile (camada adicional ao honeypot/tempo mínimo acima)
+  // — ver App\Services\Security\TurnstileVerificationService.
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (!token) return
@@ -58,6 +62,7 @@ export function GuestInvitePage() {
         document: document.trim() || undefined,
         website,
         form_rendered_at: formRenderedAtRef.current,
+        turnstile_token: turnstileToken,
       })
       navigate(`/rastreio/${result.sale_uuid}`)
     } catch (error) {
@@ -142,6 +147,7 @@ export function GuestInvitePage() {
                     required
                   />
                   <TextField label="Documento (opcional)" value={document} onChange={(event) => setDocument(event.target.value)} fullWidth />
+                  <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(undefined)} />
                   <Button
                     type="submit"
                     variant="contained"

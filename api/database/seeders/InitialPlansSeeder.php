@@ -28,6 +28,7 @@ class InitialPlansSeeder extends Seeder
                     'event_sessions',
                     'event_gates',
                     'ticket_types',
+                    'ticket_type_channel_quotas',
                     'ticket_waitlist',
                     'ticket_batches',
                     'event_products',

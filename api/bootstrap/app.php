@@ -1,18 +1,33 @@
 <?php
 
+use App\Http\Middleware\AdaptiveThrottleMiddleware;
+use App\Http\Middleware\ApiHardening;
+use App\Http\Middleware\ApplicationRequestLogger;
+use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\CustomerJwtAccessMiddleware;
+use App\Http\Middleware\EnsureTenantOwner;
+use App\Http\Middleware\JwtAccessMiddleware;
+use App\Http\Middleware\OptionalCustomerJwtMiddleware;
+use App\Http\Middleware\RequestId;
+use App\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ThrottleRequests;
+use App\Services\APIResponse;
+use App\Services\Logging\ApplicationLogger;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\AuthenticationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenBlacklistedException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
-use App\Services\Logging\ApplicationLogger;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     // Application::configure() habilita auto-discovery de eventos por padrão
@@ -32,29 +47,30 @@ return Application::configure(basePath: dirname(__DIR__))
     // a descoberta automática mantém só o nosso $listen manual ativo.
     ->withEvents(discover: false)
     ->withRouting(
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Globais (todas as requisições)
         $middleware->append([
-            \Illuminate\Http\Middleware\HandleCors::class,
-            \App\Http\Middleware\ApiHardening::class,
-            \App\Http\Middleware\RequestId::class,
-            \App\Http\Middleware\ApplicationRequestLogger::class,
-            \App\Http\Middleware\SetLocale::class,
+            HandleCors::class,
+            ApiHardening::class,
+            RequestId::class,
+            ApplicationRequestLogger::class,
+            SetLocale::class,
         ]);
 
         // Aliases (para usar em rotas)
         $middleware->alias([
-            'jwt' => \App\Http\Middleware\JwtAccessMiddleware::class,
-            'perm' => \App\Http\Middleware\CheckPermission::class,
-            'throttle' => \App\Http\Middleware\ThrottleRequests::class,
-            'tenant' => \App\Http\Middleware\ResolveTenant::class,
-            'tenant.owner' => \App\Http\Middleware\EnsureTenantOwner::class,
-            'customer.jwt' => \App\Http\Middleware\CustomerJwtAccessMiddleware::class,
-            'customer.jwt.optional' => \App\Http\Middleware\OptionalCustomerJwtMiddleware::class,
+            'jwt' => JwtAccessMiddleware::class,
+            'perm' => CheckPermission::class,
+            'throttle' => ThrottleRequests::class,
+            'adaptive.throttle' => AdaptiveThrottleMiddleware::class,
+            'tenant' => ResolveTenant::class,
+            'tenant.owner' => EnsureTenantOwner::class,
+            'customer.jwt' => CustomerJwtAccessMiddleware::class,
+            'customer.jwt.optional' => OptionalCustomerJwtMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -63,7 +79,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (TokenBlacklistedException $e, Request $request) {
             ApplicationLogger::warning('JWT token blacklisted');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.auth.token_blacklisted'),
                 401,
                 'TOKEN_BLACKLISTED'
@@ -73,7 +89,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (TokenExpiredException $e, Request $request) {
             ApplicationLogger::warning('JWT token expired');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.auth.token_expired'),
                 401,
                 'TOKEN_EXPIRED'
@@ -83,7 +99,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (TokenInvalidException $e, Request $request) {
             ApplicationLogger::warning('JWT token invalid');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.auth.token_invalid'),
                 401,
                 'TOKEN_INVALID'
@@ -95,7 +111,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'exception' => $e->getMessage(),
             ]);
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.auth.unauthenticated'),
                 401,
                 'UNAUTHENTICATED'
@@ -108,7 +124,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'errors' => $e->errors(),
             ]);
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.validation.failed'),
                 422,
                 'VALIDATION_ERROR',
@@ -120,7 +136,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             ApplicationLogger::warning('Authentication failed');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.auth.unauthenticated'),
                 401,
                 'UNAUTHENTICATED'
@@ -133,7 +149,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             ApplicationLogger::warning('Model not found');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.http.not_found'),
                 404,
                 'NOT_FOUND'
@@ -144,7 +160,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             ApplicationLogger::warning('Route not found');
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.http.not_found'),
                 404,
                 'NOT_FOUND'
@@ -163,8 +179,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // guard de validação (422/409/...) — cliente nunca via a mensagem
         // real. Preserva status code e mensagem (sempre um __('messages...')
         // controlado pelo próprio backend, nunca input cru do cliente).
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
-            return \App\Services\APIResponse::error(
+        $exceptions->render(function (HttpException $e, Request $request) {
+            return APIResponse::error(
                 $e->getMessage() ?: __('messages.http.server_error'),
                 $e->getStatusCode(),
                 'HTTP_ERROR'
@@ -172,10 +188,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Generic Exception (SEMPRE POR ÚLTIMO)
-        $exceptions->render(function (\Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
             ApplicationLogger::exception($e);
 
-            return \App\Services\APIResponse::error(
+            return APIResponse::error(
                 __('messages.http.server_error'),
                 500,
                 'INTERNAL_SERVER_ERROR'

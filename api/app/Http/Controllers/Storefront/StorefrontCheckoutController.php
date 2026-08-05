@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\DTOs\Storefront\StorefrontCheckoutDTO;
 use App\Exceptions\BelowMinimumSaleException;
 use App\Exceptions\CouponUsageLimitReachedException;
+use App\Exceptions\InsufficientChannelQuotaException;
 use App\Exceptions\InvalidCouponException;
 use App\Exceptions\StorefrontDisabledException;
 use App\Http\Controllers\Controller;
@@ -32,6 +33,8 @@ class StorefrontCheckoutController extends Controller
             return APIResponse::error($e->getMessage(), 422, 'INVALID_COUPON');
         } catch (CouponUsageLimitReachedException $e) {
             return APIResponse::error($e->getMessage(), 422, 'COUPON_USAGE_LIMIT_REACHED');
+        } catch (InsufficientChannelQuotaException $e) {
+            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_CHANNEL_QUOTA');
         }
 
         return APIResponse::success(

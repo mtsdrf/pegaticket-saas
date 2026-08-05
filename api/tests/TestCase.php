@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
@@ -28,6 +29,18 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // CACHE_STORE=array (phpunit.xml) persiste durante todo o processo
+        // do PHPUnit, não por teste — achado ao integrar App\Http\
+        // Middleware\AdaptiveThrottleMiddleware/App\Services\Security\
+        // SuspiciousIpTracker (2026-08-05): testes de honeypot em arquivos
+        // DIFERENTES compartilham o mesmo IP de teste (127.0.0.1) e
+        // acumulavam "rejeições suspeitas" entre testes não relacionados,
+        // fazendo endpoints públicos completamente saudáveis (hold,
+        // convite, lista de espera) começarem a responder 429 em testes
+        // que não tinham nada a ver com throttle. Mesmo espírito de
+        // RefreshDatabase para o banco: cada teste começa com cache limpo.
+        Cache::flush();
 
         Http::preventStrayRequests();
     }

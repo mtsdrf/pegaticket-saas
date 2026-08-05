@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Auth\SelfSignupController;
 use App\Http\Controllers\CashSession\CashSessionController;
 use App\Http\Controllers\CommunicationLog\CommunicationLogController;
+use App\Http\Controllers\EmailTemplate\EmailTemplateController;
 use App\Http\Controllers\Event\EventCategoryController;
 use App\Http\Controllers\Event\EventController;
 use App\Http\Controllers\Event\EventGateController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Event\EventImageController;
 use App\Http\Controllers\Event\EventProductController;
 use App\Http\Controllers\Event\EventSessionController;
 use App\Http\Controllers\Event\TicketBatchController;
+use App\Http\Controllers\Event\TicketTypeChannelQuotaController;
 use App\Http\Controllers\Event\TicketTypeController;
 use App\Http\Controllers\Event\TicketTypeImageController;
 use App\Http\Controllers\Event\TicketTypeWaitlistController;
@@ -46,6 +48,7 @@ use App\Http\Controllers\Portal\PortalCouponController;
 use App\Http\Controllers\Portal\PortalFavoriteController;
 use App\Http\Controllers\Portal\PortalLinkController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
+use App\Http\Controllers\Portal\TicketResaleController;
 use App\Http\Controllers\Privacy\PrivacyRequestController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Report\ReportController;
@@ -75,6 +78,7 @@ use App\Http\Controllers\Tenant\TenantUserController;
 use App\Http\Controllers\Tenant\TenantUserInviteController;
 use App\Http\Controllers\TenantSettings\TenantSettingsController;
 use App\Http\Controllers\Ticket\TicketController;
+use App\Http\Controllers\Ticket\TicketResalePayoutController;
 use App\Http\Controllers\User\UserAvatarController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Venue\SeatController;
@@ -150,7 +154,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:60,1,guest-invite-show');
 
     Route::post('/convites/{token}/resgatar', [GuestInviteController::class, 'redeem'])
-        ->middleware('throttle:20,1,guest-invite-redeem');
+        ->middleware(['throttle:20,1,guest-invite-redeem', 'adaptive.throttle:3,60']);
 
     // Imagens guardadas em BLOB no banco (avatar/produto/logo) — antes eram
     // arquivo estático em /storage/*, sem passar por middleware nenhum;
@@ -206,7 +210,7 @@ Route::prefix('v1')->group(function () {
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-event-queue-status']);
 
     Route::post('/loja/{slug}/eventos/{eventSlug}/holds', [StorefrontHoldController::class, 'store'])
-        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create']);
+        ->middleware(['customer.jwt.optional', 'throttle:60,1,storefront-holds-create', 'adaptive.throttle:3,60']);
 
     Route::get('/loja/{slug}/holds/{holdUuid}', [StorefrontHoldController::class, 'show'])
         ->middleware(['customer.jwt.optional', 'throttle:100,1,storefront-holds-show']);
@@ -245,7 +249,7 @@ Route::prefix('v1')->group(function () {
     // via App\Services\Security\AntiBotGuardService (honeypot + tempo
     // mínimo). Ver App\Services\TicketTypeWaitlist\TicketTypeWaitlistService.
     Route::post('/loja/{slug}/lista-espera', [StorefrontTicketWaitlistController::class, 'store'])
-        ->middleware('throttle:30,1,storefront-ticket-waitlist-create');
+        ->middleware(['throttle:30,1,storefront-ticket-waitlist-create', 'adaptive.throttle:3,60']);
     // Portal do cliente final (roadmap 5.2) — login sem senha por OTP de
     // e-mail. Identidade própria (App\Models\FinalCustomer\FinalCustomer),
     // NÃO é App\Models\User\User (staff). Nunca revela se o e-mail já tinha
@@ -294,6 +298,27 @@ Route::prefix('v1')->group(function () {
         // participante do ingresso e rotaciona code/qr_token.
         Route::post('/tickets/{uuid}/transfer', [PortalController::class, 'transferTicket'])
             ->middleware('throttle:20,1,portal-tickets-transfer');
+
+        // Revenda oficial verificada (roadmap Fase 4) — fechamento
+        // reaproveita TicketService::transfer() (mesma rotação de QR),
+        // ver TicketResaleService.
+        Route::get('/tickets/resale-eligible', [TicketResaleController::class, 'eligibleTickets'])
+            ->middleware('throttle:60,1,portal-tickets-resale-eligible');
+
+        Route::post('/tickets/{ticketUuid}/resale-listings', [TicketResaleController::class, 'store'])
+            ->middleware('throttle:20,1,portal-tickets-resale-create');
+
+        Route::get('/resale-listings/mine', [TicketResaleController::class, 'myListings'])
+            ->middleware('throttle:60,1,portal-resale-listings-mine');
+
+        Route::get('/resale-listings', [TicketResaleController::class, 'browse'])
+            ->middleware('throttle:60,1,portal-resale-listings-browse');
+
+        Route::post('/resale-listings/{uuid}/cancel', [TicketResaleController::class, 'cancel'])
+            ->middleware('throttle:20,1,portal-resale-listings-cancel');
+
+        Route::post('/resale-listings/{uuid}/purchase', [TicketResaleController::class, 'purchase'])
+            ->middleware('throttle:20,1,portal-resale-listings-purchase');
 
         // Avaliação de compra concluída — 1 avaliação por venda.
         Route::post('/sales/{uuid}/rating', [PortalController::class, 'rate'])
@@ -611,6 +636,24 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:tenant_settings,update', 'throttle:30,1,tenant-settings-update']);
         });
 
+        // Templates de e-mail configuráveis (só os types tenant-scoped, ver
+        // App\Services\EmailTemplate\EmailTemplateService::CUSTOMIZABLE_TYPES —
+        // password_reset/portal_otp/email_confirmation ficam fora, são
+        // fluxos de segurança/plataforma).
+        Route::prefix('email-templates')->group(function () {
+            Route::get('/', [EmailTemplateController::class, 'index'])
+                ->middleware(['tenant', 'perm:email_templates,read', 'throttle:100,1,email-templates-list']);
+
+            Route::get('/{type}', [EmailTemplateController::class, 'show'])
+                ->middleware(['tenant', 'perm:email_templates,read', 'throttle:100,1,email-templates-show']);
+
+            Route::put('/{type}', [EmailTemplateController::class, 'update'])
+                ->middleware(['tenant', 'perm:email_templates,update', 'throttle:30,1,email-templates-update']);
+
+            Route::delete('/{type}', [EmailTemplateController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:email_templates,delete', 'throttle:10,1,email-templates-reset']);
+        });
+
         // Perfil da própria empresa editável pelo dono (nome + logo apenas).
         // slug/plano/status ficam exclusivos do admin da plataforma (TenantController).
         // Checklist de implantação (roadmap A2, dores #4/#15) — qualquer
@@ -828,6 +871,25 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['tenant', 'perm:ticket_batches,delete', 'throttle:10,1,ticket-batches-delete']);
         });
 
+        // Cota de inventário por canal de venda (roadmap "cotas por
+        // canal") — opt-in, ver App\Services\Event\TicketTypeChannelQuotaService.
+        Route::prefix('ticket-types/{ticketType}/channel-quotas')->group(function () {
+            Route::get('/', [TicketTypeChannelQuotaController::class, 'index'])
+                ->middleware(['tenant', 'perm:ticket_type_channel_quotas,read', 'throttle:100,1,ticket-type-channel-quotas-list']);
+
+            Route::post('/', [TicketTypeChannelQuotaController::class, 'store'])
+                ->middleware(['tenant', 'perm:ticket_type_channel_quotas,create', 'throttle:30,1,ticket-type-channel-quotas-create']);
+
+            Route::get('/{quota}', [TicketTypeChannelQuotaController::class, 'show'])
+                ->middleware(['tenant', 'perm:ticket_type_channel_quotas,read', 'throttle:100,1,ticket-type-channel-quotas-show']);
+
+            Route::put('/{quota}', [TicketTypeChannelQuotaController::class, 'update'])
+                ->middleware(['tenant', 'perm:ticket_type_channel_quotas,update', 'throttle:30,1,ticket-type-channel-quotas-update']);
+
+            Route::delete('/{quota}', [TicketTypeChannelQuotaController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:ticket_type_channel_quotas,delete', 'throttle:10,1,ticket-type-channel-quotas-delete']);
+        });
+
         Route::prefix('event-products')->group(function () {
             Route::get('/', [EventProductController::class, 'index'])
                 ->middleware(['tenant', 'perm:event_products,read', 'throttle:100,1,event-products-list']);
@@ -1029,6 +1091,11 @@ Route::prefix('v1')->group(function () {
 
             Route::post('/{ticket}/resend', [TicketController::class, 'resend'])
                 ->middleware(['tenant', 'perm:tickets,resend', 'throttle:20,1,tickets-resend']);
+
+            // Liberação manual do repasse da revenda oficial verificada
+            // (roadmap Fase 4) — nunca automático, ver TicketResaleService.
+            Route::post('/resale-listings/{listing}/release-payout', [TicketResalePayoutController::class, 'release'])
+                ->middleware(['tenant', 'perm:tickets,update', 'throttle:30,1,tickets-resale-release-payout']);
         });
 
         // Tela dedicada de gestão de vendas online (origin=storefront) —

@@ -15,6 +15,7 @@ class CommunicationLog extends Model
         'type',
         'recipient_email',
         'status',
+        'mailer_used',
         'error_message',
         'sent_at',
     ];

@@ -21,15 +21,17 @@ use App\Events\Auth\TokenRefreshed;
 */
 use App\Events\CashSession\CashSessionClosed;
 use App\Events\CashSession\CashSessionOpened;
+use App\Events\EmailTemplate\EmailTemplateReset;
+use App\Events\EmailTemplate\EmailTemplateUpdated;
 use App\Events\Event\EventCategoryCreated;
 use App\Events\Event\EventCategoryDeleted;
-use App\Events\Event\EventCategoryUpdated;
-use App\Events\Event\EventCreated;
 /*
 |--------------------------------------------------------------------------
 | User Events
 |--------------------------------------------------------------------------
 */
+use App\Events\Event\EventCategoryUpdated;
+use App\Events\Event\EventCreated;
 use App\Events\Event\EventDeleted;
 use App\Events\Event\EventGateCreated;
 use App\Events\Event\EventGateDeleted;
@@ -45,6 +47,9 @@ use App\Events\Event\EventUpdated;
 use App\Events\Event\TicketBatchCreated;
 use App\Events\Event\TicketBatchDeleted;
 use App\Events\Event\TicketBatchUpdated;
+use App\Events\Event\TicketTypeChannelQuotaCreated;
+use App\Events\Event\TicketTypeChannelQuotaDeleted;
+use App\Events\Event\TicketTypeChannelQuotaUpdated;
 /*
 |--------------------------------------------------------------------------
 | Functionality Events
@@ -156,6 +161,9 @@ use App\Events\Tenant\TenantUserInvited;
 use App\Events\Tenant\TenantUserUpdated;
 use App\Events\TenantSettings\TenantSettingsUpdated;
 use App\Events\Ticket\TicketCheckedIn;
+use App\Events\Ticket\TicketResaleListingCancelled;
+use App\Events\Ticket\TicketResaleListingCreated;
+use App\Events\Ticket\TicketResaleListingSold;
 use App\Events\Ticket\TicketResent;
 use App\Events\Ticket\TicketsCancelled;
 use App\Events\Ticket\TicketsIssued;
@@ -200,6 +208,8 @@ use App\Listeners\CashSession\AuditCashSessionClosed;
 |--------------------------------------------------------------------------
 */
 use App\Listeners\CashSession\AuditCashSessionOpened;
+use App\Listeners\EmailTemplate\AuditEmailTemplateReset;
+use App\Listeners\EmailTemplate\AuditEmailTemplateUpdated;
 use App\Listeners\Event\AuditEventCategoryCreated;
 use App\Listeners\Event\AuditEventCategoryDeleted;
 use App\Listeners\Event\AuditEventCategoryUpdated;
@@ -229,6 +239,9 @@ use App\Listeners\Event\AuditTicketBatchDeleted;
 |--------------------------------------------------------------------------
 */
 use App\Listeners\Event\AuditTicketBatchUpdated;
+use App\Listeners\Event\AuditTicketTypeChannelQuotaCreated;
+use App\Listeners\Event\AuditTicketTypeChannelQuotaDeleted;
+use App\Listeners\Event\AuditTicketTypeChannelQuotaUpdated;
 use App\Listeners\Event\AuditTicketTypeCreated;
 /*
 |--------------------------------------------------------------------------
@@ -302,6 +315,9 @@ use App\Listeners\Tenant\AuditTenantUserInvited;
 use App\Listeners\Tenant\AuditTenantUserUpdated;
 use App\Listeners\TenantSettings\AuditTenantSettingsUpdated;
 use App\Listeners\Ticket\AuditTicketCheckedIn;
+use App\Listeners\Ticket\AuditTicketResaleListingCancelled;
+use App\Listeners\Ticket\AuditTicketResaleListingCreated;
+use App\Listeners\Ticket\AuditTicketResaleListingSold;
 use App\Listeners\Ticket\AuditTicketResent;
 use App\Listeners\Ticket\AuditTicketsCancelled;
 use App\Listeners\Ticket\AuditTicketsIssued;
@@ -504,12 +520,29 @@ class EventServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
+        | Email Template
+        |--------------------------------------------------------------------------
+        */
+        EmailTemplateUpdated::class => [AuditEmailTemplateUpdated::class],
+        EmailTemplateReset::class => [AuditEmailTemplateReset::class],
+
+        /*
+        |--------------------------------------------------------------------------
         | Ticket Batch
         |--------------------------------------------------------------------------
         */
         TicketBatchCreated::class => [AuditTicketBatchCreated::class],
         TicketBatchUpdated::class => [AuditTicketBatchUpdated::class],
         TicketBatchDeleted::class => [AuditTicketBatchDeleted::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ticket Type Channel Quota
+        |--------------------------------------------------------------------------
+        */
+        TicketTypeChannelQuotaCreated::class => [AuditTicketTypeChannelQuotaCreated::class],
+        TicketTypeChannelQuotaUpdated::class => [AuditTicketTypeChannelQuotaUpdated::class],
+        TicketTypeChannelQuotaDeleted::class => [AuditTicketTypeChannelQuotaDeleted::class],
 
         /*
         |--------------------------------------------------------------------------
@@ -564,6 +597,9 @@ class EventServiceProvider extends ServiceProvider
         TicketResent::class => [AuditTicketResent::class, SendResentTicketMail::class],
         TicketCheckedIn::class => [AuditTicketCheckedIn::class],
         TicketTransferred::class => [AuditTicketTransferred::class, SendTransferredTicketMail::class],
+        TicketResaleListingCreated::class => [AuditTicketResaleListingCreated::class],
+        TicketResaleListingSold::class => [AuditTicketResaleListingSold::class],
+        TicketResaleListingCancelled::class => [AuditTicketResaleListingCancelled::class],
         GuestListEntryRedeemed::class => [AuditGuestListEntryRedeemed::class],
         TicketTypeWaitlistEntryCreated::class => [AuditTicketTypeWaitlistEntryCreated::class],
 

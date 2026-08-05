@@ -10,9 +10,11 @@ use App\Models\Event\TicketType;
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
+use App\Models\Sale\Sale;
 use App\Models\Sale\SaleItem;
 use App\Models\Venue\Seat;
 use App\Services\Affiliate\AffiliateService;
+use App\Services\Event\TicketTypeChannelQuotaService;
 use App\Services\Tenant\TenantSettingsService;
 use App\Support\MediaUrl;
 use Carbon\CarbonInterface;
@@ -29,6 +31,7 @@ class StorefrontHoldService
         private SeatAllocationService $seatAllocationService,
         private AffiliateService $affiliateService,
         private VirtualQueueService $virtualQueueService,
+        private TicketTypeChannelQuotaService $channelQuotaService,
     ) {}
 
     /**
@@ -151,6 +154,17 @@ class StorefrontHoldService
                 $available = $ticketType
                     ? $this->resolveTicketTypeAvailability($ticketType, $selectedBatch)
                     : $this->calculateAvailableUnits($ticketType, $eventProduct, $seat, $selectedBatch);
+
+                // Cota por canal (opt-in) — canal desta reserva é `affiliate`
+                // sempre que o hold já carrega um afiliado atribuído
+                // (mesmo critério de Sale::resolveChannel()), senão
+                // `storefront`. Sem TicketTypeChannelQuota cadastrada pro
+                // par (ticket_type, canal), availableForChannel() devolve o
+                // próprio $available (comportamento anterior preservado).
+                if ($ticketType) {
+                    $channel = $affiliate ? Sale::CHANNEL_AFFILIATE : Sale::CHANNEL_STOREFRONT;
+                    $available = $this->channelQuotaService->availableForChannel($ticketType, $channel, $available);
+                }
 
                 if ($available < $quantity) {
                     abort(422, __('messages.inventory_hold.insufficient_availability'));

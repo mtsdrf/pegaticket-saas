@@ -160,6 +160,14 @@ return [
         'list' => 'Lista de comunicações retornada com sucesso.',
     ],
 
+    'email_template' => [
+        'list' => 'Lista de templates de e-mail retornada com sucesso.',
+        'show' => 'Template de e-mail exibido com sucesso.',
+        'updated' => 'Template de e-mail atualizado com sucesso.',
+        'reset' => 'Template de e-mail restaurado para o padrão.',
+        'invalid_type' => 'O tipo de e-mail ":type" não pode ser personalizado.',
+    ],
+
     'workflow' => [
         'timeline_list' => 'Histórico operacional retornado com sucesso.',
     ],
@@ -415,6 +423,15 @@ return [
         'has_sales' => 'Este lote já possui vendas registradas e não pode ser removido.',
     ],
 
+    'ticket_type_channel_quota' => [
+        'list' => 'Lista de cotas por canal.',
+        'show' => 'Cota por canal exibida com sucesso.',
+        'created' => 'Cota por canal criada com sucesso.',
+        'updated' => 'Cota por canal atualizada com sucesso.',
+        'deleted' => 'Cota por canal removida com sucesso.',
+        'channel_quota_exceeded' => 'Cota de inventário do canal esgotada para um ou mais itens selecionados.',
+    ],
+
     'ticket' => [
         'list' => 'Lista de ingressos.',
         'show' => 'Ingresso exibido com sucesso.',
@@ -425,6 +442,23 @@ return [
         'mail_subject_resent' => 'Reenvio dos ingressos da venda #:code',
         'mail_subject_reminder' => 'Seu evento está chegando — venda #:code',
         'mail_subject_transferred' => 'Transferência de ingresso confirmada — venda #:code',
+    ],
+
+    'ticket_resale' => [
+        'list' => 'Anúncios de revenda exibidos com sucesso.',
+        'eligible_tickets_shown' => 'Ingressos elegíveis para revenda exibidos com sucesso.',
+        'my_listings_shown' => 'Meus anúncios de revenda exibidos com sucesso.',
+        'created' => 'Ingresso anunciado para revenda com sucesso.',
+        'cancelled' => 'Anúncio de revenda cancelado com sucesso.',
+        'purchased' => 'Revenda concluída com sucesso. O ingresso já está em seu nome.',
+        'payout_released' => 'Repasse ao vendedor liberado com sucesso.',
+        'ticket_not_eligible' => 'Este ingresso não pode ser anunciado para revenda no status atual.',
+        'already_listed' => 'Este ingresso já está anunciado para revenda.',
+        'price_above_cap' => 'O preço de revenda não pode ser maior que o valor pago originalmente.',
+        'not_cancellable' => 'Este anúncio não pode ser cancelado no status atual.',
+        'no_longer_available' => 'Este anúncio não está mais disponível para compra.',
+        'cannot_buy_own_listing' => 'Você não pode comprar seu próprio anúncio de revenda.',
+        'payout_not_releasable' => 'Este repasse não está pendente de liberação.',
     ],
 
     'guest_list' => [

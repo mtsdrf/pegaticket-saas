@@ -128,4 +128,15 @@ class Ticket extends BaseModel
     {
         return $this->hasMany(TicketCheckin::class);
     }
+
+    /**
+     * Anúncios de revenda oficial verificada (roadmap Fase 4) —
+     * historicamente pode ter mais de um (revendido, cancelado, revendido
+     * de novo), mas só um `listado` por vez (garantido em
+     * TicketResaleService::create()).
+     */
+    public function resaleListings(): HasMany
+    {
+        return $this->hasMany(TicketResaleListing::class);
+    }
 }

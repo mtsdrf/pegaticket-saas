@@ -16,6 +16,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { TurnstileWidget } from '../../components/security/TurnstileWidget'
 import { OtpIdentifyForm } from '../../components/storefront/OtpIdentifyForm'
 import { Logo } from '../../components/ui/Logo'
 import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelemetry'
@@ -966,6 +967,13 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const [holdRetryNonce, setHoldRetryNonce] = useState(0)
   const shouldReleaseHoldRef = useRef(true)
   const lastReleasedHoldUuidRef = useRef<string | null>(null)
+  // Cloudflare Turnstile (camada adicional ao honeypot/tempo mínimo já
+  // aplicados na criação de hold, ver App\Services\Security\
+  // TurnstileVerificationService). VITE_TURNSTILE_SITE_KEY vazio (default
+  // até as credenciais serem configuradas) = hasTurnstileSiteKey false, a
+  // reserva segue criada imediatamente como hoje, sem esperar token.
+  const hasTurnstileSiteKey = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(undefined)
 
   const holdPayloadItems = useMemo<StorefrontCreateHoldPayload['items']>(
     () =>
@@ -1061,6 +1069,14 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       return
     }
 
+    // Aguarda o token do Turnstile só quando o widget está de fato ativo
+    // (VITE_TURNSTILE_SITE_KEY configurada); sem isso, a reserva é criada
+    // imediatamente como já acontecia antes desta camada existir.
+    if (hasTurnstileSiteKey && !turnstileToken) {
+      setIsPreparingHold(true)
+      return
+    }
+
     let cancelled = false
     let createdHoldUuid: string | null = null
 
@@ -1076,6 +1092,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           session_uuid: holdContext.sessionUuid ?? undefined,
           items: holdPayloadItems,
           affiliate_code: getStorefrontTracking(slug)?.affiliate_code ?? undefined,
+          turnstile_token: turnstileToken,
         })
 
         createdHoldUuid = createdHold.uuid
@@ -1107,7 +1124,20 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       lastReleasedHoldUuidRef.current = createdHoldUuid
       storefrontHoldService.releaseHoldBestEffort(slug, createdHoldUuid, sessionId)
     }
-  }, [slug, sessionId, items.length, holdContext.eligible, holdContext.eventSlug, holdContext.sessionUuid, holdContext.message, holdPayloadItems, holdRetryNonce, holdSignature])
+  }, [
+    slug,
+    sessionId,
+    items.length,
+    holdContext.eligible,
+    holdContext.eventSlug,
+    holdContext.sessionUuid,
+    holdContext.message,
+    holdPayloadItems,
+    holdRetryNonce,
+    holdSignature,
+    hasTurnstileSiteKey,
+    turnstileToken,
+  ])
 
   useEffect(() => {
     if (!hold?.uuid) return
@@ -1348,6 +1378,11 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
   return (
     <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      {/* Cloudflare Turnstile invisível — camada adicional de anti-bot na
+          criação da reserva temporária (ver App\Services\Security\
+          TurnstileVerificationService). Sem VITE_TURNSTILE_SITE_KEY
+          configurada o componente não renderiza nada. */}
+      <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(undefined)} size="invisible" />
       <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 2.5, sm: 3 }, mb: 2.5 }}>
         <Stack spacing={1.25}>
           <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Reserva temporária</Typography>

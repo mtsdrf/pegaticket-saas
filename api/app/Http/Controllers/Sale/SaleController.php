@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Sale;
 
 use App\DTOs\Sale\CancelSaleDTO;
 use App\DTOs\Sale\CreateSaleDTO;
+use App\DTOs\Sale\UpdateSaleItemsDTO;
 use App\Exceptions\DiscountLimitExceededException;
+use App\Exceptions\InsufficientChannelQuotaException;
+use App\Exceptions\InvalidSaleStateException;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
-use App\Exceptions\InvalidSaleStateException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\PayInstallmentRequest;
@@ -15,7 +17,6 @@ use App\Http\Requests\Sale\RejectSaleRequest;
 use App\Http\Requests\Sale\SalePaymentChargeRequest;
 use App\Http\Requests\Sale\StoreSaleRequest;
 use App\Http\Requests\Sale\UpdateSaleItemsRequest;
-use App\DTOs\Sale\UpdateSaleItemsDTO;
 use App\Http\Resources\Sale\SaleListResource;
 use App\Http\Resources\Sale\SalePaymentResource;
 use App\Http\Resources\Sale\SaleResource;
@@ -33,8 +34,7 @@ class SaleController extends Controller
     public function __construct(
         private SaleService $service,
         private SalePaymentService $paymentService,
-    ) {
-    }
+    ) {}
 
     /**
      * Cria uma cobrança Pix para a venda (roadmap 2A — recebimento do
@@ -110,7 +110,7 @@ class SaleController extends Controller
                     'per_page' => $list->perPage(),
                     'total' => $list->total(),
                     'last_page' => $list->lastPage(),
-                ]
+                ],
             ]
         );
     }
@@ -136,6 +136,8 @@ class SaleController extends Controller
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (DiscountLimitExceededException $e) {
             return APIResponse::error($e->getMessage(), 422, 'DISCOUNT_LIMIT_EXCEEDED');
+        } catch (InsufficientChannelQuotaException $e) {
+            return APIResponse::error($e->getMessage(), 422, 'INSUFFICIENT_CHANNEL_QUOTA');
         }
 
         $sale->load(self::EAGER_RELATIONS);
@@ -208,7 +210,7 @@ class SaleController extends Controller
                     'per_page' => $list->perPage(),
                     'total' => $list->total(),
                     'last_page' => $list->lastPage(),
-                ]
+                ],
             ]
         );
     }

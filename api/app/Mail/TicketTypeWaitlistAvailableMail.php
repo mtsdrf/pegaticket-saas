@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Event\TicketType;
 use App\Models\Event\TicketTypeWaitlistEntry;
+use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -29,10 +30,21 @@ class TicketTypeWaitlistAvailableMail extends Mailable
             .'/eventos/'.$this->ticketType->tenant->slug
             .'/'.$this->ticketType->event?->slug;
 
-        return $this
-            ->subject(__('messages.ticket_type_waitlist.mail_subject', ['ticket_type' => $this->ticketType->name]))
-            ->view('emails.ticket-type-waitlist-available')
-            ->with([
+        $placeholders = [
+            'tipo_ingresso' => $this->ticketType->name,
+            'link' => $storefrontUrl,
+        ];
+
+        $resolver = app(EmailTemplateResolverService::class);
+        $defaultSubject = __('messages.ticket_type_waitlist.mail_subject', ['ticket_type' => $this->ticketType->name]);
+        $subject = $resolver->resolveSubject('waitlist_available', $this->ticketType->tenant_id, $defaultSubject, $placeholders);
+        $bodyHtml = $resolver->resolveBodyHtml('waitlist_available', $this->ticketType->tenant_id, $placeholders);
+
+        $mail = $this->subject($subject);
+
+        return $bodyHtml !== null
+            ? $mail->html($bodyHtml)
+            : $mail->view('emails.ticket-type-waitlist-available')->with([
                 'ticketType' => $this->ticketType,
                 'waitlistEntry' => $this->waitlistEntry,
                 'storefrontUrl' => $storefrontUrl,

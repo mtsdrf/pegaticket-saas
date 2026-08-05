@@ -8,6 +8,7 @@ use App\Repositories\Contracts\CartEventRepositoryInterface;
 use App\Repositories\Contracts\CashSessionRepositoryInterface;
 use App\Repositories\Contracts\CommunicationLogRepositoryInterface;
 use App\Repositories\Contracts\CouponRepositoryInterface;
+use App\Repositories\Contracts\EmailTemplateRepositoryInterface;
 use App\Repositories\Contracts\EventCategoryRepositoryInterface;
 // Repository Interfaces
 use App\Repositories\Contracts\EventGateRepositoryInterface;
@@ -43,6 +44,8 @@ use App\Repositories\Contracts\TenantUserRepositoryInterface;
 use App\Repositories\Contracts\TicketBatchRepositoryInterface;
 use App\Repositories\Contracts\TicketCheckinRepositoryInterface;
 use App\Repositories\Contracts\TicketRepositoryInterface;
+use App\Repositories\Contracts\TicketResaleListingRepositoryInterface;
+use App\Repositories\Contracts\TicketTypeChannelQuotaRepositoryInterface;
 use App\Repositories\Contracts\TicketTypeRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\VenueRepositoryInterface;
@@ -51,8 +54,9 @@ use App\Repositories\Eloquent\CartEventRepository;
 use App\Repositories\Eloquent\CashSessionRepository;
 use App\Repositories\Eloquent\CommunicationLogRepository;
 use App\Repositories\Eloquent\CouponRepository;
-use App\Repositories\Eloquent\EventCategoryRepository;
+use App\Repositories\Eloquent\EmailTemplateRepository;
 // Repository Implementations
+use App\Repositories\Eloquent\EventCategoryRepository;
 use App\Repositories\Eloquent\EventGateRepository;
 use App\Repositories\Eloquent\EventProductRepository;
 use App\Repositories\Eloquent\EventRepository;
@@ -86,6 +90,8 @@ use App\Repositories\Eloquent\TenantUserRepository;
 use App\Repositories\Eloquent\TicketBatchRepository;
 use App\Repositories\Eloquent\TicketCheckinRepository;
 use App\Repositories\Eloquent\TicketRepository;
+use App\Repositories\Eloquent\TicketResaleListingRepository;
+use App\Repositories\Eloquent\TicketTypeChannelQuotaRepository;
 use App\Repositories\Eloquent\TicketTypeRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Eloquent\VenueRepository;
@@ -289,16 +295,34 @@ class AppServiceProvider extends ServiceProvider
             EventGateRepository::class
         );
 
+        // Email Template Repository
+        $this->app->bind(
+            EmailTemplateRepositoryInterface::class,
+            EmailTemplateRepository::class
+        );
+
         // Ticket Batch Repository
         $this->app->bind(
             TicketBatchRepositoryInterface::class,
             TicketBatchRepository::class
         );
 
+        // Ticket Type Channel Quota Repository
+        $this->app->bind(
+            TicketTypeChannelQuotaRepositoryInterface::class,
+            TicketTypeChannelQuotaRepository::class
+        );
+
         // Ticket Repository (ingresso digital emitido, spec 5.15)
         $this->app->bind(
             TicketRepositoryInterface::class,
             TicketRepository::class
+        );
+
+        // Ticket Resale Listing Repository (revenda oficial verificada, roadmap Fase 4)
+        $this->app->bind(
+            TicketResaleListingRepositoryInterface::class,
+            TicketResaleListingRepository::class
         );
 
         // Ticket Checkin Repository (controle de acesso/portaria, spec 5.16)

@@ -83,4 +83,9 @@ class TicketType extends BaseModel
     {
         return $this->hasMany(TicketBatch::class);
     }
+
+    public function channelQuotas(): HasMany
+    {
+        return $this->hasMany(TicketTypeChannelQuota::class);
+    }
 }

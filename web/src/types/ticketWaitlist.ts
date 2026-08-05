@@ -8,6 +8,8 @@ export interface JoinTicketTypeWaitlistPayload {
   website?: string
   /** Timestamp de quando o formulário carregou, para checagem de tempo mínimo de preenchimento. */
   form_rendered_at?: string
+  /** Token do widget Cloudflare Turnstile (ver `components/security/TurnstileWidget`) — ausente quando `VITE_TURNSTILE_SITE_KEY` não está configurada. */
+  turnstile_token?: string
 }
 
 /** Entrada listada pelo staff (GET /ticket-types/{ticketType}/lista-espera). */

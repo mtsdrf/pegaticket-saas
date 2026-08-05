@@ -6,7 +6,7 @@
 <body style="font-family: Arial, sans-serif; color: #1a1a1a;">
     <p>Olá.</p>
 
-    <p>Use o código abaixo para entrar no seu painel de pedidos PegaTicket:</p>
+    <p>Use o código abaixo para entrar no seu painel de compras PegaTicket:</p>
 
     <p style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#f4f4f5;padding:16px 20px;border-radius:8px;display:inline-block;">
         <?php echo e($code); ?>

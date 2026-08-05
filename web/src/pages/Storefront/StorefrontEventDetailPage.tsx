@@ -8,6 +8,7 @@ import { Alert, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, TextField
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '../../components/layout/EmptyState'
+import { TurnstileWidget } from '../../components/security/TurnstileWidget'
 import { FloatingCheckoutBar, FLOATING_CHECKOUT_BAR_HEIGHT } from '../../components/storefront/FloatingCheckoutBar'
 import { SeatMapViewer, type SeatMapViewerSeat, type SeatMapViewerVisualState } from '../../components/storefront/SeatMapViewer'
 import { STOREFRONT_BOTTOM_NAV_HEIGHT } from '../../components/storefront/StorefrontBottomNav'
@@ -46,6 +47,9 @@ function TicketTypeWaitlistCta({ slug, ticketTypeUuid }: { slug: string; ticketT
   const [email, setEmail] = useState('')
   const [website, setWebsite] = useState('')
   const formRenderedAtRef = useRef(new Date().toISOString())
+  // Cloudflare Turnstile (camada adicional ao honeypot/tempo mínimo acima)
+  // — ver App\Services\Security\TurnstileVerificationService.
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -63,6 +67,7 @@ function TicketTypeWaitlistCta({ slug, ticketTypeUuid }: { slug: string; ticketT
         email: email.trim(),
         website,
         form_rendered_at: formRenderedAtRef.current,
+        turnstile_token: turnstileToken,
       })
       setIsSubmitted(true)
     } catch (error) {
@@ -129,6 +134,7 @@ function TicketTypeWaitlistCta({ slug, ticketTypeUuid }: { slug: string; ticketT
           fullWidth
           required
         />
+        <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(undefined)} size="compact" />
         <Stack direction="row" spacing={1}>
           <Button
             type="submit"

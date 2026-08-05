@@ -120,4 +120,22 @@ return [
             : env('PAGBANK_TOKEN_SANDBOX'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cloudflare Turnstile (CAPTCHA — camada adicional ao anti-bot existente)
+    |--------------------------------------------------------------------------
+    |
+    | Vendor confirmado com o usuário (2026-08-05): gratuito, sem custo por
+    | requisição. TURNSTILE_SECRET_KEY vazio = App\Services\Security\
+    | TurnstileVerificationService fica em modo desabilitado (sempre
+    | aprova) até o usuário preencher as credenciais reais — mesmo
+    | espírito de 'pagbank' acima, não trava a aplicação por falta de
+    | chave ainda não fornecida.
+    |
+    */
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

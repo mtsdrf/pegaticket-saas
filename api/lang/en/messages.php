@@ -159,6 +159,14 @@ return [
         'list' => 'Communication log list returned successfully.',
     ],
 
+    'email_template' => [
+        'list' => 'Email templates list returned successfully.',
+        'show' => 'Email template shown successfully.',
+        'updated' => 'Email template updated successfully.',
+        'reset' => 'Email template reset to default.',
+        'invalid_type' => 'Email type ":type" cannot be customized.',
+    ],
+
     'workflow' => [
         'timeline_list' => 'Operational history returned successfully.',
     ],
@@ -408,6 +416,15 @@ return [
         'has_sales' => 'This batch already has sales and cannot be deleted.',
     ],
 
+    'ticket_type_channel_quota' => [
+        'list' => 'Channel quotas list.',
+        'show' => 'Channel quota shown successfully.',
+        'created' => 'Channel quota created successfully.',
+        'updated' => 'Channel quota updated successfully.',
+        'deleted' => 'Channel quota deleted successfully.',
+        'channel_quota_exceeded' => 'The channel inventory quota is exhausted for one or more selected items.',
+    ],
+
     'ticket' => [
         'list' => 'Tickets list.',
         'show' => 'Ticket shown successfully.',
@@ -418,6 +435,23 @@ return [
         'mail_subject_resent' => 'Ticket resend for sale #:code',
         'mail_subject_reminder' => 'Your event is coming up — sale #:code',
         'mail_subject_transferred' => 'Ticket transfer confirmed — sale #:code',
+    ],
+
+    'ticket_resale' => [
+        'list' => 'Resale listings shown successfully.',
+        'eligible_tickets_shown' => 'Resale-eligible tickets shown successfully.',
+        'my_listings_shown' => 'My resale listings shown successfully.',
+        'created' => 'Ticket listed for resale successfully.',
+        'cancelled' => 'Resale listing cancelled successfully.',
+        'purchased' => 'Resale completed successfully. The ticket is now in your name.',
+        'payout_released' => 'Seller payout released successfully.',
+        'ticket_not_eligible' => 'This ticket cannot be listed for resale in its current status.',
+        'already_listed' => 'This ticket is already listed for resale.',
+        'price_above_cap' => 'The resale price cannot exceed the originally paid amount.',
+        'not_cancellable' => 'This listing cannot be cancelled in its current status.',
+        'no_longer_available' => 'This listing is no longer available for purchase.',
+        'cannot_buy_own_listing' => 'You cannot buy your own resale listing.',
+        'payout_not_releasable' => 'This payout is not pending release.',
     ],
 
     'guest_list' => [

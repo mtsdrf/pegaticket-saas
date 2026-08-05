@@ -56,6 +56,8 @@ export interface RedeemGuestInvitePayload {
   website?: string
   /** Timestamp de quando o formulário carregou, para checagem de tempo mínimo de preenchimento (roadmap Fase 7). */
   form_rendered_at?: string
+  /** Token do widget Cloudflare Turnstile (ver `components/security/TurnstileWidget`) — ausente quando `VITE_TURNSTILE_SITE_KEY` não está configurada. */
+  turnstile_token?: string
 }
 
 export interface RedeemGuestInviteResult {

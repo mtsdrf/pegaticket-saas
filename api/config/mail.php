@@ -18,6 +18,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fallback Mailer (hub de comunicação)
+    |--------------------------------------------------------------------------
+    |
+    | Nome de um mailer configurado em "mailers" abaixo (ex.: "smtp_fallback")
+    | usado UMA VEZ por App\Services\Communication\CommunicationDispatcherService
+    | quando o mailer padrão falha. Vazio (default) desabilita o fallback —
+    | comportamento igual ao anterior a esta feature.
+    |
+    */
+
+    'fallback_mailer' => env('MAIL_MAILER_FALLBACK', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mailer Configurations
     |--------------------------------------------------------------------------
     |
@@ -45,6 +59,22 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
+        // Provedor secundário de e-mail (hub de comunicação, fallback de
+        // envio). Credenciais reais precisam ser preenchidas depois pelo
+        // usuário (MAIL_FALLBACK_*) — sem elas, MAIL_MAILER_FALLBACK fica
+        // vazio e o fallback é ignorado (comportamento atual preservado).
+        'smtp_fallback' => [
+            'transport' => 'smtp',
+            'scheme' => env('MAIL_FALLBACK_SCHEME'),
+            'url' => env('MAIL_FALLBACK_URL'),
+            'host' => env('MAIL_FALLBACK_HOST', '127.0.0.1'),
+            'port' => env('MAIL_FALLBACK_PORT', 2525),
+            'username' => env('MAIL_FALLBACK_USERNAME'),
+            'password' => env('MAIL_FALLBACK_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],

@@ -365,6 +365,8 @@ export interface StorefrontCreateHoldPayload {
   website?: string
   /** Timestamp de quando o formulário carregou, para checagem de tempo mínimo de preenchimento (roadmap Fase 7). */
   form_rendered_at?: string
+  /** Token do widget Cloudflare Turnstile (ver `components/security/TurnstileWidget`) — ausente quando `VITE_TURNSTILE_SITE_KEY` não está configurada. */
+  turnstile_token?: string
 }
 
 /** Fila virtual para alta demanda (roadmap Fase 7) — `GET /loja/{slug}/eventos/{eventSlug}/fila`, usado em polling pela tela de detalhe do evento enquanto `status !== 'admitted'`. */

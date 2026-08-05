@@ -14,6 +14,7 @@ class CommunicationLogResource extends JsonResource
             'type' => $this->type,
             'recipient_email' => $this->recipient_email,
             'status' => $this->status,
+            'mailer_used' => $this->mailer_used,
             'error_message' => $this->error_message,
             'sent_at' => $this->sent_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),

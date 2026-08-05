@@ -18,6 +18,7 @@ use App\Events\Sale\SalePaid;
 use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SaleUnpaid;
 use App\Exceptions\DiscountLimitExceededException;
+use App\Exceptions\InsufficientChannelQuotaException;
 use App\Exceptions\InvalidSaleStateException;
 use App\Models\BaseModel;
 use App\Models\Event\EventProduct;
@@ -30,7 +31,9 @@ use App\Models\Sale\SaleItem;
 use App\Models\Sale\SalePrepLink;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\SaleRepositoryInterface;
+use App\Services\Event\TicketTypeChannelQuotaService;
 use App\Services\Permission\PermissionService;
+use App\Services\Storefront\StorefrontHoldService;
 use App\Services\Workflow\WorkflowTransitionLogger;
 use App\Support\GridQuery;
 use Carbon\Carbon;
@@ -68,6 +71,8 @@ class SaleService
         private SalePaymentService $paymentService,
         private PermissionService $permissionService,
         private WorkflowTransitionLogger $workflowTransitionLogger,
+        private StorefrontHoldService $holdService,
+        private TicketTypeChannelQuotaService $channelQuotaService,
     ) {}
 
     public function find(Sale $order): Sale
@@ -245,11 +250,16 @@ class SaleService
 
             $lines = [];
             $totalCents = 0;
+            $channel = Sale::resolveChannel($dto->affiliateId, $dto->origin);
 
             foreach ($dto->items as $item) {
                 $sellable = $this->resolveSellable($item, $dto->tenantId);
 
                 $line = $this->resolveSaleItemLine($sellable, $client, $item);
+
+                if ($sellable instanceof TicketType) {
+                    $this->assertWithinChannelQuota($sellable, $channel, (int) round($line['quantity']));
+                }
 
                 $totalCents += $line['line_total_cents'];
                 $lines[] = $line;
@@ -301,6 +311,7 @@ class SaleService
                 'change_for_amount' => $dto->changeForAmount,
                 'status' => $dto->status,
                 'origin' => $dto->origin,
+                'channel' => $channel,
                 'purchaser_ip' => $dto->purchaserIp,
             ]);
 
@@ -913,6 +924,39 @@ class SaleService
                 'due_date' => $dueDate,
                 'is_paid' => false,
             ]);
+        }
+    }
+
+    /**
+     * Cota de inventário por canal (opt-in, roadmap "cotas por canal") —
+     * sem nenhuma TicketTypeChannelQuota cadastrada pra este TicketType
+     * neste canal, comportamento 100% preservado (só o estoque geral
+     * conta, igual antes desta feature). Estoque geral é o mesmo cálculo
+     * já usado pela loja pública (StorefrontHoldService::
+     * availableQuantityForTicketType(), batch-aware), reaproveitado aqui
+     * para o fluxo staff/afiliado direto (sem hold) não ter uma segunda
+     * régua divergente.
+     */
+    private function assertWithinChannelQuota(TicketType $ticketType, string $channel, int $quantity): void
+    {
+        // Sem cota configurada pra este (ticket_type, channel), sai antes
+        // de calcular estoque geral — SaleService::create() (staff/
+        // afiliado sem hold) nunca validou quantity_available, e esta
+        // feature é opt-in: introduzir o cálculo incondicionalmente
+        // quebraria toda venda staff hoje sem TicketType.quantity_available
+        // configurado (fluxo storefront/hold já faz esse cálculo à parte,
+        // em StorefrontHoldService::createHold()).
+        if (! $this->channelQuotaService->quotaExists($ticketType, $channel)) {
+            return;
+        }
+
+        $generalStockRemaining = $this->holdService->availableQuantityForTicketType($ticketType);
+        $available = $this->channelQuotaService->availableForChannel($ticketType, $channel, $generalStockRemaining);
+
+        if ($quantity > $available) {
+            throw new InsufficientChannelQuotaException(
+                __('messages.ticket_type_channel_quota.channel_quota_exceeded')
+            );
         }
     }
 

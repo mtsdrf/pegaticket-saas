@@ -20,6 +20,15 @@ class Sale extends BaseModel
         'counter' => 'staff',
     ];
 
+    // Canal de venda (cotas por canal) — distinto de `origin`: `affiliate`
+    // prevalece sobre `origin=storefront` sempre que há afiliado atribuído.
+    // Ver resolveChannel().
+    public const CHANNEL_STOREFRONT = 'storefront';
+
+    public const CHANNEL_STAFF = 'staff';
+
+    public const CHANNEL_AFFILIATE = 'affiliate';
+
     protected $table = 'sales';
 
     protected $fillable = [
@@ -45,6 +54,7 @@ class Sale extends BaseModel
         'status',
         'status_before_cancellation_request',
         'origin',
+        'channel',
         'purchaser_ip',
         'operated_by',
         'client_sale_uuid',
@@ -137,6 +147,23 @@ class Sale extends BaseModel
         }
 
         return self::LEGACY_ORIGIN_MAP[$origin] ?? $origin;
+    }
+
+    /**
+     * Canal de venda (cotas por canal, TicketTypeChannelQuota) — afiliado
+     * atribuído SEMPRE prevalece sobre a origem (mesmo um checkout público
+     * com affiliate_code vira canal `affiliate`, não `storefront`), staff
+     * (origin normalizado != storefront) sem afiliado é `staff`.
+     */
+    public static function resolveChannel(?int $affiliateId, ?string $origin): string
+    {
+        if ($affiliateId !== null) {
+            return self::CHANNEL_AFFILIATE;
+        }
+
+        return self::normalizeOrigin($origin) === 'storefront'
+            ? self::CHANNEL_STOREFRONT
+            : self::CHANNEL_STAFF;
     }
 
     public function finalCustomer()

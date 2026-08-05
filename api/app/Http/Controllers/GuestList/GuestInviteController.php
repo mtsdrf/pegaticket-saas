@@ -33,7 +33,9 @@ class GuestInviteController extends Controller
     {
         $this->antiBotGuard->assertHuman(
             $request->validated('website'),
-            $request->validated('form_rendered_at')
+            $request->validated('form_rendered_at'),
+            $request->validated('turnstile_token'),
+            $request->ip()
         );
 
         $dto = RedeemGuestListEntryDTO::fromArray($request->validated());

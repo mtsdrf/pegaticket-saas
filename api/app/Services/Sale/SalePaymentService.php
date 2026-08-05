@@ -15,6 +15,7 @@ use App\Services\Finance\ExternalReviewFinancialAdjustmentService;
 use App\Services\Logging\ApplicationLogger;
 use App\Support\Money;
 use App\Support\Payment\ExternalPaymentReviewRegistrar;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -356,9 +357,23 @@ class SalePaymentService
      */
     public function registerManualPayment(Sale $order, string $method, float $amount): Payment
     {
+        return $this->registerManualPaymentForPayable($order, $method, $amount);
+    }
+
+    /**
+     * Generalização de registerManualPayment() para qualquer payable
+     * polimórfico compatível com a tabela `payments` (Sale, ou — roadmap
+     * Fase 4 — TicketResaleListing na revenda oficial verificada). Mesma
+     * mecânica de `ManualPaymentProvider::createPendingPayment()` (mesmo
+     * model/tabela, sem rail de pagamento novo), mas já nasce `paid`:
+     * usada só onde não há PSP mediando a cobrança (ex.: fechamento
+     * operacional de venda, revenda P2P sem PSP acoplado ainda).
+     */
+    public function registerManualPaymentForPayable(Model $payable, string $method, float $amount): Payment
+    {
         return Payment::create([
-            'payable_type' => $order->getMorphClass(),
-            'payable_id' => $order->getKey(),
+            'payable_type' => $payable->getMorphClass(),
+            'payable_id' => $payable->getKey(),
             'provider' => 'manual',
             'method' => $method,
             'amount' => number_format($amount, 2, '.', ''),
