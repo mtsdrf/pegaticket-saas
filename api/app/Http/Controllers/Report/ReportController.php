@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Sale\SaleResource;
 use App\Services\APIResponse;
+use App\Services\Report\AlertService;
 use App\Services\Report\OperationSnapshotService;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
@@ -25,7 +26,20 @@ class ReportController extends Controller
     public function __construct(
         private ReportService $service,
         private OperationSnapshotService $operationSnapshotService,
+        private AlertService $alertService,
     ) {}
+
+    /**
+     * Alertas básicos do Home (roadmap Fase A1) — estoque baixo e
+     * pagamento, calculados on-the-fly, sem model de alerta configurável.
+     */
+    public function alerts()
+    {
+        return APIResponse::success(
+            $this->alertService->activeAlerts((int) app('tenant_id')),
+            __('messages.report.alerts')
+        );
+    }
 
     public function operationSnapshot()
     {

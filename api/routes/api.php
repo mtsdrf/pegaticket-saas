@@ -1142,6 +1142,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/charts', [ReportController::class, 'charts'])
                 ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-charts']);
 
+            // Alertas básicos do Home (roadmap Fase A1) — estoque baixo e
+            // pagamento, calculado on-the-fly (ver AlertService).
+            Route::get('/alerts', [ReportController::class, 'alerts'])
+                ->middleware(['tenant', 'perm:dashboard,read', 'throttle:60,1,reports-alerts']);
+
             Route::get('/sales', [ReportController::class, 'sales'])
                 ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,reports-sales']);
 
@@ -1201,6 +1206,18 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('/checkin-insights', [AnalyticsController::class, 'checkinInsights'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-checkin-insights']);
+
+                // Vendas por dimensão configurável (roadmap Fase A1) —
+                // unifica top-products/top-clients/by-channel; aditivo, os
+                // três endpoints antigos continuam ativos.
+                Route::get('/sales-by-dimension', [AnalyticsController::class, 'salesByDimension'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-by-dimension']);
+
+                // Relatório de pagamentos básico (roadmap Fase A1) —
+                // aprovação/recusa por período, sem roteamento entre
+                // gateways (só PagBank existe).
+                Route::get('/payments', [AnalyticsController::class, 'payments'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-payments']);
             });
         });
 

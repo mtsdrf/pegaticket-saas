@@ -12,9 +12,12 @@ import type {
   OverdueSale,
   OverdueType,
   PaymentDelayClient,
+  PaymentsSummary,
   RevenueConcentration,
+  SalesByDimension,
   SalesByHour,
   SalesByLocation,
+  SalesDimension,
   SalesGroupBy,
   SalesHistoryYear,
   SalesSummary,
@@ -295,4 +298,49 @@ export async function getSalesByHour(params?: AnalyticsPeriodParams): Promise<Sa
 export async function getCheckinInsights(params: AnalyticsPeriodParams): Promise<CheckinInsights> {
   const response = await apiClient.get<ApiSuccess<CheckinInsights>>('/reports/analytics/checkin-insights', { params })
   return response.data.data
+}
+
+/**
+ * Vendas por dimensão configurável (roadmap Fase A1) — unifica
+ * top-products/top-clients/by-channel num único endpoint; `revenue` vem
+ * como string decimal do backend (`formatMoney`), normalizado para number
+ * aqui como o resto deste service.
+ */
+export async function getSalesByDimension(
+  params: AnalyticsPeriodParams & { dimension: SalesDimension; limit: number },
+): Promise<SalesByDimension> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/sales-by-dimension', { params })
+  const raw = response.data.data
+  const items = asArray(pick(raw, ['items'])).map((item) => ({
+    key: toText(pick(item, ['key'])),
+    label: toText(pick(item, ['label'])),
+    order_count: item.order_count === null || item.order_count === undefined ? null : toNumber(item.order_count),
+    quantity_sold: item.quantity_sold === null || item.quantity_sold === undefined ? null : toNumber(item.quantity_sold),
+    revenue: toNumber(pick(item, ['revenue'])),
+  }))
+
+  return {
+    dimension: (toText(pick(raw, ['dimension'])) || params.dimension) as SalesDimension,
+    items,
+  }
+}
+
+/** Relatório de pagamentos básico (roadmap Fase A1): dinheiro fica como string do backend, normalizado aqui. */
+export async function getPaymentsSummary(params: AnalyticsPeriodParams): Promise<PaymentsSummary> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/payments', { params })
+  const raw = response.data.data
+  const group = (key: string) => {
+    const g = (pick(raw, [key]) as Raw | undefined) ?? {}
+    return { count: toNumber(pick(g, ['count'])), total_amount: toNumber(pick(g, ['total_amount'])) }
+  }
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    confirmed: group('confirmed'),
+    rejected: group('rejected'),
+    pending_approval: group('pending_approval'),
+    approval_rate_percentage: toNumber(pick(raw, ['approval_rate_percentage'])),
+    rejection_rate_percentage: toNumber(pick(raw, ['rejection_rate_percentage'])),
+  }
 }

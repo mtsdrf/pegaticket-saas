@@ -1,3 +1,4 @@
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
@@ -15,6 +16,7 @@ import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import { CHANNEL_LABELS, type ChannelResultPoint } from '../../types/report'
 import { formatCurrency } from '../../utils/format'
+import { buildCsvContent, downloadTextFile } from '../../utils/gridExport'
 import { presetRange } from '../../utils/period'
 
 const CHANNEL_ICONS: Record<string, SvgIconComponent> = {
@@ -59,6 +61,18 @@ export function ChannelReportPage() {
     navigate(`/relatorios/vendas?origin=${encodeURIComponent(origin)}&date_from=${from}&date_to=${to}`)
   }
 
+  function handleExportCsv() {
+    if (!rows || rows.length === 0) return
+    const headers = ['Canal', 'Vendas', 'Faturamento', 'Ticket médio']
+    const body = rows.map((row) => [
+      CHANNEL_LABELS[row.origin] ?? row.origin,
+      String(row.order_count),
+      formatCurrency(row.total_amount),
+      formatCurrency(row.average_ticket),
+    ])
+    downloadTextFile(buildCsvContent(headers, body), 'resultado-por-canal.csv', 'text/csv;charset=utf-8')
+  }
+
   const totalOrders = rows?.reduce((sum, row) => sum + row.order_count, 0) ?? 0
 
   return (
@@ -67,6 +81,18 @@ export function ChannelReportPage() {
         title="Resultado por canal"
         subtitle="Compare vendas, faturamento e ticket médio por canal de venda."
         breadcrumbs={[{ label: 'Relatórios', to: '/relatorios/canais' }, { label: 'Resultado por canal' }]}
+        action={
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
+            onClick={handleExportCsv}
+            disabled={!rows || rows.length === 0}
+            sx={{ minHeight: 40 }}
+          >
+            Exportar CSV
+          </Button>
+        }
       />
 
       <PeriodFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} defaultPreset="last_30" />

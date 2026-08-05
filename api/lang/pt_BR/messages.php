@@ -921,6 +921,7 @@ return [
         'receivable_interactions_list' => 'Histórico de interações do recebível.',
         'receivable_interaction_created' => 'Interação de recebível registrada com sucesso.',
         'cmv' => 'Relatório de CMV obtido com sucesso.',
+        'alerts' => 'Alertas obtidos com sucesso.',
     ],
 
     'analytics' => [
@@ -940,6 +941,8 @@ return [
         'stock_ruptures' => 'Rupturas de estoque obtidas com sucesso.',
         'sales_by_hour' => 'Vendas por hora obtidas com sucesso.',
         'checkin_insights' => 'Análises de acesso exibidas com sucesso.',
+        'sales_by_dimension' => 'Vendas por dimensão obtidas com sucesso.',
+        'payments_summary' => 'Relatório de pagamentos obtido com sucesso.',
     ],
 
     'route' => [

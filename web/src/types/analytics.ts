@@ -190,3 +190,43 @@ export interface CheckinInsights {
   by_session: CheckinInsightsSessionRow[]
   by_ticket_type: CheckinInsightsTicketTypeRow[]
 }
+
+// ---------------------------------------------------------------------------
+// Vendas por dimensão configurável (roadmap Fase A1) — unifica
+// top-products/top-clients/by-channel num único endpoint aditivo.
+// ---------------------------------------------------------------------------
+
+export type SalesDimension = 'ticket_type' | 'client' | 'origin'
+
+export interface SalesByDimensionItem {
+  key: string
+  label: string
+  order_count: number | null
+  quantity_sold: number | null
+  revenue: number
+}
+
+export interface SalesByDimension {
+  dimension: SalesDimension
+  items: SalesByDimensionItem[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de pagamentos básico (roadmap Fase A1) — aprovação/recusa por
+// período, sem roteamento entre gateways (só PagBank existe).
+// ---------------------------------------------------------------------------
+
+export interface PaymentsSummaryGroup {
+  count: number
+  total_amount: number
+}
+
+export interface PaymentsSummary {
+  from: string
+  to: string
+  confirmed: PaymentsSummaryGroup
+  rejected: PaymentsSummaryGroup
+  pending_approval: PaymentsSummaryGroup
+  approval_rate_percentage: number
+  rejection_rate_percentage: number
+}

@@ -9,15 +9,28 @@ import { ClientsTab } from './tabs/ClientsTab'
 import { LocationsTab } from './tabs/LocationsTab'
 import { OverdueTab } from './tabs/OverdueTab'
 import { OverviewTab } from './tabs/OverviewTab'
+import { PaymentsTab } from './tabs/PaymentsTab'
 import { ProductsTab } from './tabs/ProductsTab'
 import { AccessTab } from './tabs/AccessTab'
+import { SalesByDimensionTab } from './tabs/SalesByDimensionTab'
 import { SeasonalityTab } from './tabs/SeasonalityTab'
 
-type AnalyticsTabKey = 'overview' | 'products' | 'access' | 'locations' | 'seasonality' | 'clients' | 'overdue'
+type AnalyticsTabKey =
+  | 'overview'
+  | 'products'
+  | 'sales-by-dimension'
+  | 'payments'
+  | 'access'
+  | 'locations'
+  | 'seasonality'
+  | 'clients'
+  | 'overdue'
 
 const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'overview', label: 'Financeiro' },
   { key: 'products', label: 'Produtos' },
+  { key: 'sales-by-dimension', label: 'Vendas por dimensão' },
+  { key: 'payments', label: 'Pagamentos' },
   { key: 'access', label: 'Acesso' },
   { key: 'locations', label: 'Locais' },
   { key: 'seasonality', label: 'Sazonalidade' },
@@ -99,6 +112,8 @@ export function AnalyticsPage() {
               >
                 {tab.key === 'overview' && <OverviewTab {...tabProps} />}
                 {tab.key === 'products' && <ProductsTab {...tabProps} />}
+                {tab.key === 'sales-by-dimension' && <SalesByDimensionTab {...tabProps} />}
+                {tab.key === 'payments' && <PaymentsTab {...tabProps} />}
                 {tab.key === 'access' && <AccessTab {...tabProps} />}
                 {tab.key === 'locations' && <LocationsTab {...tabProps} />}
                 {tab.key === 'seasonality' && <SeasonalityTab onPlanLocked={handlePlanLocked} />}

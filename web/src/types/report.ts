@@ -14,6 +14,10 @@ export interface ReportIndicators {
   comparison_current_label: string
   comparison_previous_label: string
   overdue_sales_count: number
+  net_revenue_amount: string
+  tickets_issued: number
+  commercial_capacity: number
+  occupancy_percentage: number
 }
 
 export interface SalesByMonthPoint {
@@ -135,4 +139,16 @@ export interface ReportCharts {
   receivables_forecast_by_month: SalesByMonthPoint[]
   abc_products: AbcProductPoint[]
   abc_clients: AbcClientPoint[]
+}
+
+/** Alertas básicos do Home (roadmap Fase A1) — estoque baixo e pagamento, calculados on-the-fly. */
+export type AlertType = 'low_stock' | 'payment_rejection_rate' | 'payment_pending_queue'
+export type AlertSeverity = 'warning' | 'critical'
+
+export interface ReportAlert {
+  type: AlertType
+  severity: AlertSeverity
+  title: string
+  message: string
+  meta: Record<string, unknown>
 }

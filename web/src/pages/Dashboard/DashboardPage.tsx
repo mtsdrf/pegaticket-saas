@@ -7,10 +7,13 @@ import SellOutlinedIcon from '@mui/icons-material/SellOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
+import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { PeriodFilter } from '../../components/analytics/PeriodFilter'
+import { AlertsCard } from '../../components/dashboard/AlertsCard'
 import { MetricCard } from '../../components/dashboard/MetricCard'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { OnboardingChecklistCard } from '../../components/dashboard/OnboardingChecklistCard'
@@ -23,6 +26,7 @@ import { ReceivablesForecastChart } from '../../components/dashboard/Receivables
 import { SeasonalityMatrixCard } from '../../components/dashboard/SeasonalityMatrixCard'
 import { useDashboardReport } from '../../hooks/useDashboardReport'
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist'
+import { useReportAlerts } from '../../hooks/useReportAlerts'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
 import { PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
@@ -45,6 +49,7 @@ export function DashboardPage() {
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
   const { indicators, charts, isLoading, error } = useDashboardReport(from, to, canViewStats)
+  const { alerts, isLoading: isLoadingAlerts } = useReportAlerts(canViewStats)
   const { checklist, dismiss: dismissChecklist } = useOnboardingChecklist()
   const showOnboardingChecklist = checklist !== null && checklist.completed < checklist.total && !checklist.is_dismissed
   const growthCaption = indicators
@@ -105,6 +110,7 @@ export function DashboardPage() {
         </Box>
 
         {canViewStats && <OperationSnapshotCard />}
+        {canViewStats && <AlertsCard alerts={alerts} isLoading={isLoadingAlerts} />}
 
         {showOnboardingChecklist && checklist && (
             <OnboardingChecklistCard checklist={checklist} onDismiss={() => void dismissChecklist()} />
@@ -209,10 +215,12 @@ export function DashboardPage() {
         <Box
           sx={{
             display: 'grid',
-            // Contagem fixa (6 KPIs): colunas explícitas por breakpoint que
-            // dividem exatamente a contagem — 1/2/3/6 nunca deixam card órfão
-            // esticado numa linha própria (ver design-system.md).
-            gridTemplateColumns: { xs: 'repeat(1,1fr)', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)' },
+            // 7 KPIs desde a Fase A1 (ocupação/receita líquida somaram aos 5
+            // originais) — auto-fit em vez de divisão fixa de coluna: a
+            // contagem tende a crescer mais rápido do que vale a pena
+            // recalcular o breakpoint ideal a cada KPI novo (ver quick
+            // actions acima, mesmo padrão).
+            gridTemplateColumns: { xs: 'repeat(1,1fr)', sm: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))' },
             gap: 1.5,
           }}
         >
@@ -259,6 +267,24 @@ export function DashboardPage() {
             tone="primary"
             isLoading={isLoading}
             index={4}
+          />
+          <MetricCard
+            icon={SavingsOutlinedIcon}
+            label="Receita líquida"
+            value={indicators ? formatCurrency(indicators.net_revenue_amount) : null}
+            caption="Já descontadas taxas de plataforma e processamento"
+            tone="accent"
+            isLoading={isLoading}
+            index={5}
+          />
+          <MetricCard
+            icon={EventSeatOutlinedIcon}
+            label="Ocupação comercial"
+            value={indicators ? formatPercentage(indicators.occupancy_percentage) : null}
+            caption={indicators ? `${indicators.tickets_issued} de ${indicators.commercial_capacity} ingressos com capacidade` : null}
+            tone="primary"
+            isLoading={isLoading}
+            index={6}
           />
         </Box>
 

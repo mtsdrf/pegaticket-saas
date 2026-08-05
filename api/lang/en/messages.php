@@ -914,6 +914,7 @@ return [
         'receivable_interactions_list' => 'Receivable interaction history.',
         'receivable_interaction_created' => 'Receivable interaction recorded successfully.',
         'cmv' => 'CMV report retrieved successfully.',
+        'alerts' => 'Alerts retrieved successfully.',
     ],
 
     'analytics' => [
@@ -933,6 +934,8 @@ return [
         'stock_ruptures' => 'Stock ruptures retrieved successfully.',
         'sales_by_hour' => 'Sales by hour retrieved successfully.',
         'checkin_insights' => 'Access analytics loaded successfully.',
+        'sales_by_dimension' => 'Sales by dimension retrieved successfully.',
+        'payments_summary' => 'Payments report retrieved successfully.',
     ],
 
     'route' => [

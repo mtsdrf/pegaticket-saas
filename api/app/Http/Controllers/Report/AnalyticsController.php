@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\AnalyticsAbcRequest;
 use App\Http\Requests\Report\AnalyticsOverdueSalesRequest;
 use App\Http\Requests\Report\AnalyticsPeriodRequest;
+use App\Http\Requests\Report\AnalyticsSalesByDimensionRequest;
 use App\Http\Requests\Report\AnalyticsSalesSummaryRequest;
 use App\Http\Requests\Report\AnalyticsTopRequest;
 use App\Services\APIResponse;
@@ -15,8 +16,7 @@ class AnalyticsController extends Controller
 {
     public function __construct(
         private AnalyticsService $service
-    ) {
-    }
+    ) {}
 
     public function salesSummary(AnalyticsSalesSummaryRequest $request)
     {
@@ -115,7 +115,7 @@ class AnalyticsController extends Controller
                     'per_page' => $list->perPage(),
                     'total' => $list->total(),
                     'last_page' => $list->lastPage(),
-                ]
+                ],
             ]
         );
     }
@@ -204,5 +204,38 @@ class AnalyticsController extends Controller
         );
 
         return APIResponse::success($data, __('messages.analytics.checkin_insights'));
+    }
+
+    /**
+     * Vendas por dimensão configurável (roadmap Fase A1) — unifica
+     * top-products/top-clients/by-channel num único endpoint aditivo; os
+     * três antigos continuam ativos para não quebrar consumidores atuais.
+     */
+    public function salesByDimension(AnalyticsSalesByDimensionRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->salesByDimension(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null,
+            $validated['dimension'] ?? 'ticket_type',
+            (int) ($validated['limit'] ?? 10)
+        );
+
+        return APIResponse::success($data, __('messages.analytics.sales_by_dimension'));
+    }
+
+    public function payments(AnalyticsPeriodRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->paymentsSummary(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null
+        );
+
+        return APIResponse::success($data, __('messages.analytics.payments_summary'));
     }
 }

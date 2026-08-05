@@ -2,6 +2,7 @@
 
 namespace App\Services\Report;
 
+use App\Models\Sale\Sale;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -32,8 +33,14 @@ class AnalyticsService
      * considerado "churned" (evadido) em churnClients().
      */
     private const CHURN_INACTIVITY_DAYS = 60;
+
     private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
+
     private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
+
+    public function __construct(
+        private readonly RfmCalculator $rfmCalculator = new RfmCalculator
+    ) {}
 
     /**
      * Por bucket (dia ou mês): qtd de vendas, faturamento e ticket
@@ -71,7 +78,7 @@ class AnalyticsService
             ->orderByDesc('revenue')
             ->limit($limit)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'ticket_type_uuid' => $row->ticket_type_uuid,
                 'ticket_type_name' => $row->ticket_type_name,
                 'quantity_sold' => (float) $row->quantity_sold,
@@ -117,7 +124,7 @@ class AnalyticsService
 
         krsort($matrix);
 
-        return collect($matrix)->map(fn(array $months, int $year) => [
+        return collect($matrix)->map(fn (array $months, int $year) => [
             'year' => $year,
             'months' => collect(range(1, 12))->map(function (int $month) use ($months) {
                 $data = $months[$month] ?? ['count' => 0, 'revenue' => 0.0];
@@ -132,18 +139,11 @@ class AnalyticsService
     }
 
     /**
-     * Top clientes por valor total no período, com nº de vendas,
-     * última compra e rótulo RFM simples.
-     *
-     * Regra do rótulo (tercis calculados sobre TODOS os clientes com
-     * venda ativo no período, não só o top N):
-     * - R (recência), F (frequência) e M (monetário) recebem score
-     *   1..3 pelo tercil da distribuição (3 = melhor: comprou mais
-     *   recentemente / mais vezes / gastou mais).
-     * - R = 1 (tercil menos recente): `inativo` se F = 1, senão
-     *   `em_risco` (bom cliente esfriando).
-     * - R >= 2: `vip` se F = 3 e M = 3; `recorrente` se F >= 2;
-     *   senão `em_risco` (compra recente porém esporádica).
+     * Top clientes por valor total no período, com nº de vendas, última
+     * compra e rótulo RFM. Segmento calculado por `RfmCalculator`
+     * (tercis sobre TODOS os clientes com venda ativa no período, não só
+     * o top N) — mesma fórmula usada por `ReportService::rfmClients()`,
+     * ver `RfmCalculator` para a regra completa.
      */
     public function topClients(int $tenantId, ?string $from, ?string $to, int $limit = 10): array
     {
@@ -151,12 +151,12 @@ class AnalyticsService
 
         $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
             ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-                        ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
+            ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
             ->selectRaw('final_customers.uuid as client_uuid, final_customers.name as client_name, COUNT(sales.id) as order_count, SUM(sales.total_amount) as total_amount, MAX(sales.created_at) as last_order_at')
             ->orderByDesc('total_amount')
             ->get();
 
-        $clients = $rows->map(fn($row) => [
+        $clients = $rows->map(fn ($row) => [
             'client_uuid' => $row->client_uuid,
             'client_name' => $row->client_name,
             'order_count' => (int) $row->order_count,
@@ -165,25 +165,23 @@ class AnalyticsService
             'recency_days' => (int) Carbon::parse($row->last_order_at)->startOfDay()->diffInDays(now()->startOfDay()),
         ]);
 
-        $recencyScore = $this->tercileScorer($clients->map(fn($c) => -$c['recency_days'])->all());
-        $frequencyScore = $this->tercileScorer($clients->map(fn($c) => (float) $c['order_count'])->all());
-        $monetaryScore = $this->tercileScorer($clients->map(fn($c) => $c['total_amount'])->all());
+        $rfmInput = $clients->map(fn (array $c) => [
+            'recency_days' => $c['recency_days'],
+            'frequency' => $c['order_count'],
+            'monetary' => $c['total_amount'],
+        ])->all();
+        $segments = $this->rfmCalculator->segments($rfmInput);
 
         return $clients
-            ->map(function (array $client) use ($recencyScore, $frequencyScore, $monetaryScore) {
-                $r = $recencyScore(-$client['recency_days']);
-                $f = $frequencyScore((float) $client['order_count']);
-                $m = $monetaryScore($client['total_amount']);
-
-                return [
-                    'client_uuid' => $client['client_uuid'],
-                    'client_name' => $client['client_name'],
-                    'order_count' => $client['order_count'],
-                    'total_amount' => $this->formatMoney($client['total_amount']),
-                    'last_order_at' => $client['last_order_at'],
-                    'rfm_label' => $this->rfmLabel($r, $f, $m),
-                ];
-            })
+            ->values()
+            ->map(fn (array $client, int $index) => [
+                'client_uuid' => $client['client_uuid'],
+                'client_name' => $client['client_name'],
+                'order_count' => $client['order_count'],
+                'total_amount' => $this->formatMoney($client['total_amount']),
+                'last_order_at' => $client['last_order_at'],
+                'rfm_label' => $segments[$index],
+            ])
             ->take($limit)
             ->values()
             ->all();
@@ -207,7 +205,7 @@ class AnalyticsService
             ->orderByDesc('avg_days_to_pay')
             ->limit($limit)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'client_uuid' => $row->client_uuid,
                 'client_name' => $row->client_name,
                 'avg_days_to_pay' => round((float) $row->avg_days_to_pay, 1),
@@ -237,8 +235,8 @@ class AnalyticsService
             ->groupBy('sales.id', 'sales.uuid', 'final_customers.name')
             ->selectRaw(
                 "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, SUM(sale_installments.amount) as open_amount, MAX("
-                . $this->daysSinceExpression('sale_installments.due_date')
-                . ') as days_overdue',
+                .$this->daysSinceExpression('sale_installments.due_date')
+                .') as days_overdue',
                 [$today]
             );
 
@@ -250,8 +248,8 @@ class AnalyticsService
             ->whereDate('sales.due_date', '<', $today)
             ->selectRaw(
                 "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, sales.total_amount as open_amount, "
-                . $this->daysSinceExpression('sales.due_date')
-                . ' as days_overdue',
+                .$this->daysSinceExpression('sales.due_date')
+                .' as days_overdue',
                 [$today]
             );
 
@@ -263,7 +261,7 @@ class AnalyticsService
             ->orderByDesc('days_overdue')
             ->orderBy('sale_uuid')
             ->paginate($perPage)
-            ->through(fn($row) => [
+            ->through(fn ($row) => [
                 'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'type' => $row->type,
@@ -283,7 +281,7 @@ class AnalyticsService
         if ($dimension === 'clients') {
             $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
                 ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-                                ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
+                ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
                 ->selectRaw('final_customers.uuid as uuid, final_customers.name as name, SUM(sales.total_amount) as revenue')
                 ->orderByDesc('revenue')
                 ->get();
@@ -340,8 +338,8 @@ class AnalyticsService
             ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
             ->selectRaw(
                 'SUM(sale_items.line_total) as total_revenue, '
-                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.line_total ELSE 0 END) as revenue_with_cost, '
-                . 'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.quantity * ticket_types.last_purchase_cost ELSE 0 END) as total_cost'
+                .'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.line_total ELSE 0 END) as revenue_with_cost, '
+                .'SUM(CASE WHEN ticket_types.last_purchase_cost IS NOT NULL THEN sale_items.quantity * ticket_types.last_purchase_cost ELSE 0 END) as total_cost'
             )
             ->first();
 
@@ -376,10 +374,10 @@ class AnalyticsService
         $row = $this->salesQuery($tenantId, $fromDate, $toDate)
             ->selectRaw(
                 'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN 1 ELSE 0 END) as with_count, '
-                . 'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.total_amount ELSE 0 END) as with_total, '
-                . 'SUM(CASE WHEN sales.coupon_id IS NULL THEN 1 ELSE 0 END) as without_count, '
-                . 'SUM(CASE WHEN sales.coupon_id IS NULL THEN sales.total_amount ELSE 0 END) as without_total, '
-                . 'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.discount_amount ELSE 0 END) as total_discount'
+                .'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.total_amount ELSE 0 END) as with_total, '
+                .'SUM(CASE WHEN sales.coupon_id IS NULL THEN 1 ELSE 0 END) as without_count, '
+                .'SUM(CASE WHEN sales.coupon_id IS NULL THEN sales.total_amount ELSE 0 END) as without_total, '
+                .'SUM(CASE WHEN sales.coupon_id IS NOT NULL THEN sales.discount_amount ELSE 0 END) as total_discount'
             )
             ->first();
 
@@ -447,12 +445,12 @@ class AnalyticsService
 
         $clients = $this->salesQuery($tenantId, null, null)
             ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-                        ->groupBy('final_customers.id', 'final_customers.name')
+            ->groupBy('final_customers.id', 'final_customers.name')
             ->havingRaw('COUNT(sales.id) >= 2')
             ->selectRaw('final_customers.id as client_id, final_customers.name as client_name, MAX(sales.created_at) as last_order_at')
             ->get()
-            ->filter(fn($row) => Carbon::parse($row->last_order_at)->lt($threshold))
-            ->keyBy(fn($row) => (int) $row->client_id);
+            ->filter(fn ($row) => Carbon::parse($row->last_order_at)->lt($threshold))
+            ->keyBy(fn ($row) => (int) $row->client_id);
 
         if ($clients->isEmpty()) {
             return [
@@ -462,7 +460,7 @@ class AnalyticsService
             ];
         }
 
-        $windows = $clients->map(fn($row) => [
+        $windows = $clients->map(fn ($row) => [
             'last' => Carbon::parse($row->last_order_at),
             'start' => Carbon::parse($row->last_order_at)->subDays(90),
         ]);
@@ -495,7 +493,7 @@ class AnalyticsService
 
         $topClients = $rows->sortByDesc('monthly_revenue_at_risk')
             ->take(10)
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'client_name' => $item['client_name'],
                 'last_order_at' => $item['last_order_at'],
                 'monthly_revenue_at_risk' => $this->formatMoney($item['monthly_revenue_at_risk']),
@@ -528,7 +526,7 @@ class AnalyticsService
             ->groupByRaw("{$dowExpr}, {$hourExpr}")
             ->orderByRaw("{$dowExpr}, {$hourExpr}")
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'day_of_week' => (int) $row->day_of_week,
                 'hour' => (int) $row->hour,
                 'count' => (int) $row->order_count,
@@ -670,6 +668,115 @@ class AnalyticsService
         ];
     }
 
+    /**
+     * Relatório de vendas por dimensão configurável (roadmap Fase A1) —
+     * unifica `topTicketTypes()`/`topClients()`/`ReportService::byChannel()`
+     * num único endpoint aditivo (os três antigos continuam funcionando,
+     * consumidos hoje pelo frontend; nenhum contrato quebrado). Shape de
+     * item uniforme entre dimensões: `key`/`label` sempre presentes,
+     * `quantity_sold` só é populado para `ticket_type` (as demais dimensões
+     * não têm "quantidade de item", só contagem de pedido).
+     *
+     * @return array{dimension: string, items: list<array{key: string, label: string, order_count: int|null, quantity_sold: float|null, revenue: string}>}
+     */
+    public function salesByDimension(int $tenantId, ?string $from, ?string $to, string $dimension = 'ticket_type', int $limit = 10): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $items = match ($dimension) {
+            'client' => $this->salesQuery($tenantId, $fromDate, $toDate)
+                ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+                ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
+                ->selectRaw('final_customers.uuid as item_key, final_customers.name as item_label, COUNT(sales.id) as order_count, SUM(sales.total_amount) as revenue')
+                ->orderByDesc('revenue')
+                ->limit($limit)
+                ->get()
+                ->map(fn ($row) => [
+                    'key' => $row->item_key,
+                    'label' => $row->item_label,
+                    'order_count' => (int) $row->order_count,
+                    'quantity_sold' => null,
+                    'revenue' => $this->formatMoney((float) $row->revenue),
+                ])
+                ->all(),
+            'origin' => $this->salesQuery($tenantId, $fromDate, $toDate)
+                ->selectRaw("CASE WHEN sales.origin = 'counter' THEN 'staff' ELSE sales.origin END as item_key, COUNT(*) as order_count, SUM(sales.total_amount) as revenue")
+                ->groupByRaw("CASE WHEN sales.origin = 'counter' THEN 'staff' ELSE sales.origin END")
+                ->orderByDesc('revenue')
+                ->limit($limit)
+                ->get()
+                ->map(fn ($row) => [
+                    'key' => Sale::normalizeOrigin((string) $row->item_key),
+                    'label' => Sale::normalizeOrigin((string) $row->item_key),
+                    'order_count' => (int) $row->order_count,
+                    'quantity_sold' => null,
+                    'revenue' => $this->formatMoney((float) $row->revenue),
+                ])
+                ->all(),
+            default => $this->saleItemsQuery($tenantId, $fromDate, $toDate)
+                ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+                ->whereNull('ticket_types.deleted_at')
+                ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name')
+                ->selectRaw('ticket_types.uuid as item_key, ticket_types.name as item_label, SUM(sale_items.quantity) as quantity_sold, SUM(sale_items.line_total) as revenue')
+                ->orderByDesc('revenue')
+                ->limit($limit)
+                ->get()
+                ->map(fn ($row) => [
+                    'key' => $row->item_key,
+                    'label' => $row->item_label,
+                    'order_count' => null,
+                    'quantity_sold' => (float) $row->quantity_sold,
+                    'revenue' => $this->formatMoney((float) $row->revenue),
+                ])
+                ->all(),
+        };
+
+        return [
+            'dimension' => in_array($dimension, ['client', 'origin', 'ticket_type'], true) ? $dimension : 'ticket_type',
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Relatório de pagamentos básico (roadmap Fase A1) — aprovação/recusa
+     * por período, sobre `sales.status` (`pending_approval`/`confirmed`/
+     * `rejected`). SEM roteamento entre gateways (decisão de produto já
+     * fechada — só PagBank existe). `approval_rate`/`rejection_rate` são
+     * calculados só sobre vendas DECIDIDAS (confirmed + rejected); vendas
+     * ainda `pending_approval` não entram no denominador dessas taxas.
+     */
+    public function paymentsSummary(int $tenantId, ?string $from, ?string $to): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->selectRaw('sales.status as status, COUNT(*) as order_count, SUM(sales.total_amount) as total_amount')
+            ->groupBy('sales.status')
+            ->get()
+            ->keyBy('status');
+
+        $byStatus = fn (string $status) => [
+            'count' => (int) ($rows[$status]->order_count ?? 0),
+            'total_amount' => $this->formatMoney((float) ($rows[$status]->total_amount ?? 0)),
+        ];
+
+        $confirmed = $byStatus('confirmed');
+        $rejected = $byStatus('rejected');
+        $pending = $byStatus('pending_approval');
+
+        $decidedCount = $confirmed['count'] + $rejected['count'];
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'confirmed' => $confirmed,
+            'rejected' => $rejected,
+            'pending_approval' => $pending,
+            'approval_rate_percentage' => $decidedCount > 0 ? round(($confirmed['count'] / $decidedCount) * 100, 2) : 0.0,
+            'rejection_rate_percentage' => $decidedCount > 0 ? round(($rejected['count'] / $decidedCount) * 100, 2) : 0.0,
+        ];
+    }
+
     // ------------------------------------------------------------------
     // Bases de query
     // ------------------------------------------------------------------
@@ -680,8 +787,8 @@ class AnalyticsService
             ->where('sales.tenant_id', $tenantId)
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
-            ->when($from, fn($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
-            ->when($to, fn($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
+            ->when($from, fn ($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
+            ->when($to, fn ($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
     }
 
     private function saleItemsQuery(int $tenantId, ?Carbon $from, ?Carbon $to): QueryBuilder
@@ -692,8 +799,8 @@ class AnalyticsService
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
             ->whereNull('sale_items.deleted_at')
-            ->when($from, fn($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
-            ->when($to, fn($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
+            ->when($from, fn ($q) => $q->whereDate('sales.created_at', '>=', $from->toDateString()))
+            ->when($to, fn ($q) => $q->whereDate('sales.created_at', '<=', $to->toDateString()));
     }
 
     private function ticketCheckinsQuery(int $tenantId, Carbon $from, Carbon $to): QueryBuilder
@@ -720,7 +827,7 @@ class AnalyticsService
             ->groupByRaw($bucketExpr)
             ->orderByRaw($bucketExpr)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'bucket' => $row->bucket,
                 'order_count' => (int) $row->order_count,
                 'revenue' => $this->formatMoney((float) $row->revenue),
@@ -836,39 +943,6 @@ class AnalyticsService
      * mundo cai no melhor tercil disponível — suficiente pro rótulo RFM
      * simples desta fase.
      */
-    private function tercileScorer(array $values): \Closure
-    {
-        $sorted = $values;
-        sort($sorted);
-        $count = count($sorted);
-
-        if ($count === 0) {
-            return fn(float $value): int => 1;
-        }
-
-        $q1 = $sorted[(int) floor($count / 3)] ?? $sorted[0];
-        $q2 = $sorted[(int) floor(($count * 2) / 3)] ?? $sorted[$count - 1];
-
-        return fn(float $value): int => match (true) {
-            $value >= $q2 => 3,
-            $value >= $q1 => 2,
-            default => 1,
-        };
-    }
-
-    private function rfmLabel(int $r, int $f, int $m): string
-    {
-        if ($r === 1) {
-            return $f === 1 ? 'inativo' : 'em_risco';
-        }
-
-        if ($f === 3 && $m === 3) {
-            return 'vip';
-        }
-
-        return $f >= 2 ? 'recorrente' : 'em_risco';
-    }
-
     private function formatMoney(float $value): string
     {
         return number_format($value, 2, '.', '');
@@ -877,7 +951,7 @@ class AnalyticsService
     private function caseWhenIn(string $column, array $values): string
     {
         $quoted = implode(', ', array_map(
-            fn(string $value) => DB::getPdo()->quote($value),
+            fn (string $value) => DB::getPdo()->quote($value),
             $values
         ));
 

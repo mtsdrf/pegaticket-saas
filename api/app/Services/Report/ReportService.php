@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\DB;
  */
 class ReportService
 {
+    public function __construct(
+        private readonly RfmCalculator $rfmCalculator = new RfmCalculator
+    ) {}
+
     public function indicators(int $tenantId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $totalOrders = $this->salesQuery($tenantId, $dateFrom, $dateTo)->count();
@@ -32,6 +36,7 @@ class ReportService
         $amountReceived = $this->amountReceived($tenantId, $dateFrom, $dateTo);
         $averageTicket = $totalOrders > 0 ? $totalAmount / $totalOrders : 0.0;
         $comparison = $this->salesComparison($tenantId, $dateFrom, $dateTo);
+        $occupancy = $this->occupancyRate($tenantId);
 
         return [
             'total_sales' => $totalOrders,
@@ -43,12 +48,71 @@ class ReportService
             'unpaid_sales' => $totalOrders - $paidOrders,
             'amount_received' => $this->formatMoney($amountReceived),
             'amount_receivable' => $this->formatMoney($totalAmount - $amountReceived),
+            'net_revenue_amount' => $this->formatMoney($this->netRevenue($tenantId, $dateFrom, $dateTo)),
             'current_period_total_amount' => $this->formatMoney($comparison['current_total']),
             'previous_period_total_amount' => $this->formatMoney($comparison['previous_total']),
             'sales_growth_percentage' => $comparison['growth_percentage'],
             'comparison_current_label' => $comparison['current_label'],
             'comparison_previous_label' => $comparison['previous_label'],
             'overdue_sales_count' => $this->overdueOrdersCount($tenantId),
+            'tickets_issued' => $occupancy['tickets_issued'],
+            'commercial_capacity' => $occupancy['commercial_capacity'],
+            'occupancy_percentage' => $occupancy['occupancy_percentage'],
+        ];
+    }
+
+    /**
+     * Receita líquida básica (KPI 2, roadmap Fase A1) — SÓ realizado, sem
+     * projeção. Soma `receivables.net_amount` (gross - taxa da plataforma -
+     * taxa do processador) das vendas do tenant cuja `created_at` cai no
+     * período — `Receivable` só é gerado para venda paga
+     * (`ReceivableGenerationService::generateForSaleUuid`), então isto já é
+     * "receita líquida do que foi de fato recebido", não uma projeção.
+     */
+    private function netRevenue(int $tenantId, ?string $dateFrom, ?string $dateTo): float
+    {
+        return (float) DB::table('receivables')
+            ->join('sales', 'sales.id', '=', 'receivables.sale_id')
+            ->where('receivables.tenant_id', $tenantId)
+            ->whereNull('receivables.deleted_at')
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->sum('receivables.net_amount');
+    }
+
+    /**
+     * Ocupação comercial (KPI 4, roadmap Fase A1) — snapshot atual do
+     * tenant, NÃO filtrado por período (capacidade é atributo estrutural do
+     * `TicketType`, não um fato datado como venda). `tickets_issued` conta
+     * só tickets `status = 'ativo'` (exclui estornado/cancelado) cujo
+     * `ticket_type` tem capacidade cadastrada (`quantity_available` não
+     * nulo) — lote sem capacidade definida (venda ilimitada) fica fora do
+     * denominador E do numerador, para não subestimar a ocupação dos lotes
+     * que de fato têm limite.
+     */
+    private function occupancyRate(int $tenantId): array
+    {
+        $capacity = (int) DB::table('ticket_types')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->whereNotNull('quantity_available')
+            ->sum('quantity_available');
+
+        $issued = (int) DB::table('tickets')
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->where('tickets.tenant_id', $tenantId)
+            ->whereNull('tickets.deleted_at')
+            ->where('tickets.status', 'ativo')
+            ->whereNotNull('ticket_types.quantity_available')
+            ->whereNull('ticket_types.deleted_at')
+            ->count();
+
+        return [
+            'tickets_issued' => $issued,
+            'commercial_capacity' => $capacity,
+            'occupancy_percentage' => $capacity > 0 ? round(($issued / $capacity) * 100, 2) : 0.0,
         ];
     }
 
@@ -96,8 +160,7 @@ class ReportService
         int $perPage = 15,
         ?string $sortBy = null,
         string $sortDir = 'desc'
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         $sortable = [
             'is_paid' => 'sales.is_paid',
         ];
@@ -199,7 +262,7 @@ class ReportService
 
         return [
             'content' => $pdf->output(),
-            'filename' => 'relatorio-vendas-' . now()->format('Ymd_His') . '.pdf',
+            'filename' => 'relatorio-vendas-'.now()->format('Ymd_His').'.pdf',
         ];
     }
 
@@ -213,8 +276,8 @@ class ReportService
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->whereNull('cancelled_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('created_at', '<=', $dateTo));
+            ->when($dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('created_at', '<=', $dateTo));
     }
 
     /**
@@ -237,8 +300,8 @@ class ReportService
             ->whereNull('sales.cancelled_at')
             ->whereNull('sale_installments.deleted_at')
             ->where('sale_installments.is_paid', true)
-            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->sum('sale_installments.amount');
 
         return $nonInstallment + $installments;
@@ -258,7 +321,7 @@ class ReportService
         foreach ($this->salesQuery($tenantId, $dateFrom, $dateTo)->get(['created_at', 'total_amount']) as $row) {
             $month = Carbon::parse($row->created_at)->format('Y-m');
 
-            if (!isset($grouped[$month])) {
+            if (! isset($grouped[$month])) {
                 $grouped[$month] = ['count' => 0, 'total_amount' => 0.0];
             }
 
@@ -268,7 +331,7 @@ class ReportService
 
         ksort($grouped);
 
-        return collect($grouped)->map(fn($data, $month) => [
+        return collect($grouped)->map(fn ($data, $month) => [
             'month' => $month,
             'count' => (int) $data['count'],
             'total_amount' => $this->formatMoney($data['total_amount']),
@@ -294,11 +357,11 @@ class ReportService
             $year = (int) $date->format('Y');
             $month = (int) $date->format('n');
 
-            if (!isset($grouped[$year])) {
+            if (! isset($grouped[$year])) {
                 $grouped[$year] = [];
             }
 
-            if (!isset($grouped[$year][$month])) {
+            if (! isset($grouped[$year][$month])) {
                 $grouped[$year][$month] = ['count' => 0, 'total_amount' => 0.0];
             }
 
@@ -334,14 +397,14 @@ class ReportService
             ->whereNull('sales.cancelled_at')
             ->whereNull('sale_items.deleted_at')
             ->whereNull('ticket_types.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('ticket_types.id', 'ticket_types.name')
             ->selectRaw('ticket_types.name as ticket_type_name, SUM(sale_items.quantity) as quantity_sold, SUM(sale_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'ticket_type_name' => $row->ticket_type_name,
                 'quantity_sold' => (float) $row->quantity_sold,
                 'revenue' => $this->formatMoney((float) $row->revenue),
@@ -356,14 +419,14 @@ class ReportService
             ->where('sales.tenant_id', $tenantId)
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
             ->selectRaw('final_customers.name as client_name, COUNT(sales.id) as order_count, SUM(sales.total_amount) as total_amount')
             ->orderByDesc('total_amount')
             ->limit($limit)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'client_name' => $row->client_name,
                 'order_count' => (int) $row->order_count,
                 'total_amount' => $this->formatMoney((float) $row->total_amount),
@@ -371,6 +434,11 @@ class ReportService
             ->all();
     }
 
+    /**
+     * Segmento calculado por `RfmCalculator` (tercis sobre TODOS os
+     * clientes ativos no período, não só o top N retornado) — mesma
+     * fórmula usada por `AnalyticsService::topClients()`.
+     */
     private function rfmClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
     {
         $rows = DB::table('sales')
@@ -378,29 +446,34 @@ class ReportService
             ->where('sales.tenant_id', $tenantId)
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
             ->selectRaw('final_customers.name as client_name, COUNT(sales.id) as frequency, SUM(sales.total_amount) as monetary, MAX(sales.created_at) as last_order_at')
             ->orderByDesc('monetary')
-            ->limit($limit)
             ->get();
 
-        return $rows->map(function ($row) {
-            $recencyDays = Carbon::parse($row->last_order_at)->diffInDays(now());
+        $clients = $rows->map(fn ($row) => [
+            'client_name' => $row->client_name,
+            'frequency' => (int) $row->frequency,
+            'monetary' => (float) $row->monetary,
+            'recency_days' => Carbon::parse($row->last_order_at)->diffInDays(now()),
+        ]);
 
-            return [
-                'client_name' => $row->client_name,
-                'frequency' => (int) $row->frequency,
-                'monetary' => $this->formatMoney((float) $row->monetary),
-                'recency_days' => $recencyDays,
-                'segment' => $this->rfmSegment(
-                    recencyDays: $recencyDays,
-                    frequency: (int) $row->frequency,
-                    monetary: (float) $row->monetary
-                ),
-            ];
-        })->all();
+        $segments = $this->rfmCalculator->segments($clients->all());
+
+        return $clients
+            ->values()
+            ->map(fn (array $client, int $index) => [
+                'client_name' => $client['client_name'],
+                'frequency' => $client['frequency'],
+                'monetary' => $this->formatMoney($client['monetary']),
+                'recency_days' => $client['recency_days'],
+                'segment' => $this->rfmCalculator->displayLabel($segments[$index]),
+            ])
+            ->take($limit)
+            ->values()
+            ->all();
     }
 
     private function latePaymentClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
@@ -411,8 +484,8 @@ class ReportService
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
             ->whereNotNull('sales.paid_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->get(['final_customers.name as client_name', 'sales.created_at', 'sales.paid_at']);
 
         return $rows
@@ -452,7 +525,7 @@ class ReportService
                 'sale_installments.due_date as due_date'
             )
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'amount' => $this->formatMoney((float) $row->amount),
@@ -477,7 +550,7 @@ class ReportService
                 'sales.due_date as due_date'
             )
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'sale_uuid' => $row->sale_uuid,
                 'client_name' => $row->client_name,
                 'amount' => $this->formatMoney((float) $row->amount),
@@ -513,7 +586,7 @@ class ReportService
             ->whereNull('sale_installments.deleted_at')
             ->where('sale_installments.is_paid', false)
             ->get(['sale_installments.amount', 'sale_installments.due_date'])
-            ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
+            ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             ->concat(
                 DB::table('sales')
                     ->where('tenant_id', $tenantId)
@@ -523,11 +596,11 @@ class ReportService
                     ->where('is_paid', false)
                     ->whereNotNull('due_date')
                     ->get(['total_amount as amount', 'due_date'])
-                    ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
+                    ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             );
 
         foreach ($rows as $row) {
-            if (!$row['due_date']) {
+            if (! $row['due_date']) {
                 continue;
             }
 
@@ -546,7 +619,7 @@ class ReportService
             $buckets[$bucketKey]['count']++;
         }
 
-        return collect($buckets)->map(fn($bucket) => [
+        return collect($buckets)->map(fn ($bucket) => [
             ...$bucket,
             'amount' => $this->formatMoney($bucket['amount']),
             'count' => (int) $bucket['count'],
@@ -565,7 +638,7 @@ class ReportService
             ->whereNull('sale_installments.deleted_at')
             ->where('sale_installments.is_paid', false)
             ->get(['sale_installments.amount', 'sale_installments.due_date'])
-            ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
+            ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             ->concat(
                 DB::table('sales')
                     ->where('tenant_id', $tenantId)
@@ -575,17 +648,17 @@ class ReportService
                     ->where('is_paid', false)
                     ->whereNotNull('due_date')
                     ->get(['total_amount as amount', 'due_date'])
-                    ->map(fn($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
+                    ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
             );
 
         foreach ($rows as $row) {
-            if (!$row['due_date']) {
+            if (! $row['due_date']) {
                 continue;
             }
 
             $month = Carbon::parse($row['due_date'])->format('Y-m');
 
-            if (!isset($grouped[$month])) {
+            if (! isset($grouped[$month])) {
                 $grouped[$month] = ['count' => 0, 'total_amount' => 0.0];
             }
 
@@ -595,7 +668,7 @@ class ReportService
 
         ksort($grouped);
 
-        return collect($grouped)->map(fn($data, $month) => [
+        return collect($grouped)->map(fn ($data, $month) => [
             'month' => $month,
             'count' => (int) $data['count'],
             'total_amount' => $this->formatMoney($data['total_amount']),
@@ -612,13 +685,13 @@ class ReportService
             ->whereNull('sales.cancelled_at')
             ->whereNull('sale_items.deleted_at')
             ->whereNull('ticket_types.deleted_at')
-            ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('ticket_types.id', 'ticket_types.name')
             ->selectRaw('ticket_types.name as ticket_type_name, SUM(sale_items.line_total) as revenue')
             ->orderByDesc('revenue')
             ->get()
-            ->map(fn($row) => ['ticket_type_name' => $row->ticket_type_name, 'revenue' => (float) $row->revenue]);
+            ->map(fn ($row) => ['ticket_type_name' => $row->ticket_type_name, 'revenue' => (float) $row->revenue]);
 
         return $this->abcCurve($rows->all(), 'ticket_type_name', $limit);
     }
@@ -630,13 +703,13 @@ class ReportService
             ->where('sales.tenant_id', $tenantId)
             ->whereNull('sales.deleted_at')
             ->whereNull('sales.cancelled_at')
-                        ->when($dateFrom, fn($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
             ->groupBy('final_customers.id', 'final_customers.name')
             ->selectRaw('final_customers.name as client_name, SUM(sales.total_amount) as revenue')
             ->orderByDesc('revenue')
             ->get()
-            ->map(fn($row) => ['client_name' => $row->client_name, 'revenue' => (float) $row->revenue]);
+            ->map(fn ($row) => ['client_name' => $row->client_name, 'revenue' => (float) $row->revenue]);
 
         return $this->abcCurve($rows->all(), 'client_name', $limit);
     }
@@ -736,8 +809,8 @@ class ReportService
                 $currentEnd,
                 $previousStart,
                 $previousEnd,
-                $currentStart->format('d/m/Y') . ' a ' . $currentEnd->format('d/m/Y'),
-                $previousStart->format('d/m/Y') . ' a ' . $previousEnd->format('d/m/Y'),
+                $currentStart->format('d/m/Y').' a '.$currentEnd->format('d/m/Y'),
+                $previousStart->format('d/m/Y').' a '.$previousEnd->format('d/m/Y'),
             ];
         }
 
@@ -754,23 +827,6 @@ class ReportService
             $currentStart->translatedFormat('F/Y'),
             $previousStart->translatedFormat('F/Y'),
         ];
-    }
-
-    private function rfmSegment(int $recencyDays, int $frequency, float $monetary): string
-    {
-        if ($recencyDays <= 30 && ($frequency >= 5 || $monetary >= 1000)) {
-            return 'VIP';
-        }
-
-        if ($recencyDays <= 60 && $frequency >= 3) {
-            return 'Recorrente';
-        }
-
-        if ($recencyDays <= 120) {
-            return 'Em risco';
-        }
-
-        return 'Inativo';
     }
 
     private function abcCurveClass(float $cumulativePercentage): string
@@ -802,29 +858,29 @@ class ReportService
             // load).
             ->with(['finalCustomer']);
 
-        if (!empty($filters['client_uuid'])) {
-            $query->whereHas('finalCustomer', fn($q) => $q->where('uuid', $filters['client_uuid']));
+        if (! empty($filters['client_uuid'])) {
+            $query->whereHas('finalCustomer', fn ($q) => $q->where('uuid', $filters['client_uuid']));
         }
 
-        if (!empty($filters['client_name'])) {
-            $query->whereHas('finalCustomer', fn($q) => $q->where('name', 'like', '%' . $filters['client_name'] . '%'));
+        if (! empty($filters['client_name'])) {
+            $query->whereHas('finalCustomer', fn ($q) => $q->where('name', 'like', '%'.$filters['client_name'].'%'));
         }
 
         if (array_key_exists('is_paid', $filters) && $filters['is_paid'] !== null) {
             $query->where('is_paid', filter_var($filters['is_paid'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
         // Filtro por canal (roadmap A1.3) — drill-down do by-channel:
         // GET /reports/sales?origin=X&date_from=Y&date_to=Z.
-        if (!empty($filters['origin'])) {
+        if (! empty($filters['origin'])) {
             $normalizedOrigin = Sale::normalizeOrigin((string) $filters['origin']);
 
             if ($normalizedOrigin === 'staff') {
@@ -841,5 +897,4 @@ class ReportService
     {
         return number_format($value, 2, '.', '');
     }
-
 }
