@@ -13,11 +13,11 @@ use App\Exceptions\InvalidEmailConfirmationTokenException;
 use App\Mail\UserEmailConfirmationMail;
 use App\Models\User\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Communication\CommunicationDispatcherService;
 use App\Services\Media\MediaStorageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -33,9 +33,9 @@ class ProfileService
 
     public function __construct(
         private UserRepositoryInterface $repository,
-        private MediaStorageService $mediaStorage
-    ) {
-    }
+        private MediaStorageService $mediaStorage,
+        private CommunicationDispatcherService $communicationDispatcher
+    ) {}
 
     public function update(User $user, UpdateProfileDTO $dto): User
     {
@@ -53,7 +53,7 @@ class ProfileService
                 $data = array_filter([
                     'name' => $dto->name,
                     'phone' => $dto->phone,
-                ], fn($v) => !is_null($v));
+                ], fn ($v) => ! is_null($v));
 
                 if ($newMedia) {
                     $data['avatar_path'] = $newMedia['path'];
@@ -62,17 +62,17 @@ class ProfileService
                     $data['avatar_updated_at'] = $newMedia['updated_at'];
                 }
 
-                if (!empty($data)) {
+                if (! empty($data)) {
                     $user = $this->repository->updateUser($user, $data);
                 }
 
                 if ($newMedia && $oldPath && $oldPath !== $newMedia['path']) {
-                    DB::afterCommit(fn() => $this->mediaStorage->deletePublicMedia($oldPath, 'avatar'));
+                    DB::afterCommit(fn () => $this->mediaStorage->deletePublicMedia($oldPath, 'avatar'));
                 }
 
                 $changes = array_diff_assoc($user->getAttributes(), $original);
 
-                if (!empty($changes)) {
+                if (! empty($changes)) {
                     event(new UserProfileUpdated(
                         userUuid: $user->uuid,
                         actorId: Auth::id(),
@@ -116,9 +116,13 @@ class ProfileService
                 'pending_email_expires_at' => now()->addHours(self::EMAIL_TOKEN_EXPIRES_IN_HOURS),
             ]);
 
-            $confirmUrl = rtrim((string) config('app.frontend_url'), '/') . '/confirmar-email/' . $plainToken;
+            $confirmUrl = rtrim((string) config('app.frontend_url'), '/').'/confirmar-email/'.$plainToken;
 
-            Mail::to($dto->newEmail)->send(new UserEmailConfirmationMail($user, $dto->newEmail, $confirmUrl));
+            $this->communicationDispatcher->send(
+                'email_confirmation',
+                new UserEmailConfirmationMail($user, $dto->newEmail, $confirmUrl),
+                $dto->newEmail
+            );
         });
     }
 
@@ -129,7 +133,7 @@ class ProfileService
                 ->whereNull('deleted_at')
                 ->first();
 
-            if (!$user || !$user->pending_email_expires_at || $user->pending_email_expires_at->isPast()) {
+            if (! $user || ! $user->pending_email_expires_at || $user->pending_email_expires_at->isPast()) {
                 throw new InvalidEmailConfirmationTokenException(
                     __('messages.profile.invalid_or_expired_token')
                 );

@@ -37,6 +37,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Análises', 'slug' => 'analytics', 'description' => 'Análises avançadas de vendas', 'is_active' => true],
             ['name' => 'Visão Geral', 'slug' => 'dashboard', 'description' => 'Indicadores e números da tela inicial', 'is_active' => true],
             ['name' => 'Auditoria', 'slug' => 'audit_logs', 'description' => 'Consulta ao histórico de auditoria da plataforma', 'is_active' => true],
+            ['name' => 'Comunicação', 'slug' => 'communication_logs', 'description' => 'Consulta ao tracking unificado de e-mail transacional (hub de comunicação)', 'is_active' => true],
             ['name' => 'Configurações', 'slug' => 'tenant_settings', 'description' => 'Gestão das configurações da empresa', 'is_active' => true],
             ['name' => 'Perfil da Empresa', 'slug' => 'tenant-profile', 'description' => 'Edição de nome e logo da própria empresa pelo dono', 'is_active' => true],
             ['name' => 'Bilheteria Online', 'slug' => 'storefront', 'description' => 'Catálogo público de eventos e checkout da bilheteria online do tenant', 'is_active' => true],

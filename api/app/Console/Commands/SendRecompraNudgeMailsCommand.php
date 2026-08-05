@@ -4,10 +4,10 @@ namespace App\Console\Commands;
 
 use App\Mail\RecompraNudgeMail;
 use App\Models\Sale\Sale;
+use App\Services\Communication\CommunicationDispatcherService;
 use App\Services\Logging\ApplicationLogger;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * Automação de recompra (roadmap Fase 6, fatia final) — identifica, por
@@ -27,7 +27,7 @@ class SendRecompraNudgeMailsCommand extends Command
 
     protected $description = 'Envia e-mail de recompra para compradores que não compram há mais de N dias (default 60).';
 
-    public function handle(): int
+    public function handle(CommunicationDispatcherService $communicationDispatcher): int
     {
         $days = max(1, (int) $this->option('days'));
         $threshold = now()->subDays($days);
@@ -71,11 +71,16 @@ class SendRecompraNudgeMailsCommand extends Command
             try {
                 $storefrontUrl = rtrim((string) config('app.frontend_url'), '/').'/eventos/'.$sale->tenant->slug;
 
-                Mail::to($email)->send(new RecompraNudgeMail(
-                    tenant: $sale->tenant,
-                    finalCustomer: $sale->finalCustomer,
-                    storefrontUrl: $storefrontUrl,
-                ));
+                $communicationDispatcher->send(
+                    'recompra_nudge',
+                    new RecompraNudgeMail(
+                        tenant: $sale->tenant,
+                        finalCustomer: $sale->finalCustomer,
+                        storefrontUrl: $storefrontUrl,
+                    ),
+                    $email,
+                    $sale->tenant_id
+                );
 
                 $sale->forceFill(['recompra_nudge_sent_at' => now()])->save();
                 $sent++;

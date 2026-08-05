@@ -6,6 +6,7 @@ use App\Contracts\Payment\PaymentProviderInterface;
 use App\Repositories\Contracts\AuditLogRepositoryInterface;
 use App\Repositories\Contracts\CartEventRepositoryInterface;
 use App\Repositories\Contracts\CashSessionRepositoryInterface;
+use App\Repositories\Contracts\CommunicationLogRepositoryInterface;
 use App\Repositories\Contracts\CouponRepositoryInterface;
 use App\Repositories\Contracts\EventCategoryRepositoryInterface;
 // Repository Interfaces
@@ -48,6 +49,7 @@ use App\Repositories\Contracts\VenueRepositoryInterface;
 use App\Repositories\Eloquent\AuditLogRepository;
 use App\Repositories\Eloquent\CartEventRepository;
 use App\Repositories\Eloquent\CashSessionRepository;
+use App\Repositories\Eloquent\CommunicationLogRepository;
 use App\Repositories\Eloquent\CouponRepository;
 use App\Repositories\Eloquent\EventCategoryRepository;
 // Repository Implementations
@@ -339,6 +341,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             AuditLogRepositoryInterface::class,
             AuditLogRepository::class
+        );
+
+        // Communication Log Repository (hub de comunicação)
+        $this->app->bind(
+            CommunicationLogRepositoryInterface::class,
+            CommunicationLogRepository::class
         );
 
         // Final Customer Repository (Portal do cliente final)

@@ -9,9 +9,9 @@ use App\Exceptions\InvalidPasswordResetTokenException;
 use App\Mail\PasswordResetMail;
 use App\Models\User\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Communication\CommunicationDispatcherService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -24,9 +24,9 @@ class PasswordResetService
     private const RESET_TOKEN_EXPIRES_IN_HOURS = 1;
 
     public function __construct(
-        private UserRepositoryInterface $repository
-    ) {
-    }
+        private UserRepositoryInterface $repository,
+        private CommunicationDispatcherService $communicationDispatcher
+    ) {}
 
     /**
      * Nunca revela se o e-mail existe ou não (user enumeration) — sempre
@@ -38,7 +38,7 @@ class PasswordResetService
             ->whereNull('deleted_at')
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
@@ -50,9 +50,13 @@ class PasswordResetService
                 'password_reset_expires_at' => now()->addHours(self::RESET_TOKEN_EXPIRES_IN_HOURS),
             ]);
 
-            $resetUrl = rtrim((string) config('app.frontend_url'), '/') . '/redefinir-senha/' . $plainToken;
+            $resetUrl = rtrim((string) config('app.frontend_url'), '/').'/redefinir-senha/'.$plainToken;
 
-            Mail::to($user->email)->send(new PasswordResetMail($user, $resetUrl));
+            $this->communicationDispatcher->send(
+                'password_reset',
+                new PasswordResetMail($user, $resetUrl),
+                $user->email
+            );
         });
     }
 
@@ -63,7 +67,7 @@ class PasswordResetService
                 ->whereNull('deleted_at')
                 ->first();
 
-            if (!$user || !$user->password_reset_expires_at || $user->password_reset_expires_at->isPast()) {
+            if (! $user || ! $user->password_reset_expires_at || $user->password_reset_expires_at->isPast()) {
                 throw new InvalidPasswordResetTokenException(
                     __('messages.auth.invalid_or_expired_reset_token')
                 );

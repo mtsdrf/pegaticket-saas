@@ -11,9 +11,9 @@ use App\Models\Tenant\TenantRole;
 use App\Models\Tenant\TenantUserInvite;
 use App\Models\User\User;
 use App\Repositories\Contracts\TenantUserInviteRepositoryInterface;
+use App\Services\Communication\CommunicationDispatcherService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class TenantUserInviteService
@@ -21,9 +21,9 @@ class TenantUserInviteService
     private const EXPIRES_IN_DAYS = 7;
 
     public function __construct(
-        private TenantUserInviteRepositoryInterface $repository
-    ) {
-    }
+        private TenantUserInviteRepositoryInterface $repository,
+        private CommunicationDispatcherService $communicationDispatcher
+    ) {}
 
     public function create(CreateTenantUserInviteDTO $dto, int $tenantId): TenantUserInvite
     {
@@ -56,9 +56,14 @@ class TenantUserInviteService
                 'expires_at' => now()->addDays(self::EXPIRES_IN_DAYS),
             ]);
 
-            $inviteUrl = rtrim((string) config('app.frontend_url'), '/') . '/convite/' . $plainToken;
+            $inviteUrl = rtrim((string) config('app.frontend_url'), '/').'/convite/'.$plainToken;
 
-            Mail::to($invite->email)->send(new TenantUserInviteMail($invite, $inviteUrl));
+            $this->communicationDispatcher->send(
+                'tenant_user_invite',
+                new TenantUserInviteMail($invite, $inviteUrl),
+                $invite->email,
+                $tenantId
+            );
 
             event(new TenantUserInvited(
                 tenantUserInviteUuid: $invite->uuid,

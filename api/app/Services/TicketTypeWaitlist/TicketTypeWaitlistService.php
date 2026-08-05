@@ -7,10 +7,10 @@ use App\Events\TicketTypeWaitlist\TicketTypeWaitlistEntryCreated;
 use App\Mail\TicketTypeWaitlistAvailableMail;
 use App\Models\Event\TicketType;
 use App\Models\Event\TicketTypeWaitlistEntry;
+use App\Services\Communication\CommunicationDispatcherService;
 use App\Services\Logging\ApplicationLogger;
 use App\Services\Storefront\StorefrontHoldService;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * Lista de espera de TicketType esgotado (roadmap inventário). Cadastro
@@ -30,6 +30,7 @@ class TicketTypeWaitlistService
 {
     public function __construct(
         private StorefrontHoldService $storefrontHoldService,
+        private CommunicationDispatcherService $communicationDispatcher,
     ) {}
 
     public function create(int $tenantId, CreateTicketTypeWaitlistEntryDTO $dto): TicketTypeWaitlistEntry
@@ -116,10 +117,15 @@ class TicketTypeWaitlistService
 
             foreach ($entries as $entry) {
                 try {
-                    Mail::to($entry->email)->send(new TicketTypeWaitlistAvailableMail(
-                        ticketType: $ticketType,
-                        waitlistEntry: $entry,
-                    ));
+                    $this->communicationDispatcher->send(
+                        'waitlist_available',
+                        new TicketTypeWaitlistAvailableMail(
+                            ticketType: $ticketType,
+                            waitlistEntry: $entry,
+                        ),
+                        $entry->email,
+                        $ticketType->tenant_id
+                    );
 
                     $entry->forceFill(['notified_at' => now()])->save();
                     $sent++;

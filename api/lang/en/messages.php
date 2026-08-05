@@ -155,6 +155,10 @@ return [
         'list' => 'Audit log list returned successfully.',
     ],
 
+    'communication_log' => [
+        'list' => 'Communication log list returned successfully.',
+    ],
+
     'workflow' => [
         'timeline_list' => 'Operational history returned successfully.',
     ],

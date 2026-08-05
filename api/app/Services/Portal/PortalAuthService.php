@@ -16,8 +16,8 @@ use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\FinalCustomer\FinalCustomerOtp;
 use App\Repositories\Contracts\FinalCustomerRepositoryInterface;
 use App\Services\Auth\CustomerJWTService;
+use App\Services\Communication\CommunicationDispatcherService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
@@ -28,7 +28,9 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 class PortalAuthService
 {
     private const OTP_LENGTH = 6;
+
     private const EXPIRES_IN_MINUTES = 10;
+
     private const MAX_ATTEMPTS = 5;
 
     /**
@@ -45,15 +47,15 @@ class PortalAuthService
     public function __construct(
         private FinalCustomerRepositoryInterface $customerRepository,
         private CustomerJWTService $jwtService,
-    ) {
-    }
+        private CommunicationDispatcherService $communicationDispatcher,
+    ) {}
 
     public function requestOtp(RequestOtpDTO $dto): void
     {
         DB::transaction(function () use ($dto) {
             $customer = $this->customerRepository->findByEmail($dto->email);
 
-            if (!$customer) {
+            if (! $customer) {
                 $customer = $this->customerRepository->create([
                     'email' => $dto->email,
                 ]);
@@ -81,7 +83,11 @@ class PortalAuthService
             ]);
 
             try {
-                Mail::to($customer->email)->send(new PortalOtpMail($code, self::EXPIRES_IN_MINUTES));
+                $this->communicationDispatcher->send(
+                    'portal_otp',
+                    new PortalOtpMail($code, self::EXPIRES_IN_MINUTES),
+                    $customer->email
+                );
             } catch (TransportExceptionInterface $e) {
                 throw new PortalOtpDeliveryException(__('messages.portal.otp_delivery_unavailable'), previous: $e);
             }
@@ -110,7 +116,7 @@ class PortalAuthService
                 ->first()
             : null;
 
-        if (!$customer || !$otp) {
+        if (! $customer || ! $otp) {
             event(new PortalOtpVerificationFailed(email: $dto->email, reason: 'not_found'));
 
             throw new InvalidOtpException(__('messages.portal.invalid_code'));

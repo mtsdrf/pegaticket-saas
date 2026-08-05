@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Auth\SelfSignupController;
 use App\Http\Controllers\CashSession\CashSessionController;
+use App\Http\Controllers\CommunicationLog\CommunicationLogController;
 use App\Http\Controllers\Event\EventCategoryController;
 use App\Http\Controllers\Event\EventController;
 use App\Http\Controllers\Event\EventGateController;
@@ -433,6 +434,16 @@ Route::prefix('v1')->group(function () {
         Route::prefix('audit-logs')->group(function () {
             Route::get('/', [AuditLogController::class, 'index'])
                 ->middleware(['perm:audit_logs,read', 'throttle:100,1,audit-logs-list']);
+        });
+
+        // Tracking unificado de e-mail transacional (roadmap "hub de
+        // comunicação") — mesmo padrão de audit-logs: sem middleware
+        // `tenant`, tabela mistura registros com e sem tenant_id (ex.
+        // password_reset/email_confirmation/portal_otp não têm tenant claro
+        // no momento do envio), staff da plataforma consulta tudo.
+        Route::prefix('communication-logs')->group(function () {
+            Route::get('/', [CommunicationLogController::class, 'index'])
+                ->middleware(['perm:communication_logs,read', 'throttle:100,1,communication-logs-list']);
         });
 
         // Painel de pendências de pagamento/assinatura (roadmap 2026-07-24)

@@ -156,6 +156,10 @@ return [
         'list' => 'Lista de auditoria retornada com sucesso.',
     ],
 
+    'communication_log' => [
+        'list' => 'Lista de comunicações retornada com sucesso.',
+    ],
+
     'workflow' => [
         'timeline_list' => 'Histórico operacional retornado com sucesso.',
     ],
