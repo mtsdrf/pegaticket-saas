@@ -2,17 +2,14 @@ import AccessibleOutlinedIcon from '@mui/icons-material/AccessibleOutlined'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined'
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
-import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined'
 import RemoveIcon from '@mui/icons-material/Remove'
-import RestartAltIcon from '@mui/icons-material/RestartAlt'
-import ZoomInIcon from '@mui/icons-material/ZoomIn'
-import ZoomOutIcon from '@mui/icons-material/ZoomOut'
 import { Alert, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '../../components/layout/EmptyState'
 import { FloatingCheckoutBar, FLOATING_CHECKOUT_BAR_HEIGHT } from '../../components/storefront/FloatingCheckoutBar'
+import { SeatMapViewer, type SeatMapViewerSeat, type SeatMapViewerVisualState } from '../../components/storefront/SeatMapViewer'
 import { STOREFRONT_BOTTOM_NAV_HEIGHT } from '../../components/storefront/StorefrontBottomNav'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
@@ -166,7 +163,6 @@ export function StorefrontEventDetailPage() {
   const [autoSeatQuantity, setAutoSeatQuantity] = useState(1)
   const [seatAvailabilityFilter, setSeatAvailabilityFilter] = useState<'all' | 'available'>('all')
   const [accessibleSeatsOnly, setAccessibleSeatsOnly] = useState(false)
-  const [mapZoom, setMapZoom] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -245,8 +241,6 @@ export function StorefrontEventDetailPage() {
       venueMap.height &&
       filteredDisplayedSeats.some((seat) => seat.pos_x !== null && seat.pos_y !== null),
   )
-  const mapCanvasWidth = venueMap?.width ? Math.max(320, Math.round(venueMap.width * mapZoom)) : 320
-  const mapCanvasHeight = venueMap?.height ? Math.max(220, Math.round(venueMap.height * mapZoom)) : 220
 
   useEffect(() => {
     if (!slug || !eventSlug) return
@@ -370,7 +364,6 @@ export function StorefrontEventDetailPage() {
   useEffect(() => {
     setSelectedSeatSector('all')
     setSeatAvailabilityFilter('all')
-    setMapZoom(1)
   }, [selectedSeatTicketTypeUuid, selectedSessionUuid])
 
   function findCartItem(itemUuid: string, kind: 'ticket_type' | 'event_product', seatUuid?: string | null) {
@@ -703,129 +696,95 @@ export function StorefrontEventDetailPage() {
     )
   }
 
-  function renderSeatMapNode(seat: StorefrontAvailabilitySeat, ticketType: StorefrontAvailabilityTicketType) {
-    if (!venueMap?.width || !venueMap?.height || seat.pos_x === null || seat.pos_y === null) {
-      return null
-    }
+  function buildSeatMapViewerSeat(seat: StorefrontAvailabilitySeat, ticketType: StorefrontAvailabilityTicketType): SeatMapViewerSeat | null {
+    if (seat.pos_x === null || seat.pos_y === null) return null
 
-    const { cartItem, currentQuantity, seatCapacity, serverAvailableQuantity, maxSelectableQuantity, isSingleUnitSeat, isExclusive } =
+    const { currentQuantity, seatCapacity, serverAvailableQuantity, maxSelectableQuantity, isSingleUnitSeat, isExclusive } =
       getSeatSelectionState(seat, ticketType)
     const isSelected = currentQuantity > 0
     const isAvailable = serverAvailableQuantity > 0
+    const isFull = !isSingleUnitSeat && !isExclusive && currentQuantity >= maxSelectableQuantity && isSelected
     const isDisabled =
       cartHasMixedSessions ||
       isLoadingAvailability ||
-      !isAvailable ||
       !canPurchase ||
-      (availability?.requires_session_selection && !selectedSessionUuid)
+      (availability?.requires_session_selection && !selectedSessionUuid) ||
+      (!isSelected && !isAvailable) ||
+      isFull
 
-    const left = `${(seat.pos_x / venueMap.width) * 100}%`
-    const top = `${(seat.pos_y / venueMap.height) * 100}%`
-    const size = seat.kind === 'mesa' || seat.kind === 'camarote' ? 34 : 26
+    const visualState: SeatMapViewerVisualState = isSelected ? 'selected' : isAvailable ? 'available' : 'unavailable'
 
-    let background = 'var(--pt-surface-raised-bg)'
-    let color = 'var(--pt-text)'
-    let border = '1px solid var(--pt-border)'
+    const summary = isSelected
+      ? isSingleUnitSeat || isExclusive
+        ? 'selecionado'
+        : `${currentQuantity} de ${seatCapacity} vaga(s) selecionada(s)`
+      : seat.availability_status === 'reservado'
+        ? 'reservado neste momento'
+        : seat.availability_status === 'indisponivel'
+          ? 'indisponível'
+          : isExclusive
+            ? `reserva exclusiva para ${seatCapacity} pessoa(s)`
+            : 'disponível'
 
-    if (isSelected) {
-      background = 'var(--pt-primary)'
-      color = '#fff'
-      border = '1px solid var(--pt-primary)'
-    } else if (seat.availability_status === 'reservado') {
-      background = 'rgba(245, 158, 11, 0.14)'
-      color = '#b45309'
-      border = '1px solid rgba(245, 158, 11, 0.45)'
-    } else if (seat.availability_status === 'indisponivel') {
-      background = 'rgba(239, 68, 68, 0.12)'
-      color = '#b91c1c'
-      border = '1px solid rgba(239, 68, 68, 0.38)'
+    return {
+      uuid: seat.uuid,
+      pos_x: seat.pos_x,
+      pos_y: seat.pos_y,
+      kind: seat.kind,
+      label: seat.label,
+      isAccessible: seat.is_accessible,
+      visualState,
+      disabled: isDisabled,
+      ariaLabel: `${seat.label}${seat.sector_name ? `, ${seat.sector_name}` : ''}, ${summary}${seat.is_accessible ? ', lugar acessível' : ''}`,
+    }
+  }
+
+  function handleSeatMapSelect(seatUuid: string, ticketType: StorefrontAvailabilityTicketType) {
+    const seat = displayedSeats.find((item) => item.uuid === seatUuid)
+    if (!seat || !event) return
+
+    const { cartItem, currentQuantity, seatCapacity, maxSelectableQuantity, isSingleUnitSeat, isExclusive } = getSeatSelectionState(
+      seat,
+      ticketType,
+    )
+    const isSelected = currentQuantity > 0
+
+    if (isSelected && (isSingleUnitSeat || isExclusive)) {
+      updateQuantity(cartItem!.id, 0)
+      return
     }
 
-    if (seat.is_accessible && !isSelected) {
-      border = '2px solid var(--pt-primary)'
+    if (isSelected && !isSingleUnitSeat) {
+      if (cartItem && currentQuantity < maxSelectableQuantity) {
+        updateQuantity(cartItem.id, currentQuantity + 1)
+      }
+      return
     }
 
-    return (
-      <Tooltip
-        key={seat.uuid}
-        title={`${seat.label}${seat.sector_name ? ` • ${seat.sector_name}` : ''}${seat.is_accessible ? ' • acessível' : ''}`}
-        arrow
-        placement="top"
-      >
-        <Box
-          component="button"
-          type="button"
-          onClick={() => {
-            if (isSelected && (isSingleUnitSeat || isExclusive)) {
-              updateQuantity(cartItem!.id, 0)
-              return
-            }
-
-            if (isSelected && !isSingleUnitSeat) {
-              if (cartItem && currentQuantity < maxSelectableQuantity) {
-                updateQuantity(cartItem.id, currentQuantity + 1)
-              }
-              return
-            }
-
-            if (isDisabled || !event) return
-
-            addTicketType(
-              event,
-              {
-                uuid: ticketType.uuid,
-                name: ticketType.name,
-                description: ticketType.description,
-                price: ticketType.effective_price,
-                image_url: null,
-                quantity_available: ticketType.available_quantity,
-                min_per_order: ticketType.min_per_order,
-                max_per_order: ticketType.max_per_order,
-                sales_start_at: ticketType.sales_start_at,
-                sales_end_at: ticketType.sales_end_at,
-                status: 'ativo',
-              },
-              isExclusive ? seatCapacity : 1,
-              selectedSession ? { uuid: selectedSession.uuid, name: selectedSession.name } : null,
-              {
-                uuid: seat.uuid,
-                label: seat.label,
-                sector_name: seat.sector_name,
-                kind: seat.kind,
-                capacity: seat.capacity,
-              },
-            )
-          }}
-          disabled={(isDisabled && !isSelected) || (!isSingleUnitSeat && !isExclusive && currentQuantity >= maxSelectableQuantity && isSelected)}
-          sx={{
-            position: 'absolute',
-            left,
-            top,
-            transform: 'translate(-50%, -50%)',
-            width: size,
-            height: size,
-            borderRadius: seat.kind === 'mesa' ? '30%' : '999px',
-            border,
-            background,
-            color,
-            fontSize: 10,
-            fontWeight: 800,
-            lineHeight: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: isSelected ? '0 10px 24px rgba(15, 118, 110, 0.22)' : '0 6px 14px rgba(15, 23, 42, 0.10)',
-            cursor: isDisabled && !isSelected ? 'not-allowed' : 'pointer',
-            opacity: isDisabled && !isSelected ? 0.7 : 1,
-            transition: 'transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease',
-            '&:hover': {
-              transform: 'translate(-50%, -50%) scale(1.08)',
-            },
-          }}
-        >
-          {isSingleUnitSeat ? seat.label.slice(0, 3).toUpperCase() : isExclusive ? 'EXC' : `${currentQuantity || serverAvailableQuantity}/${seatCapacity}`}
-        </Box>
-      </Tooltip>
+    addTicketType(
+      event,
+      {
+        uuid: ticketType.uuid,
+        name: ticketType.name,
+        description: ticketType.description,
+        price: ticketType.effective_price,
+        image_url: null,
+        quantity_available: ticketType.available_quantity,
+        min_per_order: ticketType.min_per_order,
+        max_per_order: ticketType.max_per_order,
+        sales_start_at: ticketType.sales_start_at,
+        sales_end_at: ticketType.sales_end_at,
+        status: 'ativo',
+      },
+      isExclusive ? seatCapacity : 1,
+      selectedSession ? { uuid: selectedSession.uuid, name: selectedSession.name } : null,
+      {
+        uuid: seat.uuid,
+        label: seat.label,
+        sector_name: seat.sector_name,
+        kind: seat.kind,
+        capacity: seat.capacity,
+      },
     )
   }
 
@@ -849,20 +808,6 @@ export function StorefrontEventDetailPage() {
     }
 
     return `${selectedPlaces} acesso(s) reservado(s) em ${selectedUnits} lugar(es)`
-  }
-
-  function zoomIn() {
-    setMapZoom((current) => Math.min(2.5, Number((current + 0.25).toFixed(2))))
-  }
-
-  function zoomOut() {
-    setMapZoom((current) => Math.max(1, Number((current - 0.25).toFixed(2))))
-  }
-
-  function resetMapView() {
-    setMapZoom(1)
-    setSelectedSeatSector('all')
-    setSeatAvailabilityFilter('all')
   }
 
   return (
@@ -1243,90 +1188,22 @@ export function StorefrontEventDetailPage() {
                           </Stack>
                         </Stack>
 
-                        {canRenderSeatMap && venueMap ? (
+                        {canRenderSeatMap && venueMap?.width && venueMap?.height ? (
                           <Paper variant="outlined" sx={{ ...SOFT_PANEL_SX, p: 1.25, overflow: 'hidden' }}>
                             <Stack spacing={1.25}>
-                              <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
-                                  Toque em um ponto do mapa para selecionar ou remover um lugar.
-                                </Typography>
-                                <Stack direction="row" spacing={0.5}>
-                                  <Tooltip title="Diminuir zoom" arrow>
-                                    <span>
-                                      <IconButton size="small" onClick={zoomOut} disabled={mapZoom <= 1} sx={{ ...SOFT_PANEL_SX }}>
-                                        <ZoomOutIcon fontSize="small" />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
-                                  <Tooltip title="Aumentar zoom" arrow>
-                                    <span>
-                                      <IconButton size="small" onClick={zoomIn} disabled={mapZoom >= 2.5} sx={{ ...SOFT_PANEL_SX }}>
-                                        <ZoomInIcon fontSize="small" />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
-                                  <Tooltip title="Redefinir visualização" arrow>
-                                    <span>
-                                      <IconButton size="small" onClick={resetMapView} sx={{ ...SOFT_PANEL_SX }}>
-                                        <RestartAltIcon fontSize="small" />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
-                                </Stack>
-                              </Stack>
+                              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
+                                Arraste para mover, use a roda do mouse ou pinça para dar zoom, e toque num lugar disponível para selecionar ou remover.
+                              </Typography>
 
-                              <Box
-                                sx={{
-                                  position: 'relative',
-                                  width: '100%',
-                                  overflow: 'auto',
-                                  borderRadius: 'var(--pt-radius-lg)',
-                                  border: '1px solid var(--pt-border)',
-                                  background: 'rgba(15, 23, 42, 0.02)',
-                                  maxHeight: { xs: 360, md: 520 },
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    position: 'relative',
-                                    width: mapCanvasWidth,
-                                    height: mapCanvasHeight,
-                                  borderRadius: 'var(--pt-radius-lg)',
-                                  background: venueMap.background_image_url
-                                    ? `linear-gradient(rgba(15, 23, 42, 0.03), rgba(15, 23, 42, 0.08)), url(${venueMap.background_image_url}) center / cover no-repeat`
-                                    : 'linear-gradient(135deg, rgba(15, 118, 110, 0.06), rgba(15, 23, 42, 0.04))',
-                                }}
-                              >
-                                {!venueMap.background_image_url && (
-                                  <Stack
-                                    sx={{
-                                      position: 'absolute',
-                                      inset: 0,
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: 'var(--pt-muted)',
-                                      pointerEvents: 'none',
-                                    }}
-                                  >
-                                    <EventSeatOutlinedIcon sx={{ fontSize: 36 }} />
-                                    <Typography sx={{ fontSize: 12.5 }}>Mapa sem imagem de fundo</Typography>
-                                  </Stack>
-                                )}
-
-                                {filteredDisplayedSeats.map((seat) => renderSeatMapNode(seat, selectedSeatTicketType))}
-                                </Box>
-                              </Box>
-
-                              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', color: 'var(--pt-muted)' }}>
-                                <Typography sx={{ fontSize: 12 }}>Disponível</Typography>
-                                <Box sx={{ width: 14, height: 14, borderRadius: 999, border: '1px solid var(--pt-border)', bgcolor: 'var(--pt-surface-raised-bg)' }} />
-                                <Typography sx={{ fontSize: 12 }}>Selecionado</Typography>
-                                <Box sx={{ width: 14, height: 14, borderRadius: 999, bgcolor: 'var(--pt-primary)' }} />
-                                <Typography sx={{ fontSize: 12 }}>Reservado</Typography>
-                                <Box sx={{ width: 14, height: 14, borderRadius: 999, border: '1px solid rgba(245, 158, 11, 0.45)', bgcolor: 'rgba(245, 158, 11, 0.14)' }} />
-                                <Typography sx={{ fontSize: 12 }}>Indisponível</Typography>
-                                <Box sx={{ width: 14, height: 14, borderRadius: 999, border: '1px solid rgba(239, 68, 68, 0.38)', bgcolor: 'rgba(239, 68, 68, 0.12)' }} />
-                              </Stack>
+                              <SeatMapViewer
+                                mapWidth={venueMap.width}
+                                mapHeight={venueMap.height}
+                                backgroundImageUrl={venueMap.background_image_url}
+                                seats={filteredDisplayedSeats
+                                  .map((seat) => buildSeatMapViewerSeat(seat, selectedSeatTicketType))
+                                  .filter((seat): seat is SeatMapViewerSeat => seat !== null)}
+                                onSelectSeat={(seatUuid) => handleSeatMapSelect(seatUuid, selectedSeatTicketType)}
+                              />
                             </Stack>
                           </Paper>
                         ) : null}
