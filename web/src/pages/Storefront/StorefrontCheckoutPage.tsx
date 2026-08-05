@@ -29,6 +29,7 @@ import * as storefrontCheckoutService from '../../services/storefrontCheckoutSer
 import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
 import { getStorefrontTracking } from '../../utils/marketingTracking'
+import { sendFunnelEvent } from '../../utils/funnelTracking'
 import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
@@ -59,6 +60,9 @@ type PaymentFlowState = {
   method: PaymentFlowMethod
   amount: string
   payer: PaymentFlowPayer
+  slug: string
+  eventSlug: string | null
+  sessionId: string
 }
 
 type PagSeguroEncryptResult = {
@@ -253,7 +257,17 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
  * "Já paguei, verificar", que só relê `GET /rastreio/{uuid}` (público,
  * já reflete `is_paid` assim que o webhook do PSP confirmar).
  */
-function PixPaymentPanel({ saleUuid }: { saleUuid: string }) {
+function PixPaymentPanel({
+  saleUuid,
+  slug,
+  eventSlug,
+  sessionId,
+}: {
+  saleUuid: string
+  slug: string
+  eventSlug: string | null
+  sessionId: string
+}) {
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [payment, setPayment] = useState<SalePayment | null>(null)
@@ -300,6 +314,7 @@ function PixPaymentPanel({ saleUuid }: { saleUuid: string }) {
     try {
       const tracking = await getSaleTracking(saleUuid)
       if (tracking.is_paid) {
+        if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
         navigate(`/rastreio/${saleUuid}`)
         return
       }
@@ -411,7 +426,19 @@ function PixPaymentPanel({ saleUuid }: { saleUuid: string }) {
   )
 }
 
-function CreditCardPaymentPanel({ saleUuid, payer }: { saleUuid: string; payer: PaymentFlowPayer }) {
+function CreditCardPaymentPanel({
+  saleUuid,
+  payer,
+  slug,
+  eventSlug,
+  sessionId,
+}: {
+  saleUuid: string
+  payer: PaymentFlowPayer
+  slug: string
+  eventSlug: string | null
+  sessionId: string
+}) {
   const navigate = useNavigate()
   const [config, setConfig] = useState<SalePaymentCheckoutConfig | null>(null)
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
@@ -491,6 +518,7 @@ function CreditCardPaymentPanel({ saleUuid, payer }: { saleUuid: string; payer: 
         },
       })
 
+      if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
       navigate(`/rastreio/${saleUuid}`)
     } catch (error) {
       setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o cartão agora.'))
@@ -631,7 +659,21 @@ function CreditCardPaymentPanel({ saleUuid, payer }: { saleUuid: string; payer: 
   )
 }
 
-function DebitCardPaymentPanel({ saleUuid, amount, payer }: { saleUuid: string; amount: string; payer: PaymentFlowPayer }) {
+function DebitCardPaymentPanel({
+  saleUuid,
+  amount,
+  payer,
+  slug,
+  eventSlug,
+  sessionId,
+}: {
+  saleUuid: string
+  amount: string
+  payer: PaymentFlowPayer
+  slug: string
+  eventSlug: string | null
+  sessionId: string
+}) {
   const navigate = useNavigate()
   const [config, setConfig] = useState<SalePaymentCheckoutConfig | null>(null)
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
@@ -796,6 +838,7 @@ function DebitCardPaymentPanel({ saleUuid, amount, payer }: { saleUuid: string; 
         },
       })
 
+      if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
       navigate(`/rastreio/${saleUuid}`)
     } catch (error) {
       setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o débito agora.'))
@@ -885,14 +928,38 @@ function DebitCardPaymentPanel({ saleUuid, amount, payer }: { saleUuid: string; 
 
 function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
   if (flow.method === 'pix') {
-    return <PixPaymentPanel saleUuid={flow.saleUuid} />
+    return (
+      <PixPaymentPanel
+        saleUuid={flow.saleUuid}
+        slug={flow.slug}
+        eventSlug={flow.eventSlug}
+        sessionId={flow.sessionId}
+      />
+    )
   }
 
   if (flow.method === 'credit_card') {
-    return <CreditCardPaymentPanel saleUuid={flow.saleUuid} payer={flow.payer} />
+    return (
+      <CreditCardPaymentPanel
+        saleUuid={flow.saleUuid}
+        payer={flow.payer}
+        slug={flow.slug}
+        eventSlug={flow.eventSlug}
+        sessionId={flow.sessionId}
+      />
+    )
   }
 
-  return <DebitCardPaymentPanel saleUuid={flow.saleUuid} amount={flow.amount} payer={flow.payer} />
+  return (
+    <DebitCardPaymentPanel
+      saleUuid={flow.saleUuid}
+      amount={flow.amount}
+      payer={flow.payer}
+      slug={flow.slug}
+      eventSlug={flow.eventSlug}
+      sessionId={flow.sessionId}
+    />
+  )
 }
 
 /** Passo 2: dados de contato + resumo + confirmação. */
@@ -901,6 +968,19 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
   const { customer } = usePortalAuth()
   const { items, totalAmount, clear, sessionId } = useStorefrontCart()
   const { markCompleted } = useCartAbandonmentTelemetry(slug)
+
+  // Funil de conversão (roadmap A2) — "iniciou checkout" dispara uma vez ao
+  // entrar neste passo, para o primeiro evento presente no carrinho.
+  const hasSentCheckoutStartedRef = useRef(false)
+  useEffect(() => {
+    if (hasSentCheckoutStartedRef.current) return
+    const firstEventSlug = items.find((item) => item.event_slug)?.event_slug
+    if (firstEventSlug) {
+      sendFunnelEvent(slug, firstEventSlug, sessionId, 'checkout_started')
+      hasSentCheckoutStartedRef.current = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, sessionId, items])
 
   const [clientName, setClientName] = useState('')
   const [clientLastName, setClientLastName] = useState('')
@@ -1104,6 +1184,9 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
         setHold(createdHold)
         setHoldSecondsLeft(getHoldSecondsLeft(createdHold))
+        if (holdContext.eventSlug) {
+          sendFunnelEvent(slug, holdContext.eventSlug, sessionId, 'hold_created')
+        }
       } catch (error) {
         if (cancelled) return
         setHold(null)
@@ -1312,6 +1395,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       const result = await storefrontCheckoutService.checkout(slug, payload)
       shouldReleaseHoldRef.current = false
       markCompleted()
+      const funnelEventSlug = items.find((item) => item.event_slug)?.event_slug ?? null
+
       if (intendedPaymentMethod === 'pix' || intendedPaymentMethod === 'credit_card' || intendedPaymentMethod === 'debit_card') {
         setPaymentFlow({
           saleUuid: result.sale.uuid,
@@ -1323,8 +1408,17 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             phone: clientPhone.trim(),
             taxId: '',
           },
+          slug,
+          eventSlug: funnelEventSlug,
+          sessionId,
         })
       } else {
+        // Meio de pagamento offline (ex.: dinheiro) — sem passo de
+        // confirmação adicional a instrumentar, então "pagamento
+        // confirmado" é registrado aqui mesmo (aproximação deliberada).
+        if (funnelEventSlug) {
+          sendFunnelEvent(slug, funnelEventSlug, sessionId, 'payment_confirmed')
+        }
         clear()
         navigate(`/rastreio/${result.sale.uuid}`)
       }

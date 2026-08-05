@@ -1,4 +1,5 @@
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
@@ -25,6 +26,7 @@ export function SaleReportListPage() {
   const { activeTenantUuid } = useAuth()
   const [exportError, setExportError] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [isExportingXlsx, setIsExportingXlsx] = useState(false)
   const [filters, setFilters] = useState<SaleReportFilters>({})
   const [summary, setSummary] = useState<SaleReportSummary | null>(null)
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
@@ -125,6 +127,18 @@ export function SaleReportListPage() {
     }
   }
 
+  async function handleExportXlsx() {
+    setExportError(null)
+    setIsExportingXlsx(true)
+    try {
+      await reportDetailService.exportOrderReportsXlsx(drillDownFilters)
+    } catch (error) {
+      setExportError(getApiErrorMessage(error, 'Não foi possível exportar o XLSX agora.'))
+    } finally {
+      setIsExportingXlsx(false)
+    }
+  }
+
   function clearDrillDown() {
     setSearchParams({})
   }
@@ -154,6 +168,15 @@ export function SaleReportListPage() {
             sx={{ minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
           >
             {isExporting ? 'Exportando PDF...' : 'Exportar PDF'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadOutlinedIcon />}
+            onClick={() => void handleExportXlsx()}
+            disabled={!activeTenantUuid || isExportingXlsx}
+            sx={{ minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
+          >
+            {isExportingXlsx ? 'Exportando XLSX...' : 'Exportar XLSX'}
           </Button>
         </Box>
       }

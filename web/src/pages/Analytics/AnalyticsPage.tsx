@@ -5,12 +5,18 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { PlanUpgradeNotice } from '../../components/plan/PlanUpgradeNotice'
 import { PAGE_CONTAINER_SX, UI_RADIUS, UI_SIZE } from '../../styles/layoutStandards'
 import { presetRange } from '../../utils/period'
+import { AffiliatesTab } from './tabs/AffiliatesTab'
 import { ClientsTab } from './tabs/ClientsTab'
+import { CompareEventsTab } from './tabs/CompareEventsTab'
+import { CouponsTab } from './tabs/CouponsTab'
+import { FunnelTab } from './tabs/FunnelTab'
+import { InventoryTab } from './tabs/InventoryTab'
 import { LocationsTab } from './tabs/LocationsTab'
 import { OverdueTab } from './tabs/OverdueTab'
 import { OverviewTab } from './tabs/OverviewTab'
 import { PaymentsTab } from './tabs/PaymentsTab'
 import { ProductsTab } from './tabs/ProductsTab'
+import { RefundsTab } from './tabs/RefundsTab'
 import { AccessTab } from './tabs/AccessTab'
 import { SalesByDimensionTab } from './tabs/SalesByDimensionTab'
 import { SeasonalityTab } from './tabs/SeasonalityTab'
@@ -25,6 +31,12 @@ type AnalyticsTabKey =
   | 'seasonality'
   | 'clients'
   | 'overdue'
+  | 'affiliates'
+  | 'coupons'
+  | 'refunds'
+  | 'inventory'
+  | 'funnel'
+  | 'compare-events'
 
 const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'overview', label: 'Financeiro' },
@@ -36,6 +48,12 @@ const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'seasonality', label: 'Sazonalidade' },
   { key: 'clients', label: 'Clientes' },
   { key: 'overdue', label: 'Atrasos' },
+  { key: 'affiliates', label: 'Afiliados' },
+  { key: 'coupons', label: 'Cupons' },
+  { key: 'refunds', label: 'Reembolsos' },
+  { key: 'inventory', label: 'Inventário' },
+  { key: 'funnel', label: 'Funil' },
+  { key: 'compare-events', label: 'Comparar eventos' },
 ]
 
 const DEFAULT_RANGE = presetRange('last_12_months')
@@ -78,8 +96,14 @@ export function AnalyticsPage() {
             from={from}
             to={to}
             onChange={handlePeriodChange}
-            disabled={activeTab === 'seasonality'}
-            disabledHint="Sazonalidade usa o histórico completo"
+            disabled={activeTab === 'seasonality' || activeTab === 'inventory' || activeTab === 'compare-events'}
+            disabledHint={
+              activeTab === 'inventory'
+                ? 'Inventário usa o evento selecionado, não período'
+                : activeTab === 'compare-events'
+                  ? 'Comparação usa os eventos selecionados, não período'
+                  : 'Sazonalidade usa o histórico completo'
+            }
           />
 
           <Tabs
@@ -119,6 +143,12 @@ export function AnalyticsPage() {
                 {tab.key === 'seasonality' && <SeasonalityTab onPlanLocked={handlePlanLocked} />}
                 {tab.key === 'clients' && <ClientsTab {...tabProps} />}
                 {tab.key === 'overdue' && <OverdueTab {...tabProps} />}
+                {tab.key === 'affiliates' && <AffiliatesTab {...tabProps} />}
+                {tab.key === 'coupons' && <CouponsTab {...tabProps} />}
+                {tab.key === 'refunds' && <RefundsTab {...tabProps} />}
+                {tab.key === 'inventory' && <InventoryTab />}
+                {tab.key === 'funnel' && <FunnelTab {...tabProps} />}
+                {tab.key === 'compare-events' && <CompareEventsTab />}
               </Box>
             )
           })}

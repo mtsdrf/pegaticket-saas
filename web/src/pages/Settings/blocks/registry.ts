@@ -1,5 +1,6 @@
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
+import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined'
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
@@ -17,6 +18,7 @@ const CompanyBlock = lazy(() => import('./CompanyBlock').then((m) => ({ default:
 const OperationsBlock = lazy(() => import('./OperationsBlock').then((m) => ({ default: m.OperationsBlock })))
 const PaymentBlock = lazy(() => import('./PaymentBlock').then((m) => ({ default: m.PaymentBlock })))
 const DataPrivacyBlock = lazy(() => import('./DataPrivacyBlock').then((m) => ({ default: m.DataPrivacyBlock })))
+const ScheduledReportsBlock = lazy(() => import('./ScheduledReportsBlock').then((m) => ({ default: m.ScheduledReportsBlock })))
 
 export interface SettingsBlockConfig {
   key: string
@@ -85,6 +87,15 @@ export const SETTINGS_BLOCKS: SettingsBlockConfig[] = [
     icon: ShieldOutlinedIcon,
     permission: ACCESS.tenantProfileExport,
     Component: DataPrivacyBlock,
+  },
+  {
+    key: 'relatorios-agendados',
+    path: 'relatorios-agendados',
+    label: 'Relatórios agendados',
+    description: 'Receba o resumo do Home por e-mail, diário ou semanal.',
+    icon: MailOutlineOutlinedIcon,
+    permission: ACCESS.reportsRead,
+    Component: ScheduledReportsBlock,
   },
 ]
 

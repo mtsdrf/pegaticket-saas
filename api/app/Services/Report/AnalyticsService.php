@@ -2,8 +2,10 @@
 
 namespace App\Services\Report;
 
+use App\Models\Event\Event;
 use App\Models\Sale\Sale;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +35,15 @@ class AnalyticsService
      * considerado "churned" (evadido) em churnClients().
      */
     private const CHURN_INACTIVITY_DAYS = 60;
+
+    /**
+     * Heurística de sinal de abuso de cupom (roadmap Fase A2) — uso mínimo
+     * e média de uso por cliente distinto a partir dos quais o cupom é
+     * sinalizado para revisão manual (ver `couponsReport()`).
+     */
+    private const COUPON_ABUSE_MIN_USAGE = 5;
+
+    private const COUPON_ABUSE_AVG_USES_PER_CUSTOMER = 2.0;
 
     private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
 
@@ -774,6 +785,480 @@ class AnalyticsService
             'pending_approval' => $pending,
             'approval_rate_percentage' => $decidedCount > 0 ? round(($confirmed['count'] / $decidedCount) * 100, 2) : 0.0,
             'rejection_rate_percentage' => $decidedCount > 0 ? round(($rejected['count'] / $decidedCount) * 100, 2) : 0.0,
+        ];
+    }
+
+    /**
+     * Relatório de afiliados consolidado (roadmap Fase A2) — ranking por
+     * comissão gerada/vendas atribuídas + ROI. Fonte: `affiliate_commissions`
+     * (uma linha por venda paga com `affiliate_id`, ver `AffiliateCommissionService`),
+     * período por `affiliate_commissions.created_at` (nasce junto com a
+     * venda paga). `roi_percentage` = `(receita_atribuída - comissão_paga) /
+     * comissão_paga * 100` — só considera comissão já `paid` como custo
+     * (comissão `pending` ainda não foi um gasto realizado); `null` quando
+     * não há comissão paga (divisão por zero).
+     *
+     * @return array{from: string, to: string, totals: array<string, mixed>, items: list<array<string, mixed>>}
+     */
+    public function affiliatesReport(int $tenantId, ?string $from, ?string $to, int $limit = 20): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $rows = DB::table('affiliate_commissions')
+            ->join('affiliates', 'affiliates.id', '=', 'affiliate_commissions.affiliate_id')
+            ->where('affiliate_commissions.tenant_id', $tenantId)
+            ->whereNull('affiliate_commissions.deleted_at')
+            ->whereNull('affiliates.deleted_at')
+            ->whereBetween('affiliate_commissions.created_at', [$fromDate, $toDate->copy()->endOfDay()])
+            ->groupBy('affiliates.id', 'affiliates.uuid', 'affiliates.name', 'affiliates.tracking_code', 'affiliates.status')
+            ->selectRaw(
+                "affiliates.uuid as affiliate_uuid,
+                affiliates.name as affiliate_name,
+                affiliates.tracking_code as tracking_code,
+                affiliates.status as affiliate_status,
+                COUNT(*) as attributed_sales_count,
+                SUM(affiliate_commissions.sale_amount) as attributed_revenue,
+                SUM(affiliate_commissions.amount) as commission_amount,
+                SUM(CASE WHEN affiliate_commissions.status = 'paid' THEN affiliate_commissions.amount ELSE 0 END) as commission_paid_amount"
+            )
+            ->orderByDesc('attributed_revenue')
+            ->limit($limit)
+            ->get();
+
+        $items = $rows->map(function ($row) {
+            $attributedRevenue = (float) $row->attributed_revenue;
+            $commissionPaid = (float) $row->commission_paid_amount;
+
+            return [
+                'affiliate_uuid' => $row->affiliate_uuid,
+                'affiliate_name' => $row->affiliate_name,
+                'tracking_code' => $row->tracking_code,
+                'affiliate_status' => $row->affiliate_status,
+                'attributed_sales_count' => (int) $row->attributed_sales_count,
+                'attributed_revenue' => $this->formatMoney($attributedRevenue),
+                'commission_amount' => $this->formatMoney((float) $row->commission_amount),
+                'commission_paid_amount' => $this->formatMoney($commissionPaid),
+                'roi_percentage' => $commissionPaid > 0
+                    ? round((($attributedRevenue - $commissionPaid) / $commissionPaid) * 100, 2)
+                    : null,
+            ];
+        })->all();
+
+        $totalAttributedRevenue = array_sum(array_map(fn ($item) => (float) $item['attributed_revenue'], $items));
+        $totalCommissionAmount = array_sum(array_map(fn ($item) => (float) $item['commission_amount'], $items));
+        $totalCommissionPaid = array_sum(array_map(fn ($item) => (float) $item['commission_paid_amount'], $items));
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'totals' => [
+                'affiliates_count' => count($items),
+                'attributed_revenue' => $this->formatMoney($totalAttributedRevenue),
+                'commission_amount' => $this->formatMoney($totalCommissionAmount),
+                'commission_paid_amount' => $this->formatMoney($totalCommissionPaid),
+                'roi_percentage' => $totalCommissionPaid > 0
+                    ? round((($totalAttributedRevenue - $totalCommissionPaid) / $totalCommissionPaid) * 100, 2)
+                    : null,
+            ],
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Relatório de cupons consolidado (roadmap Fase A2) — ranking de uso,
+     * taxa de conversão (redemption que virou venda paga), valor
+     * descontado total e sinal de abuso. Fonte: `coupon_redemptions`
+     * (log de uso, um registro por venda que aplicou o cupom — removido
+     * pelo sistema se a venda for recusada, ver `CouponRedemption`) join
+     * `sales` (para status/valor/desconto real aplicado). Período por
+     * `coupon_redemptions.redeemed_at`.
+     *
+     * `abuse_signal`: heurística simples e independente do `RiskEngineService`
+     * (que avalia fraude por venda/cliente, não concentração de cupom) —
+     * dispara quando o cupom tem uso alto (>= ABUSE_MIN_USAGE) E a média de
+     * uso por cliente distinto é alta (>= ABUSE_AVG_USES_PER_CUSTOMER),
+     * sinal de poucos clientes reaproveitando o mesmo cupom muitas vezes.
+     * Não é decisão automática, só sinalização para revisão manual.
+     *
+     * @return array{from: string, to: string, totals: array<string, mixed>, items: list<array<string, mixed>>}
+     */
+    public function couponsReport(int $tenantId, ?string $from, ?string $to, int $limit = 20): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $rows = DB::table('coupon_redemptions')
+            ->join('coupons', 'coupons.id', '=', 'coupon_redemptions.coupon_id')
+            ->join('sales', 'sales.id', '=', 'coupon_redemptions.sale_id')
+            ->where('coupon_redemptions.tenant_id', $tenantId)
+            ->whereNull('coupons.deleted_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('coupon_redemptions.redeemed_at', [$fromDate, $toDate->copy()->endOfDay()])
+            ->groupBy('coupons.id', 'coupons.uuid', 'coupons.code', 'coupons.type', 'coupons.is_active')
+            ->selectRaw(
+                'coupons.uuid as coupon_uuid,
+                coupons.code as coupon_code,
+                coupons.type as coupon_type,
+                coupons.is_active as coupon_is_active,
+                COUNT(*) as usage_count,
+                COUNT(DISTINCT coupon_redemptions.final_customer_id) as distinct_customers_count,
+                SUM(CASE WHEN sales.is_paid = 1 AND sales.cancelled_at IS NULL THEN 1 ELSE 0 END) as paid_usage_count,
+                SUM(CASE WHEN sales.cancelled_at IS NULL THEN sales.discount_amount ELSE 0 END) as total_discount_amount,
+                SUM(CASE WHEN sales.is_paid = 1 AND sales.cancelled_at IS NULL THEN sales.total_amount ELSE 0 END) as revenue_generated'
+            )
+            ->orderByDesc('usage_count')
+            ->limit($limit)
+            ->get();
+
+        $items = $rows->map(function ($row) {
+            $usageCount = (int) $row->usage_count;
+            $distinctCustomers = (int) $row->distinct_customers_count;
+            $avgUsesPerCustomer = $distinctCustomers > 0 ? round($usageCount / $distinctCustomers, 2) : 0.0;
+
+            return [
+                'coupon_uuid' => $row->coupon_uuid,
+                'coupon_code' => $row->coupon_code,
+                'coupon_type' => $row->coupon_type,
+                'coupon_is_active' => (bool) $row->coupon_is_active,
+                'usage_count' => $usageCount,
+                'distinct_customers_count' => $distinctCustomers,
+                'paid_usage_count' => (int) $row->paid_usage_count,
+                'conversion_rate_percentage' => $this->percentage((int) $row->paid_usage_count, $usageCount),
+                'total_discount_amount' => $this->formatMoney((float) $row->total_discount_amount),
+                'revenue_generated' => $this->formatMoney((float) $row->revenue_generated),
+                'avg_uses_per_customer' => $avgUsesPerCustomer,
+                'abuse_signal' => $usageCount >= self::COUPON_ABUSE_MIN_USAGE
+                    && $avgUsesPerCustomer >= self::COUPON_ABUSE_AVG_USES_PER_CUSTOMER,
+            ];
+        })->all();
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'totals' => [
+                'coupons_used_count' => count($items),
+                'total_redemptions' => array_sum(array_column($items, 'usage_count')),
+                'total_discount_amount' => $this->formatMoney(array_sum(array_map(fn ($item) => (float) $item['total_discount_amount'], $items))),
+                'coupons_with_abuse_signal_count' => count(array_filter($items, fn ($item) => $item['abuse_signal'])),
+            ],
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Relatório de reembolsos/chargebacks dedicado (roadmap Fase A2) —
+     * volume, valor, motivo (texto livre — `sale_refunds.reason`,
+     * agregado por correspondência exata, melhor esforço) e taxa de
+     * reembolso sobre vendas pagas no período. Período por
+     * `sale_refunds.refunded_at`; a base de vendas pagas para a taxa usa
+     * `sales.created_at` no mesmo período (mesma convenção de
+     * `salesQuery()`), não `paid_at` — consistente com o resto do módulo.
+     *
+     * @return array{from: string, to: string, totals: array<string, mixed>, by_type: array<string, mixed>, top_reasons: list<array<string, mixed>>}
+     */
+    public function refundsReport(int $tenantId, ?string $from, ?string $to): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $refundsQuery = DB::table('sale_refunds')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->whereBetween('refunded_at', [$fromDate, $toDate->copy()->endOfDay()]);
+
+        $totals = (clone $refundsQuery)
+            ->selectRaw('COUNT(*) as refunds_count, SUM(amount) as total_refunded_amount')
+            ->first();
+
+        $byType = (clone $refundsQuery)
+            ->selectRaw('type, COUNT(*) as refunds_count, SUM(amount) as total_amount')
+            ->groupBy('type')
+            ->get()
+            ->keyBy('type');
+
+        $typeGroup = fn (string $type) => [
+            'count' => (int) ($byType[$type]->refunds_count ?? 0),
+            'total_amount' => $this->formatMoney((float) ($byType[$type]->total_amount ?? 0)),
+        ];
+
+        $topReasons = (clone $refundsQuery)
+            ->selectRaw('reason, COUNT(*) as refunds_count, SUM(amount) as total_amount')
+            ->groupBy('reason')
+            ->orderByDesc('refunds_count')
+            ->limit(15)
+            ->get()
+            ->map(fn ($row) => [
+                'reason' => $row->reason,
+                'count' => (int) $row->refunds_count,
+                'total_amount' => $this->formatMoney((float) $row->total_amount),
+            ])
+            ->all();
+
+        $paidSales = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->where('sales.is_paid', true)
+            ->selectRaw('COUNT(*) as paid_sales_count, SUM(sales.total_amount) as paid_sales_amount')
+            ->first();
+
+        $refundsCount = (int) ($totals->refunds_count ?? 0);
+        $totalRefundedAmount = (float) ($totals->total_refunded_amount ?? 0);
+        $paidSalesCount = (int) ($paidSales->paid_sales_count ?? 0);
+        $paidSalesAmount = (float) ($paidSales->paid_sales_amount ?? 0);
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'totals' => [
+                'refunds_count' => $refundsCount,
+                'total_refunded_amount' => $this->formatMoney($totalRefundedAmount),
+                'refund_rate_percentage' => $this->percentage($refundsCount, $paidSalesCount),
+                'refund_amount_rate_percentage' => $paidSalesAmount > 0
+                    ? round(($totalRefundedAmount / $paidSalesAmount) * 100, 2)
+                    : 0.0,
+            ],
+            'by_type' => [
+                'total' => $typeGroup('total'),
+                'parcial' => $typeGroup('parcial'),
+            ],
+            'top_reasons' => $topReasons,
+        ];
+    }
+
+    /**
+     * Relatório de inventário/assentos avançado (roadmap Fase A2) —
+     * ocupação agregada por setor para um evento específico (visão de
+     * staff, não disponibilidade individual de compra — isso já é coberto
+     * por `StorefrontHoldService`). `event_uuid` é sempre obrigatório
+     * (regra transversal de filtro ativo) — snapshot atual, sem filtro de
+     * período (mesma natureza estrutural de `occupancy_percentage`/KPI 4).
+     * Evento sem `venue_map_version_id` (sem mapa de assentos, só GA) volta
+     * `has_seat_map = false` e `sectors = []`.
+     *
+     * @return array{event_uuid: string, event_name: string, has_seat_map: bool, totals: array<string, mixed>, sectors: list<array<string, mixed>>}
+     */
+    public function inventoryReport(int $tenantId, string $eventUuid): array
+    {
+        $event = DB::table('events')
+            ->where('tenant_id', $tenantId)
+            ->where('uuid', $eventUuid)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $event) {
+            throw (new ModelNotFoundException)->setModel(Event::class);
+        }
+
+        if ($event->venue_map_version_id === null) {
+            return [
+                'event_uuid' => $eventUuid,
+                'event_name' => $event->name,
+                'has_seat_map' => false,
+                'totals' => [
+                    'total_seats' => 0,
+                    'sold_seats' => 0,
+                    'held_seats_now' => 0,
+                    'blocked_seats' => 0,
+                    'available_seats' => 0,
+                    'occupancy_percentage' => 0.0,
+                ],
+                'sectors' => [],
+            ];
+        }
+
+        $soldBySector = DB::table('seats')
+            ->join('tickets', 'tickets.seat_id', '=', 'seats.id')
+            ->where('seats.venue_map_version_id', $event->venue_map_version_id)
+            ->where('tickets.tenant_id', $tenantId)
+            ->where('tickets.status', 'ativo')
+            ->whereNull('tickets.deleted_at')
+            ->groupBy('seats.sector_name')
+            ->selectRaw("COALESCE(seats.sector_name, 'Sem setor') as sector_name, COUNT(*) as sold_seats")
+            ->pluck('sold_seats', 'sector_name');
+
+        $heldBySector = DB::table('seats')
+            ->join('inventory_hold_items', 'inventory_hold_items.seat_id', '=', 'seats.id')
+            ->join('inventory_holds', 'inventory_holds.id', '=', 'inventory_hold_items.inventory_hold_id')
+            ->where('seats.venue_map_version_id', $event->venue_map_version_id)
+            ->where('inventory_holds.tenant_id', $tenantId)
+            ->where('inventory_holds.status', 'reservado')
+            ->where('inventory_holds.expires_at', '>', now())
+            ->groupBy('seats.sector_name')
+            ->selectRaw("COALESCE(seats.sector_name, 'Sem setor') as sector_name, COUNT(*) as held_seats")
+            ->pluck('held_seats', 'sector_name');
+
+        $sectors = DB::table('seats')
+            ->where('venue_map_version_id', $event->venue_map_version_id)
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->groupBy('sector_name', 'status')
+            ->selectRaw("COALESCE(sector_name, 'Sem setor') as sector_name, status, COUNT(*) as seat_count")
+            ->get()
+            ->groupBy('sector_name')
+            ->map(function ($rows, $sectorName) use ($soldBySector, $heldBySector) {
+                $total = (int) $rows->sum('seat_count');
+                $blocked = (int) $rows->whereIn('status', ['bloqueado', 'indisponivel'])->sum('seat_count');
+                $sold = (int) ($soldBySector[$sectorName] ?? 0);
+                $held = (int) ($heldBySector[$sectorName] ?? 0);
+                $available = max(0, $total - $sold - $blocked - $held);
+
+                return [
+                    'sector_name' => $sectorName,
+                    'total_seats' => $total,
+                    'sold_seats' => $sold,
+                    'held_seats_now' => $held,
+                    'blocked_seats' => $blocked,
+                    'available_seats' => $available,
+                    'occupancy_percentage' => $this->percentage($sold, $total),
+                ];
+            })
+            ->values()
+            ->sortByDesc('occupancy_percentage')
+            ->values()
+            ->all();
+
+        return [
+            'event_uuid' => $eventUuid,
+            'event_name' => $event->name,
+            'has_seat_map' => true,
+            'totals' => [
+                'total_seats' => array_sum(array_column($sectors, 'total_seats')),
+                'sold_seats' => array_sum(array_column($sectors, 'sold_seats')),
+                'held_seats_now' => array_sum(array_column($sectors, 'held_seats_now')),
+                'blocked_seats' => array_sum(array_column($sectors, 'blocked_seats')),
+                'available_seats' => array_sum(array_column($sectors, 'available_seats')),
+                'occupancy_percentage' => $this->percentage(
+                    array_sum(array_column($sectors, 'sold_seats')),
+                    array_sum(array_column($sectors, 'total_seats'))
+                ),
+            ],
+            'sectors' => $sectors,
+        ];
+    }
+
+    /**
+     * Comparação entre eventos (roadmap Fase A2, último item do relatório
+     * 1 tela 2) — curva de vendas de 2 a `MAX_EVENTS` eventos do MESMO
+     * tenant, indexada por "dia N desde a abertura de vendas" de cada
+     * evento (regra de negócio confirmada pelo usuário), NÃO por data de
+     * calendário. Isso permite comparar, por exemplo, o dia 5 de pré-venda
+     * do Evento A com o dia 5 de pré-venda do Evento B mesmo que tenham
+     * aberto em datas de calendário completamente diferentes.
+     *
+     * Definição de "abertura de vendas" de um evento (decisão registrada
+     * aqui e em metrics-catalog.md, pois não existe uma data única no
+     * schema): MENOR `ticket_types.sales_start_at` (não nulo) entre os
+     * tipos de ingresso ativos do evento. Quando NENHUM tipo de ingresso
+     * tem `sales_start_at` preenchido (venda sempre aberta, sem janela
+     * configurada), usa-se o `created_at` do evento como fallback — é o
+     * primeiro instante em que a venda poderia ter ocorrido.
+     *
+     * @param  array<int, string>  $eventUuids
+     */
+    public function compareEvents(int $tenantId, array $eventUuids): array
+    {
+        $eventUuids = array_values(array_unique($eventUuids));
+
+        $events = DB::table('events')
+            ->where('tenant_id', $tenantId)
+            ->whereIn('uuid', $eventUuids)
+            ->whereNull('deleted_at')
+            ->get(['id', 'uuid', 'name', 'created_at']);
+
+        if ($events->count() !== count($eventUuids)) {
+            throw (new ModelNotFoundException)->setModel(Event::class);
+        }
+
+        $eventsByUuid = $events->keyBy('uuid');
+
+        $result = [];
+
+        foreach ($eventUuids as $eventUuid) {
+            $event = $eventsByUuid[$eventUuid];
+            $result[] = $this->compareEventsBuildEntry($tenantId, $event);
+        }
+
+        return ['events' => $result];
+    }
+
+    private function compareEventsBuildEntry(int $tenantId, object $event): array
+    {
+        $minSalesStartAt = DB::table('ticket_types')
+            ->where('event_id', $event->id)
+            ->whereNull('deleted_at')
+            ->whereNotNull('sales_start_at')
+            ->min('sales_start_at');
+
+        $salesOpenedAt = $minSalesStartAt
+            ? Carbon::parse($minSalesStartAt)->startOfDay()
+            : Carbon::parse($event->created_at)->startOfDay();
+
+        $dailyRows = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->where('ticket_types.event_id', $event->id)
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
+            ->groupByRaw('DATE(sales.created_at)')
+            ->selectRaw('DATE(sales.created_at) as sale_date, COUNT(DISTINCT sales.id) as order_count, SUM(sale_items.quantity) as quantity_sold, SUM(sale_items.line_total) as revenue')
+            ->orderByRaw('DATE(sales.created_at)')
+            ->get();
+
+        $series = [];
+        foreach ($dailyRows as $row) {
+            $dayIndex = (int) max(0, floor(
+                (Carbon::parse($row->sale_date)->startOfDay()->timestamp - $salesOpenedAt->timestamp) / 86400
+            ));
+
+            if (! isset($series[$dayIndex])) {
+                $series[$dayIndex] = ['day' => $dayIndex, 'order_count' => 0, 'quantity_sold' => 0, 'revenue' => 0.0];
+            }
+
+            $series[$dayIndex]['order_count'] += (int) $row->order_count;
+            $series[$dayIndex]['quantity_sold'] += (int) $row->quantity_sold;
+            $series[$dayIndex]['revenue'] += (float) $row->revenue;
+        }
+
+        ksort($series);
+        $series = array_values(array_map(fn (array $point) => [
+            'day' => $point['day'],
+            'order_count' => $point['order_count'],
+            'quantity_sold' => $point['quantity_sold'],
+            'revenue' => $this->formatMoney($point['revenue']),
+        ], $series));
+
+        $totalOrders = array_sum(array_column($series, 'order_count'));
+        $totalQuantity = array_sum(array_column($series, 'quantity_sold'));
+        $totalRevenue = array_sum(array_map('floatval', array_column($series, 'revenue')));
+
+        $capacity = (int) DB::table('ticket_types')
+            ->where('event_id', $event->id)
+            ->whereNull('deleted_at')
+            ->whereNotNull('quantity_available')
+            ->sum('quantity_available');
+
+        $issued = (int) DB::table('tickets')
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->where('ticket_types.event_id', $event->id)
+            ->where('tickets.tenant_id', $tenantId)
+            ->whereNull('tickets.deleted_at')
+            ->where('tickets.status', 'ativo')
+            ->whereNotNull('ticket_types.quantity_available')
+            ->whereNull('ticket_types.deleted_at')
+            ->count();
+
+        return [
+            'event_uuid' => $event->uuid,
+            'event_name' => $event->name,
+            'sales_opened_at' => $salesOpenedAt->toDateString(),
+            'totals' => [
+                'total_orders' => $totalOrders,
+                'total_quantity_sold' => $totalQuantity,
+                'total_revenue' => $this->formatMoney($totalRevenue),
+                'average_ticket' => $this->formatMoney($totalOrders > 0 ? $totalRevenue / $totalOrders : 0.0),
+                'tickets_issued' => $issued,
+                'commercial_capacity' => $capacity,
+                'occupancy_percentage' => $this->percentage($issued, $capacity),
+            ],
+            'series' => $series,
         ];
     }
 

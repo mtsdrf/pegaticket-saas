@@ -1,18 +1,25 @@
 import { apiClient } from './apiClient'
 import type { ApiSuccess } from '../types/api'
+import { extractFilenameFromContentDisposition, triggerBlobDownload } from '../utils/fileDownload'
 import type {
   AbcDimension,
   AbcItem,
+  AffiliatesReport,
   AnalyticsPeriodParams,
   ChurnClients,
   CheckinInsights,
+  CompareEventsReport,
   CouponRoi,
+  CouponsReport,
+  FunnelReport,
+  InventoryReport,
   LocationSales,
   MarginSummary,
   OverdueSale,
   OverdueType,
   PaymentDelayClient,
   PaymentsSummary,
+  RefundsReport,
   RevenueConcentration,
   SalesByDimension,
   SalesByHour,
@@ -343,4 +350,227 @@ export async function getPaymentsSummary(params: AnalyticsPeriodParams): Promise
     approval_rate_percentage: toNumber(pick(raw, ['approval_rate_percentage'])),
     rejection_rate_percentage: toNumber(pick(raw, ['rejection_rate_percentage'])),
   }
+}
+
+/** Relatório de afiliados consolidado (roadmap Fase A2): dinheiro vem como string decimal do backend. */
+export async function getAffiliatesReport(params: AnalyticsPeriodParams & { limit: number }): Promise<AffiliatesReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/affiliates', { params })
+  const raw = response.data.data
+  const totals = (pick(raw, ['totals']) as Raw | undefined) ?? {}
+
+  const items = asArray(pick(raw, ['items'])).map((item) => ({
+    affiliate_uuid: toText(pick(item, ['affiliate_uuid'])),
+    affiliate_name: toText(pick(item, ['affiliate_name'])),
+    tracking_code: toText(pick(item, ['tracking_code'])),
+    affiliate_status: toText(pick(item, ['affiliate_status'])),
+    attributed_sales_count: toNumber(pick(item, ['attributed_sales_count'])),
+    attributed_revenue: toNumber(pick(item, ['attributed_revenue'])),
+    commission_amount: toNumber(pick(item, ['commission_amount'])),
+    commission_paid_amount: toNumber(pick(item, ['commission_paid_amount'])),
+    roi_percentage: item.roi_percentage === null || item.roi_percentage === undefined ? null : toNumber(item.roi_percentage),
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    totals: {
+      affiliates_count: toNumber(pick(totals, ['affiliates_count'])),
+      attributed_revenue: toNumber(pick(totals, ['attributed_revenue'])),
+      commission_amount: toNumber(pick(totals, ['commission_amount'])),
+      commission_paid_amount: toNumber(pick(totals, ['commission_paid_amount'])),
+      roi_percentage: totals.roi_percentage === null || totals.roi_percentage === undefined ? null : toNumber(totals.roi_percentage),
+    },
+    items,
+  }
+}
+
+/** Relatório de cupons consolidado (roadmap Fase A2): dinheiro vem como string decimal do backend. */
+export async function getCouponsReport(params: AnalyticsPeriodParams & { limit: number }): Promise<CouponsReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/coupons', { params })
+  const raw = response.data.data
+  const totals = (pick(raw, ['totals']) as Raw | undefined) ?? {}
+
+  const items = asArray(pick(raw, ['items'])).map((item) => ({
+    coupon_uuid: toText(pick(item, ['coupon_uuid'])),
+    coupon_code: toText(pick(item, ['coupon_code'])),
+    coupon_type: toText(pick(item, ['coupon_type'])),
+    coupon_is_active: Boolean(pick(item, ['coupon_is_active'])),
+    usage_count: toNumber(pick(item, ['usage_count'])),
+    distinct_customers_count: toNumber(pick(item, ['distinct_customers_count'])),
+    paid_usage_count: toNumber(pick(item, ['paid_usage_count'])),
+    conversion_rate_percentage: toNumber(pick(item, ['conversion_rate_percentage'])),
+    total_discount_amount: toNumber(pick(item, ['total_discount_amount'])),
+    revenue_generated: toNumber(pick(item, ['revenue_generated'])),
+    avg_uses_per_customer: toNumber(pick(item, ['avg_uses_per_customer'])),
+    abuse_signal: Boolean(pick(item, ['abuse_signal'])),
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    totals: {
+      coupons_used_count: toNumber(pick(totals, ['coupons_used_count'])),
+      total_redemptions: toNumber(pick(totals, ['total_redemptions'])),
+      total_discount_amount: toNumber(pick(totals, ['total_discount_amount'])),
+      coupons_with_abuse_signal_count: toNumber(pick(totals, ['coupons_with_abuse_signal_count'])),
+    },
+    items,
+  }
+}
+
+/** Relatório de reembolsos/chargebacks dedicado (roadmap Fase A2). */
+export async function getRefundsReport(params: AnalyticsPeriodParams): Promise<RefundsReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/refunds', { params })
+  const raw = response.data.data
+  const totals = (pick(raw, ['totals']) as Raw | undefined) ?? {}
+  const byType = (pick(raw, ['by_type']) as Raw | undefined) ?? {}
+
+  const typeGroup = (key: string) => {
+    const g = (pick(byType, [key]) as Raw | undefined) ?? {}
+    return { count: toNumber(pick(g, ['count'])), total_amount: toNumber(pick(g, ['total_amount'])) }
+  }
+
+  const topReasons = asArray(pick(raw, ['top_reasons'])).map((item) => ({
+    reason: toText(pick(item, ['reason'])),
+    count: toNumber(pick(item, ['count'])),
+    total_amount: toNumber(pick(item, ['total_amount'])),
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    totals: {
+      refunds_count: toNumber(pick(totals, ['refunds_count'])),
+      total_refunded_amount: toNumber(pick(totals, ['total_refunded_amount'])),
+      refund_rate_percentage: toNumber(pick(totals, ['refund_rate_percentage'])),
+      refund_amount_rate_percentage: toNumber(pick(totals, ['refund_amount_rate_percentage'])),
+    },
+    by_type: {
+      total: typeGroup('total'),
+      parcial: typeGroup('parcial'),
+    },
+    top_reasons: topReasons,
+  }
+}
+
+/**
+ * Relatório de inventário/assentos avançado (roadmap Fase A2) —
+ * `event_uuid` sempre obrigatório (regra transversal de filtro ativo).
+ */
+export async function getInventoryReport(params: { event_uuid: string }): Promise<InventoryReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/inventory', { params })
+  const raw = response.data.data
+  const totals = (pick(raw, ['totals']) as Raw | undefined) ?? {}
+
+  const sectors = asArray(pick(raw, ['sectors'])).map((item) => ({
+    sector_name: toText(pick(item, ['sector_name'])),
+    total_seats: toNumber(pick(item, ['total_seats'])),
+    sold_seats: toNumber(pick(item, ['sold_seats'])),
+    held_seats_now: toNumber(pick(item, ['held_seats_now'])),
+    blocked_seats: toNumber(pick(item, ['blocked_seats'])),
+    available_seats: toNumber(pick(item, ['available_seats'])),
+    occupancy_percentage: toNumber(pick(item, ['occupancy_percentage'])),
+  }))
+
+  return {
+    event_uuid: toText(pick(raw, ['event_uuid'])),
+    event_name: toText(pick(raw, ['event_name'])),
+    has_seat_map: Boolean(pick(raw, ['has_seat_map'])),
+    totals: {
+      total_seats: toNumber(pick(totals, ['total_seats'])),
+      sold_seats: toNumber(pick(totals, ['sold_seats'])),
+      held_seats_now: toNumber(pick(totals, ['held_seats_now'])),
+      blocked_seats: toNumber(pick(totals, ['blocked_seats'])),
+      available_seats: toNumber(pick(totals, ['available_seats'])),
+      occupancy_percentage: toNumber(pick(totals, ['occupancy_percentage'])),
+    },
+    sectors,
+  }
+}
+
+/**
+ * Funil de conversão anônimo (roadmap A2) — período opcional (default 30
+ * dias no backend) + `event_uuid` opcional.
+ */
+export async function getFunnelReport(params: Partial<AnalyticsPeriodParams> & { event_uuid?: string }): Promise<FunnelReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/funnel', { params })
+  const raw = response.data.data
+
+  const steps = asArray(pick(raw, ['steps'])).map((item) => ({
+    step: toText(pick(item, ['step'])),
+    label: toText(pick(item, ['label'])),
+    session_count: toNumber(pick(item, ['session_count'])),
+    conversion_from_previous_percentage:
+      pick(item, ['conversion_from_previous_percentage']) === null ? null : toNumber(pick(item, ['conversion_from_previous_percentage'])),
+    conversion_from_first_percentage:
+      pick(item, ['conversion_from_first_percentage']) === null ? null : toNumber(pick(item, ['conversion_from_first_percentage'])),
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    event_uuid: (pick(raw, ['event_uuid']) as string | null) ?? null,
+    steps,
+  }
+}
+
+/**
+ * Comparação entre eventos (roadmap A2, último item) — 2 a 5 event_uuids
+ * do mesmo tenant. Sem período: a base de comparação é "dias desde
+ * abertura de vendas" de cada evento, calculada no backend.
+ */
+export async function getCompareEventsReport(params: { event_uuids: string[] }): Promise<CompareEventsReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/compare-events', {
+    params,
+    paramsSerializer: {
+      indexes: false,
+    },
+  })
+  const raw = response.data.data
+
+  const events = asArray(pick(raw, ['events'])).map((item) => {
+    const totals = (pick(item, ['totals']) as Raw | undefined) ?? {}
+    const series = asArray(pick(item, ['series'])).map((point) => ({
+      day: toNumber(pick(point, ['day'])),
+      order_count: toNumber(pick(point, ['order_count'])),
+      quantity_sold: toNumber(pick(point, ['quantity_sold'])),
+      revenue: toNumber(pick(point, ['revenue'])),
+    }))
+
+    return {
+      event_uuid: toText(pick(item, ['event_uuid'])),
+      event_name: toText(pick(item, ['event_name'])),
+      sales_opened_at: toText(pick(item, ['sales_opened_at'])),
+      totals: {
+        total_orders: toNumber(pick(totals, ['total_orders'])),
+        total_quantity_sold: toNumber(pick(totals, ['total_quantity_sold'])),
+        total_revenue: toNumber(pick(totals, ['total_revenue'])),
+        average_ticket: toNumber(pick(totals, ['average_ticket'])),
+        tickets_issued: toNumber(pick(totals, ['tickets_issued'])),
+        commercial_capacity: toNumber(pick(totals, ['commercial_capacity'])),
+        occupancy_percentage: toNumber(pick(totals, ['occupancy_percentage'])),
+      },
+      series,
+    }
+  })
+
+  return { events }
+}
+
+async function downloadXlsx(url: string, params: object, fallbackFilename: string): Promise<void> {
+  const response = await apiClient.get(url, { params, responseType: 'blob' })
+  const filename = extractFilenameFromContentDisposition(response.headers['content-disposition'], fallbackFilename)
+  triggerBlobDownload(response.data, filename)
+}
+
+/** Exportação XLSX de vendas por dimensão (roadmap A2) — MESMA base de getSalesByDimension. */
+export function exportSalesByDimensionXlsx(
+  params: AnalyticsPeriodParams & { dimension: SalesDimension; limit: number },
+): Promise<void> {
+  return downloadXlsx('/reports/analytics/sales-by-dimension/xlsx', params, 'vendas-por-dimensao.xlsx')
+}
+
+/** Exportação XLSX do relatório de pagamentos (roadmap A2) — MESMA base de getPaymentsSummary. */
+export function exportPaymentsXlsx(params: AnalyticsPeriodParams): Promise<void> {
+  return downloadXlsx('/reports/analytics/payments/xlsx', params, 'relatorio-pagamentos.xlsx')
 }

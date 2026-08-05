@@ -139,6 +139,85 @@ calculado on-the-fly a cada chamada de `GET /reports/alerts`).
 | `payment_rejection_rate` | Taxa de recusa (mesma fórmula do `paymentsSummary`) na janela dos últimos 7 dias, com amostra mínima de 5 vendas decididas (evita alarme com 1 recusa em 1 venda) | Dispara se `rejection_rate >= 20%`; `severity='critical'` se `>= 40%` |
 | `payment_pending_queue` | `COUNT(sales.status = 'pending_approval')` atual do tenant — proxy de "fila crescendo", sem histórico de tendência ainda | Dispara se `>= 15`; `severity='critical'` se `>= 30` |
 
+## 5.3 Afiliados, cupons, reembolsos e inventário/assentos (`AnalyticsService`, Fase A2)
+
+Regra transversal desta fase: nenhum destes 4 relatórios carrega sem filtro
+ativo por padrão — os três primeiros herdam o período obrigatório (default
+últimos 12 meses via `resolvePeriod()`, igual ao resto do módulo); o de
+inventário não usa período (ocupação é snapshot estrutural do mapa de
+assentos) e em vez disso exige `event_uuid` (`AnalyticsInventoryRequest`,
+`required`) — sem evento selecionado, o frontend (`InventoryTab`) não faz
+nenhuma chamada.
+
+| Métrica | Fórmula | Fonte |
+|---|---|---|
+| Afiliados — vendas atribuídas / receita atribuída (`affiliatesReport`) | `COUNT(*)`/`SUM(sale_amount)` de `affiliate_commissions` por afiliado no período (uma linha por venda paga com `affiliate_id`, ver `AffiliateCommissionService`); período por `affiliate_commissions.created_at` | `affiliate_commissions` |
+| Afiliados — ROI (`roi_percentage`) | `(receita_atribuída - comissão_PAGA) / comissão_PAGA * 100`; só comissão com `status='paid'` conta como custo (comissão `pending` ainda não foi gasto realizado); `null` quando não há comissão paga (divisão por zero) | `affiliate_commissions.amount`, `.status` |
+| Cupons — uso/conversão (`couponsReport`) | `usage_count = COUNT(*)` de `coupon_redemptions` por cupom no período (`redeemed_at`); `conversion_rate_percentage = paid_usage_count / usage_count * 100`, onde `paid_usage_count` conta só venda `is_paid=true` e não cancelada | `coupon_redemptions`, `sales.is_paid`/`.cancelled_at` |
+| Cupons — valor descontado / receita gerada | `total_discount_amount = SUM(sales.discount_amount)`; `revenue_generated = SUM(sales.total_amount)` só de venda paga não cancelada, ambos por cupom no período | `sales.discount_amount`, `.total_amount` |
+| Cupons — sinal de abuso (`abuse_signal`) | Heurística própria (independente do `RiskEngineService`, que avalia fraude por venda/cliente, não concentração de cupom): dispara quando `usage_count >= 5` **e** `avg_uses_per_customer >= 2.0` (`usage_count / distinct_customers_count`). Sinalização para revisão manual, não bloqueio automático | `coupon_redemptions` agrupado por `final_customer_id` |
+| Reembolsos — volume/valor (`refundsReport`) | `refunds_count = COUNT(*)`, `total_refunded_amount = SUM(amount)` de `sale_refunds` no período, por `refunded_at`; `by_type` quebra em `total`/`parcial` (`sale_refunds.type`) | `sale_refunds` |
+| Reembolsos — motivo (`top_reasons`) | Agrupamento por correspondência EXATA de `sale_refunds.reason` (texto livre digitado pelo operador) — **melhor esforço, não normaliza sinônimo/grafia diferente**; top 15 por contagem | `sale_refunds.reason` |
+| Reembolsos — taxa sobre vendas pagas | `refund_rate_percentage = refunds_count / paid_sales_count * 100`; `refund_amount_rate_percentage = total_refunded_amount / paid_sales_amount * 100`. Base de vendas pagas usa `sales.created_at` no MESMO período do filtro (não `paid_at`), mesma convenção de `salesQuery()` — pode haver reembolso de venda paga fora do período que não entra no denominador | `sales` (via `salesQuery`, `is_paid=true`) |
+| Inventário — ocupação por setor (`inventoryReport`) | Por `seats.sector_name` do `venue_map_version_id` do evento: `sold_seats = COUNT(tickets ativos com seat_id no setor)`; `blocked_seats` = seats com `status IN (bloqueado, indisponivel)`; `held_seats_now` = seats com hold ativo (`inventory_holds.status='reservado'` e `expires_at > now()`); `available_seats = total - sold - blocked - held`; `occupancy_percentage = sold/total*100`. Evento sem `venue_map_version_id` (só GA, sem mapa) retorna `has_seat_map=false` e `sectors=[]` — não confundir com `occupancy_percentage`/KPI 4 (que é por `ticket_type.quantity_available`, não por assento) | `seats`, `tickets.seat_id`, `inventory_holds`/`inventory_hold_items` |
+
+## 5.4 Funil de conversão anônimo (`FunnelAnalyticsService`, Fase A2)
+
+Rastreio ANÔNIMO por sessão (decisão do usuário, 2026-08-05 §7.1 item 3):
+evento de etapa vista + `session_id` técnico do carrinho da loja
+(`useStorefrontCart().sessionId`, mesmo `session_id` de `cart_events`),
+sem dado pessoal. Captura 100% client-side via
+`web/src/utils/funnelTracking.ts` (`sendBeacon`/`fetch keepalive`,
+fire-and-forget), gravado em `storefront_funnel_events` (sem soft delete,
+log de evento append-only, mesmo espírito de `cart_events`). Etapas fixas,
+nesta ordem (`StorefrontFunnelEvent::STEPS`):
+
+1. `event_viewed` — carregou `StorefrontEventDetailPage` com sucesso.
+2. `ticket_selection_started` — primeiro item deste evento entrou no carrinho.
+3. `hold_created` — `POST /loja/{slug}/eventos/{eventSlug}/holds` respondeu OK.
+4. `checkout_started` — entrou no passo de dados/revisão do checkout.
+5. `payment_confirmed` — aproximação prática, não webhook completo: Pix confirma via `GET /rastreio` (`is_paid=true`); cartão confirma na submissão bem-sucedida da cobrança (`createSalePaymentCharge`), sem aguardar decisão final do PSP; meio de pagamento offline (dinheiro) confirma no sucesso do próprio `POST /loja/{slug}/checkout`. Decisão de escopo deliberada (mesmo espírito de adiar o Sankey elaborado da seção 5.4 do roadmap) — não reflete 100% dos casos de recusa tardia de cartão.
+
+| Métrica | Fórmula | Fonte |
+|---|---|---|
+| Sessões únicas por etapa (`session_count`) | `COUNT(DISTINCT session_id)` de `storefront_funnel_events` por `step`, no período (default 30 dias, `resolvePeriod()` própria de `FunnelAnalyticsService`, diferente do default de 12 meses do resto do módulo) e `event_uuid` opcional | `storefront_funnel_events` |
+| Conversão vs. etapa anterior (`conversion_from_previous_percentage`) | `session_count[etapa] / session_count[etapa_anterior] * 100`; `null` na primeira etapa ou quando a etapa anterior teve 0 sessões | idem |
+| Conversão vs. primeira etapa (`conversion_from_first_percentage`) | `session_count[etapa] / session_count[event_viewed] * 100`; `null` quando `event_viewed` teve 0 sessões | idem |
+
+Endpoint staff: `GET /reports/analytics/funnel` (`perm:analytics,read`),
+aba "Funil" em Análises — barras horizontais decrescentes, sem
+Sankey/visualização elaborada (decisão adiada, roadmap seção 5.4).
+
+## 5.5 Comparação entre eventos (`AnalyticsService::compareEvents`, Fase A2 — último item)
+
+Sem filtro de período — o filtro obrigatório aqui é a seleção de 2 a 5
+eventos do mesmo tenant (`AnalyticsCompareEventsRequest`, `min:2`/`max:5`,
+`distinct`); qualquer uuid que não pertença ao tenant ativo faz o
+endpoint inteiro responder 404 (`ModelNotFoundException`), mesmo padrão
+de `inventoryReport`.
+
+**Definição de "abertura de vendas" de um evento** (decisão de negócio
+confirmada pelo usuário 2026-08-05, não existe coluna única no schema
+para isso): MENOR `ticket_types.sales_start_at` não nulo entre os tipos
+de ingresso ativos (`deleted_at` nulo) do evento. Quando nenhum tipo de
+ingresso tem `sales_start_at` preenchido (venda sempre aberta, sem
+janela configurada), usa-se o `created_at` do evento como fallback —
+primeiro instante em que uma venda poderia ter ocorrido.
+
+| Métrica | Fórmula | Fonte |
+|---|---|---|
+| Série diária por evento (`series[].day`/`order_count`/`quantity_sold`/`revenue`) | Agrega `sale_items` (via `ticket_type_id`→`event_id`) por `DATE(sales.created_at)`, depois reindexa cada dia como `floor((data_da_venda - abertura_de_vendas_do_evento) / 86400)`, clampado em `>= 0`. Dois eventos com aberturas de calendário diferentes ficam alinhados pelo mesmo `day` quando estão no mesmo estágio comercial (regra confirmada pelo usuário — comparação por "dias desde abertura", NÃO por data) | `sale_items`, `sales.created_at`, `ticket_types.sales_start_at`/`event_id` |
+| `total_orders`/`total_quantity_sold`/`total_revenue` | Soma dos pontos da série (pedidos distintos, unidades, receita) | idem |
+| `average_ticket` | `total_revenue / total_orders` (0 se sem pedido) — mesma convenção do catálogo geral (ticket médio por pedido, não por item) | idem |
+| `tickets_issued`/`commercial_capacity`/`occupancy_percentage` | MESMA fórmula da Ocupação comercial (KPI 4, seção 1), só escopada por `ticket_types.event_id` em vez do tenant inteiro | `tickets.status`, `ticket_types.quantity_available` |
+
+Endpoint staff: `GET /reports/analytics/compare-events?event_uuids[]=...`
+(`perm:analytics,read`), aba "Comparar eventos" em Análises — seletor
+multi-evento (Autocomplete `multiple`, máx. 5), gráfico de linha com
+receita acumulada por `day` (uma série por evento) e tabela de totais
+comparativos. Exportação CSV client-side, mesmo padrão de
+`InventoryTab`/demais abas desta fase (sem endpoint XLSX dedicado).
+
 ## 6. Métricas da spec ainda não implementadas (gap — não inventar fórmula aqui)
 
 Consolidado do gap analysis (roadmap seção 4, `docs/roadmap/2026-08-05-...md`).
@@ -149,10 +228,11 @@ contexto quando a fase correspondente chegar:
 - **Receita líquida projetada** (KPI 2) — PARCIAL desde a Fase A1: `net_revenue_amount` cobre o realizado (ver seção 1); projeção do que ainda vai vender continua AUSENTE.
 - **Ocupação comercial** (KPI 4) — RESOLVIDO na Fase A1 (`occupancy_percentage`, ver seção 1) — snapshot atual, sem filtro de período (ver nota na fórmula).
 - **Ingressos pago/reservado/cortesia separados** (KPI 3) — PARCIAL; cortesia hoje só se distingue olhando `sale_items.unit_price = 0`, nenhum endpoint expõe essa quebra.
-- **Funil de conversão** (KPI 6) — AUSENTE; sem tracking de página/checkout iniciado além do proxy de `InventoryHold`.
+- **Funil de conversão** (KPI 6) — RESOLVIDO na Fase A2 (ver seção 5.4): 5 etapas, rastreio anônimo por sessão, sem Sankey elaborado (decisão adiada).
 - **Previsão de venda final** (KPI 8) — AUSENTE.
 - **8 segmentos nomeados de RFM da spec** (campeões/leais/potenciais leais/novos/promissores/precisam de atenção/em risco/inativos, seção 33) — hoje `RfmCalculator` produz 4 rótulos (`vip`/`recorrente`/`em_risco`/`inativo`); expandir para os 8 é feature nova, fora do escopo de correção de bug da Fase A0.
 - **Coortes de retenção, LTV previsto, afinidade entre eventos** (seção 8/Telas 3-5) — AUSENTE.
 - **Rentabilidade por evento com custo cadastrado** (custo fixo/variável/marketing) — AUSENTE; só existe custo de produto (`last_purchase_cost`) via `marginSummary`.
-- **Relatório de reembolsos/chargebacks dedicado** (Pareto, % sobre receita) — AUSENTE, apesar do dado-base existir (`SaleRefund`, `SettlementAdjustment`).
+- **Relatório de reembolsos/chargebacks dedicado** — RESOLVIDO na Fase A2 (`refundsReport`, ver seção 5.3): volume, valor, motivo (texto livre, melhor esforço) e taxa sobre vendas pagas. Pareto/ranking de motivo por percentual acumulado (curva ABC de motivo) e cruzamento com `SettlementAdjustment` (impacto no repasse do organizador) continuam AUSENTES — o que existe hoje é contagem/soma por motivo exato, não Pareto acumulado nem ligação com o financeiro de repasse.
+- **Ranking/ROI de afiliados, ranking/abuso de cupons, ocupação por setor** — RESOLVIDOS na Fase A2 (ver seção 5.3).
 - **Antifraude agregado** (fila de revisão, taxa de falso positivo, Pareto de regras) — AUSENTE; `RiskEngineService` decide e persiste mas não tem endpoint de relatório.

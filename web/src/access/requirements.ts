@@ -70,6 +70,9 @@ export const ACCESS = {
   storefrontSalesApprove: tenant('storefront-sales', 'approve'),
   storefrontSalesCancel: tenant('storefront-sales', 'cancel'),
   reportsRead: tenant('reports', 'read'),
+  /** Relatórios agendados (roadmap A2) — reaproveita `reports,create`/`reports,delete`. */
+  reportsCreate: tenant('reports', 'create'),
+  reportsDelete: tenant('reports', 'delete'),
   /** Conciliação financeira (roadmap A3.12) — `payments`/`refunds`/`webhook_events` do tenant. */
   financeRead: tenant('finance', 'read'),
   usersRead: tenant('users', 'read'),

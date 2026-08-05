@@ -18,6 +18,7 @@ import * as storefrontService from '../../services/storefrontService'
 import * as ticketWaitlistService from '../../services/ticketWaitlistService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
+import { sendFunnelEvent } from '../../utils/funnelTracking'
 import type {
   StorefrontAvailabilityEventProduct,
   StorefrontAvailabilityResult,
@@ -178,6 +179,21 @@ export function StorefrontEventDetailPage() {
     () => items.filter((item) => item.event_slug === eventSlug),
     [items, eventSlug],
   )
+
+  // Funil de conversão (roadmap A2) — "iniciou seleção de ingresso" dispara
+  // uma vez por evento/sessão, no primeiro item deste evento adicionado ao
+  // carrinho (mesmo espírito do `hadItemsRef` de StorefrontCartContext).
+  const hasSentTicketSelectionStartedRef = useRef(false)
+  useEffect(() => {
+    hasSentTicketSelectionStartedRef.current = false
+  }, [eventSlug])
+  useEffect(() => {
+    if (!slug || !eventSlug || hasSentTicketSelectionStartedRef.current) return
+    if (eventCartItems.length > 0) {
+      sendFunnelEvent(slug, eventSlug, sessionId, 'ticket_selection_started')
+      hasSentTicketSelectionStartedRef.current = true
+    }
+  }, [slug, eventSlug, sessionId, eventCartItems])
   const eventCartSessionUuids = useMemo(
     () => Array.from(new Set(eventCartItems.map((item) => item.session_uuid?.trim()).filter(Boolean))),
     [eventCartItems],
@@ -256,7 +272,10 @@ export function StorefrontEventDetailPage() {
     storefrontService
       .getStorefrontEvent(slug, eventSlug)
       .then((result) => {
-        if (!cancelled) setEvent(result)
+        if (!cancelled) {
+          setEvent(result)
+          sendFunnelEvent(slug, eventSlug, sessionId, 'event_viewed')
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled) setLoadError(getApiErrorMessage(error, 'Não foi possível carregar este evento agora.'))
@@ -267,7 +286,7 @@ export function StorefrontEventDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [slug, eventSlug])
+  }, [slug, eventSlug, sessionId])
 
   useEffect(() => {
     if (!slug || !eventSlug) return

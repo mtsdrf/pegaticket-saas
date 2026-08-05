@@ -82,6 +82,12 @@ Schedule::command('sales:send-event-reminders --hours-ahead=24')->hourly();
 // SendRecompraNudgeMailsCommand.
 Schedule::command('sales:send-recompra-nudges --days=60')->daily();
 
+// Relatórios agendados básicos (roadmap A2) — resumo diário/semanal dos
+// KPIs do Home por assinatura (ScheduledReportSubscription). Roda diária;
+// o Command decide por assinatura se está em dia com a frequência
+// configurada (isDue no model). Ver SendScheduledReportSummariesCommand.
+Schedule::command('reports:send-scheduled-summaries')->daily();
+
 // Reconciliação ativa das assinaturas/preapprovals no Mercado Pago. Não
 // substitui o webhook de cobrança do ciclo; sincroniza o status estrutural
 // do vínculo recorrente (`authorized`, `cancelled`, etc.) como rede de

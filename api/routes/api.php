@@ -52,12 +52,14 @@ use App\Http\Controllers\Portal\TicketResaleController;
 use App\Http\Controllers\Privacy\PrivacyRequestController;
 use App\Http\Controllers\Report\AnalyticsController;
 use App\Http\Controllers\Report\ReportController;
+use App\Http\Controllers\Report\ScheduledReportSubscriptionController;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\Sale\SaleInstallmentController;
 use App\Http\Controllers\Sale\SaleRefundController;
 use App\Http\Controllers\Sale\SaleTrackingController;
 use App\Http\Controllers\Storefront\CartEventController;
 use App\Http\Controllers\Storefront\CouponController;
+use App\Http\Controllers\Storefront\FunnelEventController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontHoldController;
@@ -243,6 +245,12 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Storefront\CartEventController.
     Route::post('/loja/{slug}/eventos-carrinho', [CartEventController::class, 'store'])
         ->middleware('throttle:60,1,storefront-cart-events');
+
+    // Funil de conversão anônimo (roadmap A2, decisão 2026-08-05 §7.1
+    // item 3) — 100% público, mesmo espírito de /loja/{slug}/eventos-
+    // carrinho. Ver App\Http\Controllers\Storefront\FunnelEventController.
+    Route::post('/loja/{slug}/eventos/{eventSlug}/funnel-events', [FunnelEventController::class, 'store'])
+        ->middleware('throttle:120,1,storefront-funnel-events');
 
     // Lista de espera de TicketType esgotado (roadmap inventário) — 100%
     // público, mesmo espírito de /loja/{slug}/eventos-carrinho. Anti-bot
@@ -1161,6 +1169,24 @@ Route::prefix('v1')->group(function () {
             Route::post('/sales/pdf', [ReportController::class, 'salesPdf'])
                 ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-sales-pdf']);
 
+            // Exportação XLSX (roadmap A2, item 3) — maatwebsite/excel, síncrona.
+            Route::post('/sales/xlsx', [ReportController::class, 'salesXlsx'])
+                ->middleware(['tenant', 'perm:reports,export_pdf', 'throttle:10,1,reports-sales-xlsx']);
+
+            // Relatórios agendados básicos (roadmap A2) — assinatura de
+            // resumo diário/semanal do Home por e-mail. Ver
+            // App\Console\Commands\SendScheduledReportSummariesCommand.
+            Route::prefix('scheduled-report-subscriptions')->group(function () {
+                Route::get('/', [ScheduledReportSubscriptionController::class, 'index'])
+                    ->middleware(['tenant', 'perm:reports,read', 'throttle:60,1,scheduled-report-subscriptions-list']);
+
+                Route::post('/', [ScheduledReportSubscriptionController::class, 'store'])
+                    ->middleware(['tenant', 'perm:reports,create', 'throttle:20,1,scheduled-report-subscriptions-create']);
+
+                Route::delete('/{uuid}', [ScheduledReportSubscriptionController::class, 'destroy'])
+                    ->middleware(['tenant', 'perm:reports,delete', 'throttle:20,1,scheduled-report-subscriptions-delete']);
+            });
+
             // Analytics (Fase 1 do roadmap) — Functionality própria
             // `analytics`, presente só nos planos professional/premium;
             // o gate PLAN_UPGRADE_REQUIRED é aplicado pelo CheckPermission.
@@ -1213,11 +1239,44 @@ Route::prefix('v1')->group(function () {
                 Route::get('/sales-by-dimension', [AnalyticsController::class, 'salesByDimension'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-by-dimension']);
 
+                // Exportação XLSX (roadmap A2, item 3) — mesma base de /sales-by-dimension.
+                Route::get('/sales-by-dimension/xlsx', [AnalyticsController::class, 'salesByDimensionXlsx'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:20,1,analytics-sales-by-dimension-xlsx']);
+
                 // Relatório de pagamentos básico (roadmap Fase A1) —
                 // aprovação/recusa por período, sem roteamento entre
                 // gateways (só PagBank existe).
                 Route::get('/payments', [AnalyticsController::class, 'payments'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-payments']);
+
+                // Exportação XLSX (roadmap A2, item 3) — mesma base de /payments.
+                Route::get('/payments/xlsx', [AnalyticsController::class, 'paymentsXlsx'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:20,1,analytics-payments-xlsx']);
+
+                // Roadmap Fase A2 — afiliados, cupons, reembolsos/chargebacks
+                // e inventário/assentos avançado.
+                Route::get('/affiliates', [AnalyticsController::class, 'affiliates'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-affiliates']);
+
+                Route::get('/coupons', [AnalyticsController::class, 'coupons'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-coupons']);
+
+                Route::get('/refunds', [AnalyticsController::class, 'refunds'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-refunds']);
+
+                Route::get('/inventory', [AnalyticsController::class, 'inventory'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-inventory']);
+
+                // Funil de conversão anônimo (roadmap A2) — sessões únicas
+                // por etapa via storefront_funnel_events.
+                Route::get('/funnel', [AnalyticsController::class, 'funnel'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-funnel']);
+
+                // Comparação entre eventos (roadmap A2, último item) — 2 a
+                // 5 eventos do mesmo tenant, curva por dias desde abertura
+                // de vendas (não data de calendário).
+                Route::get('/compare-events', [AnalyticsController::class, 'compareEvents'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-compare-events']);
             });
         });
 

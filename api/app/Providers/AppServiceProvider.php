@@ -18,6 +18,7 @@ use App\Repositories\Contracts\EventSessionRepositoryInterface;
 use App\Repositories\Contracts\FinalCustomerRepositoryInterface;
 use App\Repositories\Contracts\FinalCustomerTenantLinkRepositoryInterface;
 use App\Repositories\Contracts\FunctionalityRepositoryInterface;
+use App\Repositories\Contracts\FunnelEventRepositoryInterface;
 use App\Repositories\Contracts\GroupRepositoryInterface;
 use App\Repositories\Contracts\HelpRequestRepositoryInterface;
 use App\Repositories\Contracts\IdempotencyRepositoryInterface;
@@ -32,6 +33,7 @@ use App\Repositories\Contracts\RefundRepositoryInterface;
 use App\Repositories\Contracts\ReleaseNoteRepositoryInterface;
 use App\Repositories\Contracts\SaleRefundRepositoryInterface;
 use App\Repositories\Contracts\SaleRepositoryInterface;
+use App\Repositories\Contracts\ScheduledReportSubscriptionRepositoryInterface;
 use App\Repositories\Contracts\SeatRepositoryInterface;
 use App\Repositories\Contracts\SubscriptionRepositoryInterface;
 use App\Repositories\Contracts\TenantFeatureOverrideRepositoryInterface;
@@ -53,9 +55,9 @@ use App\Repositories\Eloquent\AuditLogRepository;
 use App\Repositories\Eloquent\CartEventRepository;
 use App\Repositories\Eloquent\CashSessionRepository;
 use App\Repositories\Eloquent\CommunicationLogRepository;
+// Repository Implementations
 use App\Repositories\Eloquent\CouponRepository;
 use App\Repositories\Eloquent\EmailTemplateRepository;
-// Repository Implementations
 use App\Repositories\Eloquent\EventCategoryRepository;
 use App\Repositories\Eloquent\EventGateRepository;
 use App\Repositories\Eloquent\EventProductRepository;
@@ -64,6 +66,7 @@ use App\Repositories\Eloquent\EventSessionRepository;
 use App\Repositories\Eloquent\FinalCustomerRepository;
 use App\Repositories\Eloquent\FinalCustomerTenantLinkRepository;
 use App\Repositories\Eloquent\FunctionalityRepository;
+use App\Repositories\Eloquent\FunnelEventRepository;
 use App\Repositories\Eloquent\GroupRepository;
 use App\Repositories\Eloquent\HelpRequestRepository;
 use App\Repositories\Eloquent\IdempotencyRepository;
@@ -78,6 +81,7 @@ use App\Repositories\Eloquent\RefundRepository;
 use App\Repositories\Eloquent\ReleaseNoteRepository;
 use App\Repositories\Eloquent\SaleRefundRepository;
 use App\Repositories\Eloquent\SaleRepository;
+use App\Repositories\Eloquent\ScheduledReportSubscriptionRepository;
 use App\Repositories\Eloquent\SeatRepository;
 use App\Repositories\Eloquent\SubscriptionRepository;
 use App\Repositories\Eloquent\TenantFeatureOverrideRepository;
@@ -96,11 +100,11 @@ use App\Repositories\Eloquent\TicketTypeRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Eloquent\VenueRepository;
 use App\Services\Payment\ManualPaymentProvider;
+// Payment provider (cobrança de planos — roadmap 1B)
 use App\Services\Payment\MercadoPagoPaymentProvider;
 use App\Services\Payment\PagBankPaymentProvider;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Cache\RateLimiting\Limit;
-// Payment provider (cobrança de planos — roadmap 1B)
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -418,6 +422,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             CartEventRepositoryInterface::class,
             CartEventRepository::class
+        );
+
+        // Funil de conversão anônimo da bilheteria online (roadmap A2)
+        $this->app->bind(
+            FunnelEventRepositoryInterface::class,
+            FunnelEventRepository::class
+        );
+
+        // Relatórios agendados básicos (roadmap A2)
+        $this->app->bind(
+            ScheduledReportSubscriptionRepositoryInterface::class,
+            ScheduledReportSubscriptionRepository::class
         );
 
         // Cobrança de planos (roadmap 1B)

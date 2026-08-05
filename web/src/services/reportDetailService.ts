@@ -42,3 +42,10 @@ async function exportPdf(url: string, payload: object, fallbackFilename: string)
 export function exportOrderReportsPdf(filters: SaleReportFilters): Promise<void> {
   return exportPdf('/reports/sales/pdf', filters, 'relatorio-vendas.pdf')
 }
+
+/** Exportação XLSX do relatório de vendas (roadmap A2) — MESMA base filtrada do PDF acima. */
+export async function exportOrderReportsXlsx(filters: SaleReportFilters): Promise<void> {
+  const response = await apiClient.post('/reports/sales/xlsx', filters, { responseType: 'blob' })
+  const filename = extractFilenameFromContentDisposition(response.headers['content-disposition'], 'relatorio-vendas.xlsx')
+  triggerBlobDownload(response.data, filename)
+}

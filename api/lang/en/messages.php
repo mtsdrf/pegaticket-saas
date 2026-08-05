@@ -757,6 +757,7 @@ return [
         'order_rated' => 'Rating submitted successfully.',
         'order_already_rated' => 'This purchase has already been rated.',
         'cart_event_recorded' => 'Cart event recorded successfully.',
+        'funnel_event_recorded' => 'Funnel event recorded successfully.',
         'store_pickup_not_enabled' => 'This company does not accept on-site pickup yet.',
         'store_pickup_address_missing' => 'The company has not configured its pickup point yet, so this purchase cannot be picked up on-site right now.',
         'delivery_not_enabled' => 'This company is not accepting deliveries right now.',
@@ -915,6 +916,10 @@ return [
         'receivable_interaction_created' => 'Receivable interaction recorded successfully.',
         'cmv' => 'CMV report retrieved successfully.',
         'alerts' => 'Alerts retrieved successfully.',
+        'scheduled_subscriptions_listed' => 'Scheduled report subscriptions retrieved successfully.',
+        'scheduled_subscription_created' => 'Scheduled report subscription created successfully.',
+        'scheduled_subscription_cancelled' => 'Scheduled report subscription cancelled successfully.',
+        'scheduled_summary_mail_subject' => ':frequency summary — :tenant',
     ],
 
     'analytics' => [
@@ -936,6 +941,12 @@ return [
         'checkin_insights' => 'Access analytics loaded successfully.',
         'sales_by_dimension' => 'Sales by dimension retrieved successfully.',
         'payments_summary' => 'Payments report retrieved successfully.',
+        'affiliates_report' => 'Affiliates report retrieved successfully.',
+        'coupons_report' => 'Coupons report retrieved successfully.',
+        'refunds_report' => 'Refunds report retrieved successfully.',
+        'inventory_report' => 'Inventory report retrieved successfully.',
+        'funnel_report' => 'Conversion funnel retrieved successfully.',
+        'compare_events_report' => 'Event comparison retrieved successfully.',
     ],
 
     'route' => [

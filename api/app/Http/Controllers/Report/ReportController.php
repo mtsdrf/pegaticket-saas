@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\ArrayTableExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Sale\SaleResource;
 use App\Services\APIResponse;
@@ -9,6 +10,7 @@ use App\Services\Report\AlertService;
 use App\Services\Report\OperationSnapshotService;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -134,6 +136,24 @@ class ReportController extends Controller
             fn () => print ($pdf['content']),
             $pdf['filename'],
             ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    /**
+     * Exportação XLSX do relatório de vendas (roadmap A2, decisão 2026-08-05
+     * §7.1 item 3 do roadmap de refatoração — maatwebsite/excel, síncrono).
+     * MESMA base filtrada de sales()/salesPdf().
+     */
+    public function salesXlsx(Request $request)
+    {
+        $export = $this->service->salesRowsForExport(
+            app('tenant_id'),
+            $request->only(self::ORDER_FILTERS)
+        );
+
+        return Excel::download(
+            new ArrayTableExport($export['headings'], $export['rows']),
+            'relatorio-vendas-'.now()->format('Ymd_His').'.xlsx'
         );
     }
 }

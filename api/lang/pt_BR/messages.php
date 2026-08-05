@@ -764,6 +764,7 @@ return [
         'order_rated' => 'Avaliação registrada com sucesso.',
         'order_already_rated' => 'Esta compra já foi avaliada.',
         'cart_event_recorded' => 'Evento de carrinho registrado com sucesso.',
+        'funnel_event_recorded' => 'Evento de funil registrado com sucesso.',
         'store_pickup_not_enabled' => 'Esta empresa ainda não aceita retirada presencial.',
         'store_pickup_address_missing' => 'A empresa ainda não configurou o ponto de retirada, então não é possível retirar a compra no momento.',
         'delivery_not_enabled' => 'Esta empresa não está aceitando entregas no momento.',
@@ -922,6 +923,10 @@ return [
         'receivable_interaction_created' => 'Interação de recebível registrada com sucesso.',
         'cmv' => 'Relatório de CMV obtido com sucesso.',
         'alerts' => 'Alertas obtidos com sucesso.',
+        'scheduled_subscriptions_listed' => 'Assinaturas de relatório agendado obtidas com sucesso.',
+        'scheduled_subscription_created' => 'Assinatura de relatório agendado criada com sucesso.',
+        'scheduled_subscription_cancelled' => 'Assinatura de relatório agendado cancelada com sucesso.',
+        'scheduled_summary_mail_subject' => 'Resumo :frequency — :tenant',
     ],
 
     'analytics' => [
@@ -943,6 +948,12 @@ return [
         'checkin_insights' => 'Análises de acesso exibidas com sucesso.',
         'sales_by_dimension' => 'Vendas por dimensão obtidas com sucesso.',
         'payments_summary' => 'Relatório de pagamentos obtido com sucesso.',
+        'affiliates_report' => 'Relatório de afiliados obtido com sucesso.',
+        'coupons_report' => 'Relatório de cupons obtido com sucesso.',
+        'refunds_report' => 'Relatório de reembolsos obtido com sucesso.',
+        'inventory_report' => 'Relatório de inventário obtido com sucesso.',
+        'funnel_report' => 'Funil de conversão obtido com sucesso.',
+        'compare_events_report' => 'Comparação entre eventos obtida com sucesso.',
     ],
 
     'route' => [

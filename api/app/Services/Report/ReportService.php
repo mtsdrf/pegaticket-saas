@@ -267,6 +267,33 @@ class ReportService
     }
 
     /**
+     * Linhas do relatório de vendas para exportação XLSX (roadmap A2) —
+     * MESMA base filtrada de generateSalesPdf/filteredOrders
+     * (salesEloquentQuery), só reformatada como headings+rows em vez de
+     * PDF/paginação.
+     *
+     * @return array{headings: array<int, string>, rows: array<int, array<int, string|int|float|null>>}
+     */
+    public function salesRowsForExport(int $tenantId, array $filters): array
+    {
+        $sales = $this->salesEloquentQuery($tenantId, $filters)->orderByDesc('id')->get();
+
+        $headings = ['Código', 'Cliente', 'Origem', 'Status', 'Pago', 'Valor total', 'Criado em'];
+
+        $rows = $sales->map(fn (Sale $sale) => [
+            $sale->uuid,
+            $sale->finalCustomer?->name ?? '—',
+            Sale::normalizeOrigin((string) $sale->origin),
+            $sale->status,
+            $sale->is_paid ? 'Sim' : 'Não',
+            (float) $sale->total_amount,
+            optional($sale->created_at)->format('d/m/Y H:i'),
+        ])->all();
+
+        return ['headings' => $headings, 'rows' => $rows];
+    }
+
+    /**
      * Base de vendas ativos (não cancelados, não soft-deletados) do
      * tenant, com filtro opcional de período por `created_at`.
      */

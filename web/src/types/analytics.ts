@@ -230,3 +230,178 @@ export interface PaymentsSummary {
   approval_rate_percentage: number
   rejection_rate_percentage: number
 }
+
+// ---------------------------------------------------------------------------
+// Relatório de afiliados consolidado (roadmap Fase A2).
+// ---------------------------------------------------------------------------
+
+export interface AffiliateReportItem {
+  affiliate_uuid: string
+  affiliate_name: string
+  tracking_code: string
+  affiliate_status: string
+  attributed_sales_count: number
+  attributed_revenue: number
+  commission_amount: number
+  commission_paid_amount: number
+  roi_percentage: number | null
+}
+
+export interface AffiliatesReport {
+  from: string
+  to: string
+  totals: {
+    affiliates_count: number
+    attributed_revenue: number
+    commission_amount: number
+    commission_paid_amount: number
+    roi_percentage: number | null
+  }
+  items: AffiliateReportItem[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de cupons consolidado (roadmap Fase A2).
+// ---------------------------------------------------------------------------
+
+export interface CouponReportItem {
+  coupon_uuid: string
+  coupon_code: string
+  coupon_type: string
+  coupon_is_active: boolean
+  usage_count: number
+  distinct_customers_count: number
+  paid_usage_count: number
+  conversion_rate_percentage: number
+  total_discount_amount: number
+  revenue_generated: number
+  avg_uses_per_customer: number
+  abuse_signal: boolean
+}
+
+export interface CouponsReport {
+  from: string
+  to: string
+  totals: {
+    coupons_used_count: number
+    total_redemptions: number
+    total_discount_amount: number
+    coupons_with_abuse_signal_count: number
+  }
+  items: CouponReportItem[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de reembolsos/chargebacks dedicado (roadmap Fase A2).
+// ---------------------------------------------------------------------------
+
+export interface RefundsReportTypeGroup {
+  count: number
+  total_amount: number
+}
+
+export interface RefundsReportReason {
+  reason: string
+  count: number
+  total_amount: number
+}
+
+export interface RefundsReport {
+  from: string
+  to: string
+  totals: {
+    refunds_count: number
+    total_refunded_amount: number
+    refund_rate_percentage: number
+    refund_amount_rate_percentage: number
+  }
+  by_type: {
+    total: RefundsReportTypeGroup
+    parcial: RefundsReportTypeGroup
+  }
+  top_reasons: RefundsReportReason[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de inventário/assentos avançado (roadmap Fase A2) — ocupação
+// agregada por setor de um evento específico (event_uuid obrigatório).
+// ---------------------------------------------------------------------------
+
+export interface InventorySector {
+  sector_name: string
+  total_seats: number
+  sold_seats: number
+  held_seats_now: number
+  blocked_seats: number
+  available_seats: number
+  occupancy_percentage: number
+}
+
+export interface InventoryReport {
+  event_uuid: string
+  event_name: string
+  has_seat_map: boolean
+  totals: {
+    total_seats: number
+    sold_seats: number
+    held_seats_now: number
+    blocked_seats: number
+    available_seats: number
+    occupancy_percentage: number
+  }
+  sectors: InventorySector[]
+}
+
+// ---------------------------------------------------------------------------
+// Funil de conversão anônimo (roadmap A2) — sessões únicas por etapa do
+// storefront (visualização, seleção de ingresso, reserva, checkout,
+// pagamento confirmado) e taxa de conversão entre etapas consecutivas.
+// ---------------------------------------------------------------------------
+
+export interface FunnelStepResult {
+  step: string
+  label: string
+  session_count: number
+  conversion_from_previous_percentage: number | null
+  conversion_from_first_percentage: number | null
+}
+
+export interface FunnelReport {
+  from: string
+  to: string
+  event_uuid: string | null
+  steps: FunnelStepResult[]
+}
+
+// ---------------------------------------------------------------------------
+// Comparação entre eventos (roadmap A2, último item) — curva de vendas
+// indexada por "dias desde abertura de vendas" de cada evento (não data
+// de calendário), mais totais comparativos.
+// ---------------------------------------------------------------------------
+
+export interface CompareEventsSeriesPoint {
+  day: number
+  order_count: number
+  quantity_sold: number
+  revenue: number
+}
+
+export interface CompareEventsEntry {
+  event_uuid: string
+  event_name: string
+  sales_opened_at: string
+  totals: {
+    total_orders: number
+    total_quantity_sold: number
+    total_revenue: number
+    average_ticket: number
+    tickets_issued: number
+    commercial_capacity: number
+    occupancy_percentage: number
+  }
+  series: CompareEventsSeriesPoint[]
+}
+
+export interface CompareEventsReport {
+  events: CompareEventsEntry[]
+}

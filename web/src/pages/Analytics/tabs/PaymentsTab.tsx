@@ -3,7 +3,7 @@ import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined'
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
 import { Box, Button, Paper, Typography } from '@mui/material'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AnalyticsErrorAlert } from '../../../components/analytics/AnalyticsErrorAlert'
 import { MetricCard } from '../../../components/dashboard/MetricCard'
 import { useAnalyticsData } from '../../../hooks/useAnalyticsData'
@@ -22,6 +22,7 @@ export function PaymentsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     () => analyticsService.getPaymentsSummary({ from, to }),
     `${from}|${to}`,
   )
+  const [isExportingXlsx, setIsExportingXlsx] = useState(false)
 
   useEffect(() => {
     if (planLocked) onPlanLocked()
@@ -42,6 +43,17 @@ export function PaymentsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     downloadTextFile(buildCsvContent(headers, rows), 'relatorio-pagamentos.csv', 'text/csv;charset=utf-8')
   }
 
+  async function handleExportXlsx() {
+    setIsExportingXlsx(true)
+    try {
+      await analyticsService.exportPaymentsXlsx({ from, to })
+    } catch {
+      // best-effort — sem toast dedicado nesta fase, mesmo espírito do CSV acima
+    } finally {
+      setIsExportingXlsx(false)
+    }
+  }
+
   return (
     <Paper variant="outlined" className="pt-reveal" sx={{ p: { xs: 2.25, sm: 3 }, ...ELEVATED_SURFACE_SX }}>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: 2.5 }}>
@@ -54,16 +66,28 @@ export function PaymentsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
           </Typography>
         </Box>
 
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
-          onClick={handleExportCsv}
-          disabled={!data}
-          sx={{ minHeight: 40 }}
-        >
-          Exportar CSV
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
+            onClick={handleExportCsv}
+            disabled={!data}
+            sx={{ minHeight: 40 }}
+          >
+            Exportar CSV
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
+            onClick={() => void handleExportXlsx()}
+            disabled={!data || isExportingXlsx}
+            sx={{ minHeight: 40 }}
+          >
+            {isExportingXlsx ? 'Exportando…' : 'Exportar XLSX'}
+          </Button>
+        </Box>
       </Box>
 
       <Box

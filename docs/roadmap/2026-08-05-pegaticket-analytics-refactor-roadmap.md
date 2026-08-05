@@ -218,7 +218,7 @@ Numeração própria deste documento (não reaproveita as fases do roadmap globa
 - Relatório de cupons consolidado (ranking, taxa de uso, abuso).
 - Relatório de inventário/assentos avançado (ocupação por setor, mapa de calor de assentos).
 - Relatório de reembolsos/chargebacks dedicado.
-- Comparação entre eventos (tela 2 do relatório 1) — depende de definir "estágio comercial equivalente" (seção 2.4), que é uma regra de negócio nova a validar com o usuário, não só uma query.
+- Comparação entre eventos (tela 2 do relatório 1) — **RESOLVIDO** (2026-08-05): "estágio comercial equivalente" definido como "dias desde abertura de vendas" (menor `sales_start_at` entre os tipos de ingresso do evento, fallback `created_at` do evento), regra confirmada pelo usuário. Ver `AnalyticsService::compareEvents()` e `.claude/memory/metrics-catalog.md` seção 5.5.
 - Relatórios agendados básicos (só e-mail diário/semanal, sem toda a Parte VI).
 - Exportação XLSX real (depende da Fase A0, decisão de biblioteca).
 
@@ -255,7 +255,7 @@ Numeração própria deste documento (não reaproveita as fases do roadmap globa
 7. **Atendimento/NPS/CSAT** (relatório 16): mesma situação — não há hoje nenhuma coleta de satisfação/NPS no produto. É decisão de produto antes de ser item de relatório.
 8. **Roteamento inteligente de pagamento (relatório 6, tela 4) e fiscal/ERP (relatório 18, tela 2)**: já têm decisão de produto fechada no roadmap global (2026-08-05) como "não fazer" — citados aqui só para deixar explícito que essas duas telas da spec devem ser **removidas do escopo**, não implementadas parcialmente por engano.
 9. **Catálogo de métricas como feature de produto vs. documentação interna** (5.2): a proposta deste documento é começar como documentação interna; se o usuário quiser a tela consultável desde já, isso muda o esforço da Fase A0.
-10. **Definição de "estágio comercial equivalente" para comparação entre eventos** (seção 2.4 da spec, relatório 1 tela 2): a spec pede que comparações considerem dias desde abertura de vendas, capacidade, faixa de preço etc., mas não define a fórmula. Isso precisa de uma decisão de regra de negócio explícita antes de implementar "comparação justa" — hoje toda comparação do sistema é só por data de calendário.
+10. **Definição de "estágio comercial equivalente" para comparação entre eventos** — **RESPONDIDO pelo usuário (2026-08-05)**: "dias desde abertura de vendas" (não capacidade/faixa de preço). Implementado em `AnalyticsService::compareEvents()`, ver `.claude/memory/metrics-catalog.md` seção 5.5.
 
 ---
 
