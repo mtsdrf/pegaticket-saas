@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -48,6 +49,13 @@ class AnalyticsService
     private const CHECKIN_GRANTED_RESULTS = ['valido', 'reentrada_autorizada'];
 
     private const CHECKIN_WARNING_RESULTS = ['ja_utilizado', 'reentrada_limite_excedido', 'reentrada_intervalo_nao_atingido'];
+
+    /**
+     * Meses após a coorte de aquisição cobertos por cohortsReport() (M0..M6)
+     * — roadmap Fase A3 parte 2, decisão de escopo explícita para não virar
+     * full-scan sem limite conforme o histórico do tenant cresce.
+     */
+    private const COHORT_MAX_MONTHS = 6;
 
     public function __construct(
         private readonly RfmCalculator $rfmCalculator = new RfmCalculator
@@ -182,6 +190,7 @@ class AnalyticsService
             'monetary' => $c['total_amount'],
         ])->all();
         $segments = $this->rfmCalculator->segments($rfmInput);
+        $segments8 = $this->rfmCalculator->segments8($rfmInput);
 
         return $clients
             ->values()
@@ -192,6 +201,8 @@ class AnalyticsService
                 'total_amount' => $this->formatMoney($client['total_amount']),
                 'last_order_at' => $client['last_order_at'],
                 'rfm_label' => $segments[$index],
+                'rfm_segment8' => $segments8[$index],
+                'rfm_segment8_label' => $this->rfmCalculator->displaySegment8Label($segments8[$index]),
             ])
             ->take($limit)
             ->values()
@@ -1262,6 +1273,650 @@ class AnalyticsService
         ];
     }
 
+    /**
+     * Relatório de antifraude (roadmap Fase A3) — consome `sales.risk_flagged`/
+     * `risk_reason` já persistidos por `RiskEngineService` (motor não é
+     * alterado aqui, só lido). Contagem de vendas flagadas por período/
+     * heurística, taxa sobre vendas pagas, e lista das vendas flagadas
+     * para revisão manual do staff.
+     *
+     * `risk_reason` é texto renderizado (`__('messages.sale.risk_*_reason',
+     * [...])`, com `:count`/`:hours`/`:minutes` já interpolados) — não uma
+     * chave estável. A quebra por heurística usa `classifyRiskReason()`,
+     * que casa um trecho fixo (não-interpolado) de cada mensagem; é
+     * melhor-esforço e quebra se o texto das 6 mensagens em
+     * `messages.sale.risk_*_reason` mudar sem atualizar os trechos aqui —
+     * não há chave estruturada persistida (fora de escopo: exigiria
+     * migration/alteração do `RiskEngineService`, que esta fase não toca).
+     */
+    public function riskReport(int $tenantId, ?string $from, ?string $to, int $limit = 50): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $flaggedQuery = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->where('sales.risk_flagged', true);
+
+        $flaggedTotals = (clone $flaggedQuery)
+            ->selectRaw('COUNT(*) as flagged_count, SUM(sales.total_amount) as flagged_amount')
+            ->first();
+
+        $paidSalesCount = (int) $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->where('sales.is_paid', true)
+            ->count();
+
+        $reasons = (clone $flaggedQuery)
+            ->whereNotNull('sales.risk_reason')
+            ->pluck('sales.risk_reason');
+
+        $byHeuristic = [];
+        foreach ($reasons as $reason) {
+            $key = $this->classifyRiskReason($reason);
+            $byHeuristic[$key] = ($byHeuristic[$key] ?? 0) + 1;
+        }
+        arsort($byHeuristic);
+
+        $flaggedSales = (clone $flaggedQuery)
+            ->leftJoin('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->orderByDesc('sales.created_at')
+            ->limit($limit)
+            ->selectRaw('sales.uuid as sale_uuid, sales.total_amount, sales.created_at, sales.is_paid, sales.risk_reason, final_customers.name as client_name')
+            ->get()
+            ->map(fn ($row) => [
+                'sale_uuid' => $row->sale_uuid,
+                'client_name' => $row->client_name,
+                'total_amount' => $this->formatMoney((float) $row->total_amount),
+                'is_paid' => (bool) $row->is_paid,
+                'created_at' => Carbon::parse($row->created_at)->toDateTimeString(),
+                'heuristic' => $row->risk_reason ? $this->classifyRiskReason($row->risk_reason) : null,
+                'risk_reason' => $row->risk_reason,
+            ])
+            ->all();
+
+        $flaggedCount = (int) ($flaggedTotals->flagged_count ?? 0);
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'totals' => [
+                'flagged_count' => $flaggedCount,
+                'flagged_amount' => $this->formatMoney((float) ($flaggedTotals->flagged_amount ?? 0)),
+                'paid_sales_count' => $paidSalesCount,
+                'flagged_rate_percentage' => $this->percentage($flaggedCount, $paidSalesCount),
+            ],
+            'by_heuristic' => array_map(
+                fn (string $key, int $count) => ['heuristic' => $key, 'count' => $count],
+                array_keys($byHeuristic),
+                array_values($byHeuristic)
+            ),
+            'flagged_sales' => $flaggedSales,
+        ];
+    }
+
+    private const RISK_HEURISTIC_PATTERNS = [
+        'compras pagas para o mesmo evento' => 'compras_repetidas',
+        'tentativas de pagamento recusadas/falhas' => 'velocity_pagamento_recusado',
+        'cartão usado nesta compra foi usado por' => 'cartao_compartilhado',
+        'cartões diferentes nos últimos' => 'multiplos_cartoes',
+        'mesmo IP nos últimos' => 'velocity_ip',
+        'reembolsos registrados nos últimos' => 'abuso_reembolso',
+    ];
+
+    private function classifyRiskReason(string $reason): string
+    {
+        foreach (self::RISK_HEURISTIC_PATTERNS as $needle => $key) {
+            if (str_contains($reason, $needle)) {
+                return $key;
+            }
+        }
+
+        return 'outro';
+    }
+
+    /**
+     * Relatório de revenda/transferência (roadmap Fase A3) — consome
+     * `ticket_resale_listings` (revenda oficial) e `audit_logs` (evento
+     * `ticket_transferred`, disparado por `TicketService::transfer()`) já
+     * existentes. Volume/valor de revenda, status de repasse ao vendedor
+     * (pendente/liberado) e transferências simples (sem revenda) por
+     * período.
+     *
+     * "Transferência simples" não tem tabela própria — `TicketService::
+     * transfer()` é chamado tanto pela troca de titular direta (staff/
+     * Portal) quanto por dentro de `TicketResaleService::purchase()`
+     * (fechamento da revenda). A distinção usada aqui é por EXCLUSÃO:
+     * total de eventos `ticket_transferred` no período MENOS o total de
+     * revendas `vendido` no período (cada revenda gera exatamente 1
+     * evento de transferência) = transferências simples.
+     *
+     * `audit_logs` NÃO tem `tenant_id` (tabela técnica/global, ver
+     * `HelpRequestService::buildDiagnostics()`) — o recorte por tenant
+     * aqui é EXATO (não aproximado): `meta.ticket_uuid` de cada evento
+     * `ticket_transferred` é cruzado com `tickets.tenant_id` via
+     * `countTenantTicketTransfers()`, nunca contando evento de outro
+     * tenant.
+     */
+    public function resaleReport(int $tenantId, ?string $from, ?string $to): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+        $range = [$fromDate->copy()->startOfDay(), $toDate->copy()->endOfDay()];
+
+        $listingsQuery = DB::table('ticket_resale_listings')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at');
+
+        $listedCount = (int) (clone $listingsQuery)
+            ->whereBetween('created_at', $range)
+            ->count();
+
+        $soldQuery = (clone $listingsQuery)
+            ->where('status', 'vendido')
+            ->whereBetween('sold_at', $range);
+
+        $soldTotals = (clone $soldQuery)
+            ->selectRaw('COUNT(*) as sold_count, SUM(asking_price) as total_transacted_amount, SUM(seller_payout_amount) as total_payout_amount')
+            ->first();
+
+        $payoutByStatus = (clone $soldQuery)
+            ->groupBy('seller_payout_status')
+            ->selectRaw('seller_payout_status, COUNT(*) as count, SUM(seller_payout_amount) as total_amount')
+            ->get()
+            ->keyBy('seller_payout_status');
+
+        $payoutGroup = fn (string $status) => [
+            'count' => (int) ($payoutByStatus[$status]->count ?? 0),
+            'total_amount' => $this->formatMoney((float) ($payoutByStatus[$status]->total_amount ?? 0)),
+        ];
+
+        $cancelledCount = (int) (clone $listingsQuery)
+            ->where('status', 'cancelado')
+            ->whereBetween('cancelled_at', $range)
+            ->count();
+
+        $totalTransfersCount = $this->countTenantTicketTransfers($tenantId, $range);
+
+        $resaleTransfersCount = (int) ($soldTotals->sold_count ?? 0);
+        $simpleTransfersCount = max(0, $totalTransfersCount - $resaleTransfersCount);
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'resale' => [
+                'listed_count' => $listedCount,
+                'sold_count' => $resaleTransfersCount,
+                'cancelled_count' => $cancelledCount,
+                'total_transacted_amount' => $this->formatMoney((float) ($soldTotals->total_transacted_amount ?? 0)),
+                'total_payout_amount' => $this->formatMoney((float) ($soldTotals->total_payout_amount ?? 0)),
+            ],
+            'payout_by_status' => [
+                'pendente_liberacao' => $payoutGroup('pendente_liberacao'),
+                'liberado' => $payoutGroup('liberado'),
+            ],
+            'transfers' => [
+                'total_count' => $totalTransfersCount,
+                'resale_count' => $resaleTransfersCount,
+                'simple_count' => $simpleTransfersCount,
+            ],
+        ];
+    }
+
+    /**
+     * Conta eventos `ticket_transferred` de `audit_logs` cujo ticket
+     * pertence ao tenant informado. `audit_logs` não tem `tenant_id`
+     * (tabela global) nem FK pra `tickets` — o vínculo é via
+     * `meta.ticket_uuid` (JSON, gravado por `AuditTicketTransferred`),
+     * cruzado em PHP contra `tickets.uuid` filtrado por `tenant_id`. Só
+     * lê os dois campos necessários (`created_at`/`meta`) da janela de
+     * data, sem carregar a tabela inteira.
+     *
+     * @param  array{0: Carbon, 1: Carbon}  $range
+     */
+    private function countTenantTicketTransfers(int $tenantId, array $range): int
+    {
+        $ticketUuids = DB::table('audit_logs')
+            ->where('event', 'ticket_transferred')
+            ->whereBetween('created_at', $range)
+            ->pluck('meta')
+            ->map(function ($meta) {
+                $decoded = is_string($meta) ? json_decode($meta, true) : null;
+
+                return is_array($decoded) ? ($decoded['ticket_uuid'] ?? null) : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($ticketUuids === []) {
+            return 0;
+        }
+
+        $tenantTicketUuids = DB::table('tickets')
+            ->where('tenant_id', $tenantId)
+            ->whereIn('uuid', array_unique($ticketUuids))
+            ->pluck('uuid')
+            ->flip();
+
+        return count(array_filter($ticketUuids, fn (string $uuid) => $tenantTicketUuids->has($uuid)));
+    }
+
+    /**
+     * Relatório de bilheteria por operador/terminal (roadmap Fase A3) —
+     * consome `ticket_checkins` (`operator_id`/`gate_name`, controle de
+     * acesso), `sales` (`created_by`, preenchido automaticamente por
+     * `BaseModel` com `Auth::id()` — é o operador de balcão em vendas com
+     * `origin` `staff`/`counter`) e `cash_sessions` (`opened_by`, sessão de
+     * caixa presencial) já existentes. Sem tabela nova.
+     */
+    public function operatorReport(int $tenantId, ?string $from, ?string $to): array
+    {
+        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
+
+        $grantedCase = $this->caseWhenIn('ticket_checkins.result', self::CHECKIN_GRANTED_RESULTS);
+        $warningCase = $this->caseWhenIn('ticket_checkins.result', self::CHECKIN_WARNING_RESULTS);
+        $blockedCase = "CASE WHEN {$grantedCase} = 0 AND {$warningCase} = 0 THEN 1 ELSE 0 END";
+
+        $byOperator = $this->ticketCheckinsQuery($tenantId, $fromDate, $toDate)
+            ->leftJoin('users', 'users.id', '=', 'ticket_checkins.operator_id')
+            ->groupBy('ticket_checkins.operator_id', 'users.name')
+            ->selectRaw(
+                "ticket_checkins.operator_id,
+                COALESCE(users.name, 'Sem operador') as operator_name,
+                COUNT(ticket_checkins.id) as total_reads,
+                SUM({$grantedCase}) as granted_reads,
+                SUM({$warningCase}) as warning_reads,
+                SUM({$blockedCase}) as blocked_reads"
+            )
+            ->orderByDesc('total_reads')
+            ->get()
+            ->map(fn ($row) => [
+                'operator_id' => $row->operator_id !== null ? (int) $row->operator_id : null,
+                'operator_name' => $row->operator_name,
+                'total_reads' => (int) $row->total_reads,
+                'granted_reads' => (int) $row->granted_reads,
+                'warning_reads' => (int) $row->warning_reads,
+                'blocked_reads' => (int) $row->blocked_reads,
+            ])
+            ->all();
+
+        $byGate = $this->ticketCheckinsQuery($tenantId, $fromDate, $toDate)
+            ->groupBy('ticket_checkins.gate_name')
+            ->selectRaw(
+                "COALESCE(ticket_checkins.gate_name, 'Sem portaria') as gate_name,
+                COUNT(ticket_checkins.id) as total_reads,
+                SUM({$grantedCase}) as granted_reads,
+                SUM({$warningCase}) as warning_reads,
+                SUM({$blockedCase}) as blocked_reads"
+            )
+            ->orderByDesc('total_reads')
+            ->get()
+            ->map(fn ($row) => [
+                'gate_name' => $row->gate_name,
+                'total_reads' => (int) $row->total_reads,
+                'granted_reads' => (int) $row->granted_reads,
+                'warning_reads' => (int) $row->warning_reads,
+                'blocked_reads' => (int) $row->blocked_reads,
+            ])
+            ->all();
+
+        $salesByOperator = $this->salesQuery($tenantId, $fromDate, $toDate)
+            ->whereIn('sales.origin', ['staff', 'counter'])
+            ->leftJoin('users', 'users.id', '=', 'sales.created_by')
+            ->groupBy('sales.created_by', 'users.name')
+            ->selectRaw(
+                "sales.created_by as operator_id,
+                COALESCE(users.name, 'Sem operador') as operator_name,
+                COUNT(sales.id) as sales_count,
+                SUM(sales.total_amount) as total_amount"
+            )
+            ->orderByDesc('sales_count')
+            ->get()
+            ->map(fn ($row) => [
+                'operator_id' => $row->operator_id !== null ? (int) $row->operator_id : null,
+                'operator_name' => $row->operator_name,
+                'sales_count' => (int) $row->sales_count,
+                'total_amount' => $this->formatMoney((float) $row->total_amount),
+            ])
+            ->all();
+
+        $cashSessionsByOperator = DB::table('cash_sessions')
+            ->leftJoin('users', 'users.id', '=', 'cash_sessions.opened_by')
+            ->where('cash_sessions.tenant_id', $tenantId)
+            ->whereNull('cash_sessions.deleted_at')
+            ->whereBetween('cash_sessions.opened_at', [$fromDate->copy()->startOfDay(), $toDate->copy()->endOfDay()])
+            ->groupBy('cash_sessions.opened_by', 'users.name')
+            ->selectRaw(
+                "cash_sessions.opened_by as operator_id,
+                COALESCE(users.name, 'Sem operador') as operator_name,
+                COUNT(*) as sessions_count,
+                SUM(CASE WHEN cash_sessions.status = 'fechado' THEN 1 ELSE 0 END) as closed_sessions_count,
+                SUM(cash_sessions.difference_amount) as total_difference_amount"
+            )
+            ->orderByDesc('sessions_count')
+            ->get()
+            ->map(fn ($row) => [
+                'operator_id' => $row->operator_id !== null ? (int) $row->operator_id : null,
+                'operator_name' => $row->operator_name,
+                'sessions_count' => (int) $row->sessions_count,
+                'closed_sessions_count' => (int) $row->closed_sessions_count,
+                'total_difference_amount' => $this->formatMoney((float) ($row->total_difference_amount ?? 0)),
+            ])
+            ->all();
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'checkins_by_operator' => $byOperator,
+            'checkins_by_gate' => $byGate,
+            'sales_by_operator' => $salesByOperator,
+            'cash_sessions_by_operator' => $cashSessionsByOperator,
+        ];
+    }
+
+    /**
+     * Coortes de retenção (roadmap Fase A3, parte 2) — agrupa clientes pelo
+     * mês da primeira compra PAGA (`sales.is_paid=true`, `paid_at`) e mede
+     * quantos voltaram a comprar em cada mês subsequente (M0..M6). SEM
+     * tabela de snapshot (decisão do roadmap seção 5.3: começar em tempo
+     * real com filtro obrigatório, só migrar pra pré-agregação se a
+     * performance medida provar necessidade). `from` é OBRIGATÓRIO no
+     * request (`AnalyticsCohortsRequest`) — é o filtro ativo exigido pela
+     * regra transversal: sem mês de coorte escolhido, esta query nunca roda.
+     *
+     * M0 é sempre 100% por definição (a própria compra de aquisição conta
+     * como retenção no mês 0). Meses ainda não decorridos desde a coorte
+     * voltam com `retention_percentage=null` (não 0%) — coorte parcial,
+     * não erro, conforme decisão do roadmap.
+     */
+    public function cohortsReport(int $tenantId, string $from, ?string $to): array
+    {
+        $fromDate = Carbon::parse($from)->startOfMonth();
+        $toDate = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
+
+        if ($fromDate->gt($toDate)) {
+            [$fromDate, $toDate] = [$toDate->copy()->startOfMonth(), $fromDate->copy()->endOfMonth()];
+        }
+
+        $firstPaidSub = DB::table('sales')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->whereNull('cancelled_at')
+            ->where('is_paid', true)
+            ->whereNotNull('paid_at')
+            ->whereNotNull('final_customer_id')
+            ->groupBy('final_customer_id')
+            ->selectRaw('final_customer_id, MIN(paid_at) as first_paid_at');
+
+        $monthExpr = $this->monthFormatExpression('first.first_paid_at');
+
+        $cohortSizes = DB::table($firstPaidSub, 'first')
+            ->whereBetween('first.first_paid_at', [$fromDate, $toDate])
+            ->selectRaw("{$monthExpr} as cohort_month, COUNT(*) as cohort_size")
+            ->groupByRaw($monthExpr)
+            ->orderByRaw($monthExpr)
+            ->get()
+            ->keyBy('cohort_month');
+
+        if ($cohortSizes->isEmpty()) {
+            return [
+                'from' => $fromDate->toDateString(),
+                'to' => $toDate->toDateString(),
+                'max_month_offset' => self::COHORT_MAX_MONTHS,
+                'cohorts' => [],
+            ];
+        }
+
+        $monthDiffExpr = $this->monthDiffExpression('s2.paid_at', 'first.first_paid_at');
+        $monthAddExpr = $this->monthAddExpression('first.first_paid_at', self::COHORT_MAX_MONTHS);
+
+        $retentionRows = DB::table($firstPaidSub, 'first')
+            ->whereBetween('first.first_paid_at', [$fromDate, $toDate])
+            ->join('sales as s2', function ($join) use ($tenantId, $monthAddExpr) {
+                $join->on('s2.final_customer_id', '=', 'first.final_customer_id')
+                    ->where('s2.tenant_id', $tenantId)
+                    ->whereNull('s2.deleted_at')
+                    ->whereNull('s2.cancelled_at')
+                    ->where('s2.is_paid', true)
+                    ->whereRaw('s2.paid_at >= first.first_paid_at')
+                    ->whereRaw("s2.paid_at <= {$monthAddExpr}");
+            })
+            ->selectRaw("{$monthExpr} as cohort_month, {$monthDiffExpr} as month_offset, COUNT(DISTINCT first.final_customer_id) as retained_count")
+            ->groupByRaw("{$monthExpr}, {$monthDiffExpr}")
+            ->get();
+
+        $retentionByMonth = [];
+        foreach ($retentionRows as $row) {
+            $retentionByMonth[$row->cohort_month][(int) $row->month_offset] = (int) $row->retained_count;
+        }
+
+        $now = now()->startOfMonth();
+        $cohorts = [];
+        foreach ($cohortSizes as $month => $row) {
+            $cohortStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+            $monthsElapsed = min(self::COHORT_MAX_MONTHS, max(0, $cohortStart->diffInMonths($now)));
+            $size = (int) $row->cohort_size;
+
+            $retention = [];
+            for ($offset = 0; $offset <= self::COHORT_MAX_MONTHS; $offset++) {
+                if ($offset > $monthsElapsed) {
+                    $retention[] = ['month_offset' => $offset, 'retained_count' => null, 'retention_percentage' => null];
+
+                    continue;
+                }
+
+                $count = $retentionByMonth[$month][$offset] ?? 0;
+                $retention[] = [
+                    'month_offset' => $offset,
+                    'retained_count' => $count,
+                    'retention_percentage' => $this->percentage($count, $size),
+                ];
+            }
+
+            $cohorts[] = [
+                'cohort_month' => $month,
+                'cohort_size' => $size,
+                'retention' => $retention,
+            ];
+        }
+
+        return [
+            'from' => $fromDate->toDateString(),
+            'to' => $toDate->toDateString(),
+            'max_month_offset' => self::COHORT_MAX_MONTHS,
+            'cohorts' => array_values($cohorts),
+        ];
+    }
+
+    /**
+     * LTV histórico (roadmap Fase A3, parte 2) — valor total JÁ GASTO por
+     * cliente até hoje (soma de `sales.total_amount` de venda ativa, mesma
+     * convenção de receita do resto do módulo — não é só o valor pago),
+     * agregado por segmento RFM de 8 níveis (reaproveita `RfmCalculator`,
+     * nenhum recálculo de tercil) ou por coorte de aquisição (mês da
+     * primeira compra PAGA, mesma definição de `cohortsReport()`). É
+     * REALIZADO, não projeção — LTV previsto fica pra Fase A4 (exige
+     * modelo). Sem período: LTV histórico é por natureza vitalício, não um
+     * recorte de data — mesmo espírito de `churnClients()`, que também não
+     * tem filtro de período.
+     */
+    public function ltvReport(int $tenantId, string $groupBy = 'segment'): array
+    {
+        $rows = $this->salesQuery($tenantId, null, null)
+            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
+            ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
+            ->selectRaw(
+                'final_customers.uuid as client_uuid,
+                final_customers.name as client_name,
+                COUNT(sales.id) as order_count,
+                SUM(sales.total_amount) as ltv_amount,
+                MAX(sales.created_at) as last_order_at,
+                MIN(CASE WHEN sales.is_paid = 1 AND sales.paid_at IS NOT NULL THEN sales.paid_at END) as first_paid_at'
+            )
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [
+                'group_by' => $groupBy,
+                'overall' => ['customers_count' => 0, 'average_ltv' => $this->formatMoney(0)],
+                'groups' => [],
+            ];
+        }
+
+        $groups = $groupBy === 'cohort' ? $this->ltvByCohort($rows) : $this->ltvBySegment($rows);
+
+        $totalLtv = (float) $rows->sum('ltv_amount');
+
+        return [
+            'group_by' => $groupBy,
+            'overall' => [
+                'customers_count' => $rows->count(),
+                'average_ltv' => $this->formatMoney($totalLtv / $rows->count()),
+            ],
+            'groups' => $groups,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, object>  $rows
+     * @return array<int, array{key:string, label:string, customers_count:int, average_ltv:string, total_ltv:string}>
+     */
+    private function ltvBySegment($rows): array
+    {
+        $rfmInput = $rows->map(fn ($r) => [
+            'recency_days' => (int) Carbon::parse($r->last_order_at)->startOfDay()->diffInDays(now()->startOfDay()),
+            'frequency' => (int) $r->order_count,
+            'monetary' => (float) $r->ltv_amount,
+        ])->all();
+
+        $segments8 = $this->rfmCalculator->segments8($rfmInput);
+
+        $totals = [];
+        foreach ($rows->values() as $index => $row) {
+            $segment = $segments8[$index];
+            $totals[$segment]['customers_count'] = ($totals[$segment]['customers_count'] ?? 0) + 1;
+            $totals[$segment]['total_ltv'] = ($totals[$segment]['total_ltv'] ?? 0.0) + (float) $row->ltv_amount;
+        }
+
+        $groups = [];
+        foreach ($totals as $segment => $agg) {
+            $groups[] = [
+                'key' => $segment,
+                'label' => $this->rfmCalculator->displaySegment8Label($segment),
+                'customers_count' => $agg['customers_count'],
+                'average_ltv' => $this->formatMoney($agg['total_ltv'] / $agg['customers_count']),
+                'total_ltv' => $this->formatMoney($agg['total_ltv']),
+            ];
+        }
+
+        usort($groups, fn ($a, $b) => (float) $b['average_ltv'] <=> (float) $a['average_ltv']);
+
+        return $groups;
+    }
+
+    /**
+     * @param  Collection<int, object>  $rows
+     * @return array<int, array{key:string, label:string, customers_count:int, average_ltv:string, total_ltv:string}>
+     */
+    private function ltvByCohort($rows): array
+    {
+        $totals = [];
+        foreach ($rows as $row) {
+            if ($row->first_paid_at === null) {
+                continue;
+            }
+
+            $month = Carbon::parse($row->first_paid_at)->format('Y-m');
+            $totals[$month]['customers_count'] = ($totals[$month]['customers_count'] ?? 0) + 1;
+            $totals[$month]['total_ltv'] = ($totals[$month]['total_ltv'] ?? 0.0) + (float) $row->ltv_amount;
+        }
+
+        ksort($totals);
+
+        $groups = [];
+        foreach ($totals as $month => $agg) {
+            $groups[] = [
+                'key' => $month,
+                'label' => $month,
+                'customers_count' => $agg['customers_count'],
+                'average_ltv' => $this->formatMoney($agg['total_ltv'] / $agg['customers_count']),
+                'total_ltv' => $this->formatMoney($agg['total_ltv']),
+            ];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Afinidade entre eventos (roadmap Fase A3, parte 2) — para o evento
+     * selecionado (filtro obrigatório, sem evento não roda), lista os top
+     * `limit` eventos mais comprados pelos MESMOS clientes (contagem de
+     * clientes em comum), útil pra cross-sell. Sem matriz completa nem
+     * rede/grafo visual (decisão adiada, roadmap seção 5.4) — só ranking.
+     */
+    public function eventAffinityReport(int $tenantId, string $eventUuid, int $limit = 10): array
+    {
+        $event = DB::table('events')
+            ->where('tenant_id', $tenantId)
+            ->where('uuid', $eventUuid)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $event) {
+            throw (new ModelNotFoundException)->setModel(Event::class);
+        }
+
+        $baseCustomers = DB::table('sales')
+            ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
+            ->where('ticket_types.event_id', $event->id)
+            ->whereNotNull('sales.final_customer_id')
+            ->distinct()
+            ->pluck('sales.final_customer_id');
+
+        if ($baseCustomers->isEmpty()) {
+            return [
+                'event_uuid' => $eventUuid,
+                'event_name' => $event->name,
+                'base_customers_count' => 0,
+                'affinities' => [],
+            ];
+        }
+
+        $baseCustomersCount = $baseCustomers->count();
+
+        $affinities = DB::table('sales')
+            ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->join('events', 'events.id', '=', 'ticket_types.event_id')
+            ->where('sales.tenant_id', $tenantId)
+            ->whereNull('sales.deleted_at')
+            ->whereNull('sales.cancelled_at')
+            ->whereNull('sale_items.deleted_at')
+            ->where('ticket_types.event_id', '!=', $event->id)
+            ->whereIn('sales.final_customer_id', $baseCustomers)
+            ->groupBy('events.id', 'events.uuid', 'events.name')
+            ->selectRaw('events.uuid as event_uuid, events.name as event_name, COUNT(DISTINCT sales.final_customer_id) as shared_customers_count')
+            ->orderByDesc('shared_customers_count')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($row) => [
+                'event_uuid' => $row->event_uuid,
+                'event_name' => $row->event_name,
+                'shared_customers_count' => (int) $row->shared_customers_count,
+                'affinity_percentage' => $this->percentage((int) $row->shared_customers_count, $baseCustomersCount),
+            ])
+            ->all();
+
+        return [
+            'event_uuid' => $eventUuid,
+            'event_name' => $event->name,
+            'base_customers_count' => $baseCustomersCount,
+            'affinities' => $affinities,
+        ];
+    }
+
     // ------------------------------------------------------------------
     // Bases de query
     // ------------------------------------------------------------------
@@ -1380,6 +2035,39 @@ class AnalyticsService
         return DB::connection()->getDriverName() === 'sqlite'
             ? "CAST(julianday(?) - julianday(date({$column})) AS INTEGER)"
             : "DATEDIFF(?, {$column})";
+    }
+
+    /**
+     * Data formatada como 'YYYY-MM' — chave de mês usada em cohortsReport()/
+     * ltvReport() (group_by=cohort).
+     */
+    private function monthFormatExpression(string $column): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', {$column})"
+            : "DATE_FORMAT({$column}, '%Y-%m')";
+    }
+
+    /**
+     * Diferença em MESES inteiros entre duas datas (a - b), usada em
+     * cohortsReport() pra calcular o offset M0..M6 de cada linha.
+     */
+    private function monthDiffExpression(string $a, string $b): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "((CAST(strftime('%Y', {$a}) AS INTEGER) - CAST(strftime('%Y', {$b}) AS INTEGER)) * 12 + (CAST(strftime('%m', {$a}) AS INTEGER) - CAST(strftime('%m', {$b}) AS INTEGER)))"
+            : "PERIOD_DIFF(DATE_FORMAT({$a}, '%Y%m'), DATE_FORMAT({$b}, '%Y%m'))";
+    }
+
+    /**
+     * Soma N meses a uma coluna de data — usada em cohortsReport() pra
+     * limitar o join da janela de retenção a COHORT_MAX_MONTHS.
+     */
+    private function monthAddExpression(string $column, int $months): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "datetime({$column}, '+{$months} months')"
+            : "DATE_ADD({$column}, INTERVAL {$months} MONTH)";
     }
 
     /**

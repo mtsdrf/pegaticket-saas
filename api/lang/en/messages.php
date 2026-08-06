@@ -116,6 +116,17 @@ return [
     | Groups
     |--------------------------------------------------------------------------
     */
+    'custom_report' => [
+        'schema' => 'Available fields for custom reports.',
+        'list' => 'Custom reports listed successfully.',
+        'show' => 'Custom report found.',
+        'created' => 'Custom report created successfully.',
+        'updated' => 'Custom report updated successfully.',
+        'deleted' => 'Custom report deleted successfully.',
+        'executed' => 'Report executed successfully.',
+        'execution_failed' => 'Could not execute the report. Please try again.',
+    ],
+
     'group' => [
         'created' => 'Group created successfully.',
         'updated' => 'Group updated successfully.',
@@ -947,6 +958,12 @@ return [
         'inventory_report' => 'Inventory report retrieved successfully.',
         'funnel_report' => 'Conversion funnel retrieved successfully.',
         'compare_events_report' => 'Event comparison retrieved successfully.',
+        'risk_report' => 'Fraud risk report retrieved successfully.',
+        'resale_report' => 'Resale/transfer report retrieved successfully.',
+        'operator_report' => 'Operator ticketing report retrieved successfully.',
+        'cohorts_report' => 'Retention cohorts retrieved successfully.',
+        'ltv_report' => 'Historical LTV retrieved successfully.',
+        'event_affinity_report' => 'Event affinity retrieved successfully.',
     ],
 
     'route' => [

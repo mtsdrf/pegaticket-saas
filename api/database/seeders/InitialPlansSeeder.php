@@ -42,6 +42,7 @@ class InitialPlansSeeder extends Seeder
                     'storefront',
                     'reports',
                     'analytics',
+                    'custom_reports',
                     'storefront-sales',
                     'finance',
                     'dashboard',

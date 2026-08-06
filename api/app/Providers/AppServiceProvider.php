@@ -8,6 +8,7 @@ use App\Repositories\Contracts\CartEventRepositoryInterface;
 use App\Repositories\Contracts\CashSessionRepositoryInterface;
 use App\Repositories\Contracts\CommunicationLogRepositoryInterface;
 use App\Repositories\Contracts\CouponRepositoryInterface;
+use App\Repositories\Contracts\CustomReportDefinitionRepositoryInterface;
 use App\Repositories\Contracts\EmailTemplateRepositoryInterface;
 use App\Repositories\Contracts\EventCategoryRepositoryInterface;
 // Repository Interfaces
@@ -57,6 +58,7 @@ use App\Repositories\Eloquent\CashSessionRepository;
 use App\Repositories\Eloquent\CommunicationLogRepository;
 // Repository Implementations
 use App\Repositories\Eloquent\CouponRepository;
+use App\Repositories\Eloquent\CustomReportDefinitionRepository;
 use App\Repositories\Eloquent\EmailTemplateRepository;
 use App\Repositories\Eloquent\EventCategoryRepository;
 use App\Repositories\Eloquent\EventGateRepository;
@@ -237,6 +239,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PlanFunctionalityRepositoryInterface::class,
             PlanFunctionalityRepository::class
+        );
+
+        // Custom Report Definition Repository
+        $this->app->bind(
+            CustomReportDefinitionRepositoryInterface::class,
+            CustomReportDefinitionRepository::class
         );
 
         // Tenant Role Repository

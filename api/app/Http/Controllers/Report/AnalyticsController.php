@@ -6,12 +6,16 @@ use App\Exports\ArrayTableExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\AnalyticsAbcRequest;
 use App\Http\Requests\Report\AnalyticsAffiliatesRequest;
+use App\Http\Requests\Report\AnalyticsCohortsRequest;
 use App\Http\Requests\Report\AnalyticsCompareEventsRequest;
 use App\Http\Requests\Report\AnalyticsCouponsRequest;
+use App\Http\Requests\Report\AnalyticsEventAffinityRequest;
 use App\Http\Requests\Report\AnalyticsFunnelRequest;
 use App\Http\Requests\Report\AnalyticsInventoryRequest;
+use App\Http\Requests\Report\AnalyticsLtvRequest;
 use App\Http\Requests\Report\AnalyticsOverdueSalesRequest;
 use App\Http\Requests\Report\AnalyticsPeriodRequest;
+use App\Http\Requests\Report\AnalyticsRiskRequest;
 use App\Http\Requests\Report\AnalyticsSalesByDimensionRequest;
 use App\Http\Requests\Report\AnalyticsSalesSummaryRequest;
 use App\Http\Requests\Report\AnalyticsTopRequest;
@@ -396,5 +400,109 @@ class AnalyticsController extends Controller
         );
 
         return APIResponse::success($data, __('messages.analytics.funnel_report'));
+    }
+
+    /**
+     * Relatório de antifraude (roadmap Fase A3) — consome `RiskEngineService`
+     * já persistido em `sales.risk_flagged`/`risk_reason`, só leitura.
+     */
+    public function risk(AnalyticsRiskRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->riskReport(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null,
+            (int) ($validated['limit'] ?? 50)
+        );
+
+        return APIResponse::success($data, __('messages.analytics.risk_report'));
+    }
+
+    /**
+     * Relatório de revenda/transferência (roadmap Fase A3) — volume/valor
+     * de revenda oficial, status de repasse e transferências simples.
+     */
+    public function resale(AnalyticsPeriodRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->resaleReport(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null
+        );
+
+        return APIResponse::success($data, __('messages.analytics.resale_report'));
+    }
+
+    /**
+     * Relatório de bilheteria por operador/terminal (roadmap Fase A3) —
+     * check-ins por operador/portaria + vendas presenciais por operador.
+     */
+    public function operators(AnalyticsPeriodRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->operatorReport(
+            app('tenant_id'),
+            $validated['from'] ?? null,
+            $validated['to'] ?? null
+        );
+
+        return APIResponse::success($data, __('messages.analytics.operator_report'));
+    }
+
+    /**
+     * Coortes de retenção (roadmap Fase A3, parte 2) — `from` obrigatório
+     * (regra transversal de filtro ativo). Ver
+     * App\Services\Report\AnalyticsService::cohortsReport().
+     */
+    public function cohorts(AnalyticsCohortsRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->cohortsReport(
+            app('tenant_id'),
+            $validated['from'],
+            $validated['to'] ?? null
+        );
+
+        return APIResponse::success($data, __('messages.analytics.cohorts_report'));
+    }
+
+    /**
+     * LTV histórico (roadmap Fase A3, parte 2) — realizado, agregado por
+     * segmento RFM ou coorte de aquisição. Ver
+     * App\Services\Report\AnalyticsService::ltvReport().
+     */
+    public function ltv(AnalyticsLtvRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->ltvReport(
+            app('tenant_id'),
+            $validated['group_by'] ?? 'segment'
+        );
+
+        return APIResponse::success($data, __('messages.analytics.ltv_report'));
+    }
+
+    /**
+     * Afinidade entre eventos (roadmap Fase A3, parte 2) — `event_uuid`
+     * obrigatório. Ver App\Services\Report\AnalyticsService::eventAffinityReport().
+     */
+    public function eventAffinity(AnalyticsEventAffinityRequest $request)
+    {
+        $validated = $request->validated();
+
+        $data = $this->service->eventAffinityReport(
+            app('tenant_id'),
+            $validated['event_uuid'],
+            (int) ($validated['limit'] ?? 10)
+        );
+
+        return APIResponse::success($data, __('messages.analytics.event_affinity_report'));
     }
 }

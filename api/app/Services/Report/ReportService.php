@@ -488,6 +488,7 @@ class ReportService
         ]);
 
         $segments = $this->rfmCalculator->segments($clients->all());
+        $segments8 = $this->rfmCalculator->segments8($clients->all());
 
         return $clients
             ->values()
@@ -497,6 +498,8 @@ class ReportService
                 'monetary' => $this->formatMoney($client['monetary']),
                 'recency_days' => $client['recency_days'],
                 'segment' => $this->rfmCalculator->displayLabel($segments[$index]),
+                'segment8' => $segments8[$index],
+                'segment8_label' => $this->rfmCalculator->displaySegment8Label($segments8[$index]),
             ])
             ->take($limit)
             ->values()

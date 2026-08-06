@@ -8,19 +8,26 @@ import type {
   AnalyticsPeriodParams,
   ChurnClients,
   CheckinInsights,
+  CohortsReport,
   CompareEventsReport,
   CouponRoi,
   CouponsReport,
+  EventAffinityReport,
   FunnelReport,
   InventoryReport,
   LocationSales,
+  LtvGroupBy,
+  LtvReport,
   MarginSummary,
+  OperatorReport,
   OverdueSale,
   OverdueType,
   PaymentDelayClient,
   PaymentsSummary,
   RefundsReport,
+  ResaleReport,
   RevenueConcentration,
+  RiskReport,
   SalesByDimension,
   SalesByHour,
   SalesByLocation,
@@ -186,11 +193,15 @@ export async function getTopClients(params: AnalyticsPeriodParams & { limit: num
 
   return items.map((raw) => {
     const segment = toText(pick(raw, ['rfm', 'segment', 'rfm_segment', 'rfm_label'])).toLowerCase()
+    const segment8 = toText(pick(raw, ['rfm_segment8', 'segment8'])).toLowerCase()
+    const segment8Label = toText(pick(raw, ['rfm_segment8_label', 'segment8_label']))
     return {
       name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
       order_count: toNumber(pick(raw, ['order_count', 'sales_count', 'frequency', 'count'])),
       total_amount: toNumber(pick(raw, [...AMOUNT_KEYS, 'monetary'])),
       rfm: (RFM_SEGMENTS as readonly string[]).includes(segment) ? (segment as TopClient['rfm']) : null,
+      rfm_segment8: segment8 ? (segment8 as TopClient['rfm_segment8']) : null,
+      rfm_segment8_label: segment8Label || null,
     }
   })
 }
@@ -555,6 +566,191 @@ export async function getCompareEventsReport(params: { event_uuids: string[] }):
   })
 
   return { events }
+}
+
+/** Relatório de antifraude (roadmap Fase A3) — leitura de RiskEngineService, sem alterar o motor. */
+export async function getRiskReport(params: AnalyticsPeriodParams & { limit?: number }): Promise<RiskReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/risk', { params })
+  const raw = response.data.data
+  const totals = (pick(raw, ['totals']) as Raw | undefined) ?? {}
+
+  const byHeuristic = asArray(pick(raw, ['by_heuristic'])).map((item) => ({
+    heuristic: toText(pick(item, ['heuristic'])),
+    count: toNumber(pick(item, ['count'])),
+  }))
+
+  const flaggedSales = asArray(pick(raw, ['flagged_sales'])).map((item) => ({
+    sale_uuid: toText(pick(item, ['sale_uuid'])),
+    client_name: (pick(item, ['client_name']) as string | null) ?? null,
+    total_amount: toNumber(pick(item, ['total_amount'])),
+    is_paid: Boolean(pick(item, ['is_paid'])),
+    created_at: toText(pick(item, ['created_at'])),
+    heuristic: (pick(item, ['heuristic']) as string | null) ?? null,
+    risk_reason: (pick(item, ['risk_reason']) as string | null) ?? null,
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    totals: {
+      flagged_count: toNumber(pick(totals, ['flagged_count'])),
+      flagged_amount: toNumber(pick(totals, ['flagged_amount'])),
+      paid_sales_count: toNumber(pick(totals, ['paid_sales_count'])),
+      flagged_rate_percentage: toNumber(pick(totals, ['flagged_rate_percentage'])),
+    },
+    by_heuristic: byHeuristic,
+    flagged_sales: flaggedSales,
+  }
+}
+
+/** Relatório de revenda/transferência (roadmap Fase A3). */
+export async function getResaleReport(params: AnalyticsPeriodParams): Promise<ResaleReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/resale', { params })
+  const raw = response.data.data
+  const resale = (pick(raw, ['resale']) as Raw | undefined) ?? {}
+  const payoutByStatus = (pick(raw, ['payout_by_status']) as Raw | undefined) ?? {}
+  const transfers = (pick(raw, ['transfers']) as Raw | undefined) ?? {}
+
+  const payoutGroup = (key: string) => {
+    const g = (pick(payoutByStatus, [key]) as Raw | undefined) ?? {}
+    return { count: toNumber(pick(g, ['count'])), total_amount: toNumber(pick(g, ['total_amount'])) }
+  }
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    resale: {
+      listed_count: toNumber(pick(resale, ['listed_count'])),
+      sold_count: toNumber(pick(resale, ['sold_count'])),
+      cancelled_count: toNumber(pick(resale, ['cancelled_count'])),
+      total_transacted_amount: toNumber(pick(resale, ['total_transacted_amount'])),
+      total_payout_amount: toNumber(pick(resale, ['total_payout_amount'])),
+    },
+    payout_by_status: {
+      pendente_liberacao: payoutGroup('pendente_liberacao'),
+      liberado: payoutGroup('liberado'),
+    },
+    transfers: {
+      total_count: toNumber(pick(transfers, ['total_count'])),
+      resale_count: toNumber(pick(transfers, ['resale_count'])),
+      simple_count: toNumber(pick(transfers, ['simple_count'])),
+    },
+  }
+}
+
+/** Relatório de bilheteria por operador/terminal (roadmap Fase A3). */
+export async function getOperatorReport(params: AnalyticsPeriodParams): Promise<OperatorReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/operators', { params })
+  const raw = response.data.data
+
+  const operatorId = (item: Raw) => {
+    const value = pick(item, ['operator_id'])
+    return value === null || value === undefined ? null : toNumber(value)
+  }
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    checkins_by_operator: asArray(pick(raw, ['checkins_by_operator'])).map((item) => ({
+      operator_id: operatorId(item),
+      operator_name: toText(pick(item, ['operator_name'])),
+      total_reads: toNumber(pick(item, ['total_reads'])),
+      granted_reads: toNumber(pick(item, ['granted_reads'])),
+      warning_reads: toNumber(pick(item, ['warning_reads'])),
+      blocked_reads: toNumber(pick(item, ['blocked_reads'])),
+    })),
+    checkins_by_gate: asArray(pick(raw, ['checkins_by_gate'])).map((item) => ({
+      gate_name: toText(pick(item, ['gate_name'])),
+      total_reads: toNumber(pick(item, ['total_reads'])),
+      granted_reads: toNumber(pick(item, ['granted_reads'])),
+      warning_reads: toNumber(pick(item, ['warning_reads'])),
+      blocked_reads: toNumber(pick(item, ['blocked_reads'])),
+    })),
+    sales_by_operator: asArray(pick(raw, ['sales_by_operator'])).map((item) => ({
+      operator_id: operatorId(item),
+      operator_name: toText(pick(item, ['operator_name'])),
+      sales_count: toNumber(pick(item, ['sales_count'])),
+      total_amount: toNumber(pick(item, ['total_amount'])),
+    })),
+    cash_sessions_by_operator: asArray(pick(raw, ['cash_sessions_by_operator'])).map((item) => ({
+      operator_id: operatorId(item),
+      operator_name: toText(pick(item, ['operator_name'])),
+      sessions_count: toNumber(pick(item, ['sessions_count'])),
+      closed_sessions_count: toNumber(pick(item, ['closed_sessions_count'])),
+      total_difference_amount: toNumber(pick(item, ['total_difference_amount'])),
+    })),
+  }
+}
+
+/**
+ * Coortes de retenção (roadmap Fase A3, parte 2) — `from` sempre
+ * obrigatório (regra transversal de filtro ativo, ver AnalyticsCohortsRequest).
+ */
+export async function getCohortsReport(params: { from: string; to?: string }): Promise<CohortsReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/cohorts', { params })
+  const raw = response.data.data
+
+  const cohorts = asArray(pick(raw, ['cohorts'])).map((cohort) => ({
+    cohort_month: toText(pick(cohort, ['cohort_month'])),
+    cohort_size: toNumber(pick(cohort, ['cohort_size'])),
+    retention: asArray(pick(cohort, ['retention'])).map((point) => ({
+      month_offset: toNumber(pick(point, ['month_offset'])),
+      retained_count: pick(point, ['retained_count']) === null ? null : toNumber(pick(point, ['retained_count'])),
+      retention_percentage:
+        pick(point, ['retention_percentage']) === null ? null : toNumber(pick(point, ['retention_percentage'])),
+    })),
+  }))
+
+  return {
+    from: toText(pick(raw, ['from'])),
+    to: toText(pick(raw, ['to'])),
+    max_month_offset: toNumber(pick(raw, ['max_month_offset'])),
+    cohorts,
+  }
+}
+
+/** LTV histórico (roadmap Fase A3, parte 2) — realizado, por segmento RFM ou coorte de aquisição. */
+export async function getLtvReport(params: { group_by: LtvGroupBy }): Promise<LtvReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/ltv', { params })
+  const raw = response.data.data
+  const overall = (pick(raw, ['overall']) as Raw | undefined) ?? {}
+
+  const groups = asArray(pick(raw, ['groups'])).map((group) => ({
+    key: toText(pick(group, ['key'])),
+    label: toText(pick(group, ['label'])),
+    customers_count: toNumber(pick(group, ['customers_count'])),
+    average_ltv: toNumber(pick(group, ['average_ltv'])),
+    total_ltv: toNumber(pick(group, ['total_ltv'])),
+  }))
+
+  return {
+    group_by: (toText(pick(raw, ['group_by'])) || params.group_by) as LtvGroupBy,
+    overall: {
+      customers_count: toNumber(pick(overall, ['customers_count'])),
+      average_ltv: toNumber(pick(overall, ['average_ltv'])),
+    },
+    groups,
+  }
+}
+
+/** Afinidade entre eventos (roadmap Fase A3, parte 2) — `event_uuid` sempre obrigatório. */
+export async function getEventAffinityReport(params: { event_uuid: string; limit?: number }): Promise<EventAffinityReport> {
+  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/event-affinity', { params })
+  const raw = response.data.data
+
+  const affinities = asArray(pick(raw, ['affinities'])).map((item) => ({
+    event_uuid: toText(pick(item, ['event_uuid'])),
+    event_name: toText(pick(item, ['event_name'])),
+    shared_customers_count: toNumber(pick(item, ['shared_customers_count'])),
+    affinity_percentage: toNumber(pick(item, ['affinity_percentage'])),
+  }))
+
+  return {
+    event_uuid: toText(pick(raw, ['event_uuid'])),
+    event_name: toText(pick(raw, ['event_name'])),
+    base_customers_count: toNumber(pick(raw, ['base_customers_count'])),
+    affinities,
+  }
 }
 
 async function downloadXlsx(url: string, params: object, fallbackFilename: string): Promise<void> {

@@ -94,29 +94,32 @@ use App\Events\Portal\PortalLinkConfirmed;
 use App\Events\Portal\PortalOtpRequested;
 use App\Events\Portal\PortalOtpVerificationFailed;
 use App\Events\Portal\PortalOtpVerified;
+use App\Events\Report\CustomReportDefinitionCreated;
+use App\Events\Report\CustomReportDefinitionDeleted;
+use App\Events\Report\CustomReportDefinitionUpdated;
 use App\Events\Report\ScheduledReportSubscriptionCancelled;
 use App\Events\Report\ScheduledReportSubscriptionCreated;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SaleCancellationApproved;
-use App\Events\Sale\SaleCancellationRejected;
-use App\Events\Sale\SaleCancellationRequested;
-use App\Events\Sale\SaleCancelled;
 /*
 |--------------------------------------------------------------------------
 | Tenant User
 |--------------------------------------------------------------------------
 */
+use App\Events\Sale\SaleCancellationRejected;
+use App\Events\Sale\SaleCancellationRequested;
+use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
 use App\Events\Sale\SaleInstallmentCreated;
 use App\Events\Sale\SaleInstallmentDeleted;
-use App\Events\Sale\SaleInstallmentPaid;
-use App\Events\Sale\SaleInstallmentUnpaid;
-use App\Events\Sale\SaleInstallmentUpdated;
 /*
 |--------------------------------------------------------------------------
 | Tenant User Invite
 |--------------------------------------------------------------------------
 */
+use App\Events\Sale\SaleInstallmentPaid;
+use App\Events\Sale\SaleInstallmentUnpaid;
+use App\Events\Sale\SaleInstallmentUpdated;
 use App\Events\Sale\SaleItemsUpdated;
 use App\Events\Sale\SalePaid;
 use App\Events\Sale\SalePaymentCharged;
@@ -126,38 +129,38 @@ use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Storefront\CouponCreated;
 use App\Events\Storefront\CouponDeleted;
-use App\Events\Storefront\CouponUpdated;
-use App\Events\Subscription\SubscriptionCanceled;
-use App\Events\Subscription\SubscriptionCreated;
 /*
 |--------------------------------------------------------------------------
 | Event Category
 |--------------------------------------------------------------------------
 */
+use App\Events\Storefront\CouponUpdated;
+use App\Events\Subscription\SubscriptionCanceled;
+use App\Events\Subscription\SubscriptionCreated;
 use App\Events\Subscription\SubscriptionPlanChanged;
 use App\Events\Subscription\SubscriptionWithdrawalRequested;
 use App\Events\Support\HelpRequestCreated;
-use App\Events\Tenant\TenantCreated;
-use App\Events\Tenant\TenantDataExported;
-use App\Events\Tenant\TenantDeleted;
 /*
 |--------------------------------------------------------------------------
 | Event
 |--------------------------------------------------------------------------
 */
+use App\Events\Tenant\TenantCreated;
+use App\Events\Tenant\TenantDataExported;
+use App\Events\Tenant\TenantDeleted;
 use App\Events\Tenant\TenantFeatureOverridesSynced;
 use App\Events\Tenant\TenantRoleCreated;
 use App\Events\Tenant\TenantRoleDeleted;
 use App\Events\Tenant\TenantRolePermissionsSynced;
 use App\Events\Tenant\TenantRoleUpdated;
-use App\Events\Tenant\TenantUpdated;
-use App\Events\Tenant\TenantUserCreated;
-use App\Events\Tenant\TenantUserDeleted;
 /*
 |--------------------------------------------------------------------------
 | Ticket Type
 |--------------------------------------------------------------------------
 */
+use App\Events\Tenant\TenantUpdated;
+use App\Events\Tenant\TenantUserCreated;
+use App\Events\Tenant\TenantUserDeleted;
 use App\Events\Tenant\TenantUserInviteAccepted;
 use App\Events\Tenant\TenantUserInvited;
 use App\Events\Tenant\TenantUserUpdated;
@@ -166,47 +169,47 @@ use App\Events\Ticket\TicketCheckedIn;
 use App\Events\Ticket\TicketResaleListingCancelled;
 use App\Events\Ticket\TicketResaleListingCreated;
 use App\Events\Ticket\TicketResaleListingSold;
-use App\Events\Ticket\TicketResent;
-use App\Events\Ticket\TicketsCancelled;
-use App\Events\Ticket\TicketsIssued;
 /*
 |--------------------------------------------------------------------------
 | Event Product (adicional/estacionamento)
 |--------------------------------------------------------------------------
 */
+use App\Events\Ticket\TicketResent;
+use App\Events\Ticket\TicketsCancelled;
+use App\Events\Ticket\TicketsIssued;
 use App\Events\Ticket\TicketTransferred;
 use App\Events\TicketTypeWaitlist\TicketTypeWaitlistEntryCreated;
 use App\Events\User\UserCreated;
-use App\Events\User\UserDeleted;
-use App\Events\User\UserEmailChanged;
-use App\Events\User\UserPasswordChanged;
 /*
 |--------------------------------------------------------------------------
 | Event Session Events
 |--------------------------------------------------------------------------
 */
+use App\Events\User\UserDeleted;
+use App\Events\User\UserEmailChanged;
+use App\Events\User\UserPasswordChanged;
 use App\Events\User\UserProfileUpdated;
 use App\Events\User\UserUpdated;
 use App\Events\Venue\SeatCreated;
-use App\Events\Venue\SeatDeleted;
-use App\Events\Venue\SeatUpdated;
-use App\Events\Venue\VenueCreated;
 /*
 |--------------------------------------------------------------------------
 | Ticket Batch Events
 |--------------------------------------------------------------------------
 */
+use App\Events\Venue\SeatDeleted;
+use App\Events\Venue\SeatUpdated;
+use App\Events\Venue\VenueCreated;
 use App\Events\Venue\VenueDeleted;
 use App\Events\Venue\VenuePublished;
 use App\Events\Venue\VenueUpdated;
-use App\Listeners\Affiliate\AuditAffiliateCreated;
-use App\Listeners\Affiliate\AuditAffiliateUpdated;
-use App\Listeners\Audit\AuditAuthListener;
 /*
 |--------------------------------------------------------------------------
 | Venue Events
 |--------------------------------------------------------------------------
 */
+use App\Listeners\Affiliate\AuditAffiliateCreated;
+use App\Listeners\Affiliate\AuditAffiliateUpdated;
+use App\Listeners\Audit\AuditAuthListener;
 use App\Listeners\Audit\AuditGroupListener;
 use App\Listeners\CashSession\AuditCashSessionClosed;
 use App\Listeners\CashSession\AuditCashSessionOpened;
@@ -223,43 +226,43 @@ use App\Listeners\Event\AuditEventGateUpdated;
 use App\Listeners\Event\AuditEventProductCreated;
 use App\Listeners\Event\AuditEventProductDeleted;
 use App\Listeners\Event\AuditEventProductUpdated;
-use App\Listeners\Event\AuditEventSessionCreated;
-use App\Listeners\Event\AuditEventSessionDeleted;
-use App\Listeners\Event\AuditEventSessionUpdated;
 /*
 |--------------------------------------------------------------------------
 | Tenant Settings
 |--------------------------------------------------------------------------
 */
-use App\Listeners\Event\AuditEventStatusChanged;
-use App\Listeners\Event\AuditEventUpdated;
+use App\Listeners\Event\AuditEventSessionCreated;
+use App\Listeners\Event\AuditEventSessionDeleted;
 /*
 |--------------------------------------------------------------------------
 | Feature flag por tenant individual (roadmap A5, item 19)
 |--------------------------------------------------------------------------
 */
+use App\Listeners\Event\AuditEventSessionUpdated;
+use App\Listeners\Event\AuditEventStatusChanged;
+use App\Listeners\Event\AuditEventUpdated;
 use App\Listeners\Event\AuditTicketBatchCreated;
 use App\Listeners\Event\AuditTicketBatchDeleted;
-use App\Listeners\Event\AuditTicketBatchUpdated;
-use App\Listeners\Event\AuditTicketTypeChannelQuotaCreated;
-use App\Listeners\Event\AuditTicketTypeChannelQuotaDeleted;
 /*
 |--------------------------------------------------------------------------
 | Storefront (Delivery Fase 3) — cupons
 |--------------------------------------------------------------------------
 */
+use App\Listeners\Event\AuditTicketBatchUpdated;
+use App\Listeners\Event\AuditTicketTypeChannelQuotaCreated;
+use App\Listeners\Event\AuditTicketTypeChannelQuotaDeleted;
 use App\Listeners\Event\AuditTicketTypeChannelQuotaUpdated;
 use App\Listeners\Event\AuditTicketTypeCreated;
 use App\Listeners\Event\AuditTicketTypeDeleted;
 use App\Listeners\Event\AuditTicketTypeUpdated;
-use App\Listeners\Functionality\AuditFunctionalityCreated;
-use App\Listeners\Functionality\AuditFunctionalityDeleted;
-use App\Listeners\Functionality\AuditFunctionalityUpdated;
 /*
 |--------------------------------------------------------------------------
 | Sale
 |--------------------------------------------------------------------------
 */
+use App\Listeners\Functionality\AuditFunctionalityCreated;
+use App\Listeners\Functionality\AuditFunctionalityDeleted;
+use App\Listeners\Functionality\AuditFunctionalityUpdated;
 use App\Listeners\GuestList\AuditGuestListEntryRedeemed;
 use App\Listeners\Legal\AuditReleaseNoteCreated;
 use App\Listeners\Legal\AuditReleaseNoteDeleted;
@@ -269,6 +272,9 @@ use App\Listeners\Plan\AuditPlanDeleted;
 use App\Listeners\Plan\AuditPlanFunctionalitiesSynced;
 use App\Listeners\Plan\AuditPlanUpdated;
 use App\Listeners\Portal\WritePortalAuditLog;
+use App\Listeners\Report\AuditCustomReportDefinitionCreated;
+use App\Listeners\Report\AuditCustomReportDefinitionDeleted;
+use App\Listeners\Report\AuditCustomReportDefinitionUpdated;
 use App\Listeners\Report\AuditScheduledReportSubscriptionCancelled;
 use App\Listeners\Report\AuditScheduledReportSubscriptionCreated;
 use App\Listeners\Risk\FlagRiskOnSaleRefundCreated;
@@ -321,6 +327,11 @@ use App\Listeners\TenantSettings\AuditTenantSettingsUpdated;
 use App\Listeners\Ticket\AuditTicketCheckedIn;
 use App\Listeners\Ticket\AuditTicketResaleListingCancelled;
 use App\Listeners\Ticket\AuditTicketResaleListingCreated;
+/*
+|--------------------------------------------------------------------------
+| Portal do cliente final
+|--------------------------------------------------------------------------
+*/
 use App\Listeners\Ticket\AuditTicketResaleListingSold;
 use App\Listeners\Ticket\AuditTicketResent;
 use App\Listeners\Ticket\AuditTicketsCancelled;
@@ -329,7 +340,7 @@ use App\Listeners\Ticket\AuditTicketTransferred;
 use App\Listeners\Ticket\SendIssuedTicketsMail;
 /*
 |--------------------------------------------------------------------------
-| Portal do cliente final
+| Assinatura / cobrança de planos (roadmap 1B)
 |--------------------------------------------------------------------------
 */
 use App\Listeners\Ticket\SendResentTicketMail;
@@ -338,11 +349,6 @@ use App\Listeners\TicketTypeWaitlist\AuditTicketTypeWaitlistEntryCreated;
 use App\Listeners\User\AuditUserCreated;
 use App\Listeners\User\AuditUserDeleted;
 use App\Listeners\User\AuditUserEmailChanged;
-/*
-|--------------------------------------------------------------------------
-| Assinatura / cobrança de planos (roadmap 1B)
-|--------------------------------------------------------------------------
-*/
 use App\Listeners\User\AuditUserPasswordChanged;
 use App\Listeners\User\AuditUserProfileUpdated;
 use App\Listeners\User\AuditUserUpdated;
@@ -381,6 +387,15 @@ class EventServiceProvider extends ServiceProvider
         GroupCreated::class => [AuditGroupCreated::class],
         GroupUpdated::class => [AuditGroupUpdated::class],
         GroupDeleted::class => [AuditGroupDeleted::class],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Custom Report Definitions
+        |--------------------------------------------------------------------------
+        */
+        CustomReportDefinitionCreated::class => [AuditCustomReportDefinitionCreated::class],
+        CustomReportDefinitionUpdated::class => [AuditCustomReportDefinitionUpdated::class],
+        CustomReportDefinitionDeleted::class => [AuditCustomReportDefinitionDeleted::class],
 
         /*
         |--------------------------------------------------------------------------

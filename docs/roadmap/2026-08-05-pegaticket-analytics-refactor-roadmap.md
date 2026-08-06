@@ -235,10 +235,28 @@ Numeração própria deste documento (não reaproveita as fases do roadmap globa
 
 ### Fase A4 — Inteligência avançada (equivalente à Fase 4 da spec, seção 91)
 
-- Previsão de vendas, cenários, detecção de anomalias, recomendações automáticas.
-- Atendimento/NPS/CSAT — depende de o produto passar a coletar isso em algum lugar primeiro (não existe hoje nem como feature, não é só relatório faltando).
-- Consumo cashless/estacionamento — depende de decisão de produto sobre se essas features entram no escopo do PegaTicket (hoje não existem como domínio).
-- Tudo aqui depende de volume de dado histórico real suficiente para um modelo fazer sentido — não adianta implementar "previsão de vendas" com poucos eventos históricos, o resultado vai ser ruído.
+- **Detecção de anomalias — ENTREGUE (2026-08-06)**: estatística simples
+  (z-score, não machine learning) sobre 3 séries diárias já existentes
+  (receita, volume de vendas, taxa de recusa de pagamento), exposta como
+  3 novos tipos de alerta em `GET /reports/alerts`
+  (`AlertService::statisticalAnomalyAlerts`). Ver fórmula, limiares e
+  limitação de confiabilidade documentados em
+  `.claude/memory/metrics-catalog.md` seção 5.2. Testado em
+  `tests/Feature/Report/AnomalyDetectionAlertTest.php` (anomalia real
+  detectada, dia normal não sinalizado, histórico insuficiente não
+  dispara falso positivo).
+- **Previsão de vendas, cenários e recomendações automáticas — NÃO
+  implementado, decisão consciente**: dependem de volume de histórico
+  real que o produto ainda não tem; implementar agora geraria ruído, não
+  sinal útil. Decisão tomada em 2026-08-06, não é item esquecido.
+- **Atendimento/NPS/CSAT — NÃO implementado, decisão consciente**: já
+  decidido fora do escopo desta refatoração (ver seção 7.1 item 5) —
+  depende do produto passar a coletar isso em algum lugar primeiro (não
+  existe hoje nem como feature).
+- **Consumo cashless/estacionamento — NÃO implementado, decisão
+  consciente**: já decidido fora do escopo desta refatoração (ver seção
+  7.1 item 5) — depende de decisão de produto sobre se essas features
+  entram no escopo do PegaTicket (hoje não existem como domínio).
 
 **Nota sobre dependências entre fases**: A1 depende de A0. A2 depende parcialmente de A0 (RFM) e de decisões de biblioteca (XLSX). A3 depende de decisão de pré-agregação (5.3) para coortes/LTV, e o construtor de relatórios (A3) idealmente só começa depois que os services de domínio da Fase A1/A2 já estiverem consolidados no namespace único da seção 5.1 — senão o construtor herda a mesma fragmentação que existe hoje. A4 depende de volume de dado, não só de código pronto.
 

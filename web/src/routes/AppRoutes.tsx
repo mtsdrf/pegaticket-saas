@@ -117,6 +117,9 @@ const SaleFormPage = lazy(() => import('../pages/Sale/SaleFormPage').then((m) =>
 const AnalyticsPage = lazy(() =>
   import('../pages/Analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
 )
+const CustomReportsPage = lazy(() =>
+  import('../pages/CustomReports/CustomReportsPage').then((m) => ({ default: m.CustomReportsPage })),
+)
 const SaleReportListPage = lazy(() =>
   import('../pages/SaleReport/SaleReportListPage').then((m) => ({ default: m.SaleReportListPage })),
 )
@@ -307,6 +310,7 @@ export function AppRoutes() {
             <Route path="/vendas-online" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/vendas-loja" element={<PermissionRoute requirement={ACCESS.storefrontSalesRead}><StorefrontSaleManagementPage /></PermissionRoute>} />
             <Route path="/analises" element={<PermissionRoute requirement={ACCESS.reportsRead}><AnalyticsPage /></PermissionRoute>} />
+            <Route path="/relatorios-personalizados" element={<PermissionRoute requirement={ACCESS.customReportsRead}><CustomReportsPage /></PermissionRoute>} />
             <Route path="/relatorios/canais" element={<PermissionRoute requirement={ACCESS.reportsRead}><ChannelReportPage /></PermissionRoute>} />
             <Route path="/relatorios/vendas" element={<PermissionRoute requirement={ACCESS.reportsRead}><SaleReportListPage /></PermissionRoute>} />
             <Route path="/financeiro/operacao" element={<PermissionRoute requirement={ACCESS.financeRead}><FinanceOperationsPage /></PermissionRoute>} />

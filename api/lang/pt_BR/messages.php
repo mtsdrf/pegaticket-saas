@@ -117,6 +117,17 @@ return [
     | Grupos
     |--------------------------------------------------------------------------
     */
+    'custom_report' => [
+        'schema' => 'Campos disponíveis para relatório personalizado.',
+        'list' => 'Relatórios personalizados listados com sucesso.',
+        'show' => 'Relatório personalizado encontrado.',
+        'created' => 'Relatório personalizado criado com sucesso.',
+        'updated' => 'Relatório personalizado atualizado com sucesso.',
+        'deleted' => 'Relatório personalizado removido com sucesso.',
+        'executed' => 'Relatório executado com sucesso.',
+        'execution_failed' => 'Não foi possível executar o relatório. Tente novamente.',
+    ],
+
     'group' => [
         'created' => 'Grupo criado com sucesso.',
         'updated' => 'Grupo atualizado com sucesso.',
@@ -954,6 +965,12 @@ return [
         'inventory_report' => 'Relatório de inventário obtido com sucesso.',
         'funnel_report' => 'Funil de conversão obtido com sucesso.',
         'compare_events_report' => 'Comparação entre eventos obtida com sucesso.',
+        'risk_report' => 'Relatório de antifraude obtido com sucesso.',
+        'resale_report' => 'Relatório de revenda/transferência obtido com sucesso.',
+        'operator_report' => 'Relatório de bilheteria por operador obtido com sucesso.',
+        'cohorts_report' => 'Coortes de retenção obtidas com sucesso.',
+        'ltv_report' => 'LTV histórico obtido com sucesso.',
+        'event_affinity_report' => 'Afinidade entre eventos obtida com sucesso.',
     ],
 
     'route' => [

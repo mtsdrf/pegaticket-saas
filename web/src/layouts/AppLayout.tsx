@@ -107,6 +107,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: InsightsOutlinedIcon,
     children: [
       { to: '/analises', label: 'Análises', access: ACCESS.reportsRead },
+      { to: '/relatorios-personalizados', label: 'Relatórios personalizados', access: ACCESS.customReportsRead },
       { to: '/relatorios/canais', label: 'Resultado por canal', access: ACCESS.reportsRead },
       { to: '/relatorios/vendas', label: 'Relatório de vendas', access: ACCESS.reportsRead },
       { to: '/financeiro/operacao', label: 'Operação financeira', access: ACCESS.financeRead },

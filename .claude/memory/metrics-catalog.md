@@ -127,17 +127,54 @@ no resto do módulo.
 | `approval_rate_percentage` | `confirmed.count / (confirmed.count + rejected.count) * 100` — só sobre vendas DECIDIDAS, `pending_approval` fica fora do denominador | `sales.status` |
 | `rejection_rate_percentage` | `rejected.count / (confirmed.count + rejected.count) * 100` | `sales.status` |
 
-## 5.2 Alertas básicos (`AlertService::activeAlerts`, Fase A1)
+## 5.2 Alertas básicos (`AlertService::activeAlerts`, Fase A1; anomalia estatística adicionada na Fase A4)
 
-Só os dois tipos aprovados nesta fase — NÃO é o catálogo completo de
-alertas configuráveis da spec (sem model, sem regra por tenant, tudo
-calculado on-the-fly a cada chamada de `GET /reports/alerts`).
+NÃO é o catálogo completo de alertas configuráveis da spec (sem model, sem
+regra por tenant, tudo calculado on-the-fly a cada chamada de
+`GET /reports/alerts`).
 
 | Alerta | Regra | Limiar (hardcoded, não configurável ainda) |
 |---|---|---|
 | `low_stock` | Por `ticket_type` ativo com `quantity_available` cadastrado: `remaining_percentage = (quantity_available - tickets_ativos_emitidos) / quantity_available * 100` | Dispara se `remaining_percentage <= 15%`; `severity='critical'` se `remaining = 0` |
 | `payment_rejection_rate` | Taxa de recusa (mesma fórmula do `paymentsSummary`) na janela dos últimos 7 dias, com amostra mínima de 5 vendas decididas (evita alarme com 1 recusa em 1 venda) | Dispara se `rejection_rate >= 20%`; `severity='critical'` se `>= 40%` |
 | `payment_pending_queue` | `COUNT(sales.status = 'pending_approval')` atual do tenant — proxy de "fila crescendo", sem histórico de tendência ainda | Dispara se `>= 15`; `severity='critical'` se `>= 30` |
+| `daily_revenue_anomaly` / `daily_sales_count_anomaly` / `daily_payment_rejection_rate_anomaly` | Detecção de anomalia **estatística simples (z-score, não machine learning)** — ver detalhe abaixo | Dispara se `\|z-score\| >= 2`; `severity='critical'` se `>= 3` |
+
+### Detecção de anomalia estatística (Fase A4, `AlertService::statisticalAnomalyAlerts`)
+
+Reaproveita `sales` (mesma tabela/filtros de `salesQuery()` do resto do
+catálogo — `tenant_id`, `deleted_at` nulo, `cancelled_at` nulo), sem
+coleta nova. Não é previsão nem machine learning: é média + desvio padrão
+de uma janela recente comparada ao dia mais recente.
+
+- **Séries avaliadas**: receita diária (`SUM(sales.total_amount)` por dia),
+  volume de vendas diário (`COUNT(sales.id)` por dia) e taxa de recusa de
+  pagamento diária (`rejected / (confirmed + rejected)` por dia, só em dias
+  com pelo menos 1 venda decidida — dia sem decisão não entra na série,
+  não é tratado como 0%).
+- **Baseline**: até `ANOMALY_BASELINE_WINDOW_DAYS = 14` dias anteriores ao
+  dia avaliado (hoje), **limitado ao histórico real do tenant** (desde a
+  primeira venda) quando esse histórico for mais curto que 14 dias — não
+  zero-preenche dias anteriores à primeira venda do tenant (isso inflaria
+  artificialmente a variância/puxaria a média para 0 e geraria falso
+  positivo/negativo).
+- **Mínimo de histórico (`ANOMALY_MIN_HISTORY_DAYS = 7`)**: se o tenant
+  tem menos de 7 dias de histórico desde a primeira venda, a checagem
+  inteira é pulada — SEM alerta algum, nem tentativa de calcular
+  desvio padrão sobre base pequena. Mesma regra vale por métrica: taxa de
+  recusa exige 7 dias **com decisão** no baseline, não 7 dias corridos.
+- **Limitação explícita de confiabilidade**: com baseline de desvio padrão
+  praticamente zero (histórico raro/constante), o z-score fica
+  matematicamente indefinido/instável — nesse caso (`std_dev < 0.01`) o
+  service **não dispara alerta**, em vez de sinalizar qualquer variação
+  mínima como anomalia gigante. Isso é uma limitação conhecida e
+  documentada no código (`AlertService::buildAnomalyAlert`), não um bug.
+- **Fórmula**: `z = (valor_hoje - média_baseline) / desvio_padrão_baseline`
+  (desvio padrão populacional, `sqrt(Σ(x-média)² / n)`, sem lib externa).
+  `|z| >= 2` dispara; `|z| >= 3` é `critical`.
+- **Meta do alerta**: `history_days` (tamanho real do baseline usado —
+  sempre exposto pro consumidor conseguir avaliar confiança), `latest_value`,
+  `mean`, `std_dev`, `z_score`, `threshold`.
 
 ## 5.3 Afiliados, cupons, reembolsos e inventário/assentos (`AnalyticsService`, Fase A2)
 
@@ -218,6 +255,83 @@ receita acumulada por `day` (uma série por evento) e tabela de totais
 comparativos. Exportação CSV client-side, mesmo padrão de
 `InventoryTab`/demais abas desta fase (sem endpoint XLSX dedicado).
 
+## 5.6 Antifraude, revenda/transferência e bilheteria por operador (`AnalyticsService`, Fase A3, parte 1)
+
+Regra transversal desta fase mantida: os 3 relatórios herdam o período
+obrigatório (default últimos 12 meses via `resolvePeriod()`).
+
+| Métrica | Fórmula | Fonte |
+|---|---|---|
+| Antifraude — total/valor flagado (`riskReport`) | `COUNT`/`SUM(total_amount)` de `sales` com `risk_flagged=true` no período (via `salesQuery()` — não cancelada/deletada); `flagged_rate_percentage = flagged_count / paid_sales_count * 100` | `sales.risk_flagged`, `.total_amount` |
+| Antifraude — por heurística (`by_heuristic`) | `sales.risk_reason` é TEXTO RENDERIZADO (`__('messages.sale.risk_*_reason', [...])`, `:count`/`:hours`/`:minutes` já interpolados), não uma chave estável — `classifyRiskReason()` casa um trecho FIXO (não-interpolado) de cada uma das 6 mensagens pra derivar a chave (`compras_repetidas`/`velocity_pagamento_recusado`/`multiplos_cartoes`/`cartao_compartilhado`/`velocity_ip`/`abuso_reembolso`/`outro`). Melhor-esforço: quebra se o texto das mensagens mudar sem atualizar os trechos em `AnalyticsService::RISK_HEURISTIC_PATTERNS`. `RiskEngineService` (motor, 6 heurísticas) NÃO foi alterado — só lido | `sales.risk_reason` |
+| Antifraude — lista para revisão manual (`flagged_sales`) | Até `limit` (default 50) vendas flagadas, mais recentes primeiro, com cliente/valor/data/heurística/motivo — nunca bloqueio automático, só apoio à revisão do staff | `sales` + `final_customers` |
+| Revenda — volume/valor (`resaleReport`) | `listed_count`/`sold_count`/`cancelled_count` = `COUNT` de `ticket_resale_listings` por `status` (`listado`/`vendido`/`cancelado`) filtrado por `created_at`/`sold_at`/`cancelled_at` respectivamente no período; `total_transacted_amount = SUM(asking_price)`, `total_payout_amount = SUM(seller_payout_amount)` das revendas `vendido` no período | `ticket_resale_listings` |
+| Revenda — status de repasse (`payout_by_status`) | `COUNT`/`SUM(seller_payout_amount)` agrupado por `seller_payout_status` (`pendente_liberacao`/`liberado`) das revendas `vendido` no período | `ticket_resale_listings.seller_payout_status` |
+| Transferências — total/revenda/simples (`transfers`) | `total_count` = eventos `ticket_transferred` de `audit_logs` no período CUJO `meta.ticket_uuid` pertence a um `ticket` do tenant (`countTenantTicketTransfers()` — `audit_logs` NÃO tem `tenant_id`, tabela técnica global, ver `HelpRequestService::buildDiagnostics()`; o recorte por tenant aqui é EXATO via cruzamento com `tickets.tenant_id`, não aproximado). `resale_count` = `sold_count` acima (cada revenda fechada gera exatamente 1 evento de transferência via `TicketService::transfer()`, chamado por dentro de `TicketResaleService::purchase()`). `simple_count = max(0, total_count - resale_count)` — transferência direta de titular (staff/Portal), fora do fluxo de revenda | `audit_logs` (`event='ticket_transferred'`, `meta.ticket_uuid`), `tickets.tenant_id`, `ticket_resale_listings` |
+| Bilheteria — check-ins por operador/portaria (`operatorReport.checkins_by_operator`/`checkins_by_gate`) | `COUNT`/`SUM` de `ticket_checkins` agrupado por `operator_id` (join `users`) ou `gate_name`, com granted/warning/blocked usando as MESMAS constantes de `checkinInsights()` (`CHECKIN_GRANTED_RESULTS`/`CHECKIN_WARNING_RESULTS`) | `ticket_checkins.operator_id`, `.gate_name`, `.result` |
+| Bilheteria — vendas por operador (`sales_by_operator`) | `COUNT`/`SUM(total_amount)` de `sales` com `origin IN (staff, counter)` agrupado por `created_by` (preenchido automaticamente por `BaseModel` com `Auth::id()` — é o operador que registrou a venda presencial) | `sales.created_by`, `.origin` |
+| Bilheteria — sessões de caixa por operador (`cash_sessions_by_operator`) | `COUNT`/`SUM(difference_amount)` de `cash_sessions` agrupado por `opened_by` no período (`opened_at`) — não recalcula o valor esperado/vendas em dinheiro da sessão (isso é responsabilidade de `CashSessionService`, não duplicado aqui) | `cash_sessions.opened_by`, `.difference_amount`, `.status` |
+
+## 5.7 8 segmentos nomeados de RFM (`RfmCalculator`, Fase A3, parte 1)
+
+Os 4 rótulos antigos (`vip`/`recorrente`/`em_risco`/`inativo`,
+`RfmCalculator::segments()`/`label()`) continuam INTOCADOS — consumidos hoje
+por `RfmChip`/Home/`ClientsTab`, nenhum contrato quebrado. Os 8 segmentos da
+spec (seção 33) são um método ADITIVO (`segments8()`/`label8()`), derivado
+da MESMA combinação de tercis R/F/M já calculada (nenhuma query nova, nenhum
+recálculo de tercil). Expostos como campo adicional
+`rfm_segment8`/`rfm_segment8_label` em `AnalyticsService::topClients()` e
+`segment8`/`segment8_label` em `ReportService::rfmClients()` — sem tela
+dedicada de "Segmentação RFM" nesta parte da fase (fora do escopo desta
+tarefa; consumo de UI fica para quando o construtor/tela de CRM avançado
+entrar).
+
+Os 8 nomes são exatamente os da spec: campeões, clientes leais, potenciais
+leais, novos clientes, promissores, precisam de atenção, em risco, inativos
+(chaves canônicas: `campeoes`/`clientes_leais`/`potenciais_leais`/
+`novos_clientes`/`promissores`/`precisam_atencao`/`em_risco8`/`inativos` —
+`em_risco8` só pra não colidir com a chave `em_risco` dos 4 segmentos
+antigos, mesmo texto de rótulo "Em risco").
+
+A fórmula de corte (qual combinação de R/F/M vira qual dos 8 segmentos) é
+DECISÃO DESTA IMPLEMENTAÇÃO — a spec só lista os 8 nomes, não fórmula de
+corte, e o modelo clássico de RFM de 8-11 segmentos normalmente usa score
+1..5, não tercis (1..3) como este catálogo já usa desde a Fase A0. Adaptação
+feita (ver docblock de `RfmCalculator::label8()` para a tabela completa):
+
+| R | F | M | Segmento |
+|---|---|---|---|
+| 3 | 3 | 3 | `campeoes` |
+| ≥2 | 3 | qualquer | `clientes_leais` |
+| 3 | 2 | qualquer | `potenciais_leais` |
+| 3 | 1 | ≥2 | `promissores` |
+| 3 | 1 | 1 | `novos_clientes` |
+| 2 | 1 ou 2 | qualquer | `precisam_atencao` |
+| 1 | ≥2 | qualquer | `em_risco8` |
+| 1 | 1 | qualquer | `inativos` |
+
+## 5.8 Coortes, LTV histórico e afinidade entre eventos (`AnalyticsService`, Fase A3, parte 2)
+
+Decisão de performance confirmada pelo usuário (roadmap seção 5.3): SEM
+tabela de snapshot/materialização — os 3 relatórios rodam em tempo real
+sobre o filtro obrigatório selecionado. Só migra pra pré-agregação se a
+performance medida provar necessidade.
+
+| Métrica | Fórmula | Fonte |
+|---|---|---|
+| Coorte de aquisição (`cohortsReport`) | Cliente é agrupado pelo MÊS da primeira venda com `is_paid=true`/`paid_at` não nulo (`MIN(paid_at)` por `final_customer_id`). Filtro `from` (mês inicial) **OBRIGATÓRIO** no request (`AnalyticsCohortsRequest`) — regra transversal de filtro ativo, sem mês escolhido a query nunca roda | `sales.paid_at`, `.is_paid`, `.final_customer_id` |
+| Retenção M0..M6 (`cohortsReport.cohorts[].retention`) | Para cada cliente da coorte, `COUNT(DISTINCT final_customer_id)` de venda paga com `paid_at` entre a data de aquisição e +`COHORT_MAX_MONTHS` (6) meses, agrupado por `month_offset = PERIOD_DIFF` em relação ao mês de aquisição. M0 é sempre 100% (a própria compra de aquisição conta). Offset ainda não decorrido desde a coorte retorna `retention_percentage=null` (coorte parcial, não erro) — só offset decorrido e sem retorno vira `0%` | `sales.paid_at` (join auto-referenciado bounded por `+6 meses`) |
+| LTV histórico (`ltvReport`) | `ltv_amount = SUM(sales.total_amount)` de venda ativa (mesma convenção de receita do resto do catálogo — não é só o valor pago) por cliente, VITALÍCIO (sem filtro de período, mesmo espírito de `churnClients()`). Agrupamento (`group_by`, default `segment`): `segment` reaproveita `RfmCalculator::segments8()` (recência/frequência/LTV do próprio cliente, sem recálculo de tercil); `cohort` agrupa pelo mês da primeira compra PAGA (mesma definição de `cohortsReport`). É REALIZADO — LTV previsto fica pra Fase A4 (exige modelo) | `sales.total_amount`, `.paid_at`, `.is_paid` |
+| Afinidade entre eventos (`eventAffinityReport`) | Para o `event_uuid` selecionado (obrigatório), pega o conjunto de clientes que compraram para esse evento (`sale_items`→`ticket_types.event_id`), depois `COUNT(DISTINCT final_customer_id)` desses MESMOS clientes em cada outro evento do tenant, ordenado desc, top `limit` (default 10). `affinity_percentage = clientes_em_comum / total_clientes_do_evento_base * 100`. Sem matriz completa nem rede/grafo visual (decisão adiada, roadmap seção 5.4) | `sale_items`, `ticket_types.event_id`, `sales.final_customer_id` |
+
+Endpoints staff: `GET /reports/analytics/cohorts` (`from` obrigatório),
+`GET /reports/analytics/ltv` (`group_by` opcional), `GET
+/reports/analytics/event-affinity` (`event_uuid` obrigatório) — todos
+`perm:analytics,read`. Abas "Coortes", "LTV" e "Afinidade" em Análises,
+nenhuma usa o `PeriodFilter` compartilhado da página (cada uma tem seu
+próprio filtro obrigatório: mês de coorte, group_by ou evento). Exportação
+CSV client-side, mesmo padrão das demais abas desta fase.
+
 ## 6. Métricas da spec ainda não implementadas (gap — não inventar fórmula aqui)
 
 Consolidado do gap analysis (roadmap seção 4, `docs/roadmap/2026-08-05-...md`).
@@ -230,9 +344,11 @@ contexto quando a fase correspondente chegar:
 - **Ingressos pago/reservado/cortesia separados** (KPI 3) — PARCIAL; cortesia hoje só se distingue olhando `sale_items.unit_price = 0`, nenhum endpoint expõe essa quebra.
 - **Funil de conversão** (KPI 6) — RESOLVIDO na Fase A2 (ver seção 5.4): 5 etapas, rastreio anônimo por sessão, sem Sankey elaborado (decisão adiada).
 - **Previsão de venda final** (KPI 8) — AUSENTE.
-- **8 segmentos nomeados de RFM da spec** (campeões/leais/potenciais leais/novos/promissores/precisam de atenção/em risco/inativos, seção 33) — hoje `RfmCalculator` produz 4 rótulos (`vip`/`recorrente`/`em_risco`/`inativo`); expandir para os 8 é feature nova, fora do escopo de correção de bug da Fase A0.
-- **Coortes de retenção, LTV previsto, afinidade entre eventos** (seção 8/Telas 3-5) — AUSENTE.
+- **8 segmentos nomeados de RFM da spec** (campeões/leais/potenciais leais/novos/promissores/precisam de atenção/em risco/inativos, seção 33) — RESOLVIDO na Fase A3, parte 1 (ver seção 5.7): `RfmCalculator::segments8()`, aditivo aos 4 rótulos antigos. Sem tela dedicada de "Segmentação RFM" (tamanho de segmento/receita/ticket médio/eventos preferidos/propensão de recompra/ação recomendada da spec) — só o segmento calculado e exposto via API, consumo de UI é item futuro.
+- **Coortes de retenção, LTV histórico, afinidade entre eventos** — RESOLVIDOS na Fase A3, parte 2 (ver seção 5.8). LTV PREVISTO continua AUSENTE (exige modelo, fica pra Fase A4).
 - **Rentabilidade por evento com custo cadastrado** (custo fixo/variável/marketing) — AUSENTE; só existe custo de produto (`last_purchase_cost`) via `marginSummary`.
 - **Relatório de reembolsos/chargebacks dedicado** — RESOLVIDO na Fase A2 (`refundsReport`, ver seção 5.3): volume, valor, motivo (texto livre, melhor esforço) e taxa sobre vendas pagas. Pareto/ranking de motivo por percentual acumulado (curva ABC de motivo) e cruzamento com `SettlementAdjustment` (impacto no repasse do organizador) continuam AUSENTES — o que existe hoje é contagem/soma por motivo exato, não Pareto acumulado nem ligação com o financeiro de repasse.
 - **Ranking/ROI de afiliados, ranking/abuso de cupons, ocupação por setor** — RESOLVIDOS na Fase A2 (ver seção 5.3).
-- **Antifraude agregado** (fila de revisão, taxa de falso positivo, Pareto de regras) — AUSENTE; `RiskEngineService` decide e persiste mas não tem endpoint de relatório.
+- **Antifraude agregado** (fila de revisão, taxa de falso positivo, Pareto de regras) — RESOLVIDO na Fase A3, parte 1 (`riskReport`, ver seção 5.6): contagem/valor flagado por período, taxa sobre vendas pagas, quebra por heurística (melhor-esforço via casamento de texto) e lista de vendas flagadas para revisão manual. Taxa de FALSO positivo continua AUSENTE — exigiria staff marcar cada alerta como "confirmado"/"falso positivo" (feedback loop que não existe hoje, `sales.risk_flagged` é só o flag do motor, sem campo de decisão humana).
+- **Relatório de revenda/transferência** — RESOLVIDO na Fase A3, parte 1 (`resaleReport`, ver seção 5.6): volume/valor de revenda, status de repasse, transferências simples (aproximado por exclusão).
+- **Relatório de bilheteria por operador/terminal** — RESOLVIDO na Fase A3, parte 1 (`operatorReport`, ver seção 5.6): check-ins por operador/portaria, vendas presenciais por operador, sessões de caixa por operador.

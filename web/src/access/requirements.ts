@@ -75,6 +75,11 @@ export const ACCESS = {
   reportsDelete: tenant('reports', 'delete'),
   /** Conciliação financeira (roadmap A3.12) — `payments`/`refunds`/`webhook_events` do tenant. */
   financeRead: tenant('finance', 'read'),
+  /** Construtor de relatórios personalizados (roadmap 5.6) — functionality própria `custom_reports`. */
+  customReportsRead: tenant('custom_reports', 'read'),
+  customReportsCreate: tenant('custom_reports', 'create'),
+  customReportsUpdate: tenant('custom_reports', 'update'),
+  customReportsDelete: tenant('custom_reports', 'delete'),
   usersRead: tenant('users', 'read'),
   usersCreate: tenant('users', 'create'),
   usersUpdate: tenant('users', 'update'),

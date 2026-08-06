@@ -36,6 +36,7 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Vendas Online', 'slug' => 'storefront-sales', 'description' => 'Gestão das vendas geradas pela bilheteria online (aprovar, cancelar, despachar, entregar)', 'is_active' => true],
             ['name' => 'Relatórios', 'slug' => 'reports', 'description' => 'Relatórios, indicadores e painel', 'is_active' => true],
             ['name' => 'Análises', 'slug' => 'analytics', 'description' => 'Análises avançadas de vendas', 'is_active' => true],
+            ['name' => 'Relatórios Personalizados', 'slug' => 'custom_reports', 'description' => 'Construtor de relatórios personalizados (fonte de dados, dimensões, métricas e métricas calculadas)', 'is_active' => true],
             ['name' => 'Visão Geral', 'slug' => 'dashboard', 'description' => 'Indicadores e números da tela inicial', 'is_active' => true],
             ['name' => 'Auditoria', 'slug' => 'audit_logs', 'description' => 'Consulta ao histórico de auditoria da plataforma', 'is_active' => true],
             ['name' => 'Comunicação', 'slug' => 'communication_logs', 'description' => 'Consulta ao tracking unificado de e-mail transacional (hub de comunicação)', 'is_active' => true],

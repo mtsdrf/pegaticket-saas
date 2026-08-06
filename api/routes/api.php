@@ -51,6 +51,7 @@ use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\Portal\TicketResaleController;
 use App\Http\Controllers\Privacy\PrivacyRequestController;
 use App\Http\Controllers\Report\AnalyticsController;
+use App\Http\Controllers\Report\CustomReportDefinitionController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Report\ScheduledReportSubscriptionController;
 use App\Http\Controllers\Sale\SaleController;
@@ -1277,6 +1278,60 @@ Route::prefix('v1')->group(function () {
                 // de vendas (não data de calendário).
                 Route::get('/compare-events', [AnalyticsController::class, 'compareEvents'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-compare-events']);
+
+                // Roadmap Fase A3 — antifraude, revenda/transferência e
+                // bilheteria por operador/terminal.
+                Route::get('/risk', [AnalyticsController::class, 'risk'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-risk']);
+
+                Route::get('/resale', [AnalyticsController::class, 'resale'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-resale']);
+
+                Route::get('/operators', [AnalyticsController::class, 'operators'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-operators']);
+
+                // Roadmap Fase A3, parte 2 — coortes/retenção, LTV histórico
+                // e afinidade entre eventos.
+                Route::get('/cohorts', [AnalyticsController::class, 'cohorts'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:30,1,analytics-cohorts']);
+
+                Route::get('/ltv', [AnalyticsController::class, 'ltv'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-ltv']);
+
+                Route::get('/event-affinity', [AnalyticsController::class, 'eventAffinity'])
+                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-event-affinity']);
+            });
+
+            // Construtor de relatórios personalizados (roadmap 5.6). Fonte
+            // de dados/dimensões/métricas SEMPRE vindas de
+            // App\Support\Report\CustomReportFieldWhitelist — nunca SQL
+            // livre. `perm:custom_reports,*` própria, separada de
+            // `analytics`/`reports`, pra permitir plano/permissão granular
+            // no futuro sem afetar os relatórios fixos já existentes.
+            Route::prefix('custom-report-definitions')->group(function () {
+                Route::get('/schema', [CustomReportDefinitionController::class, 'schema'])
+                    ->middleware(['tenant', 'perm:custom_reports,read', 'throttle:60,1,custom-reports-schema']);
+
+                Route::post('/preview', [CustomReportDefinitionController::class, 'preview'])
+                    ->middleware(['tenant', 'perm:custom_reports,read', 'throttle:30,1,custom-reports-preview']);
+
+                Route::get('/', [CustomReportDefinitionController::class, 'index'])
+                    ->middleware(['tenant', 'perm:custom_reports,read', 'throttle:60,1,custom-reports-list']);
+
+                Route::post('/', [CustomReportDefinitionController::class, 'store'])
+                    ->middleware(['tenant', 'perm:custom_reports,create', 'throttle:20,1,custom-reports-create']);
+
+                Route::get('/{customReportDefinition}', [CustomReportDefinitionController::class, 'show'])
+                    ->middleware(['tenant', 'perm:custom_reports,read', 'throttle:60,1,custom-reports-show']);
+
+                Route::put('/{customReportDefinition}', [CustomReportDefinitionController::class, 'update'])
+                    ->middleware(['tenant', 'perm:custom_reports,update', 'throttle:20,1,custom-reports-update']);
+
+                Route::delete('/{customReportDefinition}', [CustomReportDefinitionController::class, 'destroy'])
+                    ->middleware(['tenant', 'perm:custom_reports,delete', 'throttle:10,1,custom-reports-delete']);
+
+                Route::get('/{customReportDefinition}/execute', [CustomReportDefinitionController::class, 'execute'])
+                    ->middleware(['tenant', 'perm:custom_reports,read', 'throttle:30,1,custom-reports-execute']);
             });
         });
 

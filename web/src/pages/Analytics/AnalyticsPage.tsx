@@ -7,16 +7,22 @@ import { PAGE_CONTAINER_SX, UI_RADIUS, UI_SIZE } from '../../styles/layoutStanda
 import { presetRange } from '../../utils/period'
 import { AffiliatesTab } from './tabs/AffiliatesTab'
 import { ClientsTab } from './tabs/ClientsTab'
+import { CohortsTab } from './tabs/CohortsTab'
 import { CompareEventsTab } from './tabs/CompareEventsTab'
 import { CouponsTab } from './tabs/CouponsTab'
+import { EventAffinityTab } from './tabs/EventAffinityTab'
 import { FunnelTab } from './tabs/FunnelTab'
 import { InventoryTab } from './tabs/InventoryTab'
 import { LocationsTab } from './tabs/LocationsTab'
+import { LtvTab } from './tabs/LtvTab'
+import { OperatorsTab } from './tabs/OperatorsTab'
 import { OverdueTab } from './tabs/OverdueTab'
 import { OverviewTab } from './tabs/OverviewTab'
 import { PaymentsTab } from './tabs/PaymentsTab'
 import { ProductsTab } from './tabs/ProductsTab'
 import { RefundsTab } from './tabs/RefundsTab'
+import { ResaleTab } from './tabs/ResaleTab'
+import { RiskTab } from './tabs/RiskTab'
 import { AccessTab } from './tabs/AccessTab'
 import { SalesByDimensionTab } from './tabs/SalesByDimensionTab'
 import { SeasonalityTab } from './tabs/SeasonalityTab'
@@ -37,6 +43,12 @@ type AnalyticsTabKey =
   | 'inventory'
   | 'funnel'
   | 'compare-events'
+  | 'risk'
+  | 'resale'
+  | 'operators'
+  | 'cohorts'
+  | 'ltv'
+  | 'event-affinity'
 
 const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'overview', label: 'Financeiro' },
@@ -54,6 +66,12 @@ const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'inventory', label: 'Inventário' },
   { key: 'funnel', label: 'Funil' },
   { key: 'compare-events', label: 'Comparar eventos' },
+  { key: 'risk', label: 'Antifraude' },
+  { key: 'resale', label: 'Revenda' },
+  { key: 'operators', label: 'Operadores' },
+  { key: 'cohorts', label: 'Coortes' },
+  { key: 'ltv', label: 'LTV' },
+  { key: 'event-affinity', label: 'Afinidade' },
 ]
 
 const DEFAULT_RANGE = presetRange('last_12_months')
@@ -96,13 +114,26 @@ export function AnalyticsPage() {
             from={from}
             to={to}
             onChange={handlePeriodChange}
-            disabled={activeTab === 'seasonality' || activeTab === 'inventory' || activeTab === 'compare-events'}
+            disabled={
+              activeTab === 'seasonality' ||
+              activeTab === 'inventory' ||
+              activeTab === 'compare-events' ||
+              activeTab === 'cohorts' ||
+              activeTab === 'ltv' ||
+              activeTab === 'event-affinity'
+            }
             disabledHint={
               activeTab === 'inventory'
                 ? 'Inventário usa o evento selecionado, não período'
                 : activeTab === 'compare-events'
                   ? 'Comparação usa os eventos selecionados, não período'
-                  : 'Sazonalidade usa o histórico completo'
+                  : activeTab === 'cohorts'
+                    ? 'Coortes usa o mês de coorte selecionado, não período'
+                    : activeTab === 'ltv'
+                      ? 'LTV histórico é vitalício, não usa período'
+                      : activeTab === 'event-affinity'
+                        ? 'Afinidade usa o evento selecionado, não período'
+                        : 'Sazonalidade usa o histórico completo'
             }
           />
 
@@ -149,6 +180,12 @@ export function AnalyticsPage() {
                 {tab.key === 'inventory' && <InventoryTab />}
                 {tab.key === 'funnel' && <FunnelTab {...tabProps} />}
                 {tab.key === 'compare-events' && <CompareEventsTab />}
+                {tab.key === 'risk' && <RiskTab {...tabProps} />}
+                {tab.key === 'resale' && <ResaleTab {...tabProps} />}
+                {tab.key === 'operators' && <OperatorsTab {...tabProps} />}
+                {tab.key === 'cohorts' && <CohortsTab />}
+                {tab.key === 'ltv' && <LtvTab />}
+                {tab.key === 'event-affinity' && <EventAffinityTab />}
               </Box>
             )
           })}

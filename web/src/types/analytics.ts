@@ -49,11 +49,29 @@ export interface SalesHistoryYear {
 
 export type RfmSegment = 'vip' | 'recorrente' | 'em_risco' | 'inativo'
 
+/**
+ * 8 segmentos nomeados da spec (roadmap Fase A3, seção 33) — aditivo ao
+ * `RfmSegment` de 4 valores acima (não substitui, `RfmChip`/Home continuam
+ * lendo só `rfm`). Derivado da MESMA combinação de tercis R/F/M, ver
+ * `RfmCalculator::label8()` no backend.
+ */
+export type RfmSegment8 =
+  | 'campeoes'
+  | 'clientes_leais'
+  | 'potenciais_leais'
+  | 'novos_clientes'
+  | 'promissores'
+  | 'precisam_atencao'
+  | 'em_risco8'
+  | 'inativos'
+
 export interface TopClient {
   name: string
   order_count: number
   total_amount: number
   rfm: RfmSegment | null
+  rfm_segment8: RfmSegment8 | null
+  rfm_segment8_label: string | null
 }
 
 export interface PaymentDelayClient {
@@ -404,4 +422,187 @@ export interface CompareEventsEntry {
 
 export interface CompareEventsReport {
   events: CompareEventsEntry[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de antifraude (roadmap Fase A3) — leitura de `sales.risk_flagged`/
+// `risk_reason` já persistidos por RiskEngineService; motor de risco não é
+// alterado, só lido.
+// ---------------------------------------------------------------------------
+
+export interface RiskReportHeuristic {
+  heuristic: string
+  count: number
+}
+
+export interface RiskFlaggedSale {
+  sale_uuid: string
+  client_name: string | null
+  total_amount: number
+  is_paid: boolean
+  created_at: string
+  heuristic: string | null
+  risk_reason: string | null
+}
+
+export interface RiskReport {
+  from: string
+  to: string
+  totals: {
+    flagged_count: number
+    flagged_amount: number
+    paid_sales_count: number
+    flagged_rate_percentage: number
+  }
+  by_heuristic: RiskReportHeuristic[]
+  flagged_sales: RiskFlaggedSale[]
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de revenda/transferência (roadmap Fase A3) — `ticket_resale_listings`
+// (revenda oficial) + `audit_logs` (evento `ticket_transferred`, transferência
+// simples por exclusão do total de revendas fechadas).
+// ---------------------------------------------------------------------------
+
+export interface ResalePayoutStatusGroup {
+  count: number
+  total_amount: number
+}
+
+export interface ResaleReport {
+  from: string
+  to: string
+  resale: {
+    listed_count: number
+    sold_count: number
+    cancelled_count: number
+    total_transacted_amount: number
+    total_payout_amount: number
+  }
+  payout_by_status: {
+    pendente_liberacao: ResalePayoutStatusGroup
+    liberado: ResalePayoutStatusGroup
+  }
+  transfers: {
+    total_count: number
+    resale_count: number
+    simple_count: number
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Relatório de bilheteria por operador/terminal (roadmap Fase A3) —
+// `ticket_checkins` (operator_id/gate_name) + `sales` (created_by, vendas
+// presenciais) + `cash_sessions` (opened_by).
+// ---------------------------------------------------------------------------
+
+export interface OperatorCheckinStats {
+  operator_id: number | null
+  operator_name: string
+  total_reads: number
+  granted_reads: number
+  warning_reads: number
+  blocked_reads: number
+}
+
+export interface OperatorGateStats {
+  gate_name: string
+  total_reads: number
+  granted_reads: number
+  warning_reads: number
+  blocked_reads: number
+}
+
+export interface OperatorSalesStats {
+  operator_id: number | null
+  operator_name: string
+  sales_count: number
+  total_amount: number
+}
+
+export interface OperatorCashSessionStats {
+  operator_id: number | null
+  operator_name: string
+  sessions_count: number
+  closed_sessions_count: number
+  total_difference_amount: number
+}
+
+export interface OperatorReport {
+  from: string
+  to: string
+  checkins_by_operator: OperatorCheckinStats[]
+  checkins_by_gate: OperatorGateStats[]
+  sales_by_operator: OperatorSalesStats[]
+  cash_sessions_by_operator: OperatorCashSessionStats[]
+}
+
+// ---------------------------------------------------------------------------
+// Coortes de retenção (roadmap Fase A3, parte 2) — mês da primeira compra
+// paga (M0) x retenção nos meses seguintes (M0..M6). Tempo real, sem
+// snapshot — `from` é sempre obrigatório (regra transversal de filtro
+// ativo), a tela não busca nada sem mês de coorte escolhido.
+// ---------------------------------------------------------------------------
+
+export interface CohortRetentionPoint {
+  month_offset: number
+  retained_count: number | null
+  retention_percentage: number | null
+}
+
+export interface CohortRow {
+  cohort_month: string
+  cohort_size: number
+  retention: CohortRetentionPoint[]
+}
+
+export interface CohortsReport {
+  from: string
+  to: string
+  max_month_offset: number
+  cohorts: CohortRow[]
+}
+
+// ---------------------------------------------------------------------------
+// LTV histórico (roadmap Fase A3, parte 2) — valor já gasto (realizado, não
+// projeção) agregado por segmento RFM de 8 níveis ou por coorte de aquisição.
+// ---------------------------------------------------------------------------
+
+export type LtvGroupBy = 'segment' | 'cohort'
+
+export interface LtvGroup {
+  key: string
+  label: string
+  customers_count: number
+  average_ltv: number
+  total_ltv: number
+}
+
+export interface LtvReport {
+  group_by: LtvGroupBy
+  overall: {
+    customers_count: number
+    average_ltv: number
+  }
+  groups: LtvGroup[]
+}
+
+// ---------------------------------------------------------------------------
+// Afinidade entre eventos (roadmap Fase A3, parte 2) — para o evento
+// selecionado, ranking dos eventos mais comprados pelos mesmos clientes
+// (cross-sell). Sem matriz completa nem rede/grafo visual.
+// ---------------------------------------------------------------------------
+
+export interface EventAffinityItem {
+  event_uuid: string
+  event_name: string
+  shared_customers_count: number
+  affinity_percentage: number
+}
+
+export interface EventAffinityReport {
+  event_uuid: string
+  event_name: string
+  base_customers_count: number
+  affinities: EventAffinityItem[]
 }
