@@ -18,7 +18,7 @@ class SalePaymentChargeRequest extends FormRequest
             'method' => ['nullable', 'string', Rule::in(['pix', 'credit_card', 'debit_card'])],
             'payer_tax_id' => ['nullable', 'string', 'max:14'],
             'payer_name' => ['nullable', 'string', 'max:255'],
-            'payer_email' => ['nullable', 'email:rfc,dns', 'max:255'],
+            'payer_email' => ['nullable', 'email:rfc', 'max:255'],
             'payer_phone' => ['nullable', 'string', 'max:20'],
 
             'card' => ['nullable', 'array'],

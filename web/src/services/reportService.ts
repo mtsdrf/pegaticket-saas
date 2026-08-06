@@ -20,7 +20,7 @@ export function getByChannel(params: ReportPeriodParams = {}): Promise<ChannelRe
   return unwrap(apiClient.get<ApiSuccess<ChannelResultPoint[]>>('/reports/by-channel', { params }))
 }
 
-/** Alertas básicos do Home (roadmap Fase A1) — estoque baixo e pagamento. */
+/** Alertas básicos do Home (roadmap Fase A1) — pagamento e operação. */
 export function getAlerts(): Promise<ReportAlert[]> {
   return unwrap(apiClient.get<ApiSuccess<ReportAlert[]>>('/reports/alerts'))
 }

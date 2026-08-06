@@ -32,8 +32,9 @@ class ReportController extends Controller
     ) {}
 
     /**
-     * Alertas básicos do Home (roadmap Fase A1) — estoque baixo e
-     * pagamento, calculados on-the-fly, sem model de alerta configurável.
+     * Alertas básicos do Home (roadmap Fase A1) — pagamento, fila manual
+     * e anomalias operacionais, calculados on-the-fly, sem model de
+     * alerta configurável.
      */
     public function alerts()
     {

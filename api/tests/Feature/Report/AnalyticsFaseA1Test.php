@@ -16,7 +16,7 @@ use Tests\TestCase;
 /**
  * Roadmap Fase A1 (docs/roadmap/2026-08-05-pegaticket-analytics-refactor-roadmap.md):
  * KPIs de ocupação/receita líquida, vendas por dimensão unificada,
- * relatório de pagamentos e alertas básicos (estoque baixo/pagamento).
+ * relatório de pagamentos e alertas operacionais básicos de pagamento.
  */
 class AnalyticsFaseA1Test extends TestCase
 {
@@ -180,7 +180,7 @@ class AnalyticsFaseA1Test extends TestCase
     }
 
     #[Test]
-    public function alerts_report_low_stock_and_pending_approval_queue(): void
+    public function alerts_report_pending_approval_queue_without_low_stock_alert(): void
     {
         $ticketType = $this->createProduct($this->tenant->id, ['name' => 'Camarote', 'quantity_available' => 10]);
 
@@ -199,12 +199,13 @@ class AnalyticsFaseA1Test extends TestCase
         $alerts = $response->json('data');
 
         $lowStock = collect($alerts)->firstWhere('type', 'low_stock');
-        $this->assertNotNull($lowStock);
-        $this->assertSame('Camarote', $lowStock['meta']['ticket_type_name']);
-        $this->assertSame(1, $lowStock['meta']['remaining']);
+        $this->assertNull($lowStock);
 
         $pendingQueue = collect($alerts)->firstWhere('type', 'payment_pending_queue');
         $this->assertNotNull($pendingQueue);
         $this->assertSame(15, $pendingQueue['meta']['pending_approval_count']);
+
+        $this->assertNotNull($ticketType);
+        $this->assertNotNull($stockSale);
     }
 }

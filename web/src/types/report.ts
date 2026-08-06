@@ -82,9 +82,8 @@ export interface ReportCharts {
   rfm_clients: RfmClientPoint[]
 }
 
-/** Alertas básicos do Home (roadmap Fase A1) — estoque baixo e pagamento, calculados on-the-fly. */
+/** Alertas básicos do Home (roadmap Fase A1) — pagamento e operação, calculados on-the-fly. */
 export type AlertType =
-  | 'low_stock'
   | 'payment_rejection_rate'
   | 'payment_pending_queue'
   | 'daily_revenue_anomaly'
