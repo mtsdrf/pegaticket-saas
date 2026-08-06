@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { FormSection } from '../../components/form/FormSection'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
 import * as seatService from '../../services/seatService'
 import * as venueService from '../../services/venueService'
 import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
@@ -123,81 +125,85 @@ export function SeatFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
-        <TextField
-          label="Código"
-          value={form.label}
-          onChange={(event) => updateField('label', event.target.value)}
-          error={Boolean(fieldErrors.label)}
-          helperText={fieldErrors.label?.[0]}
-          required
-        />
-        <TextField
-          label="Setor"
-          value={form.sector_name}
-          onChange={(event) => updateField('sector_name', event.target.value)}
-          error={Boolean(fieldErrors.sector_name)}
-          helperText={fieldErrors.sector_name?.[0]}
-        />
-        <LocalAutocomplete
-          label="Tipo"
-          options={SEAT_KIND_OPTIONS}
-          value={SEAT_KIND_OPTIONS.find((option) => option.value === form.kind) ?? null}
-          onChange={(option) => updateField('kind', (option?.value ?? 'assento') as SeatKind)}
-          getOptionLabel={(option) => option.label}
-          getOptionKey={(option) => option.value}
-          error={Boolean(fieldErrors.kind)}
-          helperText={fieldErrors.kind?.[0]}
-        />
-      </Box>
+      <FormSection title="Identificação do ponto" description="Defina código, setor e o tipo estrutural do item dentro do mapa.">
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Código"
+            value={form.label}
+            onChange={(event) => updateField('label', event.target.value)}
+            error={Boolean(fieldErrors.label)}
+            helperText={fieldErrors.label?.[0]}
+            required
+          />
+          <TextField
+            label="Setor"
+            value={form.sector_name}
+            onChange={(event) => updateField('sector_name', event.target.value)}
+            error={Boolean(fieldErrors.sector_name)}
+            helperText={fieldErrors.sector_name?.[0]}
+          />
+          <LocalAutocomplete
+            label="Tipo"
+            options={SEAT_KIND_OPTIONS}
+            value={SEAT_KIND_OPTIONS.find((option) => option.value === form.kind) ?? null}
+            onChange={(option) => updateField('kind', (option?.value ?? 'assento') as SeatKind)}
+            getOptionLabel={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            error={Boolean(fieldErrors.kind)}
+            helperText={fieldErrors.kind?.[0]}
+          />
+        </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
-        <TextField
-          label="Capacidade"
-          type="number"
-          value={form.capacity}
-          onChange={(event) => updateField('capacity', event.target.value)}
-          error={Boolean(fieldErrors.capacity)}
-          helperText={fieldErrors.capacity?.[0]}
-          slotProps={{ htmlInput: { min: 1, step: '1' } }}
-        />
-        <TextField
-          label="Posição X"
-          type="number"
-          value={form.pos_x}
-          onChange={(event) => updateField('pos_x', event.target.value)}
-          error={Boolean(fieldErrors.pos_x)}
-          helperText={fieldErrors.pos_x?.[0]}
-          slotProps={{ htmlInput: { step: '0.01' } }}
-        />
-        <TextField
-          label="Posição Y"
-          type="number"
-          value={form.pos_y}
-          onChange={(event) => updateField('pos_y', event.target.value)}
-          error={Boolean(fieldErrors.pos_y)}
-          helperText={fieldErrors.pos_y?.[0]}
-          slotProps={{ htmlInput: { step: '0.01' } }}
-        />
-      </Box>
+      <FormSection title="Geometria e operação" description="Ajuste capacidade, posição no plano e disponibilidade operacional do ponto.">
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Capacidade"
+            type="number"
+            value={form.capacity}
+            onChange={(event) => updateField('capacity', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.capacity)}
+            helperText={fieldErrors.capacity?.[0]}
+            slotProps={{ htmlInput: { min: 1, step: '1' } }}
+          />
+          <TextField
+            label="Posição X"
+            type="number"
+            value={form.pos_x}
+            onChange={(event) => updateField('pos_x', event.target.value)}
+            error={Boolean(fieldErrors.pos_x)}
+            helperText={fieldErrors.pos_x?.[0]}
+            slotProps={{ htmlInput: { step: '0.01' } }}
+          />
+          <TextField
+            label="Posição Y"
+            type="number"
+            value={form.pos_y}
+            onChange={(event) => updateField('pos_y', event.target.value)}
+            error={Boolean(fieldErrors.pos_y)}
+            helperText={fieldErrors.pos_y?.[0]}
+            slotProps={{ htmlInput: { step: '0.01' } }}
+          />
+        </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <LocalAutocomplete
-          label="Status"
-          options={SEAT_STATUS_OPTIONS}
-          value={SEAT_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
-          onChange={(option) => updateField('status', (option?.value ?? 'disponivel') as SeatStatus)}
-          getOptionLabel={(option) => option.label}
-          getOptionKey={(option) => option.value}
-          error={Boolean(fieldErrors.status)}
-          helperText={fieldErrors.status?.[0]}
-        />
-        <FormControlLabel
-          control={<Switch checked={form.is_accessible} onChange={(event) => updateField('is_accessible', event.target.checked)} />}
-          label="Acessível"
-          sx={{ minHeight: 56, alignItems: 'center' }}
-        />
-      </Box>
+        <Box sx={FORM_GRID_2_SX}>
+          <LocalAutocomplete
+            label="Status"
+            options={SEAT_STATUS_OPTIONS}
+            value={SEAT_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
+            onChange={(option) => updateField('status', (option?.value ?? 'disponivel') as SeatStatus)}
+            getOptionLabel={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            error={Boolean(fieldErrors.status)}
+            helperText={fieldErrors.status?.[0]}
+          />
+          <FormControlLabel
+            control={<Switch checked={form.is_accessible} onChange={(event) => updateField('is_accessible', event.target.checked)} />}
+            label="Acessível"
+            sx={{ minHeight: 56, alignItems: 'center' }}
+          />
+        </Box>
+      </FormSection>
     </CrudFormShell>
   )
 }

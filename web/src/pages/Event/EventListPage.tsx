@@ -4,13 +4,14 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
 import MeetingRoomOutlinedIcon from '@mui/icons-material/MeetingRoomOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
-import { Avatar, Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { Avatar, Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { ACCESS } from '../../access/requirements'
 import { useAccessControl } from '../../hooks/useAccessControl'
@@ -22,6 +23,16 @@ import { getApiErrorMessage } from '../../types/api'
 import { formatDateBR } from '../../utils/format'
 
 const STATUS_LABELS = Object.fromEntries(EVENT_STATUS_OPTIONS.map((option) => [option.value, option.label]))
+const STATUS_TONES: Record<Event['status'], StatusChipTone> = {
+  rascunho: 'neutral',
+  agendado: 'warning',
+  publicado: 'success',
+  vendas_pausadas: 'info',
+  esgotado: 'warning',
+  encerrado: 'neutral',
+  cancelado: 'danger',
+  arquivado: 'neutral',
+}
 
 export function EventListPage() {
   const navigate = useNavigate()
@@ -104,7 +115,7 @@ export function EventListPage() {
         field: 'starts_at',
         headerName: 'Início',
         width: 160,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => formatDateBR(row.starts_at),
         exportValue: (row) => formatDateBR(row.starts_at),
       },
@@ -112,8 +123,9 @@ export function EventListPage() {
         field: 'status',
         headerName: 'Status',
         width: 150,
-        filterType: 'none',
-        cellRenderer: (row) => <Chip size="small" label={STATUS_LABELS[row.status] ?? row.status} />,
+        filterType: 'text',
+        cellRenderer: (row) => <StatusChip status={row.status} label={STATUS_LABELS[row.status] ?? row.status} tone={STATUS_TONES[row.status]} />,
+        exportValue: (row) => STATUS_LABELS[row.status] ?? row.status,
       },
       {
         field: 'uuid',
@@ -195,29 +207,25 @@ export function EventListPage() {
         isLoading={!activeTenantUuid}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 720 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="eventos"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <EventOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum evento cadastrado ainda',
-                description: 'Comece cadastrando o primeiro evento.',
-                action: can(ACCESS.eventsCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/eventos/novo')}>
-                    Cadastrar primeiro evento
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="eventos"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <EventOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum evento cadastrado ainda',
+            description: 'Comece cadastrando o primeiro evento.',
+            action: can(ACCESS.eventsCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/eventos/novo')}>
+                Cadastrar primeiro evento
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

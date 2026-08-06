@@ -65,6 +65,7 @@ export function CrudFormShell({
           ...SECTION_CARD_PADDING_SX,
           ...ELEVATED_SURFACE_SX,
           ...FORM_FIELD_SURFACE_SX,
+          background: 'var(--pt-surface-raised-bg)',
         }}
       >
         {loadError && (
@@ -88,7 +89,7 @@ export function CrudFormShell({
                 </Alert>
               )}
 
-              <Box sx={CONTENT_CONTAINER_SX}>{children}</Box>
+              <Box sx={{ ...CONTENT_CONTAINER_SX, gap: 3 }}>{children}</Box>
 
               <Stack
                 direction={{ xs: 'column-reverse', sm: 'row' }}

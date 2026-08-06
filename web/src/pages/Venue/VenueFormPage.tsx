@@ -2,6 +2,8 @@ import { Box, FormControlLabel, Switch, TextField } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import * as venueService from '../../services/venueService'
 import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
@@ -106,48 +108,52 @@ export function VenueFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Nome"
-          value={form.name}
-          onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(fieldErrors.name)}
-          helperText={fieldErrors.name?.[0]}
-          required
-        />
-        <FormControlLabel
-          control={<Switch checked={form.is_active} onChange={(event) => updateField('is_active', event.target.checked)} />}
-          label="Local ativo"
-          sx={{ minHeight: 56, alignItems: 'center' }}
-        />
-      </Box>
+      <FormSection title="Dados principais" description="Defina o nome do local e o status geral de uso na operação.">
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Nome"
+            value={form.name}
+            onChange={(event) => updateField('name', event.target.value)}
+            error={Boolean(fieldErrors.name)}
+            helperText={fieldErrors.name?.[0]}
+            required
+          />
+          <FormControlLabel
+            control={<Switch checked={form.is_active} onChange={(event) => updateField('is_active', event.target.checked)} />}
+            label="Local ativo"
+            sx={{ minHeight: 56, alignItems: 'center' }}
+          />
+        </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Largura do mapa"
-          type="number"
-          value={form.width}
-          onChange={(event) => updateField('width', event.target.value)}
-          error={Boolean(fieldErrors.width)}
-          helperText={fieldErrors.width?.[0] ?? 'Opcional. Base em pixels para o mapa.'}
-          slotProps={{ htmlInput: { min: 1, step: '1' } }}
-        />
-        <TextField
-          label="Altura do mapa"
-          type="number"
-          value={form.height}
-          onChange={(event) => updateField('height', event.target.value)}
-          error={Boolean(fieldErrors.height)}
-          helperText={fieldErrors.height?.[0] ?? 'Opcional. Base em pixels para o mapa.'}
-          slotProps={{ htmlInput: { min: 1, step: '1' } }}
-        />
-      </Box>
+      <FormSection title="Base do mapa" description="Informe as dimensões iniciais do mapa e, se desejar, envie uma imagem de fundo.">
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Largura do mapa"
+            type="number"
+            value={form.width}
+            onChange={(event) => updateField('width', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.width)}
+            helperText={fieldErrors.width?.[0] ?? 'Opcional. Base em pixels para o mapa.'}
+            slotProps={{ htmlInput: { min: 1, step: '1' } }}
+          />
+          <TextField
+            label="Altura do mapa"
+            type="number"
+            value={form.height}
+            onChange={(event) => updateField('height', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.height)}
+            helperText={fieldErrors.height?.[0] ?? 'Opcional. Base em pixels para o mapa.'}
+            slotProps={{ htmlInput: { min: 1, step: '1' } }}
+          />
+        </Box>
 
-      <ImageUploadField
-        label="Imagem de fundo do mapa"
-        existingImageUrl={existingImageUrl}
-        onFileSelected={setImageFile}
-      />
+        <ImageUploadField
+          label="Imagem de fundo do mapa"
+          existingImageUrl={existingImageUrl}
+          onFileSelected={setImageFile}
+        />
+      </FormSection>
     </CrudFormShell>
   )
 }

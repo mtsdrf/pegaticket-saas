@@ -16,8 +16,8 @@ const CARD_SX = {
 } as const
 
 /**
- * Alertas básicos do Home (roadmap Fase A1) — estoque baixo e pagamento,
- * calculados on-the-fly (sem model de alerta configurável). Não usa
+ * Alertas básicos do Home (roadmap Fase A1) — pagamento, fila manual e
+ * anomalias operacionais calculadas on-the-fly (sem model configurável). Não usa
  * PeriodFilter — é um card operacional "agora", mesmo espírito de
  * OperationSnapshotCard, dentro de uma tela que já tem filtro de período
  * ativo por padrão (regra transversal de filtro obrigatório da Fase A1).
@@ -56,7 +56,7 @@ export function AlertsCard({ alerts, isLoading }: AlertsCardProps) {
               Nenhum alerta no momento
             </Typography>
             <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-              Estoque e pagamentos estão dentro do esperado.
+              Pagamentos e fila operacional estão dentro do esperado.
             </Typography>
           </Box>
         </Box>

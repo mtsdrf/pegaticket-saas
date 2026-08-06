@@ -1,26 +1,27 @@
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
 import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined'
-import { Box, Chip, IconButton, MenuItem, TextField, Tooltip } from '@mui/material'
+import { IconButton, Tooltip } from '@mui/material'
 import { useCallback, useMemo, useState } from 'react'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { ACCESS } from '../../access/requirements'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
 import * as ticketService from '../../services/ticketService'
-import { TICKET_STATUS_LABELS, TICKET_STATUS_OPTIONS, type Ticket, type TicketStatus } from '../../types/ticket'
+import { TICKET_STATUS_LABELS, type Ticket, type TicketStatus } from '../../types/ticket'
 import { getApiErrorMessage } from '../../types/api'
 import { formatDateTimeBR } from '../../utils/format'
 
-const STATUS_TONE: Record<TicketStatus, { bg: string; fg: string }> = {
-  pendente: { bg: 'color-mix(in srgb, var(--pt-muted) 14%, transparent)', fg: 'var(--pt-muted)' },
-  ativo: { bg: 'color-mix(in srgb, var(--pt-info) 14%, transparent)', fg: 'var(--pt-info)' },
-  utilizado: { bg: 'color-mix(in srgb, var(--pt-success) 14%, transparent)', fg: 'var(--pt-success)' },
-  cancelado: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', fg: 'var(--pt-danger)' },
-  estornado: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', fg: 'var(--pt-danger)' },
-  bloqueado: { bg: 'color-mix(in srgb, var(--pt-danger) 14%, transparent)', fg: 'var(--pt-danger)' },
-  expirado: { bg: 'color-mix(in srgb, var(--pt-muted) 14%, transparent)', fg: 'var(--pt-muted)' },
+const STATUS_TONE: Record<TicketStatus, StatusChipTone> = {
+  pendente: 'neutral',
+  ativo: 'info',
+  utilizado: 'success',
+  cancelado: 'danger',
+  estornado: 'danger',
+  bloqueado: 'danger',
+  expirado: 'neutral',
 }
 
 /**
@@ -34,7 +35,6 @@ export function TicketListPage() {
   const { can } = useAccessControl()
   const { activeTenantUuid } = useAuth()
 
-  const [status, setStatus] = useState<TicketStatus | ''>('')
   const [resendingUuid, setResendingUuid] = useState<string | null>(null)
   const [resendError, setResendError] = useState<string | null>(null)
   const [resendedUuids, setResendedUuids] = useState<Set<string>>(new Set())
@@ -58,7 +58,6 @@ export function TicketListPage() {
 
       const result = await ticketService.listTickets({
         ...filters,
-        status: status || undefined,
         page,
         per_page: perPage,
         sort_by: sortBy,
@@ -67,7 +66,7 @@ export function TicketListPage() {
 
       return { rows: result.items, total: result.pagination.total }
     },
-    [activeTenantUuid, status],
+    [activeTenantUuid],
   )
 
   const columns = useMemo<ServerGridColumn<Ticket>[]>(
@@ -83,14 +82,14 @@ export function TicketListPage() {
       {
         field: 'event_name',
         headerName: 'Evento',
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => row.event?.name ?? '—',
         exportValue: (row) => row.event?.name ?? '',
       },
       {
         field: 'ticket_type_name',
         headerName: 'Tipo de ingresso',
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => row.ticket_type?.name ?? '—',
         exportValue: (row) => row.ticket_type?.name ?? '',
       },
@@ -98,24 +97,15 @@ export function TicketListPage() {
         field: 'status',
         headerName: 'Status',
         width: 140,
-        filterType: 'none',
-        cellRenderer: (row) => {
-          const tone = STATUS_TONE[row.status]
-          return (
-            <Chip
-              size="small"
-              label={TICKET_STATUS_LABELS[row.status] ?? row.status}
-              sx={{ fontWeight: 600, bgcolor: tone.bg, color: tone.fg }}
-            />
-          )
-        },
+        filterType: 'text',
+        cellRenderer: (row) => <StatusChip status={row.status} label={TICKET_STATUS_LABELS[row.status] ?? row.status} tone={STATUS_TONE[row.status]} />,
         exportValue: (row) => TICKET_STATUS_LABELS[row.status] ?? row.status,
       },
       {
         field: 'issued_at',
         headerName: 'Emitido em',
         width: 160,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => (row.issued_at ? formatDateTimeBR(row.issued_at) : '—'),
         exportValue: (row) => (row.issued_at ? formatDateTimeBR(row.issued_at) : ''),
       },
@@ -157,43 +147,22 @@ export function TicketListPage() {
       title="Ingressos"
       subtitle="Consulte os ingressos emitidos e registre reenvios quando necessário."
       canCreate={false}
-      toolbar={
-        <TextField
-          select
-          label="Status"
-          size="small"
-          value={status}
-          onChange={(event) => setStatus(event.target.value as TicketStatus | '')}
-          sx={{ minWidth: 220 }}
-        >
-          <MenuItem value="">Todos os status</MenuItem>
-          {TICKET_STATUS_OPTIONS.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-      }
       error={resendError}
       onRetry={() => setResendError(null)}
       isLoading={!activeTenantUuid}
       isEmpty={false}
     >
-      <Box sx={{ overflowX: 'auto' }}>
-        <Box sx={{ minWidth: 860 }}>
-          <ServerDataGrid
-            columns={columns}
-            fetchPage={fetchPage}
-            rowIdField="uuid"
-            exportFileName="ingressos"
-            emptyState={{
-              icon: <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-              title: 'Nenhum ingresso emitido ainda',
-              description: 'Ingressos aparecem aqui automaticamente após a confirmação de uma venda.',
-            }}
-          />
-        </Box>
-      </Box>
+      <ServerDataGrid
+        columns={columns}
+        fetchPage={fetchPage}
+        rowIdField="uuid"
+        exportFileName="ingressos"
+        emptyState={{
+          icon: <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+          title: 'Nenhum ingresso emitido ainda',
+          description: 'Ingressos aparecem aqui automaticamente após a confirmação de uma venda.',
+        }}
+      />
     </CrudListPage>
   )
 }

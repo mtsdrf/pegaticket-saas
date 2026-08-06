@@ -4,6 +4,8 @@ import { CrudFormShell } from './CrudFormShell'
 import { LocalAutocomplete } from './LocalAutocomplete'
 import type { CrudFieldDef, CrudFormValues } from './schemaFormTypes'
 import type { PageHeaderBreadcrumb } from '../layout/PageHeader'
+import { FormSection } from '../form/FormSection'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 
 interface SchemaFormPageProps {
   backLabel: string
@@ -59,77 +61,73 @@ export function SchemaFormPage({
       isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     >
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2, mb: 1 }}>
-        {fields.map((field) => {
-          const gridColumn = field.half ? undefined : { xs: '1 / -1', sm: '1 / -1' }
-          // Campo que ocupa a linha inteira (ex.: "Nome") não deve esticar até
-          // a largura toda do container em telas grandes — um input de texto
-          // sozinho com >600px de largura fica com aparência ruim/vazia. Só
-          // se aplica a quem realmente ocupa a linha inteira; campo `half`
-          // já fica naturalmente limitado pela coluna do grid.
-          const fullSpanMaxWidth = field.half ? undefined : { sm: 560 }
-          const error = Boolean(fieldErrors[field.name]?.[0])
-          const helperText = fieldErrors[field.name]?.[0]
+      <FormSection title="Dados principais" description="Preencha os campos obrigatórios e revise as configurações de ativação.">
+        <Box sx={{ ...FORM_GRID_2_SX, mb: 0 }}>
+          {fields.map((field) => {
+            const gridColumn = field.half ? undefined : { xs: '1 / -1', sm: '1 / -1' }
+            const error = Boolean(fieldErrors[field.name]?.[0])
+            const helperText = fieldErrors[field.name]?.[0]
 
-          if (field.type === 'switch') {
+            if (field.type === 'switch') {
+              return (
+                <FormControlLabel
+                  key={field.name}
+                  sx={{ gridColumn, minHeight: 56, alignItems: 'center' }}
+                  control={
+                    <Switch
+                      checked={Boolean(values[field.name])}
+                      onChange={(event) => onChange(field.name, event.target.checked)}
+                    />
+                  }
+                  label={field.label}
+                />
+              )
+            }
+
+            if (field.type === 'select') {
+              const currentValue = String(values[field.name] ?? '')
+              return (
+                <LocalAutocomplete
+                  key={field.name}
+                  sx={{ gridColumn }}
+                  label={field.label}
+                  required={field.required}
+                  error={error}
+                  helperText={helperText}
+                  options={field.options ?? []}
+                  value={field.options?.find((option) => option.value === currentValue) ?? null}
+                  onChange={(option) => onChange(field.name, option?.value ?? '')}
+                  getOptionLabel={(option) => option.label}
+                  getOptionKey={(option) => option.value}
+                />
+              )
+            }
+
             return (
-              <FormControlLabel
+              <TextField
                 key={field.name}
                 sx={{ gridColumn }}
-                control={
-                  <Switch
-                    checked={Boolean(values[field.name])}
-                    onChange={(event) => onChange(field.name, event.target.checked)}
-                  />
+                label={field.label}
+                type={field.type === 'number' ? 'number' : 'text'}
+                value={values[field.name] ?? ''}
+                onChange={(event) =>
+                  onChange(field.name, field.type === 'number' ? event.target.value : event.target.value)
                 }
-                label={field.label}
-              />
-            )
-          }
-
-          if (field.type === 'select') {
-            const currentValue = String(values[field.name] ?? '')
-            return (
-              <LocalAutocomplete
-                key={field.name}
-                sx={{ gridColumn, maxWidth: fullSpanMaxWidth }}
-                label={field.label}
-                required={field.required}
                 error={error}
                 helperText={helperText}
-                options={field.options ?? []}
-                value={field.options?.find((option) => option.value === currentValue) ?? null}
-                onChange={(option) => onChange(field.name, option?.value ?? '')}
-                getOptionLabel={(option) => option.label}
-                getOptionKey={(option) => option.value}
+                required={field.required}
+                fullWidth
+                slotProps={{
+                  htmlInput:
+                    field.type === 'number'
+                      ? { min: field.min, step: field.step ?? 1 }
+                      : { maxLength: field.maxLength },
+                }}
               />
             )
-          }
-
-          return (
-            <TextField
-              key={field.name}
-              sx={{ gridColumn, maxWidth: fullSpanMaxWidth }}
-              label={field.label}
-              type={field.type === 'number' ? 'number' : 'text'}
-              value={values[field.name] ?? ''}
-              onChange={(event) =>
-                onChange(field.name, field.type === 'number' ? event.target.value : event.target.value)
-              }
-              error={error}
-              helperText={helperText}
-              required={field.required}
-              fullWidth
-              slotProps={{
-                htmlInput:
-                  field.type === 'number'
-                    ? { min: field.min, step: field.step ?? 1 }
-                    : { maxLength: field.maxLength },
-              }}
-            />
-          )
-        })}
-      </Box>
+          })}
+        </Box>
+      </FormSection>
     </CrudFormShell>
   )
 }

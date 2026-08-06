@@ -1,7 +1,8 @@
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import { Box, Button, Divider, Paper, Stack, Typography } from '@mui/material'
+import { FormSection } from '../../components/form/FormSection'
 import { usePortalAuth } from '../../hooks/usePortalAuth'
-import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
+import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { formatDateBR } from '../../utils/format'
 import { PortalShell } from './PortalShell'
 
@@ -19,27 +20,29 @@ export function PortalProfilePage() {
   return (
     <PortalShell title="Perfil" subtitle="Seus dados e as lojas vinculadas à sua conta PegaTicket.">
       <Stack spacing={2.5}>
-        <Paper
-          elevation={0}
-          sx={{
-            ...ELEVATED_SURFACE_SX,
-            p: 2,
-          }}
+        <FormSection
+          title="Dados da conta"
+          description="Resumo dos dados principais vinculados ao seu acesso no portal do cliente."
         >
-          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nome</Typography>
-          <Typography sx={{ fontSize: 15, fontWeight: 600, mb: 1.25 }}>
-            {customer?.name ?? 'Não informado'}
-          </Typography>
+          <Box sx={{ width: '100%' }}>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>Nome</Typography>
+            <Typography sx={{ fontSize: 15, fontWeight: 600, mb: 1.25 }}>
+              {customer?.name ?? 'Não informado'}
+            </Typography>
 
-          <Divider sx={{ mb: 1.25 }} />
+            <Divider sx={{ mb: 1.25 }} />
 
-          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>E-mail</Typography>
-          <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>{customer?.email}</Typography>
-        </Paper>
+            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>E-mail</Typography>
+            <Typography sx={{ fontSize: 15, fontWeight: 600, wordBreak: 'break-word' }}>
+              {customer?.email}
+            </Typography>
+          </Box>
+        </FormSection>
 
-        <Box>
-          <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>Lojas vinculadas</Typography>
-
+        <FormSection
+          title="Lojas vinculadas"
+          description="Essas lojas ficaram associadas à sua conta a partir dos links de rastreio e compras confirmadas."
+        >
           {(!customer || customer.linked_tenants.length === 0) && <LinkedStoresEmpty />}
 
           {customer && customer.linked_tenants.length > 0 && (
@@ -69,7 +72,7 @@ export function PortalProfilePage() {
               ))}
             </Stack>
           )}
-        </Box>
+        </FormSection>
 
         <Button onClick={logout} variant="outlined" color="inherit" size="large">
           Sair da conta

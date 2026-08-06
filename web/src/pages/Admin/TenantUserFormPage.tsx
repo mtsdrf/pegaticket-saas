@@ -1,13 +1,15 @@
-import { FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material'
+import { Box, FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { FormSection } from '../../components/form/FormSection'
 import { PasswordField } from '../../components/form/PasswordField'
 import { useTenants } from '../../hooks/useTenants'
 import * as adminUserService from '../../services/adminUserService'
 import * as tenantRoleService from '../../services/tenantRoleService'
 import * as tenantUserService from '../../services/tenantUserService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { AdminUser, TenantRole } from '../../types/admin'
 
@@ -96,103 +98,123 @@ export function TenantUserFormPage() {
       onSubmit={handleSubmit}
     >
       <Stack spacing={2}>
-        <LocalAutocomplete
-          label="Empresa"
-          fullWidth
-          required
-          disabled={isEditMode}
-          options={tenants ?? []}
-          value={(tenants ?? []).find((tenant) => tenant.tenant_uuid === tenantUuid) ?? null}
-          onChange={(tenant) => setTenantUuid(tenant?.tenant_uuid ?? '')}
-          getOptionLabel={(tenant) => tenant.tenant_name}
-          getOptionKey={(tenant) => tenant.tenant_uuid}
-          error={Boolean(fieldErrors.tenant_uuid)}
-          helperText={fieldErrors.tenant_uuid?.[0]}
-        />
-        <LocalAutocomplete
-          label="Usuário"
-          fullWidth
-          required
-          disabled={isEditMode || createNewUser}
-          options={users}
-          value={users.find((user) => user.uuid === userUuid) ?? null}
-          onChange={(user) => setUserUuid(user?.uuid ?? '')}
-          getOptionLabel={(user) => `${user.name}${user.email ? ` • ${user.email}` : ''}`}
-          getOptionKey={(user) => user.uuid}
-          error={Boolean(fieldErrors.user_uuid) && !createNewUser}
-          helperText={createNewUser ? 'Desative a opção abaixo para escolher um usuário já existente.' : fieldErrors.user_uuid?.[0]}
-        />
-        {!isEditMode && (
-          <>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={createNewUser}
-                  onChange={(event) => {
-                    const checked = event.target.checked
-                    setCreateNewUser(checked)
-                    if (checked) {
-                      setUserUuid('')
-                    } else {
-                      setUserName('')
-                      setUserEmail('')
-                      setUserPassword('')
-                    }
-                  }}
-                />
-              }
-              label="Cadastrar um novo usuário agora"
+        <FormSection
+          title="Vínculo principal"
+          description="Associe empresa, usuário e perfil, mantendo o mesmo padrão aplicado aos demais cadastros administrativos."
+        >
+          <Box sx={FORM_GRID_2_SX}>
+            <LocalAutocomplete
+              label="Empresa"
+              fullWidth
+              required
+              disabled={isEditMode}
+              options={tenants ?? []}
+              value={(tenants ?? []).find((tenant) => tenant.tenant_uuid === tenantUuid) ?? null}
+              onChange={(tenant) => setTenantUuid(tenant?.tenant_uuid ?? '')}
+              getOptionLabel={(tenant) => tenant.tenant_name}
+              getOptionKey={(tenant) => tenant.tenant_uuid}
+              error={Boolean(fieldErrors.tenant_uuid)}
+              helperText={fieldErrors.tenant_uuid?.[0]}
             />
-            {createNewUser && (
-              <Stack spacing={2}>
-                <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
-                  O sistema criará o usuário e já fará o vínculo com a empresa e o perfil selecionado.
-                </Typography>
-                <TextField
-                  label="Nome do usuário"
-                  value={userName}
-                  onChange={(event) => setUserName(event.target.value)}
-                  required
-                  fullWidth
-                  error={Boolean(fieldErrors['user.name'])}
-                  helperText={fieldErrors['user.name']?.[0]}
-                />
-                <TextField
-                  label="E-mail do usuário"
-                  type="email"
-                  value={userEmail}
-                  onChange={(event) => setUserEmail(event.target.value)}
-                  required
-                  fullWidth
-                  error={Boolean(fieldErrors['user.email'])}
-                  helperText={fieldErrors['user.email']?.[0]}
-                />
-                <PasswordField
-                  label="Senha provisória"
-                  value={userPassword}
-                  onChange={(event) => setUserPassword(event.target.value)}
-                  required
-                  fullWidth
-                  error={Boolean(fieldErrors['user.password'])}
-                  helperText={fieldErrors['user.password']?.[0] ?? 'Depois o usuário poderá trocar a própria senha.'}
-                />
-              </Stack>
-            )}
-          </>
+            <LocalAutocomplete
+              label="Usuário"
+              fullWidth
+              required
+              disabled={isEditMode || createNewUser}
+              options={users}
+              value={users.find((user) => user.uuid === userUuid) ?? null}
+              onChange={(user) => setUserUuid(user?.uuid ?? '')}
+              getOptionLabel={(user) => `${user.name}${user.email ? ` • ${user.email}` : ''}`}
+              getOptionKey={(user) => user.uuid}
+              error={Boolean(fieldErrors.user_uuid) && !createNewUser}
+              helperText={createNewUser ? 'Desative a opção abaixo para escolher um usuário já existente.' : fieldErrors.user_uuid?.[0]}
+            />
+            <LocalAutocomplete
+              label="Perfil"
+              fullWidth
+              required
+              options={roles}
+              value={roles.find((role) => role.uuid === roleUuid) ?? null}
+              onChange={(role) => setRoleUuid(role?.uuid ?? '')}
+              getOptionLabel={(role) => role.name}
+              getOptionKey={(role) => role.uuid}
+              error={Boolean(fieldErrors.role_uuid)}
+              helperText={fieldErrors.role_uuid?.[0]}
+            />
+            <FormControlLabel
+              control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+              label="Vínculo ativo"
+              sx={{ minHeight: 56, alignItems: 'center' }}
+            />
+          </Box>
+        </FormSection>
+
+        {!isEditMode && (
+          <FormSection
+            title="Criação opcional de usuário"
+            description="Se preferir, o vínculo já pode nascer junto com um novo usuário administrativo."
+          >
+            <Stack spacing={2} sx={{ width: '100%' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={createNewUser}
+                    onChange={(event) => {
+                      const checked = event.target.checked
+                      setCreateNewUser(checked)
+                      if (checked) {
+                        setUserUuid('')
+                      } else {
+                        setUserName('')
+                        setUserEmail('')
+                        setUserPassword('')
+                      }
+                    }}
+                  />
+                }
+                label="Cadastrar um novo usuário agora"
+              />
+
+              {createNewUser && (
+                <>
+                  <Typography variant="body2" sx={{ color: 'var(--pt-muted)' }}>
+                    O sistema criará o usuário e já fará o vínculo com a empresa e o perfil selecionado.
+                  </Typography>
+                  <Box sx={FORM_GRID_2_SX}>
+                    <TextField
+                      label="Nome do usuário"
+                      value={userName}
+                      onChange={(event) => setUserName(event.target.value)}
+                      required
+                      fullWidth
+                      error={Boolean(fieldErrors['user.name'])}
+                      helperText={fieldErrors['user.name']?.[0]}
+                    />
+                    <TextField
+                      label="E-mail do usuário"
+                      type="email"
+                      value={userEmail}
+                      onChange={(event) => setUserEmail(event.target.value)}
+                      required
+                      fullWidth
+                      error={Boolean(fieldErrors['user.email'])}
+                      helperText={fieldErrors['user.email']?.[0]}
+                    />
+                    <PasswordField
+                      label="Senha provisória"
+                      value={userPassword}
+                      onChange={(event) => setUserPassword(event.target.value)}
+                      required
+                      fullWidth
+                      error={Boolean(fieldErrors['user.password'])}
+                      helperText={fieldErrors['user.password']?.[0] ?? 'Depois o usuário poderá trocar a própria senha.'}
+                    />
+                  </Box>
+                </>
+              )}
+            </Stack>
+          </FormSection>
         )}
-        <LocalAutocomplete
-          label="Perfil"
-          fullWidth
-          required
-          options={roles}
-          value={roles.find((role) => role.uuid === roleUuid) ?? null}
-          onChange={(role) => setRoleUuid(role?.uuid ?? '')}
-          getOptionLabel={(role) => role.name}
-          getOptionKey={(role) => role.uuid}
-          error={Boolean(fieldErrors.role_uuid)}
-          helperText={fieldErrors.role_uuid?.[0]}
-        />
-        <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Vínculo ativo" />
       </Stack>
     </CrudFormShell>
   )

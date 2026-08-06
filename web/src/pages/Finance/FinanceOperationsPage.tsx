@@ -3,10 +3,11 @@ import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlin
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined'
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined'
-import { Box, MenuItem, Tab, Tabs, TextField } from '@mui/material'
+import { Box, Tab, Tabs } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { MetricCard } from '../../components/dashboard/MetricCard'
 import { PeriodFilter } from '../../components/analytics/PeriodFilter'
@@ -18,38 +19,35 @@ import { presetRange } from '../../utils/period'
 
 type FinanceTab = 'receivables' | 'settlements' | 'adjustments'
 
-const RECEIVABLE_STATUS_OPTIONS = [
-  { value: '', label: 'Todos os status' },
-  { value: 'scheduled', label: 'Agendado' },
-  { value: 'awaiting_release', label: 'Em custódia' },
-  { value: 'release_requested', label: 'Liberação solicitada' },
-  { value: 'released', label: 'Liberado' },
-]
+const FINANCE_STATUS_LABELS: Record<string, string> = {
+  scheduled: 'Agendado',
+  awaiting_release: 'Em custódia',
+  release_requested: 'Liberação solicitada',
+  released: 'Liberado',
+  pending_recovery: 'Pendente de recuperação',
+  pending_review: 'Pendente de revisão',
+  applied: 'Aplicado',
+  recovered: 'Recuperado',
+  written_off: 'Absorvido',
+}
 
-const SETTLEMENT_STATUS_OPTIONS = [
-  { value: '', label: 'Todos os status' },
-  { value: 'scheduled', label: 'Agendado' },
-  { value: 'release_requested', label: 'Liberação solicitada' },
-  { value: 'released', label: 'Liberado' },
-]
-
-const ADJUSTMENT_STATUS_OPTIONS = [
-  { value: '', label: 'Todos os status' },
-  { value: 'pending_recovery', label: 'Pendente de recuperação' },
-  { value: 'pending_review', label: 'Pendente de revisão' },
-  { value: 'applied', label: 'Aplicado' },
-  { value: 'recovered', label: 'Recuperado' },
-  { value: 'written_off', label: 'Absorvido' },
-]
+const FINANCE_STATUS_TONES: Record<string, StatusChipTone> = {
+  scheduled: 'neutral',
+  awaiting_release: 'warning',
+  release_requested: 'info',
+  released: 'success',
+  pending_recovery: 'warning',
+  pending_review: 'info',
+  applied: 'success',
+  recovered: 'success',
+  written_off: 'danger',
+}
 
 export function FinanceOperationsPage() {
   const defaultRange = presetRange('last_30')
   const [tab, setTab] = useState<FinanceTab>('receivables')
   const [from, setFrom] = useState(defaultRange.from)
   const [to, setTo] = useState(defaultRange.to)
-  const [receivableStatus, setReceivableStatus] = useState('')
-  const [settlementStatus, setSettlementStatus] = useState('')
-  const [adjustmentStatus, setAdjustmentStatus] = useState('')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true)
   const [dashboardError, setDashboardError] = useState<string | null>(null)
@@ -75,7 +73,7 @@ export function FinanceOperationsPage() {
       field: 'sale',
       headerName: 'Venda',
       width: 130,
-      filterType: 'none',
+      filterType: 'text',
       sortable: false,
       cellRenderer: (row) => row.sale?.codigo ?? '—',
     },
@@ -83,7 +81,7 @@ export function FinanceOperationsPage() {
       field: 'event',
       headerName: 'Evento',
       width: 220,
-      filterType: 'none',
+      filterType: 'text',
       sortable: false,
       cellRenderer: (row) => row.event?.name ?? '—',
     },
@@ -91,14 +89,15 @@ export function FinanceOperationsPage() {
       field: 'status',
       headerName: 'Status',
       width: 160,
-      filterType: 'none',
-      sortable: false,
+      filterType: 'text',
+      cellRenderer: (row) => <StatusChip status={row.status} label={FINANCE_STATUS_LABELS[row.status] ?? row.status} tone={FINANCE_STATUS_TONES[row.status] ?? 'neutral'} />,
+      exportValue: (row) => FINANCE_STATUS_LABELS[row.status] ?? row.status,
     },
     {
       field: 'net_amount',
       headerName: 'Líquido',
       width: 130,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => formatCurrency(row.net_amount),
       exportValue: (row) => formatCurrency(row.net_amount),
     },
@@ -106,7 +105,7 @@ export function FinanceOperationsPage() {
       field: 'available_at',
       headerName: 'Disponível em',
       width: 165,
-      filterType: 'none',
+      filterType: 'text',
       cellRenderer: (row) => (row.available_at ? formatDateTimeBR(row.available_at) : '—'),
       exportValue: (row) => (row.available_at ? formatDateTimeBR(row.available_at) : ''),
     },
@@ -114,7 +113,7 @@ export function FinanceOperationsPage() {
       field: 'settlement',
       headerName: 'Repasse',
       width: 160,
-      filterType: 'none',
+      filterType: 'text',
       sortable: false,
       cellRenderer: (row) => row.settlement?.code ?? '—',
     },
@@ -122,20 +121,27 @@ export function FinanceOperationsPage() {
       field: 'open_adjustments_amount',
       headerName: 'Exceções abertas',
       width: 150,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => formatCurrency(row.open_adjustments_amount),
       exportValue: (row) => formatCurrency(row.open_adjustments_amount),
     },
   ], [])
 
   const settlementColumns = useMemo<ServerGridColumn<FinanceSettlement>[]>(() => [
-    { field: 'code', headerName: 'Código', width: 180, filterType: 'none' },
-    { field: 'status', headerName: 'Status', width: 160, filterType: 'none', sortable: false },
+    { field: 'code', headerName: 'Código', width: 180, filterType: 'text' },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 160,
+      filterType: 'text',
+      cellRenderer: (row) => <StatusChip status={row.status} label={FINANCE_STATUS_LABELS[row.status] ?? row.status} tone={FINANCE_STATUS_TONES[row.status] ?? 'neutral'} />,
+      exportValue: (row) => FINANCE_STATUS_LABELS[row.status] ?? row.status,
+    },
     {
       field: 'net_amount',
       headerName: 'Líquido',
       width: 130,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => formatCurrency(row.net_amount),
       exportValue: (row) => formatCurrency(row.net_amount),
     },
@@ -143,14 +149,14 @@ export function FinanceOperationsPage() {
       field: 'receivables_count',
       headerName: 'Recebíveis',
       width: 120,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => String(row.receivables_count),
     },
     {
       field: 'scheduled_for',
       headerName: 'Agendado para',
       width: 165,
-      filterType: 'none',
+      filterType: 'text',
       cellRenderer: (row) => (row.scheduled_for ? formatDateTimeBR(row.scheduled_for) : '—'),
       exportValue: (row) => (row.scheduled_for ? formatDateTimeBR(row.scheduled_for) : ''),
     },
@@ -158,7 +164,7 @@ export function FinanceOperationsPage() {
       field: 'released_at',
       headerName: 'Liberado em',
       width: 165,
-      filterType: 'none',
+      filterType: 'text',
       cellRenderer: (row) => (row.released_at ? formatDateTimeBR(row.released_at) : '—'),
       exportValue: (row) => (row.released_at ? formatDateTimeBR(row.released_at) : ''),
     },
@@ -166,29 +172,36 @@ export function FinanceOperationsPage() {
       field: 'open_adjustments_amount',
       headerName: 'Exceções abertas',
       width: 150,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => formatCurrency(row.open_adjustments_amount),
       exportValue: (row) => formatCurrency(row.open_adjustments_amount),
     },
   ], [])
 
   const adjustmentColumns = useMemo<ServerGridColumn<FinanceAdjustment>[]>(() => [
-    { field: 'type', headerName: 'Tipo', width: 200, filterType: 'none', sortable: false },
-    { field: 'status', headerName: 'Status', width: 170, filterType: 'none', sortable: false },
+    { field: 'type', headerName: 'Tipo', width: 200, filterType: 'text', sortable: false },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 170,
+      filterType: 'text',
+      cellRenderer: (row) => <StatusChip status={row.status} label={FINANCE_STATUS_LABELS[row.status] ?? row.status} tone={FINANCE_STATUS_TONES[row.status] ?? 'neutral'} />,
+      exportValue: (row) => FINANCE_STATUS_LABELS[row.status] ?? row.status,
+    },
     {
       field: 'amount',
       headerName: 'Valor',
       width: 120,
-      filterType: 'none',
+      filterType: 'number',
       cellRenderer: (row) => formatCurrency(row.amount),
       exportValue: (row) => formatCurrency(row.amount),
     },
-    { field: 'reason', headerName: 'Motivo', width: 320, filterType: 'none', sortable: false },
+    { field: 'reason', headerName: 'Motivo', width: 320, filterType: 'text', sortable: false },
     {
       field: 'sale',
       headerName: 'Venda',
       width: 120,
-      filterType: 'none',
+      filterType: 'text',
       sortable: false,
       cellRenderer: (row) => row.sale?.codigo ?? '—',
     },
@@ -196,7 +209,7 @@ export function FinanceOperationsPage() {
       field: 'settlement',
       headerName: 'Repasse',
       width: 150,
-      filterType: 'none',
+      filterType: 'text',
       sortable: false,
       cellRenderer: (row) => row.settlement?.code ?? '—',
     },
@@ -204,7 +217,7 @@ export function FinanceOperationsPage() {
       field: 'created_at',
       headerName: 'Criado em',
       width: 165,
-      filterType: 'none',
+      filterType: 'text',
       cellRenderer: (row) => formatDateTimeBR(row.created_at),
       exportValue: (row) => formatDateTimeBR(row.created_at),
     },
@@ -215,13 +228,12 @@ export function FinanceOperationsPage() {
       const result = await financeService.listFinanceReceivables({
         from,
         to,
-        status: receivableStatus || undefined,
         page,
         per_page: perPage,
       })
       return { rows: result.items, total: result.pagination.total }
     },
-    [from, to, receivableStatus],
+    [from, to],
   )
 
   const fetchSettlements = useCallback(
@@ -229,13 +241,12 @@ export function FinanceOperationsPage() {
       const result = await financeService.listFinanceSettlements({
         from,
         to,
-        status: settlementStatus || undefined,
         page,
         per_page: perPage,
       })
       return { rows: result.items, total: result.pagination.total }
     },
-    [from, to, settlementStatus],
+    [from, to],
   )
 
   const fetchAdjustments = useCallback(
@@ -243,17 +254,16 @@ export function FinanceOperationsPage() {
       const result = await financeService.listFinanceAdjustments({
         from,
         to,
-        status: adjustmentStatus || undefined,
         page,
         per_page: perPage,
       })
       return { rows: result.items, total: result.pagination.total }
     },
-    [from, to, adjustmentStatus],
+    [from, to],
   )
 
   return (
-    <Box sx={{ maxWidth: 1600, mx: 'auto' }}>
+    <Box>
       <CrudListPage
         title="Operação financeira"
         subtitle="Acompanhe recebíveis, repasses e exceções do financeiro da empresa em um só lugar."
@@ -261,29 +271,6 @@ export function FinanceOperationsPage() {
         toolbar={
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
             <PeriodFilter from={from} to={to} onChange={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo) }} defaultPreset="last_30" />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'repeat(2, minmax(0,240px))' }, gap: 1.5 }}>
-              {tab === 'receivables' && (
-                <TextField select label="Status do recebível" size="small" value={receivableStatus} onChange={(event) => setReceivableStatus(event.target.value)}>
-                  {RECEIVABLE_STATUS_OPTIONS.map((option) => (
-                    <MenuItem key={option.value || 'all'} value={option.value}>{option.label}</MenuItem>
-                  ))}
-                </TextField>
-              )}
-              {tab === 'settlements' && (
-                <TextField select label="Status do repasse" size="small" value={settlementStatus} onChange={(event) => setSettlementStatus(event.target.value)}>
-                  {SETTLEMENT_STATUS_OPTIONS.map((option) => (
-                    <MenuItem key={option.value || 'all'} value={option.value}>{option.label}</MenuItem>
-                  ))}
-                </TextField>
-              )}
-              {tab === 'adjustments' && (
-                <TextField select label="Status da exceção" size="small" value={adjustmentStatus} onChange={(event) => setAdjustmentStatus(event.target.value)}>
-                  {ADJUSTMENT_STATUS_OPTIONS.map((option) => (
-                    <MenuItem key={option.value || 'all'} value={option.value}>{option.label}</MenuItem>
-                  ))}
-                </TextField>
-              )}
-            </Box>
           </Box>
         }
         error={dashboardError}
@@ -306,49 +293,45 @@ export function FinanceOperationsPage() {
           </Tabs>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1080 }}>
-            {tab === 'receivables' && (
-              <ServerDataGrid
-                columns={receivableColumns}
-                fetchPage={fetchReceivables}
-                rowIdField="uuid"
-                exportFileName="financeiro-recebiveis"
-                emptyState={{
-                  icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: 'Nenhum recebível encontrado',
-                  description: 'Ajuste os filtros para localizar os recebíveis desta empresa.',
-                }}
-              />
-            )}
-            {tab === 'settlements' && (
-              <ServerDataGrid
-                columns={settlementColumns}
-                fetchPage={fetchSettlements}
-                rowIdField="uuid"
-                exportFileName="financeiro-repasses"
-                emptyState={{
-                  icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: 'Nenhum repasse encontrado',
-                  description: 'Quando houver lotes de repasse gerados, eles aparecerão aqui.',
-                }}
-              />
-            )}
-            {tab === 'adjustments' && (
-              <ServerDataGrid
-                columns={adjustmentColumns}
-                fetchPage={fetchAdjustments}
-                rowIdField="uuid"
-                exportFileName="financeiro-excecoes"
-                emptyState={{
-                  icon: <RuleOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: 'Nenhuma exceção encontrada',
-                  description: 'Quando surgirem ajustes ou exceções financeiras, eles aparecerão aqui.',
-                }}
-              />
-            )}
-          </Box>
-        </Box>
+        {tab === 'receivables' && (
+          <ServerDataGrid
+            columns={receivableColumns}
+            fetchPage={fetchReceivables}
+            rowIdField="uuid"
+            exportFileName="financeiro-recebiveis"
+            emptyState={{
+              icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+              title: 'Nenhum recebível encontrado',
+              description: 'Ajuste os filtros para localizar os recebíveis desta empresa.',
+            }}
+          />
+        )}
+        {tab === 'settlements' && (
+          <ServerDataGrid
+            columns={settlementColumns}
+            fetchPage={fetchSettlements}
+            rowIdField="uuid"
+            exportFileName="financeiro-repasses"
+            emptyState={{
+              icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+              title: 'Nenhum repasse encontrado',
+              description: 'Quando houver lotes de repasse gerados, eles aparecerão aqui.',
+            }}
+          />
+        )}
+        {tab === 'adjustments' && (
+          <ServerDataGrid
+            columns={adjustmentColumns}
+            fetchPage={fetchAdjustments}
+            rowIdField="uuid"
+            exportFileName="financeiro-excecoes"
+            emptyState={{
+              icon: <RuleOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+              title: 'Nenhuma exceção encontrada',
+              description: 'Quando surgirem ajustes ou exceções financeiras, eles aparecerão aqui.',
+            }}
+          />
+        )}
       </CrudListPage>
     </Box>
   )

@@ -21,7 +21,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getApiErrorMessage } from '../../types/api'
 import { pegaticketGridTheme } from '../../utils/agGridTheme'
 import { buildBackendFilters, buildCsvContent, buildExportTable, downloadTextFile } from '../../utils/gridExport'
-import { ServerGridBooleanFilter } from './ServerGridBooleanFilter'
 import { ServerGridEmptyOverlay, type ServerGridEmptyStateConfig } from './ServerGridEmptyOverlay'
 import { ServerGridLoadingOverlay } from './ServerGridLoadingOverlay'
 import { ServerGridPrintExport } from './ServerGridPrintExport'
@@ -87,7 +86,13 @@ function toColDef<T>(column: ServerGridColumn<T>): ColDef {
       debounceMs: 400,
     }
   } else if (filterType === 'boolean') {
-    base.filter = ServerGridBooleanFilter
+    base.filter = 'agTextColumnFilter'
+    base.floatingFilter = true
+    base.filterParams = {
+      filterOptions: ['contains'],
+      maxNumConditions: 1,
+      debounceMs: 400,
+    }
   }
 
   return base

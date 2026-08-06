@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AsyncAutocomplete } from '../../components/crud/AsyncAutocomplete'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
 import { useAuth } from '../../hooks/useAuth'
 import * as eventProductService from '../../services/eventProductService'
 import * as finalCustomerService from '../../services/finalCustomerService'
@@ -211,150 +213,164 @@ export function SaleFormPage() {
       onSubmit={handleSubmit}
     >
       <Stack spacing={2.2}>
-        <Box sx={{ maxWidth: { md: '50%' } }}>
-          <AsyncAutocomplete
-            label="Cliente"
-            required
-            value={customerOption}
-            onChange={setCustomerOption}
-            fetchOptions={fetchClientOptions}
-            getOptionLabel={(option) => {
-              const fullName = [option.final_customer.name, option.final_customer.last_name].filter(Boolean).join(' ')
-              const identifier = option.cpf_cnpj || option.phone_primary
-              return identifier ? `${fullName} (${identifier})` : fullName
-            }}
-            getOptionKey={(option) => option.uuid}
-            placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
-          />
-        </Box>
+        <FormSection
+          title="Cliente"
+          description="Selecione o comprador para registrar a venda manual e associar a comunicação automática."
+        >
+          <Box sx={{ width: '100%' }}>
+            <AsyncAutocomplete
+              label="Cliente"
+              required
+              value={customerOption}
+              onChange={setCustomerOption}
+              fetchOptions={fetchClientOptions}
+              getOptionLabel={(option) => {
+                const fullName = [option.final_customer.name, option.final_customer.last_name].filter(Boolean).join(' ')
+                const identifier = option.cpf_cnpj || option.phone_primary
+                return identifier ? `${fullName} (${identifier})` : fullName
+              }}
+              getOptionKey={(option) => option.uuid}
+              placeholder="Buscar cliente pelo nome, e-mail, CPF/CNPJ ou telefone"
+            />
+          </Box>
+        </FormSection>
 
-        <Stack spacing={1.5}>
-          <Typography sx={{ fontWeight: 700 }}>Itens da venda</Typography>
+        <FormSection
+          title="Itens da venda"
+          description="Monte os ingressos e adicionais com quantidade e valor praticado antes de concluir a cobrança."
+        >
+          <Stack spacing={1.5} sx={{ width: '100%' }}>
+            {items.map((item) => {
+              const discount = item.item && Number(item.quantity) > 0 ? (item.item.price - effectiveUnitPrice(item)) * Number(item.quantity) : 0
+              const hasDiscountInfo = item.item && Number(item.quantity) > 0 && Math.abs(discount) > 0.005
 
-          {items.map((item) => {
-            const discount = item.item && Number(item.quantity) > 0 ? (item.item.price - effectiveUnitPrice(item)) * Number(item.quantity) : 0
-            const hasDiscountInfo = item.item && Number(item.quantity) > 0 && Math.abs(discount) > 0.005
-
-            return (
-              <Box key={item.id}>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) 110px 150px 44px' },
-                    gap: 1.5,
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <AsyncAutocomplete
-                    label="Ingresso / adicional"
-                    value={item.item}
-                    onChange={(option) => handleItemProductChange(item.id, option)}
-                    fetchOptions={fetchProductOptions}
-                    getOptionLabel={(option) => option.name}
-                    getOptionKey={(option) => `${option.kind}:${option.uuid}`}
-                    placeholder="Buscar tipo de ingresso ou adicional pelo nome"
-                  />
-
-                  <TextField
-                    label="Quantidade"
-                    type="number"
-                    value={item.quantity}
-                    onChange={(event) => updateItem(item.id, { quantity: event.target.value })}
-                    slotProps={{ htmlInput: { min: 0.001, step: '0.001' } }}
-                  />
-
-                  <TextField
-                    label="Valor unitário"
-                    type="number"
-                    value={item.unitPrice}
-                    onChange={(event) => updateItem(item.id, { unitPrice: event.target.value })}
-                    disabled={!item.item}
-                    placeholder={item.item ? String(item.item.price) : undefined}
-                    slotProps={{
-                      htmlInput: { min: 0, step: '0.01' },
-                      input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
+              return (
+                <Box key={item.id}>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr)) 44px' },
+                      gap: 1.5,
+                      alignItems: 'flex-start',
                     }}
-                  />
-
-                  <IconButton
-                    aria-label="Remover item"
-                    disabled={items.length === 1}
-                    onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))}
-                    sx={{ minWidth: 44, minHeight: 44, justifySelf: { xs: 'end', md: 'auto' } }}
                   >
-                    <DeleteOutlineIcon />
-                  </IconButton>
+                    <AsyncAutocomplete
+                      label="Ingresso / adicional"
+                      value={item.item}
+                      onChange={(option) => handleItemProductChange(item.id, option)}
+                      fetchOptions={fetchProductOptions}
+                      getOptionLabel={(option) => option.name}
+                      getOptionKey={(option) => `${option.kind}:${option.uuid}`}
+                      placeholder="Buscar tipo de ingresso ou adicional pelo nome"
+                    />
+
+                    <TextField
+                      label="Quantidade"
+                      type="number"
+                      value={item.quantity}
+                      onChange={(event) => updateItem(item.id, { quantity: sanitizePositiveIntegerInput(event.target.value) })}
+                      slotProps={{ htmlInput: { min: 1, step: '1' } }}
+                    />
+
+                    <TextField
+                      label="Valor unitário"
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(event) => updateItem(item.id, { unitPrice: event.target.value })}
+                      disabled={!item.item}
+                      placeholder={item.item ? String(item.item.price) : undefined}
+                      slotProps={{
+                        htmlInput: { min: 0, step: '0.01' },
+                        input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
+                      }}
+                    />
+
+                    <IconButton
+                      aria-label="Remover item"
+                      disabled={items.length === 1}
+                      onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))}
+                      sx={{ minWidth: 44, minHeight: 44, justifySelf: { xs: 'end', md: 'auto' } }}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </Box>
+
+                  {hasDiscountInfo && (
+                    <Typography
+                      sx={{ fontSize: 13, mt: 0.5, color: discount > 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}
+                    >
+                      {discount > 0
+                        ? `Desconto neste item: ${formatCurrency(discount)}`
+                        : `Acréscimo neste item: ${formatCurrency(Math.abs(discount))}`}
+                    </Typography>
+                  )}
                 </Box>
+              )
+            })}
 
-                {hasDiscountInfo && (
-                  <Typography
-                    sx={{ fontSize: 13, mt: 0.5, color: discount > 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}
-                  >
-                    {discount > 0
-                      ? `Desconto neste item: ${formatCurrency(discount)}`
-                      : `Acréscimo neste item: ${formatCurrency(Math.abs(discount))}`}
-                  </Typography>
-                )}
-
-              </Box>
-            )
-          })}
-
-          <Button
-            variant="outlined"
-            onClick={() => setItems((current) => [...current, createDraftItem()])}
-            sx={{ minHeight: 44, alignSelf: { xs: 'stretch', sm: 'flex-start' }, width: { xs: '100%', sm: 'auto' } }}
-          >
-            Adicionar item
-          </Button>
-        </Stack>
-
-        <TextField
-          label="Observações"
-          value={notes}
-          onChange={(event) => setNotes(event.target.value.slice(0, NOTES_MAX_LENGTH))}
-          minRows={3}
-          multiline
-          fullWidth
-          helperText={`${notes.length}/${NOTES_MAX_LENGTH}`}
-          slotProps={{ htmlInput: { maxLength: NOTES_MAX_LENGTH } }}
-        />
-
-        <Alert severity="info" variant="outlined">
-          Vendas manuais sao registradas como concluidas e pagas no momento da criacao.
-        </Alert>
-
-        <Paper variant="outlined" sx={{ p: 2, ...SOFT_PANEL_SX }}>
-          <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Resumo</Typography>
-          <Stack spacing={0.75}>
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ color: 'var(--pt-muted)' }}>Total sem desconto</Typography>
-              <Typography>{formatCurrency(summary.totalTable)}</Typography>
-            </Stack>
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ color: 'var(--pt-muted)' }}>{summary.discount >= 0 ? 'Desconto' : 'Acréscimo'}</Typography>
-              <Typography sx={{ color: summary.discount >= 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}>
-                {formatCurrency(Math.abs(summary.discount))}
-              </Typography>
-            </Stack>
-            <Divider sx={{ my: 0.5 }} />
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontWeight: 700 }}>Total da venda</Typography>
-              <Typography sx={{ fontWeight: 700 }}>{formatCurrency(summary.totalPracticed)}</Typography>
-            </Stack>
-
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ color: 'var(--pt-muted)' }}>Status inicial</Typography>
-              <Typography>Concluida e paga</Typography>
-            </Stack>
+            <Button
+              variant="outlined"
+              onClick={() => setItems((current) => [...current, createDraftItem()])}
+              sx={{ minHeight: 44, alignSelf: { xs: 'stretch', sm: 'flex-start' }, width: { xs: '100%', sm: 'auto' } }}
+            >
+              Adicionar item
+            </Button>
           </Stack>
-        </Paper>
+        </FormSection>
 
-        {!isDigitsOnlyPhone(client?.phone_primary) && client && (
-          <Alert severity="info" variant="outlined">
-            Este cliente não tem um telefone válido pra notificação automática por WhatsApp — a venda é criada normalmente, só o aviso não é enviado.
-          </Alert>
-        )}
+        <FormSection
+          title="Fechamento"
+          description="Revise observações, totais e o comportamento inicial da venda antes de salvar."
+        >
+          <Stack spacing={2} sx={{ width: '100%' }}>
+            <TextField
+              label="Observações"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value.slice(0, NOTES_MAX_LENGTH))}
+              minRows={3}
+              multiline
+              fullWidth
+              helperText={`${notes.length}/${NOTES_MAX_LENGTH}`}
+              slotProps={{ htmlInput: { maxLength: NOTES_MAX_LENGTH } }}
+            />
+
+            <Alert severity="info" variant="outlined">
+              Vendas manuais sao registradas como concluidas e pagas no momento da criacao.
+            </Alert>
+
+            <Paper variant="outlined" sx={{ p: 2, width: '100%', ...SOFT_PANEL_SX }}>
+              <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Resumo</Typography>
+              <Stack spacing={0.75}>
+                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                  <Typography sx={{ color: 'var(--pt-muted)' }}>Total sem desconto</Typography>
+                  <Typography>{formatCurrency(summary.totalTable)}</Typography>
+                </Stack>
+                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                  <Typography sx={{ color: 'var(--pt-muted)' }}>{summary.discount >= 0 ? 'Desconto' : 'Acréscimo'}</Typography>
+                  <Typography sx={{ color: summary.discount >= 0 ? 'var(--pt-success)' : 'var(--pt-warning)' }}>
+                    {formatCurrency(Math.abs(summary.discount))}
+                  </Typography>
+                </Stack>
+                <Divider sx={{ my: 0.5 }} />
+                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                  <Typography sx={{ fontWeight: 700 }}>Total da venda</Typography>
+                  <Typography sx={{ fontWeight: 700 }}>{formatCurrency(summary.totalPracticed)}</Typography>
+                </Stack>
+
+                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                  <Typography sx={{ color: 'var(--pt-muted)' }}>Status inicial</Typography>
+                  <Typography>Concluida e paga</Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+
+            {!isDigitsOnlyPhone(client?.phone_primary) && client && (
+              <Alert severity="info" variant="outlined">
+                Este cliente não tem um telefone válido pra notificação automática por WhatsApp — a venda é criada normalmente, só o aviso não é enviado.
+              </Alert>
+            )}
+          </Stack>
+        </FormSection>
       </Stack>
     </CrudFormShell>
   )

@@ -1,9 +1,11 @@
 import { Alert, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { FormSection } from '../../components/form/FormSection'
 import { Logo } from '../../components/ui/Logo'
 import { TurnstileWidget } from '../../components/security/TurnstileWidget'
 import { ThemeFab } from '../../components/ThemeFab'
+import { FORM_MAX_WIDTH } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import * as guestInviteService from '../../services/guestInviteService'
 import type { GuestInvite } from '../../types/guestList'
@@ -99,66 +101,78 @@ export function GuestInvitePage() {
           </Alert>
         ) : invite ? (
           <Stack spacing={2.5}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{invite.event.name}</Typography>
-              {invite.session && (
-                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
-                  {invite.session.name}
-                  {invite.session.starts_at ? ` · ${formatDateTimeBR(invite.session.starts_at)}` : ''}
-                </Typography>
-              )}
-              <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{invite.ticket_type.name}</Typography>
-            </Box>
+            <FormSection
+              title="Resumo do convite"
+              description="Confira o evento e valide seus dados antes de concluir o resgate do ingresso."
+            >
+              <Box sx={{ textAlign: 'center', maxWidth: FORM_MAX_WIDTH.wide, mx: 'auto' }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{invite.event.name}</Typography>
+                {invite.session && (
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>
+                    {invite.session.name}
+                    {invite.session.starts_at ? ` · ${formatDateTimeBR(invite.session.starts_at)}` : ''}
+                  </Typography>
+                )}
+                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)' }}>{invite.ticket_type.name}</Typography>
+              </Box>
+            </FormSection>
 
             {invite.is_redeemed ? (
-              <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-                <Chip label="Convite já resgatado" color="success" />
-                <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
-                  Este convite já foi utilizado
-                  {invite.redeemed_at ? ` em ${formatDateTimeBR(invite.redeemed_at)}` : ''}. Verifique seu e-mail para encontrar o ingresso.
-                </Typography>
-              </Stack>
-            ) : (
-              <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-                {submitError && (
-                  <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
-                    {submitError}
-                  </Alert>
-                )}
-                <Stack spacing={1.75}>
-                  {/* Honeypot anti-bot (roadmap Fase 7) — invisível e fora da navegação por teclado/leitor de tela; só bots que preenchem tudo cegamente tendem a marcar este campo. */}
-                  <TextField
-                    label="Website"
-                    name="website"
-                    value={website}
-                    onChange={(event) => setWebsite(event.target.value)}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                    sx={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
-                  />
-                  <TextField label="Nome" value={name} onChange={(event) => setName(event.target.value)} fullWidth required />
-                  <TextField
-                    label="E-mail"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    fullWidth
-                    required
-                  />
-                  <TextField label="Documento (opcional)" value={document} onChange={(event) => setDocument(event.target.value)} fullWidth />
-                  <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(undefined)} />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={isSubmitting || !name.trim() || !email.trim()}
-                    sx={{ minHeight: 48 }}
-                  >
-                    {isSubmitting ? 'Resgatando…' : 'Resgatar meu ingresso'}
-                  </Button>
+              <FormSection title="Status do convite" description="Este link já foi utilizado anteriormente.">
+                <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
+                  <Chip label="Convite já resgatado" color="success" />
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--pt-muted)', textAlign: 'center' }}>
+                    Este convite já foi utilizado
+                    {invite.redeemed_at ? ` em ${formatDateTimeBR(invite.redeemed_at)}` : ''}. Verifique seu e-mail para encontrar o ingresso.
+                  </Typography>
                 </Stack>
-              </Box>
+              </FormSection>
+            ) : (
+              <FormSection
+                title="Dados para resgate"
+                description="Preencha seus dados para gerar o ingresso e concluir o vínculo com a cortesia."
+              >
+                <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+                  {submitError && (
+                    <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+                      {submitError}
+                    </Alert>
+                  )}
+                  <Stack spacing={1.75} sx={{ maxWidth: FORM_MAX_WIDTH.wide }}>
+                    {/* Honeypot anti-bot (roadmap Fase 7) — invisível e fora da navegação por teclado/leitor de tela; só bots que preenchem tudo cegamente tendem a marcar este campo. */}
+                    <TextField
+                      label="Website"
+                      name="website"
+                      value={website}
+                      onChange={(event) => setWebsite(event.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      sx={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+                    />
+                    <TextField label="Nome" value={name} onChange={(event) => setName(event.target.value)} fullWidth required />
+                    <TextField
+                      label="E-mail"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      fullWidth
+                      required
+                    />
+                    <TextField label="Documento (opcional)" value={document} onChange={(event) => setDocument(event.target.value)} fullWidth />
+                    <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(undefined)} />
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={isSubmitting || !name.trim() || !email.trim()}
+                      sx={{ minHeight: 48 }}
+                    >
+                      {isSubmitting ? 'Resgatando…' : 'Resgatar meu ingresso'}
+                    </Button>
+                  </Stack>
+                </Box>
+              </FormSection>
             )}
           </Stack>
         ) : null}

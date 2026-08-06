@@ -3,7 +3,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined'
 import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined'
-import { Avatar, Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { Avatar, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { ACCESS } from '../../access/requirements'
 import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
@@ -80,7 +81,7 @@ export function VenueListPage() {
         headerName: 'Mapa',
         width: 160,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => (row.width && row.height ? `${row.width} x ${row.height}` : 'Sem dimensão'),
         exportValue: (row) => (row.width && row.height ? `${row.width} x ${row.height}` : 'Sem dimensão'),
       },
@@ -88,13 +89,14 @@ export function VenueListPage() {
         field: 'is_active',
         headerName: 'Status',
         width: 180,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => (
           <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-            <Chip size="small" label={row.is_active ? 'Ativo' : 'Inativo'} color={row.is_active ? 'success' : 'default'} />
+            <StatusChip status={row.is_active ? 'ativo' : 'inativo'} label={row.is_active ? 'Ativo' : 'Inativo'} tone={row.is_active ? 'success' : 'danger'} />
             {row.published_map_version ? <Chip size="small" variant="outlined" label={`Mapa v${row.published_map_version.version_number}`} /> : null}
           </Stack>
         ),
+        exportValue: (row) => row.is_active ? 'Ativo' : 'Inativo',
       },
       {
         field: 'uuid',
@@ -164,29 +166,25 @@ export function VenueListPage() {
         isLoading={!activeTenantUuid}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 760 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="locais"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <PlaceOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum local cadastrado ainda',
-                description: 'Comece cadastrando o primeiro local para seus eventos.',
-                action: can(ACCESS.venuesCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/locais/novo')}>
-                    Cadastrar primeiro local
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="locais"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <PlaceOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum local cadastrado ainda',
+            description: 'Comece cadastrando o primeiro local para seus eventos.',
+            action: can(ACCESS.venuesCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/locais/novo')}>
+                Cadastrar primeiro local
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

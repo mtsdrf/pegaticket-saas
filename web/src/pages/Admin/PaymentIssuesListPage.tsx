@@ -2,18 +2,14 @@ import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import {
   Alert,
-  Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   IconButton,
-  MenuItem,
   Snackbar,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -22,22 +18,14 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { ACCESS } from '../../access/requirements'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useInitialLoadGate } from '../../hooks/useInitialLoadGate'
 import * as paymentAdminService from '../../services/paymentAdminService'
-import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import type { PaymentIssue, PaymentIssueType } from '../../types/paymentAdmin'
 import { formatCurrency, formatDateTimeBR } from '../../utils/format'
-
-const TYPE_OPTIONS: { value: PaymentIssueType | ''; label: string }[] = [
-  { value: '', label: 'Todos os tipos' },
-  { value: 'payment_divergent', label: 'Pagamento divergente' },
-  { value: 'idempotency_ambiguous', label: 'Idempotência ambígua' },
-  { value: 'invoice_disputed', label: 'Fatura contestada' },
-  { value: 'webhook_failed', label: 'Falha no processamento' },
-]
 
 const TYPE_LABELS: Record<PaymentIssueType, string> = {
   payment_divergent: 'Pagamento divergente',
@@ -59,7 +47,6 @@ export function PaymentIssuesListPage() {
   const { can } = useAccessControl()
   const isLoading = useInitialLoadGate(() => paymentAdminService.listPaymentIssues({ per_page: 1 }))
   const gridApiRef = useRef<GridApi | null>(null)
-  const [type, setType] = useState<PaymentIssueType | ''>('')
 
   const [reprocessTarget, setReprocessTarget] = useState<PaymentIssue | null>(null)
   const [isReprocessing, setIsReprocessing] = useState(false)
@@ -67,11 +54,15 @@ export function PaymentIssuesListPage() {
   const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null)
 
   const fetchPage = useCallback(
-    async ({ page, perPage }: ServerGridFetchParams): Promise<ServerGridFetchResult<PaymentIssue>> => {
-      const result = await paymentAdminService.listPaymentIssues({ type: type || undefined, page, per_page: perPage })
+    async ({ page, perPage, filters }: ServerGridFetchParams): Promise<ServerGridFetchResult<PaymentIssue>> => {
+      const result = await paymentAdminService.listPaymentIssues({
+        type: typeof filters.issue_type === 'string' ? filters.issue_type as PaymentIssueType : undefined,
+        page,
+        per_page: perPage,
+      })
       return { rows: result.items, total: result.pagination.total }
     },
-    [type],
+    [],
   )
 
   async function handleConfirmReprocess() {
@@ -99,15 +90,16 @@ export function PaymentIssuesListPage() {
         headerName: 'Ocorrido em',
         width: 170,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => formatDateTimeBR(row.occurred_at),
+        exportValue: (row) => formatDateTimeBR(row.occurred_at),
       },
       {
         field: 'issue_type',
         headerName: 'Tipo',
         width: 200,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => TYPE_LABELS[row.issue_type] ?? row.issue_type,
         exportValue: (row) => TYPE_LABELS[row.issue_type] ?? row.issue_type,
       },
@@ -116,7 +108,7 @@ export function PaymentIssuesListPage() {
         headerName: 'Empresa',
         width: 200,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => row.tenant?.name ?? '—',
         exportValue: (row) => row.tenant?.name ?? '',
       },
@@ -125,7 +117,7 @@ export function PaymentIssuesListPage() {
         headerName: 'Valor',
         width: 130,
         sortable: false,
-        filterType: 'none',
+        filterType: 'number',
         cellRenderer: (row) => (row.amount !== null ? formatCurrency(row.amount) : '—'),
         exportValue: (row) => (row.amount !== null ? formatCurrency(row.amount) : ''),
       },
@@ -134,8 +126,8 @@ export function PaymentIssuesListPage() {
         headerName: 'Status',
         width: 150,
         sortable: false,
-        filterType: 'none',
-        cellRenderer: (row) => <Chip size="small" label={row.status} sx={{ fontWeight: 600, color: 'var(--pt-text)', ...SOFT_PANEL_SX }} />,
+        filterType: 'text',
+        cellRenderer: (row) => <StatusChip status={row.status} tone={row.status === 'open' ? 'warning' : row.status === 'resolved' ? 'success' : 'neutral'} />,
         exportValue: (row) => row.status,
       },
       {
@@ -143,7 +135,7 @@ export function PaymentIssuesListPage() {
         headerName: 'Referência',
         width: 160,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => (
           <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }} title={row.reference}>
             {row.reference}
@@ -184,43 +176,23 @@ export function PaymentIssuesListPage() {
       <CrudListPage
         title="Pendências de pagamento"
         subtitle="Acompanhe e resolva itens travados de pagamento e assinatura entre todas as empresas."
-        toolbar={
-          <TextField
-            select
-            label="Tipo"
-            size="small"
-            value={type}
-            onChange={(event) => setType(event.target.value as PaymentIssueType | '')}
-            sx={{ minWidth: 240 }}
-          >
-            {TYPE_OPTIONS.map((option) => (
-              <MenuItem key={option.value || 'all'} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        }
         error={null}
         onRetry={() => undefined}
         isLoading={isLoading}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1080 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="reference"
-              exportFileName="pendencias-pagamento"
-              onGridReady={(api) => { gridApiRef.current = api }}
-              emptyState={{
-                icon: <ReportProblemOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhuma pendência encontrada',
-                description: 'Não há itens travados de pagamento ou assinatura no momento.',
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="reference"
+          exportFileName="pendencias-pagamento"
+          onGridReady={(api) => { gridApiRef.current = api }}
+          emptyState={{
+            icon: <ReportProblemOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhuma pendência encontrada',
+            description: 'Não há itens travados de pagamento ou assinatura no momento.',
+          }}
+        />
       </CrudListPage>
 
       <Dialog open={reprocessTarget !== null} onClose={isReprocessing ? undefined : () => setReprocessTarget(null)} maxWidth="xs" fullWidth>

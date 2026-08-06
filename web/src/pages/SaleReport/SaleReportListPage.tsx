@@ -98,7 +98,7 @@ export function SaleReportListPage() {
         field: 'total_amount',
         headerName: 'Total',
         width: 130,
-        filterType: 'none',
+        filterType: 'number',
         sortable: false,
         cellRenderer: (row) => formatCurrency(row.total_amount),
         exportValue: (row) => formatCurrency(row.total_amount),
@@ -110,7 +110,7 @@ export function SaleReportListPage() {
         filterType: 'boolean',
         cellRenderer: (row) => <ActiveChip isActive={row.is_paid} activeLabel="Sim" inactiveLabel="Não" />,
       },
-      { field: 'created_at', headerName: 'Criado em', width: 180, filterType: 'none', sortable: false },
+      { field: 'created_at', headerName: 'Criado em', width: 180, filterType: 'text', sortable: false },
     ],
     [],
   )

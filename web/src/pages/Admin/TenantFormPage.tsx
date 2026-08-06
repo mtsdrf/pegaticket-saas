@@ -3,12 +3,14 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { FormSection } from '../../components/form/FormSection'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import { TenantFeatureOverrideMatrix, type FeatureOverrideState } from '../../components/admin/TenantFeatureOverrideMatrix'
 import * as functionalityService from '../../services/functionalityService'
 import * as planService from '../../services/planService'
 import * as tenantAdminService from '../../services/tenantAdminService'
 import * as tenantFeatureOverrideService from '../../services/tenantFeatureOverrideService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import type { Functionality, Plan } from '../../types/admin'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 
@@ -132,52 +134,54 @@ export function TenantFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: isEditMode ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' }, gap: 2, mb: 2 }}>
-        <TextField
-          label="Nome"
-          value={form.name}
-          onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(fieldErrors.name)}
-          helperText={fieldErrors.name?.[0]}
-          required
-          fullWidth
-          slotProps={{ htmlInput: { maxLength: 255 } }}
-        />
-        {!isEditMode && (
+      <FormSection title="Dados principais" description="Defina a identidade da empresa, o plano contratado e o status de operação.">
+        <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: isEditMode ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))' } }}>
           <TextField
-            label="Abreviatura"
-            value={form.slug}
-            onChange={(event) => updateField('slug', event.target.value)}
-            error={Boolean(fieldErrors.slug)}
-            helperText={fieldErrors.slug?.[0]}
+            label="Nome"
+            value={form.name}
+            onChange={(event) => updateField('name', event.target.value)}
+            error={Boolean(fieldErrors.name)}
+            helperText={fieldErrors.name?.[0]}
             required
             fullWidth
             slotProps={{ htmlInput: { maxLength: 255 } }}
           />
-        )}
-      </Box>
+          {!isEditMode && (
+            <TextField
+              label="Abreviatura"
+              value={form.slug}
+              onChange={(event) => updateField('slug', event.target.value)}
+              error={Boolean(fieldErrors.slug)}
+              helperText={fieldErrors.slug?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+          )}
+        </Box>
 
-      <LocalAutocomplete
-        label="Plano"
-        options={plans}
-        value={plans.find((plan) => plan.uuid === form.plan_uuid) ?? null}
-        onChange={(plan) => updateField('plan_uuid', plan?.uuid ?? '')}
-        getOptionLabel={(plan) => plan.name}
-        getOptionKey={(plan) => plan.uuid}
-        required
-        fullWidth
-        error={Boolean(fieldErrors.plan_uuid)}
-        helperText={fieldErrors.plan_uuid?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 560 } }}
-      />
+        <LocalAutocomplete
+          label="Plano"
+          options={plans}
+          value={plans.find((plan) => plan.uuid === form.plan_uuid) ?? null}
+          onChange={(plan) => updateField('plan_uuid', plan?.uuid ?? '')}
+          getOptionLabel={(plan) => plan.name}
+          getOptionKey={(plan) => plan.uuid}
+          required
+          fullWidth
+          error={Boolean(fieldErrors.plan_uuid)}
+          helperText={fieldErrors.plan_uuid?.[0]}
+        />
 
-      <FormControlLabel
-        sx={{ mb: 2 }}
-        control={<Switch checked={form.is_active} onChange={(event) => updateField('is_active', event.target.checked)} />}
-        label="Ativo"
-      />
+        <FormControlLabel
+          control={<Switch checked={form.is_active} onChange={(event) => updateField('is_active', event.target.checked)} />}
+          label="Ativo"
+        />
+      </FormSection>
 
-      <ImageUploadField label="Logo da empresa" existingImageUrl={existingLogoUrl} onFileSelected={setLogoFile} />
+      <FormSection title="Identidade visual" description="Opcionalmente envie a logo da empresa para uso nas interfaces da plataforma.">
+        <ImageUploadField label="Logo da empresa" existingImageUrl={existingLogoUrl} onFileSelected={setLogoFile} />
+      </FormSection>
 
       {isEditMode && (
         <>

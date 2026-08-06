@@ -24,6 +24,7 @@ export interface ServerGridColumn<T> {
    * fallback `row[field]`.
    */
   exportValue?: (row: T) => string | number | boolean | null | undefined
+  filterTextToBackend?: (value: string) => string | number | boolean | undefined
 }
 
 export interface ServerGridFetchParams {

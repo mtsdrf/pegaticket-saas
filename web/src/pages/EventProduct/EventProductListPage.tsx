@@ -2,23 +2,32 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined'
-import { Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { ACCESS } from '../../access/requirements'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
 import * as eventProductService from '../../services/eventProductService'
-import { EVENT_PRODUCT_KIND_OPTIONS, type EventProduct } from '../../types/eventProduct'
+import { EVENT_PRODUCT_KIND_OPTIONS, EVENT_PRODUCT_STATUS_OPTIONS, type EventProduct } from '../../types/eventProduct'
 import { getApiErrorMessage } from '../../types/api'
 import { formatCurrency } from '../../utils/format'
 
 const KIND_LABELS = Object.fromEntries(EVENT_PRODUCT_KIND_OPTIONS.map((option) => [option.value, option.label]))
+const STATUS_LABELS = Object.fromEntries(EVENT_PRODUCT_STATUS_OPTIONS.map((option) => [option.value, option.label]))
+const STATUS_TONES: Record<EventProduct['status'], StatusChipTone> = {
+  rascunho: 'neutral',
+  ativo: 'success',
+  pausado: 'info',
+  esgotado: 'warning',
+  encerrado: 'neutral',
+}
 
 export function EventProductListPage() {
   const navigate = useNavigate()
@@ -88,8 +97,9 @@ export function EventProductListPage() {
         field: 'kind',
         headerName: 'Tipo',
         width: 140,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => <Chip size="small" label={KIND_LABELS[row.kind] ?? row.kind} />,
+        exportValue: (row) => KIND_LABELS[row.kind] ?? row.kind,
       },
       {
         field: 'price',
@@ -99,7 +109,14 @@ export function EventProductListPage() {
         cellRenderer: (row) => formatCurrency(row.price),
         exportValue: (row) => formatCurrency(row.price),
       },
-      { field: 'status', headerName: 'Status', width: 130, filterType: 'none' },
+      {
+        field: 'status',
+        headerName: 'Status',
+        width: 130,
+        filterType: 'text',
+        cellRenderer: (row) => <StatusChip status={row.status} label={STATUS_LABELS[row.status] ?? row.status} tone={STATUS_TONES[row.status]} />,
+        exportValue: (row) => STATUS_LABELS[row.status] ?? row.status,
+      },
       {
         field: 'uuid',
         headerName: 'Ações',
@@ -156,29 +173,25 @@ export function EventProductListPage() {
         isLoading={!activeTenantUuid}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 720 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="adicionais"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <LocalMallOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum adicional cadastrado ainda',
-                description: 'Comece cadastrando o primeiro adicional de um evento.',
-                action: can(ACCESS.eventProductsCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/adicionais/novo')}>
-                    Cadastrar primeiro adicional
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="adicionais"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <LocalMallOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum adicional cadastrado ainda',
+            description: 'Comece cadastrando o primeiro adicional de um evento.',
+            action: can(ACCESS.eventProductsCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/adicionais/novo')}>
+                Cadastrar primeiro adicional
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

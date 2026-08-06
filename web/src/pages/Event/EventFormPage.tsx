@@ -1,8 +1,11 @@
-import { Box, Checkbox, FormControlLabel, FormHelperText, TextField, Typography } from '@mui/material'
+import MyLocationOutlinedIcon from '@mui/icons-material/MyLocationOutlined'
+import { Alert, Box, Button, Checkbox, FormControlLabel, FormHelperText, TextField, Typography } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { DATETIME_FIELD_SLOT_PROPS, getBrowserCurrentCoordinates, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { FormSection } from '../../components/form/FormSection'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import { StoreLocationMap } from '../../components/storefront/StoreLocationMap'
 import * as eventCategoryService from '../../services/eventCategoryService'
@@ -86,6 +89,7 @@ export function EventFormPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
 
   useEffect(() => {
     setIsLoadingForm(true)
@@ -202,7 +206,8 @@ export function EventFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 2fr) minmax(0, 1fr)' }, mb: 2 }}>
+      <FormSection title="Dados principais" description="Defina identidade, categoria e posicionamento inicial do evento no sistema.">
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Nome"
           value={form.name}
@@ -224,38 +229,40 @@ export function EventFormPage() {
         />
       </Box>
 
-      <LocalAutocomplete
-        label="Categoria"
-        options={categoryOptions}
-        value={categoryOptions.find((option) => option.value === form.event_category_uuid) ?? null}
-        onChange={(option) => updateField('event_category_uuid', option?.value ?? '')}
-        getOptionLabel={(option) => option.label}
-        getOptionKey={(option) => option.value}
-        fullWidth
-        error={Boolean(fieldErrors.event_category_uuid)}
-        helperText={fieldErrors.event_category_uuid?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 400 } }}
-      />
+      <Box sx={FORM_GRID_2_SX}>
+        <LocalAutocomplete
+          label="Categoria"
+          options={categoryOptions}
+          value={categoryOptions.find((option) => option.value === form.event_category_uuid) ?? null}
+          onChange={(option) => updateField('event_category_uuid', option?.value ?? '')}
+          getOptionLabel={(option) => option.label}
+          getOptionKey={(option) => option.value}
+          fullWidth
+          error={Boolean(fieldErrors.event_category_uuid)}
+          helperText={fieldErrors.event_category_uuid?.[0]}
+        />
 
-      <LocalAutocomplete
-        label="Local com mapa publicado"
-        options={venueOptions}
-        value={venueOptions.find((option) => option.value === form.venue_uuid) ?? null}
-        onChange={(option) => updateField('venue_uuid', option?.value ?? '')}
-        getOptionLabel={(option) => option.label}
-        getOptionKey={(option) => option.value}
-        fullWidth
-        error={Boolean(fieldErrors.venue_uuid)}
-        helperText={
-          fieldErrors.venue_uuid?.[0] ??
-          (venueOptions.length === 0
-            ? 'Nenhum local ativo com mapa publicado disponível ainda.'
-            : 'Opcional. O evento usará a última versão publicada do mapa deste local.')
-        }
-        sx={{ mb: 2, maxWidth: { sm: 520 } }}
-      />
+        <LocalAutocomplete
+          label="Local com mapa publicado"
+          options={venueOptions}
+          value={venueOptions.find((option) => option.value === form.venue_uuid) ?? null}
+          onChange={(option) => updateField('venue_uuid', option?.value ?? '')}
+          getOptionLabel={(option) => option.label}
+          getOptionKey={(option) => option.value}
+          fullWidth
+          error={Boolean(fieldErrors.venue_uuid)}
+          helperText={
+            fieldErrors.venue_uuid?.[0] ??
+            (venueOptions.length === 0
+              ? 'Nenhum local ativo com mapa publicado disponível ainda.'
+              : 'Opcional. O evento usará a última versão publicada do mapa deste local.')
+          }
+        />
+      </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
+      <FormSection title="Operação do evento" description="Escolha tipo, visibilidade, status e janela principal de realização.">
+      <Box sx={FORM_GRID_3_SX}>
         <LocalAutocomplete
           label="Tipo"
           options={EVENT_TYPE_OPTIONS}
@@ -288,7 +295,7 @@ export function EventFormPage() {
         />
       </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Início"
           type="datetime-local"
@@ -297,7 +304,7 @@ export function EventFormPage() {
           error={Boolean(fieldErrors.starts_at)}
           helperText={fieldErrors.starts_at?.[0]}
           required
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
         <TextField
           label="Término"
@@ -307,21 +314,13 @@ export function EventFormPage() {
           error={Boolean(fieldErrors.ends_at)}
           helperText={fieldErrors.ends_at?.[0]}
           required
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
       </Box>
+      </FormSection>
 
-      <Box
-        sx={{
-          mb: 2,
-          border: '1px solid var(--pt-divider)',
-          borderRadius: 3,
-          p: 2,
-          backgroundColor: 'var(--pt-surface-soft)',
-        }}
-      >
-        <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Reentrada</Typography>
-        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
+      <FormSection title="Reentrada" description="Defina a política padrão de nova entrada depois do primeiro acesso.">
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
           Define a política padrão de nova entrada depois do primeiro acesso.
         </Typography>
 
@@ -339,13 +338,13 @@ export function EventFormPage() {
         {fieldErrors.reentry_enabled?.[0] && <FormHelperText error sx={{ mb: 1 }}>{fieldErrors.reentry_enabled[0]}</FormHelperText>}
 
         {form.reentry_enabled && (
-          <Box sx={{ ...FORM_GRID_2_SX }}>
+          <Box sx={FORM_GRID_2_SX}>
             <TextField
               label="Limite de reentradas"
               type="number"
               placeholder="Sem limite"
               value={form.max_reentries}
-              onChange={(event) => updateField('max_reentries', event.target.value)}
+              onChange={(event) => updateField('max_reentries', sanitizePositiveIntegerInput(event.target.value))}
               error={Boolean(fieldErrors.max_reentries)}
               helperText={fieldErrors.max_reentries?.[0] ?? 'Quantidade maxima de reentradas autorizadas por ingresso.'}
               slotProps={{ htmlInput: { min: 0, step: '1' } }}
@@ -355,7 +354,7 @@ export function EventFormPage() {
               type="number"
               placeholder="Sem intervalo"
               value={form.reentry_cooldown_minutes}
-              onChange={(event) => updateField('reentry_cooldown_minutes', event.target.value)}
+              onChange={(event) => updateField('reentry_cooldown_minutes', sanitizePositiveIntegerInput(event.target.value))}
               error={Boolean(fieldErrors.reentry_cooldown_minutes)}
               helperText={
                 fieldErrors.reentry_cooldown_minutes?.[0] ??
@@ -365,9 +364,10 @@ export function EventFormPage() {
             />
           </Box>
         )}
-      </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+      <FormSection title="Localização" description="Informe nome, endereço e coordenadas para exibição pública e navegação.">
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Local"
           value={form.location_name}
@@ -384,7 +384,7 @@ export function EventFormPage() {
         />
       </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Latitude"
           type="number"
@@ -405,8 +405,33 @@ export function EventFormPage() {
         />
       </Box>
 
+      <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <Button
+          type="button"
+          variant="outlined"
+          startIcon={<MyLocationOutlinedIcon />}
+          onClick={() => {
+            setLocationError(null)
+            void getBrowserCurrentCoordinates()
+              .then(({ latitude, longitude }) => {
+                updateField('location_lat', String(latitude))
+                updateField('location_lng', String(longitude))
+              })
+              .catch((error: Error) => setLocationError(error.message))
+          }}
+        >
+          Usar localização atual
+        </Button>
+      </Box>
+
+      {locationError && (
+        <Alert severity="warning" variant="outlined">
+          {locationError}
+        </Alert>
+      )}
+
       {form.location_lat.trim() && form.location_lng.trim() && !Number.isNaN(Number(form.location_lat)) && !Number.isNaN(Number(form.location_lng)) && (
-        <Box sx={{ mb: 2 }}>
+        <Box>
           <StoreLocationMap
             lat={Number(form.location_lat)}
             lng={Number(form.location_lng)}
@@ -414,7 +439,9 @@ export function EventFormPage() {
           />
         </Box>
       )}
+      </FormSection>
 
+      <FormSection title="Conteúdo e mídia" description="Ajuste os textos de apresentação e a imagem principal do evento.">
       <TextField
         label="Descrição curta"
         value={form.description_short}
@@ -422,7 +449,6 @@ export function EventFormPage() {
         error={Boolean(fieldErrors.description_short)}
         helperText={fieldErrors.description_short?.[0]}
         fullWidth
-        sx={{ mb: 2 }}
         slotProps={{ htmlInput: { maxLength: 255 } }}
       />
 
@@ -435,10 +461,10 @@ export function EventFormPage() {
         fullWidth
         multiline
         minRows={3}
-        sx={{ mb: 2 }}
       />
 
       <ImageUploadField label="Imagem de capa" existingImageUrl={existingImageUrl} onFileSelected={setImageFile} />
+      </FormSection>
     </CrudFormShell>
   )
 }

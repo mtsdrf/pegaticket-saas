@@ -21,6 +21,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AsyncAutocomplete } from '../crud/AsyncAutocomplete'
+import { DATE_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../form/fieldHelpers'
 import { SaleRefundsSection } from './SaleRefundsSection'
 import { SaleReceiptPrintView } from './SaleReceiptPrintView'
 import { useAuth } from '../../hooks/useAuth'
@@ -457,7 +458,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                       {itemDrafts.map((row, index) => (
                         <Stack key={row.id} spacing={1}>
                           <Box
-                            sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) 110px 150px 44px' }, gap: 1.5, alignItems: 'flex-start' }}
+                            sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr)) 44px' }, gap: 1.5, alignItems: 'flex-start' }}
                           >
                             <AsyncAutocomplete
                               label="Ingresso / adicional"
@@ -481,8 +482,8 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                               label="Quantidade"
                               type="number"
                               value={row.quantity}
-                              onChange={(event) => updateItemDraftRow(row.id, { quantity: event.target.value })}
-                              slotProps={{ htmlInput: { min: 0.001, step: '0.001' } }}
+                              onChange={(event) => updateItemDraftRow(row.id, { quantity: sanitizePositiveIntegerInput(event.target.value) })}
+                              slotProps={{ htmlInput: { min: 1, step: '1' } }}
                               error={Boolean(itemsFieldErrors[`items.${index}.quantity`]?.[0])}
                               helperText={itemsFieldErrors[`items.${index}.quantity`]?.[0]}
                             />
@@ -548,7 +549,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                     type="date"
                     value={paidAtDraft}
                     onChange={(event) => setPaidAtDraft(event.target.value)}
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={DATE_FIELD_SLOT_PROPS}
                     helperText="Deixe em branco para usar a data de hoje. Datas futuras agendam o pagamento."
                     sx={{ width: { xs: '100%', sm: '50%' } }}
                   />
@@ -710,13 +711,13 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
               {installmentDrafts.map((row, index) => (
                 <Box
                   key={row.uuid ?? `new-${index}`}
-                  sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: '90px minmax(0, 1fr) 160px 44px' }, gap: 1, alignItems: 'flex-start' }}
+                  sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(3, minmax(0, 1fr)) 44px' }, gap: 1.5, alignItems: 'flex-start' }}
                 >
                   <TextField
                     label="Nº"
                     type="number"
                     value={row.installment_number}
-                    onChange={(event) => updateDraftRow(index, { installment_number: event.target.value })}
+                    onChange={(event) => updateDraftRow(index, { installment_number: sanitizePositiveIntegerInput(event.target.value) })}
                     slotProps={{ htmlInput: { min: 1, step: 1 } }}
                     error={Boolean(installmentFieldErrors[`installments.${index}.installment_number`]?.[0])}
                     helperText={installmentFieldErrors[`installments.${index}.installment_number`]?.[0]}
@@ -738,7 +739,7 @@ export function SaleDetailDialog({ saleUuid, open, onClose, onChanged }: SaleDet
                     type="date"
                     value={row.due_date}
                     onChange={(event) => updateDraftRow(index, { due_date: event.target.value })}
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={DATE_FIELD_SLOT_PROPS}
                     error={Boolean(installmentFieldErrors[`installments.${index}.due_date`]?.[0])}
                     helperText={installmentFieldErrors[`installments.${index}.due_date`]?.[0]}
                   />

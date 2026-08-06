@@ -1,35 +1,15 @@
 import MarkEmailUnreadOutlinedIcon from '@mui/icons-material/MarkEmailUnreadOutlined'
-import { Alert, Box, Button, Divider, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, Skeleton, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { AvatarUpload } from '../../components/account/AvatarUpload'
+import { FormSection } from '../../components/form/FormSection'
 import { PasswordField } from '../../components/form/PasswordField'
 import { PageHeader } from '../../components/layout/PageHeader'
-import { FORM_FIELD_SURFACE_SX } from '../../styles/formFieldStyles'
 import { useUserProfile } from '../../hooks/useUserProfile'
 import { FORM_GRID_2_SX, PAGE_CONTAINER_SX } from '../../styles/layoutStandards'
-import { ELEVATED_SURFACE_SX } from '../../styles/surfaces'
 import * as profileService from '../../services/profileService'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PASSWORD_POLICY_HINT, generateStrongPassword } from '../../utils/password'
-
-const SECTION_SX = {
-  p: { xs: 2, sm: 3 },
-  ...ELEVATED_SURFACE_SX,
-  ...FORM_FIELD_SURFACE_SX,
-} as const
-
-function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <Box sx={{ mb: 2.5 }}>
-      <Typography
-        sx={{ fontFamily: '"Sora", "Inter", sans-serif', fontSize: { xs: 18, sm: 20 }, fontWeight: 700, color: 'var(--pt-text)' }}
-      >
-        {title}
-      </Typography>
-      <Typography sx={{ fontSize: 14, color: 'var(--pt-muted)', mt: 0.25 }}>{subtitle}</Typography>
-    </Box>
-  )
-}
 
 function BasicDataSection() {
   const { profile, setProfile } = useUserProfile()
@@ -76,9 +56,10 @@ function BasicDataSection() {
   }
 
   return (
-    <Paper variant="outlined" sx={SECTION_SX}>
-      <SectionTitle title="Dados básicos" subtitle="Seu nome, telefone e sua foto de perfil." />
-
+    <FormSection
+      title="Dados básicos"
+      description="Atualize seu nome, telefone e a foto usada nas áreas autenticadas do sistema."
+    >
       <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         {formError && (
           <Alert severity="error" sx={{ mb: 2.5 }}>
@@ -91,7 +72,7 @@ function BasicDataSection() {
           </Alert>
         )}
 
-        <Stack spacing={2.5}>
+        <Stack spacing={2.5} sx={{ width: '100%' }}>
           <AvatarUpload name={profile.name} existingAvatarUrl={profile.avatar_url} onFileSelected={setAvatarFile} />
 
           <TextField
@@ -101,7 +82,7 @@ function BasicDataSection() {
             error={Boolean(fieldErrors.name)}
             helperText={fieldErrors.name?.[0]}
             required
-            sx={{ maxWidth: { sm: 400 } }}
+            fullWidth
             slotProps={{ htmlInput: { maxLength: 255 } }}
           />
 
@@ -113,7 +94,7 @@ function BasicDataSection() {
             helperText={fieldErrors.phone?.[0] ?? 'Usado como dado de contato da cobrança da assinatura.'}
             placeholder="(11) 91234-5678"
             autoComplete="tel"
-            sx={{ maxWidth: { sm: 400 } }}
+            fullWidth
             slotProps={{ htmlInput: { maxLength: 30 } }}
           />
         </Stack>
@@ -124,7 +105,7 @@ function BasicDataSection() {
           </Button>
         </Stack>
       </Box>
-    </Paper>
+    </FormSection>
   )
 }
 
@@ -165,8 +146,10 @@ function EmailSection() {
   }
 
   return (
-    <Paper variant="outlined" sx={SECTION_SX}>
-      <SectionTitle title="E-mail" subtitle="E-mail usado para entrar no PegaTicket." />
+    <FormSection
+      title="E-mail"
+      description="Gerencie o endereço usado para autenticação. A troca só é concluída após a confirmação no novo e-mail."
+    >
 
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: profile.pending_email ? 1.5 : 2.5 }}>
         <Typography sx={{ fontSize: 14.5, color: 'var(--pt-text)' }}>{profile.email}</Typography>
@@ -201,7 +184,7 @@ function EmailSection() {
           </Alert>
         )}
 
-        <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, maxWidth: { sm: 560 } }}>
+        <Box sx={FORM_GRID_2_SX}>
           <TextField
             label="Novo e-mail"
             type="email"
@@ -230,7 +213,7 @@ function EmailSection() {
           </Button>
         </Stack>
       </Box>
-    </Paper>
+    </FormSection>
   )
 }
 
@@ -279,9 +262,10 @@ function PasswordSection() {
   }
 
   return (
-    <Paper variant="outlined" sx={SECTION_SX}>
-      <SectionTitle title="Senha" subtitle="Use uma senha forte que você não utiliza em outro lugar." />
-
+    <FormSection
+      title="Senha"
+      description="Use uma senha forte, exclusiva e dentro da política atual de segurança da plataforma."
+    >
       <Box component="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         {formError && (
           <Alert severity="error" sx={{ mb: 2.5 }}>
@@ -294,7 +278,7 @@ function PasswordSection() {
           </Alert>
         )}
 
-        <Stack spacing={2} sx={{ maxWidth: { sm: 400 } }}>
+        <Stack spacing={2} sx={{ width: '100%' }}>
           <PasswordField
             label="Senha atual"
             value={form.current_password}
@@ -332,7 +316,7 @@ function PasswordSection() {
           </Button>
         </Stack>
       </Box>
-    </Paper>
+    </FormSection>
   )
 }
 

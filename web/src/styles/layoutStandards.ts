@@ -63,6 +63,20 @@ export const FORM_GRID_3_SX: SxProps<Theme> = {
   gap: 2,
 }
 
+export const FORM_STACK_SX: SxProps<Theme> = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+}
+
+export const FORM_MAX_WIDTH = {
+  compact: { sm: 240 },
+  narrow: { sm: 320 },
+  medium: { sm: 400 },
+  wide: { sm: 560 },
+  xwide: { sm: 760 },
+} as const
+
 export const CARD_EQUAL_HEIGHT_SX: SxProps<Theme> = {
   height: '100%',
   display: 'flex',

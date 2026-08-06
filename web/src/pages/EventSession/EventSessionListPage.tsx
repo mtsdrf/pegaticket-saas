@@ -2,7 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
-import { Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,6 +10,7 @@ import { ACCESS } from '../../access/requirements'
 import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { useAccessControl } from '../../hooks/useAccessControl'
 import { useAuth } from '../../hooks/useAuth'
@@ -20,6 +21,14 @@ import { EVENT_SESSION_STATUS_OPTIONS, type EventSession } from '../../types/eve
 import { formatDateFromDateTimeBR } from '../../utils/format'
 
 const STATUS_LABELS = Object.fromEntries(EVENT_SESSION_STATUS_OPTIONS.map((option) => [option.value, option.label]))
+const STATUS_TONES: Record<EventSession['status'], StatusChipTone> = {
+  rascunho: 'neutral',
+  agendado: 'warning',
+  vendas_abertas: 'success',
+  vendas_encerradas: 'info',
+  realizado: 'neutral',
+  cancelado: 'danger',
+}
 
 export function EventSessionListPage() {
   const navigate = useNavigate()
@@ -78,7 +87,7 @@ export function EventSessionListPage() {
       {
         field: 'name',
         headerName: 'Sessão',
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => row.name || 'Sessão sem nome',
         exportValue: (row) => row.name || 'Sessão sem nome',
       },
@@ -86,7 +95,7 @@ export function EventSessionListPage() {
         field: 'starts_at',
         headerName: 'Início',
         width: 170,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => formatDateFromDateTimeBR(row.starts_at),
         exportValue: (row) => formatDateFromDateTimeBR(row.starts_at),
       },
@@ -94,7 +103,7 @@ export function EventSessionListPage() {
         field: 'ends_at',
         headerName: 'Término',
         width: 170,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => formatDateFromDateTimeBR(row.ends_at),
         exportValue: (row) => formatDateFromDateTimeBR(row.ends_at),
       },
@@ -102,15 +111,17 @@ export function EventSessionListPage() {
         field: 'capacity',
         headerName: 'Capacidade',
         width: 130,
-        filterType: 'none',
+        filterType: 'number',
         cellRenderer: (row) => (row.capacity ?? 'Livre'),
+        exportValue: (row) => row.capacity ?? 'Livre',
       },
       {
         field: 'status',
         headerName: 'Status',
         width: 170,
-        filterType: 'none',
-        cellRenderer: (row) => <Chip size="small" label={STATUS_LABELS[row.status] ?? row.status} />,
+        filterType: 'text',
+        cellRenderer: (row) => <StatusChip status={row.status} label={STATUS_LABELS[row.status] ?? row.status} tone={STATUS_TONES[row.status]} />,
+        exportValue: (row) => STATUS_LABELS[row.status] ?? row.status,
       },
       {
         field: 'uuid',
@@ -169,29 +180,25 @@ export function EventSessionListPage() {
         isEmpty={false}
         breadcrumbs={[{ label: 'Eventos', to: '/eventos' }, { label: eventName }]}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 820 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="sessoes-evento"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <ScheduleOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhuma sessão cadastrada ainda',
-                description: 'Comece adicionando a primeira data operacional deste evento.',
-                action: can(ACCESS.eventSessionsCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/eventos/${eventUuid}/sessoes/nova`)}>
-                    Cadastrar primeira sessão
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="sessoes-evento"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <ScheduleOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhuma sessão cadastrada ainda',
+            description: 'Comece adicionando a primeira data operacional deste evento.',
+            action: can(ACCESS.eventSessionsCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/eventos/${eventUuid}/sessoes/nova`)}>
+                Cadastrar primeira sessão
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { FormSection } from '../../components/form/FormSection'
 import * as eventService from '../../services/eventService'
 import * as eventProductService from '../../services/eventProductService'
 import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
@@ -157,21 +159,20 @@ export function EventProductFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <LocalAutocomplete
-        label="Evento"
-        options={eventOptions}
-        value={eventOptions.find((option) => option.value === form.event_uuid) ?? null}
-        onChange={(option) => updateField('event_uuid', option?.value ?? '')}
-        getOptionLabel={(option) => option.label}
-        getOptionKey={(option) => option.value}
-        required
-        fullWidth
-        error={Boolean(fieldErrors.event_uuid)}
-        helperText={fieldErrors.event_uuid?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 560 } }}
-      />
-
-      <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 2fr) minmax(0, 1fr)' }, mb: 2 }}>
+      <FormSection title="Dados principais" description="Associe o adicional ao evento e defina preço, tipo e disponibilidade comercial.">
+      <Box sx={FORM_GRID_2_SX}>
+        <LocalAutocomplete
+          label="Evento"
+          options={eventOptions}
+          value={eventOptions.find((option) => option.value === form.event_uuid) ?? null}
+          onChange={(option) => updateField('event_uuid', option?.value ?? '')}
+          getOptionLabel={(option) => option.label}
+          getOptionKey={(option) => option.value}
+          required
+          fullWidth
+          error={Boolean(fieldErrors.event_uuid)}
+          helperText={fieldErrors.event_uuid?.[0]}
+        />
         <TextField
           label="Nome"
           value={form.name}
@@ -180,22 +181,23 @@ export function EventProductFormPage() {
           helperText={fieldErrors.name?.[0]}
           required
         />
-        <TextField
-          label="Preço"
-          type="number"
-          value={form.price}
-          onChange={(event) => updateField('price', event.target.value)}
-          error={Boolean(fieldErrors.price)}
-          helperText={fieldErrors.price?.[0]}
-          required
-          slotProps={{
-            input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
-            htmlInput: { min: 0, step: '0.01' },
-          }}
-        />
       </Box>
+      <TextField
+        label="Preço"
+        type="number"
+        value={form.price}
+        onChange={(event) => updateField('price', event.target.value)}
+        error={Boolean(fieldErrors.price)}
+        helperText={fieldErrors.price?.[0]}
+        required
+        fullWidth
+        slotProps={{
+          input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
+          htmlInput: { min: 0, step: '0.01' },
+        }}
+      />
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
+      <Box sx={FORM_GRID_3_SX}>
         <LocalAutocomplete
           label="Tipo"
           options={EVENT_PRODUCT_KIND_OPTIONS}
@@ -211,7 +213,7 @@ export function EventProductFormPage() {
           type="number"
           placeholder="Ilimitado"
           value={form.quantity_available}
-          onChange={(event) => updateField('quantity_available', event.target.value)}
+          onChange={(event) => updateField('quantity_available', sanitizePositiveIntegerInput(event.target.value))}
           error={Boolean(fieldErrors.quantity_available)}
           helperText={fieldErrors.quantity_available?.[0]}
           slotProps={{ htmlInput: { min: 0, step: '1' } }}
@@ -220,14 +222,14 @@ export function EventProductFormPage() {
           label="Máx. por compra"
           type="number"
           value={form.max_per_order}
-          onChange={(event) => updateField('max_per_order', event.target.value)}
+          onChange={(event) => updateField('max_per_order', sanitizePositiveIntegerInput(event.target.value))}
           error={Boolean(fieldErrors.max_per_order)}
           helperText={fieldErrors.max_per_order?.[0]}
           slotProps={{ htmlInput: { min: 1, step: '1' } }}
         />
       </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Início das vendas"
           type="datetime-local"
@@ -235,7 +237,7 @@ export function EventProductFormPage() {
           onChange={(event) => updateField('sales_start_at', event.target.value)}
           error={Boolean(fieldErrors.sales_start_at)}
           helperText={fieldErrors.sales_start_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
         <TextField
           label="Fim das vendas"
@@ -244,7 +246,7 @@ export function EventProductFormPage() {
           onChange={(event) => updateField('sales_end_at', event.target.value)}
           error={Boolean(fieldErrors.sales_end_at)}
           helperText={fieldErrors.sales_end_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
       </Box>
 
@@ -257,9 +259,10 @@ export function EventProductFormPage() {
         getOptionKey={(option) => option.value}
         error={Boolean(fieldErrors.status)}
         helperText={fieldErrors.status?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 260 } }}
       />
+      </FormSection>
 
+      <FormSection title="Descrição e requisitos" description="Explique o item vendido e, quando aplicável, exija os dados do veículo.">
       <TextField
         label="Descrição"
         value={form.description}
@@ -269,11 +272,10 @@ export function EventProductFormPage() {
         fullWidth
         multiline
         minRows={2}
-        sx={{ mb: 2 }}
       />
 
       {form.kind === 'parking' && (
-        <Stack spacing={0.5}>
+        <Stack spacing={1}>
           <FormControlLabel
             control={
               <Switch
@@ -303,6 +305,7 @@ export function EventProductFormPage() {
           />
         </Stack>
       )}
+      </FormSection>
     </CrudFormShell>
   )
 }

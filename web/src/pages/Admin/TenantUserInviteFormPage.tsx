@@ -1,10 +1,12 @@
-import { Alert, Stack, TextField } from '@mui/material'
+import { Alert, Box, Stack, TextField } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { FormSection } from '../../components/form/FormSection'
 import * as tenantRoleService from '../../services/tenantRoleService'
 import * as tenantUserService from '../../services/tenantUserService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { TenantRole } from '../../types/admin'
 
@@ -70,48 +72,57 @@ export function TenantUserInviteFormPage() {
       submittingLabel="Enviando…"
     >
       <Stack spacing={2}>
-        {successMessage && (
-          <Alert severity="success" role="status">
-            {successMessage}
-          </Alert>
-        )}
+        <FormSection
+          title="Dados do convite"
+          description="Informe a pessoa que vai receber o acesso e qual perfil ela deve assumir dentro da empresa."
+        >
+          <Stack spacing={2} sx={{ width: '100%' }}>
+            {successMessage && (
+              <Alert severity="success" role="status">
+                {successMessage}
+              </Alert>
+            )}
 
-        <TextField
-          label="Nome"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          error={Boolean(fieldErrors.name?.[0])}
-          helperText={fieldErrors.name?.[0]}
-          fullWidth
-          required
-          slotProps={{ htmlInput: { maxLength: 255 } }}
-        />
+            <Box sx={FORM_GRID_2_SX}>
+              <TextField
+                label="Nome"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                error={Boolean(fieldErrors.name?.[0])}
+                helperText={fieldErrors.name?.[0]}
+                fullWidth
+                required
+                slotProps={{ htmlInput: { maxLength: 255 } }}
+              />
 
-        <TextField
-          label="E-mail"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          error={Boolean(fieldErrors.email?.[0])}
-          helperText={fieldErrors.email?.[0]}
-          fullWidth
-          required
-          slotProps={{ htmlInput: { maxLength: 255 } }}
-        />
+              <TextField
+                label="E-mail"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                error={Boolean(fieldErrors.email?.[0])}
+                helperText={fieldErrors.email?.[0]}
+                fullWidth
+                required
+                slotProps={{ htmlInput: { maxLength: 255 } }}
+              />
 
-        <LocalAutocomplete
-          label="Perfil"
-          fullWidth
-          required
-          options={roles}
-          value={roles.find((role) => role.uuid === roleUuid) ?? null}
-          onChange={(role) => setRoleUuid(role?.uuid ?? '')}
-          getOptionLabel={(role) => role.name}
-          getOptionKey={(role) => role.uuid}
-          error={Boolean(fieldErrors.role_uuid?.[0])}
-          helperText={fieldErrors.role_uuid?.[0]}
-        />
+              <LocalAutocomplete
+                label="Perfil"
+                fullWidth
+                required
+                options={roles}
+                value={roles.find((role) => role.uuid === roleUuid) ?? null}
+                onChange={(role) => setRoleUuid(role?.uuid ?? '')}
+                getOptionLabel={(role) => role.name}
+                getOptionKey={(role) => role.uuid}
+                error={Boolean(fieldErrors.role_uuid?.[0])}
+                helperText={fieldErrors.role_uuid?.[0]}
+              />
+            </Box>
+          </Stack>
+        </FormSection>
       </Stack>
     </CrudFormShell>
   )

@@ -24,6 +24,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { DATE_FIELD_SLOT_PROPS } from '../form/fieldHelpers'
 import * as saleRefundService from '../../services/saleRefundService'
 import * as ticketService from '../../services/ticketService'
 import { ACCESS } from '../../access/requirements'
@@ -364,7 +365,7 @@ function SaleRefundFormDialog({ sale, onClose, onRegistered }: SaleRefundFormDia
                 onChange={(event) => setRefundedAt(event.target.value)}
                 error={Boolean(fieldErrors.refunded_at?.[0])}
                 helperText={fieldErrors.refunded_at?.[0]}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={DATE_FIELD_SLOT_PROPS}
                 sx={{ width: { xs: '100%', sm: '50%' } }}
               />
             </Stack>

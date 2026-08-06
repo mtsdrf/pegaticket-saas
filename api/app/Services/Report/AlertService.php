@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Alertas básicos do Home (roadmap Fase A1, seção 88 do documento-base;
- * detecção de anomalias adicionada na Fase A4) — estoque baixo, pagamento
+ * detecção de anomalias adicionada na Fase A4) — pagamentos, fila manual
  * e anomalia estatística simples sobre séries diárias. NÃO é o catálogo
  * completo de alertas configuráveis da spec (seção 79, fase futura) —
  * sem model, sem regra por tenant, tudo calculado on-the-fly a partir de
@@ -15,14 +15,6 @@ use Illuminate\Support\Facades\DB;
  */
 class AlertService
 {
-    /**
-     * Ticket type com estoque restante igual ou abaixo deste percentual da
-     * capacidade cadastrada dispara alerta de estoque baixo.
-     */
-    private const LOW_STOCK_THRESHOLD_PERCENTAGE = 15.0;
-
-    private const LOW_STOCK_MAX_ITEMS = 10;
-
     /**
      * Janela de observação da taxa de recusa de pagamento.
      */
@@ -68,69 +60,10 @@ class AlertService
     public function activeAlerts(int $tenantId): array
     {
         return [
-            ...$this->lowStockAlerts($tenantId),
             ...$this->paymentRejectionAlert($tenantId),
             ...$this->pendingApprovalAlert($tenantId),
             ...$this->statisticalAnomalyAlerts($tenantId),
         ];
-    }
-
-    /**
-     * Um alerta por `ticket_type` ativo com capacidade cadastrada
-     * (`quantity_available` não nulo) cujo estoque restante caiu abaixo do
-     * limiar. Ticket type sem capacidade cadastrada (venda ilimitada) nunca
-     * gera alerta — não há "esgotar" pra medir.
-     */
-    private function lowStockAlerts(int $tenantId): array
-    {
-        $rows = DB::table('ticket_types')
-            ->leftJoin('tickets', function ($join) {
-                $join->on('tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->where('tickets.status', 'ativo')
-                    ->whereNull('tickets.deleted_at');
-            })
-            ->leftJoin('events', 'events.id', '=', 'ticket_types.event_id')
-            ->where('ticket_types.tenant_id', $tenantId)
-            ->where('ticket_types.status', 'ativo')
-            ->whereNull('ticket_types.deleted_at')
-            ->whereNotNull('ticket_types.quantity_available')
-            ->where('ticket_types.quantity_available', '>', 0)
-            ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name', 'ticket_types.quantity_available', 'events.name')
-            ->selectRaw('ticket_types.uuid as ticket_type_uuid, ticket_types.name as ticket_type_name, events.name as event_name, ticket_types.quantity_available as capacity, COUNT(tickets.id) as issued')
-            ->get()
-            ->map(function ($row) {
-                $capacity = (int) $row->capacity;
-                $issued = (int) $row->issued;
-                $remaining = max(0, $capacity - $issued);
-                $remainingPercentage = $capacity > 0 ? round(($remaining / $capacity) * 100, 2) : 0.0;
-
-                return [
-                    'ticket_type_uuid' => $row->ticket_type_uuid,
-                    'ticket_type_name' => $row->ticket_type_name,
-                    'event_name' => $row->event_name,
-                    'capacity' => $capacity,
-                    'remaining' => $remaining,
-                    'remaining_percentage' => $remainingPercentage,
-                ];
-            })
-            ->filter(fn (array $item) => $item['remaining_percentage'] <= self::LOW_STOCK_THRESHOLD_PERCENTAGE)
-            ->sortBy('remaining_percentage')
-            ->take(self::LOW_STOCK_MAX_ITEMS)
-            ->values();
-
-        if ($rows->isEmpty()) {
-            return [];
-        }
-
-        return $rows->map(fn (array $item) => [
-            'type' => 'low_stock',
-            'severity' => $item['remaining'] === 0 ? 'critical' : 'warning',
-            'title' => 'Estoque baixo',
-            'message' => $item['remaining'] === 0
-                ? "\"{$item['ticket_type_name']}\" esgotou."
-                : "\"{$item['ticket_type_name']}\" com apenas {$item['remaining']} ingresso(s) restante(s) ({$item['remaining_percentage']}% da capacidade).",
-            'meta' => $item,
-        ])->all();
     }
 
     /**

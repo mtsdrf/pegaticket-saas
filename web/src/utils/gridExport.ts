@@ -10,10 +10,6 @@ interface TextFilterModel {
   filter?: string
 }
 
-interface BooleanFilterModel {
-  value: boolean
-}
-
 /**
  * Converte o `filterModel` cru do ag-Grid nos parâmetros exatos que o
  * backend espera (contains/min-max/bool), usando `backendField` de cada
@@ -51,11 +47,16 @@ export function buildBackendFilters<T>(
         filters[`${backendField}_max`] = filterTo
       }
     } else if (filterType === 'boolean') {
-      const { value } = model as BooleanFilterModel
-      if (typeof value === 'boolean') filters[backendField] = value
+      const maybeText = (model as TextFilterModel).filter?.trim().toLowerCase()
+      if (!maybeText) continue
+      if (['sim', 's', 'true', '1', 'ativo', 'ativa', 'pago', 'liberado'].includes(maybeText)) {
+        filters[backendField] = true
+      } else if (['nao', 'não', 'n', 'false', '0', 'inativo', 'inativa', 'pendente'].includes(maybeText)) {
+        filters[backendField] = false
+      }
     } else {
       const { filter } = model as TextFilterModel
-      if (filter) filters[backendField] = filter
+      if (filter) filters[backendField] = column.filterTextToBackend ? column.filterTextToBackend(filter) : filter
     }
   }
 

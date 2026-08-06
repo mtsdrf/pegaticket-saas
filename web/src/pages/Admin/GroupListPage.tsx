@@ -1,7 +1,7 @@
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -70,11 +70,7 @@ export function GroupListPage() {
   return (
     <>
       <CrudListPage title="Grupos" subtitle="Organize permissões sistêmicas por grupos." createLabel="Novo grupo" canCreate={can(ACCESS.adminGroupsCreate)} onCreate={() => navigate('/admin/grupos/novo')} error={null} onRetry={() => undefined} isLoading={isLoading} isEmpty={false}>
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 720 }}>
-            <ServerDataGrid columns={columns} fetchPage={fetchPage} rowIdField="uuid" onGridReady={(api) => { gridApiRef.current = api }} emptyState={{ icon: <GroupOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />, title: 'Nenhum grupo cadastrado', description: 'Crie grupos para agrupar permissões sistêmicas.', action: can(ACCESS.adminGroupsCreate) ? <Button variant="contained" onClick={() => navigate('/admin/grupos/novo')}>Cadastrar primeiro grupo</Button> : undefined }} />
-          </Box>
-        </Box>
+        <ServerDataGrid columns={columns} fetchPage={fetchPage} rowIdField="uuid" onGridReady={(api) => { gridApiRef.current = api }} emptyState={{ icon: <GroupOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />, title: 'Nenhum grupo cadastrado', description: 'Crie grupos para agrupar permissões sistêmicas.', action: can(ACCESS.adminGroupsCreate) ? <Button variant="contained" onClick={() => navigate('/admin/grupos/novo')}>Cadastrar primeiro grupo</Button> : undefined }} />
       </CrudListPage>
       <ConfirmDeleteDialog open={deleteTarget !== null} title="Excluir grupo" itemLabel={deleteTarget?.name ?? null} isDeleting={isDeleting} error={deleteError} onCancel={() => setDeleteTarget(null)} onConfirm={() => void handleConfirmDelete()} />
     </>

@@ -1,7 +1,7 @@
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -98,28 +98,24 @@ export function PlanListPage() {
         isLoading={isLoading}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 980 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <WorkspacePremiumOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum plano cadastrado',
-                description: 'Cadastre planos para controlar quais funcionalidades cada empresa pode usar.',
-                action: can(ACCESS.adminPlansCreate) ? (
-                  <Button variant="contained" onClick={() => navigate('/admin/planos/novo')}>
-                    Cadastrar primeiro plano
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <WorkspacePremiumOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum plano cadastrado',
+            description: 'Cadastre planos para controlar quais funcionalidades cada empresa pode usar.',
+            action: can(ACCESS.adminPlansCreate) ? (
+              <Button variant="contained" onClick={() => navigate('/admin/planos/novo')}>
+                Cadastrar primeiro plano
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

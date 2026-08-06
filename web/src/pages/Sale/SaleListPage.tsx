@@ -1,14 +1,11 @@
 import AddIcon from '@mui/icons-material/Add'
-import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
-import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
-import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import { Box, Button, Chip, IconButton, Stack, Typography, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ActiveChip } from '../../components/crud/ActiveChip'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
@@ -21,39 +18,19 @@ import { useAuth } from '../../hooks/useAuth'
 import * as saleService from '../../services/saleService'
 import * as workflowService from '../../services/workflowService'
 import type { Sale } from '../../types/sale'
-import type { SaleOperationStage, SaleOrigin, SaleStatus } from '../../types/sale'
+import type { SaleOperationStage, SaleOrigin } from '../../types/sale'
 import { formatCurrency, formatDateTimeBR } from '../../utils/format'
 import { deriveSaleStatus, STATUS_TONE_COLORS } from '../../utils/saleStatus'
-
-const ORIGIN_FILTERS: Array<{ value: 'all' | SaleOrigin; label: string }> = [
-  { value: 'all', label: 'Todos os canais' },
-  { value: 'staff', label: 'Manual' },
-  { value: 'storefront', label: 'Online' },
-]
 
 const ORIGIN_META: Record<SaleOrigin, { label: string; shortLabel: string }> = {
   staff: { label: 'Venda manual', shortLabel: 'Manual' },
   storefront: { label: 'Bilheteria online', shortLabel: 'Online' },
 }
 
-const STAGE_FILTERS: Array<{ value: 'all' | SaleOperationStage; label: string }> = [
-  { value: 'all', label: 'Todas as etapas' },
-  { value: 'approval', label: 'Aguardando aprovação' },
-  { value: 'confirmed', label: 'Confirmado' },
-]
-
 const STAGE_META: Record<SaleOperationStage, { label: string; accent: string }> = {
   approval: { label: 'Aguardando aprovação', accent: 'var(--pt-warning)' },
   confirmed: { label: 'Confirmado', accent: 'var(--pt-primary)' },
 }
-
-const STATUS_FILTERS: Array<{ value: 'all' | SaleStatus; label: string }> = [
-  { value: 'all', label: 'Todos os status' },
-  { value: 'pending_approval', label: 'Aguardando aprovação' },
-  { value: 'confirmed', label: 'Confirmados' },
-  { value: 'cancellation_requested', label: 'Cancelamento solicitado' },
-  { value: 'rejected', label: 'Recusados' },
-]
 
 function deriveOperationStage(sale: Sale): SaleOperationStage | null {
   if (sale.cancelled_at || sale.status === 'rejected') return null
@@ -122,35 +99,20 @@ const ORDER_STAGE_CHIP_SX = {
 export function SaleListPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
   const { can } = useAccessControl()
   const { activeTenantUuid } = useAuth()
   const gridApiRef = useRef<GridApi | null>(null)
   const isManualOrdersPage = location.pathname === '/vendas-manuais'
 
-  const stageFilterFromQuery = searchParams.get('stage')
-  const isStageFilterFromQueryValid = stageFilterFromQuery === 'approval'
-    || stageFilterFromQuery === 'confirmed'
-
   const [selectedSaleUuid, setSelectedSaleUuid] = useState<string | null>(null)
   const [selectedTimelineSaleUuid, setSelectedTimelineSaleUuid] = useState<string | null>(null)
-  const [originFilter, setOriginFilter] = useState<'all' | SaleOrigin>(isManualOrdersPage ? 'staff' : 'all')
-  const [statusFilter, setStatusFilter] = useState<'all' | SaleStatus>('all')
-  const [stageFilter, setStageFilter] = useState<'all' | SaleOperationStage>(
-    isStageFilterFromQueryValid ? stageFilterFromQuery : 'all',
-  )
-  const [activeOnly, setActiveOnly] = useState(true)
-  const [originCounts, setOriginCounts] = useState<Partial<Record<SaleOrigin, number>>>({})
 
   const fetchPage = useCallback(
     async ({ page, perPage, sortBy, sortDir, filters }: ServerGridFetchParams): Promise<ServerGridFetchResult<Sale>> => {
       if (!activeTenantUuid) return { rows: [], total: 0 }
       const result = await saleService.listSales({
         ...filters,
-        ...(isManualOrdersPage ? { origin: 'staff' as const } : originFilter !== 'all' ? { origin: originFilter } : {}),
-        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
-        ...(stageFilter !== 'all' ? { stage: stageFilter } : {}),
-        ...(activeOnly && !isManualOrdersPage ? { active_only: true } : {}),
+        ...(isManualOrdersPage ? { origin: 'staff' as const } : {}),
         page,
         per_page: perPage,
         sort_by: sortBy,
@@ -158,46 +120,8 @@ export function SaleListPage() {
       })
       return { rows: result.items, total: result.pagination.total }
     },
-    [activeOnly, activeTenantUuid, isManualOrdersPage, originFilter, stageFilter, statusFilter],
+    [activeTenantUuid, isManualOrdersPage],
   )
-
-  useEffect(() => {
-    const nextStageFilter = isStageFilterFromQueryValid ? stageFilterFromQuery : 'all'
-    setStageFilter((current) => (current === nextStageFilter ? current : nextStageFilter))
-    if (nextStageFilter !== 'all') {
-      setStatusFilter('all')
-    }
-  }, [isStageFilterFromQueryValid, stageFilterFromQuery])
-
-  useEffect(() => {
-    if (!isManualOrdersPage) return
-    setOriginFilter('staff')
-    setStatusFilter('all')
-    setStageFilter('all')
-    setActiveOnly(false)
-  }, [isManualOrdersPage])
-
-  useEffect(() => {
-    if (!gridApiRef.current) return
-    gridApiRef.current.refreshInfiniteCache()
-  }, [stageFilter])
-
-  useEffect(() => {
-    if (isManualOrdersPage || !activeTenantUuid) return
-    let cancelled = false
-    ;(async () => {
-      const counts = await Promise.all(
-        (['staff', 'storefront'] as SaleOrigin[]).map(async (origin) => {
-          const pageResult = await saleService.listSales({ origin, active_only: true, per_page: 1 })
-          return [origin, pageResult.pagination.total] as const
-        }),
-      )
-      if (!cancelled) setOriginCounts(Object.fromEntries(counts))
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [activeTenantUuid, isManualOrdersPage, activeOnly])
 
   const columns = useMemo<ServerGridColumn<Sale>[]>(
     () => [
@@ -206,8 +130,7 @@ export function SaleListPage() {
             field: 'origin',
             headerName: 'Canal',
             width: 120,
-            sortable: false,
-            filterType: 'none',
+            filterType: 'text',
             cellRenderer: (row: Sale) => {
               const meta = ORIGIN_META[row.origin]
               return (
@@ -230,8 +153,13 @@ export function SaleListPage() {
             field: 'operation_stage',
             headerName: 'Etapa',
             width: 170,
-            sortable: false,
-            filterType: 'none',
+            filterType: 'text',
+            filterTextToBackend: (value) => {
+              const normalized = value.trim().toLowerCase()
+              if (normalized.includes('apro')) return 'approval'
+              if (normalized.includes('conf')) return 'confirmed'
+              return value
+            },
             cellRenderer: (row: Sale) => {
               const stage = deriveOperationStage(row)
               if (!stage) {
@@ -290,8 +218,7 @@ export function SaleListPage() {
         field: 'risk_flagged',
         headerName: 'Risco',
         width: 90,
-        sortable: false,
-        filterType: 'none',
+        filterType: 'boolean',
         cellRenderer: (row) =>
           row.risk_flagged ? (
             <Tooltip title={row.risk_reason ?? 'Padrão de compra suspeito — revise manualmente.'}>
@@ -313,8 +240,7 @@ export function SaleListPage() {
             field: 'status',
             headerName: 'Status',
             width: 300,
-            sortable: false,
-            filterType: 'none',
+            filterType: 'text',
             cellRenderer: (row: Sale) => <SaleStatusBadge sale={row} />,
             exportValue: (row: Sale) => deriveSaleStatus({
               is_cancelled: Boolean(row.cancelled_at),
@@ -336,8 +262,7 @@ export function SaleListPage() {
         field: 'created_at',
         headerName: 'Criado em',
         width: 170,
-        sortable: false,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) => formatDateTimeBR(row.created_at),
         exportValue: (row) => formatDateTimeBR(row.created_at),
       },
@@ -376,102 +301,6 @@ export function SaleListPage() {
     ],
     [isManualOrdersPage],
   )
-
-  const toolbar = !isManualOrdersPage ? (
-    <Box
-      sx={{
-        p: 1.5,
-        borderRadius: '18px',
-        border: '1px solid var(--pt-border)',
-        bgcolor: 'color-mix(in srgb, var(--pt-surface) 92%, white)',
-      }}
-    >
-      <Stack spacing={1.25}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={1}
-          sx={{ alignItems: { xs: 'stretch', md: 'center' }, justifyContent: 'space-between' }}
-        >
-          <Stack direction="row" spacing={0.9} sx={{ alignItems: 'center' }}>
-            <FilterAltOutlinedIcon sx={{ color: 'var(--pt-muted)', fontSize: 19 }} />
-            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>Filtros</Typography>
-          </Stack>
-          <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75 }}>
-            <Chip
-              clickable
-              color={activeOnly ? 'primary' : 'default'}
-              variant={activeOnly ? 'filled' : 'outlined'}
-              label={activeOnly ? 'Só em andamento' : 'Mostrar histórico também'}
-              onClick={() => {
-                setActiveOnly((current) => !current)
-                gridApiRef.current?.refreshInfiniteCache()
-              }}
-            />
-            <Chip size="small" label={`Manual: ${originCounts.staff ?? 0}`} icon={<ApartmentOutlinedIcon fontSize="small" />} variant="outlined" />
-            <Chip size="small" label={`Online: ${originCounts.storefront ?? 0}`} icon={<LanguageOutlinedIcon fontSize="small" />} variant="outlined" />
-          </Stack>
-        </Stack>
-
-        <Stack spacing={1}>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-            {STAGE_FILTERS.map((option) => (
-              <Chip
-                key={option.value}
-                clickable
-                label={option.label}
-                color={stageFilter === option.value ? 'primary' : 'default'}
-                variant={stageFilter === option.value ? 'filled' : 'outlined'}
-                onClick={() => {
-                  setStageFilter(option.value)
-                  if (option.value !== 'all') setStatusFilter('all')
-                  setSearchParams((current) => {
-                    const next = new URLSearchParams(current)
-                    if (option.value === 'all') next.delete('stage')
-                    else next.set('stage', option.value)
-                    return next
-                  }, { replace: true })
-                  gridApiRef.current?.refreshInfiniteCache()
-                }}
-              />
-            ))}
-          </Stack>
-
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-            {ORIGIN_FILTERS.map((option) => (
-              <Chip
-                key={option.value}
-                clickable
-                label={option.label}
-                color={originFilter === option.value ? 'primary' : 'default'}
-                variant={originFilter === option.value ? 'filled' : 'outlined'}
-                onClick={() => {
-                  setOriginFilter(option.value)
-                  gridApiRef.current?.refreshInfiniteCache()
-                }}
-              />
-            ))}
-          </Stack>
-
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-            {STATUS_FILTERS.map((option) => (
-              <Chip
-                key={option.value}
-                clickable
-                label={option.label}
-                color={statusFilter === option.value ? 'primary' : 'default'}
-                variant={statusFilter === option.value ? 'filled' : 'outlined'}
-                onClick={() => {
-                  setStatusFilter(option.value)
-                  if (option.value !== 'all') setStageFilter('all')
-                  gridApiRef.current?.refreshInfiniteCache()
-                }}
-              />
-            ))}
-          </Stack>
-        </Stack>
-      </Stack>
-    </Box>
-  ) : undefined
 
   const manualPage = (
     <CrudListPage
@@ -524,7 +353,6 @@ export function SaleListPage() {
           onRetry={() => undefined}
           isLoading={!activeTenantUuid}
           isEmpty={false}
-          toolbar={toolbar}
         >
           <Box sx={{ overflowX: 'auto' }}>
             <Box sx={{ minWidth: 1180 }}>
@@ -538,10 +366,8 @@ export function SaleListPage() {
                 }}
                 emptyState={{
                   icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                  title: activeOnly ? 'Nenhuma venda em andamento neste filtro' : 'Nenhuma venda encontrada',
-                  description: activeOnly
-                    ? 'Quando houver novas vendas, elas aparecerão aqui independente do canal de entrada.'
-                    : 'Ajuste os filtros acima ou crie a primeira venda.',
+                  title: 'Nenhuma venda encontrada',
+                  description: 'Quando houver vendas registradas, elas aparecerão aqui e poderão ser refinadas pelos filtros do próprio grid.',
                   action: can(ACCESS.salesCreate) ? (
                     <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/vendas-manuais/nova')}>
                       Criar primeira venda

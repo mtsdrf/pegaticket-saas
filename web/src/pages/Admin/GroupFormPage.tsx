@@ -2,8 +2,10 @@ import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
 import * as adminGroupService from '../../services/adminGroupService'
 import * as adminUserService from '../../services/adminUserService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { AdminUser } from '../../types/admin'
 
@@ -72,46 +74,48 @@ export function GroupFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
     >
-      <Stack spacing={2}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <TextField
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={Boolean(fieldErrors.name)}
-            helperText={fieldErrors.name?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-          <TextField
-            label="Abreviatura"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            error={Boolean(fieldErrors.slug)}
-            helperText={fieldErrors.slug?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-        </Box>
-        <FormControl fullWidth>
-          <InputLabel id="group-users">Usuários do grupo</InputLabel>
-          <Select
-            labelId="group-users"
-            label="Usuários do grupo"
-            multiple
-            value={userUuids}
-            onChange={(e) => setUserUuids(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-          >
-            {users.map((user) => <MenuItem key={user.uuid} value={user.uuid}>{user.name}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <Typography variant="caption" sx={{ color: 'var(--pt-muted)' }}>
-          Permissões de grupo ainda não têm leitura dedicada na API; por segurança, esta tela gerencia apenas os dados básicos e os usuários vinculados.
-        </Typography>
-        <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Grupo ativo" />
-      </Stack>
+      <FormSection title="Dados principais" description="Defina a identidade do grupo, seus usuários vinculados e o status de ativação.">
+        <Stack spacing={2}>
+          <Box sx={FORM_GRID_2_SX}>
+            <TextField
+              label="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={Boolean(fieldErrors.name)}
+              helperText={fieldErrors.name?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="Abreviatura"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              error={Boolean(fieldErrors.slug)}
+              helperText={fieldErrors.slug?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 100 } }}
+            />
+          </Box>
+          <FormControl fullWidth>
+            <InputLabel id="group-users">Usuários do grupo</InputLabel>
+            <Select
+              labelId="group-users"
+              label="Usuários do grupo"
+              multiple
+              value={userUuids}
+              onChange={(e) => setUserUuids(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+            >
+              {users.map((user) => <MenuItem key={user.uuid} value={user.uuid}>{user.name}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <Typography variant="caption" sx={{ color: 'var(--pt-muted)' }}>
+            Permissões de grupo ainda não têm leitura dedicada na API; por segurança, esta tela gerencia apenas os dados básicos e os usuários vinculados.
+          </Typography>
+          <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Grupo ativo" />
+        </Stack>
+      </FormSection>
     </CrudFormShell>
   )
 }

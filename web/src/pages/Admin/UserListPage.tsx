@@ -1,7 +1,7 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -108,22 +108,18 @@ export function UserListPage() {
         isLoading={isLoading}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 760 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              onGridReady={(api) => { gridApiRef.current = api }}
-              emptyState={{
-                icon: <PersonOutlineOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum usuário cadastrado',
-                description: 'Cadastre usuários para liberar acesso ao sistema.',
-                action: can(ACCESS.adminUsersCreate) ? <Button variant="contained" onClick={() => navigate('/admin/usuarios/novo')}>Cadastrar primeiro usuário</Button> : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          onGridReady={(api) => { gridApiRef.current = api }}
+          emptyState={{
+            icon: <PersonOutlineOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum usuário cadastrado',
+            description: 'Cadastre usuários para liberar acesso ao sistema.',
+            action: can(ACCESS.adminUsersCreate) ? <Button variant="contained" onClick={() => navigate('/admin/usuarios/novo')}>Cadastrar primeiro usuário</Button> : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

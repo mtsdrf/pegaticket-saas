@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FeatureMatrix } from '../../components/admin/FeatureMatrix'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
+import { sanitizeIntegerInput } from '../../components/form/fieldHelpers'
 import * as functionalityService from '../../services/functionalityService'
 import * as planService from '../../services/planService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { Functionality } from '../../types/admin'
 
@@ -99,55 +102,70 @@ export function PlanFormPage() {
       onSubmit={handleSubmit}
     >
       <Stack spacing={2}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <TextField
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={Boolean(fieldErrors.name)}
-            helperText={fieldErrors.name?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
+        <FormSection
+          title="Dados principais"
+          description="Defina a identificação do plano, sua ordem de exibição e se ele está disponível para uso."
+        >
+          <Box sx={FORM_GRID_2_SX}>
+            <TextField
+              label="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={Boolean(fieldErrors.name)}
+              helperText={fieldErrors.name?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="Abreviatura"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              error={Boolean(fieldErrors.slug)}
+              helperText={fieldErrors.slug?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 100 } }}
+            />
+            <TextField
+              label="Descrição"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              error={Boolean(fieldErrors.description)}
+              helperText={fieldErrors.description?.[0]}
+              fullWidth
+              sx={{ gridColumn: '1 / -1' }}
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="Ordem"
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(sanitizeIntegerInput(e.target.value) || '0'))}
+              error={Boolean(fieldErrors.sort_order)}
+              helperText={fieldErrors.sort_order?.[0]}
+              fullWidth
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            />
+            <FormControlLabel
+              control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+              label="Plano ativo"
+              sx={{ minHeight: 56, alignItems: 'center' }}
+            />
+          </Box>
+        </FormSection>
+
+        <FormSection
+          title="Pacote de funcionalidades"
+          description="Escolha quais recursos ficam liberados para quem contratar este plano."
+        >
+          <FeatureMatrix
+            title="Funcionalidades liberadas"
+            functionalities={sortedFunctionalities}
+            selected={selected}
+            onToggle={handleToggle}
           />
-          <TextField
-            label="Abreviatura"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            error={Boolean(fieldErrors.slug)}
-            helperText={fieldErrors.slug?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-          <TextField
-            label="Descrição"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            error={Boolean(fieldErrors.description)}
-            helperText={fieldErrors.description?.[0]}
-            fullWidth
-            sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' }, maxWidth: { md: 560 } }}
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-          <TextField
-            label="Ordem"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value))}
-            error={Boolean(fieldErrors.sort_order)}
-            helperText={fieldErrors.sort_order?.[0]}
-            fullWidth
-            slotProps={{ htmlInput: { min: 0, step: 1 } }}
-          />
-        </Box>
-        <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Plano ativo" />
-        <FeatureMatrix
-          title="Funcionalidades liberadas"
-          functionalities={sortedFunctionalities}
-          selected={selected}
-          onToggle={handleToggle}
-        />
+        </FormSection>
       </Stack>
     </CrudFormShell>
   )

@@ -16,6 +16,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { FormSection } from '../../components/form/FormSection'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import * as eventService from '../../services/eventService'
 import * as ticketTypeService from '../../services/ticketTypeService'
@@ -191,21 +193,20 @@ export function TicketTypeFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <LocalAutocomplete
-        label="Evento"
-        options={eventOptions}
-        value={eventOptions.find((option) => option.value === form.event_uuid) ?? null}
-        onChange={(option) => updateField('event_uuid', option?.value ?? '')}
-        getOptionLabel={(option) => option.label}
-        getOptionKey={(option) => option.value}
-        required
-        fullWidth
-        error={Boolean(fieldErrors.event_uuid)}
-        helperText={fieldErrors.event_uuid?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 560 } }}
-      />
-
-      <Box sx={{ ...FORM_GRID_2_SX, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 2fr) minmax(0, 1fr)' }, mb: 2 }}>
+      <FormSection title="Dados principais" description="Associe o ingresso ao evento e defina os campos comerciais centrais.">
+      <Box sx={FORM_GRID_2_SX}>
+        <LocalAutocomplete
+          label="Evento"
+          options={eventOptions}
+          value={eventOptions.find((option) => option.value === form.event_uuid) ?? null}
+          onChange={(option) => updateField('event_uuid', option?.value ?? '')}
+          getOptionLabel={(option) => option.label}
+          getOptionKey={(option) => option.value}
+          required
+          fullWidth
+          error={Boolean(fieldErrors.event_uuid)}
+          helperText={fieldErrors.event_uuid?.[0]}
+        />
         <TextField
           label="Nome"
           value={form.name}
@@ -214,28 +215,31 @@ export function TicketTypeFormPage() {
           helperText={fieldErrors.name?.[0]}
           required
         />
-        <TextField
-          label="Preço"
-          type="number"
-          value={form.price}
-          onChange={(event) => updateField('price', event.target.value)}
-          error={Boolean(fieldErrors.price)}
-          helperText={fieldErrors.price?.[0]}
-          required
-          slotProps={{
-            input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
-            htmlInput: { min: 0, step: '0.01' },
-          }}
-        />
       </Box>
+      <TextField
+        label="Preço"
+        type="number"
+        value={form.price}
+        onChange={(event) => updateField('price', event.target.value)}
+        error={Boolean(fieldErrors.price)}
+        helperText={fieldErrors.price?.[0]}
+        required
+        fullWidth
+        slotProps={{
+          input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
+          htmlInput: { min: 0, step: '0.01' },
+        }}
+      />
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
+      <FormSection title="Regras de venda" description="Controle capacidade, limites por pedido, agenda de venda e status operacional.">
+      <Box sx={FORM_GRID_3_SX}>
         <TextField
           label="Qtd. disponível"
           type="number"
           placeholder="Ilimitado"
           value={form.quantity_available}
-          onChange={(event) => updateField('quantity_available', event.target.value)}
+          onChange={(event) => updateField('quantity_available', sanitizePositiveIntegerInput(event.target.value))}
           error={Boolean(fieldErrors.quantity_available)}
           helperText={fieldErrors.quantity_available?.[0]}
           slotProps={{ htmlInput: { min: 0, step: '1' } }}
@@ -244,7 +248,7 @@ export function TicketTypeFormPage() {
           label="Mín. por compra"
           type="number"
           value={form.min_per_order}
-          onChange={(event) => updateField('min_per_order', event.target.value)}
+          onChange={(event) => updateField('min_per_order', sanitizePositiveIntegerInput(event.target.value))}
           error={Boolean(fieldErrors.min_per_order)}
           helperText={fieldErrors.min_per_order?.[0]}
           slotProps={{ htmlInput: { min: 1, step: '1' } }}
@@ -253,14 +257,14 @@ export function TicketTypeFormPage() {
           label="Máx. por compra"
           type="number"
           value={form.max_per_order}
-          onChange={(event) => updateField('max_per_order', event.target.value)}
+          onChange={(event) => updateField('max_per_order', sanitizePositiveIntegerInput(event.target.value))}
           error={Boolean(fieldErrors.max_per_order)}
           helperText={fieldErrors.max_per_order?.[0]}
           slotProps={{ htmlInput: { min: 1, step: '1' } }}
         />
       </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
+      <Box sx={FORM_GRID_2_SX}>
         <TextField
           label="Início das vendas"
           type="datetime-local"
@@ -268,7 +272,7 @@ export function TicketTypeFormPage() {
           onChange={(event) => updateField('sales_start_at', event.target.value)}
           error={Boolean(fieldErrors.sales_start_at)}
           helperText={fieldErrors.sales_start_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
         <TextField
           label="Fim das vendas"
@@ -277,7 +281,7 @@ export function TicketTypeFormPage() {
           onChange={(event) => updateField('sales_end_at', event.target.value)}
           error={Boolean(fieldErrors.sales_end_at)}
           helperText={fieldErrors.sales_end_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
       </Box>
 
@@ -290,20 +294,11 @@ export function TicketTypeFormPage() {
         getOptionKey={(option) => option.value}
         error={Boolean(fieldErrors.status)}
         helperText={fieldErrors.status?.[0]}
-        sx={{ mb: 2, maxWidth: { sm: 260 } }}
       />
+      </FormSection>
 
-      <Box
-        sx={{
-          mb: 2,
-          border: '1px solid var(--pt-divider)',
-          borderRadius: 3,
-          p: 2,
-          backgroundColor: 'var(--pt-surface-soft)',
-        }}
-      >
-        <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.5 }}>Override de reentrada</Typography>
-        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 1.5 }}>
+      <FormSection title="Override de reentrada" description="O tipo de ingresso pode herdar a política do evento ou sobrescrevê-la.">
+        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
           Este tipo de ingresso pode herdar a regra do evento ou sobrescreve-la.
         </Typography>
 
@@ -352,7 +347,7 @@ export function TicketTypeFormPage() {
               type="number"
               placeholder="Sem limite"
               value={form.max_reentries}
-              onChange={(event) => updateField('max_reentries', event.target.value)}
+              onChange={(event) => updateField('max_reentries', sanitizePositiveIntegerInput(event.target.value))}
               error={Boolean(fieldErrors.max_reentries)}
               helperText={fieldErrors.max_reentries?.[0] ?? 'Se vazio, usa sem limite dentro desta regra.'}
               slotProps={{ htmlInput: { min: 0, step: '1' } }}
@@ -362,15 +357,16 @@ export function TicketTypeFormPage() {
               type="number"
               placeholder="Sem intervalo"
               value={form.reentry_cooldown_minutes}
-              onChange={(event) => updateField('reentry_cooldown_minutes', event.target.value)}
+              onChange={(event) => updateField('reentry_cooldown_minutes', sanitizePositiveIntegerInput(event.target.value))}
               error={Boolean(fieldErrors.reentry_cooldown_minutes)}
               helperText={fieldErrors.reentry_cooldown_minutes?.[0] ?? 'Tempo minimo entre acessos autorizados.'}
               slotProps={{ htmlInput: { min: 0, step: '1' } }}
             />
           </Box>
         )}
-      </Box>
+      </FormSection>
 
+      <FormSection title="Descrição e mídia" description="Adicione contexto comercial para facilitar a venda e a comunicação.">
       <TextField
         label="Descrição"
         value={form.description}
@@ -380,12 +376,12 @@ export function TicketTypeFormPage() {
         fullWidth
         multiline
         minRows={2}
-        sx={{ mb: 2 }}
       />
 
       <ImageUploadField label="Imagem" existingImageUrl={existingImageUrl} onFileSelected={setImageFile} />
+      </FormSection>
 
-      <Accordion variant="outlined" sx={{ mt: 2, ...SOFT_PANEL_SX, '&::before': { display: 'none' } }}>
+      <Accordion variant="outlined" sx={{ ...SOFT_PANEL_SX, '&::before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>Avançado (estoque legado)</Typography>
         </AccordionSummary>
@@ -425,7 +421,6 @@ export function TicketTypeFormPage() {
               onChange={(event) => updateField('unit', event.target.value)}
               error={Boolean(fieldErrors.unit)}
               helperText={fieldErrors.unit?.[0]}
-              sx={{ maxWidth: { sm: 240 } }}
               slotProps={{ htmlInput: { maxLength: 50 } }}
             />
 
@@ -440,7 +435,6 @@ export function TicketTypeFormPage() {
                 input: { startAdornment: <InputAdornment position="start">R$</InputAdornment> },
                 htmlInput: { min: 0, step: '0.01' },
               }}
-              sx={{ maxWidth: { sm: 240 } }}
             />
           </Stack>
         </AccordionDetails>

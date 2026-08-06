@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PermissionMatrix } from '../../components/admin/PermissionMatrix'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
 import * as tenantRoleService from '../../services/tenantRoleService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { Functionality, TenantRolePermission } from '../../types/admin'
 import { ACTION_LABELS_PT, getTenantRoleActionOptions } from '../../types/admin'
@@ -121,60 +124,70 @@ export function TenantRoleFormPage() {
       onSubmit={handleSubmit}
     >
       <Stack spacing={2}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <TextField
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={Boolean(fieldErrors.name)}
-            helperText={fieldErrors.name?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-          <TextField
-            label="Abreviatura"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            error={Boolean(fieldErrors.slug)}
-            helperText={fieldErrors.slug?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-        </Box>
-        <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Perfil ativo" />
+        <FormSection
+          title="Dados principais"
+          description="Defina a identidade do perfil, seu status de ativação e os limites comerciais aplicáveis."
+        >
+          <Box sx={FORM_GRID_2_SX}>
+            <TextField
+              label="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={Boolean(fieldErrors.name)}
+              helperText={fieldErrors.name?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="Abreviatura"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              error={Boolean(fieldErrors.slug)}
+              helperText={fieldErrors.slug?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="Limite de desconto em vendas"
+              type="number"
+              value={discountLimitPercent}
+              onChange={(e) => setDiscountLimitPercent(sanitizePositiveIntegerInput(e.target.value))}
+              helperText="Desconto manual máximo (% abaixo do preço de tabela) que este perfil pode aplicar em um item de venda. Deixe em branco para não limitar."
+              fullWidth
+              slotProps={{
+                input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
+                htmlInput: { min: 0, max: 100, step: '1' },
+              }}
+            />
+            <FormControlLabel
+              control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+              label="Perfil ativo"
+              sx={{ minHeight: 56, alignItems: 'center' }}
+            />
+          </Box>
 
-        <Box>
-          <TextField
-            label="Limite de desconto em vendas"
-            type="number"
-            value={discountLimitPercent}
-            onChange={(e) => setDiscountLimitPercent(e.target.value)}
-            helperText="Desconto manual máximo (% abaixo do preço de tabela) que este perfil pode aplicar em um item de venda. Deixe em branco para não limitar."
-            sx={{ maxWidth: { sm: 360 } }}
-            fullWidth
-            slotProps={{
-              input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
-              htmlInput: { min: 0, max: 100, step: '0.01' },
-            }}
-          />
           {!selected.sales?.length && discountLimitPercent.trim() && (
-            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-warning)', mt: 0.5 }}>
-              Este perfil não tem nenhuma permissão de "Vendas" marcada abaixo — o limite só tem efeito se o
-              perfil puder criar/editar vendas.
+            <Typography sx={{ fontSize: 12.5, color: 'var(--pt-warning)', mt: 1.5 }}>
+              Este perfil não tem nenhuma permissão de "Vendas" marcada abaixo, então o limite só terá efeito quando o perfil puder criar ou editar vendas.
             </Typography>
           )}
-        </Box>
+        </FormSection>
 
-        <PermissionMatrix
+        <FormSection
           title="Permissões do perfil"
-          functionalities={functionalities}
-          getActionsForFunctionality={getTenantRoleActionOptions}
-          selected={selected}
-          onToggle={handleToggle}
-          actionLabels={ACTION_LABELS_PT}
-        />
+          description="Selecione os acessos permitidos para cada funcionalidade da empresa."
+        >
+          <PermissionMatrix
+            title="Permissões do perfil"
+            functionalities={functionalities}
+            getActionsForFunctionality={getTenantRoleActionOptions}
+            selected={selected}
+            onToggle={handleToggle}
+            actionLabels={ACTION_LABELS_PT}
+          />
+        </FormSection>
       </Stack>
     </CrudFormShell>
   )

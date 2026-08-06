@@ -80,11 +80,11 @@ export function AuditLogListPage() {
           headerName: 'Método/Rota',
           width: 220,
           sortable: false,
-          filterType: 'none',
+          filterType: 'text',
           cellRenderer: (row) => [row.method, row.route].filter(Boolean).join(' ') || '—',
           exportValue: (row) => [row.method, row.route].filter(Boolean).join(' ') || '—',
         },
-        { field: 'ip', headerName: 'IP', width: 140, sortable: false, filterType: 'none', cellRenderer: (row) => row.ip ?? '—' },
+        { field: 'ip', headerName: 'IP', width: 140, sortable: false, filterType: 'text', cellRenderer: (row) => row.ip ?? '—' },
       )
     }
 
@@ -117,21 +117,17 @@ export function AuditLogListPage() {
         isLoading={isLoading}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: isMobile ? 460 : 900 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="auditoria"
-              emptyState={{
-                icon: <HistoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum registro de auditoria',
-                description: 'Ainda não há alterações registradas no sistema.',
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="auditoria"
+          emptyState={{
+            icon: <HistoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum registro de auditoria',
+            description: 'Ainda não há alterações registradas no sistema.',
+          }}
+        />
       </CrudListPage>
 
       <Dialog open={detailTarget !== null} onClose={() => setDetailTarget(null)} fullWidth maxWidth="md">

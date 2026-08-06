@@ -2,6 +2,8 @@ import { Box, TextField } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { FormSection } from '../../components/form/FormSection'
 import * as eventService from '../../services/eventService'
 import * as eventSessionService from '../../services/eventSessionService'
 import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
@@ -132,90 +134,94 @@ export function EventSessionFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Nome da sessão"
-          value={form.name}
-          onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(fieldErrors.name)}
-          helperText={fieldErrors.name?.[0] ?? 'Opcional. Ex.: Sábado, abertura oficial, segundo horário.'}
-        />
-        <LocalAutocomplete
-          label="Status"
-          options={EVENT_SESSION_STATUS_OPTIONS}
-          value={EVENT_SESSION_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
-          onChange={(option) => updateField('status', (option?.value ?? 'rascunho') as EventSessionStatus)}
-          getOptionLabel={(option) => option.label}
-          getOptionKey={(option) => option.value}
-          error={Boolean(fieldErrors.status)}
-          helperText={fieldErrors.status?.[0]}
-        />
-      </Box>
+      <FormSection title="Identidade da sessão" description="Defina o nome operacional e o status atual desta agenda dentro do evento.">
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Nome da sessão"
+            value={form.name}
+            onChange={(event) => updateField('name', event.target.value)}
+            error={Boolean(fieldErrors.name)}
+            helperText={fieldErrors.name?.[0] ?? 'Opcional. Ex.: Sábado, abertura oficial, segundo horário.'}
+          />
+          <LocalAutocomplete
+            label="Status"
+            options={EVENT_SESSION_STATUS_OPTIONS}
+            value={EVENT_SESSION_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
+            onChange={(option) => updateField('status', (option?.value ?? 'rascunho') as EventSessionStatus)}
+            getOptionLabel={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            error={Boolean(fieldErrors.status)}
+            helperText={fieldErrors.status?.[0]}
+          />
+        </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Início"
-          type="datetime-local"
-          value={form.starts_at}
-          onChange={(event) => updateField('starts_at', event.target.value)}
-          error={Boolean(fieldErrors.starts_at)}
-          helperText={fieldErrors.starts_at?.[0]}
-          required
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          label="Término"
-          type="datetime-local"
-          value={form.ends_at}
-          onChange={(event) => updateField('ends_at', event.target.value)}
-          error={Boolean(fieldErrors.ends_at)}
-          helperText={fieldErrors.ends_at?.[0]}
-          required
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </Box>
+      <FormSection title="Agenda e janelas" description="Configure a data principal da sessão, abertura de portões e a janela comercial de vendas.">
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Início"
+            type="datetime-local"
+            value={form.starts_at}
+            onChange={(event) => updateField('starts_at', event.target.value)}
+            error={Boolean(fieldErrors.starts_at)}
+            helperText={fieldErrors.starts_at?.[0]}
+            required
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+          <TextField
+            label="Término"
+            type="datetime-local"
+            value={form.ends_at}
+            onChange={(event) => updateField('ends_at', event.target.value)}
+            error={Boolean(fieldErrors.ends_at)}
+            helperText={fieldErrors.ends_at?.[0]}
+            required
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+        </Box>
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
-        <TextField
-          label="Abertura dos portões"
-          type="datetime-local"
-          value={form.gate_opens_at}
-          onChange={(event) => updateField('gate_opens_at', event.target.value)}
-          error={Boolean(fieldErrors.gate_opens_at)}
-          helperText={fieldErrors.gate_opens_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          label="Capacidade"
-          type="number"
-          value={form.capacity}
-          onChange={(event) => updateField('capacity', event.target.value)}
-          error={Boolean(fieldErrors.capacity)}
-          helperText={fieldErrors.capacity?.[0] ?? 'Opcional. Deixe vazio para não travar por capacidade aqui.'}
-          slotProps={{ htmlInput: { min: 0, step: '1' } }}
-        />
-      </Box>
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Abertura dos portões"
+            type="datetime-local"
+            value={form.gate_opens_at}
+            onChange={(event) => updateField('gate_opens_at', event.target.value)}
+            error={Boolean(fieldErrors.gate_opens_at)}
+            helperText={fieldErrors.gate_opens_at?.[0]}
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+          <TextField
+            label="Capacidade"
+            type="number"
+            value={form.capacity}
+            onChange={(event) => updateField('capacity', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.capacity)}
+            helperText={fieldErrors.capacity?.[0] ?? 'Opcional. Deixe vazio para não travar por capacidade aqui.'}
+            slotProps={{ htmlInput: { min: 0, step: '1' } }}
+          />
+        </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Início das vendas"
-          type="datetime-local"
-          value={form.sales_start_at}
-          onChange={(event) => updateField('sales_start_at', event.target.value)}
-          error={Boolean(fieldErrors.sales_start_at)}
-          helperText={fieldErrors.sales_start_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          label="Fim das vendas"
-          type="datetime-local"
-          value={form.sales_end_at}
-          onChange={(event) => updateField('sales_end_at', event.target.value)}
-          error={Boolean(fieldErrors.sales_end_at)}
-          helperText={fieldErrors.sales_end_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </Box>
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Início das vendas"
+            type="datetime-local"
+            value={form.sales_start_at}
+            onChange={(event) => updateField('sales_start_at', event.target.value)}
+            error={Boolean(fieldErrors.sales_start_at)}
+            helperText={fieldErrors.sales_start_at?.[0]}
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+          <TextField
+            label="Fim das vendas"
+            type="datetime-local"
+            value={form.sales_end_at}
+            onChange={(event) => updateField('sales_end_at', event.target.value)}
+            error={Boolean(fieldErrors.sales_end_at)}
+            helperText={fieldErrors.sales_end_at?.[0]}
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+        </Box>
+      </FormSection>
     </CrudFormShell>
   )
 }

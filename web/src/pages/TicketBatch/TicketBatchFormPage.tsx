@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
+import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { FormSection } from '../../components/form/FormSection'
 import * as ticketBatchService from '../../services/ticketBatchService'
 import * as ticketTypeService from '../../services/ticketTypeService'
 import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
@@ -132,84 +134,88 @@ export function TicketBatchFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
-        <TextField
-          label="Nome do lote"
-          value={form.name}
-          onChange={(event) => updateField('name', event.target.value)}
-          error={Boolean(fieldErrors.name)}
-          helperText={fieldErrors.name?.[0]}
-          required
-        />
-        <TextField
-          label="Preço"
-          type="number"
-          value={form.price}
-          onChange={(event) => updateField('price', event.target.value)}
-          error={Boolean(fieldErrors.price)}
-          helperText={fieldErrors.price?.[0]}
-          required
+      <FormSection title="Dados comerciais" description="Defina o nome do lote, preço, volume ofertado e sua janela de disponibilidade.">
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Nome do lote"
+            value={form.name}
+            onChange={(event) => updateField('name', event.target.value)}
+            error={Boolean(fieldErrors.name)}
+            helperText={fieldErrors.name?.[0]}
+            required
+          />
+          <TextField
+            label="Preço"
+            type="number"
+            value={form.price}
+            onChange={(event) => updateField('price', event.target.value)}
+            error={Boolean(fieldErrors.price)}
+            helperText={fieldErrors.price?.[0]}
+            required
           slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
         />
-        <TextField
-          label="Quantidade"
-          type="number"
-          value={form.quantity}
-          onChange={(event) => updateField('quantity', event.target.value)}
-          error={Boolean(fieldErrors.quantity)}
-          helperText={fieldErrors.quantity?.[0]}
-          required
-          slotProps={{ htmlInput: { min: 1, step: '1' } }}
-        />
-      </Box>
+          <TextField
+            label="Quantidade"
+            type="number"
+            value={form.quantity}
+            onChange={(event) => updateField('quantity', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.quantity)}
+            helperText={fieldErrors.quantity?.[0]}
+            required
+            slotProps={{ htmlInput: { min: 1, step: '1' } }}
+          />
+        </Box>
 
-      <Box sx={{ ...FORM_GRID_2_SX, mb: 2 }}>
-        <TextField
-          label="Início"
-          type="datetime-local"
-          value={form.starts_at}
-          onChange={(event) => updateField('starts_at', event.target.value)}
-          error={Boolean(fieldErrors.starts_at)}
-          helperText={fieldErrors.starts_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          label="Fim"
-          type="datetime-local"
-          value={form.ends_at}
-          onChange={(event) => updateField('ends_at', event.target.value)}
-          error={Boolean(fieldErrors.ends_at)}
-          helperText={fieldErrors.ends_at?.[0]}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-      </Box>
+        <Box sx={FORM_GRID_2_SX}>
+          <TextField
+            label="Início"
+            type="datetime-local"
+            value={form.starts_at}
+            onChange={(event) => updateField('starts_at', event.target.value)}
+            error={Boolean(fieldErrors.starts_at)}
+            helperText={fieldErrors.starts_at?.[0]}
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+          <TextField
+            label="Fim"
+            type="datetime-local"
+            value={form.ends_at}
+            onChange={(event) => updateField('ends_at', event.target.value)}
+            error={Boolean(fieldErrors.ends_at)}
+            helperText={fieldErrors.ends_at?.[0]}
+            slotProps={DATETIME_FIELD_SLOT_PROPS}
+          />
+        </Box>
+      </FormSection>
 
-      <Box sx={{ ...FORM_GRID_3_SX, mb: 2 }}>
-        <TextField
-          label="Prioridade"
-          type="number"
-          value={form.priority}
-          onChange={(event) => updateField('priority', event.target.value)}
-          error={Boolean(fieldErrors.priority)}
-          helperText={fieldErrors.priority?.[0] ?? 'Menor número = entra antes.'}
-          slotProps={{ htmlInput: { min: 0, step: '1' } }}
-        />
-        <LocalAutocomplete
-          label="Status"
-          options={TICKET_BATCH_STATUS_OPTIONS}
-          value={TICKET_BATCH_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
-          onChange={(option) => updateField('status', (option?.value ?? 'rascunho') as TicketBatchStatus)}
-          getOptionLabel={(option) => option.label}
-          getOptionKey={(option) => option.value}
-          error={Boolean(fieldErrors.status)}
-          helperText={fieldErrors.status?.[0]}
-        />
-        <FormControlLabel
-          control={<Switch checked={form.auto_advance} onChange={(event) => updateField('auto_advance', event.target.checked)} />}
-          label="Avanço automático"
-          sx={{ minHeight: 56, alignItems: 'center' }}
-        />
-      </Box>
+      <FormSection title="Ordem de avanço" description="Controle a prioridade do lote, o status operacional e o comportamento automático de troca.">
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Prioridade"
+            type="number"
+            value={form.priority}
+            onChange={(event) => updateField('priority', sanitizePositiveIntegerInput(event.target.value))}
+            error={Boolean(fieldErrors.priority)}
+            helperText={fieldErrors.priority?.[0] ?? 'Menor número = entra antes.'}
+            slotProps={{ htmlInput: { min: 0, step: '1' } }}
+          />
+          <LocalAutocomplete
+            label="Status"
+            options={TICKET_BATCH_STATUS_OPTIONS}
+            value={TICKET_BATCH_STATUS_OPTIONS.find((option) => option.value === form.status) ?? null}
+            onChange={(option) => updateField('status', (option?.value ?? 'rascunho') as TicketBatchStatus)}
+            getOptionLabel={(option) => option.label}
+            getOptionKey={(option) => option.value}
+            error={Boolean(fieldErrors.status)}
+            helperText={fieldErrors.status?.[0]}
+          />
+          <FormControlLabel
+            control={<Switch checked={form.auto_advance} onChange={(event) => updateField('auto_advance', event.target.checked)} />}
+            label="Avanço automático"
+            sx={{ minHeight: 56, alignItems: 'center' }}
+          />
+        </Box>
+      </FormSection>
     </CrudFormShell>
   )
 }

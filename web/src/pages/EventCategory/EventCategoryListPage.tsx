@@ -1,7 +1,7 @@
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -140,28 +140,24 @@ export function EventCategoryListPage() {
         isLoading={!activeTenantUuid}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 480 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <CategoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhuma categoria cadastrada ainda',
-                description: 'Categorias agrupam os eventos (ex.: Shows, Esportes, Cursos).',
-                action: can(ACCESS.eventCategoriesCreate) ? (
-                  <Button variant="contained" onClick={() => navigate('/eventos/categorias/nova')}>
-                    Cadastrar primeira categoria
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <CategoryOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhuma categoria cadastrada ainda',
+            description: 'Categorias agrupam os eventos (ex.: Shows, Esportes, Cursos).',
+            action: can(ACCESS.eventCategoriesCreate) ? (
+              <Button variant="contained" onClick={() => navigate('/eventos/categorias/nova')}>
+                Cadastrar primeira categoria
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

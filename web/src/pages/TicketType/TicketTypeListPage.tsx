@@ -3,13 +3,14 @@ import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumb
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined'
-import { Avatar, Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Avatar, Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { TicketTypeStatusToggle } from '../../components/ticketType/TicketTypeStatusToggle'
 import { ACCESS } from '../../access/requirements'
@@ -114,13 +115,14 @@ export function TicketTypeListPage() {
         field: 'status',
         headerName: 'Ativo',
         width: 110,
-        filterType: 'none',
+        filterType: 'text',
         cellRenderer: (row) =>
           can(ACCESS.ticketTypesUpdate) ? (
             <TicketTypeStatusToggle ticketType={row} onToggled={() => gridApiRef.current?.refreshInfiniteCache()} />
           ) : (
-            row.status
+            <StatusChip status={row.status} label={row.status === 'ativo' ? 'Ativo' : 'Inativo'} tone={row.status === 'ativo' ? 'success' : 'danger'} />
           ),
+        exportValue: (row) => row.status === 'ativo' ? 'Ativo' : 'Inativo',
       },
       {
         field: 'uuid',
@@ -190,29 +192,25 @@ export function TicketTypeListPage() {
         isLoading={!activeTenantUuid}
         isEmpty={false}
       >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 720 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="tipos-de-ingresso"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum tipo de ingresso cadastrado ainda',
-                description: 'Comece cadastrando o primeiro tipo de ingresso de um evento.',
-                action: can(ACCESS.ticketTypesCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/tipos-de-ingresso/novo')}>
-                    Cadastrar primeiro tipo de ingresso
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="tipos-de-ingresso"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <ConfirmationNumberOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum tipo de ingresso cadastrado ainda',
+            description: 'Comece cadastrando o primeiro tipo de ingresso de um evento.',
+            action: can(ACCESS.ticketTypesCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/tipos-de-ingresso/novo')}>
+                Cadastrar primeiro tipo de ingresso
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

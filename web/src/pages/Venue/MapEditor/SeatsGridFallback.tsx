@@ -4,7 +4,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined'
-import { Alert, Box, Button, Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { Alert, Button, IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -12,6 +12,7 @@ import { ACCESS } from '../../../access/requirements'
 import { ConfirmDeleteDialog } from '../../../components/crud/ConfirmDeleteDialog'
 import { CrudListPage } from '../../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../../components/crud/ServerDataGrid'
+import { StatusChip, type StatusChipTone } from '../../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../../components/crud/serverGridTypes'
 import { useAccessControl } from '../../../hooks/useAccessControl'
 import { useAuth } from '../../../hooks/useAuth'
@@ -22,6 +23,11 @@ import { SEAT_KIND_OPTIONS, SEAT_STATUS_OPTIONS, type Seat } from '../../../type
 
 const KIND_LABELS = Object.fromEntries(SEAT_KIND_OPTIONS.map((option) => [option.value, option.label]))
 const STATUS_LABELS = Object.fromEntries(SEAT_STATUS_OPTIONS.map((option) => [option.value, option.label]))
+const STATUS_TONES: Record<Seat['status'], StatusChipTone> = {
+  disponivel: 'success',
+  bloqueado: 'warning',
+  indisponivel: 'danger',
+}
 
 /**
  * Fallback somente-grid do mapa de assentos para viewport pequeno (< `md`) —
@@ -125,7 +131,7 @@ export function SeatsGridFallback() {
         headerName: 'Status',
         width: 140,
         filterType: 'none',
-        cellRenderer: (row) => <Chip size="small" label={STATUS_LABELS[row.status] ?? row.status} />,
+        cellRenderer: (row) => <StatusChip status={row.status} label={STATUS_LABELS[row.status] ?? row.status} tone={STATUS_TONES[row.status]} />,
       },
       {
         field: 'uuid',
@@ -195,29 +201,25 @@ export function SeatsGridFallback() {
           Edite o mapa visualmente numa tela maior. Aqui você ainda pode cadastrar, editar e excluir assentos por formulário.
         </Alert>
         {publishError ? <Alert severity="error" sx={{ mb: 2 }}>{publishError}</Alert> : null}
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 760 }}>
-            <ServerDataGrid
-              columns={columns}
-              fetchPage={fetchPage}
-              rowIdField="uuid"
-              exportFileName="mapa-local"
-              onGridReady={(api) => {
-                gridApiRef.current = api
-              }}
-              emptyState={{
-                icon: <EventSeatOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
-                title: 'Nenhum ponto cadastrado ainda',
-                description: 'Comece adicionando o primeiro assento ou mesa deste local.',
-                action: can(ACCESS.seatsCreate) ? (
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/locais/${venueUuid}/assentos/novo`)}>
-                    Cadastrar primeiro assento
-                  </Button>
-                ) : undefined,
-              }}
-            />
-          </Box>
-        </Box>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="mapa-local"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <EventSeatOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhum ponto cadastrado ainda',
+            description: 'Comece adicionando o primeiro assento ou mesa deste local.',
+            action: can(ACCESS.seatsCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/locais/${venueUuid}/assentos/novo`)}>
+                Cadastrar primeiro assento
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog

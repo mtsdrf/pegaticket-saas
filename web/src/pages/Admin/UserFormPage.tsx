@@ -2,9 +2,11 @@ import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
+import { FormSection } from '../../components/form/FormSection'
 import { PasswordField } from '../../components/form/PasswordField'
 import * as adminGroupService from '../../services/adminGroupService'
 import * as adminUserService from '../../services/adminUserService'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { AdminGroup } from '../../types/admin'
 import { PASSWORD_POLICY_HINT, generateStrongPassword } from '../../utils/password'
@@ -98,60 +100,62 @@ export function UserFormPage() {
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
     >
-      <Stack spacing={2}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-          <TextField
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={Boolean(fieldErrors.name)}
-            helperText={fieldErrors.name?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-          <TextField
-            label="E-mail"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={Boolean(fieldErrors.email)}
-            helperText={fieldErrors.email?.[0]}
-            required
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255 } }}
-          />
-          <PasswordField
-            label={isEditMode ? 'Nova senha (opcional)' : 'Senha'}
-            autoComplete={isEditMode ? 'new-password' : 'new-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onGenerate={handleGeneratePassword}
-            error={Boolean(fieldErrors.password)}
-            helperText={fieldErrors.password?.[0] ?? PASSWORD_POLICY_HINT}
-            required={!isEditMode}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 255, minLength: 12 } }}
-          />
-          {canManageGroups && (
-            <FormControl fullWidth>
-              <InputLabel id="user-groups">Grupos</InputLabel>
-              <Select
-                labelId="user-groups"
-                label="Grupos"
-                multiple
-                value={groupUuids}
-                onChange={(e) => setGroupUuids(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-              >
-                {groups.map((group) => (
-                  <MenuItem key={group.uuid} value={group.uuid}>{group.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-        </Box>
-        <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Usuário ativo" />
-      </Stack>
+      <FormSection title="Dados principais" description="Cadastre identidade, credencial de acesso e vínculo com grupos administrativos.">
+        <Stack spacing={2}>
+          <Box sx={FORM_GRID_2_SX}>
+            <TextField
+              label="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={Boolean(fieldErrors.name)}
+              helperText={fieldErrors.name?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <TextField
+              label="E-mail"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={Boolean(fieldErrors.email)}
+              helperText={fieldErrors.email?.[0]}
+              required
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255 } }}
+            />
+            <PasswordField
+              label={isEditMode ? 'Nova senha (opcional)' : 'Senha'}
+              autoComplete={isEditMode ? 'new-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onGenerate={handleGeneratePassword}
+              error={Boolean(fieldErrors.password)}
+              helperText={fieldErrors.password?.[0] ?? PASSWORD_POLICY_HINT}
+              required={!isEditMode}
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 255, minLength: 12 } }}
+            />
+            {canManageGroups && (
+              <FormControl fullWidth>
+                <InputLabel id="user-groups">Grupos</InputLabel>
+                <Select
+                  labelId="user-groups"
+                  label="Grupos"
+                  multiple
+                  value={groupUuids}
+                  onChange={(e) => setGroupUuids(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                >
+                  {groups.map((group) => (
+                    <MenuItem key={group.uuid} value={group.uuid}>{group.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+          <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Usuário ativo" />
+        </Stack>
+      </FormSection>
     </CrudFormShell>
   )
 }

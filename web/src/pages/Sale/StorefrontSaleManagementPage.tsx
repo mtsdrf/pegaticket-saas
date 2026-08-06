@@ -2,11 +2,12 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
-import { Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { IconButton, Stack, Tooltip } from '@mui/material'
 import type { GridApi } from 'ag-grid-community'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CrudListPage } from '../../components/crud/CrudListPage'
 import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import { StatusChip } from '../../components/crud/StatusChip'
 import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
 import { StorefrontSaleActionDialog } from '../../components/sale/StorefrontSaleActionDialog'
 import { WorkflowTimelineDialog } from '../../components/workflow/WorkflowTimelineDialog'
@@ -49,9 +50,10 @@ export function StorefrontSaleManagementPage() {
   const seededRef = useRef(false)
 
   const fetchPage = useCallback(
-    async ({ page, perPage }: ServerGridFetchParams): Promise<ServerGridFetchResult<Sale>> => {
+    async ({ page, perPage, filters }: ServerGridFetchParams): Promise<ServerGridFetchResult<Sale>> => {
       if (!activeTenantUuid) return { rows: [], total: 0 }
       const result = await storefrontSaleService.listStorefrontSales({
+        ...filters,
         active_only: true,
         page,
         per_page: perPage,
@@ -113,18 +115,29 @@ export function StorefrontSaleManagementPage() {
         headerName: 'Status',
         width: 210,
         sortable: false,
-        filterType: 'none',
+        filterType: 'text',
+        filterTextToBackend: (value) => {
+          const normalized = value.trim().toLowerCase()
+          if (!normalized) return undefined
+          if (normalized.includes('cancel')) return 'cancellation_requested'
+          if (normalized.includes('aprova') || normalized.includes('aguard')) return 'pending_approval'
+          if (normalized.includes('confirm')) return 'confirmed'
+          return normalized
+        },
         cellRenderer: (row) =>
           row.status === 'cancellation_requested' ? (
-            <Chip
-              size="small"
-              icon={<CancelOutlinedIcon fontSize="small" />}
+            <StatusChip
+              status={row.status}
               label="Cancelamento solicitado"
-              color="warning"
-              sx={{ fontWeight: 600 }}
+              tone="warning"
+              icon={<CancelOutlinedIcon fontSize="small" />}
             />
           ) : (
-            <Chip size="small" label={STAGE_META[deriveStage(row) ?? 'confirmed'].label} variant="outlined" />
+            <StatusChip
+              status={deriveStage(row) ?? 'confirmed'}
+              label={STAGE_META[deriveStage(row) ?? 'confirmed'].label}
+              tone={deriveStage(row) === 'approval' ? 'warning' : 'success'}
+            />
           ),
         exportValue: (row) => (row.status === 'cancellation_requested' ? 'Cancelamento solicitado' : STAGE_META[deriveStage(row) ?? 'confirmed'].label),
       },
