@@ -54,7 +54,6 @@ class ReportService
             'sales_growth_percentage' => $comparison['growth_percentage'],
             'comparison_current_label' => $comparison['current_label'],
             'comparison_previous_label' => $comparison['previous_label'],
-            'overdue_sales_count' => $this->overdueOrdersCount($tenantId),
             'tickets_issued' => $occupancy['tickets_issued'],
             'commercial_capacity' => $occupancy['commercial_capacity'],
             'occupancy_percentage' => $occupancy['occupancy_percentage'],
@@ -139,18 +138,10 @@ class ReportService
                 'received' => $this->formatMoney($amountReceived),
                 'receivable' => $this->formatMoney($totalAmount - $amountReceived),
             ],
-            'sales_by_city' => [],
-            'sales_by_neighborhood' => [],
             'seasonality_matrix' => $this->seasonalityMatrix($tenantId),
             'top_ticket_types' => $this->topTicketTypes($tenantId, $dateFrom, $dateTo),
             'top_clients' => $this->topClients($tenantId, $dateFrom, $dateTo),
             'rfm_clients' => $this->rfmClients($tenantId, $dateFrom, $dateTo),
-            'late_payment_clients' => $this->latePaymentClients($tenantId, $dateFrom, $dateTo),
-            'overdue_sales' => $this->overdueOrders($tenantId),
-            'receivables_aging' => $this->receivablesAging($tenantId),
-            'receivables_forecast_by_month' => $this->receivablesForecastByMonth($tenantId),
-            'abc_ticket_types' => $this->abcTicketTypes($tenantId, $dateFrom, $dateTo),
-            'abc_clients' => $this->abcClients($tenantId, $dateFrom, $dateTo),
         ];
     }
 
@@ -365,16 +356,6 @@ class ReportService
         ])->values()->all();
     }
 
-    private function salesByCity(int $tenantId, ?string $dateFrom, ?string $dateTo): array
-    {
-        return [];
-    }
-
-    private function salesByNeighborhood(int $tenantId, ?string $dateFrom, ?string $dateTo): array
-    {
-        return [];
-    }
-
     private function seasonalityMatrix(int $tenantId): array
     {
         $grouped = [];
@@ -506,290 +487,6 @@ class ReportService
             ->all();
     }
 
-    private function latePaymentClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
-    {
-        $rows = DB::table('sales')
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNotNull('sales.paid_at')
-            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
-            ->get(['final_customers.name as client_name', 'sales.created_at', 'sales.paid_at']);
-
-        return $rows
-            ->groupBy('client_name')
-            ->map(function ($clientRows, $clientName) {
-                $days = collect($clientRows)->map(function ($row) {
-                    return Carbon::parse($row->created_at)->diffInDays(Carbon::parse($row->paid_at));
-                });
-
-                return [
-                    'client_name' => $clientName,
-                    'avg_days_to_pay' => round($days->avg() ?? 0, 1),
-                    'paid_sales_count' => $days->count(),
-                ];
-            })
-            ->sortByDesc('avg_days_to_pay')
-            ->take($limit)
-            ->values()
-            ->all();
-    }
-
-    private function overdueOrders(int $tenantId, int $limit = 5): array
-    {
-        $installmentRows = DB::table('sale_installments')
-            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNull('sale_installments.deleted_at')
-            ->where('sale_installments.is_paid', false)
-            ->whereDate('sale_installments.due_date', '<', now()->toDateString())
-            ->select(
-                'sales.uuid as sale_uuid',
-                'final_customers.name as client_name',
-                'sale_installments.amount as amount',
-                'sale_installments.due_date as due_date'
-            )
-            ->get()
-            ->map(fn ($row) => [
-                'sale_uuid' => $row->sale_uuid,
-                'client_name' => $row->client_name,
-                'amount' => $this->formatMoney((float) $row->amount),
-                'due_date' => Carbon::parse($row->due_date)->toDateString(),
-                'days_overdue' => Carbon::parse($row->due_date)->diffInDays(now()),
-                'source' => 'installment',
-            ]);
-
-        $orderRows = DB::table('sales')
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->where('sales.is_installment', false)
-            ->where('sales.is_paid', false)
-            ->whereNotNull('sales.due_date')
-            ->whereDate('sales.due_date', '<', now()->toDateString())
-            ->select(
-                'sales.uuid as sale_uuid',
-                'final_customers.name as client_name',
-                'sales.total_amount as amount',
-                'sales.due_date as due_date'
-            )
-            ->get()
-            ->map(fn ($row) => [
-                'sale_uuid' => $row->sale_uuid,
-                'client_name' => $row->client_name,
-                'amount' => $this->formatMoney((float) $row->amount),
-                'due_date' => Carbon::parse($row->due_date)->toDateString(),
-                'days_overdue' => Carbon::parse($row->due_date)->diffInDays(now()),
-                'source' => 'order',
-            ]);
-
-        return $installmentRows
-            ->concat($orderRows)
-            ->sortByDesc('days_overdue')
-            ->take($limit)
-            ->values()
-            ->all();
-    }
-
-    private function receivablesAging(int $tenantId): array
-    {
-        $today = now()->startOfDay();
-        $buckets = [
-            'current' => ['bucket' => 'current', 'label' => 'A vencer', 'amount' => 0.0, 'count' => 0],
-            'overdue_1_30' => ['bucket' => 'overdue_1_30', 'label' => 'Vencido 1-30 dias', 'amount' => 0.0, 'count' => 0],
-            'overdue_31_60' => ['bucket' => 'overdue_31_60', 'label' => 'Vencido 31-60 dias', 'amount' => 0.0, 'count' => 0],
-            'overdue_61_90' => ['bucket' => 'overdue_61_90', 'label' => 'Vencido 61-90 dias', 'amount' => 0.0, 'count' => 0],
-            'overdue_90_plus' => ['bucket' => 'overdue_90_plus', 'label' => 'Vencido 90+ dias', 'amount' => 0.0, 'count' => 0],
-        ];
-
-        $rows = DB::table('sale_installments')
-            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNull('sale_installments.deleted_at')
-            ->where('sale_installments.is_paid', false)
-            ->get(['sale_installments.amount', 'sale_installments.due_date'])
-            ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
-            ->concat(
-                DB::table('sales')
-                    ->where('tenant_id', $tenantId)
-                    ->whereNull('deleted_at')
-                    ->whereNull('cancelled_at')
-                    ->where('is_installment', false)
-                    ->where('is_paid', false)
-                    ->whereNotNull('due_date')
-                    ->get(['total_amount as amount', 'due_date'])
-                    ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
-            );
-
-        foreach ($rows as $row) {
-            if (! $row['due_date']) {
-                continue;
-            }
-
-            $dueDate = Carbon::parse($row['due_date'])->startOfDay();
-            $daysOverdue = $dueDate->lt($today) ? $dueDate->diffInDays($today) : 0;
-
-            $bucketKey = match (true) {
-                $daysOverdue === 0 => 'current',
-                $daysOverdue <= 30 => 'overdue_1_30',
-                $daysOverdue <= 60 => 'overdue_31_60',
-                $daysOverdue <= 90 => 'overdue_61_90',
-                default => 'overdue_90_plus',
-            };
-
-            $buckets[$bucketKey]['amount'] += $row['amount'];
-            $buckets[$bucketKey]['count']++;
-        }
-
-        return collect($buckets)->map(fn ($bucket) => [
-            ...$bucket,
-            'amount' => $this->formatMoney($bucket['amount']),
-            'count' => (int) $bucket['count'],
-        ])->values()->all();
-    }
-
-    private function receivablesForecastByMonth(int $tenantId): array
-    {
-        $grouped = [];
-
-        $rows = DB::table('sale_installments')
-            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNull('sale_installments.deleted_at')
-            ->where('sale_installments.is_paid', false)
-            ->get(['sale_installments.amount', 'sale_installments.due_date'])
-            ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
-            ->concat(
-                DB::table('sales')
-                    ->where('tenant_id', $tenantId)
-                    ->whereNull('deleted_at')
-                    ->whereNull('cancelled_at')
-                    ->where('is_installment', false)
-                    ->where('is_paid', false)
-                    ->whereNotNull('due_date')
-                    ->get(['total_amount as amount', 'due_date'])
-                    ->map(fn ($row) => ['amount' => (float) $row->amount, 'due_date' => $row->due_date])
-            );
-
-        foreach ($rows as $row) {
-            if (! $row['due_date']) {
-                continue;
-            }
-
-            $month = Carbon::parse($row['due_date'])->format('Y-m');
-
-            if (! isset($grouped[$month])) {
-                $grouped[$month] = ['count' => 0, 'total_amount' => 0.0];
-            }
-
-            $grouped[$month]['count']++;
-            $grouped[$month]['total_amount'] += (float) $row['amount'];
-        }
-
-        ksort($grouped);
-
-        return collect($grouped)->map(fn ($data, $month) => [
-            'month' => $month,
-            'count' => (int) $data['count'],
-            'total_amount' => $this->formatMoney($data['total_amount']),
-        ])->values()->all();
-    }
-
-    private function abcTicketTypes(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
-    {
-        $rows = DB::table('sale_items')
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNull('sale_items.deleted_at')
-            ->whereNull('ticket_types.deleted_at')
-            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
-            ->groupBy('ticket_types.id', 'ticket_types.name')
-            ->selectRaw('ticket_types.name as ticket_type_name, SUM(sale_items.line_total) as revenue')
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn ($row) => ['ticket_type_name' => $row->ticket_type_name, 'revenue' => (float) $row->revenue]);
-
-        return $this->abcCurve($rows->all(), 'ticket_type_name', $limit);
-    }
-
-    private function abcClients(int $tenantId, ?string $dateFrom, ?string $dateTo, int $limit = 5): array
-    {
-        $rows = DB::table('sales')
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->when($dateFrom, fn ($q) => $q->whereDate('sales.created_at', '>=', $dateFrom))
-            ->when($dateTo, fn ($q) => $q->whereDate('sales.created_at', '<=', $dateTo))
-            ->groupBy('final_customers.id', 'final_customers.name')
-            ->selectRaw('final_customers.name as client_name, SUM(sales.total_amount) as revenue')
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn ($row) => ['client_name' => $row->client_name, 'revenue' => (float) $row->revenue]);
-
-        return $this->abcCurve($rows->all(), 'client_name', $limit);
-    }
-
-    private function abcCurve(array $rows, string $nameKey, int $limit): array
-    {
-        $totalRevenue = collect($rows)->sum('revenue');
-        $cumulative = 0.0;
-
-        return collect($rows)->map(function (array $row) use ($totalRevenue, &$cumulative, $nameKey) {
-            $participation = $totalRevenue > 0 ? round(($row['revenue'] / $totalRevenue) * 100, 2) : 0.0;
-            $cumulative = round($cumulative + $participation, 2);
-
-            return [
-                $nameKey => $row[$nameKey],
-                'revenue' => $this->formatMoney($row['revenue']),
-                'participation_percentage' => $participation,
-                'cumulative_percentage' => $cumulative,
-                'curve_class' => $this->abcCurveClass($cumulative),
-            ];
-        })->take($limit)->values()->all();
-    }
-
-    private function overdueOrdersCount(int $tenantId): int
-    {
-        $today = now()->toDateString();
-
-        $overdueInstallments = DB::table('sale_installments')
-            ->join('sales', 'sales.id', '=', 'sale_installments.sale_id')
-            ->where('sales.tenant_id', $tenantId)
-            ->whereNull('sales.deleted_at')
-            ->whereNull('sales.cancelled_at')
-            ->whereNull('sale_installments.deleted_at')
-            ->where('sale_installments.is_paid', false)
-            ->whereDate('sale_installments.due_date', '<', $today)
-            ->count();
-
-        $overdueOrders = DB::table('sales')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->whereNull('cancelled_at')
-            ->where('is_installment', false)
-            ->where('is_paid', false)
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
-            ->count();
-
-        return $overdueInstallments + $overdueOrders;
-    }
-
     private function salesComparison(int $tenantId, ?string $dateFrom, ?string $dateTo): array
     {
         [$currentStart, $currentEnd, $previousStart, $previousEnd, $currentLabel, $previousLabel] =
@@ -857,19 +554,6 @@ class ReportService
             $currentStart->translatedFormat('F/Y'),
             $previousStart->translatedFormat('F/Y'),
         ];
-    }
-
-    private function abcCurveClass(float $cumulativePercentage): string
-    {
-        if ($cumulativePercentage <= 80) {
-            return 'A';
-        }
-
-        if ($cumulativePercentage <= 95) {
-            return 'B';
-        }
-
-        return 'C';
     }
 
     /**

@@ -1198,20 +1198,11 @@ Route::prefix('v1')->group(function () {
                 Route::get('/top-products', [AnalyticsController::class, 'topProducts'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-top-products']);
 
-                Route::get('/sales-by-location', [AnalyticsController::class, 'salesByLocation'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-by-location']);
-
                 Route::get('/sales-history', [AnalyticsController::class, 'salesHistory'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-sales-history']);
 
                 Route::get('/top-clients', [AnalyticsController::class, 'topClients'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-top-clients']);
-
-                Route::get('/payment-delays', [AnalyticsController::class, 'paymentDelays'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-payment-delays']);
-
-                Route::get('/overdue-sales', [AnalyticsController::class, 'overdueOrders'])
-                    ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-overdue-sales']);
 
                 Route::get('/abc-analysis', [AnalyticsController::class, 'abcAnalysis'])
                     ->middleware(['tenant', 'perm:analytics,read', 'throttle:60,1,analytics-abc-analysis']);

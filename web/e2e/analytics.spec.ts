@@ -140,62 +140,27 @@ test.describe('Análises', () => {
     })
 
     await page.route('**/api/v1/reports/analytics/abc-analysis*', async (route) => {
-      const dimension = new URL(route.request().url()).searchParams.get('dimension')
-      const items =
-        dimension === 'clients'
-          ? [
-              {
-                client_name: 'Cliente Horizonte',
-                revenue: 1800,
-                participation_percentage: 37.3,
-                cumulative_percentage: 37.3,
-                curve_class: 'A',
-              },
-              {
-                client_name: 'Cliente Aurora',
-                revenue: 940,
-                participation_percentage: 19.5,
-                cumulative_percentage: 56.8,
-                curve_class: 'B',
-              },
-            ]
-          : [
-              {
-                product_name: 'Pizza Calabresa',
-                revenue: 1664,
-                participation_percentage: 34.5,
-                cumulative_percentage: 34.5,
-                curve_class: 'A',
-              },
-              {
-                product_name: 'Lasanha Artesanal',
-                revenue: 1140.5,
-                participation_percentage: 23.7,
-                cumulative_percentage: 58.2,
-                curve_class: 'B',
-              },
-            ]
+      const items = [
+        {
+          product_name: 'Pizza Calabresa',
+          revenue: 1664,
+          participation_percentage: 34.5,
+          cumulative_percentage: 34.5,
+          curve_class: 'A',
+        },
+        {
+          product_name: 'Lasanha Artesanal',
+          revenue: 1140.5,
+          participation_percentage: 23.7,
+          cumulative_percentage: 58.2,
+          curve_class: 'B',
+        },
+      ]
 
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ success: true, message: 'OK', data: items, meta: {} }),
-      })
-    })
-
-    await page.route('**/api/v1/reports/analytics/sales-by-location*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: {
-            cities: [{ city_name: 'São Paulo', sales_count: 11, total_amount: 3020.4 }],
-            neighborhoods: [{ neighborhood_name: 'Mooca', sales_count: 5, total_amount: 1310.2 }],
-          },
-          meta: {},
-        }),
       })
     })
 
@@ -262,72 +227,6 @@ test.describe('Análises', () => {
       })
     })
 
-    await page.route('**/api/v1/reports/analytics/payment-delays*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: [
-            { client_name: 'Cliente Horizonte', avg_days_to_pay: 2, paid_sales_count: 5 },
-            { client_name: 'Cliente Aurora', avg_days_to_pay: 7, paid_sales_count: 3 },
-          ],
-          meta: {},
-        }),
-      })
-    })
-
-    await page.route('**/api/v1/reports/analytics/overdue-sales*', async (route) => {
-      const url = new URL(route.request().url())
-      const pageNumber = Number(url.searchParams.get('page') ?? '1')
-      const rows =
-        pageNumber === 1
-          ? [
-              {
-                sale_uuid: 'order-1',
-                client_name: 'Cliente Horizonte',
-                open_amount: 210.4,
-                days_overdue: 12,
-                type: 'pagamento',
-              },
-              {
-                sale_uuid: 'order-2',
-                client_name: 'Cliente Aurora',
-                open_amount: 98,
-                days_overdue: 33,
-                type: 'entrega',
-              },
-            ]
-          : [
-              {
-                sale_uuid: 'order-3',
-                client_name: 'Cliente Horizonte Sul',
-                open_amount: 55,
-                days_overdue: 4,
-                type: 'pagamento',
-              },
-            ]
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'OK',
-          data: rows,
-          meta: {
-            pagination: {
-              current_page: pageNumber,
-              per_page: 15,
-              total: 3,
-              last_page: 2,
-            },
-          },
-        }),
-      })
-    })
-
     await page.goto('/analises')
 
     await expect(page.getByRole('heading', { name: 'Análises' })).toBeVisible()
@@ -339,12 +238,6 @@ test.describe('Análises', () => {
     await expect(page.getByText('Pizza Calabresa').first()).toBeVisible()
     await expect(page.getByText('Curva ABC de produtos')).toBeVisible()
 
-    await page.getByRole('tab', { name: 'Locais' }).click()
-    await expect(page.getByText('Vendas por cidade')).toBeVisible()
-    await expect(page.getByText('São Paulo')).toBeVisible()
-    await expect(page.getByText('Vendas por bairro')).toBeVisible()
-    await expect(page.getByText('Mooca')).toBeVisible()
-
     await page.getByRole('tab', { name: 'Sazonalidade' }).click()
     await expect(page.getByText('Movimento por dia e hora')).toBeVisible()
     await expect(page.getByText('Sazonalidade').last()).toBeVisible()
@@ -354,15 +247,5 @@ test.describe('Análises', () => {
     await page.getByRole('tab', { name: 'Clientes' }).click()
     await expect(page.getByText('Melhores clientes')).toBeVisible()
     await expect(page.getByText('Cliente Horizonte').first()).toBeVisible()
-    await expect(page.getByText('Atrasos de pagamento')).toBeVisible()
-
-    await page.getByRole('tab', { name: 'Atrasos' }).click()
-    await expect(page.getByText('Vendas em atraso')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Cliente Aurora' })).toBeVisible()
-    await expect(page.getByText('33 dias')).toBeVisible()
-
-    await page.getByRole('button', { name: 'Go to page 2' }).click()
-    await expect(page.getByRole('cell', { name: 'Cliente Horizonte Sul' })).toBeVisible()
-    await expect(page.getByText('4 dias')).toBeVisible()
   })
 })

@@ -7,7 +7,6 @@ use App\Models\Sale\Sale;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -107,18 +106,6 @@ class AnalyticsService
     }
 
     /**
-     * Dimensões geográficas foram removidas do produto atual junto com o
-     * cadastro persistido de endereço do comprador.
-     */
-    public function salesByLocation(int $tenantId, ?string $from, ?string $to): array
-    {
-        return [
-            'by_city' => [],
-            'by_neighborhood' => [],
-        ];
-    }
-
-    /**
      * Matriz ano × mês com TODOS os anos que têm venda (sem filtro de
      * período — histórico completo por definição). Meses sem venda
      * entram zerados; anos em ordem decrescente.
@@ -210,89 +197,6 @@ class AnalyticsService
     }
 
     /**
-     * Média de dias entre criação (created_at) e pagamento (paid_at) por
-     * cliente — só vendas pagos — ordenado do mais lento pro mais rápido.
-     */
-    public function paymentDelays(int $tenantId, ?string $from, ?string $to, int $limit = 10): array
-    {
-        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
-
-        $avgDaysExpr = $this->dateDiffDaysExpression('sales.paid_at', 'sales.created_at');
-
-        return $this->salesQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->whereNotNull('sales.paid_at')
-            ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
-            ->selectRaw("final_customers.uuid as client_uuid, final_customers.name as client_name, AVG({$avgDaysExpr}) as avg_days_to_pay, COUNT(sales.id) as order_count")
-            ->orderByDesc('avg_days_to_pay')
-            ->limit($limit)
-            ->get()
-            ->map(fn ($row) => [
-                'client_uuid' => $row->client_uuid,
-                'client_name' => $row->client_name,
-                'avg_days_to_pay' => round((float) $row->avg_days_to_pay, 1),
-                'order_count' => (int) $row->order_count,
-            ])
-            ->all();
-    }
-
-    /**
-     * Vendas em atraso de pagamento, paginado, ordenado por dias de
-     * atraso desc: parcela vencida não paga (agregado por compra: valor
-     * em aberto = soma das parcelas vencidas não pagas, dias = maior
-     * atraso) OU venda não parcelado com due_date vencido e não pago
-     * (valor em aberto = total_amount).
-     */
-    public function overdueOrders(int $tenantId, ?string $from, ?string $to, int $perPage = 15): LengthAwarePaginator
-    {
-        [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
-        $today = now()->toDateString();
-
-        $overdueInstallments = $this->salesQuery($tenantId, $fromDate, $toDate)
-            ->join('sale_installments', 'sale_installments.sale_id', '=', 'sales.id')
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->whereNull('sale_installments.deleted_at')
-            ->where('sale_installments.is_paid', false)
-            ->whereDate('sale_installments.due_date', '<', $today)
-            ->groupBy('sales.id', 'sales.uuid', 'final_customers.name')
-            ->selectRaw(
-                "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, SUM(sale_installments.amount) as open_amount, MAX("
-                .$this->daysSinceExpression('sale_installments.due_date')
-                .') as days_overdue',
-                [$today]
-            );
-
-        $overduePaymentOrders = $this->salesQuery($tenantId, $fromDate, $toDate)
-            ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-            ->where('sales.is_installment', false)
-            ->where('sales.is_paid', false)
-            ->whereNotNull('sales.due_date')
-            ->whereDate('sales.due_date', '<', $today)
-            ->selectRaw(
-                "sales.uuid as sale_uuid, final_customers.name as client_name, 'pagamento' as type, sales.total_amount as open_amount, "
-                .$this->daysSinceExpression('sales.due_date')
-                .' as days_overdue',
-                [$today]
-            );
-
-        $union = $overdueInstallments
-            ->unionAll($overduePaymentOrders);
-
-        return DB::query()
-            ->fromSub($union, 'overdue')
-            ->orderByDesc('days_overdue')
-            ->orderBy('sale_uuid')
-            ->paginate($perPage)
-            ->through(fn ($row) => [
-                'sale_uuid' => $row->sale_uuid,
-                'client_name' => $row->client_name,
-                'type' => $row->type,
-                'open_amount' => $this->formatMoney((float) $row->open_amount),
-                'days_overdue' => (int) $row->days_overdue,
-            ]);
-    }
-
-    /**
      * Curva ABC por participação acumulada no faturamento:
      * A até 80%, B de 80% (exclusive) a 95%, C o resto.
      */
@@ -300,22 +204,13 @@ class AnalyticsService
     {
         [$fromDate, $toDate] = $this->resolvePeriod($from, $to);
 
-        if ($dimension === 'clients') {
-            $rows = $this->salesQuery($tenantId, $fromDate, $toDate)
-                ->join('final_customers', 'final_customers.id', '=', 'sales.final_customer_id')
-                ->groupBy('final_customers.id', 'final_customers.uuid', 'final_customers.name')
-                ->selectRaw('final_customers.uuid as uuid, final_customers.name as name, SUM(sales.total_amount) as revenue')
-                ->orderByDesc('revenue')
-                ->get();
-        } else {
-            $rows = $this->saleItemsQuery($tenantId, $fromDate, $toDate)
-                ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
-                ->whereNull('ticket_types.deleted_at')
-                ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name')
-                ->selectRaw('ticket_types.uuid as uuid, ticket_types.name as name, SUM(sale_items.line_total) as revenue')
-                ->orderByDesc('revenue')
-                ->get();
-        }
+        $rows = $this->saleItemsQuery($tenantId, $fromDate, $toDate)
+            ->join('ticket_types', 'ticket_types.id', '=', 'sale_items.ticket_type_id')
+            ->whereNull('ticket_types.deleted_at')
+            ->groupBy('ticket_types.id', 'ticket_types.uuid', 'ticket_types.name')
+            ->selectRaw('ticket_types.uuid as uuid, ticket_types.name as name, SUM(sale_items.line_total) as revenue')
+            ->orderByDesc('revenue')
+            ->get();
 
         $totalRevenue = (float) $rows->sum('revenue');
         $cumulative = 0.0;

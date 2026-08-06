@@ -21,8 +21,6 @@ import { OperationSnapshotCard } from '../../components/dashboard/OperationSnaps
 import { SalesByMonthChart } from '../../components/dashboard/SalesByMonthChart'
 import { QuickActionCard } from '../../components/dashboard/QuickActionCard'
 import { RankingListCard } from '../../components/dashboard/RankingListCard'
-import { ReceivablesAgingCard } from '../../components/dashboard/ReceivablesAgingCard'
-import { ReceivablesForecastChart } from '../../components/dashboard/ReceivablesForecastChart'
 import { SeasonalityMatrixCard } from '../../components/dashboard/SeasonalityMatrixCard'
 import { useDashboardReport } from '../../hooks/useDashboardReport'
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist'
@@ -310,44 +308,6 @@ export function DashboardPage() {
           <SalesByMonthChart data={charts?.sales_by_month ?? null} isLoading={isLoading} />
         </Paper>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' },
-            gap: 1.5,
-          }}
-        >
-          <RankingListCard
-            title="Vendas por cidade"
-            subtitle="Cidades com maior faturamento no período."
-            isLoading={isLoading}
-            items={
-              charts?.sales_by_city?.map((item) => ({
-                title: item.city_name,
-                value: formatCurrency(item.total_amount),
-                meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhuma cidade com vendas ainda"
-            emptyDescription="Quando as vendas entrarem, o ranking por cidade aparece aqui."
-          />
-
-          <RankingListCard
-            title="Vendas por bairro"
-            subtitle="Bairros com maior faturamento no período."
-            isLoading={isLoading}
-            items={
-              charts?.sales_by_neighborhood?.map((item) => ({
-                title: item.neighborhood_name,
-                value: formatCurrency(item.total_amount),
-                meta: `${item.count} venda${item.count === 1 ? '' : 's'}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum bairro com vendas ainda"
-            emptyDescription="Quando as vendas entrarem, o ranking por bairro aparece aqui."
-          />
-        </Box>
-
         <SeasonalityMatrixCard rows={charts?.seasonality_matrix ?? null} isLoading={isLoading} />
 
         <Box
@@ -358,18 +318,18 @@ export function DashboardPage() {
           }}
         >
           <RankingListCard
-            title="Produtos campeões"
-            subtitle="Itens com maior faturamento no período."
+            title="Tipos de ingresso mais vendidos"
+            subtitle="Tipos de ingresso com maior faturamento no período."
             isLoading={isLoading}
             items={
-              charts?.top_addons?.map((item) => ({
-                title: item.product_name,
+              charts?.top_ticket_types?.map((item) => ({
+                title: item.ticket_type_name,
                 value: formatCurrency(item.revenue),
                 meta: `${item.quantity_sold} vendidos`,
               })) ?? null
             }
-            emptyTitle="Nenhum produto vendido ainda"
-            emptyDescription="Assim que as vendas começarem a gerar itens, o ranking aparece aqui."
+            emptyTitle="Nenhum ingresso vendido ainda"
+            emptyDescription="Assim que as vendas começarem, o ranking de tipos de ingresso aparece aqui."
           />
 
           <RankingListCard
@@ -388,127 +348,20 @@ export function DashboardPage() {
           />
         </Box>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(3, minmax(0, 1fr))' },
-            gap: 1.5,
-          }}
-        >
-          <RankingListCard
-            title="Clientes por RFM"
-            subtitle="Recência, frequência e valor dos clientes mais relevantes."
-            isLoading={isLoading}
-            items={
-              charts?.rfm_clients?.map((item) => ({
-                title: item.client_name,
-                value: formatCurrency(item.monetary),
-                meta: `${item.segment} • ${item.frequency} venda${item.frequency === 1 ? '' : 's'} • há ${item.recency_days} dia${item.recency_days === 1 ? '' : 's'}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum cliente ranqueado ainda"
-            emptyDescription="Quando houver histórico de compras, o recorte RFM aparece aqui."
-          />
-
-          <RankingListCard
-            title="Clientes que demoram a pagar"
-            subtitle="Tempo médio entre entrega e pagamento."
-            isLoading={isLoading}
-            items={
-              charts?.late_payment_clients?.map((item) => ({
-                title: item.client_name,
-                value: `${item.avg_days_to_pay} dia${item.avg_days_to_pay === 1 ? '' : 's'}`,
-                meta: `${item.paid_sales_count} venda${item.paid_sales_count === 1 ? '' : 's'} paga${item.paid_sales_count === 1 ? '' : 's'}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum prazo de pagamento medido ainda"
-            emptyDescription="Assim que houver vendas concluídas e pagas, o ranking aparece aqui."
-          />
-
-          <RankingListCard
-            title="Vendas mais atrasadas"
-            subtitle="Títulos vencidos com maior tempo em aberto."
-            isLoading={isLoading}
-            items={
-              charts?.overdue_sales?.map((item) => ({
-                title: item.client_name,
-                value: `${item.days_overdue} dia${item.days_overdue === 1 ? '' : 's'}`,
-                meta: `${item.source === 'installment' ? 'Parcela' : 'Venda'} • vence em ${item.due_date} • ${formatCurrency(item.amount)}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum atraso financeiro agora"
-            emptyDescription="Quando existir venda ou parcela vencida, o ranking aparece aqui."
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', xl: 'repeat(3, minmax(0, 1fr))' },
-            gap: 1.5,
-          }}
-        >
-          <ReceivablesAgingCard buckets={charts?.receivables_aging ?? null} isLoading={isLoading} />
-
-          <RankingListCard
-            title="Curva ABC de produtos"
-            subtitle="Participação dos itens no faturamento acumulado."
-            isLoading={isLoading}
-            items={
-              charts?.abc_products?.map((item) => ({
-                title: item.product_name,
-                value: item.curve_class,
-                meta: `${formatCurrency(item.revenue)} • ${formatPercentage(item.participation_percentage)} do faturamento • acum. ${formatPercentage(item.cumulative_percentage)}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum produto na curva ABC ainda"
-            emptyDescription="Quando houver vendas com itens, a classificação aparece aqui."
-          />
-
-          <RankingListCard
-            title="Curva ABC de clientes"
-            subtitle="Participação dos clientes no faturamento acumulado."
-            isLoading={isLoading}
-            items={
-              charts?.abc_clients?.map((item) => ({
-                title: item.client_name,
-                value: item.curve_class,
-                meta: `${formatCurrency(item.revenue)} • ${formatPercentage(item.participation_percentage)} do faturamento • acum. ${formatPercentage(item.cumulative_percentage)}`,
-              })) ?? null
-            }
-            emptyTitle="Nenhum cliente na curva ABC ainda"
-            emptyDescription="Quando houver faturamento no período, a classificação aparece aqui."
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)' },
-            gap: 1.5,
-          }}
-        >
-          <Paper
-            variant="outlined"
-            className="pt-reveal"
-            sx={{
-              p: { xs: 2, sm: 3 },
-              ...ELEVATED_SURFACE_SX,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-              <PaidOutlinedIcon sx={{ fontSize: 18, color: 'var(--pt-muted)' }} />
-              <Typography sx={{ fontWeight: 600, fontSize: 16, color: 'var(--pt-text)' }}>
-                Projeção de recebimentos
-              </Typography>
-            </Box>
-            <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mb: 2 }}>
-              Valores em aberto agrupados por mês de vencimento.
-            </Typography>
-
-            <ReceivablesForecastChart data={charts?.receivables_forecast_by_month ?? null} isLoading={isLoading} />
-          </Paper>
-        </Box>
+        <RankingListCard
+          title="Clientes por RFM"
+          subtitle="Recência, frequência e valor dos clientes mais relevantes."
+          isLoading={isLoading}
+          items={
+            charts?.rfm_clients?.map((item) => ({
+              title: item.client_name,
+              value: formatCurrency(item.monetary),
+              meta: `${item.segment} • ${item.frequency} venda${item.frequency === 1 ? '' : 's'} • há ${item.recency_days} dia${item.recency_days === 1 ? '' : 's'}`,
+            })) ?? null
+          }
+          emptyTitle="Nenhum cliente ranqueado ainda"
+          emptyDescription="Quando houver histórico de compras, o recorte RFM aparece aqui."
+        />
         </>
         )}
       </Stack>

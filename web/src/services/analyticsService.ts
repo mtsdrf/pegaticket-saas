@@ -15,14 +15,10 @@ import type {
   EventAffinityReport,
   FunnelReport,
   InventoryReport,
-  LocationSales,
   LtvGroupBy,
   LtvReport,
   MarginSummary,
   OperatorReport,
-  OverdueSale,
-  OverdueType,
-  PaymentDelayClient,
   PaymentsSummary,
   RefundsReport,
   ResaleReport,
@@ -30,7 +26,6 @@ import type {
   RiskReport,
   SalesByDimension,
   SalesByHour,
-  SalesByLocation,
   SalesDimension,
   SalesGroupBy,
   SalesHistoryYear,
@@ -40,7 +35,6 @@ import type {
   TopClient,
   TopProduct,
 } from '../types/analytics'
-import type { PaginatedResult, PaginationMeta } from '../types/pagination'
 
 /**
  * Os endpoints `/reports/analytics/*` estão sendo desenvolvidos em paralelo
@@ -145,28 +139,6 @@ export async function getTopProducts(params: AnalyticsPeriodParams & { limit: nu
   }))
 }
 
-function normalizeLocation(raw: Raw, nameKeys: string[]): LocationSales {
-  return {
-    name: toText(pick(raw, [...nameKeys, ...NAME_KEYS])),
-    count: toNumber(pick(raw, COUNT_KEYS)),
-    total_amount: toNumber(pick(raw, AMOUNT_KEYS)),
-  }
-}
-
-export async function getSalesByLocation(params: AnalyticsPeriodParams): Promise<SalesByLocation> {
-  const response = await apiClient.get<ApiSuccess<Raw>>('/reports/analytics/sales-by-location', { params })
-  const raw = response.data.data
-
-  return {
-    cities: asArray(pick(raw, ['cities', 'by_city', 'cidades'])).map((item) =>
-      normalizeLocation(item, ['city_name', 'cidade_name', 'city']),
-    ),
-    neighborhoods: asArray(pick(raw, ['neighborhoods', 'by_neighborhood', 'bairros'])).map((item) =>
-      normalizeLocation(item, ['neighborhood_name', 'bairro_name', 'neighborhood']),
-    ),
-  }
-}
-
 export async function getSalesHistory(): Promise<SalesHistoryYear[]> {
   const response = await apiClient.get<ApiSuccess<unknown>>('/reports/analytics/sales-history')
   const rows = Array.isArray(response.data.data)
@@ -204,61 +176,6 @@ export async function getTopClients(params: AnalyticsPeriodParams & { limit: num
       rfm_segment8_label: segment8Label || null,
     }
   })
-}
-
-export async function getPaymentDelays(
-  params: AnalyticsPeriodParams & { limit: number },
-): Promise<PaymentDelayClient[]> {
-  const response = await apiClient.get<ApiSuccess<unknown>>('/reports/analytics/payment-delays', { params })
-  const items = Array.isArray(response.data.data)
-    ? (response.data.data as Raw[])
-    : asArray(pick(response.data.data as Raw, ['items', 'clients']))
-
-  return items.map((raw) => ({
-    name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
-    avg_days_to_pay: toNumber(pick(raw, ['avg_days_to_pay', 'average_days_to_pay', 'avg_delay_days', 'avg_days_late'])),
-    paid_sales_count: toNumber(pick(raw, ['order_count', 'paid_sales_count', 'sales_count', 'count'])),
-  }))
-}
-
-const OVERDUE_TYPES = ['pagamento', 'entrega'] as const
-
-/**
- * Divergência conhecida vs brief original: o backend NÃO expõe filtro por
- * `type` nem retorna `due_date` — o tipo (`pagamento`/`entrega`) vem como
- * campo de cada linha (`open_amount` = valor em aberto). Uma venda atrasada
- * em pagamento E entrega aparece duas vezes, uma por tipo (decisão do backend).
- */
-export async function listOverdueOrders(
-  params: AnalyticsPeriodParams & { page: number; per_page: number },
-): Promise<PaginatedResult<OverdueSale>> {
-  const response = await apiClient.get<ApiSuccess<unknown>>('/reports/analytics/overdue-sales', { params })
-  const meta = response.data.meta as { pagination?: PaginationMeta }
-  const items = Array.isArray(response.data.data)
-    ? (response.data.data as Raw[])
-    : asArray(pick(response.data.data as Raw, ['items', 'sales']))
-
-  const rows = items.map((raw) => {
-    const type = toText(pick(raw, ['type', 'tipo', 'source'])).toLowerCase()
-    return {
-      sale_uuid: toText(pick(raw, ['sale_uuid', 'uuid'])),
-      client_name: toText(pick(raw, ['client_name', ...NAME_KEYS])),
-      amount: toNumber(pick(raw, ['open_amount', ...AMOUNT_KEYS])),
-      due_date: toText(pick(raw, ['due_date', 'date'])) || null,
-      days_overdue: toNumber(pick(raw, ['days_overdue', 'days_late'])),
-      type: (OVERDUE_TYPES as readonly string[]).includes(type) ? (type as OverdueType) : null,
-    }
-  })
-
-  return {
-    items: rows,
-    pagination: meta.pagination ?? {
-      current_page: params.page,
-      per_page: params.per_page,
-      total: rows.length,
-      last_page: 1,
-    },
-  }
 }
 
 const ABC_CLASSES = ['A', 'B', 'C'] as const

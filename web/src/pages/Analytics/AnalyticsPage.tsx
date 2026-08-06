@@ -13,10 +13,8 @@ import { CouponsTab } from './tabs/CouponsTab'
 import { EventAffinityTab } from './tabs/EventAffinityTab'
 import { FunnelTab } from './tabs/FunnelTab'
 import { InventoryTab } from './tabs/InventoryTab'
-import { LocationsTab } from './tabs/LocationsTab'
 import { LtvTab } from './tabs/LtvTab'
 import { OperatorsTab } from './tabs/OperatorsTab'
-import { OverdueTab } from './tabs/OverdueTab'
 import { OverviewTab } from './tabs/OverviewTab'
 import { PaymentsTab } from './tabs/PaymentsTab'
 import { ProductsTab } from './tabs/ProductsTab'
@@ -33,10 +31,8 @@ type AnalyticsTabKey =
   | 'sales-by-dimension'
   | 'payments'
   | 'access'
-  | 'locations'
   | 'seasonality'
   | 'clients'
-  | 'overdue'
   | 'affiliates'
   | 'coupons'
   | 'refunds'
@@ -56,10 +52,8 @@ const TABS: { key: AnalyticsTabKey; label: string }[] = [
   { key: 'sales-by-dimension', label: 'Vendas por dimensão' },
   { key: 'payments', label: 'Pagamentos' },
   { key: 'access', label: 'Acesso' },
-  { key: 'locations', label: 'Locais' },
   { key: 'seasonality', label: 'Sazonalidade' },
   { key: 'clients', label: 'Clientes' },
-  { key: 'overdue', label: 'Atrasos' },
   { key: 'affiliates', label: 'Afiliados' },
   { key: 'coupons', label: 'Cupons' },
   { key: 'refunds', label: 'Reembolsos' },
@@ -103,7 +97,7 @@ export function AnalyticsPage() {
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1600 }}>
       <PageHeader
         title="Análises"
-        subtitle="Explore financeiro, ingressos, acesso, locais, clientes e atrasos da operação."
+        subtitle="Explore financeiro, ingressos, acesso e clientes da operação."
       />
 
       {planLocked ? (
@@ -170,10 +164,8 @@ export function AnalyticsPage() {
                 {tab.key === 'sales-by-dimension' && <SalesByDimensionTab {...tabProps} />}
                 {tab.key === 'payments' && <PaymentsTab {...tabProps} />}
                 {tab.key === 'access' && <AccessTab {...tabProps} />}
-                {tab.key === 'locations' && <LocationsTab {...tabProps} />}
                 {tab.key === 'seasonality' && <SeasonalityTab onPlanLocked={handlePlanLocked} />}
                 {tab.key === 'clients' && <ClientsTab {...tabProps} />}
-                {tab.key === 'overdue' && <OverdueTab {...tabProps} />}
                 {tab.key === 'affiliates' && <AffiliatesTab {...tabProps} />}
                 {tab.key === 'coupons' && <CouponsTab {...tabProps} />}
                 {tab.key === 'refunds' && <RefundsTab {...tabProps} />}

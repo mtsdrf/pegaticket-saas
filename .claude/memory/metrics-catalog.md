@@ -69,7 +69,7 @@ inventar fórmula para o que falta.
 | Receita por canal (`byChannel`) | `SUM(total_amount)` agrupado por `sales.origin`, mesma base de `salesQuery()` | `sales.origin` |
 | `salesSummary` (Analytics, dia/mês) | Contagem + receita + ticket médio por bucket, com bucket comparativo do período imediatamente anterior de mesma duração | `sales.created_at`, `sales.total_amount` |
 | Top ticket types | `SUM(sale_items.line_total)` e `SUM(sale_items.quantity)` por `ticket_type_id`, via `sale_items` (snapshot da venda, não preço atual do produto) | `sale_items`, `ticket_types` |
-| Curva ABC (ticket types/clientes) | Ordena por receita desc, participação = `receita_item / receita_total * 100`, acumula; classe A ≤80%, B ≤95% (exclusive), C = resto | `sale_items`/`sales` agregado |
+| Curva ABC de ticket types | Ordena por receita desc, participação = `receita_item / receita_total * 100`, acumula; classe A ≤80%, B ≤95% (exclusive), C = resto. Dimensão `clients` removida em 2026-08-06 (resíduo Maskats, ver seção 7) | `sale_items` agregado por `ticket_type_id` |
 | Margem bruta (`marginSummary`) | `gross_margin = revenue_with_known_cost - SUM(quantity * ticket_types.last_purchase_cost)`; `coverage_percentage = revenue_with_known_cost / total_revenue * 100` — só conta item cujo `ticket_types.last_purchase_cost` não é nulo | `sale_items`, `ticket_types.last_purchase_cost` |
 | ROI de cupom (`couponRoi`) | Ticket médio de vendas com `coupon_id` vs. sem, `ticket_lift_percentage = (avg_com - avg_sem) / avg_sem * 100`. **Documentado como correlação, não causalidade** (autosseleção de cliente) | `sales.coupon_id`, `sales.discount_amount` |
 | Concentração de receita (`revenueConcentration`) | `top10_revenue / total_revenue * 100`, top 10 clientes por `SUM(total_amount)` no período | `sales` |
@@ -84,17 +84,21 @@ inventar fórmula para o que falta.
 |---|---|---|
 | RFM (segmento único) | **Ver `RfmCalculator`** (`api/app/Services/Report/RfmCalculator.php`) — score relativo por tercil (1..3) sobre recência (invertida), frequência e valor monetário do conjunto de clientes ativo no período; regra de rótulo: R=1 → `inativo` se F=1 senão `em_risco`; R≥2 → `vip` se F=3 e M=3, `recorrente` se F≥2, senão `em_risco`. Usado por `ReportService::rfmClients()` (Home) e `AnalyticsService::topClients()` (Análises) — **fórmula única desde a Fase A0**, antes divergiam (ver `architecture-decisions.md`) | `sales` + `final_customers`, agregado por cliente |
 | Top clientes por valor | `SUM(total_amount)` desc por `final_customer_id`, com `order_count`/`last_order_at` | `sales` |
-| Atraso médio de pagamento (`paymentDelays`/`latePaymentClients`) | Média de `DATEDIFF(paid_at, created_at)` por cliente, só vendas com `paid_at` preenchido | `sales.created_at`, `sales.paid_at` |
 | Churn (`churnClients`) | Cliente com **2+ vendas ativas** cuja última venda é anterior a `now() - 60 dias` (`CHURN_INACTIVITY_DAYS`); receita mensal em risco = `SUM(total_amount)` dos pedidos nos 90 dias antes da última compra, dividido por 3 | `sales` |
 | CRM (`crmSummaryForTenant`) | `total_spent = SUM(total_amount)` e `purchase_count = COUNT(*)` só de vendas **pagas** (`is_paid=true`), não cancelada/deletada, por `final_customer_tenant_link`; `last_purchase_at = MAX(paid_at)` | `final_customer_tenant_links`, `sales` |
 
 ## 3. Pagamentos, inadimplência e cobrança
 
-| Métrica | Fórmula | Fonte |
-|---|---|---|
-| Pedidos vencidos (`overdueOrders`) | União de (a) parcela vencida não paga (`due_date < hoje`, `is_paid=false`) agregada por venda, valor = soma das parcelas vencidas, dias = maior atraso; (b) venda não parcelada com `due_date` vencido e `is_paid=false`, valor = `total_amount` | `sale_installments`, `sales` |
-| Aging de recebíveis / previsão por mês | Bucket por faixa de dias de atraso / por mês de vencimento, `SUM` de valor em aberto | `sale_installments`/`sales` |
-| `overdue_percentage` (resumo filtrado) | `COUNT` de vendas `is_paid=false AND is_installment=false AND due_date < hoje` sobre o total filtrado — **definição simplificada**, não cobre parcela atrasada de venda parcelada (essa lógica vive só em `overdueOrdersCount()`) | `sales` |
+`overdue_percentage` (resumo filtrado de `salesFilteredSummary`, tela de
+listagem de vendas) continua existindo — `COUNT` de vendas `is_paid=false
+AND is_installment=false AND due_date < hoje` sobre o total filtrado. Os
+indicadores/relatórios dedicados de atraso de pagamento/aging de
+recebíveis (`overdueOrders`, `receivablesAging`,
+`receivablesForecastByMonth`, `paymentDelays`/`latePaymentClients`, aba
+"Atrasos" e "Locais" de Análises) foram **removidos em 2026-08-06** — ver
+seção 7. `sale_installments`/`is_installment` (parcelamento manual
+lançado por staff/balcão) continua existindo como funcionalidade, só os
+relatórios/indicadores dedicados a atraso foram removidos.
 
 ## 4. Operação e check-in (`OperationSnapshotService`, `AnalyticsService::checkinInsights`)
 
@@ -352,3 +356,62 @@ contexto quando a fase correspondente chegar:
 - **Antifraude agregado** (fila de revisão, taxa de falso positivo, Pareto de regras) — RESOLVIDO na Fase A3, parte 1 (`riskReport`, ver seção 5.6): contagem/valor flagado por período, taxa sobre vendas pagas, quebra por heurística (melhor-esforço via casamento de texto) e lista de vendas flagadas para revisão manual. Taxa de FALSO positivo continua AUSENTE — exigiria staff marcar cada alerta como "confirmado"/"falso positivo" (feedback loop que não existe hoje, `sales.risk_flagged` é só o flag do motor, sem campo de decisão humana).
 - **Relatório de revenda/transferência** — RESOLVIDO na Fase A3, parte 1 (`resaleReport`, ver seção 5.6): volume/valor de revenda, status de repasse, transferências simples (aproximado por exclusão).
 - **Relatório de bilheteria por operador/terminal** — RESOLVIDO na Fase A3, parte 1 (`operatorReport`, ver seção 5.6): check-ins por operador/portaria, vendas presenciais por operador, sessões de caixa por operador.
+
+## 7. Métricas removidas em 2026-08-06 (resíduo Maskats, não decisão de produto)
+
+O produto nasceu como Maskats (comércio/varejo B2B) e foi pivotado para
+ticketing (ver `project_ticketing_pivot_confirmed.md`). Vários
+indicadores/relatórios do Home e de Análises eram resíduo literal do
+domínio antigo — não fazem sentido pra venda de ingressos com pagamento
+imediato via PagBank (cartão/Pix) e foram removidos nesta data, não por
+decisão de produto sobre uma feature nova:
+
+- **Vendas por cidade / por bairro** (`sales_by_city`/`sales_by_neighborhood`
+  no Home, aba "Locais" em Análises) — já era um stub vazio documentado no
+  código (`ReportService::salesByCity/salesByNeighborhood`,
+  `AnalyticsService::salesByLocation`) desde que o cadastro de endereço do
+  comprador foi removido do produto; a remoção agora tira o stub morto do
+  contrato/response de vez, em vez de deixar `[]` fantasma.
+- **Curva ABC de clientes** (`abc_clients` no Home, dimensão `dimension=clients`
+  de `abcAnalysis`/aba Clientes em Análises) — removida. Curva ABC de
+  **ticket types** continua (é o "produto" real do domínio de ticketing,
+  não resíduo — ver decisão abaixo).
+- **Clientes que demoram a pagar / atraso médio de pagamento**
+  (`late_payment_clients` no Home, `paymentDelays`/aba "Atrasos" em
+  Análises) — removida.
+- **Vendas atrasadas / pedidos vencidos** (`overdue_sales`/
+  `overdue_sales_count` no Home e no e-mail de resumo agendado,
+  `overdueOrders`/aba "Atrasos" em Análises) — removida.
+- **Aging de recebíveis / projeção de recebimentos por mês**
+  (`receivables_aging`/`receivables_forecast_by_month` no Home) — removida.
+
+**Decisão sobre "produtos"**: `top_ticket_types`/`abc_ticket_types`
+("Produtos campeões"/"Curva ABC de produtos" no Home, aba "Produtos" em
+Análises) foram **mantidos** — apesar do nome genérico "produto" na UI,
+a fonte é `ticket_types` (o tipo de ingresso vendido), que é o domínio
+real de ticketing, não resíduo de catálogo de comércio. `EventProduct`
+(item físico vendido junto com o ingresso, ex. bebida) é um domínio
+separado e ativo, não tinha indicador dedicado no Home/Análises e não foi
+tocado por esta remoção.
+
+**Decisão sobre atraso/recebível**: o conceito de "conta a receber do
+cliente final" (`sale_installments`/`is_installment`, parcelamento
+manual lançado por staff/balcão, sem UI de checkout do storefront) **não
+foi removido como funcionalidade** — só os relatórios/indicadores
+dedicados a ele (listados acima). Isso é diferente do settlement/repasse
+financeiro (`Finance/*`, `receivables.net_amount`,
+`SettlementAdjustment` — dinheiro que a PLATAFORMA deve ao TENANT), que
+já tinha relatório próprio e não foi tocado.
+
+Backend: campos/métodos removidos de `ReportService::charts()`/
+`indicators()` e de `AnalyticsService`; rotas
+`/reports/analytics/sales-by-location`, `/payment-delays`,
+`/overdue-sales` removidas; `/reports/analytics/abc-analysis` só aceita
+`dimension=ticket_types` agora (antes aceitava `clients` também).
+Frontend: campos removidos de `ReportCharts`/`ReportIndicators`
+(`types/report.ts`) e dos tipos de Analytics (`types/analytics.ts`);
+abas "Locais" e "Atrasos" removidas de Análises
+(`LocationsTab.tsx`/`OverdueTab.tsx` deletados); cards
+`ReceivablesAgingCard`/`ReceivablesForecastChart` deletados (exclusivos
+desses dados, não reaproveitados); `RankingListCard`/`SeasonalityMatrixCard`
+mantidos (compartilhados por dado que continua existindo).

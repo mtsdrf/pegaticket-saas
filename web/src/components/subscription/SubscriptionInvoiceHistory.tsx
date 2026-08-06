@@ -42,8 +42,8 @@ const PIX_CHARGEABLE_STATUSES = new Set(['open', 'overdue', 'failed'])
 /**
  * Histórico paginado de faturas (`GET /subscription/invoices`), usado pela
  * tela única de assinatura (`SubscriptionPage`, dono e demais perfis com
- * `subscription:read`) — mesmo padrão de paginação de `OverdueTab`
- * (`crudService.listPaginated` + `PaginationMeta`).
+ * `subscription:read`) — mesmo padrão de paginação usado no resto do
+ * módulo (`crudService.listPaginated` + `PaginationMeta`).
  */
 export function SubscriptionInvoiceHistory() {
   const [page, setPage] = useState(1)

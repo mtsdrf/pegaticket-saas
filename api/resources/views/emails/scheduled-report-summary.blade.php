@@ -29,10 +29,6 @@
             <td style="border:1px solid #e5e7eb;"><strong>A receber</strong></td>
             <td style="border:1px solid #e5e7eb;">R$ {{ $indicators['amount_receivable'] ?? '0,00' }}</td>
         </tr>
-        <tr>
-            <td style="border:1px solid #e5e7eb;"><strong>Vendas em atraso</strong></td>
-            <td style="border:1px solid #e5e7eb;">{{ $indicators['overdue_sales_count'] ?? 0 }}</td>
-        </tr>
         <tr style="background:#f3f4f6;">
             <td style="border:1px solid #e5e7eb;"><strong>Crescimento vs. período anterior</strong></td>
             <td style="border:1px solid #e5e7eb;">{{ $indicators['sales_growth_percentage'] ?? 0 }}%</td>

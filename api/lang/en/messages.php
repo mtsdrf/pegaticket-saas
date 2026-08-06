@@ -936,11 +936,8 @@ return [
     'analytics' => [
         'sales_summary' => 'Sales summary retrieved successfully.',
         'top_addons' => 'Top products retrieved successfully.',
-        'sales_by_location' => 'Sales by location retrieved successfully.',
         'sales_history' => 'Sales history retrieved successfully.',
         'top_clients' => 'Top clients retrieved successfully.',
-        'payment_delays' => 'Payment delays retrieved successfully.',
-        'overdue_sales' => 'Overdue sales retrieved successfully.',
         'abc_analysis' => 'ABC analysis retrieved successfully.',
         'margin_summary' => 'Margin summary retrieved successfully.',
         'coupon_roi' => 'Coupon ticket comparison retrieved successfully.',

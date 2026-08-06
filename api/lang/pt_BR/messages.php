@@ -943,11 +943,8 @@ return [
     'analytics' => [
         'sales_summary' => 'Resumo de vendas obtido com sucesso.',
         'top_addons' => 'Top produtos obtidos com sucesso.',
-        'sales_by_location' => 'Vendas por localização obtidas com sucesso.',
         'sales_history' => 'Histórico de vendas obtido com sucesso.',
         'top_clients' => 'Top clientes obtidos com sucesso.',
-        'payment_delays' => 'Atrasos de pagamento obtidos com sucesso.',
-        'overdue_sales' => 'Vendas em atraso obtidas com sucesso.',
         'abc_analysis' => 'Análise ABC obtida com sucesso.',
         'margin_summary' => 'Resumo de margem obtido com sucesso.',
         'coupon_roi' => 'Comparação de ticket por cupom obtida com sucesso.',

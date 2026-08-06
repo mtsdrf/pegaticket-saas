@@ -16,7 +16,7 @@ export function ProductsTab({ from, to, onPlanLocked }: AnalyticsTabProps) {
     `${from}|${to}`,
   )
   const abc = useAnalyticsData(
-    () => analyticsService.getAbcAnalysis({ from, to, dimension: 'products' }),
+    () => analyticsService.getAbcAnalysis({ from, to, dimension: 'ticket_types' }),
     `${from}|${to}`,
   )
 

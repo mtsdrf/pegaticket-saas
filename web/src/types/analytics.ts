@@ -25,17 +25,6 @@ export interface TopProduct {
   revenue: number
 }
 
-export interface LocationSales {
-  name: string
-  count: number
-  total_amount: number
-}
-
-export interface SalesByLocation {
-  cities: LocationSales[]
-  neighborhoods: LocationSales[]
-}
-
 export interface SalesHistoryMonth {
   month: number
   count: number
@@ -74,24 +63,7 @@ export interface TopClient {
   rfm_segment8_label: string | null
 }
 
-export interface PaymentDelayClient {
-  name: string
-  avg_days_to_pay: number
-  paid_sales_count: number
-}
-
-export type OverdueType = 'pagamento' | 'entrega'
-
-export interface OverdueSale {
-  sale_uuid: string
-  client_name: string
-  amount: number
-  due_date: string | null
-  days_overdue: number
-  type: OverdueType | null
-}
-
-export type AbcDimension = 'products' | 'clients'
+export type AbcDimension = 'ticket_types'
 
 export type AbcClass = 'A' | 'B' | 'C'
 
