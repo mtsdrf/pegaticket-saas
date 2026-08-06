@@ -227,8 +227,8 @@ export async function mockAuthenticatedApiBootstrap(page: Page, options: ShellMo
       total_sales: 0,
       total_sales_amount: '0.00',
       average_ticket: '0.00',
-      delivered_sales: 0,
-      undelivered_sales: 0,
+      completed_sales: 0,
+      uncompleted_sales: 0,
       paid_sales: 0,
       unpaid_sales: 0,
       amount_received: '0.00',
@@ -239,6 +239,28 @@ export async function mockAuthenticatedApiBootstrap(page: Page, options: ShellMo
       comparison_current_label: 'Mês atual',
       comparison_previous_label: 'Mês anterior',
       overdue_sales_count: 0,
+      net_revenue_amount: '0.00',
+      tickets_issued: 0,
+      commercial_capacity: 0,
+      occupancy_percentage: 0,
+    },
+  })
+
+  await mockApiRoute(page, {
+    path: '/reports/alerts',
+    body: [],
+  })
+
+  await mockApiRoute(page, {
+    path: '/reports/operation-snapshot',
+    body: {
+      cash_session: null,
+      sales_pending_approval_count: 0,
+      sales_today: { count: 0, total_amount: '0.00' },
+      checkins_today: { total: 0, granted: 0, warning: 0, blocked: 0 },
+      checkout: { window_hours: 24, started: 0, completed: 0, error_rate_percent: 0 },
+      virtual_queue: { waiting: 0, admitted: 0 },
+      generated_at: new Date().toISOString(),
     },
   })
 

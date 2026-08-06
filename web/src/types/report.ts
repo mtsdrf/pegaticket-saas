@@ -142,7 +142,13 @@ export interface ReportCharts {
 }
 
 /** Alertas básicos do Home (roadmap Fase A1) — estoque baixo e pagamento, calculados on-the-fly. */
-export type AlertType = 'low_stock' | 'payment_rejection_rate' | 'payment_pending_queue'
+export type AlertType =
+  | 'low_stock'
+  | 'payment_rejection_rate'
+  | 'payment_pending_queue'
+  | 'daily_revenue_anomaly'
+  | 'daily_sales_count_anomaly'
+  | 'daily_payment_rejection_rate_anomaly'
 export type AlertSeverity = 'warning' | 'critical'
 
 export interface ReportAlert {

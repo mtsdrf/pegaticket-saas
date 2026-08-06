@@ -39,8 +39,10 @@ export function formatQuantity(value: string | number): string {
   return safe.toLocaleString('pt-BR', { maximumFractionDigits: 3 })
 }
 
-export function formatPercentage(value: number): string {
-  return `${value.toFixed(2).replace('.', ',')}%`
+export function formatPercentage(value: number | null | undefined): string {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  const safe = Number.isFinite(numeric) ? numeric : 0
+  return `${safe.toFixed(2).replace('.', ',')}%`
 }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
