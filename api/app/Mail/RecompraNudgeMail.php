@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Tenant\Tenant;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -42,7 +43,10 @@ class RecompraNudgeMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => "Novos eventos disponíveis em {$this->tenant->name}.",
+                'headline' => 'Sentimos sua falta por aqui',
+            ]))
             : $mail->view('emails.recompra-nudge')->with([
                 'tenant' => $this->tenant,
                 'finalCustomer' => $this->finalCustomer,

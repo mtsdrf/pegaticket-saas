@@ -95,8 +95,9 @@ class TenantUserInviteTest extends TestCase
     }
 
     #[Test]
-    public function invite_is_blocked_when_pending_invite_already_exists(): void
+    public function invite_can_be_sent_again_even_when_a_pending_invite_already_exists(): void
     {
+        Mail::fake();
         $this->grantPermission('tenant_users', 'create');
 
         $roleUuid = \App\Models\Tenant\TenantRole::where('tenant_id', $this->tenant->id)->value('uuid');
@@ -113,8 +114,14 @@ class TenantUserInviteTest extends TestCase
 
         $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->postJson('/api/v1/tenant-users/invite', $payload)
-            ->assertStatus(422)
-            ->assertJsonPath('code', 'DUPLICATE_INVITE');
+            ->assertStatus(201);
+
+        $this->assertSame(2, TenantUserInvite::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->where('email', 'pendente@test.com')
+            ->count());
+
+        Mail::assertSent(TenantUserInviteMail::class, 2);
     }
 
     #[Test]

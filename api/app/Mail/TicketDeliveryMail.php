@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Sale\Sale;
 use App\Models\Ticket\Ticket;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
@@ -43,7 +44,10 @@ class TicketDeliveryMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => "Atualização da venda {$this->sale->codigo} no PegaTicket.",
+                'headline' => 'Seu ingresso está pronto',
+            ]))
             : $mail->view('emails.ticket-delivery')->with([
                 'sale' => $this->sale,
                 'tickets' => $this->tickets,

@@ -1,49 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá.</p>
+@extends('emails.layouts.base')
+
+@section('preheader', 'Seus ingressos e dados da venda já estão disponíveis.')
+@section('headline', 'Seu ingresso está pronto')
+@section('subheadline', 'Centralizamos abaixo os dados principais da sua venda para facilitar o acompanhamento e o acesso ao evento.')
+
+@section('content')
+    <p style="margin:0 0 16px 0;">Olá.</p>
 
     @if ($mode === 'resent')
-        <p>Reenviamos os dados do seu ingresso da venda <strong>#{{ $sale->codigo }}</strong>.</p>
+        <p style="margin:0 0 16px 0;">Reenviamos os dados do seu ingresso da venda <strong>#{{ $sale->codigo }}</strong>.</p>
     @elseif ($mode === 'reminder')
-        <p>Seu evento está chegando! Aqui está o lembrete dos ingressos da venda <strong>#{{ $sale->codigo }}</strong>.</p>
+        <p style="margin:0 0 16px 0;">Seu evento está chegando. Aqui está o lembrete dos ingressos da venda <strong>#{{ $sale->codigo }}</strong>.</p>
     @elseif ($mode === 'transferred')
-        <p>A titularidade de um ingresso da venda <strong>#{{ $sale->codigo }}</strong> foi transferida. Segue o novo QR Code — o anterior não é mais válido.</p>
+        <p style="margin:0 0 16px 0;">A titularidade de um ingresso da venda <strong>#{{ $sale->codigo }}</strong> foi transferida. O novo QR Code já está disponível e o anterior não é mais válido.</p>
     @else
-        <p>Seu pagamento foi confirmado e seus ingressos da venda <strong>#{{ $sale->codigo }}</strong> já estão prontos.</p>
+        <p style="margin:0 0 16px 0;">Seu pagamento foi confirmado e os ingressos da venda <strong>#{{ $sale->codigo }}</strong> já estão prontos.</p>
     @endif
 
-    <p>Resumo dos ingressos:</p>
-
-    <ul>
+    <div style="margin:24px 0 18px 0;padding:18px;border-radius:18px;background-color:#f7fbfc;border:1px solid #d9e8e6;">
+        <div style="font-size:14px;font-weight:700;color:#113d34;margin-bottom:14px;">Resumo dos ingressos</div>
         @foreach ($tickets as $ticket)
-            <li style="margin-bottom: 10px;">
-                <strong>{{ $ticket->ticketType?->event?->name ?? 'Evento' }}</strong><br>
+            <div style="{{ $loop->last ? '' : 'margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #d9e8e6;' }}">
+                <div style="font-size:15px;font-weight:700;color:#113d34;margin-bottom:4px;">{{ $ticket->ticketType?->event?->name ?? 'Evento' }}</div>
                 @if ($ticket->ticketType?->session?->name)
-                    Sessão: {{ $ticket->ticketType->session->name }}<br>
+                    <div style="font-size:14px;color:#143b33;">Sessão: {{ $ticket->ticketType->session->name }}</div>
                 @endif
-                Tipo: {{ $ticket->ticketType?->name ?? 'Ingresso' }}<br>
-                Código: {{ $ticket->code }}<br>
+                <div style="font-size:14px;color:#143b33;">Tipo: {{ $ticket->ticketType?->name ?? 'Ingresso' }}</div>
+                <div style="font-size:14px;color:#143b33;">Código: {{ $ticket->code }}</div>
                 @if ($ticket->attendee_name)
-                    Participante: {{ $ticket->attendee_name }}<br>
+                    <div style="font-size:14px;color:#143b33;">Participante: {{ $ticket->attendee_name }}</div>
                 @endif
                 @if ($ticket->seat?->label)
-                    Assento: {{ $ticket->seat->label }}@if ($ticket->seat->sector_name) - {{ $ticket->seat->sector_name }}@endif<br>
+                    <div style="font-size:14px;color:#143b33;">Assento: {{ $ticket->seat->label }}@if ($ticket->seat->sector_name) - {{ $ticket->seat->sector_name }}@endif</div>
                 @endif
-            </li>
+            </div>
         @endforeach
-    </ul>
+    </div>
 
-    <p>
-        <a href="{{ $trackingUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Acompanhar venda
-        </a>
-    </p>
-
-    <p>Se preferir, copie e cole este link no navegador:</p>
-    <p>{{ $trackingUrl }}</p>
-</body>
-</html>
+    @include('emails.partials.button', ['url' => $trackingUrl, 'label' => 'Acompanhar venda'])
+    @include('emails.partials.link-box', ['url' => $trackingUrl])
+@endsection

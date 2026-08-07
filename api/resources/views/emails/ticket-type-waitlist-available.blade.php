@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá{{ $waitlistEntry->name ? ', ' . $waitlistEntry->name : '' }}.</p>
+@extends('emails.layouts.base')
 
-    <p>Boa notícia: <strong>{{ $ticketType->name }}</strong> voltou a ter vaga disponível.</p>
+@section('preheader', 'O ingresso que você acompanhava voltou a ter vaga.')
+@section('headline', 'Boa notícia: voltou a ter vaga')
+@section('subheadline', 'O tipo de ingresso que você queria está disponível novamente. Como a procura pode ser alta, vale agir rápido.')
 
-    <p>Como a procura costuma ser grande, recomendamos garantir o seu o quanto antes.</p>
+@section('content')
+    <p style="margin:0 0 16px 0;">Olá{{ $waitlistEntry->name ? ', ' . $waitlistEntry->name : '' }}.</p>
+    <p style="margin:0 0 16px 0;"><strong>{{ $ticketType->name }}</strong> voltou a ter vaga disponível.</p>
+    <p style="margin:0 0 16px 0;">Como a procura costuma ser grande, recomendamos garantir o seu o quanto antes.</p>
 
-    <p>
-        <a href="{{ $storefrontUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Garantir meu ingresso
-        </a>
-    </p>
-
-    <p>Se preferir, copie e cole este link no navegador:</p>
-    <p>{{ $storefrontUrl }}</p>
-</body>
-</html>
+    @include('emails.partials.button', ['url' => $storefrontUrl, 'label' => 'Garantir meu ingresso'])
+    @include('emails.partials.link-box', ['url' => $storefrontUrl])
+@endsection

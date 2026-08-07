@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Event\TicketType;
 use App\Models\Event\TicketTypeWaitlistEntry;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -43,7 +44,10 @@ class TicketTypeWaitlistAvailableMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => "O ingresso {$this->ticketType->name} voltou a ficar disponível.",
+                'headline' => 'Boa notícia: voltou a ter vaga',
+            ]))
             : $mail->view('emails.ticket-type-waitlist-available')->with([
                 'ticketType' => $this->ticketType,
                 'waitlistEntry' => $this->waitlistEntry,

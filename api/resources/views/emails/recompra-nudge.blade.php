@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá{{ $finalCustomer->name ? ', ' . $finalCustomer->name : '' }}.</p>
+@extends('emails.layouts.base')
 
-    <p>Faz um tempo que você não compra na <strong>{{ $tenant->name }}</strong> — sentimos sua falta!</p>
+@section('preheader', 'Novos eventos disponíveis para você comprar novamente.')
+@section('headline', 'Sentimos sua falta por aqui')
+@section('subheadline', 'Seu histórico mostra que você já curtiu experiências com esta empresa. Aproveite para ver o que está disponível agora.')
 
-    <p>Dá uma olhada nos próximos eventos e garanta seu ingresso antes que esgote.</p>
+@section('content')
+    <p style="margin:0 0 16px 0;">Olá{{ $finalCustomer->name ? ', ' . $finalCustomer->name : '' }}.</p>
+    <p style="margin:0 0 16px 0;">Faz um tempo que você não compra na <strong>{{ $tenant->name }}</strong> e queremos facilitar o seu retorno.</p>
+    <p style="margin:0 0 16px 0;">Dê uma olhada nos próximos eventos e garanta seu ingresso antes que as vagas acabem.</p>
 
-    <p>
-        <a href="{{ $storefrontUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Ver eventos da {{ $tenant->name }}
-        </a>
-    </p>
-
-    <p>Se preferir, copie e cole este link no navegador:</p>
-    <p>{{ $storefrontUrl }}</p>
-</body>
-</html>
+    @include('emails.partials.button', ['url' => $storefrontUrl, 'label' => 'Ver eventos da ' . $tenant->name])
+    @include('emails.partials.link-box', ['url' => $storefrontUrl])
+@endsection

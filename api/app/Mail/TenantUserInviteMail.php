@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Tenant\TenantUserInvite;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -33,7 +34,10 @@ class TenantUserInviteMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => "Convite para acessar {$this->invite->tenant->name} no PegaTicket.",
+                'headline' => 'Você recebeu um convite',
+            ]))
             : $mail->view('emails.tenant-user-invite')->with([
                 'invite' => $this->invite,
                 'inviteUrl' => $this->inviteUrl,

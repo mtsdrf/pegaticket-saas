@@ -56,6 +56,8 @@ class EmailTemplateMailIntegrationTest extends TestCase
         $rendered = $mail->render();
 
         $this->assertStringContainsString($customer->name, $rendered);
+        $this->assertStringContainsString('/logo.png', $rendered);
+        $this->assertStringContainsString('Sentimos sua falta por aqui', $rendered);
     }
 
     #[Test]
@@ -78,6 +80,8 @@ class EmailTemplateMailIntegrationTest extends TestCase
         $rendered = $mail->render();
 
         $this->assertStringContainsString("Olá {$customer->name}, volte para {$tenant->name}: https://loja.test/eventos/{$tenant->slug}", $rendered);
+        $this->assertStringContainsString('/logo.png', $rendered);
+        $this->assertStringContainsString('Sentimos sua falta por aqui', $rendered);
     }
 
     #[Test]

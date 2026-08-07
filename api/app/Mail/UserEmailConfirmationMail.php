@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User\User;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -33,7 +34,10 @@ class UserEmailConfirmationMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => 'Confirme a alteração do e-mail da sua conta PegaTicket.',
+                'headline' => 'Confirme seu novo e-mail',
+            ]))
             : $mail->view('emails.user-email-confirmation')->with([
                 'user' => $this->user,
                 'newEmail' => $this->newEmail,

@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá, {{ $user->name }}.</p>
+@extends('emails.layouts.base')
 
-    <p>Recebemos uma solicitação para redefinir a senha da sua conta no PegaTicket.</p>
+@section('preheader', 'Recebemos uma solicitação para redefinir a senha da sua conta.')
+@section('headline', 'Redefina sua senha com segurança')
+@section('subheadline', 'Use o botão abaixo para criar uma nova senha e voltar a acessar sua conta com tranquilidade.')
 
-    <p>
-        <a href="{{ $resetUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Redefinir senha
-        </a>
-    </p>
+@section('content')
+    <p style="margin:0 0 16px 0;">Olá, {{ $user->name }}.</p>
+    <p style="margin:0 0 16px 0;">Recebemos uma solicitação para redefinir a senha da sua conta no PegaTicket.</p>
 
-    <p>Ou copie e cole este link no navegador:</p>
-    <p>{{ $resetUrl }}</p>
+    @include('emails.partials.button', ['url' => $resetUrl, 'label' => 'Redefinir senha'])
+    @include('emails.partials.link-box', ['url' => $resetUrl])
 
-    <p>Este link expira em 1 hora.</p>
+    <div style="margin-top:20px;padding:16px 18px;border-radius:16px;background-color:#f2f8f8;border:1px solid #d9e8e6;">
+        <div style="font-size:14px;line-height:1.6;color:#143b33;">Este link expira em <strong>1 hora</strong>.</div>
+    </div>
 
-    <p>Se você não solicitou essa redefinição, pode ignorar este e-mail — sua senha atual continua sendo usada normalmente.</p>
-</body>
-</html>
+    <p style="margin:20px 0 0 0;color:#5d7470;">Se você não solicitou essa redefinição, pode ignorar este e-mail. Sua senha atual continua sendo usada normalmente.</p>
+@endsection

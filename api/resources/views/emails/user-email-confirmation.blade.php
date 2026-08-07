@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá, {{ $user->name }}.</p>
+@extends('emails.layouts.base')
 
-    <p>Recebemos uma solicitação para trocar o e-mail da sua conta no PegaTicket para <strong>{{ $newEmail }}</strong>.</p>
+@section('preheader', 'Confirme a alteração do e-mail da sua conta no sistema.')
+@section('headline', 'Confirme seu novo e-mail')
+@section('subheadline', 'Antes de concluir a troca, precisamos validar que o novo endereço realmente pertence a você.')
 
-    <p>
-        <a href="{{ $confirmUrl }}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Confirmar novo e-mail
-        </a>
-    </p>
+@section('content')
+    <p style="margin:0 0 16px 0;">Olá, {{ $user->name }}.</p>
+    <p style="margin:0 0 16px 0;">Recebemos uma solicitação para trocar o e-mail da sua conta no PegaTicket para <strong>{{ $newEmail }}</strong>.</p>
 
-    <p>Ou copie e cole este link no navegador:</p>
-    <p>{{ $confirmUrl }}</p>
+    @include('emails.partials.button', ['url' => $confirmUrl, 'label' => 'Confirmar novo e-mail'])
+    @include('emails.partials.link-box', ['url' => $confirmUrl])
 
-    <p>Este link expira em 24 horas.</p>
+    <div style="margin-top:20px;padding:16px 18px;border-radius:16px;background-color:#f2f8f8;border:1px solid #d9e8e6;">
+        <div style="font-size:14px;line-height:1.6;color:#143b33;">Este link expira em <strong>24 horas</strong>.</div>
+    </div>
 
-    <p>Se você não solicitou essa troca, pode ignorar este e-mail — seu e-mail atual continua sendo usado normalmente.</p>
-</body>
-</html>
+    <p style="margin:20px 0 0 0;color:#5d7470;">Se você não solicitou essa troca, pode ignorar este e-mail. Seu e-mail atual continua sendo usado normalmente.</p>
+@endsection

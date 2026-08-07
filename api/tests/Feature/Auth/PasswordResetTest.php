@@ -144,4 +144,16 @@ class PasswordResetTest extends TestCase
         $this->user->refresh();
         $this->assertTrue(Hash::check('oldpassword123', $this->user->password));
     }
+
+    #[Test]
+    public function password_reset_mail_uses_the_branded_layout(): void
+    {
+        $mail = (new PasswordResetMail($this->user, 'https://app.test/redefinir/token-exemplo'))->build();
+
+        $rendered = $mail->render();
+
+        $this->assertStringContainsString('/logo.png', $rendered);
+        $this->assertStringContainsString('Redefina sua senha com segurança', $rendered);
+        $this->assertStringContainsString('https://app.test/redefinir/token-exemplo', $rendered);
+    }
 }

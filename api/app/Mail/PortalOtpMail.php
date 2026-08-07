@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -30,7 +31,10 @@ class PortalOtpMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => 'Seu código temporário de acesso ao portal PegaTicket.',
+                'headline' => 'Código de acesso ao portal',
+            ]))
             : $mail->view('emails.portal-otp')->with([
                 'code' => $this->code,
                 'expiresInMinutes' => $this->expiresInMinutes,

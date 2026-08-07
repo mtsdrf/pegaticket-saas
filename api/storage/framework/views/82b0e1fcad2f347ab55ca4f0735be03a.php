@@ -1,24 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a;">
-    <p>Olá<?php echo e($finalCustomer->name ? ', ' . $finalCustomer->name : ''); ?>.</p>
+<?php $__env->startSection('preheader', 'Novos eventos disponíveis para você comprar novamente.'); ?>
+<?php $__env->startSection('headline', 'Sentimos sua falta por aqui'); ?>
+<?php $__env->startSection('subheadline', 'Seu histórico mostra que você já curtiu experiências com esta empresa. Aproveite para ver o que está disponível agora.'); ?>
 
-    <p>Faz um tempo que você não compra na <strong><?php echo e($tenant->name); ?></strong> — sentimos sua falta!</p>
+<?php $__env->startSection('content'); ?>
+    <p style="margin:0 0 16px 0;">Olá<?php echo e($finalCustomer->name ? ', ' . $finalCustomer->name : ''); ?>.</p>
+    <p style="margin:0 0 16px 0;">Faz um tempo que você não compra na <strong><?php echo e($tenant->name); ?></strong> e queremos facilitar o seu retorno.</p>
+    <p style="margin:0 0 16px 0;">Dê uma olhada nos próximos eventos e garanta seu ingresso antes que as vagas acabem.</p>
 
-    <p>Dá uma olhada nos próximos eventos e garanta seu ingresso antes que esgote.</p>
+    <?php echo $__env->make('emails.partials.button', ['url' => $storefrontUrl, 'label' => 'Ver eventos da ' . $tenant->name], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('emails.partials.link-box', ['url' => $storefrontUrl], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+<?php $__env->stopSection(); ?>
 
-    <p>
-        <a href="<?php echo e($storefrontUrl); ?>" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-            Ver eventos da <?php echo e($tenant->name); ?>
-
-        </a>
-    </p>
-
-    <p>Se preferir, copie e cole este link no navegador:</p>
-    <p><?php echo e($storefrontUrl); ?></p>
-</body>
-</html>
-<?php /**PATH /home/mtsdrf/workspace/pegaticket-saas/api/resources/views/emails/recompra-nudge.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('emails.layouts.base', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /home/mtsdrf/workspace/pegaticket-saas/api/resources/views/emails/recompra-nudge.blade.php ENDPATH**/ ?>

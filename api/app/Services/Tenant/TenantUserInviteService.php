@@ -4,7 +4,6 @@ namespace App\Services\Tenant;
 
 use App\DTOs\Tenant\CreateTenantUserInviteDTO;
 use App\Events\Tenant\TenantUserInvited;
-use App\Exceptions\DuplicateInviteException;
 use App\Exceptions\EmailAlreadyRegisteredException;
 use App\Mail\TenantUserInviteMail;
 use App\Models\Tenant\TenantRole;
@@ -36,12 +35,6 @@ class TenantUserInviteService
             if (User::where('email', $dto->email)->whereNull('deleted_at')->exists()) {
                 throw new EmailAlreadyRegisteredException(
                     __('messages.tenant_user_invite.email_already_registered')
-                );
-            }
-
-            if ($this->repository->findPendingByTenantAndEmail($tenantId, $dto->email)) {
-                throw new DuplicateInviteException(
-                    __('messages.tenant_user_invite.pending_invite_exists')
                 );
             }
 

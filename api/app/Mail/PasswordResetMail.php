@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User\User;
+use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -31,7 +32,10 @@ class PasswordResetMail extends Mailable
         $mail = $this->subject($subject);
 
         return $bodyHtml !== null
-            ? $mail->html($bodyHtml)
+            ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
+                'preheader' => 'Solicitação de redefinição de senha no PegaTicket.',
+                'headline' => 'Redefina sua senha com segurança',
+            ]))
             : $mail->view('emails.password-reset')->with([
                 'user' => $this->user,
                 'resetUrl' => $this->resetUrl,
