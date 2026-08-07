@@ -55,7 +55,7 @@ class MediaStorageService
         ];
 
         if ($path && Storage::disk($this->publicDisk($mediaKey))->exists($path)) {
-            if ($this->usesRemotePublicDisk($mediaKey) && $this->useDirectPublicUrls()) {
+            if ($this->usesRemotePublicDisk($mediaKey) && $this->shouldRedirectToDirectPublicUrl($mediaKey)) {
                 return redirect()->away(Storage::disk($this->publicDisk($mediaKey))->url($path), 302, [
                     'Cache-Control' => $headers['Cache-Control'],
                 ]);
@@ -83,12 +83,21 @@ class MediaStorageService
 
     private function useDirectPublicUrls(): bool
     {
-        return (bool) config('media.use_direct_public_urls', true);
+        return (bool) config('media.use_direct_public_urls', false);
     }
 
     private function usesRemotePublicDisk(string $mediaKey): bool
     {
         return config('filesystems.disks.' . $this->publicDisk($mediaKey) . '.driver') === 's3';
+    }
+
+    private function shouldRedirectToDirectPublicUrl(string $mediaKey): bool
+    {
+        if (! $this->useDirectPublicUrls()) {
+            return false;
+        }
+
+        return (string) config('filesystems.disks.' . $this->publicDisk($mediaKey) . '.url', '') !== '';
     }
 
 }

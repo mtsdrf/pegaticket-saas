@@ -10,7 +10,7 @@ class MediaUrl
 {
     public static function resolvePublic(?string $path, mixed $legacyData, string $fallbackPath, mixed $updatedAt, string $mediaKey): ?string
     {
-        if ($path && self::shouldUseDirectPublicUrls()) {
+        if ($path && self::shouldUseDirectPublicUrls($mediaKey)) {
             $url = Storage::disk((string) config('media.public_disks.' . $mediaKey, 'public'))->url($path);
 
             return self::appendVersion($url, $updatedAt);
@@ -46,8 +46,18 @@ class MediaUrl
         return 0;
     }
 
-    private static function shouldUseDirectPublicUrls(): bool
+    private static function shouldUseDirectPublicUrls(string $mediaKey): bool
     {
-        return (bool) config('media.use_direct_public_urls', true);
+        if (! (bool) config('media.use_direct_public_urls', false)) {
+            return false;
+        }
+
+        $disk = (string) config('media.public_disks.' . $mediaKey, 'public');
+
+        if (config('filesystems.disks.' . $disk . '.driver') !== 's3') {
+            return true;
+        }
+
+        return (string) config('filesystems.disks.' . $disk . '.url', '') !== '';
     }
 }

@@ -174,10 +174,12 @@ class ProfileTest extends TestCase
         $this->assertStringContainsString('immutable', $cacheControl);
 
         $disk = Storage::disk((string) config('media.public_disks.avatar'));
-        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', true);
-        $usesRemoteDisk = config('filesystems.disks.' . config('media.public_disks.avatar') . '.driver') === 's3';
+        $diskName = (string) config('media.public_disks.avatar');
+        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', false);
+        $usesRemoteDisk = config('filesystems.disks.' . $diskName . '.driver') === 's3';
+        $hasConfiguredDirectUrl = (string) config('filesystems.disks.' . $diskName . '.url', '') !== '';
 
-        if ($usesDirectPublicUrls && $usesRemoteDisk) {
+        if ($usesDirectPublicUrls && $usesRemoteDisk && $hasConfiguredDirectUrl) {
             $response->assertRedirect($disk->url($user->avatar_path));
 
             return;

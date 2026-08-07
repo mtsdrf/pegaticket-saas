@@ -185,10 +185,12 @@ class TenantLogoTest extends TestCase
         $this->assertStringContainsString('immutable', $cacheControl);
 
         $disk = Storage::disk((string) config('media.public_disks.tenant'));
-        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', true);
-        $usesRemoteDisk = config('filesystems.disks.' . config('media.public_disks.tenant') . '.driver') === 's3';
+        $diskName = (string) config('media.public_disks.tenant');
+        $usesDirectPublicUrls = (bool) config('media.use_direct_public_urls', false);
+        $usesRemoteDisk = config('filesystems.disks.' . $diskName . '.driver') === 's3';
+        $hasConfiguredDirectUrl = (string) config('filesystems.disks.' . $diskName . '.url', '') !== '';
 
-        if ($usesDirectPublicUrls && $usesRemoteDisk) {
+        if ($usesDirectPublicUrls && $usesRemoteDisk && $hasConfiguredDirectUrl) {
             $response->assertRedirect($disk->url($tenant->logo_path));
 
             return;
