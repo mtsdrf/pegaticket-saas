@@ -170,13 +170,6 @@ export function EventFormPage() {
     event.preventDefault()
     setFormError(null)
     setFieldErrors({})
-
-    const selectedVenue = venueOptions.find((option) => option.value === form.venue_uuid)
-    if (selectedVenue && !selectedVenue.hasPublishedMap) {
-      setFormError('Selecione um local com mapa publicado para vincular ao evento.')
-      return
-    }
-
     setIsSubmitting(true)
 
     const payload = {
