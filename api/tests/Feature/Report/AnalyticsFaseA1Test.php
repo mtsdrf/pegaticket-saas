@@ -161,6 +161,50 @@ class AnalyticsFaseA1Test extends TestCase
     }
 
     #[Test]
+    public function charts_expose_sales_by_month_split_between_manual_and_online(): void
+    {
+        $manualSale = $this->makeSale([
+            'origin' => 'staff',
+            'total_amount' => 120,
+            'created_at' => now()->startOfMonth()->addDays(2),
+            'updated_at' => now()->startOfMonth()->addDays(2),
+        ]);
+
+        $counterSale = $this->makeSale([
+            'origin' => 'counter',
+            'total_amount' => 80,
+            'created_at' => now()->startOfMonth()->addDays(4),
+            'updated_at' => now()->startOfMonth()->addDays(4),
+        ]);
+
+        $onlineSale = $this->makeSale([
+            'origin' => 'storefront',
+            'total_amount' => 150,
+            'created_at' => now()->startOfMonth()->addDays(8),
+            'updated_at' => now()->startOfMonth()->addDays(8),
+        ]);
+
+        $response = $this->auth()->getJson('/api/v1/reports/charts');
+
+        $response->assertStatus(200);
+
+        $point = collect($response->json('data.sales_by_month'))
+            ->firstWhere('month', now()->format('Y-m'));
+
+        $this->assertNotNull($point);
+        $this->assertSame(3, $point['count']);
+        $this->assertSame('350.00', $point['total_amount']);
+        $this->assertSame(2, $point['manual_count']);
+        $this->assertSame('200.00', $point['manual_total_amount']);
+        $this->assertSame(1, $point['online_count']);
+        $this->assertSame('150.00', $point['online_total_amount']);
+
+        $this->assertNotNull($manualSale);
+        $this->assertNotNull($counterSale);
+        $this->assertNotNull($onlineSale);
+    }
+
+    #[Test]
     public function payments_summary_computes_approval_and_rejection_rates(): void
     {
         $this->makeSale(['status' => 'confirmed', 'total_amount' => 100]);

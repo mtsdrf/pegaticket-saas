@@ -3,6 +3,7 @@ import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
+  Legend as ChartLegend,
   LinearScale,
   Tooltip as ChartTooltip,
   type TooltipItem,
@@ -13,7 +14,7 @@ import { pegaticketTokens } from '../../theme'
 import type { SalesByMonthPoint } from '../../types/report'
 import { formatMonthLabel } from '../../utils/format'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTooltip)
+ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTooltip, ChartLegend)
 
 interface SalesByMonthChartProps {
   data: SalesByMonthPoint[] | null
@@ -32,12 +33,24 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
       labels: points.map((point) => formatMonthLabel(point.month)),
       datasets: [
         {
-          data: points.map((point) => point.count),
+          label: 'Manual',
+          data: points.map((point) => point.manual_count),
           backgroundColor: points.map((_, index) =>
-            index === lastIndex ? tokens.accent : `color-mix(in srgb, ${tokens.primary} 78%, transparent)`,
+            index === lastIndex ? tokens.primary : 'rgb(17, 61, 52)',
           ),
-          borderRadius: 6,
+          borderRadius: 0,
           maxBarThickness: 40,
+          stack: 'sales',
+        },
+        {
+          label: 'Online',
+          data: points.map((point) => point.online_count),
+          backgroundColor: points.map((_, index) =>
+            index === lastIndex ? tokens.accent : 'rgba(15, 118, 110, 0.85)',
+          ),
+          borderRadius: 0,
+          maxBarThickness: 40,
+          stack: 'sales',
         },
       ],
     }
@@ -81,7 +94,19 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
           maintainAspectRatio: false,
           animation: { duration: 400, easing: 'easeOutQuart' },
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true,
+              position: 'top',
+              align: 'start',
+              labels: {
+                color: tokens.muted,
+                boxWidth: 12,
+                boxHeight: 12,
+                useBorderRadius: true,
+                borderRadius: 4,
+                font: { size: 12, family: 'Inter' },
+              },
+            },
             tooltip: {
               backgroundColor: tokens.surface,
               titleColor: tokens.text,
@@ -90,15 +115,24 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
               borderWidth: 1,
               padding: 10,
               cornerRadius: 8,
-              displayColors: false,
               callbacks: {
                 label: (item: TooltipItem<'bar'>) =>
-                  `${item.formattedValue} venda${item.parsed.y === 1 ? '' : 's'} • ${data?.[item.dataIndex]?.total_amount ?? '0,00'}`,
+                  `${item.dataset.label}: ${item.formattedValue} venda${item.parsed.y === 1 ? '' : 's'} • ${
+                    item.dataset.label === 'Manual'
+                      ? data?.[item.dataIndex]?.manual_total_amount ?? '0,00'
+                      : data?.[item.dataIndex]?.online_total_amount ?? '0,00'
+                  }`,
+                footer: (items) => {
+                  const point = data?.[items[0]?.dataIndex ?? -1]
+                  if (!point) return ''
+                  return `Total do mês: ${point.count} vendas • ${point.total_amount}`
+                },
               },
             },
           },
           scales: {
             x: {
+              stacked: true,
               grid: { display: false },
               ticks: {
                 color: tokens.muted,
@@ -109,6 +143,7 @@ export function SalesByMonthChart({ data, isLoading }: SalesByMonthChartProps) {
               },
             },
             y: {
+              stacked: true,
               beginAtZero: true,
               ticks: { color: tokens.muted, font: { size: 12, family: 'Inter' }, precision: 0 },
               grid: { color: `color-mix(in srgb, ${tokens.border} 70%, transparent)` },

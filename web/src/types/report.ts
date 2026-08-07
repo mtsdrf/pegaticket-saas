@@ -23,6 +23,10 @@ export interface SalesByMonthPoint {
   month: string
   count: number
   total_amount: string
+  manual_count: number
+  manual_total_amount: string
+  online_count: number
+  online_total_amount: string
 }
 
 export interface TopTicketTypePoint {

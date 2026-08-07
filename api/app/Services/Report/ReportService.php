@@ -336,15 +336,31 @@ class ReportService
     {
         $grouped = [];
 
-        foreach ($this->salesQuery($tenantId, $dateFrom, $dateTo)->get(['created_at', 'total_amount']) as $row) {
+        foreach ($this->salesQuery($tenantId, $dateFrom, $dateTo)->get(['created_at', 'total_amount', 'origin']) as $row) {
             $month = Carbon::parse($row->created_at)->format('Y-m');
+            $origin = Sale::normalizeOrigin((string) $row->origin);
+            $isManual = $origin === 'staff';
 
             if (! isset($grouped[$month])) {
-                $grouped[$month] = ['count' => 0, 'total_amount' => 0.0];
+                $grouped[$month] = [
+                    'count' => 0,
+                    'total_amount' => 0.0,
+                    'manual_count' => 0,
+                    'manual_total_amount' => 0.0,
+                    'online_count' => 0,
+                    'online_total_amount' => 0.0,
+                ];
             }
 
             $grouped[$month]['count']++;
             $grouped[$month]['total_amount'] += (float) $row->total_amount;
+            if ($isManual) {
+                $grouped[$month]['manual_count']++;
+                $grouped[$month]['manual_total_amount'] += (float) $row->total_amount;
+            } else {
+                $grouped[$month]['online_count']++;
+                $grouped[$month]['online_total_amount'] += (float) $row->total_amount;
+            }
         }
 
         ksort($grouped);
@@ -353,6 +369,10 @@ class ReportService
             'month' => $month,
             'count' => (int) $data['count'],
             'total_amount' => $this->formatMoney($data['total_amount']),
+            'manual_count' => (int) $data['manual_count'],
+            'manual_total_amount' => $this->formatMoney($data['manual_total_amount']),
+            'online_count' => (int) $data['online_count'],
+            'online_total_amount' => $this->formatMoney($data['online_total_amount']),
         ])->values()->all();
     }
 
