@@ -73,6 +73,9 @@ const EventSessionFormPage = lazy(() =>
 const EventGateListPage = lazy(() =>
   import('../pages/EventGate/EventGateListPage').then((m) => ({ default: m.EventGateListPage })),
 )
+const EventGateFormPage = lazy(() =>
+  import('../pages/EventGate/EventGateFormPage').then((m) => ({ default: m.EventGateFormPage })),
+)
 const TicketTypeListPage = lazy(() =>
   import('../pages/TicketType/TicketTypeListPage').then((m) => ({ default: m.TicketTypeListPage })),
 )
@@ -104,6 +107,7 @@ const SeatFormPage = lazy(() => import('../pages/Venue/SeatFormPage').then((m) =
 const SaleListPage = lazy(() => import('../pages/Sale/SaleListPage').then((m) => ({ default: m.SaleListPage })))
 const CashSessionPage = lazy(() => import('../pages/CashSession/CashSessionPage').then((m) => ({ default: m.CashSessionPage })))
 const GuestListsPage = lazy(() => import('../pages/GuestList/GuestListsPage').then((m) => ({ default: m.GuestListsPage })))
+const GuestListFormPage = lazy(() => import('../pages/GuestList/GuestListFormPage').then((m) => ({ default: m.GuestListFormPage })))
 const GuestListDetailPage = lazy(() => import('../pages/GuestList/GuestListDetailPage').then((m) => ({ default: m.GuestListDetailPage })))
 const GuestInvitePage = lazy(() => import('../pages/GuestList/GuestInvitePage').then((m) => ({ default: m.GuestInvitePage })))
 const AffiliateListPage = lazy(() => import('../pages/Affiliate/AffiliateListPage').then((m) => ({ default: m.AffiliateListPage })))
@@ -275,6 +279,8 @@ export function AppRoutes() {
             <Route path="/eventos/:eventUuid/sessoes/nova" element={<PermissionRoute requirement={ACCESS.eventSessionsCreate}><EventSessionFormPage /></PermissionRoute>} />
             <Route path="/eventos/:eventUuid/sessoes/:sessionUuid/editar" element={<PermissionRoute requirement={ACCESS.eventSessionsUpdate}><EventSessionFormPage /></PermissionRoute>} />
             <Route path="/eventos/:eventUuid/portarias" element={<PermissionRoute requirement={ACCESS.eventGatesRead}><EventGateListPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/portarias/nova" element={<PermissionRoute requirement={ACCESS.eventGatesCreate}><EventGateFormPage /></PermissionRoute>} />
+            <Route path="/eventos/:eventUuid/portarias/:gateUuid/editar" element={<PermissionRoute requirement={ACCESS.eventGatesUpdate}><EventGateFormPage /></PermissionRoute>} />
             <Route path="/eventos/categorias" element={<PermissionRoute requirement={ACCESS.eventCategoriesRead}><EventCategoryListPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/nova" element={<PermissionRoute requirement={ACCESS.eventCategoriesCreate}><EventCategoryFormPage /></PermissionRoute>} />
             <Route path="/eventos/categorias/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventCategoriesUpdate}><EventCategoryFormPage /></PermissionRoute>} />
@@ -305,6 +311,8 @@ export function AppRoutes() {
             <Route path="/vendas-manuais/nova" element={<PermissionRoute requirement={ACCESS.salesCreate}><SaleFormPage /></PermissionRoute>} />
             <Route path="/caixa" element={<PermissionRoute requirement={ACCESS.cashSessionsRead}><CashSessionPage /></PermissionRoute>} />
             <Route path="/listas-de-convidados" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListsPage /></PermissionRoute>} />
+            <Route path="/listas-de-convidados/nova" element={<PermissionRoute requirement={ACCESS.eventsUpdate}><GuestListFormPage /></PermissionRoute>} />
+            <Route path="/listas-de-convidados/:uuid/editar" element={<PermissionRoute requirement={ACCESS.eventsUpdate}><GuestListFormPage /></PermissionRoute>} />
             <Route path="/listas-de-convidados/:uuid" element={<PermissionRoute requirement={ACCESS.eventsRead}><GuestListDetailPage /></PermissionRoute>} />
             <Route path="/afiliados" element={<PermissionRoute requirement={ACCESS.affiliatesRead}><AffiliateListPage /></PermissionRoute>} />
             <Route path="/clientes" element={<PermissionRoute requirement={ACCESS.customersRead}><FinalCustomerCrmListPage /></PermissionRoute>} />

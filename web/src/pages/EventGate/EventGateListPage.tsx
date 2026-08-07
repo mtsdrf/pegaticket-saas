@@ -1,119 +1,57 @@
-import { Alert, Autocomplete, Box, Button, Chip, IconButton, Paper, Stack, Switch, TextField, Tooltip, Typography } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import MeetingRoomOutlinedIcon from '@mui/icons-material/MeetingRoomOutlined'
-import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
-import { CrudListPage } from '../../components/crud/CrudListPage'
-import { useAuth } from '../../hooks/useAuth'
+import { Button, IconButton, Stack, Tooltip } from '@mui/material'
+import type { GridApi } from 'ag-grid-community'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ACCESS } from '../../access/requirements'
+import { ConfirmDeleteDialog } from '../../components/crud/ConfirmDeleteDialog'
+import { ActiveChip } from '../../components/crud/ActiveChip'
+import { CrudListPage } from '../../components/crud/CrudListPage'
+import { ServerDataGrid } from '../../components/crud/ServerDataGrid'
+import type { ServerGridColumn, ServerGridFetchParams, ServerGridFetchResult } from '../../components/crud/serverGridTypes'
+import { useAccessControl } from '../../hooks/useAccessControl'
+import { useAuth } from '../../hooks/useAuth'
 import * as eventService from '../../services/eventService'
 import * as eventGateService from '../../services/eventGateService'
-import * as ticketTypeService from '../../services/ticketTypeService'
 import type { EventGate } from '../../types/eventGate'
-import type { TicketType } from '../../types/ticketType'
 import { getApiErrorMessage } from '../../types/api'
-import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 
-/**
- * Portarias/postos de acesso do evento — cada portaria pode restringir quais
- * tipos de ingresso ela aceita (lista vazia = aceita qualquer um, portão
- * "aberto"). Usada como sugestão na tela de check-in (`gateName`), mas o
- * cadastro aqui é opcional: o operador continua podendo digitar um valor
- * livre no check-in mesmo sem nenhuma portaria formal cadastrada.
- */
 export function EventGateListPage() {
+  const navigate = useNavigate()
   const { eventUuid = '' } = useParams<{ eventUuid: string }>()
-  const { hasPermission } = useAuth()
-  const canCreate = hasPermission(ACCESS.eventGatesCreate)
-  const canUpdate = hasPermission(ACCESS.eventGatesUpdate)
-  const canDelete = hasPermission(ACCESS.eventGatesDelete)
-
+  const { can } = useAccessControl()
+  const { activeTenantUuid } = useAuth()
+  const gridApiRef = useRef<GridApi | null>(null)
   const [eventName, setEventName] = useState('Evento')
-  const [gates, setGates] = useState<EventGate[]>([])
-  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
-
-  const [showForm, setShowForm] = useState(false)
-  const [editingUuid, setEditingUuid] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [isActive, setIsActive] = useState(true)
-  const [allowedTicketTypes, setAllowedTicketTypes] = useState<TicketType[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
-
+  const [headerError, setHeaderError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<EventGate | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const load = useCallback(() => {
-    if (!eventUuid) return
-    setIsLoading(true)
-    setLoadError(null)
-
-    Promise.all([
-      eventService.getEvent(eventUuid),
-      eventGateService.listEventGates(eventUuid),
-      ticketTypeService.listTicketTypes({ event_uuid: eventUuid, per_page: 100, sort_by: 'name', sort_dir: 'asc' }),
-    ])
-      .then(([event, gateResult, ticketTypeResult]) => {
-        setEventName(event.name)
-        setGates(gateResult.items)
-        setTicketTypes(ticketTypeResult.items)
-      })
-      .catch((error) => setLoadError(getApiErrorMessage(error, 'Não foi possível carregar as portarias agora.')))
-      .finally(() => setIsLoading(false))
+  useEffect(() => {
+    eventService
+      .getEvent(eventUuid)
+      .then((event) => setEventName(event.name))
+      .catch((error) => setHeaderError(getApiErrorMessage(error, 'Não foi possível carregar o evento agora.')))
   }, [eventUuid])
 
-  useEffect(load, [load])
+  const fetchPage = useCallback(
+    async ({ page, perPage, filters }: ServerGridFetchParams): Promise<ServerGridFetchResult<EventGate>> => {
+      if (!activeTenantUuid || !eventUuid) return { rows: [], total: 0 }
 
-  function openCreateForm() {
-    setEditingUuid(null)
-    setName('')
-    setIsActive(true)
-    setAllowedTicketTypes([])
-    setFormError(null)
-    setShowForm(true)
-  }
+      const result = await eventGateService.listEventGates(eventUuid, {
+        ...filters,
+        page,
+        per_page: perPage,
+      })
 
-  function openEditForm(gate: EventGate) {
-    setEditingUuid(gate.uuid)
-    setName(gate.name)
-    setIsActive(gate.is_active)
-    setAllowedTicketTypes(
-      ticketTypes.filter((ticketType) => gate.allowed_ticket_types.some((allowed) => allowed.uuid === ticketType.uuid)),
-    )
-    setFormError(null)
-    setShowForm(true)
-  }
-
-  async function handleSubmit() {
-    if (!name.trim()) return
-    setFormError(null)
-    setIsSubmitting(true)
-
-    const payload = {
-      name: name.trim(),
-      is_active: isActive,
-      ticket_type_uuids: allowedTicketTypes.map((ticketType) => ticketType.uuid),
-    }
-
-    try {
-      if (editingUuid) {
-        await eventGateService.updateEventGate(eventUuid, editingUuid, payload)
-      } else {
-        await eventGateService.createEventGate(eventUuid, payload)
-      }
-      setShowForm(false)
-      load()
-    } catch (error) {
-      setFormError(getApiErrorMessage(error, 'Não foi possível salvar a portaria agora.'))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+      return { rows: result.items, total: result.pagination.total }
+    },
+    [activeTenantUuid, eventUuid],
+  )
 
   async function handleConfirmDelete() {
     if (!deleteTarget) return
@@ -123,139 +61,120 @@ export function EventGateListPage() {
     try {
       await eventGateService.deleteEventGate(eventUuid, deleteTarget.uuid)
       setDeleteTarget(null)
-      load()
-    } catch (error) {
-      setDeleteError(getApiErrorMessage(error, 'Não foi possível desativar a portaria agora.'))
+      gridApiRef.current?.refreshInfiniteCache()
+    } catch (err) {
+      setDeleteError(getApiErrorMessage(err, 'Não foi possível excluir a portaria agora.'))
     } finally {
       setIsDeleting(false)
     }
   }
 
+  const columns = useMemo<ServerGridColumn<EventGate>[]>(
+    () => [
+      { field: 'name', headerName: 'Portaria', filterType: 'text' },
+      {
+        field: 'allowed_ticket_types',
+        headerName: 'Tipos permitidos',
+        minWidth: 260,
+        filterType: 'text',
+        cellRenderer: (row) =>
+          row.allowed_ticket_types.length === 0
+            ? 'Aceita qualquer tipo'
+            : row.allowed_ticket_types.map((ticketType) => ticketType.name).join(', '),
+        exportValue: (row) =>
+          row.allowed_ticket_types.length === 0
+            ? 'Aceita qualquer tipo'
+            : row.allowed_ticket_types.map((ticketType) => ticketType.name).join(', '),
+      },
+      {
+        field: 'is_active',
+        headerName: 'Ativo',
+        width: 120,
+        filterType: 'boolean',
+        cellRenderer: (row) => <ActiveChip isActive={row.is_active} />,
+        exportValue: (row) => (row.is_active ? 'Ativo' : 'Inativo'),
+      },
+      {
+        field: 'uuid',
+        headerName: 'Ações',
+        width: 140,
+        sortable: false,
+        filterType: 'none',
+        exportable: false,
+        cellRenderer: (row) => (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            {can(ACCESS.eventGatesUpdate) ? (
+              <Tooltip title="Editar portaria" arrow>
+                <IconButton
+                  size="small"
+                  aria-label={`Editar portaria ${row.name}`}
+                  onClick={() => navigate(`/eventos/${eventUuid}/portarias/${row.uuid}/editar`)}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+            {can(ACCESS.eventGatesDelete) ? (
+              <Tooltip title="Excluir portaria" arrow>
+                <IconButton
+                  size="small"
+                  aria-label={`Excluir portaria ${row.name}`}
+                  onClick={() => {
+                    setDeleteError(null)
+                    setDeleteTarget(row)
+                  }}
+                  sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+          </Stack>
+        ),
+      },
+    ],
+    [can, eventUuid, navigate],
+  )
+
   return (
     <>
       <CrudListPage
         title={`Portarias de ${eventName}`}
-        subtitle="Cadastre os pontos de acesso do evento e restrinja quais tipos de ingresso cada um aceita."
-        isLoading={isLoading}
-        error={loadError}
-        onRetry={load}
-        isEmpty={gates.length === 0 && !showForm}
-        emptyIcon={<MeetingRoomOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />}
-        emptyTitle="Nenhuma portaria cadastrada"
-        emptyDescription="Sem portarias cadastradas, o check-in aceita qualquer valor digitado livremente no campo de portão."
-        canCreate={canCreate}
+        subtitle="Gerencie os pontos de acesso do evento e os tipos de ingresso aceitos por cada um."
         createLabel="Nova portaria"
-        onCreate={openCreateForm}
+        canCreate={can(ACCESS.eventGatesCreate)}
+        onCreate={() => navigate(`/eventos/${eventUuid}/portarias/nova`)}
+        error={headerError}
+        onRetry={() => navigate(0)}
+        isLoading={!activeTenantUuid}
+        isEmpty={false}
         breadcrumbs={[{ label: 'Eventos', to: '/eventos' }, { label: eventName }]}
       >
-        {showForm && (
-          <Paper elevation={0} sx={{ p: 2.5, mb: 2.5, ...ELEVATED_SURFACE_SX }}>
-            <Typography sx={{ fontWeight: 700, mb: 1.5 }}>{editingUuid ? 'Editar portaria' : 'Nova portaria'}</Typography>
-            {formError && (
-              <Alert severity="error" sx={{ mb: 1.5 }}>
-                {formError}
-              </Alert>
-            )}
-            <Stack spacing={2} sx={{ maxWidth: 520 }}>
-              <TextField label="Nome da portaria" value={name} onChange={(event) => setName(event.target.value)} required />
-              <Autocomplete
-                multiple
-                size="small"
-                options={ticketTypes}
-                value={allowedTicketTypes}
-                onChange={(_event, value) => setAllowedTicketTypes(value)}
-                getOptionLabel={(ticketType) => ticketType.name}
-                isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
-                noOptionsText="Nenhum tipo de ingresso cadastrado"
-                renderValue={(value, getItemProps) =>
-                  value.map((ticketType, index) => {
-                    const { key, ...itemProps } = getItemProps({ index })
-                    return <Chip key={key} size="small" label={ticketType.name} {...itemProps} />
-                  })
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Tipos de ingresso permitidos"
-                    placeholder={allowedTicketTypes.length === 0 ? 'Vazio = aceita qualquer tipo' : undefined}
-                    helperText="Deixe vazio para a portaria aceitar qualquer tipo de ingresso."
-                  />
-                )}
-              />
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <Switch checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-                <Typography sx={{ fontSize: 14 }}>Portaria ativa</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5}>
-                <Button
-                  variant="contained"
-                  disabled={isSubmitting || !name.trim()}
-                  onClick={() => void handleSubmit()}
-                  sx={{ minHeight: 44 }}
-                >
-                  {isSubmitting ? 'Salvando…' : editingUuid ? 'Salvar alterações' : 'Criar portaria'}
-                </Button>
-                <Button color="inherit" disabled={isSubmitting} onClick={() => setShowForm(false)} sx={{ minHeight: 44 }}>
-                  Cancelar
-                </Button>
-              </Stack>
-            </Stack>
-          </Paper>
-        )}
-
-        <Stack spacing={1.5}>
-          {gates.map((gate) => (
-            <Paper key={gate.uuid} elevation={0} sx={{ p: 2, ...SOFT_PANEL_SX }}>
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
-                <Box sx={{ minWidth: 0 }}>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography sx={{ fontWeight: 700 }}>{gate.name}</Typography>
-                    <Chip label={gate.is_active ? 'Ativa' : 'Inativa'} size="small" color={gate.is_active ? 'success' : 'default'} />
-                  </Stack>
-                  <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)', mt: 0.5 }}>
-                    {gate.allowed_ticket_types.length === 0
-                      ? 'Aceita qualquer tipo de ingresso'
-                      : gate.allowed_ticket_types.map((ticketType) => ticketType.name).join(', ')}
-                  </Typography>
-                </Box>
-                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                  {canUpdate && (
-                    <Tooltip title="Editar portaria" arrow>
-                      <IconButton
-                        size="small"
-                        aria-label={`Editar portaria ${gate.name}`}
-                        onClick={() => openEditForm(gate)}
-                        sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-primary)' } }}
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  {canDelete && (
-                    <Tooltip title="Desativar portaria" arrow>
-                      <IconButton
-                        size="small"
-                        aria-label={`Desativar portaria ${gate.name}`}
-                        onClick={() => {
-                          setDeleteError(null)
-                          setDeleteTarget(gate)
-                        }}
-                        sx={{ minWidth: 44, minHeight: 44, color: 'var(--pt-muted)', '&:hover': { color: 'var(--pt-danger)' } }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Stack>
-              </Stack>
-            </Paper>
-          ))}
-        </Stack>
+        <ServerDataGrid
+          columns={columns}
+          fetchPage={fetchPage}
+          rowIdField="uuid"
+          exportFileName="portarias-evento"
+          onGridReady={(api) => {
+            gridApiRef.current = api
+          }}
+          emptyState={{
+            icon: <MeetingRoomOutlinedIcon sx={{ fontSize: 40, color: 'var(--pt-muted)' }} />,
+            title: 'Nenhuma portaria cadastrada ainda',
+            description: 'Comece adicionando o primeiro ponto de acesso deste evento.',
+            action: can(ACCESS.eventGatesCreate) ? (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/eventos/${eventUuid}/portarias/nova`)}>
+                Cadastrar primeira portaria
+              </Button>
+            ) : undefined,
+          }}
+        />
       </CrudListPage>
 
       <ConfirmDeleteDialog
         open={deleteTarget !== null}
-        title="Desativar portaria"
+        title="Excluir portaria"
         itemLabel={deleteTarget?.name ?? null}
         isDeleting={isDeleting}
         error={deleteError}

@@ -30,6 +30,15 @@ export interface CreateGuestListPayload {
   notes?: string
 }
 
+export interface UpdateGuestListPayload {
+  event_uuid?: string
+  event_session_uuid?: string | null
+  ticket_type_uuid?: string
+  name?: string
+  quantity_per_entry?: number
+  notes?: string | null
+}
+
 export interface AddGuestListEntryPayload {
   name: string
   email: string

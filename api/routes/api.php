@@ -784,6 +784,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/{uuid}', [GuestListController::class, 'show'])
                 ->middleware(['tenant', 'perm:events,read', 'throttle:100,1,guest-lists-show']);
 
+            Route::put('/{uuid}', [GuestListController::class, 'update'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:30,1,guest-lists-update']);
+
+            Route::delete('/{uuid}', [GuestListController::class, 'destroy'])
+                ->middleware(['tenant', 'perm:events,update', 'throttle:10,1,guest-lists-delete']);
+
             Route::post('/{uuid}/entries', [GuestListController::class, 'addEntry'])
                 ->middleware(['tenant', 'perm:events,update', 'throttle:60,1,guest-lists-add-entry']);
         });

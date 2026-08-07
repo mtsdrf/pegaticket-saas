@@ -399,7 +399,11 @@ export function SubscriptionPage() {
   if (!canView) {
     return (
       <Box sx={{ width: '100%', minWidth: 0, flex: 1 }}>
-        <PageHeader title="Assinatura da empresa" subtitle="Plano, cobrança e situação da assinatura da empresa ativa." />
+        <PageHeader
+          title="Assinatura da empresa"
+          subtitle="Plano, cobrança e situação da assinatura da empresa ativa."
+          backLink={{ label: 'Voltar para Configurações', to: '/configuracoes' }}
+        />
         <Alert severity="info" variant="outlined">
           Esta área concentra decisões de plano, assinatura e cobrança. Fale com o proprietário da empresa ou com quem
           administra os acessos para liberar a permissão de assinatura, se você precisar dela.
@@ -410,7 +414,11 @@ export function SubscriptionPage() {
 
   return (
     <Box sx={{ ...PAGE_CONTAINER_SX, width: '100%', minWidth: 0, flex: 1 }}>
-      <PageHeader title="Assinatura da empresa" subtitle="Plano, cobrança, trial, renovação e decisões de assinatura da sua empresa." />
+      <PageHeader
+        title="Assinatura da empresa"
+        subtitle="Plano, cobrança, trial, renovação e decisões de assinatura da sua empresa."
+        backLink={{ label: 'Voltar para Configurações', to: '/configuracoes' }}
+      />
 
       <Paper
         variant="outlined"

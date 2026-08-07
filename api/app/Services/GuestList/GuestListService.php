@@ -5,6 +5,7 @@ namespace App\Services\GuestList;
 use App\DTOs\GuestList\AddGuestListEntryDTO;
 use App\DTOs\GuestList\CreateGuestListDTO;
 use App\DTOs\GuestList\RedeemGuestListEntryDTO;
+use App\DTOs\GuestList\UpdateGuestListDTO;
 use App\DTOs\Sale\CreateSaleDTO;
 use App\Events\GuestList\GuestListEntryRedeemed;
 use App\Exceptions\GuestListEntryAlreadyRedeemedException;
@@ -55,14 +56,27 @@ class GuestListService
         ]);
     }
 
-    public function paginate(int $tenantId, int $perPage = 15): LengthAwarePaginator
+    public function paginate(int $tenantId, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return GuestList::where('tenant_id', $tenantId)
+        $query = GuestList::where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
             ->with(['event', 'session', 'ticketType'])
             ->withCount(['entries', 'entries as redeemed_entries_count' => fn ($q) => $q->whereNotNull('redeemed_at')])
-            ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->orderByDesc('created_at');
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%'.$filters['name'].'%');
+        }
+
+        if (!empty($filters['event_name'])) {
+            $query->whereHas('event', fn ($q) => $q->where('name', 'like', '%'.$filters['event_name'].'%'));
+        }
+
+        if (!empty($filters['ticket_type_name'])) {
+            $query->whereHas('ticketType', fn ($q) => $q->where('name', 'like', '%'.$filters['ticket_type_name'].'%'));
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function find(int $tenantId, string $uuid): GuestList
@@ -84,6 +98,66 @@ class GuestListService
             'email' => $dto->email,
             'document' => $dto->document,
         ]);
+    }
+
+    public function update(int $tenantId, GuestList $guestList, UpdateGuestListDTO $dto): GuestList
+    {
+        $this->assertBelongsToTenant($guestList, $tenantId);
+
+        return DB::transaction(function () use ($tenantId, $guestList, $dto) {
+            $eventId = $guestList->event_id;
+
+            if ($dto->eventUuidProvided && $dto->eventUuid) {
+                $eventId = Event::where('tenant_id', $tenantId)->where('uuid', $dto->eventUuid)->firstOrFail()->id;
+            }
+
+            $data = [];
+
+            if ($dto->name !== null) {
+                $data['name'] = $dto->name;
+            }
+
+            if ($dto->quantityPerEntry !== null) {
+                $data['quantity_per_entry'] = max(1, $dto->quantityPerEntry);
+            }
+
+            if ($dto->notesProvided) {
+                $data['notes'] = $dto->notes;
+            }
+
+            if ($dto->eventUuidProvided && $dto->eventUuid) {
+                $data['event_id'] = $eventId;
+            }
+
+            if ($dto->ticketTypeUuidProvided && $dto->ticketTypeUuid) {
+                $data['ticket_type_id'] = TicketType::where('tenant_id', $tenantId)
+                    ->where('event_id', $eventId)
+                    ->where('uuid', $dto->ticketTypeUuid)
+                    ->firstOrFail()
+                    ->id;
+            }
+
+            if ($dto->eventSessionUuidProvided) {
+                $data['event_session_id'] = $dto->eventSessionUuid
+                    ? EventSession::where('tenant_id', $tenantId)
+                        ->where('event_id', $eventId)
+                        ->where('uuid', $dto->eventSessionUuid)
+                        ->firstOrFail()
+                        ->id
+                    : null;
+            }
+
+            $guestList->fill($data);
+            $guestList->save();
+
+            return $guestList->fresh(['event', 'session', 'ticketType']);
+        });
+    }
+
+    public function delete(int $tenantId, GuestList $guestList): void
+    {
+        $this->assertBelongsToTenant($guestList, $tenantId);
+        $guestList->delete();
     }
 
     public function findByToken(string $token): GuestListEntry

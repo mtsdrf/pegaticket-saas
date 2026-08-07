@@ -469,6 +469,8 @@ return [
         'list' => 'Guest lists shown successfully.',
         'created' => 'Guest list created successfully.',
         'show' => 'Guest list shown successfully.',
+        'updated' => 'Guest list updated successfully.',
+        'deleted' => 'Guest list deleted successfully.',
         'entry_added' => 'Guest added successfully.',
         'invite_shown' => 'Invite shown successfully.',
         'redeemed' => 'Invite redeemed successfully.',

@@ -6,7 +6,7 @@ import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../c
 import { FormSection } from '../../components/form/FormSection'
 import * as eventService from '../../services/eventService'
 import * as eventSessionService from '../../services/eventSessionService'
-import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
+import { FORM_GRID_2_SX } from '../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { EVENT_SESSION_STATUS_OPTIONS, type EventSessionStatus } from '../../types/eventSession'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
@@ -180,7 +180,7 @@ export function EventSessionFormPage() {
           />
         </Box>
 
-        <Box sx={FORM_GRID_3_SX}>
+        <Box sx={FORM_GRID_2_SX}>
           <TextField
             label="Abertura dos portões"
             type="datetime-local"

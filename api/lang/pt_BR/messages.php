@@ -476,6 +476,8 @@ return [
         'list' => 'Listas de convidados exibidas com sucesso.',
         'created' => 'Lista de convidados criada com sucesso.',
         'show' => 'Lista de convidados exibida com sucesso.',
+        'updated' => 'Lista de convidados atualizada com sucesso.',
+        'deleted' => 'Lista de convidados removida com sucesso.',
         'entry_added' => 'Convidado adicionado com sucesso.',
         'invite_shown' => 'Convite exibido com sucesso.',
         'redeemed' => 'Convite resgatado com sucesso.',

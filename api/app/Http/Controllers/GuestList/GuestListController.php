@@ -4,9 +4,12 @@ namespace App\Http\Controllers\GuestList;
 
 use App\DTOs\GuestList\AddGuestListEntryDTO;
 use App\DTOs\GuestList\CreateGuestListDTO;
+use App\DTOs\GuestList\UpdateGuestListDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GuestList\AddGuestListEntryRequest;
 use App\Http\Requests\GuestList\CreateGuestListRequest;
+use App\Http\Requests\GuestList\ListGuestListRequest;
+use App\Http\Requests\GuestList\UpdateGuestListRequest;
 use App\Http\Resources\GuestList\GuestListEntryResource;
 use App\Http\Resources\GuestList\GuestListResource;
 use App\Models\GuestList\GuestList;
@@ -19,9 +22,13 @@ class GuestListController extends Controller
         private GuestListService $service
     ) {}
 
-    public function index()
+    public function index(ListGuestListRequest $request)
     {
-        $guestLists = $this->service->paginate(app('tenant_id'));
+        $guestLists = $this->service->paginate(
+            app('tenant_id'),
+            $request->validated(),
+            (int) ($request->validated()['per_page'] ?? 15)
+        );
 
         return APIResponse::success(
             GuestListResource::collection($guestLists),
@@ -70,6 +77,31 @@ class GuestListController extends Controller
             new GuestListEntryResource($entry),
             __('messages.guest_list.entry_added'),
             201
+        );
+    }
+
+    public function update(UpdateGuestListRequest $request, string $uuid)
+    {
+        $guestList = $this->service->find(app('tenant_id'), $uuid);
+        $dto = UpdateGuestListDTO::fromArray($request->validated());
+
+        $guestList = $this->service->update(app('tenant_id'), $guestList, $dto);
+
+        return APIResponse::success(
+            new GuestListResource($guestList),
+            __('messages.guest_list.updated')
+        );
+    }
+
+    public function destroy(string $uuid)
+    {
+        $guestList = $this->service->find(app('tenant_id'), $uuid);
+        $this->service->delete(app('tenant_id'), $guestList);
+
+        return APIResponse::success(
+            null,
+            __('messages.guest_list.deleted'),
+            204
         );
     }
 }
