@@ -277,6 +277,17 @@ const CARD_BRAND_RULES: CardBrandRule[] = [
 const DEFAULT_CARD_FORMAT = [4, 4, 4, 4, 3]
 const DEFAULT_CARD_LENGTHS = [16]
 const DEFAULT_CARD_CVV_LENGTHS = [3]
+const CARD_BRAND_IMAGE_PATHS: Partial<Record<CardBrand, string>> = {
+  amex: '/card-brands/amex.svg',
+  diners: '/card-brands/diners.svg',
+  discover: '/card-brands/discover.svg',
+  elo: '/card-brands/elo.svg',
+  hipercard: '/card-brands/hipercard.svg',
+  jcb: '/card-brands/jcb.svg',
+  mastercard: '/card-brands/mastercard.svg',
+  unionpay: '/card-brands/unionpay.svg',
+  visa: '/card-brands/visa.svg',
+}
 
 function detectCardBrand(value: string): CardBrandRule | null {
   const digits = normalizeDigits(value)
@@ -721,6 +732,7 @@ function CreditCardPaymentPanel({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCardBackVisible, setIsCardBackVisible] = useState(false)
   const cardBrand = useMemo(() => detectCardBrand(cardNumber), [cardNumber])
+  const cardBrandImageSrc = cardBrand ? CARD_BRAND_IMAGE_PATHS[cardBrand.brand] : undefined
 
   useEffect(() => {
     setIsLoadingConfig(true)
@@ -854,7 +866,8 @@ function CreditCardPaymentPanel({
               <Box
                 sx={{
                   position: 'relative',
-                  minHeight: 212,
+                  width: '100%',
+                  aspectRatio: '85.6 / 53.98',
                   transformStyle: 'preserve-3d',
                   isolation: 'isolate',
                 }}
@@ -868,18 +881,19 @@ function CreditCardPaymentPanel({
                     WebkitBackfaceVisibility: 'hidden',
                     transform: isCardBackVisible ? 'rotateY(-180deg)' : 'rotateY(0deg)',
                     transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
-                    borderRadius: '15px',
+                    borderRadius: '3.7%',
                     border: '1px solid rgba(211, 241, 232, 0.12)',
                     background:
                       'radial-gradient(circle at top right, rgba(140, 255, 224, 0.28), transparent 28%), linear-gradient(135deg, #115441 0%, #0f3d31 38%, #0b2620 100%)',
                     color: '#f3fbf7',
-                    px: 2.5,
-                    py: 2.35,
+                    padding: '5.8%',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-start',
+                    gap: 0.35,
                     boxShadow: '0 24px 60px rgba(6, 28, 23, 0.34)',
                     zIndex: isCardBackVisible ? 1 : 2,
+                    containerType: 'inline-size',
                   }}
                 >
                   <Box
@@ -892,16 +906,19 @@ function CreditCardPaymentPanel({
                       zIndex: 0,
                     }}
                   />
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ position: 'relative', zIndex: 1 }}>
+                  <Stack
+                    direction="row"
+                    sx={{ position: 'relative', zIndex: 1, justifyContent: 'space-between', alignItems: 'flex-start' }}
+                  >
                     <Stack spacing={1.6}>
                       <Typography sx={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.78 }}>
                         PegaTicket
                       </Typography>
                       <Box
                         sx={{
-                          width: 54,
-                          height: 40,
-                          borderRadius: '10px',
+                          width: '14.4cqw',
+                          aspectRatio: '12.3 / 8',
+                          borderRadius: '18%',
                           background:
                             'linear-gradient(135deg, rgba(255, 219, 128, 0.92) 0%, rgba(194, 148, 58, 0.92) 100%)',
                           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)',
@@ -911,37 +928,53 @@ function CreditCardPaymentPanel({
                         <Box
                           sx={{
                             position: 'absolute',
-                            inset: '10px 14px',
-                            borderLeft: '1px solid rgba(88, 53, 8, 0.35)',
-                            borderRight: '1px solid rgba(88, 53, 8, 0.35)',
+                            inset: '15% 30%',
+                            borderTop: '1px solid rgba(88, 53, 8, 0.35)',
+                            borderBottom: '1px solid rgba(88, 53, 8, 0.35)',
                           }}
                         />
                       </Box>
                     </Stack>
-                    <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
-                      <Typography sx={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.64 }}>
-                        Bandeira
-                      </Typography>
-                      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>
-                        {cardBrand?.label ?? 'Crédito'}
-                      </Typography>
-                    </Stack>
+                    <Box sx={{ width: '14.4cqw', aspectRatio: '12.3 / 8' }} />
                   </Stack>
 
-                  <Typography sx={{ position: 'relative', zIndex: 1, fontSize: { xs: 24, sm: 28 }, letterSpacing: '0.14em', fontWeight: 600 }}>
+                  <Typography
+                    sx={{
+                      position: 'relative',
+                      zIndex: 1,
+                      fontSize: { xs: 24, sm: 28 },
+                      letterSpacing: '0.14em',
+                      fontWeight: 600,
+                      mt: '40px',
+                      mb: '-12px',
+                    }}
+                  >
                     {formatCardPreviewNumber(cardNumber)}
                   </Typography>
 
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-end" spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
-                    <Box sx={{ minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    spacing={3.25}
+                    sx={{ position: 'relative', zIndex: 1, mt: 'auto', pr: '22%', alignItems: 'flex-end' }}
+                  >
+                    <Box sx={{ minWidth: 0, flex: '1 1 auto', maxWidth: 'calc(100% - 14cqw)' }}>
                       <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
                         Titular
                       </Typography>
-                      <Typography noWrap sx={{ fontSize: 14, fontWeight: 600 }}>
+                      <Typography
+                        noWrap
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {holderName.trim() || 'Nome do titular'}
                       </Typography>
                     </Box>
-                    <Box>
+                    <Box sx={{ flexShrink: 0 }}>
                       <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
                         Validade
                       </Typography>
@@ -950,6 +983,55 @@ function CreditCardPaymentPanel({
                       </Typography>
                     </Box>
                   </Stack>
+
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      right: '5.8%',
+                      bottom: '5.8%',
+                      width: '15%',
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'flex-end',
+                      zIndex: 1,
+                    }}
+                  >
+                    {cardBrandImageSrc ? (
+                      <Box
+                        component="img"
+                        src={cardBrandImageSrc}
+                        alt={cardBrand?.label ?? 'Bandeira do cartão'}
+                        sx={{
+                          width: '100%',
+                          height: 'auto',
+                          objectFit: 'contain',
+                          objectPosition: 'right bottom',
+                          filter: 'drop-shadow(0 8px 18px rgba(3, 14, 11, 0.26))',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          aspectRatio: '1.4 / 1',
+                          borderRadius: '10%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(243, 251, 247, 0.18)',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          color: 'rgba(243, 251, 247, 0.84)',
+                          fontSize: 11,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          flexShrink: 0,
+                        }}
+                        >
+                          Bandeira
+                        </Box>
+                      )}
+                    </Box>
                 </Box>
 
                 <Box
@@ -961,7 +1043,7 @@ function CreditCardPaymentPanel({
                     WebkitBackfaceVisibility: 'hidden',
                     transform: isCardBackVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
                     transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
-                    borderRadius: '15px',
+                    borderRadius: '3.7%',
                     border: '1px solid rgba(211, 241, 232, 0.12)',
                     background:
                       'radial-gradient(circle at bottom left, rgba(140, 255, 224, 0.16), transparent 32%), linear-gradient(140deg, #0d2822 0%, #112c27 58%, #0f1d1a 100%)',
@@ -979,8 +1061,8 @@ function CreditCardPaymentPanel({
                       zIndex: 0,
                     }}
                   />
-                  <Box sx={{ height: 46, background: '#09110f', mt: 3.25 }} />
-                  <Box sx={{ px: 2.5, pt: 2.25, position: 'relative', zIndex: 1 }}>
+                  <Box sx={{ height: '26%', background: '#09110f', mt: '2%', position: 'relative', zIndex: 1 }} />
+                  <Box sx={{ px: '5.8%', pt: '6%', position: 'relative', zIndex: 1 }}>
                     <Typography sx={{ mb: 1, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.64 }}>
                       Código de segurança
                     </Typography>
@@ -1003,7 +1085,7 @@ function CreditCardPaymentPanel({
                       {securityCode || '•••'}
                     </Box>
                   </Box>
-                  <Typography sx={{ px: 2.5, pt: 1.5, position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.5, color: 'rgba(243, 251, 247, 0.72)' }}>
+                  <Typography sx={{ px: '5.8%', pt: '3%', position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.5, color: 'rgba(243, 251, 247, 0.72)' }}>
                     Confira o número, o nome do titular e o CVV exatamente como aparecem no cartão antes de concluir o pagamento.
                   </Typography>
                 </Box>
