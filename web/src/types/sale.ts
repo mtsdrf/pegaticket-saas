@@ -212,6 +212,24 @@ export interface SalePaymentCheckoutConfig {
   sdk_script_url: string | null
 }
 
+export interface SalePaymentInstallmentOption {
+  installments: number
+  installment_value: number
+  interest_free: boolean
+  total_amount: number
+  currency: string
+  buyer_interest_total: number
+  buyer_interest_installments: number
+}
+
+export interface SalePaymentInstallmentOptions {
+  provider: string
+  available: boolean
+  brand: string | null
+  bin?: string | null
+  options: SalePaymentInstallmentOption[]
+}
+
 export interface SalePaymentAuthenticationMethodPayload {
   type: 'THREEDS' | 'INAPP'
   id: string
@@ -228,6 +246,8 @@ export interface SalePaymentChargePayload {
     holder_name: string
     holder_tax_id: string
     installments?: number
+    buyer_interest_total?: number
+    buyer_interest_installments?: number
   }
   authentication_method?: SalePaymentAuthenticationMethodPayload
 }

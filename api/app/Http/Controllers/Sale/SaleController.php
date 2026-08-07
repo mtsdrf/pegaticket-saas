@@ -15,6 +15,7 @@ use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\PayInstallmentRequest;
 use App\Http\Requests\Sale\RejectSaleRequest;
 use App\Http\Requests\Sale\SalePaymentChargeRequest;
+use App\Http\Requests\Sale\SalePaymentInstallmentOptionsRequest;
 use App\Http\Requests\Sale\StoreSaleRequest;
 use App\Http\Requests\Sale\UpdateSaleItemsRequest;
 use App\Http\Resources\Sale\SaleListResource;
@@ -71,6 +72,25 @@ class SaleController extends Controller
             new SalePaymentResource($payment),
             __('messages.sale.payment_charge_created'),
             201
+        );
+    }
+
+    public function paymentInstallmentOptions(SalePaymentInstallmentOptionsRequest $request, Sale $sale)
+    {
+        try {
+            $options = $this->paymentService->installmentOptionsForOrder(
+                $sale,
+                (string) $request->validated('credit_card_bin'),
+                (int) ($request->validated('max_installments') ?? 12),
+                (int) ($request->validated('max_installments_no_interest') ?? 1),
+            );
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $options,
+            __('messages.sale.payment_checkout_config_loaded')
         );
     }
 

@@ -94,6 +94,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'method' => $method,
             'payer' => $this->resolveOrderPayer($order, $payload),
             'payment_method' => $this->resolvePaymentMethodPayload($method, $payload),
+            'buyer_interest' => $this->resolveBuyerInterestPayload($method, $payload),
         ]);
 
         return $this->chargeAndPersist($order, $request, $credentials);
@@ -342,6 +343,73 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         ];
     }
 
+    public function getInstallmentOptions(?Sale $order, string $creditCardBin, int $maxInstallments = 12, int $maxInstallmentsNoInterest = 1): array
+    {
+        $credentials = $order !== null
+            ? $this->resolveOrderCredentials($order)
+            : $this->resolveCredentials(null);
+        $token = $credentials['token'];
+        $normalizedBin = substr($this->normalizeDocument($creditCardBin), 0, 6);
+
+        if ($token === '') {
+            return [
+                'provider' => 'pagbank',
+                'available' => false,
+                'brand' => null,
+                'options' => [],
+            ];
+        }
+
+        if (strlen($normalizedBin) !== 6 || ! $order instanceof Sale) {
+            return [
+                'provider' => 'pagbank',
+                'available' => true,
+                'brand' => null,
+                'options' => [],
+            ];
+        }
+
+        $response = $this->client($credentials)->get('/charges/fees/calculate', [
+            'payment_methods' => ['CREDIT_CARD'],
+            'value' => Money::toMinor((string) $order->total_amount),
+            'max_installments' => max(1, min(12, $maxInstallments)),
+            'max_installments_no_interest' => max(1, min(12, $maxInstallmentsNoInterest)),
+            'credit_card_bin' => $normalizedBin,
+        ]);
+        $this->assertSuccessful($response, 'calculateInstallmentFees');
+
+        $creditCardMethods = (array) $response->json('payment_methods.credit_card', []);
+        $brand = array_key_first($creditCardMethods);
+        $plans = $brand !== null
+            ? (array) data_get($creditCardMethods, $brand.'.installment_plans', [])
+            : [];
+
+        return [
+            'provider' => 'pagbank',
+            'available' => true,
+            'brand' => $brand,
+            'bin' => $normalizedBin,
+            'options' => collect($plans)
+                ->map(function (array $plan) {
+                    $amount = (array) ($plan['amount'] ?? []);
+                    $buyerInterest = (array) data_get($plan, 'amount.fees.buyer.interest', []);
+
+                    return [
+                        'installments' => (int) ($plan['installments'] ?? 1),
+                        'installment_value' => (int) ($plan['installment_value'] ?? 0),
+                        'interest_free' => (bool) ($plan['interest_free'] ?? false),
+                        'total_amount' => (int) ($amount['value'] ?? 0),
+                        'currency' => (string) ($amount['currency'] ?? 'BRL'),
+                        'buyer_interest_total' => (int) ($buyerInterest['total'] ?? 0),
+                        'buyer_interest_installments' => (int) ($buyerInterest['installments'] ?? 0),
+                    ];
+                })
+                ->filter(fn (array $plan) => $plan['installments'] >= 1 && $plan['installment_value'] >= 500)
+                ->values()
+                ->all(),
+        ];
+    }
+
     /**
      * Vocabulário interno usado por SalePaymentService/reconciliação (mesmo
      * de MercadoPagoPaymentProvider::mapStatus) — mapeado a partir dos
@@ -425,7 +493,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             'provider' => 'pagbank',
             'provider_charge_id' => $response->providerChargeId !== '' ? $response->providerChargeId : null,
             'method' => $response->method,
-            'amount' => $request->amount,
+            'amount' => $response->amount !== '0.00' ? $response->amount : $request->amount,
             'status' => $response->status,
             'idempotency_key' => null,
             'metadata' => $response->metadata,
@@ -456,6 +524,9 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         $amountCents = Money::toMinor($request->amount);
+        $buyerInterestTotalCents = max(0, (int) ($request->buyerInterest['total'] ?? 0));
+        $buyerInterestInstallments = max(0, (int) ($request->buyerInterest['installments'] ?? 0));
+        $chargeAmountCents = $amountCents + $buyerInterestTotalCents;
         $sale = Sale::query()
             ->where('uuid', $request->referenceId)
             ->with(['tenant', 'items.ticketType', 'items.eventProduct'])
@@ -463,6 +534,21 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         $split = $sale !== null ? $this->buildSplitPayload($sale, $amountCents) : null;
         $description = $this->buildSaleDescription($sale, $request->referenceId);
         $items = $this->buildSaleItemsPayload($sale, $request->referenceId, $amountCents);
+        $chargeAmountPayload = [
+            'value' => $chargeAmountCents,
+            'currency' => 'BRL',
+        ];
+
+        if ($buyerInterestTotalCents > 0 && $buyerInterestInstallments > 0) {
+            $chargeAmountPayload['fees'] = [
+                'buyer' => [
+                    'interest' => [
+                        'total' => $buyerInterestTotalCents,
+                        'installments' => $buyerInterestInstallments,
+                    ],
+                ],
+            ];
+        }
 
         $body = array_filter([
             'reference_id' => $request->referenceId,
@@ -490,10 +576,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 ? [[
                     'reference_id' => 'charge-'.Str::lower(Str::random(12)),
                     'description' => $description,
-                    'amount' => [
-                        'value' => $amountCents,
-                        'currency' => 'BRL',
-                    ],
+                    'amount' => $chargeAmountPayload,
                     'payment_method' => $request->paymentMethod,
                     'splits' => $split,
                 ]]
@@ -527,6 +610,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'id' => $response->json('id', ''),
                 'status' => $request->method === 'pix' ? 'pending' : $this->mapStatus($chargeStatus),
                 'method' => $request->method,
+                'amount' => Money::normalize(((int) ($firstCharge['amount']['value'] ?? $chargeAmountCents)) / 100),
                 'metadata' => [
                     'qr_code_text' => $qrCode['text'] ?? null,
                     'qr_code_id' => $qrCode['id'] ?? null,
@@ -538,6 +622,8 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                     'split_release_scheduled' => $splitReleaseScheduled,
                     'paid_at' => $firstCharge['paid_at'] ?? null,
                     'payment_response' => $firstCharge['payment_response'] ?? null,
+                    'buyer_interest_total' => $buyerInterestTotalCents > 0 ? $buyerInterestTotalCents : null,
+                    'buyer_interest_installments' => $buyerInterestInstallments > 0 ? $buyerInterestInstallments : null,
                     'card' => $firstCharge['payment_method']['card'] ?? null,
                     'provider_response' => $response->json(),
                 ],
@@ -553,6 +639,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'id' => '',
                 'status' => 'failed',
                 'method' => $request->method,
+                'amount' => Money::normalize($chargeAmountCents / 100),
                 'metadata' => ['note' => 'pagbank_order_creation_failed'],
             ]);
         }
@@ -856,6 +943,29 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         return $paymentMethod;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, int>
+     */
+    private function resolveBuyerInterestPayload(string $method, array $payload): array
+    {
+        if ($method !== 'credit_card') {
+            return [];
+        }
+
+        $total = max(0, (int) ($payload['card']['buyer_interest_total'] ?? 0));
+        $installments = max(0, (int) ($payload['card']['buyer_interest_installments'] ?? 0));
+
+        if ($total <= 0 || $installments <= 0) {
+            return [];
+        }
+
+        return [
+            'total' => $total,
+            'installments' => $installments,
+        ];
     }
 
     /**

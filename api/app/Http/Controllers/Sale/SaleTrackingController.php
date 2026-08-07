@@ -7,6 +7,7 @@ use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\SalePaymentChargeRequest;
+use App\Http\Requests\Sale\SalePaymentInstallmentOptionsRequest;
 use App\Http\Resources\Sale\SalePublicTrackingResource;
 use App\Http\Resources\Sale\SalePaymentResource;
 use App\Models\Sale\Sale;
@@ -77,6 +78,27 @@ class SaleTrackingController extends Controller
 
         return APIResponse::success(
             $config,
+            __('messages.sale.payment_checkout_config_loaded')
+        );
+    }
+
+    public function paymentInstallmentOptions(SalePaymentInstallmentOptionsRequest $request, Sale $sale)
+    {
+        app()->instance('tenant_id', $sale->tenant_id);
+
+        try {
+            $options = $this->salePaymentService->installmentOptionsForOrder(
+                $sale,
+                (string) $request->validated('credit_card_bin'),
+                (int) ($request->validated('max_installments') ?? 12),
+                (int) ($request->validated('max_installments_no_interest') ?? 1),
+            );
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $options,
             __('messages.sale.payment_checkout_config_loaded')
         );
     }

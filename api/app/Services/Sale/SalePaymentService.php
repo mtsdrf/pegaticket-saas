@@ -125,6 +125,25 @@ class SalePaymentService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function installmentOptionsForOrder(
+        Sale $order,
+        string $creditCardBin,
+        int $maxInstallments = 12,
+        int $maxInstallmentsNoInterest = 1,
+    ): array {
+        $this->assertBelongsToCurrentTenant($order);
+
+        return $this->paymentProvider->getInstallmentOptions(
+            $order,
+            $creditCardBin,
+            $maxInstallments,
+            $maxInstallmentsNoInterest,
+        );
+    }
+
+    /**
      * Cobrança ativa (status `pending`) da venda, se houver. Usada tanto
      * pelo guard de duplicidade quanto pela decisão de reaproveitar em vez de
      * criar uma segunda.

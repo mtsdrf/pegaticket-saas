@@ -153,6 +153,8 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:60,1,sale-tracking-public');
     Route::get('/rastreio/{sale:uuid}/payment-checkout-config', [SaleTrackingController::class, 'paymentCheckoutConfig'])
         ->middleware('throttle:20,1,sale-tracking-public-payment');
+    Route::get('/rastreio/{sale:uuid}/payment-installment-options', [SaleTrackingController::class, 'paymentInstallmentOptions'])
+        ->middleware('throttle:30,1,sale-tracking-public-payment');
     Route::post('/rastreio/{sale:uuid}/payment-charge', [SaleTrackingController::class, 'paymentCharge'])
         ->middleware('throttle:20,1,sale-tracking-public-payment');
 
@@ -351,6 +353,8 @@ Route::prefix('v1')->group(function () {
         // PortalCustomerService::findOwnedOrder(), ver PortalController.
         Route::get('/sales/{uuid}/payment-checkout-config', [PortalController::class, 'paymentCheckoutConfig'])
             ->middleware('throttle:20,1,portal-sales-payment-checkout-config');
+        Route::get('/sales/{uuid}/payment-installment-options', [PortalController::class, 'paymentInstallmentOptions'])
+            ->middleware('throttle:30,1,portal-sales-payment-installment-options');
 
         Route::post('/sales/{uuid}/payment-charge', [PortalController::class, 'paymentCharge'])
             ->middleware('throttle:20,1,portal-sales-payment-charge');
@@ -992,6 +996,8 @@ Route::prefix('v1')->group(function () {
             // Functionality.
             Route::get('/{sale}/payment-checkout-config', [SaleController::class, 'paymentCheckoutConfig'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-payment-checkout-config']);
+            Route::get('/{sale}/payment-installment-options', [SaleController::class, 'paymentInstallmentOptions'])
+                ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-payment-installment-options']);
 
             Route::post('/{sale}/payment-charge', [SaleController::class, 'paymentCharge'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:30,1,sales-payment-charge']);

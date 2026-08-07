@@ -23,6 +23,7 @@ final class PagBankChargeRequestDTO
         public readonly string $method,
         public readonly array $payer,
         public readonly array $paymentMethod,
+        public readonly array $buyerInterest = [],
     ) {
     }
 
@@ -37,6 +38,7 @@ final class PagBankChargeRequestDTO
             method: (string) $data['method'],
             payer: (array) ($data['payer'] ?? []),
             paymentMethod: (array) ($data['payment_method'] ?? []),
+            buyerInterest: (array) ($data['buyer_interest'] ?? []),
         );
     }
 
@@ -51,6 +53,7 @@ final class PagBankChargeRequestDTO
             'method' => $this->method,
             'payer' => $this->payer,
             'payment_method' => $this->paymentMethod,
+            'buyer_interest' => $this->buyerInterest,
         ];
     }
 }

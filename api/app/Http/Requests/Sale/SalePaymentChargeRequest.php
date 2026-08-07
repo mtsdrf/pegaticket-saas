@@ -47,6 +47,8 @@ class SalePaymentChargeRequest extends FormRequest
                 'max:12',
                 Rule::requiredIf(fn () => $this->input('method') === 'credit_card'),
             ],
+            'card.buyer_interest_total' => ['nullable', 'integer', 'min:0'],
+            'card.buyer_interest_installments' => ['nullable', 'integer', 'min:0', 'max:12'],
 
             'authentication_method' => ['nullable', 'array'],
             'authentication_method.type' => [

@@ -616,6 +616,16 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
         ];
     }
 
+    public function getInstallmentOptions(?Sale $order, string $creditCardBin, int $maxInstallments = 12, int $maxInstallmentsNoInterest = 1): array
+    {
+        return [
+            'provider' => 'mercadopago',
+            'available' => false,
+            'brand' => null,
+            'options' => [],
+        ];
+    }
+
     /**
      * Cria uma order (POST /v1/orders) junto ao Mercado Pago e registra o
      * Payment polimórfico local (invoice OU order) — mesmo formato de

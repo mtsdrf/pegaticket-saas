@@ -20,6 +20,7 @@ final class PagBankChargeResponseDTO
         public readonly string $providerChargeId,
         public readonly string $status,
         public readonly string $method,
+        public readonly string $amount = '0.00',
         public readonly array $metadata = [],
     ) {
     }
@@ -33,6 +34,7 @@ final class PagBankChargeResponseDTO
             providerChargeId: (string) ($data['id'] ?? ''),
             status: (string) ($data['status'] ?? 'pending'),
             method: (string) ($data['method'] ?? ''),
+            amount: (string) ($data['amount'] ?? '0.00'),
             metadata: (array) ($data['metadata'] ?? []),
         );
     }
@@ -46,6 +48,7 @@ final class PagBankChargeResponseDTO
             'id' => $this->providerChargeId,
             'status' => $this->status,
             'method' => $this->method,
+            'amount' => $this->amount,
             'metadata' => $this->metadata,
         ];
     }

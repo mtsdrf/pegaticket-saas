@@ -33,7 +33,7 @@ import { PAGE_CONTAINER_SX, UI_SIZE } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
-import type { SalePayment, SalePaymentCheckoutConfig } from '../../types/sale'
+import type { SalePayment, SalePaymentCheckoutConfig, SalePaymentInstallmentOption } from '../../types/sale'
 import { formatCpfCnpj, isValidCpfCnpj } from '../../utils/cpfCnpj'
 import {
   BELOW_MINIMUM_ORDER_CODE,
@@ -351,6 +351,17 @@ function normalizeCardExpYear(value: string): string {
   }
 
   return digits
+}
+
+function formatInstallmentOptionLabel(option: SalePaymentInstallmentOption): string {
+  const installmentValue = formatCurrency(option.installment_value / 100)
+  const totalAmount = formatCurrency(option.total_amount / 100)
+
+  if (option.interest_free || option.buyer_interest_total <= 0) {
+    return `${option.installments}x de ${installmentValue} sem juros`
+  }
+
+  return `${option.installments}x de ${installmentValue} | total ${totalAmount} | juros ${formatCurrency(option.buyer_interest_total / 100)}`
 }
 
 function getCreditCardFieldErrors({
@@ -702,12 +713,14 @@ function PixPaymentPanel({
 
 function CreditCardPaymentPanel({
   saleUuid,
+  amount,
   payer,
   slug,
   eventSlug,
   sessionId,
 }: {
   saleUuid: string
+  amount: string
   payer: PaymentFlowPayer
   slug: string
   eventSlug: string | null
@@ -727,12 +740,34 @@ function CreditCardPaymentPanel({
   const [expYear, setExpYear] = useState('')
   const [securityCode, setSecurityCode] = useState('')
   const [installments, setInstallments] = useState('1')
+  const [installmentOptions, setInstallmentOptions] = useState<SalePaymentInstallmentOption[]>([])
+  const [isLoadingInstallmentOptions, setIsLoadingInstallmentOptions] = useState(false)
+  const [installmentOptionsError, setInstallmentOptionsError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCardBackVisible, setIsCardBackVisible] = useState(false)
   const cardBrand = useMemo(() => detectCardBrand(cardNumber), [cardNumber])
   const cardBrandImageSrc = cardBrand ? CARD_BRAND_IMAGE_PATHS[cardBrand.brand] : undefined
+  const cardBin = useMemo(() => normalizeDigits(cardNumber).slice(0, 6), [cardNumber])
+  const fallbackInstallmentOptions = useMemo<SalePaymentInstallmentOption[]>(() => {
+    const totalAmountCents = Math.round(Number(amount || '0') * 100)
+
+    return [{
+      installments: 1,
+      installment_value: totalAmountCents,
+      interest_free: true,
+      total_amount: totalAmountCents,
+      currency: 'BRL',
+      buyer_interest_total: 0,
+      buyer_interest_installments: 0,
+    }]
+  }, [amount])
+  const availableInstallmentOptions = installmentOptions.length > 0 ? installmentOptions : fallbackInstallmentOptions
+  const selectedInstallmentOption = useMemo(
+    () => availableInstallmentOptions.find((option) => String(option.installments) === installments) ?? availableInstallmentOptions[0],
+    [availableInstallmentOptions, installments],
+  )
 
   useEffect(() => {
     setIsLoadingConfig(true)
@@ -755,6 +790,46 @@ function CreditCardPaymentPanel({
       })
       .finally(() => setIsLoadingConfig(false))
   }, [saleUuid])
+
+  useEffect(() => {
+    if (!sdkReady || !config?.available) return
+
+    if (cardBin.length < 6) {
+      setInstallmentOptions([])
+      setInstallmentOptionsError(null)
+      setInstallments('1')
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingInstallmentOptions(true)
+    setInstallmentOptionsError(null)
+
+    storefrontSalePaymentService
+      .getSalePaymentInstallmentOptions(saleUuid, cardBin)
+      .then((result) => {
+        if (cancelled) return
+        const options = result.options.length > 0 ? result.options : fallbackInstallmentOptions
+        setInstallmentOptions(options)
+        setInstallments((current) =>
+          options.some((option) => String(option.installments) === current) ? current : String(options[0]?.installments ?? 1),
+        )
+      })
+      .catch((error) => {
+        if (cancelled) return
+        setInstallmentOptions([])
+        setInstallmentOptionsError(getApiErrorMessage(error, 'Não foi possível consultar as condições de parcelamento agora.'))
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingInstallmentOptions(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [cardBin, config?.available, fallbackInstallmentOptions, saleUuid, sdkReady])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -810,6 +885,8 @@ function CreditCardPaymentPanel({
           holder_name: holderName.trim(),
           holder_tax_id: holderTaxId.replace(/\D+/g, ''),
           installments: Number(installments),
+          buyer_interest_total: selectedInstallmentOption?.buyer_interest_total ?? 0,
+          buyer_interest_installments: selectedInstallmentOption?.buyer_interest_installments ?? 0,
         },
       })
 
@@ -1209,10 +1286,21 @@ function CreditCardPaymentPanel({
               onChange={(event) => setInstallments(event.target.value)}
               size="small"
               fullWidth
+              disabled={isLoadingInstallmentOptions}
+              helperText={
+                installmentOptionsError
+                ?? (cardBin.length < 6
+                  ? 'Digite os 6 primeiros números do cartão para consultar juros e parcelamento.'
+                  : isLoadingInstallmentOptions
+                    ? 'Consultando condições de parcelamento no PagBank…'
+                    : selectedInstallmentOption && !selectedInstallmentOption.interest_free && selectedInstallmentOption.buyer_interest_total > 0
+                      ? `Juros cobrados do comprador: ${formatCurrency(selectedInstallmentOption.buyer_interest_total / 100)}`
+                      : 'Sem juros para o comprador.')
+              }
             >
-              {Array.from({ length: 12 }, (_, index) => (
-                <MenuItem key={index + 1} value={String(index + 1)}>
-                  {index + 1}x
+              {availableInstallmentOptions.map((option) => (
+                <MenuItem key={option.installments} value={String(option.installments)}>
+                  {formatInstallmentOptionLabel(option)}
                 </MenuItem>
               ))}
             </TextField>
@@ -1519,6 +1607,7 @@ function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
     return (
       <CreditCardPaymentPanel
         saleUuid={flow.saleUuid}
+        amount={flow.amount}
         payer={flow.payer}
         slug={flow.slug}
         eventSlug={flow.eventSlug}

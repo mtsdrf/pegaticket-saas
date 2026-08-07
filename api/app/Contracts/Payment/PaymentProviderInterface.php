@@ -85,6 +85,15 @@ interface PaymentProviderInterface
     public function getCheckoutConfig(?Sale $order = null): array;
 
     /**
+     * Consulta os planos de parcelamento disponíveis para uma venda e um BIN
+     * de cartão específico, incluindo juros repassados ao comprador quando
+     * aplicável.
+     *
+     * @return array<string, mixed>
+     */
+    public function getInstallmentOptions(?Sale $order, string $creditCardBin, int $maxInstallments = 12, int $maxInstallmentsNoInterest = 1): array;
+
+    /**
      * Cria a assinatura recorrente automática (Preapproval no Mercado
      * Pago) vinculada ao plan_price da Subscription — o PSP passa a cobrar
      * sozinho a cada ciclo a partir daí. Retorna ao menos

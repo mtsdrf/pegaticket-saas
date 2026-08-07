@@ -14,6 +14,7 @@ use App\Http\Requests\Portal\RateSaleRequest;
 use App\Http\Requests\Portal\RequestSaleCancellationRequest;
 use App\Http\Requests\Portal\TransferTicketRequest;
 use App\Http\Requests\Sale\SalePaymentChargeRequest;
+use App\Http\Requests\Sale\SalePaymentInstallmentOptionsRequest;
 use App\Http\Resources\Portal\PortalMeResource;
 use App\Http\Resources\Portal\PortalSaleResource;
 use App\Http\Resources\Portal\PortalTicketResource;
@@ -185,6 +186,29 @@ class PortalController extends Controller
             new SalePaymentResource($payment),
             __('messages.sale.payment_charge_created'),
             201
+        );
+    }
+
+    public function paymentInstallmentOptions(SalePaymentInstallmentOptionsRequest $request, string $uuid)
+    {
+        $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+
+        app()->instance('tenant_id', $sale->tenant_id);
+
+        try {
+            $options = $this->paymentService->installmentOptionsForOrder(
+                $sale,
+                (string) $request->validated('credit_card_bin'),
+                (int) ($request->validated('max_installments') ?? 12),
+                (int) ($request->validated('max_installments_no_interest') ?? 1),
+            );
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $options,
+            __('messages.sale.payment_checkout_config_loaded')
         );
     }
 

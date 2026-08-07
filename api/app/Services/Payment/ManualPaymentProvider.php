@@ -78,6 +78,16 @@ class ManualPaymentProvider implements PaymentProviderInterface
         ];
     }
 
+    public function getInstallmentOptions(?Sale $order, string $creditCardBin, int $maxInstallments = 12, int $maxInstallmentsNoInterest = 1): array
+    {
+        return [
+            'provider' => 'manual',
+            'available' => false,
+            'brand' => null,
+            'options' => [],
+        ];
+    }
+
     public function createPreapproval(Subscription $subscription, string $operationPrefix = 'preapproval_create', ?string $cardTokenId = null): array
     {
         // Sem PSP real, não há cobrança recorrente automática — a
