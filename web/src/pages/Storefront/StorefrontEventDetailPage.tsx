@@ -19,6 +19,7 @@ import * as ticketWaitlistService from '../../services/ticketWaitlistService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { getApiErrorMessage } from '../../types/api'
 import { sendFunnelEvent } from '../../utils/funnelTracking'
+import { resolveEventCoverImageUrl } from '../../utils/eventCover'
 import type {
   StorefrontAvailabilityEventProduct,
   StorefrontAvailabilityResult,
@@ -756,6 +757,9 @@ export function StorefrontEventDetailPage() {
       pos_x: seat.pos_x,
       pos_y: seat.pos_y,
       kind: seat.kind,
+      width: seat.width,
+      height: seat.height,
+      geometryPoints: seat.geometry_points,
       label: seat.label,
       isAccessible: seat.is_accessible,
       visualState,
@@ -886,16 +890,12 @@ export function StorefrontEventDetailPage() {
                 overflow: 'hidden',
               }}
             >
-              {event.cover_image_url ? (
-                <Box
-                  component="img"
-                  src={event.cover_image_url}
-                  alt={event.name}
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <EventOutlinedIcon sx={{ fontSize: 56, color: 'var(--pt-muted)' }} />
-              )}
+              <Box
+                component="img"
+                src={resolveEventCoverImageUrl(event.cover_image_url)}
+                alt={event.name}
+                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </Box>
 
             <Box>

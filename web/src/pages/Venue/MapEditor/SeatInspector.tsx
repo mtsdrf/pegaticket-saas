@@ -210,6 +210,43 @@ function SingleSeatForm({
         />
       </Stack>
 
+      <Stack direction="row" spacing={1.5}>
+        <TextField
+          label="Largura"
+          size="small"
+          type="number"
+          value={seat.width ?? ''}
+          slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
+          onChange={(event) => {
+            const raw = event.target.value
+            if (raw === '') {
+              onCommit(seat.uuid, { width: null })
+              return
+            }
+
+            const value = Number(raw)
+            if (!Number.isNaN(value) && value > 0) onCommit(seat.uuid, { width: value })
+          }}
+        />
+        <TextField
+          label="Altura"
+          size="small"
+          type="number"
+          value={seat.height ?? ''}
+          slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
+          onChange={(event) => {
+            const raw = event.target.value
+            if (raw === '') {
+              onCommit(seat.uuid, { height: null })
+              return
+            }
+
+            const value = Number(raw)
+            if (!Number.isNaN(value) && value > 0) onCommit(seat.uuid, { height: value })
+          }}
+        />
+      </Stack>
+
       <LocalAutocomplete
         label="Status"
         size="small"

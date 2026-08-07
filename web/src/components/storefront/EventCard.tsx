@@ -6,6 +6,7 @@ import { Box, IconButton, Paper, Stack, Typography } from '@mui/material'
 import { CLAMP_TEXT_2_SX } from '../../styles/layoutStandards'
 import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import type { StorefrontEvent } from '../../types/storefront'
+import { resolveEventCoverImageUrl } from '../../utils/eventCover'
 import { formatDateBR } from '../../utils/format'
 
 interface EventCardProps {
@@ -16,6 +17,8 @@ interface EventCardProps {
 
 /** Card de evento do catálogo público — substitui `ProductGridCard`/`ProductListItem` (migração PegaTicket, comércio → ingressos). */
 export function EventCard({ event, onClick, onToggleFavorite }: EventCardProps) {
+  const coverImageUrl = resolveEventCoverImageUrl(event.cover_image_url)
+
   return (
     <Paper
       elevation={0}
@@ -48,16 +51,12 @@ export function EventCard({ event, onClick, onToggleFavorite }: EventCardProps) 
           flexShrink: 0,
         }}
       >
-        {event.cover_image_url ? (
-          <Box
-            component="img"
-            src={event.cover_image_url}
-            alt={event.name}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <EventOutlinedIcon sx={{ fontSize: 44, color: 'var(--pt-muted)' }} />
-        )}
+        <Box
+          component="img"
+          src={coverImageUrl}
+          alt={event.name}
+          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
 
         <IconButton
           onClick={(clickEvent) => {

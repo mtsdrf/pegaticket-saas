@@ -5,6 +5,7 @@ import ZoomOutOutlinedIcon from '@mui/icons-material/ZoomOutOutlined'
 import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
+import { normalizeGeometryPoints, polygonBounds, resolveSeatGeometry } from '../../pages/Venue/MapEditor/mapVisuals'
 import { clampViewBox, clientToSvgPoint, zoomViewBox, type ViewBox } from '../../pages/Venue/MapEditor/viewBox'
 
 export type SeatMapViewerVisualState = 'available' | 'selected' | 'unavailable'
@@ -14,6 +15,9 @@ export interface SeatMapViewerSeat {
   pos_x: number
   pos_y: number
   kind: string
+  width: number | null
+  height: number | null
+  geometryPoints: Array<{ x: number; y: number }>
   label: string
   isAccessible: boolean
   visualState: SeatMapViewerVisualState
@@ -27,14 +31,7 @@ interface SeatMapViewerProps {
   mapHeight: number
   backgroundImageUrl?: string | null
   onSelectSeat: (uuid: string) => void
-}
-
-/** Raio visual por tipo (px de mundo, mesma escala usada pelo editor admin em `KIND_GEOMETRY`). */
-const KIND_RADIUS: Record<string, number> = {
-  assento: 9,
-  mesa: 17,
-  camarote: 19,
-  area: 26,
+  readOnly?: boolean
 }
 
 /** Alvo de toque mínimo recomendado (44px CSS) — maior que o desenho visual do assento,
@@ -72,7 +69,7 @@ function buildBaseViewBox(mapWidth: number, mapHeight: number): ViewBox {
  * (Tab + Enter/Espaço) — SVG puro não suporta um "roving focus" nativo tão rico quanto
  * um DOM real, então o foco visual usa apenas o anel `--pt-focus-ring` do navegador.
  */
-export function SeatMapViewer({ seats, mapWidth, mapHeight, backgroundImageUrl, onSelectSeat }: SeatMapViewerProps) {
+export function SeatMapViewer({ seats, mapWidth, mapHeight, backgroundImageUrl, onSelectSeat, readOnly = false }: SeatMapViewerProps) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const dragRef = useRef<DragState>({ mode: 'idle' })
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
@@ -179,10 +176,10 @@ export function SeatMapViewer({ seats, mapWidth, mapHeight, backgroundImageUrl, 
 
       if (state.mode === 'tap' && state.seatUuid) {
         const seat = seats.find((item) => item.uuid === state.seatUuid)
-        if (seat && !seat.disabled) onSelectSeat(seat.uuid)
+        if (seat && !seat.disabled && !readOnly) onSelectSeat(seat.uuid)
       }
     },
-    [onSelectSeat, seats],
+    [onSelectSeat, readOnly, seats],
   )
 
   // React anexa `onWheel` como listener passivo por padrão — preventDefault() não
@@ -210,7 +207,7 @@ export function SeatMapViewer({ seats, mapWidth, mapHeight, backgroundImageUrl, 
   }
 
   function handleSeatKeyDown(event: React.KeyboardEvent<SVGGElement>, seat: SeatMapViewerSeat) {
-    if (seat.disabled) return
+    if (seat.disabled || readOnly) return
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       onSelectSeat(seat.uuid)
@@ -257,54 +254,128 @@ export function SeatMapViewer({ seats, mapWidth, mapHeight, backgroundImageUrl, 
           ) : null}
 
           {seats.map((seat) => {
-            const radius = KIND_RADIUS[seat.kind] ?? KIND_RADIUS.assento
+            const geo = resolveSeatGeometry(
+              seat.kind === 'assento' || seat.kind === 'mesa' || seat.kind === 'area' || seat.kind === 'camarote' ? seat.kind : 'assento',
+              seat.width,
+              seat.height,
+            )
+            const geometryPoints = normalizeGeometryPoints(seat.geometryPoints)
+            const areaBounds = seat.kind === 'area' ? polygonBounds(geometryPoints) : null
+            const radius = Math.max(geo.width, geo.height) / 2
             const isSelected = seat.visualState === 'selected'
             const fill = STATE_FILL[seat.visualState]
+            const isInteractive = !seat.disabled && !readOnly
 
             return (
               <g
                 key={seat.uuid}
                 data-seat-uuid={seat.uuid}
-                tabIndex={seat.disabled ? -1 : 0}
+                tabIndex={isInteractive ? 0 : -1}
                 role="button"
                 aria-label={seat.ariaLabel}
-                aria-disabled={seat.disabled}
+                aria-disabled={seat.disabled || readOnly}
                 aria-pressed={isSelected}
                 onKeyDown={(event) => handleSeatKeyDown(event, seat)}
-                style={{ cursor: seat.disabled ? 'not-allowed' : 'pointer', outline: 'none' }}
+                style={{ cursor: isInteractive ? 'pointer' : 'default', outline: 'none' }}
               >
                 {/* Área de toque invisível maior que o desenho visual — alvo de toque real em SVG puro. */}
-                <circle cx={seat.pos_x} cy={seat.pos_y} r={Math.max(radius, touchRadiusUnits)} fill="transparent" />
+                {seat.kind === 'area' && geometryPoints.length >= 3 ? (
+                  <>
+                    <polygon
+                      points={geometryPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+                      fill="transparent"
+                    />
 
-                {isSelected ? (
-                  <circle
-                    cx={seat.pos_x}
-                    cy={seat.pos_y}
-                    r={radius + 5}
-                    fill="none"
-                    stroke="var(--pt-primary)"
-                    strokeWidth={2}
-                    strokeDasharray="3 2"
-                  />
-                ) : null}
+                    {isSelected ? (
+                      <polygon
+                        points={geometryPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+                        fill="none"
+                        stroke="var(--pt-primary)"
+                        strokeWidth={2}
+                        strokeDasharray="3 2"
+                      />
+                    ) : null}
 
-                <circle
-                  cx={seat.pos_x}
-                  cy={seat.pos_y}
-                  r={radius}
-                  fill={fill}
-                  fillOpacity={seat.disabled && !isSelected ? 0.45 : 0.92}
-                  stroke="var(--pt-surface)"
-                  strokeWidth={1.5}
-                />
+                    <polygon
+                      points={geometryPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+                      fill={fill}
+                      fillOpacity={seat.disabled && !isSelected ? 0.35 : 0.5}
+                      stroke="var(--pt-surface)"
+                      strokeWidth={1.5}
+                    />
+                  </>
+                ) : geo.shape === 'circle' ? (
+                  <>
+                    <circle cx={seat.pos_x} cy={seat.pos_y} r={Math.max(radius, touchRadiusUnits)} fill="transparent" />
+
+                    {isSelected ? (
+                      <circle
+                        cx={seat.pos_x}
+                        cy={seat.pos_y}
+                        r={radius + 5}
+                        fill="none"
+                        stroke="var(--pt-primary)"
+                        strokeWidth={2}
+                        strokeDasharray="3 2"
+                      />
+                    ) : null}
+
+                    <circle
+                      cx={seat.pos_x}
+                      cy={seat.pos_y}
+                      r={radius}
+                      fill={fill}
+                      fillOpacity={seat.disabled && !isSelected ? 0.45 : 0.92}
+                      stroke="var(--pt-surface)"
+                      strokeWidth={1.5}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <rect
+                      x={seat.pos_x - Math.max(geo.width / 2, touchRadiusUnits)}
+                      y={seat.pos_y - Math.max(geo.height / 2, touchRadiusUnits)}
+                      width={Math.max(geo.width, touchRadiusUnits * 2)}
+                      height={Math.max(geo.height, touchRadiusUnits * 2)}
+                      rx={geo.rx}
+                      fill="transparent"
+                    />
+
+                    {isSelected ? (
+                      <rect
+                        x={seat.pos_x - geo.width / 2 - 5}
+                        y={seat.pos_y - geo.height / 2 - 5}
+                        width={geo.width + 10}
+                        height={geo.height + 10}
+                        rx={geo.rx + 4}
+                        fill="none"
+                        stroke="var(--pt-primary)"
+                        strokeWidth={2}
+                        strokeDasharray="3 2"
+                      />
+                    ) : null}
+
+                    <rect
+                      x={seat.pos_x - geo.width / 2}
+                      y={seat.pos_y - geo.height / 2}
+                      width={geo.width}
+                      height={geo.height}
+                      rx={geo.rx}
+                      fill={fill}
+                      fillOpacity={seat.disabled && !isSelected ? 0.45 : 0.92}
+                      stroke="var(--pt-surface)"
+                      strokeWidth={1.5}
+                    />
+                  </>
+                )}
 
                 {seat.isAccessible ? (
                   <text
                     x={seat.pos_x}
-                    y={seat.pos_y}
+                    y={seat.kind === 'area' && areaBounds ? areaBounds.top + 16 : seat.pos_y}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={radius}
+                    fontSize={Math.max(12, Math.min(radius, 18))}
                     fill="var(--pt-surface)"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >

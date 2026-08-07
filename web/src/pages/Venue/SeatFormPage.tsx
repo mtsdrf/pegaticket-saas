@@ -18,6 +18,8 @@ interface SeatFormState {
   capacity: string
   pos_x: string
   pos_y: string
+  width: string
+  height: string
   is_accessible: boolean
   status: SeatStatus
 }
@@ -29,6 +31,8 @@ const EMPTY_FORM: SeatFormState = {
   capacity: '1',
   pos_x: '',
   pos_y: '',
+  width: '',
+  height: '',
   is_accessible: false,
   status: 'disponivel',
 }
@@ -65,6 +69,8 @@ export function SeatFormPage() {
             capacity: String(seat.capacity),
             pos_x: String(seat.pos_x),
             pos_y: String(seat.pos_y),
+            width: seat.width !== null ? String(seat.width) : '',
+            height: seat.height !== null ? String(seat.height) : '',
             is_accessible: seat.is_accessible,
             status: seat.status,
           })
@@ -91,6 +97,8 @@ export function SeatFormPage() {
       capacity: toOptionalNumber(form.capacity),
       pos_x: toOptionalNumber(form.pos_x),
       pos_y: toOptionalNumber(form.pos_y),
+      width: toOptionalNumber(form.width),
+      height: toOptionalNumber(form.height),
       is_accessible: form.is_accessible,
       status: form.status,
     }
@@ -184,6 +192,28 @@ export function SeatFormPage() {
             helperText={fieldErrors.pos_y?.[0]}
             slotProps={{ htmlInput: { step: '0.01' } }}
           />
+        </Box>
+
+        <Box sx={FORM_GRID_3_SX}>
+          <TextField
+            label="Largura personalizada"
+            type="number"
+            value={form.width}
+            onChange={(event) => updateField('width', event.target.value)}
+            error={Boolean(fieldErrors.width)}
+            helperText={fieldErrors.width?.[0] ?? 'Deixe em branco para usar o padrão do tipo.'}
+            slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
+          />
+          <TextField
+            label="Altura personalizada"
+            type="number"
+            value={form.height}
+            onChange={(event) => updateField('height', event.target.value)}
+            error={Boolean(fieldErrors.height)}
+            helperText={fieldErrors.height?.[0] ?? 'Deixe em branco para usar o padrão do tipo.'}
+            slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
+          />
+          <Box />
         </Box>
 
         <Box sx={FORM_GRID_2_SX}>

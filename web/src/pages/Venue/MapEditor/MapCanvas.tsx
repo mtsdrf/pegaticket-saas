@@ -1,30 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { Seat, SeatKind } from '../../../types/venue'
-import { KIND_GEOMETRY, STATUS_COLOR_VAR, seatBounds } from './mapVisuals'
+import { KIND_GEOMETRY, STATUS_COLOR_VAR, normalizeGeometryPoints, polygonBounds, resolveSeatGeometry, seatVisualBounds } from './mapVisuals'
 import { clientToSvgPoint, zoomViewBox, type ViewBox } from './viewBox'
 
 const CLICK_THRESHOLD_PX = 4
+const AREA_CLOSE_DISTANCE = 14
 
 interface MapCanvasProps {
   seats: Seat[]
   selectedUuids: Set<string>
   pendingCreateKind: SeatKind | null
+  pendingAreaPoints: Array<{ x: number; y: number }>
+  pendingAreaPointer: { x: number; y: number } | null
+  disabled?: boolean
   viewBox: ViewBox
   baseViewBox: ViewBox
   backgroundImageUrl?: string | null
   onViewBoxChange: (vb: ViewBox) => void
   onSelectReplace: (uuids: string[]) => void
-  onSelectToggle: (uuid: string) => void
-  onMoveSeat: (uuid: string, x: number, y: number) => void
-  onCommitMove: (uuid: string, x: number, y: number) => void
   onCreateAt: (kind: SeatKind, x: number, y: number) => void
+  onAreaDraftPointAdd: (point: { x: number; y: number }) => void
+  onAreaDraftPointMove: (point: { x: number; y: number } | null) => void
+  onAreaDraftComplete: () => void
+  onSeatContextMenu: (uuid: string, clientX: number, clientY: number) => void
 }
 
 type DragState =
   | { mode: 'idle' }
   | { mode: 'pan'; startClientX: number; startClientY: number; startViewBox: ViewBox }
-  | { mode: 'seat'; uuid: string; startSeatX: number; startSeatY: number; startClientX: number; startClientY: number; moved: boolean }
   | { mode: 'rubber'; startX: number; startY: number; currentX: number; currentY: number }
   | { mode: 'clickCheck'; startClientX: number; startClientY: number }
 
@@ -32,15 +36,19 @@ export function MapCanvas({
   seats,
   selectedUuids,
   pendingCreateKind,
+  pendingAreaPoints,
+  pendingAreaPointer,
+  disabled = false,
   viewBox,
   baseViewBox,
   backgroundImageUrl,
   onViewBoxChange,
   onSelectReplace,
-  onSelectToggle,
-  onMoveSeat,
-  onCommitMove,
   onCreateAt,
+  onAreaDraftPointAdd,
+  onAreaDraftPointMove,
+  onAreaDraftComplete,
+  onSeatContextMenu,
 }: MapCanvasProps) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const dragRef = useRef<DragState>({ mode: 'idle' })
@@ -55,37 +63,29 @@ export function MapCanvas({
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<SVGSVGElement>) => {
       const svg = svgRef.current
-      if (!svg) return
+      if (!svg || disabled) return
+
+      if (event.button === 1) {
+        event.preventDefault()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        dragRef.current = { mode: 'pan', startClientX: event.clientX, startClientY: event.clientY, startViewBox: viewBox }
+        return
+      }
+
+      if (event.button !== 0) return
       event.currentTarget.setPointerCapture(event.pointerId)
+
+      if (pendingCreateKind === 'area') {
+        dragRef.current = { mode: 'clickCheck', startClientX: event.clientX, startClientY: event.clientY }
+        return
+      }
 
       const seatUuid = findSeatUuid(event.target)
 
       if (seatUuid) {
-        const seat = seats.find((item) => item.uuid === seatUuid)
-        if (!seat) return
-
-        if (event.shiftKey) {
-          onSelectToggle(seatUuid)
-        } else if (!selectedUuids.has(seatUuid)) {
+        if (!selectedUuids.has(seatUuid)) {
           onSelectReplace([seatUuid])
         }
-
-        dragRef.current = {
-          mode: 'seat',
-          uuid: seatUuid,
-          startSeatX: seat.pos_x,
-          startSeatY: seat.pos_y,
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          moved: false,
-        }
-        return
-      }
-
-      if (event.shiftKey) {
-        const point = clientToSvgPoint(svg, event.clientX, event.clientY)
-        dragRef.current = { mode: 'rubber', startX: point.x, startY: point.y, currentX: point.x, currentY: point.y }
-        setRubberRect({ x: point.x, y: point.y, w: 0, h: 0 })
         return
       }
 
@@ -94,9 +94,22 @@ export function MapCanvas({
         return
       }
 
-      dragRef.current = { mode: 'pan', startClientX: event.clientX, startClientY: event.clientY, startViewBox: viewBox }
+      const point = clientToSvgPoint(svg, event.clientX, event.clientY)
+      dragRef.current = { mode: 'rubber', startX: point.x, startY: point.y, currentX: point.x, currentY: point.y }
+      setRubberRect({ x: point.x, y: point.y, w: 0, h: 0 })
     },
-    [findSeatUuid, onSelectReplace, onSelectToggle, pendingCreateKind, seats, selectedUuids, viewBox],
+    [disabled, findSeatUuid, onSelectReplace, pendingCreateKind, selectedUuids, viewBox],
+  )
+
+  const handleContextMenu = useCallback(
+    (event: ReactPointerEvent<SVGSVGElement>) => {
+      if (disabled) return
+      const seatUuid = findSeatUuid(event.target)
+      if (!seatUuid) return
+      event.preventDefault()
+      onSeatContextMenu(seatUuid, event.clientX, event.clientY)
+    },
+    [disabled, findSeatUuid, onSeatContextMenu],
   )
 
   const handlePointerMove = useCallback(
@@ -105,22 +118,15 @@ export function MapCanvas({
       const state = dragRef.current
       if (!svg || state.mode === 'idle') return
 
+      if (pendingCreateKind === 'area') {
+        onAreaDraftPointMove(clientToSvgPoint(svg, event.clientX, event.clientY))
+      }
+
       if (state.mode === 'pan') {
         const scale = viewBox.w / svg.clientWidth
         const dx = (event.clientX - state.startClientX) * scale
         const dy = (event.clientY - state.startClientY) * scale
         onViewBoxChange({ ...state.startViewBox, x: state.startViewBox.x - dx, y: state.startViewBox.y - dy })
-        return
-      }
-
-      if (state.mode === 'seat') {
-        const scale = viewBox.w / svg.clientWidth
-        const dx = (event.clientX - state.startClientX) * scale
-        const dy = (event.clientY - state.startClientY) * scale
-        if (Math.abs(event.clientX - state.startClientX) > CLICK_THRESHOLD_PX || Math.abs(event.clientY - state.startClientY) > CLICK_THRESHOLD_PX) {
-          state.moved = true
-        }
-        onMoveSeat(state.uuid, state.startSeatX + dx, state.startSeatY + dy)
         return
       }
 
@@ -136,7 +142,7 @@ export function MapCanvas({
         })
       }
     },
-    [onMoveSeat, onViewBoxChange, viewBox.w],
+    [onViewBoxChange, viewBox.w],
   )
 
   const handlePointerUp = useCallback(
@@ -144,21 +150,27 @@ export function MapCanvas({
       const svg = svgRef.current
       const state = dragRef.current
       dragRef.current = { mode: 'idle' }
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
       if (!svg) return
 
-      if (state.mode === 'seat') {
-        const seat = seats.find((item) => item.uuid === state.uuid)
-        if (seat && state.moved) {
-          onCommitMove(state.uuid, seat.pos_x, seat.pos_y)
-        }
-        return
-      }
-
       if (state.mode === 'rubber') {
+        const scale = viewBox.w / Math.max(svg.clientWidth, 1)
+        const movedEnough =
+          Math.abs(state.currentX - state.startX) > CLICK_THRESHOLD_PX * scale ||
+          Math.abs(state.currentY - state.startY) > CLICK_THRESHOLD_PX * scale
+
+        if (!movedEnough) {
+          onSelectReplace([])
+          setRubberRect(null)
+          return
+        }
+
         const rect = { x1: Math.min(state.startX, state.currentX), y1: Math.min(state.startY, state.currentY), x2: Math.max(state.startX, state.currentX), y2: Math.max(state.startY, state.currentY) }
         const hits = seats
           .filter((seat) => {
-            const bounds = seatBounds(seat.kind, seat.pos_x, seat.pos_y)
+            const bounds = seatVisualBounds(seat.kind, seat.pos_x, seat.pos_y, seat.width, seat.height, seat.geometry_points)
             return bounds.left >= rect.x1 && bounds.right <= rect.x2 && bounds.top >= rect.y1 && bounds.bottom <= rect.y2
           })
           .map((seat) => seat.uuid)
@@ -169,7 +181,19 @@ export function MapCanvas({
 
       if (state.mode === 'clickCheck') {
         const movedPx = Math.hypot(event.clientX - state.startClientX, event.clientY - state.startClientY)
-        if (movedPx <= CLICK_THRESHOLD_PX && pendingCreateKind) {
+        if (movedPx <= CLICK_THRESHOLD_PX && pendingCreateKind === 'area') {
+          const point = clientToSvgPoint(svg, event.clientX, event.clientY)
+          const firstPoint = pendingAreaPoints[0]
+          if (
+            firstPoint &&
+            pendingAreaPoints.length >= 3 &&
+            Math.hypot(firstPoint.x - point.x, firstPoint.y - point.y) <= AREA_CLOSE_DISTANCE
+          ) {
+            onAreaDraftComplete()
+          } else {
+            onAreaDraftPointAdd({ x: Math.round(point.x), y: Math.round(point.y) })
+          }
+        } else if (movedPx <= CLICK_THRESHOLD_PX && pendingCreateKind) {
           const point = clientToSvgPoint(svg, event.clientX, event.clientY)
           onCreateAt(pendingCreateKind, Math.round(point.x), Math.round(point.y))
         }
@@ -177,14 +201,19 @@ export function MapCanvas({
       }
 
       if (state.mode === 'pan') {
-        const movedPx = Math.hypot(event.clientX - state.startClientX, event.clientY - state.startClientY)
-        if (movedPx <= CLICK_THRESHOLD_PX) {
-          onSelectReplace([])
-        }
+        return
       }
     },
-    [onCommitMove, onCreateAt, onSelectReplace, pendingCreateKind, seats],
+    [onAreaDraftComplete, onAreaDraftPointAdd, onCreateAt, onSelectReplace, pendingAreaPoints, pendingCreateKind, seats, viewBox.w],
   )
+
+  const handlePointerCancel = useCallback((event: ReactPointerEvent<SVGSVGElement>) => {
+    dragRef.current = { mode: 'idle' }
+    setRubberRect(null)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }, [])
 
   // React anexa `onWheel` como listener passivo por padrão — preventDefault() não
   // funciona nele (zoom rolaria a página junto). Listener nativo não-passivo é o
@@ -210,6 +239,8 @@ export function MapCanvas({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onContextMenu={handleContextMenu}
       role="application"
       aria-label="Mapa visual do local"
       style={{
@@ -217,9 +248,10 @@ export function MapCanvas({
         height: '100%',
         display: 'block',
         background: 'var(--pt-surface-soft)',
-        cursor: pendingCreateKind ? 'crosshair' : 'grab',
+        cursor: disabled ? 'progress' : pendingCreateKind ? 'crosshair' : 'default',
         touchAction: 'none',
         borderRadius: 'var(--pt-radius-lg)',
+        pointerEvents: disabled ? 'none' : 'auto',
       }}
     >
       {backgroundImageUrl ? (
@@ -227,14 +259,25 @@ export function MapCanvas({
       ) : null}
 
       {seats.map((seat) => {
-        const geo = KIND_GEOMETRY[seat.kind]
+        const baseGeo = KIND_GEOMETRY[seat.kind]
+        const geo = resolveSeatGeometry(seat.kind, seat.width, seat.height)
+        const geometryPoints = normalizeGeometryPoints(seat.geometry_points)
+        const areaBounds = seat.kind === 'area' ? polygonBounds(geometryPoints) : null
         const isSelected = selectedUuids.has(seat.uuid)
         const color = STATUS_COLOR_VAR[seat.status]
 
         return (
-          <g key={seat.uuid} data-seat-uuid={seat.uuid} style={{ cursor: 'grab' }}>
+          <g key={seat.uuid} data-seat-uuid={seat.uuid} style={{ cursor: 'pointer' }}>
             {isSelected ? (
-              geo.shape === 'circle' ? (
+              seat.kind === 'area' && geometryPoints.length >= 3 ? (
+                <polygon
+                  points={geometryPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+                  fill="none"
+                  stroke="var(--pt-primary)"
+                  strokeWidth={2}
+                  strokeDasharray="3 2"
+                />
+              ) : geo.shape === 'circle' ? (
                 <circle cx={seat.pos_x} cy={seat.pos_y} r={geo.width / 2 + 5} fill="none" stroke="var(--pt-primary)" strokeWidth={2} strokeDasharray="3 2" />
               ) : (
                 <rect
@@ -242,7 +285,7 @@ export function MapCanvas({
                   y={seat.pos_y - geo.height / 2 - 5}
                   width={geo.width + 10}
                   height={geo.height + 10}
-                  rx={geo.rx + 4}
+                  rx={baseGeo.rx + 4}
                   fill="none"
                   stroke="var(--pt-primary)"
                   strokeWidth={2}
@@ -251,7 +294,15 @@ export function MapCanvas({
               )
             ) : null}
 
-            {geo.shape === 'circle' ? (
+            {seat.kind === 'area' && geometryPoints.length >= 3 ? (
+              <polygon
+                points={geometryPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+                fill={color}
+                fillOpacity={geo.fillOpacity}
+                stroke="var(--pt-surface)"
+                strokeWidth={1.5}
+              />
+            ) : geo.shape === 'circle' ? (
               <circle cx={seat.pos_x} cy={seat.pos_y} r={geo.width / 2} fill={color} fillOpacity={geo.fillOpacity} stroke="var(--pt-surface)" strokeWidth={1.5} />
             ) : (
               <rect
@@ -259,7 +310,7 @@ export function MapCanvas({
                 y={seat.pos_y - geo.height / 2}
                 width={geo.width}
                 height={geo.height}
-                rx={geo.rx}
+                rx={baseGeo.rx}
                 fill={color}
                 fillOpacity={geo.fillOpacity}
                 stroke="var(--pt-surface)"
@@ -275,12 +326,54 @@ export function MapCanvas({
               <circle cx={seat.pos_x - geo.width / 2 + 2} cy={seat.pos_y + geo.height / 2 - 2} r={5.5} fill="var(--pt-info)" stroke="var(--pt-surface)" strokeWidth={1} />
             ) : null}
 
-            <text x={seat.pos_x} y={seat.pos_y + geo.height / 2 + 11} textAnchor="middle" fontSize={9} fill="var(--pt-muted)" style={{ pointerEvents: 'none', userSelect: 'none' }}>
+            <text
+              x={seat.pos_x}
+              y={seat.kind === 'area' && areaBounds ? areaBounds.bottom + 11 : seat.pos_y + geo.height / 2 + 11}
+              textAnchor="middle"
+              fontSize={9}
+              fill="var(--pt-muted)"
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
               {seat.label}
             </text>
           </g>
         )
       })}
+
+      {pendingCreateKind === 'area' && pendingAreaPoints.length > 0 ? (
+        <>
+          <polyline
+            points={
+              [...pendingAreaPoints, ...(pendingAreaPointer ? [pendingAreaPointer] : [])]
+                .map((point) => `${point.x},${point.y}`)
+                .join(' ')
+            }
+            fill="none"
+            stroke="var(--pt-primary)"
+            strokeWidth={2}
+            strokeDasharray="4 3"
+          />
+          {pendingAreaPoints.length >= 3 ? (
+            <polygon
+              points={pendingAreaPoints.map((point) => `${point.x},${point.y}`).join(' ')}
+              fill="var(--pt-primary)"
+              fillOpacity={0.12}
+              stroke="none"
+            />
+          ) : null}
+          {pendingAreaPoints.map((point, index) => (
+            <circle
+              key={`draft-area-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r={index === 0 ? 6 : 4.5}
+              fill={index === 0 ? 'var(--pt-accent)' : 'var(--pt-primary)'}
+              stroke="var(--pt-surface)"
+              strokeWidth={1.5}
+            />
+          ))}
+        </>
+      ) : null}
 
       {rubberRect ? (
         <rect

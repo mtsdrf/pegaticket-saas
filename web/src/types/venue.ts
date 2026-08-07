@@ -52,6 +52,9 @@ export interface Seat {
   capacity: number
   pos_x: number
   pos_y: number
+  width: number | null
+  height: number | null
+  geometry_points: Array<{ x: number; y: number }>
   is_accessible: boolean
   status: SeatStatus
   created_at: string
@@ -64,6 +67,9 @@ export interface SeatPayload {
   capacity?: number | null
   pos_x?: number | null
   pos_y?: number | null
+  width?: number | null
+  height?: number | null
+  geometry_points?: Array<{ x: number; y: number }> | null
   is_accessible?: boolean
   status?: SeatStatus
 }

@@ -40,12 +40,57 @@ export const KIND_GEOMETRY: Record<SeatKind, KindGeometry> = {
   area: { shape: 'rect', width: 96, height: 68, rx: 6, fillOpacity: 0.28 },
 }
 
-export function seatBounds(kind: SeatKind, x: number, y: number) {
+export function normalizeGeometryPoints(points?: Array<{ x: number; y: number }> | null): Array<{ x: number; y: number }> {
+  return (points ?? []).filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y))
+}
+
+export function polygonBounds(points?: Array<{ x: number; y: number }> | null) {
+  const normalized = normalizeGeometryPoints(points)
+  if (normalized.length === 0) return null
+
+  const xs = normalized.map((point) => point.x)
+  const ys = normalized.map((point) => point.y)
+
+  return {
+    left: Math.min(...xs),
+    right: Math.max(...xs),
+    top: Math.min(...ys),
+    bottom: Math.max(...ys),
+  }
+}
+
+export function resolveSeatGeometry(kind: SeatKind, width?: number | null, height?: number | null): KindGeometry {
   const geo = KIND_GEOMETRY[kind]
+
+  return {
+    ...geo,
+    width: width && width > 0 ? width : geo.width,
+    height: height && height > 0 ? height : geo.height,
+  }
+}
+
+export function seatBounds(kind: SeatKind, x: number, y: number, width?: number | null, height?: number | null) {
+  const geo = resolveSeatGeometry(kind, width, height)
   return {
     left: x - geo.width / 2,
     right: x + geo.width / 2,
     top: y - geo.height / 2,
     bottom: y + geo.height / 2,
   }
+}
+
+export function seatVisualBounds(
+  kind: SeatKind,
+  x: number,
+  y: number,
+  width?: number | null,
+  height?: number | null,
+  geometryPoints?: Array<{ x: number; y: number }> | null,
+) {
+  if (kind === 'area') {
+    const bounds = polygonBounds(geometryPoints)
+    if (bounds) return bounds
+  }
+
+  return seatBounds(kind, x, y, width, height)
 }

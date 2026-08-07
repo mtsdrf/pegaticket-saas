@@ -20,6 +20,7 @@ import * as eventService from '../../services/eventService'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { EVENT_STATUS_OPTIONS, type Event } from '../../types/event'
 import { getApiErrorMessage } from '../../types/api'
+import { resolveEventCoverImageUrl } from '../../utils/eventCover'
 import { formatDateBR } from '../../utils/format'
 
 const STATUS_LABELS = Object.fromEntries(EVENT_STATUS_OPTIONS.map((option) => [option.value, option.label]))
@@ -98,7 +99,7 @@ export function EventListPage() {
         filterType: 'none',
         exportable: false,
         cellRenderer: (row) => (
-          <Avatar variant="rounded" src={row.cover_image_url ?? undefined} sx={{ width: 32, height: 32, ...SOFT_PANEL_SX }}>
+          <Avatar variant="rounded" src={resolveEventCoverImageUrl(row.cover_image_url)} sx={{ width: 32, height: 32, ...SOFT_PANEL_SX }}>
             <EventOutlinedIcon fontSize="small" sx={{ color: 'var(--pt-muted)' }} />
           </Avatar>
         ),
@@ -130,7 +131,7 @@ export function EventListPage() {
       {
         field: 'uuid',
         headerName: 'Ações',
-        width: 190,
+        width: 240,
         sortable: false,
         filterType: 'none',
         exportable: false,

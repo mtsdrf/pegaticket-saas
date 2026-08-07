@@ -1,9 +1,12 @@
 import AddIcon from '@mui/icons-material/Add'
 import CenterFocusStrongOutlinedIcon from '@mui/icons-material/CenterFocusStrongOutlined'
 import CloseIcon from '@mui/icons-material/Close'
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
+import ContentPasteOutlinedIcon from '@mui/icons-material/ContentPasteOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import ZoomInOutlinedIcon from '@mui/icons-material/ZoomInOutlined'
 import ZoomOutOutlinedIcon from '@mui/icons-material/ZoomOutOutlined'
 import {
@@ -11,6 +14,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,14 +26,16 @@ import {
   Paper,
   Skeleton,
   Stack,
+  TextField,
   Tooltip,
 } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ACCESS } from '../../../access/requirements'
 import { ConfirmDeleteDialog } from '../../../components/crud/ConfirmDeleteDialog'
 import { EmptyState } from '../../../components/layout/EmptyState'
 import { PageHeader } from '../../../components/layout/PageHeader'
+import { SeatMapViewer, type SeatMapViewerSeat } from '../../../components/storefront/SeatMapViewer'
 import { useAccessControl } from '../../../hooks/useAccessControl'
 import * as seatService from '../../../services/seatService'
 import * as venueService from '../../../services/venueService'
@@ -38,13 +44,63 @@ import { getApiErrorMessage } from '../../../types/api'
 import { SEAT_KIND_OPTIONS, type Seat, type SeatKind, type SeatPayload, type Venue } from '../../../types/venue'
 import { BatchEditDialog } from './BatchEditDialog'
 import { MapCanvas } from './MapCanvas'
-import { KIND_LABEL } from './mapVisuals'
+import { KIND_LABEL, polygonBounds, seatVisualBounds } from './mapVisuals'
 import { SeatInspector } from './SeatInspector'
 import { clampViewBox, zoomViewBox, type ViewBox } from './viewBox'
 
 const DEFAULT_PLAN = { width: 800, height: 600 }
 const SEATS_PAGE_SIZE = 200
 const DEBOUNCE_MS = 350
+const PASTE_OFFSET = 36
+
+interface SeatClipboardItem {
+  label: string
+  sector_name: string | null
+  kind: SeatKind
+  capacity: number
+  pos_x: number
+  pos_y: number
+  width: number | null
+  height: number | null
+  geometry_points: Array<{ x: number; y: number }>
+  is_accessible: boolean
+  status: Seat['status']
+}
+
+interface DeleteRequest {
+  seats: Seat[]
+}
+
+interface ContextMenuState {
+  seatUuid: string
+  mouseX: number
+  mouseY: number
+}
+
+interface RenameDialogState {
+  seatUuid: string
+  value: string
+}
+
+function buildAreaPayload(points: Array<{ x: number; y: number }>, seats: Seat[]): SeatPayload {
+  const bounds = polygonBounds(points)
+  if (!bounds) {
+    throw new Error('Área inválida sem pontos suficientes.')
+  }
+
+  return {
+    label: defaultLabelFor('area', seats),
+    kind: 'area',
+    pos_x: Math.round((bounds.left + bounds.right) / 2),
+    pos_y: Math.round((bounds.top + bounds.bottom) / 2),
+    width: Math.round(bounds.right - bounds.left),
+    height: Math.round(bounds.bottom - bounds.top),
+    geometry_points: points,
+    status: 'disponivel',
+    capacity: 1,
+    is_accessible: false,
+  }
+}
 
 function buildBaseViewBox(venue: Venue | null, seats: Seat[]): ViewBox {
   if (venue?.width && venue?.height) {
@@ -52,13 +108,12 @@ function buildBaseViewBox(venue: Venue | null, seats: Seat[]): ViewBox {
   }
 
   if (seats.length > 0) {
-    const xs = seats.map((s) => s.pos_x)
-    const ys = seats.map((s) => s.pos_y)
+    const bounds = seats.map((seat) => seatVisualBounds(seat.kind, seat.pos_x, seat.pos_y, seat.width, seat.height, seat.geometry_points))
     const pad = 80
-    const minX = Math.min(...xs) - pad
-    const minY = Math.min(...ys) - pad
-    const maxX = Math.max(...xs) + pad
-    const maxY = Math.max(...ys) + pad
+    const minX = Math.min(...bounds.map((item) => item.left)) - pad
+    const minY = Math.min(...bounds.map((item) => item.top)) - pad
+    const maxX = Math.max(...bounds.map((item) => item.right)) + pad
+    const maxY = Math.max(...bounds.map((item) => item.bottom)) + pad
     return { x: minX, y: minY, w: Math.max(maxX - minX, 200), h: Math.max(maxY - minY, 200) }
   }
 
@@ -68,6 +123,82 @@ function buildBaseViewBox(venue: Venue | null, seats: Seat[]): ViewBox {
 function defaultLabelFor(kind: SeatKind, seats: Seat[]): string {
   const countOfKind = seats.filter((s) => s.kind === kind).length
   return `${KIND_LABEL[kind]} ${countOfKind + 1}`
+}
+
+function buildCopyLabel(baseLabel: string, usedLabels: Set<string>): string {
+  const normalized = baseLabel.trim() || 'Componente'
+  const firstCandidate = `${normalized} (cópia)`
+  if (!usedLabels.has(firstCandidate)) {
+    usedLabels.add(firstCandidate)
+    return firstCandidate
+  }
+
+  let suffix = 2
+  while (usedLabels.has(`${normalized} (cópia ${suffix})`)) {
+    suffix += 1
+  }
+
+  const candidate = `${normalized} (cópia ${suffix})`
+  usedLabels.add(candidate)
+  return candidate
+}
+
+function parseLabelSequence(label: string): { prefix: string; value: number; padding: number } | null {
+  const match = label.trim().match(/^(.*?)(\d+)$/)
+  if (!match) return null
+
+  return {
+    prefix: match[1],
+    value: Number(match[2]),
+    padding: match[2].length,
+  }
+}
+
+function buildSequenceState(seats: Seat[]): Map<string, { next: number; padding: number }> {
+  const sequenceState = new Map<string, { next: number; padding: number }>()
+
+  for (const seat of seats) {
+    const parsed = parseLabelSequence(seat.label)
+    if (!parsed) continue
+
+    const current = sequenceState.get(parsed.prefix)
+    if (!current || parsed.value >= current.next) {
+      sequenceState.set(parsed.prefix, {
+        next: parsed.value + 1,
+        padding: Math.max(parsed.padding, current?.padding ?? 0),
+      })
+      continue
+    }
+
+    current.padding = Math.max(current.padding, parsed.padding)
+  }
+
+  return sequenceState
+}
+
+function buildPastedLabel(
+  baseLabel: string,
+  usedLabels: Set<string>,
+  sequenceState: Map<string, { next: number; padding: number }>,
+): string {
+  const parsed = parseLabelSequence(baseLabel)
+  if (!parsed) {
+    return buildCopyLabel(baseLabel, usedLabels)
+  }
+
+  const current = sequenceState.get(parsed.prefix) ?? { next: parsed.value + 1, padding: parsed.padding }
+  current.padding = Math.max(current.padding, parsed.padding)
+
+  let candidate = ''
+  do {
+    candidate = `${parsed.prefix}${String(current.next).padStart(current.padding, '0')}`
+    current.next += 1
+  } while (usedLabels.has(candidate))
+
+  sequenceState.set(parsed.prefix, current)
+  usedLabels.add(candidate)
+
+  return candidate
 }
 
 export function VenueMapEditor() {
@@ -85,13 +216,22 @@ export function VenueMapEditor() {
   const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [pendingCreateKind, setPendingCreateKind] = useState<SeatKind | null>(null)
+  const [pendingAreaPoints, setPendingAreaPoints] = useState<Array<{ x: number; y: number }>>([])
+  const [pendingAreaPointer, setPendingAreaPointer] = useState<{ x: number; y: number } | null>(null)
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
   const [panelOpen, setPanelOpen] = useState(true)
+  const [clipboard, setClipboard] = useState<SeatClipboardItem[]>([])
+  const [isPasting, setIsPasting] = useState(false)
+  const [pasteCount, setPasteCount] = useState(0)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [renameDialog, setRenameDialog] = useState<RenameDialogState | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null)
 
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, w: DEFAULT_PLAN.width, h: DEFAULT_PLAN.height })
   const baseViewBoxRef = useRef<ViewBox>({ x: 0, y: 0, w: DEFAULT_PLAN.width, h: DEFAULT_PLAN.height })
 
-  const [deleteTarget, setDeleteTarget] = useState<Seat | null>(null)
+  const [deleteRequest, setDeleteRequest] = useState<DeleteRequest | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
@@ -104,6 +244,17 @@ export function VenueMapEditor() {
   const [publishError, setPublishError] = useState<string | null>(null)
 
   const debounceRef = useRef<Map<string, { payload: Partial<SeatPayload>; timer: ReturnType<typeof setTimeout> }>>(new Map())
+  const canManageSeats = can(ACCESS.seatsCreate) || can(ACCESS.seatsUpdate)
+
+  const reloadEditorData = useCallback(async () => {
+    const [venueData, seatsResult] = await Promise.all([venueService.getVenue(venueUuid), seatService.listSeats(venueUuid, { per_page: SEATS_PAGE_SIZE })])
+    setVenue(venueData)
+    setSeats(seatsResult.items)
+    setSeatsTotal(seatsResult.pagination.total)
+    const base = buildBaseViewBox(venueData, seatsResult.items)
+    baseViewBoxRef.current = base
+    setViewBox(base)
+  }, [venueUuid])
 
   useEffect(() => {
     if (!venueUuid) return
@@ -111,15 +262,9 @@ export function VenueMapEditor() {
     setIsLoading(true)
     setLoadError(null)
 
-    Promise.all([venueService.getVenue(venueUuid), seatService.listSeats(venueUuid, { per_page: SEATS_PAGE_SIZE })])
-      .then(([venueData, seatsResult]) => {
+    reloadEditorData()
+      .then(() => {
         if (cancelled) return
-        setVenue(venueData)
-        setSeats(seatsResult.items)
-        setSeatsTotal(seatsResult.pagination.total)
-        const base = buildBaseViewBox(venueData, seatsResult.items)
-        baseViewBoxRef.current = base
-        setViewBox(base)
       })
       .catch((error) => {
         if (!cancelled) setLoadError(getApiErrorMessage(error, 'Não foi possível carregar o mapa deste local agora.'))
@@ -131,7 +276,7 @@ export function VenueMapEditor() {
     return () => {
       cancelled = true
     }
-  }, [venueUuid])
+  }, [reloadEditorData, venueUuid])
 
   useEffect(() => {
     const pending = debounceRef.current
@@ -187,38 +332,33 @@ export function VenueMapEditor() {
     [commitSeat, commitSeatDebounced],
   )
 
-  const handleMoveSeat = useCallback((uuid: string, x: number, y: number) => {
-    setSeats((prev) => prev.map((seat) => (seat.uuid === uuid ? { ...seat, pos_x: x, pos_y: y } : seat)))
+  const handleCancelCreate = useCallback(() => {
+    setPendingCreateKind(null)
+    setPendingAreaPoints([])
+    setPendingAreaPointer(null)
   }, [])
 
-  const handleCommitMove = useCallback(
-    (uuid: string, x: number, y: number) => {
-      commitSeat(uuid, { pos_x: x, pos_y: y })
-    },
-    [commitSeat],
-  )
+  const handleStartCreateKind = useCallback((kind: SeatKind) => {
+    setPendingCreateKind(kind)
+    setPendingAreaPoints([])
+    setPendingAreaPointer(null)
+    setAddMenuAnchor(null)
+  }, [])
 
   const handleSelectReplace = useCallback((uuids: string[]) => {
     setSelectedUuids(new Set(uuids))
   }, [])
 
-  const handleSelectToggle = useCallback((uuid: string) => {
-    setSelectedUuids((prev) => {
-      const next = new Set(prev)
-      if (next.has(uuid)) next.delete(uuid)
-      else next.add(uuid)
-      return next
-    })
-  }, [])
-
   const handleCreateAt = useCallback(
     (kind: SeatKind, x: number, y: number) => {
-      setPendingCreateKind(null)
+      handleCancelCreate()
       const payload: SeatPayload = {
         label: defaultLabelFor(kind, seats),
         kind,
         pos_x: x,
         pos_y: y,
+        width: null,
+        height: null,
         status: 'disponivel',
         capacity: 1,
         is_accessible: false,
@@ -235,30 +375,207 @@ export function VenueMapEditor() {
           setActionError(getApiErrorMessage(error, 'Não foi possível criar o assento agora.'))
         })
     },
-    [seats, venueUuid],
+    [handleCancelCreate, seats, venueUuid],
   )
+
+  const handleAreaDraftPointAdd = useCallback((point: { x: number; y: number }) => {
+    setPendingAreaPoints((prev) => [...prev, point])
+  }, [])
+
+  const handleAreaDraftPointMove = useCallback((point: { x: number; y: number } | null) => {
+    setPendingAreaPointer(point)
+  }, [])
+
+  const handleAreaDraftComplete = useCallback(async () => {
+    if (pendingAreaPoints.length < 3) return
+
+    try {
+      const payload = buildAreaPayload(pendingAreaPoints, seats)
+      const seat = await seatService.createSeat(venueUuid, payload)
+      setSeats((prev) => [...prev, seat])
+      setSelectedUuids(new Set([seat.uuid]))
+      setPanelOpen(true)
+      handleCancelCreate()
+    } catch (error) {
+      setActionError(getApiErrorMessage(error, 'Não foi possível criar a área demarcada agora.'))
+    }
+  }, [handleCancelCreate, pendingAreaPoints, seats, venueUuid])
 
   const handleDelete = useCallback((seat: Seat) => {
     setDeleteError(null)
-    setDeleteTarget(seat)
+    setDeleteRequest({ seats: [seat] })
   }, [])
 
+  const handleDeleteSelection = useCallback(
+    (uuids: Iterable<string>) => {
+      const targetUuids = new Set(uuids)
+      const targets = seats.filter((seat) => targetUuids.has(seat.uuid))
+      if (targets.length === 0) return
+      setDeleteError(null)
+      setDeleteRequest({ seats: targets })
+    },
+    [seats],
+  )
+
+  const handleCopySelection = useCallback(() => {
+    const selected = seats
+      .filter((seat) => selectedUuids.has(seat.uuid))
+      .sort((a, b) => (a.pos_y - b.pos_y) || (a.pos_x - b.pos_x) || a.label.localeCompare(b.label))
+
+    if (selected.length === 0) return
+
+    setClipboard(
+      selected.map((seat) => ({
+        label: seat.label,
+        sector_name: seat.sector_name,
+        kind: seat.kind,
+        capacity: seat.capacity,
+        pos_x: seat.pos_x,
+        pos_y: seat.pos_y,
+        width: seat.width,
+        height: seat.height,
+        geometry_points: seat.geometry_points,
+        is_accessible: seat.is_accessible,
+        status: seat.status,
+      })),
+    )
+    setPasteCount(0)
+  }, [seats, selectedUuids])
+
+  const handlePasteSelection = useCallback(async () => {
+    if (!canManageSeats || clipboard.length === 0 || isPasting) return
+
+    const offsetStep = pasteCount + 1
+    const delta = PASTE_OFFSET * offsetStep
+    const usedLabels = new Set(seats.map((seat) => seat.label))
+    const sequenceState = buildSequenceState(seats)
+
+    setIsPasting(true)
+    setActionError(null)
+
+    try {
+      const createdSeats: Seat[] = []
+
+      for (const item of clipboard) {
+        const created = await seatService.createSeat(venueUuid, {
+          label: buildPastedLabel(item.label, usedLabels, sequenceState),
+          sector_name: item.sector_name,
+          kind: item.kind,
+          capacity: item.capacity,
+          pos_x: item.pos_x + delta,
+          pos_y: item.pos_y + delta,
+          width: item.width,
+          height: item.height,
+          geometry_points: item.geometry_points.map((point) => ({ x: point.x + delta, y: point.y + delta })),
+          is_accessible: item.is_accessible,
+          status: item.status,
+        })
+
+        createdSeats.push(created)
+      }
+
+      setSeats((prev) => [...prev, ...createdSeats])
+      setSelectedUuids(new Set(createdSeats.map((seat) => seat.uuid)))
+      setPanelOpen(true)
+      setPasteCount((prev) => prev + 1)
+    } catch (error) {
+      setActionError(getApiErrorMessage(error, 'Não foi possível colar os componentes do mapa agora.'))
+    } finally {
+      setIsPasting(false)
+    }
+  }, [canManageSeats, clipboard, isPasting, pasteCount, seats, venueUuid])
+
+  const handleSeatContextMenu = useCallback(
+    (uuid: string, mouseX: number, mouseY: number) => {
+      const isSelected = selectedUuids.has(uuid)
+      if (!isSelected) {
+        setSelectedUuids(new Set([uuid]))
+      }
+
+      setContextMenu({
+        seatUuid: uuid,
+        mouseX,
+        mouseY,
+      })
+    },
+    [selectedUuids],
+  )
+
+  const handleRenameFromContextMenu = useCallback(() => {
+    if (!contextMenu) return
+    const seat = seats.find((item) => item.uuid === contextMenu.seatUuid)
+    if (!seat) return
+
+    setRenameDialog({ seatUuid: seat.uuid, value: seat.label })
+    setContextMenu(null)
+  }, [contextMenu, seats])
+
+  const handleCopyFromContextMenu = useCallback(() => {
+    if (!contextMenu) return
+    if (!selectedUuids.has(contextMenu.seatUuid)) {
+      const seat = seats.find((item) => item.uuid === contextMenu.seatUuid)
+      if (!seat) return
+      setClipboard([
+        {
+          label: seat.label,
+          sector_name: seat.sector_name,
+          kind: seat.kind,
+          capacity: seat.capacity,
+          pos_x: seat.pos_x,
+          pos_y: seat.pos_y,
+          width: seat.width,
+          height: seat.height,
+          geometry_points: seat.geometry_points,
+          is_accessible: seat.is_accessible,
+          status: seat.status,
+        },
+      ])
+      setPasteCount(0)
+      setSelectedUuids(new Set([seat.uuid]))
+      setContextMenu(null)
+      return
+    }
+
+    handleCopySelection()
+    setContextMenu(null)
+  }, [contextMenu, handleCopySelection, seats, selectedUuids])
+
+  const handleDeleteFromContextMenu = useCallback(() => {
+    if (!contextMenu) return
+    const seat = seats.find((item) => item.uuid === contextMenu.seatUuid)
+    if (!seat) return
+
+    if (selectedUuids.has(seat.uuid) && selectedUuids.size > 1) {
+      handleDeleteSelection(selectedUuids)
+    } else {
+      handleDelete(seat)
+    }
+    setContextMenu(null)
+  }, [contextMenu, handleDelete, handleDeleteSelection, seats, selectedUuids])
+
   async function handleConfirmDelete() {
-    if (!deleteTarget) return
+    if (!deleteRequest) return
     setIsDeleting(true)
     setDeleteError(null)
 
     try {
-      await seatService.deleteSeat(venueUuid, deleteTarget.uuid)
-      setSeats((prev) => prev.filter((seat) => seat.uuid !== deleteTarget.uuid))
+      const targetUuids = new Set(deleteRequest.seats.map((seat) => seat.uuid))
+
+      for (const seat of deleteRequest.seats) {
+        await seatService.deleteSeat(venueUuid, seat.uuid)
+      }
+
+      setSeats((prev) => prev.filter((seat) => !targetUuids.has(seat.uuid)))
       setSelectedUuids((prev) => {
         const next = new Set(prev)
-        next.delete(deleteTarget.uuid)
+        for (const uuid of targetUuids) {
+          next.delete(uuid)
+        }
         return next
       })
-      setDeleteTarget(null)
+      setDeleteRequest(null)
     } catch (error) {
-      setDeleteError(getApiErrorMessage(error, 'Não foi possível excluir o assento agora.'))
+      setDeleteError(getApiErrorMessage(error, deleteRequest.seats.length > 1 ? 'Não foi possível excluir os componentes agora.' : 'Não foi possível excluir o assento agora.'))
     } finally {
       setIsDeleting(false)
     }
@@ -285,12 +602,14 @@ export function VenueMapEditor() {
   async function handlePublish() {
     setIsPublishing(true)
     setPublishError(null)
+    setPublishSuccess(null)
 
     try {
       await venueService.publishVenueMap(venueUuid)
       setPublishConfirmOpen(false)
-      const venueData = await venueService.getVenue(venueUuid)
-      setVenue(venueData)
+      await reloadEditorData()
+      setSelectedUuids(new Set())
+      setPublishSuccess('Mapa publicado com sucesso. O editor já está trabalhando sobre o novo rascunho.')
     } catch (error) {
       setPublishError(getApiErrorMessage(error, 'Não foi possível publicar o mapa agora.'))
     } finally {
@@ -304,6 +623,38 @@ export function VenueMapEditor() {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null
       if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
+
+      const isCopyShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c'
+      if (isCopyShortcut) {
+        if (isPasting) return
+        if (selectedUuids.size === 0) return
+        event.preventDefault()
+        handleCopySelection()
+        return
+      }
+
+      const isPasteShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v'
+      if (isPasteShortcut) {
+        if (clipboard.length === 0 || !canManageSeats) return
+        event.preventDefault()
+        void handlePasteSelection()
+        return
+      }
+
+      if (isPasting) return
+
+      if (event.key === 'Delete' && selectedUuids.size > 0) {
+        event.preventDefault()
+        handleDeleteSelection(selectedUuids)
+        return
+      }
+
+      if (event.key === 'Escape') {
+        handleCancelCreate()
+        setContextMenu(null)
+        return
+      }
+
       if (selectedUuids.size !== 1) return
 
       const step = event.shiftKey ? 10 : 1
@@ -313,10 +664,7 @@ export function VenueMapEditor() {
       else if (event.key === 'ArrowDown') dy = step
       else if (event.key === 'ArrowLeft') dx = -step
       else if (event.key === 'ArrowRight') dx = step
-      else if (event.key === 'Escape') {
-        setPendingCreateKind(null)
-        return
-      } else return
+      else return
 
       event.preventDefault()
       const uuid = Array.from(selectedUuids)[0]
@@ -327,7 +675,26 @@ export function VenueMapEditor() {
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [commitSeatDebounced, seats, selectedUuids])
+  }, [canManageSeats, clipboard.length, commitSeatDebounced, handleCancelCreate, handleCopySelection, handleDeleteSelection, handlePasteSelection, isPasting, seats, selectedUuids])
+
+  const previewSeats = useMemo<SeatMapViewerSeat[]>(
+    () =>
+      seats.map((seat) => ({
+        uuid: seat.uuid,
+        pos_x: seat.pos_x,
+        pos_y: seat.pos_y,
+        kind: seat.kind,
+        width: seat.width,
+        height: seat.height,
+        geometryPoints: seat.geometry_points,
+        label: seat.label,
+        isAccessible: seat.is_accessible,
+        visualState: seat.status === 'disponivel' ? 'available' : 'unavailable',
+        disabled: seat.status !== 'disponivel',
+        ariaLabel: `${seat.label}${seat.sector_name ? `, ${seat.sector_name}` : ''}`,
+      })),
+    [seats],
+  )
 
   function handleZoom(factor: number) {
     setViewBox((current) => zoomViewBox(current, baseViewBoxRef.current, factor))
@@ -338,7 +705,6 @@ export function VenueMapEditor() {
   }
 
   const publishedInfo = venue?.published_map_version
-  const canManageSeats = can(ACCESS.seatsCreate) || can(ACCESS.seatsUpdate)
 
   if (isLoading) {
     return (
@@ -364,7 +730,7 @@ export function VenueMapEditor() {
       <PageHeader
         title={`Mapa de ${venue?.name ?? 'local'}`}
         subtitle="Arraste, posicione e edite assentos, mesas, áreas e camarotes do rascunho atual."
-        breadcrumbs={[{ label: 'Locais', to: '/locais' }, { label: venue?.name ?? 'Local' }]}
+        backLink={{ label: 'Locais', to: '/locais' }}
         action={
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip
@@ -374,28 +740,38 @@ export function VenueMapEditor() {
               variant={publishedInfo ? 'filled' : 'outlined'}
             />
             <Chip size="small" label="Editando rascunho" variant="outlined" />
+            <Button variant="outlined" startIcon={<VisibilityOutlinedIcon />} onClick={() => setPreviewOpen(true)}>
+              Visualizar mapa final
+            </Button>
             {can(ACCESS.venuesUpdate) ? (
               <Button variant="outlined" startIcon={<PublishOutlinedIcon />} onClick={() => setPublishConfirmOpen(true)} disabled={isPublishing}>
                 Publicar versão
               </Button>
             ) : null}
             {canManageSeats ? (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={(event) => setAddMenuAnchor(event.currentTarget)}>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={(event) => setAddMenuAnchor(event.currentTarget)} disabled={isPasting}>
                 Adicionar
+              </Button>
+            ) : null}
+            {selectedUuids.size > 0 ? (
+              <Button variant="outlined" startIcon={<ContentCopyOutlinedIcon />} onClick={handleCopySelection} disabled={isPasting}>
+                Copiar
+              </Button>
+            ) : null}
+            {canManageSeats && clipboard.length > 0 ? (
+              <Button variant="outlined" startIcon={<ContentPasteOutlinedIcon />} onClick={() => void handlePasteSelection()} disabled={isPasting}>
+                {isPasting ? 'Colando…' : `Colar ${clipboard.length > 1 ? `(${clipboard.length})` : ''}`.trim()}
               </Button>
             ) : null}
           </Stack>
         }
       />
 
-      <Menu anchorEl={addMenuAnchor} open={Boolean(addMenuAnchor)} onClose={() => setAddMenuAnchor(null)}>
+      <Menu anchorEl={addMenuAnchor} open={Boolean(addMenuAnchor) && !isPasting} onClose={() => setAddMenuAnchor(null)}>
         {SEAT_KIND_OPTIONS.map((option) => (
           <MenuItem
             key={option.value}
-            onClick={() => {
-              setPendingCreateKind(option.value)
-              setAddMenuAnchor(null)
-            }}
+            onClick={() => handleStartCreateKind(option.value)}
           >
             {option.label}
           </MenuItem>
@@ -405,6 +781,12 @@ export function VenueMapEditor() {
       {actionError ? (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setActionError(null)}>
           {actionError}
+        </Alert>
+      ) : null}
+
+      {publishSuccess ? (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setPublishSuccess(null)}>
+          {publishSuccess}
         </Alert>
       ) : null}
 
@@ -419,12 +801,20 @@ export function VenueMapEditor() {
           severity="info"
           sx={{ mb: 2 }}
           action={
-            <IconButton size="small" onClick={() => setPendingCreateKind(null)} aria-label="Cancelar posicionamento">
+            <IconButton size="small" onClick={handleCancelCreate} aria-label="Cancelar posicionamento">
               <CloseIcon fontSize="small" />
             </IconButton>
           }
         >
-          Clique no mapa para posicionar um novo <strong>{KIND_LABEL[pendingCreateKind]}</strong>. Pressione Esc para cancelar.
+          {pendingCreateKind === 'area'
+            ? 'Clique ponto a ponto para demarcar a área no mapa. Feche a geometria clicando novamente sobre o primeiro ponto. Pressione Esc para cancelar.'
+            : <>Clique no mapa para posicionar um novo <strong>{KIND_LABEL[pendingCreateKind]}</strong>. Pressione Esc para cancelar.</>}
+        </Alert>
+      ) : null}
+
+      {clipboard.length > 0 ? (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {clipboard.length} componente{clipboard.length > 1 ? 's copiados' : ' copiado'} no mapa. Use <strong>Ctrl/Cmd+V</strong> ou o botão <strong>Colar</strong> para duplicar a seleção.
         </Alert>
       ) : null}
 
@@ -447,16 +837,40 @@ export function VenueMapEditor() {
             seats={seats}
             selectedUuids={selectedUuids}
             pendingCreateKind={pendingCreateKind}
+            pendingAreaPoints={pendingAreaPoints}
+            pendingAreaPointer={pendingAreaPointer}
             viewBox={viewBox}
             baseViewBox={baseViewBoxRef.current}
             backgroundImageUrl={venue?.background_image_url}
+            disabled={isPasting}
             onViewBoxChange={setViewBox}
             onSelectReplace={handleSelectReplace}
-            onSelectToggle={handleSelectToggle}
-            onMoveSeat={handleMoveSeat}
-            onCommitMove={handleCommitMove}
             onCreateAt={handleCreateAt}
+            onAreaDraftPointAdd={handleAreaDraftPointAdd}
+            onAreaDraftPointMove={handleAreaDraftPointMove}
+            onAreaDraftComplete={handleAreaDraftComplete}
+            onSeatContextMenu={handleSeatContextMenu}
           />
+
+          {isPasting ? (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: 1.5,
+                background: 'color-mix(in srgb, var(--pt-surface) 76%, transparent)',
+                backdropFilter: 'blur(2px)',
+              }}
+            >
+              <CircularProgress size={32} />
+              <Box sx={{ fontSize: 13.5, fontWeight: 600, color: 'var(--pt-text)' }}>Colando componentes no mapa…</Box>
+            </Box>
+          ) : null}
 
           <Stack direction="row" spacing={0.5} sx={{ position: 'absolute', bottom: 12, left: 12, background: 'var(--pt-surface)', border: '1px solid var(--pt-border)', borderRadius: 'var(--pt-radius-md)', p: 0.5 }}>
             <Tooltip title="Aumentar zoom" arrow>
@@ -498,6 +912,7 @@ export function VenueMapEditor() {
               onCommit={handleInspectorCommit}
               onDelete={handleDelete}
               onOpenBatchEdit={() => {
+                if (isPasting) return
                 setBatchError(null)
                 setBatchOpen(true)
               }}
@@ -507,14 +922,36 @@ export function VenueMapEditor() {
       </Box>
 
       <ConfirmDeleteDialog
-        open={deleteTarget !== null}
-        title="Excluir assento"
-        itemLabel={deleteTarget?.label ?? null}
+        open={deleteRequest !== null}
+        title={deleteRequest && deleteRequest.seats.length > 1 ? 'Excluir componentes' : 'Excluir assento'}
+        itemLabel={deleteRequest ? (deleteRequest.seats.length > 1 ? `${deleteRequest.seats.length} componentes selecionados` : deleteRequest.seats[0]?.label ?? null) : null}
         isDeleting={isDeleting}
         error={deleteError}
-        onCancel={() => setDeleteTarget(null)}
+        onCancel={() => setDeleteRequest(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
+
+      <Menu
+        open={contextMenu !== null && !isPasting}
+        onClose={() => setContextMenu(null)}
+        anchorReference="anchorPosition"
+        anchorPosition={contextMenu ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
+      >
+        <MenuItem onClick={handleCopyFromContextMenu}>Copiar</MenuItem>
+        <MenuItem
+          onClick={() => {
+            setContextMenu(null)
+            void handlePasteSelection()
+          }}
+          disabled={!canManageSeats || clipboard.length === 0 || isPasting}
+        >
+          Colar
+        </MenuItem>
+        <MenuItem onClick={handleRenameFromContextMenu}>Editar código</MenuItem>
+        <MenuItem onClick={handleDeleteFromContextMenu} sx={{ color: 'var(--pt-danger)' }}>
+          Remover item
+        </MenuItem>
+      </Menu>
 
       <BatchEditDialog
         open={batchOpen}
@@ -524,6 +961,62 @@ export function VenueMapEditor() {
         onCancel={() => setBatchOpen(false)}
         onApply={(payload) => void handleBatchApply(payload)}
       />
+
+      <Dialog open={renameDialog !== null} onClose={() => setRenameDialog(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>Editar código</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Código"
+            size="small"
+            value={renameDialog?.value ?? ''}
+            onChange={(event) =>
+              setRenameDialog((current) => (current ? { ...current, value: event.target.value } : current))
+            }
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setRenameDialog(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (!renameDialog) return
+              const value = renameDialog.value.trim()
+              if (!value) return
+              commitSeat(renameDialog.seatUuid, { label: value })
+              setRenameDialog(null)
+            }}
+          >
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>Visualização final do mapa</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: 'var(--pt-text)', mb: 2 }}>
+            Prévia do que o cliente verá no momento da compra. O mapa abaixo é renderizado com a mesma geometria atual do rascunho.
+          </DialogContentText>
+          <SeatMapViewer
+            seats={previewSeats}
+            mapWidth={venue?.width ?? DEFAULT_PLAN.width}
+            mapHeight={venue?.height ?? DEFAULT_PLAN.height}
+            backgroundImageUrl={venue?.background_image_url}
+            onSelectSeat={() => undefined}
+            readOnly
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setPreviewOpen(false)} variant="contained">
+            Fechar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={publishConfirmOpen} onClose={isPublishing ? undefined : () => setPublishConfirmOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Publicar versão do mapa</DialogTitle>

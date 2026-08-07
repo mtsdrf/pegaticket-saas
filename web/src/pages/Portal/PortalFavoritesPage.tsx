@@ -8,6 +8,7 @@ import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { listFavorites, toggleFavorite } from '../../services/favoriteService'
 import { getApiErrorMessage } from '../../types/api'
 import type { StorefrontEvent } from '../../types/storefront'
+import { resolveEventCoverImageUrl } from '../../utils/eventCover'
 import { formatDateBR } from '../../utils/format'
 import { PortalShell } from './PortalShell'
 
@@ -43,7 +44,7 @@ function FavoriteCard({ event, onUnfavorite }: { event: StorefrontEvent; onUnfav
       }}
     >
       <Avatar
-        src={event.cover_image_url ?? undefined}
+        src={resolveEventCoverImageUrl(event.cover_image_url)}
         variant="rounded"
         sx={{ width: 56, height: 56, flexShrink: 0, ...SOFT_PANEL_SX }}
       >

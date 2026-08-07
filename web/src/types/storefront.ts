@@ -256,6 +256,9 @@ export interface StorefrontAvailabilitySeat {
   available_quantity: number
   pos_x: number | null
   pos_y: number | null
+  width: number | null
+  height: number | null
+  geometry_points: Array<{ x: number; y: number }>
   is_accessible: boolean
   status: string
   availability_status: 'disponivel' | 'reservado' | 'indisponivel'

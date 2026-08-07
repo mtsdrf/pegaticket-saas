@@ -75,6 +75,9 @@ class SeatService
                 'capacity' => $dto->capacity,
                 'pos_x' => $dto->posX,
                 'pos_y' => $dto->posY,
+                'width' => $dto->width,
+                'height' => $dto->height,
+                'geometry_points' => $dto->geometryPoints,
                 'is_accessible' => $dto->isAccessible,
                 'status' => $dto->status,
             ]);
@@ -103,11 +106,25 @@ class SeatService
                 'capacity' => $dto->capacity,
                 'pos_x' => $dto->posX,
                 'pos_y' => $dto->posY,
+                'width' => $dto->width,
+                'height' => $dto->height,
                 'status' => $dto->status,
             ], fn($v) => !is_null($v));
 
             if ($dto->isAccessible !== null) {
                 $data['is_accessible'] = $dto->isAccessible;
+            }
+
+            if ($dto->hasWidth) {
+                $data['width'] = $dto->width;
+            }
+
+            if ($dto->hasHeight) {
+                $data['height'] = $dto->height;
+            }
+
+            if ($dto->hasGeometryPoints) {
+                $data['geometry_points'] = $dto->geometryPoints;
             }
 
             if (!empty($data)) {

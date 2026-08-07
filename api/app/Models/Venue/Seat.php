@@ -19,6 +19,9 @@ class Seat extends BaseModel
         'capacity',
         'pos_x',
         'pos_y',
+        'width',
+        'height',
+        'geometry_points',
         'is_accessible',
         'status',
     ];
@@ -27,6 +30,9 @@ class Seat extends BaseModel
         'capacity' => 'integer',
         'pos_x' => 'decimal:2',
         'pos_y' => 'decimal:2',
+        'width' => 'decimal:2',
+        'height' => 'decimal:2',
+        'geometry_points' => 'array',
         'is_accessible' => 'boolean',
     ];
 

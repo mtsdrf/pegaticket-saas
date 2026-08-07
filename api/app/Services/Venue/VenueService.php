@@ -241,6 +241,9 @@ class VenueService
                     'capacity' => $seat->capacity,
                     'pos_x' => $seat->pos_x,
                     'pos_y' => $seat->pos_y,
+                    'width' => $seat->width,
+                    'height' => $seat->height,
+                    'geometry_points' => $seat->geometry_points,
                     'is_accessible' => $seat->is_accessible,
                     'status' => $seat->status,
                 ]);

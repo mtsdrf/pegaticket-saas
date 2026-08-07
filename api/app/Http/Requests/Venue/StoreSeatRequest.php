@@ -21,6 +21,11 @@ class StoreSeatRequest extends FormRequest
             'capacity' => ['nullable', 'integer', 'min:1'],
             'pos_x' => ['nullable', 'numeric'],
             'pos_y' => ['nullable', 'numeric'],
+            'width' => ['nullable', 'numeric', 'gt:0'],
+            'height' => ['nullable', 'numeric', 'gt:0'],
+            'geometry_points' => ['nullable', 'array', 'min:3'],
+            'geometry_points.*.x' => ['required_with:geometry_points', 'numeric'],
+            'geometry_points.*.y' => ['required_with:geometry_points', 'numeric'],
             'is_accessible' => ['boolean'],
             'status' => ['nullable', 'string', Rule::in(['disponivel', 'bloqueado', 'indisponivel'])],
         ];

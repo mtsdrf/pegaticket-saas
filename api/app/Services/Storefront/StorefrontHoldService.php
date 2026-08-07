@@ -380,6 +380,15 @@ class StorefrontHoldService
                 'available_quantity' => $availableQuantity,
                 'pos_x' => $seat->pos_x,
                 'pos_y' => $seat->pos_y,
+                'width' => $seat->width !== null ? (float) $seat->width : null,
+                'height' => $seat->height !== null ? (float) $seat->height : null,
+                'geometry_points' => collect($seat->geometry_points ?? [])
+                    ->map(fn ($point) => [
+                        'x' => isset($point['x']) ? (float) $point['x'] : 0.0,
+                        'y' => isset($point['y']) ? (float) $point['y'] : 0.0,
+                    ])
+                    ->values()
+                    ->all(),
                 'is_accessible' => $seat->is_accessible,
                 'status' => $seat->status,
                 'availability_status' => $availabilityStatus,
