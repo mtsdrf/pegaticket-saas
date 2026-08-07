@@ -248,6 +248,44 @@ test.describe('Checkout público com cartão', () => {
       })
     })
 
+    await page.route(`**/api/v1/rastreio/${saleUuid}/payment-installment-options*`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'OK',
+          data: {
+            provider: 'pagbank',
+            available: true,
+            brand: 'visa',
+            bin: visaCard.number.slice(0, 6),
+            options: [
+              {
+                installments: 1,
+                installment_value: 12000,
+                interest_free: true,
+                total_amount: 12000,
+                currency: 'BRL',
+                buyer_interest_total: 0,
+                buyer_interest_installments: 0,
+              },
+              {
+                installments: 2,
+                installment_value: 6300,
+                interest_free: false,
+                total_amount: 12600,
+                currency: 'BRL',
+                buyer_interest_total: 600,
+                buyer_interest_installments: 1,
+              },
+            ],
+          },
+          meta: {},
+        }),
+      })
+    })
+
     await page.route(`**/api/v1/rastreio/${saleUuid}/payment-charge`, async (route) => {
       paymentPayload = route.request().postDataJSON() as Record<string, unknown>
       await route.fulfill({
@@ -286,7 +324,7 @@ test.describe('Checkout público com cartão', () => {
     await page.getByLabel('Ano').fill('2030')
     await page.getByLabel('CVV').fill(visaCard.cvv)
     await page.getByLabel('Parcelas').click()
-    await page.getByRole('option', { name: '1x', exact: true }).click()
+    await page.getByRole('option', { name: /^1x\b/i }).click()
     await page.getByRole('button', { name: 'Pagar com cartão' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/compra/${saleUuid}$`))

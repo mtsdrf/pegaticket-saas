@@ -353,6 +353,16 @@ function normalizeCardExpYear(value: string): string {
   return digits
 }
 
+function normalizeCardExpYearInput(value: string): string {
+  const digits = normalizeDigits(value)
+
+  if (digits.length >= 4) {
+    return digits.slice(-2)
+  }
+
+  return digits.slice(0, 2)
+}
+
 function formatInstallmentOptionLabel(option: SalePaymentInstallmentOption): string {
   const installmentValue = formatCurrency(option.installment_value / 100)
   const totalAmount = formatCurrency(option.total_amount / 100)
@@ -1249,7 +1259,7 @@ function CreditCardPaymentPanel({
                 label="Ano"
                 value={expYear}
                 onChange={(event) => {
-                  setExpYear(normalizeDigits(event.target.value).slice(0, 2))
+                  setExpYear(normalizeCardExpYearInput(event.target.value))
                   setFieldErrors((current) => ({ ...current, expYear: '' }))
                 }}
                 size="small"
