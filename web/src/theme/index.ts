@@ -181,11 +181,16 @@ export function buildPegaTicketTheme(mode: PaletteMode) {
             minHeight: UI_SIZE.control,
             borderRadius: UI_RADIUS.md,
             backgroundColor: tokens.surface,
+            colorScheme: mode,
             '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.border },
             '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.primary },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: tokens.primary,
               borderWidth: 1.5,
+            },
+            '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+              margin: 0,
+              opacity: 1,
             },
           },
         },

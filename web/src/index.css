@@ -27,6 +27,8 @@
   --pt-focus-ring: 0 0 0 3px rgba(8, 207, 167, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-form-section-bg: rgb(242, 242, 242);
+  --pt-input-native-scheme: light;
   --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 88%, white) 38%, color-mix(in srgb, var(--pt-primary) 10%, var(--pt-bg)) 100%);
   --pt-page-background-soft: linear-gradient(155deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 92%, white) 45%, color-mix(in srgb, var(--pt-secondary) 8%, var(--pt-bg)) 100%);
   --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, var(--pt-bg) 100%);
@@ -64,6 +66,8 @@
     --pt-focus-ring: 0 0 0 3px rgba(25, 223, 192, 0.28);
     --pt-surface-raised-bg: var(--pt-surface);
     --pt-surface-soft-bg: var(--pt-surface-soft);
+    --pt-form-section-bg: rgb(17, 61, 52);
+    --pt-input-native-scheme: dark;
     --pt-page-background: var(--pt-bg);
     --pt-page-background-soft: var(--pt-bg);
     --pt-page-background-desktop: var(--pt-bg);
@@ -94,6 +98,8 @@
   --pt-focus-ring: 0 0 0 3px rgba(25, 223, 192, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-form-section-bg: rgb(17, 61, 52);
+  --pt-input-native-scheme: dark;
   --pt-page-background: var(--pt-bg);
   --pt-page-background-soft: var(--pt-bg);
   --pt-page-background-desktop: var(--pt-bg);
@@ -123,6 +129,8 @@
   --pt-focus-ring: 0 0 0 3px rgba(8, 207, 167, 0.28);
   --pt-surface-raised-bg: var(--pt-surface);
   --pt-surface-soft-bg: var(--pt-surface-soft);
+  --pt-form-section-bg: rgb(242, 242, 242);
+  --pt-input-native-scheme: light;
   --pt-page-background: linear-gradient(160deg, var(--pt-bg) 0%, color-mix(in srgb, var(--pt-surface-soft) 88%, white) 38%, color-mix(in srgb, var(--pt-primary) 10%, var(--pt-bg)) 100%);
   --pt-page-background-soft: linear-gradient(155deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, color-mix(in srgb, var(--pt-surface-soft) 92%, white) 45%, color-mix(in srgb, var(--pt-secondary) 8%, var(--pt-bg)) 100%);
   --pt-page-background-desktop: linear-gradient(180deg, color-mix(in srgb, var(--pt-bg) 94%, white) 0%, var(--pt-bg) 100%);
@@ -138,6 +146,18 @@ body {
   margin: 0;
   min-height: 100svh;
   background: var(--pt-bg);
+  color: var(--pt-text);
+}
+
+input[type='number'] {
+  color-scheme: var(--pt-input-native-scheme);
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  opacity: 1;
+  background: transparent;
   color: var(--pt-text);
 }
 

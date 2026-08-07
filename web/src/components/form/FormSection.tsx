@@ -21,7 +21,7 @@ export function FormSection({
         border: '1px solid var(--pt-divider)',
         borderRadius: UI_RADIUS.lg,
         p: { xs: 2, sm: 2.5 },
-        background: 'rgb(17, 61, 52)',
+        background: 'var(--pt-form-section-bg)',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
