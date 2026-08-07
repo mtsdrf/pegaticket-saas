@@ -20,9 +20,10 @@ interface MetricCardProps {
   caption?: string | null
   isLoading?: boolean
   index?: number
+  hideValue?: boolean
 }
 
-export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading, index = 0 }: MetricCardProps) {
+export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading, index = 0, hideValue = false }: MetricCardProps) {
   const color = TONE_COLOR[tone]
 
   return (
@@ -87,12 +88,12 @@ export function MetricCard({ icon: Icon, label, value, tone, caption, isLoading,
                 overflowWrap: 'anywhere',
               }}
             >
-              {value}
+              {hideValue ? '•••••' : value}
             </Typography>
             {caption ? (
               <Typography sx={{ mt: 0.5, fontSize: 12.5, color: 'var(--pt-muted)' }}>
-              {caption}
-            </Typography>
+                {hideValue ? 'Dados ocultos' : caption}
+              </Typography>
             ) : null}
           </>
         )}

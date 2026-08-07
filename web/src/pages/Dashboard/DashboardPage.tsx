@@ -1,5 +1,7 @@
 import AddBusinessOutlinedIcon from '@mui/icons-material/AddBusinessOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined'
@@ -47,6 +49,7 @@ const QUICK_ACTIONS = [
 
 const DEFAULT_RANGE = presetRange('this_month')
 const HOME_TARGET_OCCUPANCY_PERCENTAGE = 80
+const HOME_CARD_VISIBILITY_STORAGE_KEY = 'pegaticket.dashboard.hide_card_values'
 
 function formatDecimal(value: number, maximumFractionDigits: number = 1): string {
   const safe = Number.isFinite(value) ? value : 0
@@ -79,6 +82,10 @@ export function DashboardPage() {
   const [from, setFrom] = useState(DEFAULT_RANGE.from)
   const [to, setTo] = useState(DEFAULT_RANGE.to)
   const [financeDashboard, setFinanceDashboard] = useState<FinanceDashboard | null>(null)
+  const [hideCardValues, setHideCardValues] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(HOME_CARD_VISIBILITY_STORAGE_KEY) === '1'
+  })
 
   const { indicators, charts, isLoading, error } = useDashboardReport(from, to, canViewStats)
   const { alerts } = useReportAlerts(canViewStats)
@@ -172,12 +179,35 @@ export function DashboardPage() {
 
   const insightsToRender = homeInsights.slice(0, 3)
 
+  const toggleCardVisibility = () => {
+    setHideCardValues((previous) => {
+      const next = !previous
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(HOME_CARD_VISIBILITY_STORAGE_KEY, next ? '1' : '0')
+      }
+      return next
+    })
+  }
+
   return (
     <Box sx={{ ...PAGE_CONTAINER_SX, maxWidth: 1600 }}>
       <PageHeader
         title="Visão geral"
         subtitle="Uma leitura rápida do resultado, da direção do evento e do que precisa da sua atenção agora."
         accent
+        action={
+          canViewStats ? (
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={toggleCardVisibility}
+              startIcon={hideCardValues ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
+            >
+              {hideCardValues ? 'Mostrar valores' : 'Ocultar valores'}
+            </Button>
+          ) : undefined
+        }
       />
 
       {canViewStats && (
@@ -343,6 +373,7 @@ export function DashboardPage() {
                   tone="accent"
                   isLoading={isLoading}
                   index={0}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={SavingsOutlinedIcon}
@@ -356,6 +387,7 @@ export function DashboardPage() {
                   tone="primary"
                   isLoading={isLoading}
                   index={1}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={ConfirmationNumberOutlinedIcon}
@@ -365,6 +397,7 @@ export function DashboardPage() {
                   tone="accent"
                   isLoading={isLoading}
                   index={2}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={EventSeatOutlinedIcon}
@@ -374,6 +407,7 @@ export function DashboardPage() {
                   tone={occupancyPercentage >= HOME_TARGET_OCCUPANCY_PERCENTAGE ? 'accent' : 'primary'}
                   isLoading={isLoading}
                   index={3}
+                  hideValue={hideCardValues}
                 />
               </Box>
             </Box>
@@ -405,6 +439,7 @@ export function DashboardPage() {
                   tone={requiredPacePerDay > 0 && salesPacePerDay < requiredPacePerDay ? 'warning' : 'accent'}
                   isLoading={isLoading}
                   index={4}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={TimelineOutlinedIcon}
@@ -414,6 +449,7 @@ export function DashboardPage() {
                   tone={projectedOccupancyPercentage >= HOME_TARGET_OCCUPANCY_PERCENTAGE ? 'accent' : 'warning'}
                   isLoading={isLoading}
                   index={5}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={PercentOutlinedIcon}
@@ -429,6 +465,7 @@ export function DashboardPage() {
                   tone={conversionPercentage !== null && conversionPercentage < 50 ? 'warning' : 'primary'}
                   isLoading={isLoadingSnapshot}
                   index={6}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={AccountBalanceWalletOutlinedIcon}
@@ -446,6 +483,7 @@ export function DashboardPage() {
                   tone="info"
                   isLoading={isLoading}
                   index={7}
+                  hideValue={hideCardValues}
                 />
               </Box>
             </Box>
@@ -471,6 +509,7 @@ export function DashboardPage() {
                   tone="primary"
                   isLoading={isLoading}
                   index={8}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={TrendingDownOutlinedIcon}
@@ -486,6 +525,7 @@ export function DashboardPage() {
                   tone={estimatedLostRevenue > 0 ? 'warning' : 'primary'}
                   isLoading={isLoadingSnapshot}
                   index={9}
+                  hideValue={hideCardValues}
                 />
                 <MetricCard
                   icon={TodayOutlinedIcon}
@@ -495,6 +535,7 @@ export function DashboardPage() {
                   tone="accent"
                   isLoading={isLoadingSnapshot}
                   index={10}
+                  hideValue={hideCardValues}
                 />
                 <Paper
                   variant="outlined"
@@ -538,13 +579,24 @@ export function DashboardPage() {
                           lineHeight: 1.15,
                         }}
                       >
-                        {alerts && alerts.length > 0 ? String(alerts.length) : '0'}
+                        {hideCardValues ? '•••••' : alerts && alerts.length > 0 ? String(alerts.length) : '0'}
                       </Typography>
                     </Box>
                   </Box>
 
                   <Stack spacing={1}>
-                    {insightsToRender.length > 0 ? (
+                    {hideCardValues ? (
+                      <Box
+                        sx={{
+                          p: 1.25,
+                          ...SOFT_PANEL_SX,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                          Valores e sinais automáticos ocultos nesta visualização.
+                        </Typography>
+                      </Box>
+                    ) : insightsToRender.length > 0 ? (
                       insightsToRender.map((insight) => (
                         <Box
                           key={insight}
@@ -575,7 +627,7 @@ export function DashboardPage() {
               </Box>
             </Box>
 
-            <OperationSnapshotCard snapshot={snapshot} />
+            <OperationSnapshotCard snapshot={snapshot} hideValues={hideCardValues} />
 
             <Paper
               variant="outlined"

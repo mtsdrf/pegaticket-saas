@@ -9,6 +9,7 @@ import type { OperationSnapshot } from '../../types/operationSnapshot'
 import { formatCurrency } from '../../utils/format'
 interface OperationSnapshotCardProps {
   snapshot: OperationSnapshot | null
+  hideValues?: boolean
 }
 
 /**
@@ -16,7 +17,7 @@ interface OperationSnapshotCardProps {
  * snapshot carregado pela página para poder reutilizar os mesmos dados em
  * cards contextuais da home sem polling duplicado.
  */
-export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) {
+export function OperationSnapshotCard({ snapshot, hideValues = false }: OperationSnapshotCardProps) {
   if (!snapshot) return null
 
   const cashLabel = snapshot.cash_session
@@ -33,6 +34,7 @@ export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) 
       value={cashLabel}
       tone={snapshot.cash_session ? 'primary' : 'warning'}
       index={0}
+      hideValue={hideValues}
     />,
     <MetricCard
       key="pending-approval"
@@ -41,6 +43,7 @@ export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) 
       value={String(snapshot.sales_pending_approval_count)}
       tone={snapshot.sales_pending_approval_count > 0 ? 'warning' : 'primary'}
       index={1}
+      hideValue={hideValues}
     />,
     <MetricCard
       key="checkins-today"
@@ -50,6 +53,7 @@ export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) 
       caption={snapshot.checkins_today.warning > 0 ? `${snapshot.checkins_today.warning} com alerta` : undefined}
       tone={snapshot.checkins_today.warning > 0 ? 'warning' : 'accent'}
       index={2}
+      hideValue={hideValues}
     />,
     <MetricCard
       key="checkout-error"
@@ -59,6 +63,7 @@ export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) 
       caption={`${snapshot.checkout.completed}/${snapshot.checkout.started} concluídos (${snapshot.checkout.window_hours}h)`}
       tone={snapshot.checkout.error_rate_percent > 30 ? 'warning' : 'primary'}
       index={3}
+      hideValue={hideValues}
     />,
   ]
 
@@ -72,6 +77,7 @@ export function OperationSnapshotCard({ snapshot }: OperationSnapshotCardProps) 
         caption={`${snapshot.virtual_queue.admitted} admitido(s) agora`}
         tone="accent"
         index={4}
+        hideValue={hideValues}
       />,
     )
   }
