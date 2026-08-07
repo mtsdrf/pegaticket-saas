@@ -1,8 +1,6 @@
 import AddIcon from '@mui/icons-material/Add'
 import CenterFocusStrongOutlinedIcon from '@mui/icons-material/CenterFocusStrongOutlined'
 import CloseIcon from '@mui/icons-material/Close'
-import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
-import ContentPasteOutlinedIcon from '@mui/icons-material/ContentPasteOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
@@ -13,7 +11,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
