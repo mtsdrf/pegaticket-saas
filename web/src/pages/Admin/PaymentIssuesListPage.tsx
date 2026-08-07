@@ -100,6 +100,15 @@ export function PaymentIssuesListPage() {
         width: 200,
         sortable: false,
         filterType: 'text',
+        filterTextToBackend: (value) => {
+          const normalized = value.trim().toLowerCase()
+          if (!normalized) return undefined
+
+          const matchedEntry = Object.entries(TYPE_LABELS).find(([, label]) => label.toLowerCase().includes(normalized))
+          if (matchedEntry) return matchedEntry[0] as PaymentIssueType
+
+          return normalized
+        },
         cellRenderer: (row) => TYPE_LABELS[row.issue_type] ?? row.issue_type,
         exportValue: (row) => TYPE_LABELS[row.issue_type] ?? row.issue_type,
       },

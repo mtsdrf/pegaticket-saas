@@ -149,3 +149,24 @@ Checklist completo já existe em `docs/hostinger-shared-deploy.md` ("Checklist d
 - `curl -I https://sistema.pegaticket.com` → 200 (confirma que o `.htaccess` com `Header set` não deu 500 nesse domínio — ver achado documentado em `architecture-decisions.md` sobre o mesmo tipo de diretiva ter quebrado o subdomínio da API antes)
 
 Dali em diante, todo push em `main` builda e publica sozinho.
+
+## Regra obrigatória antes de concluir qualquer tarefa que impacte deploy
+
+Antes de considerar uma tarefa como "finalizada", sempre executar uma validação mínima local compatível com a área alterada. Isso evita mandar para `main` erros só descobertos no GitHub Actions, como já aconteceu em **6 de agosto de 2026** em dois casos reais:
+
+- teste backend ainda esperando alerta `low_stock`, embora o comportamento correto do PegaTicket já não expusesse mais esse alerta;
+- E2E do admin ainda esperando filtro isolado antigo, depois da padronização das grids para filtro inline no ag-Grid.
+
+Checklist obrigatório de encerramento:
+
+1. Se houve mudança no backend, rodar `cd api && composer test`.
+2. Se houve mudança no frontend, rodar `cd web && npm run build`.
+3. Se houve mudança de tipagem/rotas/componentes do frontend, rodar `cd web && npx tsc --noEmit`.
+4. Se houve mudança em fluxo coberto por Playwright, rodar pelo menos o spec ou grep afetado antes de encerrar.
+5. Se a mudança alterar comportamento que aparece em CI/deploy, revisar se teste e implementação continuam alinhados ao padrão atual do produto.
+
+Regra prática:
+
+- não encerrar tarefa só porque o código "parece certo";
+- encerrar tarefa apenas depois de validar o caminho impactado;
+- se algum teste local não puder rodar por limitação de ambiente, registrar isso explicitamente junto com o risco residual.

@@ -246,8 +246,7 @@ test.describe('Administração global', () => {
     await expect(page.getByText('Falha no processamento')).toBeVisible()
     await expect(page.getByText('Fatura contestada')).toBeVisible()
 
-    await page.getByLabel('Tipo').click()
-    await page.getByRole('option', { name: 'Falha no processamento' }).click()
+    await page.locator('.ag-floating-filter input').nth(1).fill('Falha no processamento')
 
     await expect.poll(() => currentTypeFilter).toBe('webhook_failed')
     await expect(page.getByText('Empresa Financeira')).toBeVisible()
