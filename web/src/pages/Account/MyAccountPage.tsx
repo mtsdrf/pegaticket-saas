@@ -95,7 +95,7 @@ function BasicDataSection() {
             placeholder="(11) 91234-5678"
             autoComplete="tel"
             fullWidth
-            slotProps={{ htmlInput: { maxLength: 30 } }}
+            slotProps={{ htmlInput: { maxLength: 30, inputMode: 'numeric' } }}
           />
         </Stack>
 

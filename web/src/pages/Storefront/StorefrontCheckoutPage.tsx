@@ -1621,7 +1621,15 @@ function DebitCardPaymentPanel({
             )}
 
             <TextField label="CPF/CNPJ do pagador" value={payerTaxId} onChange={(event) => setPayerTaxId(formatCpfCnpj(event.target.value))} size="small" fullWidth required />
-            <TextField label="Telefone do pagador" value={payerPhone} onChange={(event) => setPayerPhone(event.target.value)} size="small" fullWidth required />
+            <TextField
+              label="Telefone do pagador"
+              value={payerPhone}
+              onChange={(event) => setPayerPhone(event.target.value)}
+              size="small"
+              fullWidth
+              required
+              inputMode="numeric"
+            />
             <TextField label="Nome do titular do cartão" value={holderName} onChange={(event) => setHolderName(event.target.value)} size="small" fullWidth required />
             <TextField label="CPF/CNPJ do titular" value={holderTaxId} onChange={(event) => setHolderTaxId(formatCpfCnpj(event.target.value))} size="small" fullWidth required />
             <TextField label="Número do cartão" value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} size="small" fullWidth required />
@@ -2296,7 +2304,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             onChange={(event) => setClientPhone(formatBrazilPhone(event.target.value))}
             error={Boolean(fieldErrors.client_phone)}
             helperText={fieldErrors.client_phone?.[0]}
-            inputMode="tel"
+            inputMode="numeric"
             required
             fullWidth
           />
