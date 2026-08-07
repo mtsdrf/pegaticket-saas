@@ -1099,24 +1099,23 @@ function CreditCardPaymentPanel({
                         }}
                       />
                     ) : (
-                        <Box
-                          sx={{
-                            width: '100%',
-                            aspectRatio: '1.4 / 1',
-                            borderRadius: '10%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(243, 251, 247, 0.18)',
-                          background: 'rgba(255, 255, 255, 0.06)',
-                          color: 'rgba(243, 251, 247, 0.84)',
-                          fontSize: 11,
-                          letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            flexShrink: 0,
-                            display: { xs: 'none', sm: 'inline-flex' },
-                          }}
-                        >
+	                        <Box
+	                          sx={{
+	                            width: '100%',
+	                            aspectRatio: '1.4 / 1',
+	                            borderRadius: '10%',
+	                            display: { xs: 'none', sm: 'inline-flex' },
+	                            alignItems: 'center',
+	                            justifyContent: 'center',
+	                            border: '1px solid rgba(243, 251, 247, 0.18)',
+	                            background: 'rgba(255, 255, 255, 0.06)',
+	                            color: 'rgba(243, 251, 247, 0.84)',
+	                            fontSize: 11,
+	                            letterSpacing: '0.08em',
+	                            textTransform: 'uppercase',
+	                            flexShrink: 0,
+	                          }}
+	                        >
                           Bandeira
                         </Box>
                       )}

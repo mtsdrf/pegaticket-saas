@@ -9,6 +9,7 @@
             font-size: 11px;
             color: #143b33;
             margin: 0;
+            background: #eef4f7;
         }
 
         .page-shell {
@@ -16,9 +17,9 @@
         }
 
         .brand-header {
-            background: #101E1A;
-            border-radius: 18px 18px 0 0;
-            padding: 18px 24px;
+            background: #115441;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 28px 18px;
         }
 
         .brand-table {
@@ -48,9 +49,9 @@
         }
 
         .document-card {
-            border: 1px solid #d7e6e2;
+            border: 1px solid #d5e4ea;
             border-top: 0;
-            border-radius: 0 0 18px 18px;
+            border-radius: 0 0 24px 24px;
             padding: 24px;
             background: #FFFFFF;
         }
@@ -69,8 +70,8 @@
         }
 
         .summary-box {
-            background: #f3faf8;
-            border: 1px solid #d7e6e2;
+            background: #f6fbfa;
+            border: 1px solid #d5e4ea;
             border-radius: 14px;
             padding: 14px 16px;
             margin-bottom: 18px;
@@ -90,15 +91,16 @@
         }
 
         .ticket-card {
-            border: 1px solid #d7e6e2;
+            border: 1px solid #d5e4ea;
             border-radius: 16px;
             padding: 18px;
             margin-bottom: 14px;
             page-break-inside: avoid;
+            background: #fcfffe;
         }
 
         .ticket-header {
-            border-bottom: 1px solid #d7e6e2;
+            border-bottom: 1px solid #dfe9ed;
             padding-bottom: 10px;
             margin-bottom: 12px;
         }
@@ -129,6 +131,26 @@
             vertical-align: top;
         }
 
+        .ticket-layout {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        .ticket-layout td {
+            border: 0;
+            vertical-align: top;
+        }
+
+        .ticket-info-cell {
+            width: 68%;
+            padding-right: 14px;
+        }
+
+        .ticket-qr-cell {
+            width: 32%;
+        }
+
         .field-label {
             font-size: 9px;
             text-transform: uppercase;
@@ -146,7 +168,7 @@
             margin-top: 8px;
             padding: 12px 14px;
             border-radius: 12px;
-            background: #101E1A;
+            background: #115441;
             color: #FFFFFF;
         }
 
@@ -169,6 +191,37 @@
             font-size: 10px;
             word-break: break-all;
             color: #dff7ef;
+        }
+
+        .qr-panel {
+            background: #ffffff;
+            border: 1px solid #d5e4ea;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .qr-panel-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.45px;
+            color: #6f8581;
+            margin-bottom: 8px;
+        }
+
+        .qr-image {
+            width: 132px;
+            height: 132px;
+            display: block;
+            margin: 0 auto 8px;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .qr-caption {
+            font-size: 10px;
+            line-height: 1.5;
+            color: #5d7470;
         }
 
         .validation-note {
@@ -208,15 +261,15 @@
             </p>
 
             <div class="summary-box">
-                <div class="summary-label">Compra</div>
-                <div class="summary-value">
-                    Cliente: <?php echo e($sale->finalCustomer?->name ?? 'Comprador'); ?><br>
-                    Empresa: <?php echo e($tenantName ?? 'PegaTicket'); ?><br>
-                    Gerado em: <?php echo e($generatedAt->format('d/m/Y H:i')); ?><br>
-                    Link de rastreio: <?php echo e($trackingUrl); ?>
+                    <div class="summary-label">Compra</div>
+                    <div class="summary-value">
+                        Cliente: <?php echo e($sale->finalCustomer?->name ?? 'Comprador'); ?><br>
+                        Empresa: <?php echo e($tenantName ?? 'PegaTicket'); ?><br>
+                        Gerado em: <?php echo e($generatedAt->format('d/m/Y H:i')); ?><br>
+                        Link da compra: <?php echo e($trackingUrl); ?>
 
+                    </div>
                 </div>
-            </div>
 
             <?php $__currentLoopData = $tickets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ticket): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="ticket-card">
@@ -262,16 +315,44 @@
                         </tr>
                     </table>
 
-                    <div class="code-box">
-                        <div class="code-label">Código do ingresso</div>
-                        <div class="code-value"><?php echo e($ticket->code); ?></div>
-                        <div class="code-label">Token do QR Code</div>
-                        <div class="qr-token"><?php echo e($ticket->qr_token); ?></div>
-                    </div>
+                    <?php if(! empty($ticket->pdf_qr_data_uri)): ?>
+                        <table class="ticket-layout" role="presentation">
+                            <tr>
+                                <td class="ticket-info-cell">
+                                    <div class="code-box">
+                                        <div class="code-label">Código do ingresso</div>
+                                        <div class="code-value"><?php echo e($ticket->code); ?></div>
+                                        <div class="code-label">Token do QR Code</div>
+                                        <div class="qr-token"><?php echo e($ticket->qr_token); ?></div>
+                                    </div>
 
-                    <div class="validation-note">
-                        Na validação, a equipe pode localizar este ingresso pelo código acima ou pelo token do QR Code.
-                    </div>
+                                    <div class="validation-note">
+                                        Na validação, a equipe pode localizar este ingresso pelo código acima ou ler o QR Code deste cartão.
+                                    </div>
+                                </td>
+                                <td class="ticket-qr-cell">
+                                    <div class="qr-panel">
+                                        <div class="qr-panel-label">QR Code do ingresso</div>
+                                        <img src="<?php echo e($ticket->pdf_qr_data_uri); ?>" alt="QR Code do ingresso <?php echo e($ticket->code); ?>" class="qr-image">
+                                        <div class="qr-caption">
+                                            Apresente este QR na entrada para uma leitura mais rápida.
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    <?php else: ?>
+                        <div class="code-box">
+                            <div class="code-label">Código do ingresso</div>
+                            <div class="code-value"><?php echo e($ticket->code); ?></div>
+                            <div class="code-label">Token do QR Code</div>
+                            <div class="qr-token"><?php echo e($ticket->qr_token); ?></div>
+                        </div>
+
+                        <div class="validation-note">
+                            Na validação, a equipe pode localizar este ingresso pelo código acima ou pelo token do QR Code.
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 

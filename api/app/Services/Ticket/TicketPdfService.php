@@ -3,6 +3,11 @@
 namespace App\Services\Ticket;
 
 use App\Models\Sale\Sale;
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -17,6 +22,9 @@ class TicketPdfService
     {
         $sale->loadMissing('tenant', 'finalCustomer');
         $tickets->loadMissing('ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale');
+        $tickets->each(function ($ticket): void {
+            $ticket->pdf_qr_data_uri = $this->qrCodeDataUri((string) $ticket->qr_token);
+        });
 
         $pdf = Pdf::loadView('tickets.pdf', [
             'sale' => $sale,
@@ -83,5 +91,23 @@ class TicketPdfService
         }
 
         return null;
+    }
+
+    private function qrCodeDataUri(string $content): ?string
+    {
+        if ($content === '') {
+            return null;
+        }
+
+        $writer = new Writer(
+            new ImageRenderer(
+                new RendererStyle(size: 180, margin: 2),
+                new SvgImageBackEnd()
+            )
+        );
+
+        $svg = $writer->writeString($content, ecLevel: ErrorCorrectionLevel::M());
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }
