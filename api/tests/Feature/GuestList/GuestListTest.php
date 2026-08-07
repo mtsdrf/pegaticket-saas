@@ -89,7 +89,7 @@ class GuestListTest extends TestCase
         ])->assertStatus(200);
 
         $this->assertNotEmpty($redeem->json('data.sale_uuid'));
-        $this->assertStringContainsString('/rastreio/', $redeem->json('data.tracking_url'));
+        $this->assertStringContainsString('/compra/', $redeem->json('data.tracking_url'));
 
         $entry->refresh();
         $this->assertNotNull($entry->redeemed_at);
