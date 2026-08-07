@@ -18,15 +18,21 @@ export function getSalePaymentCheckoutConfig(saleUuid: string): Promise<SalePaym
   )
 }
 
+/** Regra de negócio: compras abaixo de R$ 50 parcelam em até 5x, a partir de R$ 50 em até 12x — sempre com opção de parcelar (nunca 0x), juros calculados e cobrados do comprador via PagBank. */
+export function maxInstallmentsForAmount(amount: number): number {
+  return amount < 50 ? 5 : 12
+}
+
 export function getSalePaymentInstallmentOptions(
   saleUuid: string,
   creditCardBin: string,
+  amount: number,
 ): Promise<SalePaymentInstallmentOptions> {
   return unwrap(
     publicApiClient.get<ApiSuccess<SalePaymentInstallmentOptions>>(`/rastreio/${saleUuid}/payment-installment-options`, {
       params: {
         credit_card_bin: creditCardBin,
-        max_installments: 12,
+        max_installments: maxInstallmentsForAmount(amount),
         max_installments_no_interest: 1,
       },
     }),

@@ -866,7 +866,7 @@ function CreditCardPaymentPanel({
     setInstallmentOptionsError(null)
 
     storefrontSalePaymentService
-      .getSalePaymentInstallmentOptions(saleUuid, cardBin)
+      .getSalePaymentInstallmentOptions(saleUuid, cardBin, Number(amount || '0'))
       .then((result) => {
         if (cancelled) return
         const options = result.options.length > 0 ? result.options : fallbackInstallmentOptions
@@ -889,7 +889,7 @@ function CreditCardPaymentPanel({
     return () => {
       cancelled = true
     }
-  }, [cardBin, config?.available, fallbackInstallmentOptions, saleUuid, sdkReady])
+  }, [amount, cardBin, config?.available, fallbackInstallmentOptions, saleUuid, sdkReady])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
