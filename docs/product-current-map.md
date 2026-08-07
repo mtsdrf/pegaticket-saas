@@ -1,6 +1,6 @@
 # PegaTicket — Mapa Atual do Produto
 
-Data de referência: **3 de agosto de 2026**
+Data de referência: **7 de agosto de 2026**
 
 ## Objetivo
 
@@ -52,10 +52,10 @@ O PegaTicket é uma plataforma SaaS multiempresa de ticketing com:
 - favoritos
 - hold de inventário
 - checkout público
-- rastreio público
+- acompanhamento público da compra em `/compra/:uuid`
 - vendas manuais
 - vendas online
-- fila operacional de vendas online pendentes de aprovação
+- aprovação automática da compra quando o PagBank confirma o pagamento
 - caixa operacional (`cash session`)
 
 ### Pagamentos
@@ -65,6 +65,7 @@ O PegaTicket é uma plataforma SaaS multiempresa de ticketing com:
 - integração Mercado Pago para a trilha já existente de assinatura
 - integração PagBank para a trilha de venda
 - configuração por tenant para PagBank direto na conta da empresa (primeira fatia)
+- formulário de cartão com validação de titular, CPF/CNPJ com máscara dinâmica, Luhn, bandeira e preview visual
 - reconciliação
 - webhooks
 - log dedicado das transações PagBank
@@ -76,6 +77,8 @@ O PegaTicket é uma plataforma SaaS multiempresa de ticketing com:
 - listagem de tickets
 - QR/token de validação
 - transferência de titularidade
+- envio automático do ingresso por e-mail após pagamento aprovado
+- PDF de ingresso para download pelo comprador
 - check-in manual
 - leitura de QR na portaria
 - histórico de check-in
@@ -93,6 +96,7 @@ O PegaTicket é uma plataforma SaaS multiempresa de ticketing com:
 - solicitação de cancelamento
 - avaliação da venda
 - pagamento da própria venda no portal
+- checkout sem verificação prévia de e-mail por código
 
 ### Operação e suporte
 
@@ -158,6 +162,7 @@ Observação da Fase 5 em 4 de agosto de 2026:
 - Transferência de ingresso **já existe**, mas a cadeia completa de custódia, revenda oficial e regras avançadas de marketplace secundário **ainda não**.
 - O editor visual de venue **já existe em nível básico**, e melhor assento/contiguidade já foram entregues; o que continua parcial é o mapa interativo avançado e regras mais ricas de ocupação.
 - O check-in já cobre operação básica com QR, contingência local e sincronização operacional por polling; o que ainda precisa evoluir é reentrada, controle por zona e supervisão mais fina.
+- O checkout público foi simplificado nesta rodada: e-mail obrigatório no formulário, telefone mascarado, compra aprovada automaticamente quando o PSP aprova, e compra recusada no PagBank já encerrada localmente como não aprovada em vez de ficar pendente de revisão manual.
 
 ## 6. O que não deve guiar decisões de produto
 

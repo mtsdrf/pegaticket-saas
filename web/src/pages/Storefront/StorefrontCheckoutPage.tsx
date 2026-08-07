@@ -7,6 +7,7 @@ import {
   Checkbox,
   CircularProgress,
   FormControlLabel,
+  InputAdornment,
   MenuItem,
   Paper,
   Stack,
@@ -33,6 +34,7 @@ import { ELEVATED_SURFACE_SX, SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../../constants/paymentMethods'
 import type { SalePayment, SalePaymentCheckoutConfig } from '../../types/sale'
+import { formatCpfCnpj, isValidCpfCnpj } from '../../utils/cpfCnpj'
 import {
   BELOW_MINIMUM_ORDER_CODE,
   COUPON_USAGE_LIMIT_REACHED_CODE,
@@ -183,6 +185,246 @@ function isValidCheckoutEmail(value: string): boolean {
 function isValidBrazilPhone(value: string): boolean {
   const digits = normalizeDigits(value)
   return digits.length === 10 || digits.length === 11
+}
+
+type CardBrand = 'amex' | 'diners' | 'discover' | 'elo' | 'hipercard' | 'jcb' | 'mastercard' | 'unionpay' | 'visa' | 'unknown'
+
+type CardBrandRule = {
+  brand: CardBrand
+  label: string
+  pattern: RegExp
+  lengths: number[]
+  cvvLengths: number[]
+  format: number[]
+}
+
+const CARD_BRAND_RULES: CardBrandRule[] = [
+  {
+    brand: 'amex',
+    label: 'Amex',
+    pattern: /^3[47]/,
+    lengths: [15],
+    cvvLengths: [4],
+    format: [4, 6, 5],
+  },
+  {
+    brand: 'diners',
+    label: 'Diners',
+    pattern: /^(36|38|39|30[0-5])/,
+    lengths: [14],
+    cvvLengths: [3],
+    format: [4, 6, 4],
+  },
+  {
+    brand: 'discover',
+    label: 'Discover',
+    pattern: /^(6011|65|64[4-9])/,
+    lengths: [16, 19],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4, 3],
+  },
+  {
+    brand: 'elo',
+    label: 'Elo',
+    pattern:
+      /^(4011(78|79)|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|65003[1-3]|65003[5-9]|65004\d|65005[0-1]|65040[5-9]|6504[3-9]\d|6505\d{2}|65070\d|65071\d|65072[0-7]|6509\d{2}|65165[2-9]|6516[6-7]\d|6550\d{2})/,
+    lengths: [16],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4],
+  },
+  {
+    brand: 'hipercard',
+    label: 'Hipercard',
+    pattern: /^(606282|3841)/,
+    lengths: [13, 16, 19],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4, 3],
+  },
+  {
+    brand: 'jcb',
+    label: 'JCB',
+    pattern: /^35(2[89]|[3-8]\d)/,
+    lengths: [16, 19],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4, 3],
+  },
+  {
+    brand: 'mastercard',
+    label: 'Mastercard',
+    pattern: /^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/,
+    lengths: [16],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4],
+  },
+  {
+    brand: 'unionpay',
+    label: 'UnionPay',
+    pattern: /^62/,
+    lengths: [16, 17, 18, 19],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4, 3],
+  },
+  {
+    brand: 'visa',
+    label: 'Visa',
+    pattern: /^4/,
+    lengths: [13, 16, 19],
+    cvvLengths: [3],
+    format: [4, 4, 4, 4, 3],
+  },
+]
+
+const DEFAULT_CARD_FORMAT = [4, 4, 4, 4, 3]
+const DEFAULT_CARD_LENGTHS = [16]
+const DEFAULT_CARD_CVV_LENGTHS = [3]
+
+function detectCardBrand(value: string): CardBrandRule | null {
+  const digits = normalizeDigits(value)
+  return CARD_BRAND_RULES.find((rule) => rule.pattern.test(digits)) ?? null
+}
+
+function formatCardNumber(value: string): string {
+  const digits = normalizeDigits(value)
+  const brand = detectCardBrand(digits)
+  const format = brand?.format ?? DEFAULT_CARD_FORMAT
+  const maxLength = Math.max(...(brand?.lengths ?? DEFAULT_CARD_LENGTHS))
+  const limited = digits.slice(0, maxLength)
+  const groups: string[] = []
+  let cursor = 0
+
+  for (const groupSize of format) {
+    if (cursor >= limited.length) break
+    groups.push(limited.slice(cursor, cursor + groupSize))
+    cursor += groupSize
+  }
+
+  if (cursor < limited.length) {
+    groups.push(limited.slice(cursor))
+  }
+
+  return groups.join(' ').trim()
+}
+
+function isValidCardNumberLuhn(value: string): boolean {
+  const digits = normalizeDigits(value)
+  let sum = 0
+  let shouldDouble = false
+
+  for (let index = digits.length - 1; index >= 0; index -= 1) {
+    let digit = Number(digits[index])
+    if (shouldDouble) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+    shouldDouble = !shouldDouble
+  }
+
+  return digits.length > 0 && sum % 10 === 0
+}
+
+function formatCardPreviewNumber(value: string): string {
+  const masked = `${normalizeDigits(value)}${'•'.repeat(16)}`.slice(0, 16)
+  return masked.replace(/(.{4})/g, '$1 ').trim()
+}
+
+function normalizeCardExpYear(value: string): string {
+  const digits = normalizeDigits(value)
+
+  if (digits.length >= 4) {
+    return digits.slice(0, 4)
+  }
+
+  if (digits.length === 2) {
+    return `20${digits}`
+  }
+
+  return digits
+}
+
+function getCreditCardFieldErrors({
+  payerTaxId,
+  holderName,
+  holderTaxId,
+  cardNumber,
+  expMonth,
+  expYear,
+  securityCode,
+}: {
+  payerTaxId: string
+  holderName: string
+  holderTaxId: string
+  cardNumber: string
+  expMonth: string
+  expYear: string
+  securityCode: string
+}): Record<string, string> {
+  const errors: Record<string, string> = {}
+  const cardDigits = normalizeDigits(cardNumber)
+  const expMonthDigits = normalizeDigits(expMonth)
+  const expYearDigits = normalizeDigits(expYear)
+  const cvvDigits = normalizeDigits(securityCode)
+  const brand = detectCardBrand(cardDigits)
+  const expectedLengths = brand?.lengths ?? DEFAULT_CARD_LENGTHS
+  const expectedCvvLengths = brand?.cvvLengths ?? DEFAULT_CARD_CVV_LENGTHS
+
+  if (!payerTaxId.trim()) {
+    errors.payerTaxId = 'Informe o CPF/CNPJ do pagador.'
+  } else if (!isValidCpfCnpj(payerTaxId)) {
+    errors.payerTaxId = 'Informe um CPF/CNPJ válido.'
+  }
+
+  if (holderName.trim().length < 3) {
+    errors.holderName = 'Informe o nome completo do titular.'
+  }
+
+  if (!holderTaxId.trim()) {
+    errors.holderTaxId = 'Informe o CPF/CNPJ do titular.'
+  } else if (!isValidCpfCnpj(holderTaxId)) {
+    errors.holderTaxId = 'Informe um CPF/CNPJ válido.'
+  }
+
+  if (!cardDigits) {
+    errors.cardNumber = 'Informe o número do cartão.'
+  } else if (!expectedLengths.includes(cardDigits.length)) {
+    errors.cardNumber = 'O número do cartão está incompleto.'
+  } else if (!isValidCardNumberLuhn(cardDigits)) {
+    errors.cardNumber = 'O número do cartão parece inválido.'
+  }
+
+  if (expMonthDigits.length !== 2) {
+    errors.expMonth = 'Informe o mês com 2 dígitos.'
+  } else {
+    const month = Number(expMonthDigits)
+    if (month < 1 || month > 12) {
+      errors.expMonth = 'Informe um mês válido.'
+    }
+  }
+
+  if (expYearDigits.length !== 2) {
+    errors.expYear = 'Informe o ano com 2 dígitos.'
+  }
+
+  if (!errors.expMonth && !errors.expYear) {
+    const month = Number(expMonthDigits)
+    const year = Number(expYearDigits)
+    const now = new Date()
+    const currentYear = now.getFullYear() % 100
+    const currentMonth = now.getMonth() + 1
+
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      errors.expYear = 'O cartão está vencido.'
+    }
+  }
+
+  if (!cvvDigits) {
+    errors.securityCode = 'Informe o código de segurança.'
+  } else if (!expectedCvvLengths.includes(cvvDigits.length)) {
+    const expected = expectedCvvLengths.join(' ou ')
+    errors.securityCode = `Informe um CVV com ${expected} dígitos.`
+  }
+
+  return errors
 }
 
 function getHoldSecondsLeft(hold: StorefrontInventoryHold | null): number {
@@ -474,8 +716,11 @@ function CreditCardPaymentPanel({
   const [expYear, setExpYear] = useState('')
   const [securityCode, setSecurityCode] = useState('')
   const [installments, setInstallments] = useState('1')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCardBackVisible, setIsCardBackVisible] = useState(false)
+  const cardBrand = useMemo(() => detectCardBrand(cardNumber), [cardNumber])
 
   useEffect(() => {
     setIsLoadingConfig(true)
@@ -503,6 +748,23 @@ function CreditCardPaymentPanel({
     event.preventDefault()
     setFormError(null)
 
+    const errors = getCreditCardFieldErrors({
+      payerTaxId,
+      holderName,
+      holderTaxId,
+      cardNumber,
+      expMonth,
+      expYear,
+      securityCode,
+    })
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
+
+    setFieldErrors({})
+
     if (!config?.public_key || !window.PagSeguro) {
       setFormError('O checkout do cartão ainda não está pronto. Atualize a página e tente novamente.')
       return
@@ -516,7 +778,7 @@ function CreditCardPaymentPanel({
         holder: holderName.trim(),
         number: cardNumber.replace(/\D+/g, ''),
         expMonth: expMonth.replace(/\D+/g, ''),
-        expYear: expYear.replace(/\D+/g, ''),
+        expYear: normalizeCardExpYear(expYear),
         securityCode: securityCode.replace(/\D+/g, ''),
       })
 
@@ -588,62 +850,274 @@ function CreditCardPaymentPanel({
               </Alert>
             )}
 
+            <Box sx={{ perspective: '1400px' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  minHeight: 212,
+                  transformStyle: 'preserve-3d',
+                  isolation: 'isolate',
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    overflow: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: isCardBackVisible ? 'rotateY(-180deg)' : 'rotateY(0deg)',
+                    transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    borderRadius: '15px',
+                    border: '1px solid rgba(211, 241, 232, 0.12)',
+                    background:
+                      'radial-gradient(circle at top right, rgba(140, 255, 224, 0.28), transparent 28%), linear-gradient(135deg, #115441 0%, #0f3d31 38%, #0b2620 100%)',
+                    color: '#f3fbf7',
+                    px: 2.5,
+                    py: 2.35,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 24px 60px rgba(6, 28, 23, 0.34)',
+                    zIndex: isCardBackVisible ? 1 : 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.08) 36%, transparent 54%)',
+                      pointerEvents: 'none',
+                      zIndex: 0,
+                    }}
+                  />
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ position: 'relative', zIndex: 1 }}>
+                    <Stack spacing={1.6}>
+                      <Typography sx={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.78 }}>
+                        PegaTicket
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: 54,
+                          height: 40,
+                          borderRadius: '10px',
+                          background:
+                            'linear-gradient(135deg, rgba(255, 219, 128, 0.92) 0%, rgba(194, 148, 58, 0.92) 100%)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)',
+                          position: 'relative',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: '10px 14px',
+                            borderLeft: '1px solid rgba(88, 53, 8, 0.35)',
+                            borderRight: '1px solid rgba(88, 53, 8, 0.35)',
+                          }}
+                        />
+                      </Box>
+                    </Stack>
+                    <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
+                      <Typography sx={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.64 }}>
+                        Bandeira
+                      </Typography>
+                      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>
+                        {cardBrand?.label ?? 'Crédito'}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+
+                  <Typography sx={{ position: 'relative', zIndex: 1, fontSize: { xs: 24, sm: 28 }, letterSpacing: '0.14em', fontWeight: 600 }}>
+                    {formatCardPreviewNumber(cardNumber)}
+                  </Typography>
+
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-end" spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
+                        Titular
+                      </Typography>
+                      <Typography noWrap sx={{ fontSize: 14, fontWeight: 600 }}>
+                        {holderName.trim() || 'Nome do titular'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
+                        Validade
+                      </Typography>
+                      <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                        {(normalizeDigits(expMonth).slice(0, 2) || 'MM')}/{(normalizeDigits(expYear).slice(0, 2) || 'AA')}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    overflow: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: isCardBackVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
+                    transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    borderRadius: '15px',
+                    border: '1px solid rgba(211, 241, 232, 0.12)',
+                    background:
+                      'radial-gradient(circle at bottom left, rgba(140, 255, 224, 0.16), transparent 32%), linear-gradient(140deg, #0d2822 0%, #112c27 58%, #0f1d1a 100%)',
+                    color: '#f3fbf7',
+                    boxShadow: '0 24px 60px rgba(6, 28, 23, 0.34)',
+                    zIndex: isCardBackVisible ? 2 : 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(140deg, #0d2822 0%, #112c27 58%, #0f1d1a 100%)',
+                      zIndex: 0,
+                    }}
+                  />
+                  <Box sx={{ height: 46, background: '#09110f', mt: 3.25 }} />
+                  <Box sx={{ px: 2.5, pt: 2.25, position: 'relative', zIndex: 1 }}>
+                    <Typography sx={{ mb: 1, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.64 }}>
+                      Código de segurança
+                    </Typography>
+                    <Box
+                      sx={{
+                        borderRadius: '10px',
+                        background: 'linear-gradient(180deg, #f7f4ed 0%, #ece8df 100%)',
+                        color: '#1f2f29',
+                        px: 1.5,
+                        py: 1.15,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        letterSpacing: '0.22em',
+                        minHeight: 48,
+                      }}
+                    >
+                      {securityCode || '•••'}
+                    </Box>
+                  </Box>
+                  <Typography sx={{ px: 2.5, pt: 1.5, position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.5, color: 'rgba(243, 251, 247, 0.72)' }}>
+                    Confira o número, o nome do titular e o CVV exatamente como aparecem no cartão antes de concluir o pagamento.
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
             <TextField
               label="CPF/CNPJ do pagador"
               value={payerTaxId}
-              onChange={(event) => setPayerTaxId(event.target.value)}
+              onChange={(event) => {
+                setPayerTaxId(formatCpfCnpj(event.target.value))
+                setFieldErrors((current) => ({ ...current, payerTaxId: '' }))
+              }}
               size="small"
               fullWidth
               required
+              error={Boolean(fieldErrors.payerTaxId)}
+              helperText={fieldErrors.payerTaxId}
             />
             <TextField
               label="Nome do titular do cartão"
               value={holderName}
-              onChange={(event) => setHolderName(event.target.value)}
+              onChange={(event) => {
+                setHolderName(event.target.value)
+                setFieldErrors((current) => ({ ...current, holderName: '' }))
+              }}
               size="small"
               fullWidth
               required
+              autoComplete="cc-name"
+              error={Boolean(fieldErrors.holderName)}
+              helperText={fieldErrors.holderName}
             />
             <TextField
               label="CPF/CNPJ do titular"
               value={holderTaxId}
-              onChange={(event) => setHolderTaxId(event.target.value)}
+              onChange={(event) => {
+                setHolderTaxId(formatCpfCnpj(event.target.value))
+                setFieldErrors((current) => ({ ...current, holderTaxId: '' }))
+              }}
               size="small"
               fullWidth
               required
+              error={Boolean(fieldErrors.holderTaxId)}
+              helperText={fieldErrors.holderTaxId}
             />
             <TextField
               label="Número do cartão"
               value={cardNumber}
-              onChange={(event) => setCardNumber(event.target.value)}
+              onChange={(event) => {
+                setCardNumber(formatCardNumber(event.target.value))
+                setFieldErrors((current) => ({ ...current, cardNumber: '' }))
+              }}
               size="small"
               fullWidth
               required
+              autoComplete="cc-number"
+              inputMode="numeric"
+              error={Boolean(fieldErrors.cardNumber)}
+              helperText={fieldErrors.cardNumber ?? 'Aceita colar o número com espaços ou traços.'}
+              slotProps={{
+                input: {
+                  endAdornment: cardBrand ? <InputAdornment position="end">{cardBrand.label}</InputAdornment> : undefined,
+                },
+              }}
             />
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <TextField
                 label="Mês"
                 value={expMonth}
-                onChange={(event) => setExpMonth(event.target.value)}
+                onChange={(event) => {
+                  setExpMonth(normalizeDigits(event.target.value).slice(0, 2))
+                  setFieldErrors((current) => ({ ...current, expMonth: '' }))
+                }}
                 size="small"
                 fullWidth
                 required
+                autoComplete="cc-exp-month"
+                inputMode="numeric"
+                error={Boolean(fieldErrors.expMonth)}
+                helperText={fieldErrors.expMonth}
               />
               <TextField
                 label="Ano"
                 value={expYear}
-                onChange={(event) => setExpYear(event.target.value)}
+                onChange={(event) => {
+                  setExpYear(normalizeDigits(event.target.value).slice(0, 2))
+                  setFieldErrors((current) => ({ ...current, expYear: '' }))
+                }}
                 size="small"
                 fullWidth
                 required
+                autoComplete="cc-exp-year"
+                inputMode="numeric"
+                error={Boolean(fieldErrors.expYear)}
+                helperText={fieldErrors.expYear}
               />
               <TextField
                 label="CVV"
                 value={securityCode}
-                onChange={(event) => setSecurityCode(event.target.value)}
+                onChange={(event) => {
+                  const maxLength = Math.max(...(cardBrand?.cvvLengths ?? DEFAULT_CARD_CVV_LENGTHS))
+                  setSecurityCode(normalizeDigits(event.target.value).slice(0, maxLength))
+                  setFieldErrors((current) => ({ ...current, securityCode: '' }))
+                }}
+                onFocus={() => setIsCardBackVisible(true)}
+                onBlur={() => setIsCardBackVisible(false)}
                 size="small"
                 fullWidth
                 required
+                autoComplete="cc-csc"
+                inputMode="numeric"
+                error={Boolean(fieldErrors.securityCode)}
+                helperText={fieldErrors.securityCode}
               />
             </Stack>
             <TextField
@@ -788,7 +1262,7 @@ function DebitCardPaymentPanel({
         holder: holderName.trim(),
         number: normalizedCardNumber,
         expMonth: expMonth.replace(/\D+/g, ''),
-        expYear: expYear.replace(/\D+/g, ''),
+        expYear: normalizeCardExpYear(expYear),
         securityCode: securityCode.replace(/\D+/g, ''),
       })
 
@@ -817,7 +1291,7 @@ function DebitCardPaymentPanel({
           card: {
             number: normalizedCardNumber,
             expMonth: expMonth.replace(/\D+/g, ''),
-            expYear: expYear.replace(/\D+/g, ''),
+            expYear: normalizeCardExpYear(expYear),
             holder: {
               name: holderName.trim(),
             },
@@ -908,10 +1382,10 @@ function DebitCardPaymentPanel({
               </Alert>
             )}
 
-            <TextField label="CPF/CNPJ do pagador" value={payerTaxId} onChange={(event) => setPayerTaxId(event.target.value)} size="small" fullWidth required />
+            <TextField label="CPF/CNPJ do pagador" value={payerTaxId} onChange={(event) => setPayerTaxId(formatCpfCnpj(event.target.value))} size="small" fullWidth required />
             <TextField label="Telefone do pagador" value={payerPhone} onChange={(event) => setPayerPhone(event.target.value)} size="small" fullWidth required />
             <TextField label="Nome do titular do cartão" value={holderName} onChange={(event) => setHolderName(event.target.value)} size="small" fullWidth required />
-            <TextField label="CPF/CNPJ do titular" value={holderTaxId} onChange={(event) => setHolderTaxId(event.target.value)} size="small" fullWidth required />
+            <TextField label="CPF/CNPJ do titular" value={holderTaxId} onChange={(event) => setHolderTaxId(formatCpfCnpj(event.target.value))} size="small" fullWidth required />
             <TextField label="Número do cartão" value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} size="small" fullWidth required />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
