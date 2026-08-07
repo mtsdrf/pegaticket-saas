@@ -774,8 +774,6 @@ export function VenueMapEditor() {
     setViewBox(clampViewBox(baseViewBoxRef.current, baseViewBoxRef.current))
   }
 
-  const publishedInfo = venue?.published_map_version
-
   if (isLoading) {
     return (
       <Box sx={{ p: 2 }}>
@@ -803,13 +801,6 @@ export function VenueMapEditor() {
         backLink={{ label: 'Locais', to: '/locais' }}
         action={
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Chip
-              size="small"
-              label={publishedInfo ? `Publicado v${publishedInfo.version_number}` : 'Nunca publicado'}
-              color={publishedInfo ? 'success' : 'default'}
-              variant={publishedInfo ? 'filled' : 'outlined'}
-            />
-            <Chip size="small" label="Editando rascunho" variant="outlined" />
             <Button variant="outlined" startIcon={<VisibilityOutlinedIcon />} onClick={() => setPreviewOpen(true)}>
               Visualizar mapa final
             </Button>
@@ -821,16 +812,6 @@ export function VenueMapEditor() {
             {canManageSeats ? (
               <Button variant="contained" startIcon={<AddIcon />} onClick={(event) => setAddMenuAnchor(event.currentTarget)} disabled={isPasting}>
                 Adicionar
-              </Button>
-            ) : null}
-            {selectedUuids.size > 0 ? (
-              <Button variant="outlined" startIcon={<ContentCopyOutlinedIcon />} onClick={handleCopySelection} disabled={isPasting}>
-                Copiar
-              </Button>
-            ) : null}
-            {canManageSeats && clipboard.length > 0 ? (
-              <Button variant="outlined" startIcon={<ContentPasteOutlinedIcon />} onClick={() => void handlePasteSelection()} disabled={isPasting}>
-                {isPasting ? 'Colando…' : `Colar ${clipboard.length > 1 ? `(${clipboard.length})` : ''}`.trim()}
               </Button>
             ) : null}
           </Stack>
