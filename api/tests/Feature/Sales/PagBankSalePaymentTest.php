@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
 use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
+use Tests\Feature\Storefront\Concerns\CreatesStorefrontFixtures;
 use Tests\Support\PagBankTestCards;
 use Tests\TestCase;
 
@@ -28,6 +29,7 @@ use Tests\TestCase;
 class PagBankSalePaymentTest extends TestCase
 {
     use CreatesSaleFixtures;
+    use CreatesStorefrontFixtures;
     use PagBankTestCards;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
@@ -660,6 +662,79 @@ class PagBankSalePaymentTest extends TestCase
             'id' => $saleId,
             'status' => 'confirmed',
             'is_paid' => false,
+        ]);
+    }
+
+    #[Test]
+    public function storefront_credit_card_charge_declined_by_pagbank_marks_the_sale_as_rejected_immediately(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_DECLINED_1',
+                'charges' => [[
+                    'id' => 'CHAR_DECLINED_1',
+                    'status' => 'DECLINED',
+                    'payment_method' => [
+                        'type' => 'CREDIT_CARD',
+                    ],
+                ]],
+            ], 201),
+        ]);
+
+        $tenant = $this->createTenantWithStorefrontPlan(true);
+        $ticketType = $this->createProduct($tenant->id, ['quantity_available' => 5, 'price' => 120]);
+
+        TenantSettings::updateOrCreate(
+            ['tenant_id' => $tenant->id],
+            [
+                'payment_receiving_method' => 'pagbank_token',
+                'pagbank_integration_mode' => 'manual_token',
+                'pagbank_environment' => 'sandbox',
+                'pagbank_access_token' => 'fake-pagbank-token',
+                'storefront_enabled' => true,
+            ]
+        );
+
+        $checkout = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+            'client_name' => 'Maria',
+            'client_last_name' => 'Silva',
+            'client_email' => 'maria.silva@test.com',
+            'client_phone' => '11999999999',
+            'payment_method' => 'credit_card',
+        ])->assertStatus(201)->json('data.sale');
+
+        $sale = Sale::where('uuid', $checkout['uuid'])->firstOrFail();
+
+        $response = $this->postJson("/api/v1/rastreio/{$sale->uuid}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Maria Silva',
+            'payer_email' => 'maria.silva@test.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Maria Silva',
+                'holder_tax_id' => '12345678909',
+                'installments' => 1,
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'failed')
+            ->assertJsonPath('data.metadata.provider_status', 'DECLINED');
+
+        $sale->refresh();
+
+        $this->assertSame('rejected', $sale->status);
+        $this->assertFalse((bool) $sale->is_paid);
+
+        $this->assertDatabaseHas('payments', [
+            'payable_type' => Sale::class,
+            'payable_id' => $sale->id,
+            'provider_charge_id' => 'ORDE_DECLINED_1',
+            'status' => 'failed',
         ]);
     }
 

@@ -5,10 +5,12 @@ namespace App\Services\Sale;
 use App\Contracts\Payment\PaymentProviderInterface;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SalePaid;
+use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SalePaymentCharged;
 use App\Events\Sale\SalePaymentRefundRequested;
 use App\Exceptions\InvalidSaleStateException;
 use App\Models\Sale\Sale;
+use App\Models\Storefront\CouponRedemption;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
 use App\Services\Finance\ExternalReviewFinancialAdjustmentService;
@@ -75,6 +77,10 @@ class SalePaymentService
 
             if ($locked->cancelled_at !== null) {
                 throw new InvalidSaleStateException(__('messages.sale.already_cancelled'));
+            }
+
+            if ($locked->status === 'rejected') {
+                throw new InvalidSaleStateException(__('messages.sale.order_rejected'));
             }
 
             if ($locked->is_paid) {
@@ -264,6 +270,8 @@ class SalePaymentService
             if ($remoteStatus === 'failed' && ! in_array($payment->status, ['paid', 'refunded'], true)) {
                 $payment->status = 'failed';
                 $payment->save();
+
+                $this->markStorefrontOrderRejectedFromPayment($payment);
             }
 
             return $payment;
@@ -417,6 +425,38 @@ class SalePaymentService
 
         event(new SalePaid(
             saleUuid: $order->uuid,
+            actorId: Auth::id()
+        ));
+    }
+
+    private function markStorefrontOrderRejectedFromPayment(Payment $payment): void
+    {
+        if (! $payment->payable instanceof Sale) {
+            return;
+        }
+
+        $order = $payment->payable;
+
+        if ($order->origin !== 'storefront' || $order->status !== 'pending_approval') {
+            return;
+        }
+
+        if ($order->coupon_id !== null) {
+            CouponRedemption::where('sale_id', $order->id)->delete();
+        }
+
+        $reason = __('messages.sale.order_rejected');
+
+        $order->status = 'rejected';
+        $order->cancellation_reason = $reason;
+        $order->save();
+
+        event(new SaleRejected(
+            saleId: $order->id,
+            saleUuid: $order->uuid,
+            fromStage: 'approval',
+            toStage: 'rejected',
+            reason: $reason,
             actorId: Auth::id()
         ));
     }

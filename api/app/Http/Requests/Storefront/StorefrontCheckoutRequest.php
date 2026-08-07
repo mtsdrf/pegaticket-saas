@@ -6,10 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-/**
- * authorize() sempre true — a autorização real é o middleware customer.jwt
- * na rota (identidade do cliente final), não uma permissão de staff.
- */
+/** Checkout público: sem auth de portal; a posse da compra fica no próprio fluxo/pagamento. */
 class StorefrontCheckoutRequest extends FormRequest
 {
     public function authorize(): bool
@@ -66,6 +63,7 @@ class StorefrontCheckoutRequest extends FormRequest
 
             'client_name' => ['required', 'string', 'max:255'],
             'client_last_name' => ['required', 'string', 'max:255'],
+            'client_email' => ['required', 'email:rfc', 'max:255'],
             'client_phone' => ['required', 'string', 'max:30'],
             'notes' => ['nullable', 'string', 'max:500'],
 

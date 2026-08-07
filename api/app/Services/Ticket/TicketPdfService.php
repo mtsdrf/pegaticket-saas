@@ -23,7 +23,7 @@ class TicketPdfService
             'tickets' => $tickets,
             'tenantName' => $sale->tenant?->name,
             'generatedAt' => now(),
-            'trackingUrl' => rtrim((string) config('app.frontend_url'), '/').'/rastreio/'.$sale->uuid,
+            'trackingUrl' => rtrim((string) config('app.frontend_url'), '/').'/compra/'.$sale->uuid,
             'logoDataUri' => $this->logoDataUri(),
         ]);
 

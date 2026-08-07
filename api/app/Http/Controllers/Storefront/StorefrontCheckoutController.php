@@ -24,7 +24,7 @@ class StorefrontCheckoutController extends Controller
         $dto = StorefrontCheckoutDTO::fromArray($request->validated());
 
         try {
-            $sale = $this->service->checkout($slug, portal_customer(), $dto, $request->ip());
+            $sale = $this->service->checkout($slug, $dto, $request->ip());
         } catch (StorefrontDisabledException $e) {
             return APIResponse::error($e->getMessage(), 422, 'STOREFRONT_DISABLED');
         } catch (BelowMinimumSaleException $e) {

@@ -4,13 +4,11 @@ namespace Tests\Feature\Storefront;
 
 use App\Models\Event\TicketBatch;
 use App\Models\Event\TicketType;
-use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Inventory\InventoryHold;
 use App\Models\Inventory\InventoryHoldItem;
 use App\Models\Sale\Sale;
 use App\Models\Ticket\Ticket;
 use App\Models\Tenant\Tenant;
-use App\Services\Auth\CustomerJWTService;
 use App\Services\Ticket\TicketIssuanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -32,14 +30,6 @@ class StorefrontHoldCheckoutTest extends TestCase
     use RefreshDatabase;
     use CreatesSaleFixtures;
     use CreatesStorefrontFixtures;
-
-    private function authenticatedCustomer(string $email = 'comprador@test.com'): array
-    {
-        $customer = FinalCustomer::create(['email' => $email]);
-        $token = app(CustomerJWTService::class)->issueAccessToken($customer);
-
-        return [$customer, $token];
-    }
 
     private function createTicketType(Tenant $tenant, array $overrides = []): TicketType
     {
@@ -240,33 +230,31 @@ class StorefrontHoldCheckoutTest extends TestCase
     #[Test]
     public function checkout_with_an_expired_hold_is_rejected(): void
     {
-        [$customer, $token] = $this->authenticatedCustomer();
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $ticketType = $this->createTicketType($tenant);
         $event = $ticketType->event;
         $sessionToken = 'sess-' . Str::random(10);
 
-        $hold = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
-                'session_token' => $sessionToken,
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
-                ],
-            ])->assertStatus(201)->json('data');
+        $hold = $this->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
+            'session_token' => $sessionToken,
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+        ])->assertStatus(201)->json('data');
 
         InventoryHold::where('uuid', $hold['uuid'])->update(['expires_at' => now()->subMinute()]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
-                'hold_uuid' => $hold['uuid'],
-                'session_token' => $sessionToken,
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
-                ],
-                'client_name' => 'Comprador',
-                'client_last_name' => 'Teste',
-                'client_phone' => '11999999999',
-            ]);
+        $response = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'hold_uuid' => $hold['uuid'],
+            'session_token' => $sessionToken,
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+            'client_name' => 'Comprador',
+            'client_last_name' => 'Teste',
+            'client_email' => 'comprador-expirado@test.com',
+            'client_phone' => '11999999999',
+        ]);
 
         $response->assertStatus(422);
         $this->assertSame(0, Sale::where('tenant_id', $tenant->id)->count());
@@ -275,38 +263,36 @@ class StorefrontHoldCheckoutTest extends TestCase
     #[Test]
     public function confirmed_checkout_consumes_the_hold_and_creates_a_sale_matching_it(): void
     {
-        [$customer, $token] = $this->authenticatedCustomer();
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $ticketType = $this->createTicketType($tenant, ['price' => 75]);
         $event = $ticketType->event;
         $sessionToken = 'sess-' . Str::random(10);
 
-        $hold = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
-                'session_token' => $sessionToken,
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 2],
-                ],
-            ])->assertStatus(201)->json('data');
+        $hold = $this->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
+            'session_token' => $sessionToken,
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 2],
+            ],
+        ])->assertStatus(201)->json('data');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
-                'hold_uuid' => $hold['uuid'],
-                'session_token' => $sessionToken,
-                'items' => [
-                    [
-                        'ticket_type_uuid' => $ticketType->uuid,
-                        'quantity' => 2,
-                        'participants' => [
-                            ['name' => 'Fulano', 'document' => '11122233344'],
-                            ['name' => 'Ciclana', 'document' => '55566677788'],
-                        ],
+        $response = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'hold_uuid' => $hold['uuid'],
+            'session_token' => $sessionToken,
+            'items' => [
+                [
+                    'ticket_type_uuid' => $ticketType->uuid,
+                    'quantity' => 2,
+                    'participants' => [
+                        ['name' => 'Fulano', 'document' => '11122233344'],
+                        ['name' => 'Ciclana', 'document' => '55566677788'],
                     ],
                 ],
-                'client_name' => 'Comprador',
-                'client_last_name' => 'Teste',
-                'client_phone' => '11999999999',
-            ]);
+            ],
+            'client_name' => 'Comprador',
+            'client_last_name' => 'Teste',
+            'client_email' => 'comprador-confirmado@test.com',
+            'client_phone' => '11999999999',
+        ]);
 
         $response->assertStatus(201);
         $saleUuid = $response->json('data.sale.uuid');
@@ -332,35 +318,33 @@ class StorefrontHoldCheckoutTest extends TestCase
     #[Test]
     public function paying_a_checkout_generated_sale_issues_tickets_with_the_informed_participants(): void
     {
-        [$customer, $token] = $this->authenticatedCustomer();
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $ticketType = $this->createTicketType($tenant, ['quantity_available' => 3, 'price' => 30]);
         $event = $ticketType->event;
         $sessionToken = 'sess-' . Str::random(10);
 
-        $hold = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
-                'session_token' => $sessionToken,
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
-                ],
-            ])->assertStatus(201)->json('data');
+        $hold = $this->postJson("/api/v1/loja/{$tenant->slug}/eventos/{$event->slug}/holds", [
+            'session_token' => $sessionToken,
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+        ])->assertStatus(201)->json('data');
 
-        $checkout = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
-                'hold_uuid' => $hold['uuid'],
-                'session_token' => $sessionToken,
-                'items' => [
-                    [
-                        'ticket_type_uuid' => $ticketType->uuid,
-                        'quantity' => 1,
-                        'participants' => [['name' => 'Beltrano', 'document' => '99988877766']],
-                    ],
+        $checkout = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'hold_uuid' => $hold['uuid'],
+            'session_token' => $sessionToken,
+            'items' => [
+                [
+                    'ticket_type_uuid' => $ticketType->uuid,
+                    'quantity' => 1,
+                    'participants' => [['name' => 'Beltrano', 'document' => '99988877766']],
                 ],
-                'client_name' => 'Comprador',
-                'client_last_name' => 'Teste',
-                'client_phone' => '11999999999',
-            ])->assertStatus(201)->json('data.sale');
+            ],
+            'client_name' => 'Comprador',
+            'client_last_name' => 'Teste',
+            'client_email' => 'comprador-ingresso@test.com',
+            'client_phone' => '11999999999',
+        ])->assertStatus(201)->json('data.sale');
 
         $order = Sale::where('uuid', $checkout['uuid'])->firstOrFail();
 

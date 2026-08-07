@@ -40,7 +40,7 @@ class SendPushOnSaleRejected
             $link->final_customer_id,
             __('messages.push.order_rejected_title'),
             __('messages.push.order_rejected_body'),
-            "/rastreio/{$order->uuid}"
+            "/compra/{$order->uuid}"
         );
     }
 }

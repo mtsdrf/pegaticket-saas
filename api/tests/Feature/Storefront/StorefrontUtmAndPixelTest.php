@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Storefront;
 
-use App\Models\FinalCustomer\FinalCustomer;
 use App\Models\Sale\Sale;
 use App\Models\Tenant\TenantSettings;
-use App\Services\Auth\CustomerJWTService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
@@ -25,33 +23,24 @@ class StorefrontUtmAndPixelTest extends TestCase
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
 
-    private function authenticatedCustomer(string $email = 'utm-comprador@test.com'): array
-    {
-        $customer = FinalCustomer::create(['email' => $email]);
-        $token = app(CustomerJWTService::class)->issueAccessToken($customer);
-
-        return [$customer, $token];
-    }
-
     #[Test]
     public function checkout_persists_utm_fields_onto_the_sale(): void
     {
-        [, $token] = $this->authenticatedCustomer();
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $ticketType = $this->createProduct($tenant->id, ['quantity_available' => 5, 'price' => 40]);
 
-        $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
-                ],
-                'client_name' => 'Comprador',
-                'client_last_name' => 'Teste',
-                'client_phone' => '11999999999',
-                'utm_source' => 'instagram',
-                'utm_medium' => 'social',
-                'utm_campaign' => 'lancamento-evento',
-            ]);
+        $response = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+            'client_name' => 'Comprador',
+            'client_last_name' => 'Teste',
+            'client_email' => 'utm-comprador@test.com',
+            'client_phone' => '11999999999',
+            'utm_source' => 'instagram',
+            'utm_medium' => 'social',
+            'utm_campaign' => 'lancamento-evento',
+        ]);
 
         $response->assertStatus(201);
         $saleUuid = $response->json('data.sale.uuid');
@@ -65,19 +54,18 @@ class StorefrontUtmAndPixelTest extends TestCase
     #[Test]
     public function checkout_without_utm_leaves_the_fields_null(): void
     {
-        [, $token] = $this->authenticatedCustomer('sem-utm@test.com');
         $tenant = $this->createTenantWithStorefrontPlan(true);
         $ticketType = $this->createProduct($tenant->id, ['quantity_available' => 5, 'price' => 40]);
 
-        $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
-                'items' => [
-                    ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
-                ],
-                'client_name' => 'Comprador',
-                'client_last_name' => 'Teste',
-                'client_phone' => '11999999999',
-            ])->assertStatus(201);
+        $response = $this->postJson("/api/v1/loja/{$tenant->slug}/checkout", [
+            'items' => [
+                ['ticket_type_uuid' => $ticketType->uuid, 'quantity' => 1],
+            ],
+            'client_name' => 'Comprador',
+            'client_last_name' => 'Teste',
+            'client_email' => 'sem-utm@test.com',
+            'client_phone' => '11999999999',
+        ])->assertStatus(201);
 
         $sale = Sale::where('uuid', $response->json('data.sale.uuid'))->firstOrFail();
         $this->assertNull($sale->utm_source);

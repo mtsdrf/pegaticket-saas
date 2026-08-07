@@ -190,6 +190,7 @@ export interface StorefrontCheckoutPayload {
   session_token?: string
   client_name: string
   client_last_name: string
+  client_email: string
   client_phone: string
   notes?: string
   /** Delivery Fase 3 — código do cupom aplicado com sucesso na prévia (`validateStorefrontCoupon`); omitido = sem cupom. */

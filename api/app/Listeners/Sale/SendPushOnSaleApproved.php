@@ -44,7 +44,7 @@ class SendPushOnSaleApproved
             $link->final_customer_id,
             __('messages.push.order_approved_title'),
             __('messages.push.order_approved_body'),
-            "/rastreio/{$order->uuid}"
+            "/compra/{$order->uuid}"
         );
     }
 }

@@ -151,6 +151,10 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:60,1,sale-tracking-public');
     Route::get('/rastreio/{sale:uuid}/ingressos.pdf', [SaleTrackingController::class, 'downloadTicketsPdf'])
         ->middleware('throttle:60,1,sale-tracking-public');
+    Route::get('/rastreio/{sale:uuid}/payment-checkout-config', [SaleTrackingController::class, 'paymentCheckoutConfig'])
+        ->middleware('throttle:20,1,sale-tracking-public-payment');
+    Route::post('/rastreio/{sale:uuid}/payment-charge', [SaleTrackingController::class, 'paymentCharge'])
+        ->middleware('throttle:20,1,sale-tracking-public-payment');
 
     // Autoatendimento de convite/cortesia (roadmap Fase 4) — 100% público,
     // protegido pelo token individual imprevisível (mesmo padrão de
@@ -361,14 +365,14 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:60,1,portal-coupon-redemptions-list');
     });
 
-    // Checkout da loja (Delivery Fase 1) — autenticado como FinalCustomer
-    // via customer.jwt, mas rota própria fora do prefixo /portal: é
-    // escopada por slug de tenant (loja), não pela identidade global do
-    // portal. Ver App\Services\Storefront\StorefrontCheckoutService.
+    // Checkout da loja (Delivery Fase 1) — público, escopado pelo slug do
+    // tenant. O cliente informa o e-mail no próprio formulário; a venda
+    // segue depois pelo link público de rastreio/pagamento da própria
+    // compra.
     Route::post('/loja/{slug}/checkout', [StorefrontCheckoutController::class, 'store'])
-        ->middleware(['customer.jwt', 'throttle:20,1,storefront-checkout']);
+        ->middleware(['throttle:20,1,storefront-checkout']);
     Route::post('/bilheteria/{slug}/checkout', [StorefrontCheckoutController::class, 'store'])
-        ->middleware(['customer.jwt', 'throttle:20,1,storefront-checkout']);
+        ->middleware(['throttle:20,1,storefront-checkout']);
 
     Route::middleware(['jwt'])->group(function () {
 
@@ -1035,10 +1039,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/{sale}/refunds/{refund}/receipt', [SaleRefundController::class, 'receipt'])
                 ->middleware(['tenant', 'perm:sale_refunds,read', 'throttle:60,1,sales-refunds-receipt']);
 
-            // Fila de aprovação do staff — toda venda do canal público
-            // (origin=storefront) nasce pending_approval e precisa
-            // passar por aqui. Reaproveita perm:sales,update (mesma
-            // permissão já usada na gestão manual de parcela/itens).
+            // Fila de aprovação do staff — usada para revisão manual quando
+            // necessário. Vendas públicas pagas online podem ser
+            // autoaprovadas na confirmação do pagamento
+            // (SalePaymentService::markOrderPaid()).
             Route::post('/{sale}/approve', [SaleController::class, 'approve'])
                 ->middleware(['tenant', 'perm:sales,update', 'throttle:60,1,sales-approve']);
 

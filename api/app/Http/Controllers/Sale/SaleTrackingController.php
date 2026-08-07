@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers\Sale;
 
+use App\Exceptions\InvalidSaleStateException;
+use App\Exceptions\Payment\PaymentOperationInProgressException;
+use App\Exceptions\Payment\PaymentProviderException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sale\SalePaymentChargeRequest;
 use App\Http\Resources\Sale\SalePublicTrackingResource;
+use App\Http\Resources\Sale\SalePaymentResource;
 use App\Models\Sale\Sale;
 use App\Services\APIResponse;
+use App\Services\Sale\SalePaymentService;
 use App\Services\Ticket\TicketPdfService;
 
 /**
@@ -21,11 +27,21 @@ class SaleTrackingController extends Controller
 {
     public function __construct(
         private TicketPdfService $ticketPdfService,
+        private SalePaymentService $salePaymentService,
     ) {}
 
     public function show(Sale $sale)
     {
-        $sale->load(['finalCustomer', 'tenant', 'items.ticketType', 'items.eventProduct', 'items.seat', 'installments', 'coupon', 'latestPayment']);
+        $sale->load([
+            'finalCustomer',
+            'tenant',
+            'items.ticketType.event',
+            'items.eventProduct.event',
+            'items.seat',
+            'installments',
+            'coupon',
+            'latestPayment',
+        ]);
 
         return APIResponse::success(
             new SalePublicTrackingResource($sale),
@@ -46,6 +62,43 @@ class SaleTrackingController extends Controller
             fn () => print($pdf['content']),
             $pdf['filename'],
             ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    public function paymentCheckoutConfig(Sale $sale)
+    {
+        app()->instance('tenant_id', $sale->tenant_id);
+
+        try {
+            $config = $this->salePaymentService->checkoutConfigForOrder($sale);
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            $config,
+            __('messages.sale.payment_checkout_config_loaded')
+        );
+    }
+
+    public function paymentCharge(SalePaymentChargeRequest $request, Sale $sale)
+    {
+        app()->instance('tenant_id', $sale->tenant_id);
+
+        try {
+            $payment = $this->salePaymentService->createChargeForOrder($sale, $request->validated());
+        } catch (InvalidSaleStateException $e) {
+            return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
+        } catch (PaymentOperationInProgressException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_OPERATION_IN_PROGRESS');
+        } catch (PaymentProviderException $e) {
+            return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
+        }
+
+        return APIResponse::success(
+            new SalePaymentResource($payment),
+            __('messages.sale.payment_charge_created'),
+            201
         );
     }
 }

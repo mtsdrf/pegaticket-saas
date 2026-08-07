@@ -26,7 +26,8 @@ use Illuminate\Support\Facades\DB;
  * Checkout da loja pública (roadmap Delivery, Fase 1) — desde 2026-07-31,
  * FinalCustomer absorveu Client por completo: não existe mais Client pra
  * criar. O que este service resolve/cria é o FinalCustomerTenantLink (o
- * registro POR-TENANT do cliente já autenticado via OTP), sem
+ * registro POR-TENANT do cliente identificado pelo e-mail informado no
+ * próprio checkout), sem
  * tocar em PortalLinkService::link() (caminho de vínculo por sale_uuid
  * pré-existente, continua intocado). Toda a lógica de preço/criação de
  * venda é 100% reaproveitada de SaleService::create() — este
@@ -53,12 +54,12 @@ class StorefrontCheckoutService
      * confiar em input do cliente. null preserva 100% chamadas antigas
      * (ex.: testes que não passam IP).
      */
-    public function checkout(string $slug, FinalCustomer $customer, StorefrontCheckoutDTO $dto, ?string $purchaserIp = null): Sale
+    public function checkout(string $slug, StorefrontCheckoutDTO $dto, ?string $purchaserIp = null): Sale
     {
         $tenant = $this->catalogService->findTenantBySlug($slug);
 
-        return $this->tenantExecutionContext->run($tenant, function () use ($tenant, $customer, $dto, $purchaserIp) {
-            return DB::transaction(function () use ($tenant, $customer, $dto, $purchaserIp) {
+        return $this->tenantExecutionContext->run($tenant, function () use ($tenant, $dto, $purchaserIp) {
+            return DB::transaction(function () use ($tenant, $dto, $purchaserIp) {
                 // Defesa em profundidade: findTenantBySlug() já checou o plano
                 // fora da transação, re-checa aqui dentro dela antes de mutar
                 // qualquer coisa.
@@ -72,6 +73,7 @@ class StorefrontCheckoutService
                     throw new StorefrontDisabledException(__('messages.storefront.storefront_disabled'));
                 }
 
+                $customer = $this->resolveCustomer($dto);
                 $hold = $dto->holdUuid ? $this->resolveCheckoutHold($tenant->id, $dto->holdUuid, $dto->sessionToken, $customer) : null;
 
                 // Guards (roadmap Delivery, Fase 2), sempre ANTES de
@@ -107,8 +109,8 @@ class StorefrontCheckoutService
 
                 // Guard 4: cupom (roadmap Delivery, Fase 3) — opcional, só roda
                 // quando dto->couponCode vem preenchido. $customer->id já é
-                // conhecido desde o início do checkout (identidade resolvida
-                // pelo OTP), diferente da prévia pública (validatePreview(),
+                // conhecido desde o início do checkout (resolvido pelo e-mail
+                // obrigatório do formulário), diferente da prévia pública (validatePreview(),
                 // sem check de limite por cliente).
                 $couponId = null;
                 $discountAmountCents = 0;
@@ -204,9 +206,6 @@ class StorefrontCheckoutService
      * (customer, tenant) — cria na primeira compra dessa loja com os dados
      * de contato informados no checkout; em compras seguintes só retorna o
      * link já existente (não sobrescreve dado já capturado).
-     * A prova de posse aqui é o próprio OTP já verificado (customer.jwt),
-     * não um sale_uuid pré-existente como no fluxo de
-     * PortalLinkService::link().
      */
     private function ensureCustomerLink(int $tenantId, FinalCustomer $customer, StorefrontCheckoutDTO $dto): FinalCustomerTenantLink
     {
@@ -244,6 +243,35 @@ class StorefrontCheckoutService
                 ->where('tenant_id', $tenantId)
                 ->firstOrFail();
         }
+    }
+
+    private function resolveCustomer(StorefrontCheckoutDTO $dto): FinalCustomer
+    {
+        $email = mb_strtolower(trim($dto->clientEmail));
+
+        $customer = FinalCustomer::query()->firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $dto->clientName,
+                'last_name' => $dto->clientLastName,
+            ]
+        );
+
+        $updates = [];
+
+        if ($customer->name === null || trim((string) $customer->name) === '') {
+            $updates['name'] = $dto->clientName;
+        }
+
+        if ($customer->last_name === null || trim((string) $customer->last_name) === '') {
+            $updates['last_name'] = $dto->clientLastName;
+        }
+
+        if ($updates !== []) {
+            $customer->forceFill($updates)->save();
+        }
+
+        return $customer;
     }
 
     /**

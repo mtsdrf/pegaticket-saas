@@ -30,7 +30,7 @@ class TicketDeliveryService
 
         $tickets->loadMissing('ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale');
 
-        $trackingUrl = rtrim((string) config('app.frontend_url'), '/').'/rastreio/'.$sale->uuid;
+        $trackingUrl = rtrim((string) config('app.frontend_url'), '/').'/compra/'.$sale->uuid;
         $ticketPdfUrl = $this->ticketPdfService->publicDownloadUrl($sale);
 
         $this->communicationDispatcher->send(

@@ -20,6 +20,7 @@ class SalePublicTrackingResource extends JsonResource
     {
         return [
             'uuid' => $this->uuid,
+            'tenant_slug' => $this->whenLoaded('tenant', fn() => $this->tenant->slug),
             'tenant_name' => $this->whenLoaded('tenant', fn() => $this->tenant->name),
             'final_customer_name' => $this->whenLoaded('finalCustomer', fn() => $this->finalCustomer->name),
             'is_installment' => $this->is_installment,
@@ -43,6 +44,21 @@ class SalePublicTrackingResource extends JsonResource
                 'paid_at' => $this->latestPayment->paid_at,
             ] : null),
             'created_at' => $this->created_at,
+            'purchase_event_url' => $this->when(
+                $this->resource->relationLoaded('tenant') && $this->resource->relationLoaded('items'),
+                function () {
+                    $firstEventSlug = $this->items
+                        ->map(fn ($item) => $item->ticketType?->event?->slug ?? $item->eventProduct?->event?->slug)
+                        ->filter()
+                        ->first();
+
+                    if (! $firstEventSlug || ! $this->tenant?->slug) {
+                        return null;
+                    }
+
+                    return rtrim((string) config('app.frontend_url'), '/').'/eventos/'.$this->tenant->slug.'/'.$firstEventSlug;
+                }
+            ),
             'ticket_pdf_url' => $this->when(
                 (bool) $this->is_paid,
                 fn () => rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$this->uuid.'/ingressos.pdf'

@@ -178,6 +178,7 @@ class AffiliateTest extends TestCase
                 ],
                 'client_name' => 'Comprador',
                 'client_last_name' => 'Teste',
+                'client_email' => 'comprador-afiliado@test.com',
                 'client_phone' => '11999999999',
             ])->assertStatus(201)->json('data.sale');
 
@@ -208,6 +209,7 @@ class AffiliateTest extends TestCase
                 ],
                 'client_name' => 'Comprador',
                 'client_last_name' => 'Teste',
+                'client_email' => 'sem-hold@test.com',
                 'client_phone' => '11999999999',
             ])->assertStatus(201)->json('data.sale');
 

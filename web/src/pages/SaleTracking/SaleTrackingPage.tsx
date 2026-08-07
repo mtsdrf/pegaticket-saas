@@ -1,6 +1,7 @@
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
+import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined'
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined'
 import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
 import { Alert, Box, Button, Chip, Divider, Paper, Rating, Skeleton, Stack, TextField, Typography } from '@mui/material'
@@ -525,7 +526,7 @@ export function SaleTrackingPage() {
 
   useEffect(() => {
     if (!uuid) {
-      setErrorMessage('Link de rastreio inválido.')
+      setErrorMessage('Link da compra inválido.')
       setIsLoading(false)
       return
     }
@@ -603,23 +604,37 @@ export function SaleTrackingPage() {
 
         {!isLoading && sale && (
           <Stack spacing={2.5}>
-      <StatusBanner sale={sale} />
+            <StatusBanner sale={sale} />
 
-      {sale.ticket_pdf_url && (
-        <Button
-          component="a"
-          href={sale.ticket_pdf_url}
-          target="_blank"
-          rel="noreferrer"
-          variant="contained"
-          startIcon={<PictureAsPdfOutlinedIcon />}
-          sx={{ alignSelf: 'flex-start' }}
-        >
-          Baixar PDF do ingresso
-        </Button>
-      )}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
+              {sale.purchase_event_url && (
+                <Button
+                  component="a"
+                  href={sale.purchase_event_url}
+                  variant="outlined"
+                  startIcon={<ArrowBackOutlinedIcon />}
+                  sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+                >
+                  Voltar para a compra do evento
+                </Button>
+              )}
 
-      <Paper
+              {sale.ticket_pdf_url && (
+                <Button
+                  component="a"
+                  href={sale.ticket_pdf_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  variant="contained"
+                  startIcon={<PictureAsPdfOutlinedIcon />}
+                  sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+                >
+                  Baixar PDF do ingresso
+                </Button>
+              )}
+            </Stack>
+
+            <Paper
               elevation={0}
               sx={{
                 p: 2,
@@ -669,7 +684,7 @@ export function SaleTrackingPage() {
         <Stack spacing={0.5} sx={{ alignItems: 'center', mt: 4, mb: 1 }}>
           <Logo variant="mark" size={20} />
           <Typography sx={{ fontSize: 11.5, color: 'var(--pt-muted)' }}>
-            Rastreio via PegaTicket — do acesso a experiencia, tudo em movimento.
+            Compra via PegaTicket — do acesso a experiencia, tudo em movimento.
           </Typography>
         </Stack>
       </Box>

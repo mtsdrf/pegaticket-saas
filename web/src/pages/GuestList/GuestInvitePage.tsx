@@ -66,7 +66,7 @@ export function GuestInvitePage() {
         form_rendered_at: formRenderedAtRef.current,
         turnstile_token: turnstileToken,
       })
-      navigate(`/rastreio/${result.sale_uuid}`)
+      navigate(`/compra/${result.sale_uuid}`)
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Não foi possível resgatar este convite agora.'))
     } finally {

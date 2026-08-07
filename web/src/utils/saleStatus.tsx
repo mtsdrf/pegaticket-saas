@@ -62,6 +62,15 @@ export function deriveSaleStatus(sale: SaleStatusSource): StatusInfo {
   }
 
   if (sale.status === 'rejected') {
+    if (paymentStatus === 'failed' || providerStatus === 'DECLINED') {
+      return {
+        label: 'Compra não aprovada',
+        caption: 'O PagBank recusou a transação. Revise os dados e refaça a operação para concluir a compra.',
+        tone: 'warning',
+        icon: <CancelOutlinedIcon />,
+      }
+    }
+
     return {
       label: 'Venda recusada',
       caption: 'A equipe não conseguiu confirmar esta compra. Fale com a empresa se tiver dúvidas.',

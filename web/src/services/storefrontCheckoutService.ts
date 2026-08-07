@@ -1,16 +1,13 @@
 import { unwrap } from './apiClient'
-import { portalApiClient } from './portalApiClient'
+import { publicApiClient } from './publicApiClient'
 import type { ApiSuccess } from '../types/api'
 import type { StorefrontCheckoutPayload, StorefrontCheckoutResult } from '../types/storefront'
 
 /**
- * Único endpoint da loja que exige identidade — via `portalApiClient`
- * (Bearer do `FinalCustomer`, já obtido pelo mesmo fluxo de OTP do Portal),
- * diferente do resto do catálogo (`storefrontService.ts`, 100% anônimo via
- * `publicApiClient`). Erros 422 de negócio (cupom, meio de pagamento,
- * retirada indisponível etc.) são tratados por quem chama
- * (`StorefrontCheckoutPage`), não aqui.
+ * Checkout público da loja: sem portal auth. Erros 422 de negócio
+ * (cupom, meio de pagamento, hold inválido etc.) são tratados por quem
+ * chama (`StorefrontCheckoutPage`), não aqui.
  */
 export function checkout(slug: string, payload: StorefrontCheckoutPayload): Promise<StorefrontCheckoutResult> {
-  return unwrap(portalApiClient.post<ApiSuccess<StorefrontCheckoutResult>>(`/loja/${slug}/checkout`, payload))
+  return unwrap(publicApiClient.post<ApiSuccess<StorefrontCheckoutResult>>(`/loja/${slug}/checkout`, payload))
 }

@@ -49,7 +49,7 @@ class GuestInviteController extends Controller
         return APIResponse::success(
             [
                 'sale_uuid' => $entry->sale->uuid,
-                'tracking_url' => rtrim((string) config('app.frontend_url'), '/').'/rastreio/'.$entry->sale->uuid,
+                'tracking_url' => rtrim((string) config('app.frontend_url'), '/').'/compra/'.$entry->sale->uuid,
             ],
             __('messages.guest_list.redeemed')
         );

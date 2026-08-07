@@ -119,7 +119,7 @@ function SaleCard({
     >
       <Stack
         component={RouterLink}
-        to={`/rastreio/${sale.uuid}`}
+        to={`/compra/${sale.uuid}`}
         direction="row"
         sx={{
           p: 1.75,

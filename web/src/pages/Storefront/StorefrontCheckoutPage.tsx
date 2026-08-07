@@ -17,14 +17,12 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { TurnstileWidget } from '../../components/security/TurnstileWidget'
-import { OtpIdentifyForm } from '../../components/storefront/OtpIdentifyForm'
 import { Logo } from '../../components/ui/Logo'
 import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelemetry'
 import { formatCountdown } from '../../hooks/useCountdown'
-import { usePortalAuth } from '../../hooks/usePortalAuth'
 import { useStorefrontCart } from '../../hooks/useStorefrontCart'
 import { getSaleTracking } from '../../services/saleTrackingService'
-import * as portalSaleService from '../../services/portalSaleService'
+import * as storefrontSalePaymentService from '../../services/storefrontSalePaymentService'
 import * as storefrontCheckoutService from '../../services/storefrontCheckoutService'
 import * as storefrontHoldService from '../../services/storefrontHoldService'
 import * as storefrontService from '../../services/storefrontService'
@@ -164,6 +162,29 @@ function buildHoldSignature(eventSlug: string | null, sessionToken: string, item
   return JSON.stringify({ eventSlug, sessionToken, items })
 }
 
+function normalizeDigits(value: string): string {
+  return value.replace(/\D+/g, '')
+}
+
+function formatBrazilPhone(value: string): string {
+  const digits = normalizeDigits(value).slice(0, 11)
+
+  if (digits.length <= 2) return digits
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+function isValidCheckoutEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function isValidBrazilPhone(value: string): boolean {
+  const digits = normalizeDigits(value)
+  return digits.length === 10 || digits.length === 11
+}
+
 function getHoldSecondsLeft(hold: StorefrontInventoryHold | null): number {
   if (!hold?.expires_at) {
     return Math.max(0, hold?.remaining_seconds ?? 0)
@@ -280,7 +301,7 @@ function PixPaymentPanel({
     setStatus('loading')
     setErrorMessage(null)
     setCheckMessage(null)
-    portalSaleService
+    storefrontSalePaymentService
       .createSalePixCharge(saleUuid)
       .then((result) => {
         setPayment(result)
@@ -315,7 +336,7 @@ function PixPaymentPanel({
       const tracking = await getSaleTracking(saleUuid)
       if (tracking.is_paid) {
         if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
-        navigate(`/rastreio/${saleUuid}`)
+        navigate(`/compra/${saleUuid}`)
         return
       }
       setCheckMessage('Ainda não identificamos o pagamento. Aguarde alguns instantes após pagar e tente de novo.')
@@ -352,7 +373,7 @@ function PixPaymentPanel({
           <Button variant="contained" onClick={loadCharge}>
             Tentar gerar o Pix novamente
           </Button>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+          <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
             Continuar sem pagar agora (pagar na entrega)
           </Button>
         </Stack>
@@ -417,7 +438,7 @@ function PixPaymentPanel({
           <Button variant="contained" size="large" onClick={() => void handleCheckPayment()} disabled={isCheckingPayment} sx={{ minHeight: UI_SIZE.controlLarge }}>
             {isCheckingPayment ? 'Verificando…' : 'Já paguei, verificar pagamento'}
           </Button>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+          <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
             Ver status da minha compra
           </Button>
         </Stack>
@@ -460,7 +481,7 @@ function CreditCardPaymentPanel({
     setIsLoadingConfig(true)
     setConfigError(null)
 
-    portalSaleService
+    storefrontSalePaymentService
       .getSalePaymentCheckoutConfig(saleUuid)
       .then(async (result) => {
         setConfig(result)
@@ -504,7 +525,7 @@ function CreditCardPaymentPanel({
         throw new Error(firstError || 'Não foi possível criptografar os dados do cartão.')
       }
 
-      await portalSaleService.createSalePaymentCharge(saleUuid, {
+      await storefrontSalePaymentService.createSalePaymentCharge(saleUuid, {
         method: 'credit_card',
         payer_tax_id: payerTaxId.replace(/\D+/g, ''),
         payer_name: payer.name,
@@ -519,7 +540,7 @@ function CreditCardPaymentPanel({
       })
 
       if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
-      navigate(`/rastreio/${saleUuid}`)
+      navigate(`/compra/${saleUuid}`)
     } catch (error) {
       setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o cartão agora.'))
     } finally {
@@ -546,7 +567,7 @@ function CreditCardPaymentPanel({
           <Alert severity="error" variant="outlined">
             {configError}
           </Alert>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+          <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
             Ver status da compra
           </Button>
         </Stack>
@@ -649,7 +670,7 @@ function CreditCardPaymentPanel({
             >
               {isSubmitting ? 'Processando…' : 'Pagar com cartão'}
             </Button>
-            <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+            <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
               Ver status da compra
             </Button>
           </Stack>
@@ -702,7 +723,7 @@ function DebitCardPaymentPanel({
     setIsLoadingConfig(true)
     setConfigError(null)
 
-    portalSaleService
+    storefrontSalePaymentService
       .getSalePaymentCheckoutConfig(saleUuid)
       .then(async (result) => {
         setConfig(result)
@@ -821,7 +842,7 @@ function DebitCardPaymentPanel({
         throw new Error('A autenticação do débito não foi concluída. Tente outro cartão ou finalize com Pix.')
       }
 
-      await portalSaleService.createSalePaymentCharge(saleUuid, {
+      await storefrontSalePaymentService.createSalePaymentCharge(saleUuid, {
         method: 'debit_card',
         payer_tax_id: normalizedTaxId,
         payer_name: payer.name,
@@ -839,7 +860,7 @@ function DebitCardPaymentPanel({
       })
 
       if (eventSlug) sendFunnelEvent(slug, eventSlug, sessionId, 'payment_confirmed')
-      navigate(`/rastreio/${saleUuid}`)
+      navigate(`/compra/${saleUuid}`)
     } catch (error) {
       setFormError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Não foi possível processar o débito agora.'))
     } finally {
@@ -866,7 +887,7 @@ function DebitCardPaymentPanel({
           <Alert severity="error" variant="outlined">
             {configError}
           </Alert>
-          <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+          <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
             Ver status da compra
           </Button>
         </Stack>
@@ -916,7 +937,7 @@ function DebitCardPaymentPanel({
             <Button variant="contained" size="large" type="submit" disabled={isSubmitting || !sdkReady} sx={{ minHeight: UI_SIZE.controlLarge }}>
               {isSubmitting ? 'Autenticando…' : 'Pagar com débito'}
             </Button>
-            <Button variant="text" onClick={() => navigate(`/rastreio/${saleUuid}`)}>
+            <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
               Ver status da compra
             </Button>
           </Stack>
@@ -965,7 +986,6 @@ function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
 /** Passo 2: dados de contato + resumo + confirmação. */
 function DetailsAndReviewStep({ slug }: { slug: string }) {
   const navigate = useNavigate()
-  const { customer } = usePortalAuth()
   const { items, totalAmount, clear, sessionId } = useStorefrontCart()
   const { markCompleted } = useCartAbandonmentTelemetry(slug)
 
@@ -984,6 +1004,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
   const [clientName, setClientName] = useState('')
   const [clientLastName, setClientLastName] = useState('')
+  const [clientEmail, setClientEmail] = useState('')
   const [clientPhone, setClientPhone] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -1327,7 +1348,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     const errors: Record<string, string[]> = {}
     if (clientName.trim().length < 2) errors.client_name = ['Informe seu nome.']
     if (clientLastName.trim().length < 1) errors.client_last_name = ['Informe seu sobrenome.']
-    if (clientPhone.trim().length < 8) errors.client_phone = ['Informe um telefone válido.']
+    if (!isValidCheckoutEmail(clientEmail)) errors.client_email = ['Informe um e-mail válido.']
+    if (!isValidBrazilPhone(clientPhone)) errors.client_phone = ['Informe um telefone com DDD e 8 ou 9 dígitos.']
     if (acceptedPaymentMethods.length > 0 && !intendedPaymentMethod) {
       errors.payment_method = ['Selecione uma forma de pagamento.']
     }
@@ -1375,7 +1397,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       session_token: holdContext.eligible ? sessionId : undefined,
       client_name: clientName.trim(),
       client_last_name: clientLastName.trim(),
-      client_phone: clientPhone.trim(),
+      client_email: clientEmail.trim().toLowerCase(),
+      client_phone: normalizeDigits(clientPhone),
       notes: notes.trim() || undefined,
       coupon_code: appliedCouponCode ?? undefined,
       payment_method: intendedPaymentMethod || undefined,
@@ -1404,8 +1427,8 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           amount: String(Math.max(0, totalAmount - (couponStatus === 'applied' ? appliedDiscount : 0))),
           payer: {
             name: `${clientName.trim()} ${clientLastName.trim()}`.trim(),
-            email: customer?.email ?? '',
-            phone: clientPhone.trim(),
+            email: clientEmail.trim().toLowerCase(),
+            phone: normalizeDigits(clientPhone),
             taxId: '',
           },
           slug,
@@ -1420,7 +1443,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           sendFunnelEvent(slug, funnelEventSlug, sessionId, 'payment_confirmed')
         }
         clear()
-        navigate(`/rastreio/${result.sale.uuid}`)
+        navigate(`/compra/${result.sale.uuid}`)
       }
     } catch (error) {
       if (error instanceof ApiRequestError && error.code === INVALID_COUPON_CODE) {
@@ -1557,10 +1580,20 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
           <TextField
             label="Telefone (com DDD)"
             value={clientPhone}
-            onChange={(event) => setClientPhone(event.target.value)}
+            onChange={(event) => setClientPhone(formatBrazilPhone(event.target.value))}
             error={Boolean(fieldErrors.client_phone)}
             helperText={fieldErrors.client_phone?.[0]}
             inputMode="tel"
+            required
+            fullWidth
+          />
+          <TextField
+            label="E-mail"
+            value={clientEmail}
+            onChange={(event) => setClientEmail(event.target.value)}
+            error={Boolean(fieldErrors.client_email)}
+            helperText={fieldErrors.client_email?.[0]}
+            inputMode="email"
             required
             fullWidth
           />
@@ -1787,7 +1820,6 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 export function StorefrontCheckoutPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading } = usePortalAuth()
   const { items } = useStorefrontCart()
 
   if (!slug) return null
@@ -1808,25 +1840,9 @@ export function StorefrontCheckoutPage() {
     )
   }
 
-  if (isLoading) {
-    return (
-      <PageShell slug={slug}>
-        <Stack sx={{ alignItems: 'center', py: 6 }}>
-          <CircularProgress size={28} />
-        </Stack>
-      </PageShell>
-    )
-  }
-
   return (
     <PageShell slug={slug}>
-      {isAuthenticated ? (
-        <DetailsAndReviewStep slug={slug} />
-      ) : (
-        <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: { xs: 3, sm: 4 } }}>
-          <OtpIdentifyForm />
-        </Paper>
-      )}
+      <DetailsAndReviewStep slug={slug} />
     </PageShell>
   )
 }

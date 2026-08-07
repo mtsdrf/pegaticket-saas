@@ -204,7 +204,7 @@ function RouteFallback() {
 
 /**
  * `PortalAuthProvider` isolado dessa subárvore de rotas — nunca junto do
- * `AuthProvider` de staff em `App.tsx`. `/rastreio/:uuid` entra aqui junto
+ * `AuthProvider` de staff em `App.tsx`. `/compra/:uuid` entra aqui junto
  * porque a página de rastreio consulta `usePortalAuth()` pra decidir o
  * destino do CTA "Ver todas as minhas compras" (ver `SaleTrackingPage.tsx`).
  */
@@ -233,6 +233,7 @@ export function AppRoutes() {
         <Route path="/redefinir-senha/:token" element={<ResetPasswordPage />} />
 
         <Route element={<PortalLayout />}>
+          <Route path="/compra/:uuid" element={<SaleTrackingPage />} />
           <Route path="/rastreio/:uuid" element={<SaleTrackingPage />} />
           <Route path="/portal/entrar" element={<PortalLoginPage />} />
 

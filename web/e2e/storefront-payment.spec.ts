@@ -6,7 +6,6 @@ const [visaCard] = readPagBankSandboxCards()
 const slug = 'loja-pagamentos'
 const saleUuid = 'sale-card-flow-1'
 const holdUuid = 'hold-card-flow-1'
-const portalToken = 'portal-token-playwright'
 
 /** Datas relativas ao momento do teste — evita que fixtures com timestamp fixo expirem sozinhas quando o dia virar. */
 function minutesFromNow(minutes: number): string {
@@ -58,15 +57,13 @@ function checkoutCartItem() {
   }
 }
 
-async function mockAuthenticatedStorefrontCheckout(page: Parameters<typeof test>[0]['page']) {
+async function mockPublicStorefrontCheckout(page: Parameters<typeof test>[0]['page']) {
   await page.addInitScript(
-    ({ token, storeSlug, cart }) => {
-      localStorage.setItem('pegaticket.portal_access_token', token)
+    ({ storeSlug, cart }) => {
       localStorage.setItem(`pegaticket.storefront_cart.${storeSlug}`, JSON.stringify([cart]))
       localStorage.setItem(`mk_age_verified_${storeSlug}`, 'true')
     },
     {
-      token: portalToken,
       storeSlug: slug,
       cart: checkoutCartItem(),
     },
@@ -77,24 +74,6 @@ async function mockAuthenticatedStorefrontCheckout(page: Parameters<typeof test>
       status: 200,
       contentType: 'application/javascript',
       body: mockPagSeguroSdkSource(),
-    })
-  })
-
-  await page.route('**/api/v1/portal/me', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        message: 'OK',
-        data: {
-          uuid: 'portal-customer-1',
-          name: 'Maria',
-          email: 'mreisf.contato@gmail.com',
-          linked_tenants: [],
-        },
-        meta: {},
-      }),
     })
   })
 
@@ -218,13 +197,14 @@ async function fillCheckoutDetails(page: Parameters<typeof test>[0]['page'], pay
   await page.getByLabel('Seu nome').fill('Maria')
   await page.getByLabel('Sobrenome').fill('Reis')
   await page.getByLabel('Telefone (com DDD)').fill('11999999999')
+  await page.getByLabel('E-mail').fill('maria.reis@test.com')
   await page.getByLabel('Como você pretende pagar').click()
   await page.getByRole('option', { name: paymentMethodLabel }).click()
 }
 
 test.describe('Checkout público com cartão', () => {
   test('envia a cobrança de crédito com o cartão sandbox do PagBank', async ({ page }) => {
-    await mockAuthenticatedStorefrontCheckout(page)
+    await mockPublicStorefrontCheckout(page)
 
     let checkoutPayload: Record<string, unknown> | null = null
     let paymentPayload: Record<string, unknown> | null = null
@@ -247,7 +227,7 @@ test.describe('Checkout público com cartão', () => {
       })
     })
 
-    await page.route(`**/api/v1/portal/sales/${saleUuid}/payment-checkout-config`, async (route) => {
+    await page.route(`**/api/v1/rastreio/${saleUuid}/payment-checkout-config`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -268,7 +248,7 @@ test.describe('Checkout público com cartão', () => {
       })
     })
 
-    await page.route(`**/api/v1/portal/sales/${saleUuid}/payment-charge`, async (route) => {
+    await page.route(`**/api/v1/rastreio/${saleUuid}/payment-charge`, async (route) => {
       paymentPayload = route.request().postDataJSON() as Record<string, unknown>
       await route.fulfill({
         status: 201,
@@ -309,11 +289,12 @@ test.describe('Checkout público com cartão', () => {
     await page.getByRole('option', { name: '1x', exact: true }).click()
     await page.getByRole('button', { name: 'Pagar com cartão' }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/rastreio/${saleUuid}$`))
+    await expect(page).toHaveURL(new RegExp(`/compra/${saleUuid}$`))
 
     expect(checkoutPayload).toMatchObject({
       client_name: 'Maria',
       client_last_name: 'Reis',
+      client_email: 'maria.reis@test.com',
       client_phone: '11999999999',
       payment_method: 'credit_card',
       hold_uuid: holdUuid,
@@ -323,7 +304,7 @@ test.describe('Checkout público com cartão', () => {
       method: 'credit_card',
       payer_tax_id: '12345678909',
       payer_name: 'Maria Reis',
-      payer_email: 'mreisf.contato@gmail.com',
+      payer_email: 'maria.reis@test.com',
       payer_phone: '11999999999',
       card: {
         encrypted: visaCard.encrypted,
@@ -335,7 +316,7 @@ test.describe('Checkout público com cartão', () => {
   })
 
   test('envia a cobrança de débito com 3DS concluído pelo SDK do PagBank', async ({ page }) => {
-    await mockAuthenticatedStorefrontCheckout(page)
+    await mockPublicStorefrontCheckout(page)
 
     let paymentPayload: Record<string, unknown> | null = null
 
@@ -356,7 +337,7 @@ test.describe('Checkout público com cartão', () => {
       })
     })
 
-    await page.route(`**/api/v1/portal/sales/${saleUuid}/payment-checkout-config`, async (route) => {
+    await page.route(`**/api/v1/rastreio/${saleUuid}/payment-checkout-config`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -377,7 +358,7 @@ test.describe('Checkout público com cartão', () => {
       })
     })
 
-    await page.route(`**/api/v1/portal/sales/${saleUuid}/payment-charge`, async (route) => {
+    await page.route(`**/api/v1/rastreio/${saleUuid}/payment-charge`, async (route) => {
       paymentPayload = route.request().postDataJSON() as Record<string, unknown>
       await route.fulfill({
         status: 201,
@@ -423,13 +404,13 @@ test.describe('Checkout público com cartão', () => {
     await page.getByLabel('CEP').fill('01001000')
     await page.getByRole('button', { name: 'Pagar com débito' }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/rastreio/${saleUuid}$`))
+    await expect(page).toHaveURL(new RegExp(`/compra/${saleUuid}$`))
 
     expect(paymentPayload).toMatchObject({
       method: 'debit_card',
       payer_tax_id: '12345678909',
       payer_name: 'Maria Reis',
-      payer_email: 'mreisf.contato@gmail.com',
+      payer_email: 'maria.reis@test.com',
       payer_phone: '11999999999',
       card: {
         encrypted: visaCard.encrypted,

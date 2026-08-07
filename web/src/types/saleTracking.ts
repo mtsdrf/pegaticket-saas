@@ -20,6 +20,7 @@ export interface SaleTrackingInstallment {
 /** Espelha a resposta pública (sem auth) de `GET /rastreio/{uuid}`. `installments` só vem preenchido quando `is_installment=true`. */
 export interface SaleTracking {
   uuid: string
+  tenant_slug?: string | null
   tenant_name: string
   final_customer_name: string
   is_installment: boolean
@@ -36,6 +37,7 @@ export interface SaleTracking {
     paid_at: string | null
   } | null
   created_at: string
+  purchase_event_url?: string | null
   ticket_pdf_url?: string | null
   items: SaleTrackingItem[]
   installments: SaleTrackingInstallment[]
