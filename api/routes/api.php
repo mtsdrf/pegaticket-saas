@@ -149,6 +149,8 @@ Route::prefix('v1')->group(function () {
     // App\Http\Controllers\Sale\SaleTrackingController.
     Route::get('/rastreio/{sale:uuid}', [SaleTrackingController::class, 'show'])
         ->middleware('throttle:60,1,sale-tracking-public');
+    Route::get('/rastreio/{sale:uuid}/ingressos.pdf', [SaleTrackingController::class, 'downloadTicketsPdf'])
+        ->middleware('throttle:60,1,sale-tracking-public');
 
     // Autoatendimento de convite/cortesia (roadmap Fase 4) — 100% público,
     // protegido pelo token individual imprevisível (mesmo padrão de

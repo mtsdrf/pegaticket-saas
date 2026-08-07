@@ -6,6 +6,7 @@ use App\Models\Sale\Sale;
 use App\Models\Ticket\Ticket;
 use App\Services\Communication\BrandedEmailLayoutRenderer;
 use App\Services\Communication\EmailTemplateResolverService;
+use App\Services\Ticket\TicketPdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Mail\Mailable;
@@ -22,6 +23,7 @@ class TicketDeliveryMail extends Mailable
         public Sale $sale,
         public Collection $tickets,
         public string $trackingUrl,
+        public string $ticketPdfUrl,
         public string $mode = 'issued',
     ) {}
 
@@ -34,6 +36,7 @@ class TicketDeliveryMail extends Mailable
             'codigo_venda' => (string) $this->sale->codigo,
             'quantidade_ingressos' => (string) $this->tickets->count(),
             'link' => $this->trackingUrl,
+            'link_pdf' => $this->ticketPdfUrl,
         ];
 
         $resolver = app(EmailTemplateResolverService::class);
@@ -42,6 +45,9 @@ class TicketDeliveryMail extends Mailable
         $bodyHtml = $resolver->resolveBodyHtml($type, $this->sale->tenant_id, $placeholders);
 
         $mail = $this->subject($subject);
+
+        $pdf = app(TicketPdfService::class)->generateForSale($this->sale, $this->tickets);
+        $mail->attachData($pdf['content'], $pdf['filename'], ['mime' => 'application/pdf']);
 
         return $bodyHtml !== null
             ? $mail->html(app(BrandedEmailLayoutRenderer::class)->wrap($bodyHtml, [
@@ -52,6 +58,7 @@ class TicketDeliveryMail extends Mailable
                 'sale' => $this->sale,
                 'tickets' => $this->tickets,
                 'trackingUrl' => $this->trackingUrl,
+                'ticketPdfUrl' => $this->ticketPdfUrl,
                 'mode' => $this->mode,
             ]);
     }

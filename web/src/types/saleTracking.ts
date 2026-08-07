@@ -36,6 +36,7 @@ export interface SaleTracking {
     paid_at: string | null
   } | null
   created_at: string
+  ticket_pdf_url?: string | null
   items: SaleTrackingItem[]
   installments: SaleTrackingInstallment[]
 }

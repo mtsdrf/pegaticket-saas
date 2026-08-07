@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\Collection;
 class TicketDeliveryService
 {
     public function __construct(
-        private CommunicationDispatcherService $communicationDispatcher
+        private CommunicationDispatcherService $communicationDispatcher,
+        private TicketPdfService $ticketPdfService,
     ) {}
 
     /**
@@ -30,6 +31,7 @@ class TicketDeliveryService
         $tickets->loadMissing('ticketType.event', 'ticketType.session', 'seat', 'saleItem.sale');
 
         $trackingUrl = rtrim((string) config('app.frontend_url'), '/').'/rastreio/'.$sale->uuid;
+        $ticketPdfUrl = $this->ticketPdfService->publicDownloadUrl($sale);
 
         $this->communicationDispatcher->send(
             $mode === 'reminder' ? 'event_reminder' : 'ticket_delivery',
@@ -37,6 +39,7 @@ class TicketDeliveryService
                 sale: $sale,
                 tickets: $tickets,
                 trackingUrl: $trackingUrl,
+                ticketPdfUrl: $ticketPdfUrl,
                 mode: $mode,
             ),
             $email,

@@ -8,6 +8,7 @@ use App\Models\Sale\SaleInstallment;
 use App\Models\Sale\SaleItem;
 use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
+use App\Models\Ticket\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -80,7 +81,7 @@ class SaleTrackingTest extends TestCase
     {
         $tenant = $this->createTenant();
         $client = $this->createClient($tenant->id);
-        $order = $this->createOrder($tenant, $client);
+        $order = $this->createOrder($tenant, $client, ['is_paid' => true]);
 
         $response = $this->getJson('/api/v1/rastreio/' . $order->uuid);
 
@@ -88,7 +89,8 @@ class SaleTrackingTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.uuid', $order->uuid)
             ->assertJsonPath('data.tenant_name', $tenant->name)
-            ->assertJsonPath('data.final_customer_name', $client->name);
+            ->assertJsonPath('data.final_customer_name', $client->name)
+            ->assertJsonPath('data.ticket_pdf_url', rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$order->uuid.'/ingressos.pdf');
     }
 
     #[Test]
@@ -208,6 +210,47 @@ class SaleTrackingTest extends TestCase
         $order->delete();
 
         $this->getJson('/api/v1/rastreio/' . $order->uuid)
+            ->assertStatus(404);
+    }
+
+    #[Test]
+    public function downloads_a_pdf_with_the_sale_tickets_when_the_sale_is_paid(): void
+    {
+        $tenant = $this->createTenant();
+        $client = $this->createClient($tenant->id);
+        $product = $this->createProduct($tenant->id, ['name' => 'Pista VIP']);
+        $order = $this->createOrder($tenant, $client, [
+            'codigo' => 'SALE-PDF-001',
+            'is_paid' => true,
+        ]);
+        $item = $this->createSaleItem($tenant, $order, $product, ['quantity' => 1]);
+
+        Ticket::create([
+            'uuid' => (string) Str::uuid(),
+            'tenant_id' => $tenant->id,
+            'sale_item_id' => $item->id,
+            'ticket_type_id' => $product->id,
+            'code' => 'ABCD2345',
+            'qr_token' => Str::random(40),
+            'status' => 'ativo',
+            'issued_at' => now(),
+        ]);
+
+        $response = $this->get('/api/v1/rastreio/' . $order->uuid . '/ingressos.pdf');
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('ingressos-sale-pdf-001.pdf', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    #[Test]
+    public function does_not_download_ticket_pdf_for_unpaid_sale(): void
+    {
+        $tenant = $this->createTenant();
+        $client = $this->createClient($tenant->id);
+        $order = $this->createOrder($tenant, $client, ['is_paid' => false]);
+
+        $this->get('/api/v1/rastreio/' . $order->uuid . '/ingressos.pdf')
             ->assertStatus(404);
     }
 }

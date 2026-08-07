@@ -68,7 +68,8 @@ class TicketDeliveryMailTest extends TestCase
             return $mail->hasTo($ticket->saleItem->sale->finalCustomer->email)
                 && $mail->mode === 'issued'
                 && $mail->tickets->pluck('uuid')->contains($ticket->uuid)
-                && str_contains($mail->trackingUrl, '/rastreio/' . $ticket->saleItem->sale->uuid);
+                && str_contains($mail->trackingUrl, '/rastreio/' . $ticket->saleItem->sale->uuid)
+                && str_contains($mail->ticketPdfUrl, '/rastreio/' . $ticket->saleItem->sale->uuid . '/ingressos.pdf');
         });
     }
 
@@ -87,7 +88,8 @@ class TicketDeliveryMailTest extends TestCase
             return $mail->hasTo($ticket->saleItem->sale->finalCustomer->email)
                 && $mail->mode === 'resent'
                 && $mail->tickets->count() === 1
-                && $mail->tickets->first()?->uuid === $ticket->uuid;
+                && $mail->tickets->first()?->uuid === $ticket->uuid
+                && str_contains($mail->ticketPdfUrl, '/rastreio/' . $ticket->saleItem->sale->uuid . '/ingressos.pdf');
         });
     }
 

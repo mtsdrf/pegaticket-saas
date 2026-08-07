@@ -1,4 +1,5 @@
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import EventSeatOutlinedIcon from '@mui/icons-material/EventSeatOutlined'
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined'
 import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
@@ -602,9 +603,23 @@ export function SaleTrackingPage() {
 
         {!isLoading && sale && (
           <Stack spacing={2.5}>
-            <StatusBanner sale={sale} />
+      <StatusBanner sale={sale} />
 
-            <Paper
+      {sale.ticket_pdf_url && (
+        <Button
+          component="a"
+          href={sale.ticket_pdf_url}
+          target="_blank"
+          rel="noreferrer"
+          variant="contained"
+          startIcon={<PictureAsPdfOutlinedIcon />}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          Baixar PDF do ingresso
+        </Button>
+      )}
+
+      <Paper
               elevation={0}
               sx={{
                 p: 2,

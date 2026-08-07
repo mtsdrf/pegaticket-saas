@@ -43,6 +43,10 @@ class SalePublicTrackingResource extends JsonResource
                 'paid_at' => $this->latestPayment->paid_at,
             ] : null),
             'created_at' => $this->created_at,
+            'ticket_pdf_url' => $this->when(
+                (bool) $this->is_paid,
+                fn () => rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$this->uuid.'/ingressos.pdf'
+            ),
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'ticket_type_name' => $item->ticketType?->name ?? $item->eventProduct?->name,
                 'seat_label' => $item->seat?->label,

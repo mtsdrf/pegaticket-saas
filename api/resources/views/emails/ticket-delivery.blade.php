@@ -38,5 +38,7 @@
     </div>
 
     @include('emails.partials.button', ['url' => $trackingUrl, 'label' => 'Acompanhar venda'])
+    @include('emails.partials.button', ['url' => $ticketPdfUrl, 'label' => 'Baixar PDF do ingresso'])
     @include('emails.partials.link-box', ['url' => $trackingUrl])
+    @include('emails.partials.link-box', ['url' => $ticketPdfUrl, 'label' => 'Se preferir baixar o PDF diretamente, use este link:'])
 @endsection
