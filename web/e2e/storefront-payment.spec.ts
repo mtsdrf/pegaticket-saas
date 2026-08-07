@@ -325,7 +325,7 @@ test.describe('Checkout público com cartão', () => {
     await page.getByLabel('CVV').fill(visaCard.cvv)
     await page.getByLabel('Parcelas').click()
     await page.getByRole('option', { name: /^1x\b/i }).click()
-    await page.getByRole('button', { name: 'Pagar com cartão' }).click()
+    await page.getByRole('button', { name: /^Pagar/ }).click()
 
     await expect(page).toHaveURL(new RegExp(`/compra/${saleUuid}$`))
 

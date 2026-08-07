@@ -369,13 +369,42 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ];
         }
 
+        // max_installments_no_interest é rejeitado pelo PagBank quando igual a 1
+        // ("should be equal 0 or greater than 1") — 0 = sem restrição, deixa o
+        // PagBank aplicar a própria política padrão de parcelas sem juros.
+        $normalizedMaxNoInterest = max(0, min(12, $maxInstallmentsNoInterest));
+        if ($normalizedMaxNoInterest === 1) {
+            $normalizedMaxNoInterest = 0;
+        }
+
         $response = $this->client($credentials)->get('/charges/fees/calculate', [
-            'payment_methods' => ['CREDIT_CARD'],
+            // precisa ser string escalar — como array (`['CREDIT_CARD']`) o
+            // PagBank não reconhece o parâmetro e responde payment_methods_is_required.
+            'payment_methods' => 'CREDIT_CARD',
             'value' => Money::toMinor((string) $order->total_amount),
             'max_installments' => max(1, min(12, $maxInstallments)),
-            'max_installments_no_interest' => max(1, min(12, $maxInstallmentsNoInterest)),
+            'max_installments_no_interest' => $normalizedMaxNoInterest,
             'credit_card_bin' => $normalizedBin,
         ]);
+
+        // BINs de bandeiras/emissores fora da base do PagBank (comum em sandbox,
+        // ex.: alguns cartões de teste Visa/Amex) respondem 400 credit_card_bin_data_not_found.
+        // Não é falha de integração — degrada para "sem parcelamento disponível"
+        // em vez de estourar erro pro comprador.
+        if (! $response->successful()) {
+            $bankError = (string) $response->json('error_messages.0.error', '');
+
+            if ($bankError === 'credit_card_bin_data_not_found') {
+                return [
+                    'provider' => 'pagbank',
+                    'available' => true,
+                    'brand' => null,
+                    'bin' => $normalizedBin,
+                    'options' => [],
+                ];
+            }
+        }
+
         $this->assertSuccessful($response, 'calculateInstallmentFees');
 
         $creditCardMethods = (array) $response->json('payment_methods.credit_card', []);

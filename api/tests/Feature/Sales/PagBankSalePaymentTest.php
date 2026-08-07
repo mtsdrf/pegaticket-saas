@@ -863,4 +863,77 @@ class PagBankSalePaymentTest extends TestCase
         $this->assertStringNotContainsString('ENCRYPTED_CREDIT_CARD_PAYLOAD', $contents);
         $this->assertStringNotContainsString('mreisf.contato@gmail.com', $contents);
     }
+
+    /**
+     * Regressão: `payment_methods` como array (`['CREDIT_CARD']`) faz o
+     * PagBank responder payment_methods_is_required, e
+     * max_installments_no_interest=1 (default do endpoint) é rejeitado com
+     * "should be equal 0 or greater than 1" — confirmado batendo direto na
+     * API sandbox real em 2026-08-07. Provider precisa mandar string escalar
+     * e normalizar 1 para 0.
+     */
+    #[Test]
+    public function installment_options_request_sends_pagbank_compatible_params(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/charges/fees/calculate*' => Http::response([
+                'payment_methods' => [
+                    'credit_card' => [
+                        'mastercard' => [
+                            'installment_plans' => [[
+                                'installments' => 1,
+                                'installment_value' => 4000,
+                                'interest_free' => true,
+                                'amount' => ['value' => 4000, 'currency' => 'BRL'],
+                            ]],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $response = $this->auth()->getJson("/api/v1/sales/{$order['uuid']}/payment-installment-options?credit_card_bin=524008");
+
+        $response->assertStatus(200)->assertJsonPath('data.brand', 'mastercard');
+
+        Http::assertSent(function ($request) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return ($query['payment_methods'] ?? null) === 'CREDIT_CARD'
+                && ($query['max_installments_no_interest'] ?? null) === '0'
+                && ($query['credit_card_bin'] ?? null) === '524008';
+        });
+    }
+
+    /**
+     * Regressão: BINs de teste fora da base do PagBank (comum em sandbox,
+     * confirmado com cartões Visa/Amex de tests/cartoes_teste_pagbank.txt)
+     * respondem 400 credit_card_bin_data_not_found. Isso não pode virar erro
+     * pro comprador — precisa degradar pra "sem parcelamento disponível".
+     */
+    #[Test]
+    public function installment_options_degrades_gracefully_when_pagbank_does_not_recognize_the_bin(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/charges/fees/calculate*' => Http::response([
+                'error_messages' => [[
+                    'error' => 'credit_card_bin_data_not_found',
+                    'description' => 'credit_card_bin data not found.',
+                    'parameter_name' => 'credit_card_bin',
+                ]],
+            ], 400),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $response = $this->auth()->getJson("/api/v1/sales/{$order['uuid']}/payment-installment-options?credit_card_bin=453962");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.available', true)
+            ->assertJsonPath('data.options', []);
+    }
 }

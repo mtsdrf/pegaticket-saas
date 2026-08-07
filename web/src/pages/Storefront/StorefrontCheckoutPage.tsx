@@ -363,6 +363,28 @@ function normalizeCardExpYearInput(value: string): string {
   return digits.slice(0, 2)
 }
 
+/**
+ * O PagBank cobra valor uniforme em todas as parcelas (juro já diluído
+ * igualmente). Pra deixar claro pro comprador que a 1ª parcela equivale ao
+ * valor à vista, recalculamos só para exibição: 1ª parcela = valor base ÷ N
+ * (sem juros), e o juro total do plano é redistribuído entre as demais
+ * (N-1) parcelas. A soma continua batendo com `option.total_amount`
+ * (o que de fato é cobrado no cartão) — não muda a cobrança, só o texto.
+ */
+function computeInstallmentBreakdown(option: SalePaymentInstallmentOption): {
+  firstInstallmentCents: number
+  remainingInstallmentCents: number
+  remainingCount: number
+} {
+  const baseAmountCents = option.total_amount - option.buyer_interest_total
+  const firstInstallmentCents = Math.round(baseAmountCents / option.installments)
+  const remainingCount = option.installments - 1
+  const remainingInstallmentCents =
+    remainingCount > 0 ? Math.round((option.total_amount - firstInstallmentCents) / remainingCount) : 0
+
+  return { firstInstallmentCents, remainingInstallmentCents, remainingCount }
+}
+
 function formatInstallmentOptionLabel(option: SalePaymentInstallmentOption): string {
   const installmentValue = formatCurrency(option.installment_value / 100)
   const totalAmount = formatCurrency(option.total_amount / 100)
@@ -371,7 +393,35 @@ function formatInstallmentOptionLabel(option: SalePaymentInstallmentOption): str
     return `${option.installments}x de ${installmentValue} sem juros`
   }
 
-  return `${option.installments}x de ${installmentValue} | total ${totalAmount} | juros ${formatCurrency(option.buyer_interest_total / 100)}`
+  const { firstInstallmentCents, remainingInstallmentCents, remainingCount } = computeInstallmentBreakdown(option)
+
+  if (remainingCount <= 0) {
+    return `${option.installments}x de ${installmentValue} | total ${totalAmount}`
+  }
+
+  return `${option.installments}x — 1ª de ${formatCurrency(firstInstallmentCents / 100)} sem juros + ${remainingCount}x de ${formatCurrency(remainingInstallmentCents / 100)} com juros | total ${totalAmount}`
+}
+
+function formatPayButtonLabel(option: SalePaymentInstallmentOption | undefined): string {
+  if (!option) return 'Pagar com cartão'
+
+  const installmentValue = formatCurrency(option.installment_value / 100)
+
+  if (option.installments <= 1) {
+    return `Pagar ${installmentValue} no cartão`
+  }
+
+  if (option.interest_free || option.buyer_interest_total <= 0) {
+    return `Pagar ${option.installments}x de ${installmentValue} sem juros`
+  }
+
+  const { firstInstallmentCents, remainingInstallmentCents, remainingCount } = computeInstallmentBreakdown(option)
+
+  if (remainingCount <= 0) {
+    return `Pagar ${formatCurrency(firstInstallmentCents / 100)} no cartão`
+  }
+
+  return `Pagar 1ª de ${formatCurrency(firstInstallmentCents / 100)} + ${remainingCount}x de ${formatCurrency(remainingInstallmentCents / 100)}`
 }
 
 function getCreditCardFieldErrors({
@@ -1305,7 +1355,14 @@ function CreditCardPaymentPanel({
                   : isLoadingInstallmentOptions
                     ? 'Consultando condições de parcelamento no PagBank…'
                     : selectedInstallmentOption && !selectedInstallmentOption.interest_free && selectedInstallmentOption.buyer_interest_total > 0
-                      ? `Juros cobrados do comprador: ${formatCurrency(selectedInstallmentOption.buyer_interest_total / 100)}`
+                      ? (() => {
+                          const { firstInstallmentCents, remainingInstallmentCents, remainingCount } =
+                            computeInstallmentBreakdown(selectedInstallmentOption)
+
+                          return remainingCount > 0
+                            ? `1ª parcela de ${formatCurrency(firstInstallmentCents / 100)} sem juros; demais ${remainingCount}x de ${formatCurrency(remainingInstallmentCents / 100)} com juros (total de juros: ${formatCurrency(selectedInstallmentOption.buyer_interest_total / 100)}).`
+                            : `Juros cobrados do comprador: ${formatCurrency(selectedInstallmentOption.buyer_interest_total / 100)}`
+                        })()
                       : 'Sem juros para o comprador.')
               }
             >
@@ -1323,7 +1380,7 @@ function CreditCardPaymentPanel({
               disabled={isSubmitting || !sdkReady}
               sx={{ minHeight: UI_SIZE.controlLarge }}
             >
-              {isSubmitting ? 'Processando…' : 'Pagar com cartão'}
+              {isSubmitting ? 'Processando…' : formatPayButtonLabel(selectedInstallmentOption)}
             </Button>
             <Button variant="text" onClick={() => navigate(`/compra/${saleUuid}`)}>
               Ver status da compra
