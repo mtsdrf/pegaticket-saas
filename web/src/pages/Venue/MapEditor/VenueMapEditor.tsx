@@ -102,6 +102,10 @@ function buildAreaPayload(points: Array<{ x: number; y: number }>, seats: Seat[]
   }
 }
 
+function shiftGeometryPoints(points: Array<{ x: number; y: number }>, dx: number, dy: number) {
+  return points.map((point) => ({ x: point.x + dx, y: point.y + dy }))
+}
+
 function buildBaseViewBox(venue: Venue | null, seats: Seat[]): ViewBox {
   if (venue?.width && venue?.height) {
     return { x: 0, y: 0, w: venue.width, h: venue.height }
@@ -330,6 +334,72 @@ export function VenueMapEditor() {
       }
     },
     [commitSeat, commitSeatDebounced],
+  )
+
+  const handleMoveSeat = useCallback((uuid: string, x: number, y: number) => {
+    setSeats((prev) =>
+      prev.map((seat) => {
+        if (seat.uuid !== uuid) return seat
+        const dx = x - seat.pos_x
+        const dy = y - seat.pos_y
+        return {
+          ...seat,
+          pos_x: x,
+          pos_y: y,
+          geometry_points: seat.geometry_points.length > 0 ? shiftGeometryPoints(seat.geometry_points, dx, dy) : seat.geometry_points,
+        }
+      }),
+    )
+  }, [])
+
+  const handleMoveSelection = useCallback((updates: Array<{ uuid: string; x: number; y: number }>) => {
+    const positions = new Map(updates.map((item) => [item.uuid, item]))
+    setSeats((prev) =>
+      prev.map((seat) => {
+        const next = positions.get(seat.uuid)
+        if (!next) return seat
+        const dx = next.x - seat.pos_x
+        const dy = next.y - seat.pos_y
+        return {
+          ...seat,
+          pos_x: next.x,
+          pos_y: next.y,
+          geometry_points: seat.geometry_points.length > 0 ? shiftGeometryPoints(seat.geometry_points, dx, dy) : seat.geometry_points,
+        }
+      }),
+    )
+  }, [])
+
+  const handleCommitMove = useCallback(
+    (uuid: string, x: number, y: number) => {
+      const seat = seats.find((item) => item.uuid === uuid)
+      if (!seat) return
+      const dx = x - seat.pos_x
+      const dy = y - seat.pos_y
+      commitSeat(uuid, {
+        pos_x: x,
+        pos_y: y,
+        geometry_points: seat.geometry_points.length > 0 ? shiftGeometryPoints(seat.geometry_points, dx, dy) : seat.geometry_points,
+      })
+    },
+    [commitSeat, seats],
+  )
+
+  const handleCommitSelectionMove = useCallback(
+    (updates: Array<{ uuid: string; x: number; y: number }>) => {
+      for (const item of updates) {
+        const seat = seats.find((current) => current.uuid === item.uuid)
+        if (!seat) continue
+        const dx = item.x - seat.pos_x
+        const dy = item.y - seat.pos_y
+        persistNow(item.uuid, {
+          pos_x: item.x,
+          pos_y: item.y,
+          geometry_points: seat.geometry_points.length > 0 ? shiftGeometryPoints(seat.geometry_points, dx, dy) : seat.geometry_points,
+        })
+      }
+    },
+    [persistNow, seats],
   )
 
   const handleCancelCreate = useCallback(() => {
@@ -845,6 +915,10 @@ export function VenueMapEditor() {
             disabled={isPasting}
             onViewBoxChange={setViewBox}
             onSelectReplace={handleSelectReplace}
+            onMoveSeat={handleMoveSeat}
+            onCommitMove={handleCommitMove}
+            onMoveSelection={handleMoveSelection}
+            onCommitSelectionMove={handleCommitSelectionMove}
             onCreateAt={handleCreateAt}
             onAreaDraftPointAdd={handleAreaDraftPointAdd}
             onAreaDraftPointMove={handleAreaDraftPointMove}

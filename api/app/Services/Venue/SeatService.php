@@ -130,7 +130,7 @@ class SeatService
             if (!empty($data)) {
                 $seat = $this->repository->update($seat, $data);
 
-                $changes = array_diff_assoc($seat->getAttributes(), $original);
+                $changes = $this->detectChangedAttributes($seat->getAttributes(), $original);
 
                 if (!empty($changes)) {
                     event(new SeatUpdated(
@@ -181,5 +181,36 @@ class SeatService
         if ((int) $venue->tenant_id !== (int) app('tenant_id')) {
             abort(404);
         }
+    }
+
+    /**
+     * `array_diff_assoc()` explode com campos array/JSON (`geometry_points`).
+     * Aqui comparamos valor a valor, normalizando arrays pra JSON estável.
+     *
+     * @return array<string, mixed>
+     */
+    private function detectChangedAttributes(array $current, array $original): array
+    {
+        $changes = [];
+
+        foreach ($current as $key => $value) {
+            $normalizedCurrent = $this->normalizeAttributeValue($value);
+            $normalizedOriginal = $this->normalizeAttributeValue($original[$key] ?? null);
+
+            if ($normalizedCurrent !== $normalizedOriginal) {
+                $changes[$key] = $value;
+            }
+        }
+
+        return $changes;
+    }
+
+    private function normalizeAttributeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+
+        return $value;
     }
 }

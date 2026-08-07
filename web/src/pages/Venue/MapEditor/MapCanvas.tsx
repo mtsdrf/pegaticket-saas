@@ -19,6 +19,10 @@ interface MapCanvasProps {
   backgroundImageUrl?: string | null
   onViewBoxChange: (vb: ViewBox) => void
   onSelectReplace: (uuids: string[]) => void
+  onMoveSeat: (uuid: string, x: number, y: number) => void
+  onCommitMove: (uuid: string, x: number, y: number) => void
+  onMoveSelection: (updates: Array<{ uuid: string; x: number; y: number }>) => void
+  onCommitSelectionMove: (updates: Array<{ uuid: string; x: number; y: number }>) => void
   onCreateAt: (kind: SeatKind, x: number, y: number) => void
   onAreaDraftPointAdd: (point: { x: number; y: number }) => void
   onAreaDraftPointMove: (point: { x: number; y: number } | null) => void
@@ -29,6 +33,14 @@ interface MapCanvasProps {
 type DragState =
   | { mode: 'idle' }
   | { mode: 'pan'; startClientX: number; startClientY: number; startViewBox: ViewBox }
+  | { mode: 'seat'; uuid: string; startSeatX: number; startSeatY: number; startClientX: number; startClientY: number; moved: boolean }
+  | {
+      mode: 'selection'
+      startClientX: number
+      startClientY: number
+      moved: boolean
+      seats: Array<{ uuid: string; startX: number; startY: number }>
+    }
   | { mode: 'rubber'; startX: number; startY: number; currentX: number; currentY: number }
   | { mode: 'clickCheck'; startClientX: number; startClientY: number }
 
@@ -44,6 +56,10 @@ export function MapCanvas({
   backgroundImageUrl,
   onViewBoxChange,
   onSelectReplace,
+  onMoveSeat,
+  onCommitMove,
+  onMoveSelection,
+  onCommitSelectionMove,
   onCreateAt,
   onAreaDraftPointAdd,
   onAreaDraftPointMove,
@@ -83,8 +99,34 @@ export function MapCanvas({
       const seatUuid = findSeatUuid(event.target)
 
       if (seatUuid) {
+        const seat = seats.find((item) => item.uuid === seatUuid)
+        if (!seat) return
+
+        if (selectedUuids.has(seatUuid) && selectedUuids.size > 1) {
+          dragRef.current = {
+            mode: 'selection',
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+            moved: false,
+            seats: seats
+              .filter((item) => selectedUuids.has(item.uuid))
+              .map((item) => ({ uuid: item.uuid, startX: item.pos_x, startY: item.pos_y })),
+          }
+          return
+        }
+
         if (!selectedUuids.has(seatUuid)) {
           onSelectReplace([seatUuid])
+        }
+
+        dragRef.current = {
+          mode: 'seat',
+          uuid: seatUuid,
+          startSeatX: seat.pos_x,
+          startSeatY: seat.pos_y,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          moved: false,
         }
         return
       }
@@ -98,7 +140,7 @@ export function MapCanvas({
       dragRef.current = { mode: 'rubber', startX: point.x, startY: point.y, currentX: point.x, currentY: point.y }
       setRubberRect({ x: point.x, y: point.y, w: 0, h: 0 })
     },
-    [disabled, findSeatUuid, onSelectReplace, pendingCreateKind, selectedUuids, viewBox],
+    [disabled, findSeatUuid, onSelectReplace, pendingCreateKind, seats, selectedUuids, viewBox],
   )
 
   const handleContextMenu = useCallback(
@@ -130,6 +172,34 @@ export function MapCanvas({
         return
       }
 
+      if (state.mode === 'seat') {
+        const scale = viewBox.w / svg.clientWidth
+        const dx = (event.clientX - state.startClientX) * scale
+        const dy = (event.clientY - state.startClientY) * scale
+        if (Math.abs(event.clientX - state.startClientX) > CLICK_THRESHOLD_PX || Math.abs(event.clientY - state.startClientY) > CLICK_THRESHOLD_PX) {
+          state.moved = true
+        }
+        onMoveSeat(state.uuid, state.startSeatX + dx, state.startSeatY + dy)
+        return
+      }
+
+      if (state.mode === 'selection') {
+        const scale = viewBox.w / svg.clientWidth
+        const dx = (event.clientX - state.startClientX) * scale
+        const dy = (event.clientY - state.startClientY) * scale
+        if (Math.abs(event.clientX - state.startClientX) > CLICK_THRESHOLD_PX || Math.abs(event.clientY - state.startClientY) > CLICK_THRESHOLD_PX) {
+          state.moved = true
+        }
+        onMoveSelection(
+          state.seats.map((seat) => ({
+            uuid: seat.uuid,
+            x: seat.startX + dx,
+            y: seat.startY + dy,
+          })),
+        )
+        return
+      }
+
       if (state.mode === 'rubber') {
         const point = clientToSvgPoint(svg, event.clientX, event.clientY)
         state.currentX = point.x
@@ -142,7 +212,7 @@ export function MapCanvas({
         })
       }
     },
-    [onViewBoxChange, viewBox.w],
+    [onMoveSeat, onMoveSelection, onViewBoxChange, viewBox.w],
   )
 
   const handlePointerUp = useCallback(
@@ -154,6 +224,29 @@ export function MapCanvas({
         event.currentTarget.releasePointerCapture(event.pointerId)
       }
       if (!svg) return
+
+      if (state.mode === 'seat') {
+        const seat = seats.find((item) => item.uuid === state.uuid)
+        if (seat && state.moved) {
+          onCommitMove(state.uuid, seat.pos_x, seat.pos_y)
+        }
+        return
+      }
+
+      if (state.mode === 'selection') {
+        if (state.moved) {
+          onCommitSelectionMove(
+            state.seats
+              .map((item) => {
+                const seat = seats.find((current) => current.uuid === item.uuid)
+                if (!seat) return null
+                return { uuid: item.uuid, x: seat.pos_x, y: seat.pos_y }
+              })
+              .filter((item): item is { uuid: string; x: number; y: number } => item !== null),
+          )
+        }
+        return
+      }
 
       if (state.mode === 'rubber') {
         const scale = viewBox.w / Math.max(svg.clientWidth, 1)
@@ -204,7 +297,7 @@ export function MapCanvas({
         return
       }
     },
-    [onAreaDraftComplete, onAreaDraftPointAdd, onCreateAt, onSelectReplace, pendingAreaPoints, pendingCreateKind, seats, viewBox.w],
+    [onAreaDraftComplete, onAreaDraftPointAdd, onCommitMove, onCommitSelectionMove, onCreateAt, onSelectReplace, pendingAreaPoints, pendingCreateKind, seats, viewBox.w],
   )
 
   const handlePointerCancel = useCallback((event: ReactPointerEvent<SVGSVGElement>) => {

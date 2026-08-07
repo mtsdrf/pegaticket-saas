@@ -4,6 +4,7 @@ namespace App\Http\Requests\Venue;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreSeatRequest extends FormRequest
 {
@@ -23,11 +24,27 @@ class StoreSeatRequest extends FormRequest
             'pos_y' => ['nullable', 'numeric'],
             'width' => ['nullable', 'numeric', 'gt:0'],
             'height' => ['nullable', 'numeric', 'gt:0'],
-            'geometry_points' => ['nullable', 'array', 'min:3'],
+            'geometry_points' => ['nullable', 'array'],
             'geometry_points.*.x' => ['required_with:geometry_points', 'numeric'],
             'geometry_points.*.y' => ['required_with:geometry_points', 'numeric'],
             'is_accessible' => ['boolean'],
             'status' => ['nullable', 'string', Rule::in(['disponivel', 'bloqueado', 'indisponivel'])],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $kind = $this->input('kind', 'assento');
+            $geometryPoints = $this->input('geometry_points');
+
+            if ($kind !== 'area') {
+                return;
+            }
+
+            if (!is_array($geometryPoints) || count($geometryPoints) < 3) {
+                $validator->errors()->add('geometry_points', 'O campo geometry points deve ter no mínimo 3 itens.');
+            }
+        });
     }
 }

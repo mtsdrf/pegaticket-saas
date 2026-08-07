@@ -36,6 +36,12 @@ interface EventFormState {
   reentry_cooldown_minutes: string
 }
 
+interface VenueOption {
+  value: string
+  label: string
+  hasPublishedMap: boolean
+}
+
 const EMPTY_FORM: EventFormState = {
   name: '',
   slug: '',
@@ -83,7 +89,7 @@ export function EventFormPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([])
-  const [venueOptions, setVenueOptions] = useState<{ value: string; label: string }[]>([])
+  const [venueOptions, setVenueOptions] = useState<VenueOption[]>([])
   const [isLoadingForm, setIsLoadingForm] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -102,16 +108,24 @@ export function EventFormPage() {
     Promise.all([categoriesPromise, venuesPromise, recordPromise])
       .then(([categories, venues, record]) => {
         setCategoryOptions(categories.items.map((category) => ({ value: category.uuid, label: category.name })))
-        setVenueOptions(
-          venues.items
-            .filter((venue) => venue.published_map_version)
-            .map((venue) => ({
-              value: venue.uuid,
-              label: `${venue.name} (mapa v${venue.published_map_version?.version_number})`,
-            })),
-        )
+
+        const nextVenueOptions: VenueOption[] = venues.items.map((venue) => ({
+          value: venue.uuid,
+          label: venue.published_map_version
+            ? `${venue.name} (mapa v${venue.published_map_version.version_number})`
+            : `${venue.name} (sem mapa publicado)`,
+          hasPublishedMap: Boolean(venue.published_map_version),
+        }))
 
         if (record) {
+          if (record.venue && !nextVenueOptions.some((option) => option.value === record.venue?.uuid)) {
+            nextVenueOptions.unshift({
+              value: record.venue.uuid,
+              label: `${record.venue.name} (vinculado ao evento: mapa v${record.venue.map_version_number})`,
+              hasPublishedMap: true,
+            })
+          }
+
           setSlugTouched(true)
           setForm({
             name: record.name,
@@ -135,6 +149,8 @@ export function EventFormPage() {
           })
           setExistingImageUrl(record.cover_image_url)
         }
+
+        setVenueOptions(nextVenueOptions)
       })
       .catch((error) => setLoadError(getApiErrorMessage(error, 'Não foi possível carregar os dados do evento agora.')))
       .finally(() => setIsLoadingForm(false))
@@ -154,6 +170,13 @@ export function EventFormPage() {
     event.preventDefault()
     setFormError(null)
     setFieldErrors({})
+
+    const selectedVenue = venueOptions.find((option) => option.value === form.venue_uuid)
+    if (selectedVenue && !selectedVenue.hasPublishedMap) {
+      setFormError('Selecione um local com mapa publicado para vincular ao evento.')
+      return
+    }
+
     setIsSubmitting(true)
 
     const payload = {
@@ -254,8 +277,10 @@ export function EventFormPage() {
           helperText={
             fieldErrors.venue_uuid?.[0] ??
             (venueOptions.length === 0
-              ? 'Nenhum local ativo com mapa publicado disponível ainda.'
-              : 'Opcional. O evento usará a última versão publicada do mapa deste local.')
+              ? 'Nenhum local ativo disponível ainda.'
+              : venueOptions.some((option) => option.hasPublishedMap)
+                ? 'Opcional. O evento usará a última versão publicada do mapa deste local.'
+                : 'Há locais ativos cadastrados, mas nenhum deles possui mapa publicado no momento.')
           }
         />
       </Box>
