@@ -87,7 +87,7 @@ class SalePushNotificationTest extends TestCase
                     $client->id,
                     __('messages.push.order_approved_title'),
                     __('messages.push.order_approved_body'),
-                    '/rastreio/' . $order->uuid
+                    '/compra/' . $order->uuid
                 );
         });
 
@@ -108,7 +108,7 @@ class SalePushNotificationTest extends TestCase
                     $client->id,
                     __('messages.push.order_rejected_title'),
                     __('messages.push.order_rejected_body'),
-                    '/rastreio/' . $order->uuid
+                    '/compra/' . $order->uuid
                 );
         });
 
