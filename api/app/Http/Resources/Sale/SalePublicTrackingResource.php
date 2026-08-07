@@ -61,7 +61,7 @@ class SalePublicTrackingResource extends JsonResource
             ),
             'ticket_pdf_url' => $this->when(
                 (bool) $this->is_paid,
-                fn () => rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$this->uuid.'/ingressos.pdf'
+                fn () => url('/api/v1/rastreio/'.$this->uuid.'/ingressos.pdf')
             ),
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'ticket_type_name' => $item->ticketType?->name ?? $item->eventProduct?->name,

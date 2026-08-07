@@ -35,7 +35,7 @@ class TicketPdfService
 
     public function publicDownloadUrl(Sale $sale): string
     {
-        return rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$sale->uuid.'/ingressos.pdf';
+        return url('/api/v1/rastreio/'.$sale->uuid.'/ingressos.pdf');
     }
 
     /**

@@ -949,7 +949,7 @@ function CreditCardPaymentPanel({
               </Alert>
             )}
 
-            <Box sx={{ perspective: '1400px' }}>
+            <Box sx={{ perspective: '1400px', width: '100%', maxWidth: 560, mx: 'auto' }}>
               <Box
                 sx={{
                   position: 'relative',
@@ -998,7 +998,7 @@ function CreditCardPaymentPanel({
                     sx={{ position: 'relative', zIndex: 1, justifyContent: 'space-between', alignItems: 'flex-start' }}
                   >
                     <Stack spacing={1.6}>
-                      <Typography sx={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.78 }}>
+                      <Typography sx={{ fontSize: 'clamp(11px, 2.9cqw, 12px)', letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.78 }}>
                         PegaTicket
                       </Typography>
                       <Box
@@ -1029,11 +1029,12 @@ function CreditCardPaymentPanel({
                     sx={{
                       position: 'relative',
                       zIndex: 1,
-                      fontSize: { xs: 24, sm: 28 },
+                      fontSize: 'clamp(22px, 7.3cqw, 28px)',
                       letterSpacing: '0.14em',
                       fontWeight: 600,
-                      mt: '40px',
+                      mt: '8.2cqw',
                       mb: '-12px',
+                      lineHeight: 1.05,
                     }}
                   >
                     {formatCardPreviewNumber(cardNumber)}
@@ -1045,13 +1046,13 @@ function CreditCardPaymentPanel({
                     sx={{ position: 'relative', zIndex: 1, mt: 'auto', pr: '22%', alignItems: 'flex-end' }}
                   >
                     <Box sx={{ minWidth: 0, flex: '1 1 auto', maxWidth: 'calc(100% - 14cqw)' }}>
-                      <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
+                      <Typography sx={{ fontSize: 'clamp(10px, 2.55cqw, 11px)', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
                         Titular
                       </Typography>
                       <Typography
                         noWrap
                         sx={{
-                          fontSize: 14,
+                          fontSize: 'clamp(12px, 3.35cqw, 14px)',
                           fontWeight: 600,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -1062,10 +1063,10 @@ function CreditCardPaymentPanel({
                       </Typography>
                     </Box>
                     <Box sx={{ flexShrink: 0 }}>
-                      <Typography sx={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
+                      <Typography sx={{ fontSize: 'clamp(10px, 2.55cqw, 11px)', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68 }}>
                         Validade
                       </Typography>
-                      <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                      <Typography sx={{ fontSize: 'clamp(12px, 3.35cqw, 14px)', fontWeight: 600 }}>
                         {(normalizeDigits(expMonth).slice(0, 2) || 'MM')}/{(normalizeDigits(expYear).slice(0, 2) || 'AA')}
                       </Typography>
                     </Box>
@@ -1098,11 +1099,11 @@ function CreditCardPaymentPanel({
                         }}
                       />
                     ) : (
-                      <Box
-                        sx={{
-                          width: '100%',
-                          aspectRatio: '1.4 / 1',
-                          borderRadius: '10%',
+                        <Box
+                          sx={{
+                            width: '100%',
+                            aspectRatio: '1.4 / 1',
+                            borderRadius: '10%',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1111,9 +1112,10 @@ function CreditCardPaymentPanel({
                           color: 'rgba(243, 251, 247, 0.84)',
                           fontSize: 11,
                           letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          flexShrink: 0,
-                        }}
+                            textTransform: 'uppercase',
+                            flexShrink: 0,
+                            display: { xs: 'none', sm: 'inline-flex' },
+                          }}
                         >
                           Bandeira
                         </Box>
@@ -1150,7 +1152,7 @@ function CreditCardPaymentPanel({
                   />
                   <Box sx={{ height: '26%', background: '#09110f', mt: '2%', position: 'relative', zIndex: 1 }} />
                   <Box sx={{ px: '5.8%', pt: '6%', position: 'relative', zIndex: 1 }}>
-                    <Typography sx={{ mb: 1, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.64 }}>
+                    <Typography sx={{ mb: 1, fontSize: 'clamp(10px, 2.55cqw, 11px)', letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.64 }}>
                       Código de segurança
                     </Typography>
                     <Box
@@ -1163,7 +1165,7 @@ function CreditCardPaymentPanel({
                         display: 'flex',
                         justifyContent: 'flex-end',
                         alignItems: 'center',
-                        fontSize: 18,
+                        fontSize: 'clamp(16px, 4.2cqw, 18px)',
                         fontWeight: 700,
                         letterSpacing: '0.22em',
                         minHeight: 48,
@@ -1172,7 +1174,7 @@ function CreditCardPaymentPanel({
                       {securityCode || '•••'}
                     </Box>
                   </Box>
-                  <Typography sx={{ px: '5.8%', pt: '3%', position: 'relative', zIndex: 1, fontSize: 12, lineHeight: 1.5, color: 'rgba(243, 251, 247, 0.72)' }}>
+                  <Typography sx={{ px: '5.8%', pt: '3%', position: 'relative', zIndex: 1, fontSize: 'clamp(11px, 2.85cqw, 12px)', lineHeight: 1.5, color: 'rgba(243, 251, 247, 0.72)' }}>
                     Confira o número, o nome do titular e o CVV exatamente como aparecem no cartão antes de concluir o pagamento.
                   </Typography>
                 </Box>

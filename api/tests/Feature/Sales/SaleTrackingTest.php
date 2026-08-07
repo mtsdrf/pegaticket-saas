@@ -90,7 +90,7 @@ class SaleTrackingTest extends TestCase
             ->assertJsonPath('data.uuid', $order->uuid)
             ->assertJsonPath('data.tenant_name', $tenant->name)
             ->assertJsonPath('data.final_customer_name', $client->name)
-            ->assertJsonPath('data.ticket_pdf_url', rtrim((string) config('app.url'), '/').'/api/v1/rastreio/'.$order->uuid.'/ingressos.pdf');
+            ->assertJsonPath('data.ticket_pdf_url', url('/api/v1/rastreio/'.$order->uuid.'/ingressos.pdf'));
     }
 
     #[Test]
