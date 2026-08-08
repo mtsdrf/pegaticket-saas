@@ -10,7 +10,7 @@ import { ImageUploadField } from '../../../components/shared/ImageUploadField'
 import { ACCESS } from '../../../access/requirements'
 import { useAuth } from '../../../hooks/useAuth'
 import * as tenantProfileService from '../../../services/tenantProfileService'
-import { CARD_EQUAL_HEIGHT_SX, CLAMP_TEXT_3_SX, UI_RADIUS, UI_SIZE } from '../../../styles/layoutStandards'
+import { CARD_EQUAL_HEIGHT_SX, CLAMP_TEXT_3_SX, FORM_GRID_2_SX, UI_RADIUS, UI_SIZE } from '../../../styles/layoutStandards'
 import { ApiRequestError, getApiErrorMessage } from '../../../types/api'
 import type { TenantProfile } from '../../../types/tenantProfile'
 import { formatCpfCnpj, normalizeCpfCnpj } from '../../../utils/cpfCnpj'
@@ -274,43 +274,47 @@ export function CompanyBlock() {
       <Stack spacing={1.5} sx={{ mb: 2.5 }}>
         <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Links públicos da empresa</Typography>
         <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1.5}>
-          <PublicLinkCard
-            icon={<StorefrontOutlinedIcon fontSize="small" />}
-            title="Bilheteria online"
-            description="Use este endereço para divulgar o catálogo e receber compras pela vitrine pública."
-            url={storefrontUrl}
-            onCopy={handleCopyLink}
-            qrCodeFileName={`qr-code-eventos-${profile?.slug ?? 'pegaticket'}`}
-          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <PublicLinkCard
+              icon={<StorefrontOutlinedIcon fontSize="small" />}
+              title="Bilheteria online"
+              description="Use este endereço para divulgar o catálogo e receber compras pela vitrine pública."
+              url={storefrontUrl}
+              onCopy={handleCopyLink}
+              qrCodeFileName={`qr-code-eventos-${profile?.slug ?? 'pegaticket'}`}
+            />
+          </Box>
         </Stack>
       </Stack>
 
-      <TextField
-        label="Nome da empresa"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        error={Boolean(fieldErrors.name)}
-        helperText={fieldErrors.name?.[0]}
-        disabled={!canUpdate}
-        required
-        fullWidth
-        sx={{ maxWidth: { sm: 480 }, mb: 2.5 }}
-        slotProps={{ htmlInput: { maxLength: 255 } }}
-      />
+      <Box sx={{ ...FORM_GRID_2_SX, mb: 2.5 }}>
+        <TextField
+          label="Nome da empresa"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          error={Boolean(fieldErrors.name)}
+          helperText={fieldErrors.name?.[0]}
+          disabled={!canUpdate}
+          required
+          fullWidth
+          slotProps={{ htmlInput: { maxLength: 255 } }}
+        />
 
-      <TextField
-        label="CNPJ"
-        value={cnpj}
-        onChange={(event) => setCnpj(formatCpfCnpj(event.target.value))}
-        error={Boolean(fieldErrors.cnpj)}
-        helperText={fieldErrors.cnpj?.[0] ?? 'Aceita CNPJ numérico ou alfanumérico.'}
-        disabled={!canUpdate}
-        fullWidth
-        sx={{ maxWidth: { sm: 320 }, mb: 2.5 }}
-        slotProps={{ htmlInput: { maxLength: 18 } }}
-      />
+        <TextField
+          label="CNPJ"
+          value={cnpj}
+          onChange={(event) => setCnpj(formatCpfCnpj(event.target.value))}
+          error={Boolean(fieldErrors.cnpj)}
+          helperText={fieldErrors.cnpj?.[0] ?? 'Aceita CNPJ numérico ou alfanumérico.'}
+          disabled={!canUpdate}
+          fullWidth
+          slotProps={{ htmlInput: { maxLength: 18 } }}
+        />
+      </Box>
 
-      <ImageUploadField label="Logo da empresa" existingImageUrl={profile.logo_url} onFileSelected={setLogoFile} />
+      <Box sx={{ width: '100%', maxWidth: { md: 'calc(50% - 8px)' } }}>
+        <ImageUploadField label="Logo da empresa" existingImageUrl={profile.logo_url} onFileSelected={setLogoFile} />
+      </Box>
 
       {canUpdate && (
         <Stack direction="row" sx={{ mt: 3, justifyContent: 'flex-end' }}>
