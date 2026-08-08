@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Contracts\Payment\PaymentProviderInterface;
 use App\DTOs\Payment\PagBankChargeRequestDTO;
 use App\DTOs\Payment\PagBankChargeResponseDTO;
+use App\Enums\Payment\PaymentStatus;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Models\FinalCustomer\FinalCustomerTenantLink;
 use App\Models\Finance\PlatformFinanceSettings;
@@ -65,6 +66,30 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     private const SDK_BASE_URL_SANDBOX = 'https://sandbox.sdk.pagseguro.com';
 
     private const SDK_BASE_URL_PRODUCTION = 'https://sdk.pagseguro.com';
+
+    /**
+     * TODO: confirmar nome exato do campo de tarifa/fee cobrado pelo
+     * PagBank na resposta de charge (`GET /orders/{id}`, `GET
+     * /charges/{id}`) antes de produção — a doc oficial
+     * (developer.pagbank.com.br, consultada em 2026-08-08 para o roadmap
+     * R5/gap 2.9) NÃO documenta nenhum campo de fee/tarifa/MDR nesses
+     * endpoints hoje: nem em `amount.summary` (só `total`/`paid`/
+     * `refunded`), nem em `payment_response`, nem em `charges[]` (schema
+     * vazio). Os paths abaixo são candidatos defensivos (nomenclatura
+     * comum de outros gateways) prontos para o dia em que o PagBank
+     * passar a expor esse dado — até lá, `extractActualFeeCents()` sempre
+     * retorna null e `sales.pagbank_fee_actual` permanece nulo (nunca
+     * estimado, ver skill pagbank-integration.md §6).
+     *
+     * @var array<int, string>
+     */
+    private const ACTUAL_FEE_CANDIDATE_PATHS = [
+        'fees.value',
+        'fee.value',
+        'amount.summary.fee',
+        'amount.fees.total',
+        'payment_response.fee.value',
+    ];
 
     public function __construct(
         private PagBankTransactionLogger $transactionLogger,
@@ -233,7 +258,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
             return [
                 'provider_charge_id' => $providerChargeId,
-                'status' => $this->mapStatus((string) ($firstCharge['status'] ?? '')),
+                'status' => $this->mapStatus((string) ($firstCharge['status'] ?? ''))->value,
                 'amount' => isset($firstCharge['amount']['value'])
                     ? Money::normalize(((int) $firstCharge['amount']['value']) / 100)
                     : null,
@@ -443,20 +468,99 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
+     * Captura o custo real do PSP para esta venda a partir do payload de
+     * um Order do PagBank (resposta de criação OU reconsulta via webhook/
+     * reconciliação — ver PaymentWebhookController::handlePagBank e
+     * ReconcilePagBankSalePaymentsCommand). Roadmap R5, gap 2.9 / decisão
+     * #1 da seção 5: distinto da estimativa do simulador
+     * (TicketFeeSimulationService), só grava quando o valor vier
+     * efetivamente do PagBank — nunca estima.
+     *
+     * Imutável após a primeira captura (mesma postura de
+     * persistReceiverSnapshot() pós-pagamento): uma reconsulta posterior
+     * não reescreve o custo já registrado.
+     */
+    public function captureActualFeeForSale(Sale $sale, array $orderPayload): void
+    {
+        if ($sale->pagbank_fee_actual !== null) {
+            return;
+        }
+
+        $charge = (array) data_get($orderPayload, 'charges.0', []);
+        $feeCents = $this->extractActualFeeCents($charge);
+
+        if ($feeCents === null) {
+            return;
+        }
+
+        $sale->forceFill([
+            'pagbank_fee_actual' => Money::normalize($feeCents / 100),
+            'pagbank_fee_actual_captured_at' => now(),
+        ])->save();
+
+        $this->transactionLogger->metric('pagbank_fee_actual_captured', [
+            'sale_uuid' => $sale->uuid,
+            'tenant_id' => $sale->tenant_id,
+            'pagbank_fee_actual' => (string) $sale->pagbank_fee_actual,
+        ]);
+
+        $this->checkMarginAlert($sale);
+    }
+
+    /**
+     * Alerta interno (skill pagbank-integration.md §6): `platform_net_
+     * revenue = platform_fee_total_amount - pagbank_fee_actual` <= 0
+     * nunca deve passar silencioso. Sem canal externo nesta fase (roadmap
+     * R5) — só log estruturado no mesmo canal `pagbank_transactions`.
+     */
+    private function checkMarginAlert(Sale $sale): void
+    {
+        $netRevenue = $sale->platformNetRevenue();
+
+        if ($netRevenue === null || Money::toMinor($netRevenue) > 0) {
+            return;
+        }
+
+        $this->transactionLogger->warning('pagbank.margin.non_positive_net_revenue', [
+            'sale_uuid' => $sale->uuid,
+            'tenant_id' => $sale->tenant_id,
+            'platform_fee_total_amount' => (string) $sale->platform_fee_total_amount,
+            'pagbank_fee_actual' => (string) $sale->pagbank_fee_actual,
+            'platform_net_revenue' => $netRevenue,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $charge
+     */
+    private function extractActualFeeCents(array $charge): ?int
+    {
+        foreach (self::ACTUAL_FEE_CANDIDATE_PATHS as $path) {
+            $value = data_get($charge, $path);
+
+            if (is_numeric($value)) {
+                return (int) $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Vocabulário interno usado por SalePaymentService/reconciliação (mesmo
      * de MercadoPagoPaymentProvider::mapStatus) — mapeado a partir dos
      * status documentados de charge (PAID/AUTHORIZED/IN_ANALYSIS/DECLINED/
      * CANCELED/WAITING, developer.pagbank.com.br/reference/objeto-order).
      */
-    private function mapStatus(string $pagBankStatus): string
+    private function mapStatus(string $pagBankStatus): PaymentStatus
     {
         return match ($pagBankStatus) {
-            'PAID' => 'paid',
-            'AUTHORIZED' => 'authorized',
-            'IN_ANALYSIS' => 'in_analysis',
-            'DECLINED' => 'failed',
-            'CANCELED' => 'canceled',
-            default => 'pending', // inclui WAITING, IN_ANALYSIS, ''
+            'PAID' => PaymentStatus::Paid,
+            'AUTHORIZED' => PaymentStatus::Authorized,
+            'IN_ANALYSIS' => PaymentStatus::InAnalysis,
+            'DECLINED' => PaymentStatus::Failed,
+            'CANCELED' => PaymentStatus::Canceled,
+            default => PaymentStatus::Pending, // inclui WAITING, IN_ANALYSIS, ''
         };
     }
 
@@ -618,6 +722,14 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
         try {
             $response = $this->client($credentials)->post('/orders', $body);
+
+            $this->transactionLogger->metric('pagbank_orders_total', [
+                'reference_id' => $request->referenceId,
+                'method' => $request->method,
+                'sale_uuid' => $sale?->uuid,
+                'tenant_id' => $sale?->tenant_id,
+            ]);
+
             $this->assertSuccessful($response, 'createOrder');
 
             $this->transactionLogger->info('pagbank.create_order.response', [
@@ -633,6 +745,24 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             $splitId = $this->extractSplitIdFromResponse($response->json());
             $splitReleaseScheduled = null;
 
+            if ($chargeStatus === 'PAID' || $chargeStatus === 'AUTHORIZED') {
+                $this->transactionLogger->metric('pagbank_payment_approved', [
+                    'reference_id' => $request->referenceId,
+                    'status' => $chargeStatus,
+                    'sale_uuid' => $sale?->uuid,
+                ]);
+            } elseif ($chargeStatus === 'DECLINED') {
+                $this->transactionLogger->metric('pagbank_payment_declined', [
+                    'reference_id' => $request->referenceId,
+                    'status' => $chargeStatus,
+                    'sale_uuid' => $sale?->uuid,
+                ]);
+            }
+
+            if ($sale !== null) {
+                $this->captureActualFeeForSale($sale, $response->json());
+            }
+
             if ($split !== null) {
                 $lastReceiver = $split['receivers'][count($split['receivers']) - 1] ?? null;
                 $splitReleaseScheduled = $lastReceiver['configurations']['custody']['release']['scheduled'] ?? null;
@@ -640,7 +770,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
             return PagBankChargeResponseDTO::fromArray([
                 'id' => $response->json('id', ''),
-                'status' => $request->method === 'pix' ? 'pending' : $this->mapStatus($chargeStatus),
+                'status' => $request->method === 'pix' ? 'pending' : $this->mapStatus($chargeStatus)->value,
                 'method' => $request->method,
                 'amount' => Money::normalize(((int) ($firstCharge['amount']['value'] ?? $chargeAmountCents)) / 100),
                 'metadata' => [
@@ -665,6 +795,13 @@ class PagBankPaymentProvider implements PaymentProviderInterface
                 'reference_id' => $request->referenceId,
                 'request_body' => $body,
                 'exception' => $e,
+            ]);
+
+            $this->transactionLogger->metric('pagbank_orders_failed', [
+                'reference_id' => $request->referenceId,
+                'method' => $request->method,
+                'sale_uuid' => $sale?->uuid,
+                'tenant_id' => $sale?->tenant_id,
             ]);
 
             return PagBankChargeResponseDTO::fromArray([
@@ -861,6 +998,18 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         if ($tenantAccountId === '') {
+            // Plataforma configurada (platformAccountId !== '', já validado
+            // acima) mas sem conta de tenant elegível para o split — a
+            // venda segue sem split (100% na conta cujas credenciais o
+            // pedido usar), então a PegaTicket não recebe repasse desta
+            // venda via split. Métrica pagbank_split_failed (skill
+            // pagbank-integration.md §54) sinaliza esse caso para
+            // investigação, não é o caminho feliz.
+            $this->transactionLogger->metric('pagbank_split_failed', [
+                'tenant_id' => $tenantId,
+                'reason' => 'tenant_account_not_resolved',
+            ]);
+
             return null;
         }
 

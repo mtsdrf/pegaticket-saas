@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -10,15 +11,15 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
 {
+    use CreatesSaleFixtures;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -33,7 +34,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     private function createOrderWithPayment(string $paymentStatus = 'pending', string $amount = '75.50'): array
@@ -43,8 +44,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => (float) $amount]);
 
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/sales', [
                 'final_customer_uuid' => $client->uuid,
                 'is_installment' => false,
@@ -60,7 +60,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
             'payable_type' => Sale::class,
             'payable_id' => $order->id,
             'provider' => 'mercadopago',
-            'provider_charge_id' => 'ORD-' . Str::upper(Str::random(16)),
+            'provider_charge_id' => 'ORD-'.Str::upper(Str::random(16)),
             'method' => 'pix',
             'amount' => $amount,
             'status' => $paymentStatus,
@@ -94,7 +94,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
         $payment->refresh();
         $order->refresh();
 
-        $this->assertSame('paid', $payment->status);
+        $this->assertSame(PaymentStatus::Paid, $payment->status);
         $this->assertTrue((bool) $order->is_paid);
     }
 
@@ -122,7 +122,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
         $payment->refresh();
         $order->refresh();
 
-        $this->assertSame('paid', $payment->status);
+        $this->assertSame(PaymentStatus::Paid, $payment->status);
         $this->assertTrue((bool) $order->is_paid);
     }
 
@@ -149,7 +149,7 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
 
         $payment->refresh();
 
-        $this->assertSame('failed', $payment->status);
+        $this->assertSame(PaymentStatus::Failed, $payment->status);
     }
 
     /**
@@ -184,8 +184,8 @@ class ReconcileMercadoPagoSalePaymentsCommandTest extends TestCase
         $order->refresh();
 
         $this->assertNotSame(0, $exitCode);
-        $this->assertSame('pending', $failingPayment->status);
-        $this->assertSame('paid', $okPayment->status);
+        $this->assertSame(PaymentStatus::Pending, $failingPayment->status);
+        $this->assertSame(PaymentStatus::Paid, $okPayment->status);
         $this->assertTrue((bool) $order->is_paid);
     }
 }

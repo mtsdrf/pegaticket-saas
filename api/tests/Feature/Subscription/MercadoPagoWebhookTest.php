@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Subscription;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\Finance\Receivable;
 use App\Models\Finance\Settlement;
 use App\Models\Sale\Sale;
@@ -271,7 +272,7 @@ class MercadoPagoWebhookTest extends TestCase
         $payment->refresh();
         $order->refresh();
 
-        $this->assertSame('paid', $payment->status);
+        $this->assertSame(PaymentStatus::Paid, $payment->status);
         $this->assertTrue((bool) $order->is_paid);
     }
 
@@ -387,7 +388,7 @@ class MercadoPagoWebhookTest extends TestCase
 
         $payment->refresh();
 
-        $this->assertSame('divergent', $payment->status);
+        $this->assertSame(PaymentStatus::Divergent, $payment->status);
         $this->assertDatabaseHas('refunds', [
             'payment_id' => $payment->id,
             'provider_refund_id' => 'chb_1',
@@ -461,8 +462,8 @@ class MercadoPagoWebhookTest extends TestCase
         $paymentA->refresh();
         $paymentB->refresh();
 
-        $this->assertSame('divergent', $paymentA->status);
-        $this->assertSame('divergent', $paymentB->status);
+        $this->assertSame(PaymentStatus::Divergent, $paymentA->status);
+        $this->assertSame(PaymentStatus::Divergent, $paymentB->status);
 
         $this->assertDatabaseHas('refunds', ['payment_id' => $paymentA->id, 'provider_refund_id' => 'chb_shared']);
         $this->assertDatabaseHas('refunds', [
@@ -507,7 +508,7 @@ class MercadoPagoWebhookTest extends TestCase
 
         $payment->refresh();
 
-        $this->assertSame('divergent', $payment->status);
+        $this->assertSame(PaymentStatus::Divergent, $payment->status);
         $this->assertDatabaseHas('refunds', [
             'payment_id' => $payment->id,
             'provider_refund_id' => 'fraud-alert:ORD01JQ4S4KY8HWQ6NA5PXB65B3D3',
@@ -554,7 +555,7 @@ class MercadoPagoWebhookTest extends TestCase
         $payment->refresh();
         $invoice->refresh();
 
-        $this->assertSame('divergent', $payment->status);
+        $this->assertSame(PaymentStatus::Divergent, $payment->status);
         $this->assertSame('disputed', $invoice->status);
         $this->assertNotNull($invoice->dispute_deadline_at);
 
@@ -604,6 +605,6 @@ class MercadoPagoWebhookTest extends TestCase
         $this->assertNull($event->processed_at);
 
         $payment->refresh();
-        $this->assertSame('paid', $payment->status);
+        $this->assertSame(PaymentStatus::Paid, $payment->status);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Support\Payment;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
 use App\Support\Money;
@@ -31,8 +32,8 @@ class ExternalPaymentReviewRegistrar
             $payment->loadMissing('payable');
             $tenantId = $payment->payable?->tenant_id;
 
-            if (! in_array($payment->status, ['refunded', 'failed'], true)) {
-                $payment->status = 'divergent';
+            if (! in_array($payment->status, [PaymentStatus::Refunded, PaymentStatus::Failed], true)) {
+                $payment->status = PaymentStatus::Divergent;
                 $payment->save();
             }
 
@@ -68,6 +69,6 @@ class ExternalPaymentReviewRegistrar
 
     private function generateProtocol(): string
     {
-        return 'REF-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6));
+        return 'REF-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6));
     }
 }

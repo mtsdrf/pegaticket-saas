@@ -12,6 +12,7 @@ use App\Models\Storefront\SaleRating;
 use App\Models\Subscription\Payment;
 use App\Models\Tenant\Tenant;
 use App\Models\User\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 class Sale extends BaseModel
@@ -42,6 +43,8 @@ class Sale extends BaseModel
         'discount_amount',
         'platform_fee_total_amount',
         'platform_fee_payer_snapshot',
+        'pagbank_fee_actual',
+        'pagbank_fee_actual_captured_at',
         'tenant_receiver_provider',
         'tenant_receiver_account_id_snapshot',
         'tenant_receiver_source_snapshot',
@@ -78,6 +81,8 @@ class Sale extends BaseModel
         'service_fee' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'platform_fee_total_amount' => 'decimal:2',
+        'pagbank_fee_actual' => 'decimal:2',
+        'pagbank_fee_actual_captured_at' => 'datetime',
         'paid_amount' => 'decimal:2',
         'needs_change' => 'boolean',
         'change_for_amount' => 'decimal:2',
@@ -170,6 +175,25 @@ class Sale extends BaseModel
         return self::normalizeOrigin($origin) === 'storefront'
             ? self::CHANNEL_STOREFRONT
             : self::CHANNEL_STAFF;
+    }
+
+    /**
+     * Margem líquida da plataforma nesta venda (roadmap R5, gap 2.9 /
+     * skill pagbank-integration.md §6): `platform_fee_total_amount -
+     * pagbank_fee_actual`. Retorna null quando o custo real do PSP ainda
+     * não foi capturado — NUNCA estima (a estimativa de custo PagBank vive
+     * só no simulador, `TicketFeeSimulationService`), para não confundir
+     * receita líquida real com projeção.
+     */
+    public function platformNetRevenue(): ?string
+    {
+        if ($this->pagbank_fee_actual === null) {
+            return null;
+        }
+
+        $netCents = Money::toMinor((string) $this->platform_fee_total_amount) - Money::toMinor((string) $this->pagbank_fee_actual);
+
+        return Money::normalize($netCents / 100);
     }
 
     public function finalCustomer()

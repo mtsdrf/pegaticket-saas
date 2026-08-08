@@ -23,6 +23,8 @@ use App\Services\APIResponse;
 use App\Services\Portal\PortalCustomerService;
 use App\Services\Portal\PortalSaleCancellationService;
 use App\Services\Sale\SalePaymentService;
+use App\Services\Security\AntiBotGuardService;
+use App\Services\Security\PaymentChargeAttemptLimiter;
 use App\Services\Storefront\SaleRatingService;
 use App\Services\Ticket\TicketService;
 
@@ -34,6 +36,8 @@ class PortalController extends Controller
         private PortalSaleCancellationService $cancellationService,
         private SalePaymentService $paymentService,
         private TicketService $ticketService,
+        private AntiBotGuardService $antiBotGuard,
+        private PaymentChargeAttemptLimiter $paymentChargeAttemptLimiter,
     ) {}
 
     public function sales()
@@ -168,17 +172,32 @@ class PortalController extends Controller
 
     public function paymentCharge(SalePaymentChargeRequest $request, string $uuid)
     {
+        $this->antiBotGuard->assertHuman(
+            $request->validated('website'),
+            $request->validated('form_rendered_at'),
+            $request->validated('turnstile_token'),
+            $request->ip()
+        );
+
         $sale = $this->service->findOwnedOrder(portal_customer()->id, $uuid);
+
+        $this->paymentChargeAttemptLimiter->assertNotExceeded($sale->uuid);
 
         app()->instance('tenant_id', $sale->tenant_id);
 
         try {
             $payment = $this->paymentService->createChargeForOrder($sale, $request->validated());
         } catch (InvalidSaleStateException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_OPERATION_IN_PROGRESS');
         } catch (PaymentProviderException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
         }
 

@@ -50,13 +50,13 @@ A especificação da seção 9 pede uma máquina mais rica (`STARTED`, `PENDING_
 
 ### 2.4 3 decisões de produto pendentes — bloqueiam código de recuperação — ver seção 5
 
-### 2.5 reCAPTCHA / anti-bot no checkout — skill §31, §50 — **VERIFICAR, PROVAVELMENTE AUSENTE**
+### 2.5 reCAPTCHA / anti-bot no checkout — skill §31, §50 — **FECHADO em R4 (2026-08-08)**
 
-Não encontrado em nenhum dos serviços de pagamento levantados. É pré-requisito explícito do formulário de homologação (§50: "nunca marcar Sim apenas para passar na homologação"). Precisa ser implementado antes de abrir o chamado, não depois.
+Reaplicado o padrão já existente (`App\Services\Security\AntiBotGuardService` — honeypot + tempo mínimo de preenchimento + Cloudflare Turnstile, usado em hold/waitlist/convite) às 2 rotas públicas de cobrança: `POST /rastreio/{sale}/payment-charge` (`SaleTrackingController`) e `POST /portal/sales/{uuid}/payment-charge` (`PortalController`). Campos `website`/`form_rendered_at`/`turnstile_token` adicionados como opcionais em `App\Http\Requests\Sale\SalePaymentChargeRequest` (compartilhado pelas 3 rotas de charge); `assertHuman()` chamado no Controller (mesmo ponto de invocação do padrão existente), não na rota de staff (`SaleController::paymentCharge`, autenticado + `perm:sales,update` — anti-bot não se aplica a tráfego não-anônimo). Turnstile continua desabilitado automaticamente sem `TURNSTILE_SECRET_KEY` configurado. Testes em `tests/Feature/Security/PaymentChargeSecurityTest.php`.
 
-### 2.6 Rate limiting / anti card-testing dedicado no checkout — skill §31 — **VERIFICAR**
+### 2.6 Rate limiting / anti card-testing dedicado no checkout — skill §31 — **FECHADO em R4 (2026-08-08)**
 
-Rotas de charge (`/sales/{sale}/payment-charge`, `/rastreio/.../payment-charge`, `/portal/.../payment-charge`) precisam ser conferidas quanto a `throttle` específico (não apenas o throttle genérico de autenticação) e proteção contra tentativas repetidas de cartão no mesmo pedido/IP.
+Duas camadas, complementares ao `throttle:{max},{min}` fixo já existente nas 3 rotas: (1) `adaptive.throttle:3,60` (middleware já existente, `App\Http\Middleware\AdaptiveThrottleMiddleware`) adicionado às 2 rotas públicas — throttle agressivo extra só para IP já marcado suspeito pelo anti-bot; não aplicado à rota de staff (não faz sentido por IP para usuário autenticado). (2) `App\Services\Security\PaymentChargeAttemptLimiter` (novo, cache simples `payment-charge-attempts:{sale_uuid}`, TTL 10min, limite 5) aplicado às 3 rotas — protege a MESMA venda contra card-testing independente de IP/autenticação (um atacante rotaciona IP, não rotaciona a venda-alvo); conta só tentativas FRACASSADAS (`InvalidSaleStateException`/`PaymentOperationInProgressException`/`PaymentProviderException`), estourar o limite responde `429` via `abort()` (convertido pelo handler genérico `HttpException` de `bootstrap/app.php`, mesmo padrão de `AntiBotGuardService`). Mensagem `messages.security.payment_charge_attempts_exceeded`. Testes em `tests/Feature/Security/PaymentChargeSecurityTest.php` (429 nas 3 rotas após 5 tentativas fracassadas na mesma venda).
 
 ### 2.7 Máquina de estados de pagamento formal — skill §61 — **AUSENTE (string livre hoje)**
 
@@ -66,9 +66,9 @@ Rotas de charge (`/sales/{sale}/payment-charge`, `/rastreio/.../payment-charge`,
 
 Webhook já é idempotente. Falta confirmar: criação de `Order`/charge tem `payment_attempt_uuid` reaproveitado em retry por timeout (não apenas idempotência de settlement/reconciliação, que já existe via os comandos artisan). Verificar `createChargeForOrder()`/`buildSplitPayload()` quanto a isso especificamente — a skill é explícita: "nunca gerar nova chave automaticamente apenas porque ocorreu timeout".
 
-### 2.9 Observabilidade — skill §54-55 — **PARCIAL**
+### 2.9 Observabilidade — skill §54-55 — **FECHADO em R5 (2026-08-08)**
 
-Existe `PagBankTransactionLogger` (eventos `pagbank.*`) mas não foi confirmada a existência das métricas nomeadas pela skill (`pagbank_orders_total`, `pagbank_split_failed`, `pagbank_webhooks_failed`, etc.) nem alertas para `platform_net_revenue <= 0` (proteção de margem, skill §6 — **não encontrada em nenhum lugar do código levantado, é gap real de negócio**, não só de observabilidade).
+`sales.pagbank_fee_actual`/`pagbank_fee_actual_captured_at` (migration `2026_08_16_090000_add_pagbank_actual_fee_to_sales_table`) armazenam o custo real do PSP por venda, capturado em `PagBankPaymentProvider::callPagBank()` (resposta de criação) e em `PaymentWebhookController::handlePagBank()` (reconsulta pós-webhook) — imutável após a 1ª captura. **Pendência confirmada, não implementável agora**: a doc oficial do PagBank (`GET /orders/{id}`, `GET /charges/{id}`, confirmado via WebFetch em 2026-08-08) não expõe hoje nenhum campo de fee/tarifa/MDR — `PagBankPaymentProvider::ACTUAL_FEE_CANDIDATE_PATHS` fica com paths candidatos e `// TODO: confirmar nome do campo na doc oficial antes de produção`; `pagbank_fee_actual` continua `null` até o PagBank expor o dado ou até confirmação manual do campo certo. `Sale::platformNetRevenue()` calcula `platform_fee_total_amount - pagbank_fee_actual` (só quando disponível, nunca estimado) e `PagBankPaymentProvider::checkMarginAlert()` loga `pagbank.margin.non_positive_net_revenue` via `PagBankTransactionLogger::warning()` quando `<= 0` (skill §6, proteção de margem — sem canal externo nesta fase). Métricas nomeadas pela skill §54 instrumentadas via `PagBankTransactionLogger::metric()`: `pagbank_orders_total`/`pagbank_orders_failed`/`pagbank_payment_approved`/`pagbank_payment_declined` (`callPagBank()`), `pagbank_split_failed` (`resolveSplitSettings()`), `pagbank_webhooks_received`/`pagbank_webhooks_failed` (`PaymentWebhookController::handlePagBank()`), `pagbank_refunds` (`SalePaymentService::createRefundForPaidCancellation()`), `pagbank_reconciliation_divergences` (`ReconcilePagBankSalePaymentsCommand` + `ReconcileFinancialIntegrityCommand`). `pagbank_chargebacks` **sem ponto de instrumentação real** — chargeback PagBank é gap 2.3/Fase R3, ainda bloqueada, não confundir com o chargeback do rail Mercado Pago (que já existe e é de outro provider). Ver `.claude/memory/api-patterns.md` para o detalhamento completo.
 
 ### 2.10 Ambiente sandbox vs produção — skill §33, §53 — **PARCIAL**
 
@@ -94,7 +94,7 @@ Tenant → Conta PagBank (2.1, GAP) → Evento → Ingresso (pronto) → Pedido 
   → Cancelamento (pronto) / Chargeback (2.3, GAP) → Relatórios (pronto)
 ```
 
-O "repasse" em si (Split + Custódia + liberação + reconciliação) **já está implementado e é o núcleo mais maduro do sistema**. O que falta para chamar a fase de repasse de concluída e abrir homologação é fechar as pontas: onboarding do tenant (2.1/2.2), chargeback no rail certo (2.3), segurança de checkout (2.5/2.6) e o pacote de evidências (2.11).
+O "repasse" em si (Split + Custódia + liberação + reconciliação) **já está implementado e é o núcleo mais maduro do sistema**. O que falta para chamar a fase de repasse de concluída e abrir homologação é fechar as pontas: onboarding do tenant (2.1/2.2), chargeback no rail certo (2.3), ~~segurança de checkout (2.5/2.6)~~ (fechado em R4, 2026-08-08) e o pacote de evidências (2.11).
 
 ## 5. Fechando as 3 decisões pendentes (herdadas de `2026-08-04-fase-5-plano-fechamento-execucao.md` §8)
 
@@ -122,15 +122,19 @@ Sem gap novo da skill aqui — é continuação do que já estava em andamento: 
 2. Mapear evento de chargeback PagBank para `registerExternalReview()` (reaproveitar o domínio `Refund` já existente, mesmo padrão do Mercado Pago).
 3. Testes: chargeback antes do repasse, chargeback depois do repasse (já listados no plano de 4/08, Etapa D).
 
-### Fase R4 — Segurança de checkout para homologação (gaps 2.5, 2.6)
-1. reCAPTCHA (ou equivalente) no checkout de cartão.
-2. Rate limiting dedicado + proteção contra card testing nas 3 rotas de charge (staff, storefront `/rastreio`, portal).
-3. Confirmar sanitização de logs (nenhum PAN/CVV/Authorization — skill §16, §55) por leitura direta do `PagBankTransactionLogger` e do controller de webhook.
+### Fase R4 — Segurança de checkout para homologação (gaps 2.5, 2.6) — **CONCLUÍDA em 2026-08-08**
+1. ~~reCAPTCHA (ou equivalente) no checkout de cartão.~~ Feito — Cloudflare Turnstile (`AntiBotGuardService`, já existente no projeto) reaplicado às 2 rotas públicas (rastreio, portal).
+2. ~~Rate limiting dedicado + proteção contra card testing nas 3 rotas de charge.~~ Feito — `adaptive.throttle:3,60` nas 2 rotas públicas + `PaymentChargeAttemptLimiter` (por `sale_uuid`, 5 tentativas fracassadas/10min) nas 3 rotas.
+3. Confirmado por leitura direta: `PagBankTransactionLogger::sanitize()` mascara `card.encrypted`/`card.security_code`/`holder.tax_id`/`customer.tax_id`/`customer.email`/`customer.phones` em toda chamada de log; nenhum `Log::`/`ApplicationLogger::` direto (sem sanitização) em `PagBankPaymentProvider`; `PaymentWebhookController` nunca loga `Authorization`/header de assinatura, só o payload do webhook (que o próprio PSP já não inclui PAN/CVV). Nenhum vazamento encontrado — nenhuma mudança necessária.
 
-### Fase R5 — Proteção de margem e observabilidade (gaps 2.9, e o custo PSP real de 2.1 da decisão #1)
-1. Armazenar `pagbank_fee_actual` por venda quando disponível na resposta do PagBank.
-2. Calcular `platform_net_revenue = platform_fee - gateway_fee` e alerta quando `<= 0`.
-3. Métricas nomeadas pela skill §54.
+Suíte completa: 939 testes passando antes, sem regressão depois (9 testes novos em `tests/Feature/Security/PaymentChargeSecurityTest.php`).
+
+### Fase R5 — Proteção de margem e observabilidade (gaps 2.9, e o custo PSP real de 2.1 da decisão #1) — **CONCLUÍDA em 2026-08-08**
+1. ~~Armazenar `pagbank_fee_actual` por venda quando disponível na resposta do PagBank.~~ Feito — estrutura pronta (colunas + captura nos 2 pontos de entrada), mas o valor fica `null` até a doc oficial confirmar o nome do campo (não exposto hoje em `GET /orders/{id}`/`GET /charges/{id}`, confirmado via WebFetch).
+2. ~~Calcular `platform_net_revenue = platform_fee - gateway_fee` e alerta quando `<= 0`.~~ Feito — `Sale::platformNetRevenue()` + `PagBankPaymentProvider::checkMarginAlert()`.
+3. ~~Métricas nomeadas pela skill §54.~~ Feito — todas exceto `pagbank_chargebacks` (sem gatilho real possível antes de R3 existir).
+
+Suíte completa: 948 testes antes, 954 depois (0 regressão — 10 testes novos: `PagBankSalePaymentTest.php` + `tests/Feature/Console/ReconcilePagBankSalePaymentsCommandTest.php`, novo arquivo).
 
 ### Fase R6 — Formalizar máquina de estados de pagamento (gap 2.7)
 Baixo risco, pode ser feito em paralelo a qualquer fase acima. Enum PHP + mapeamento documentado, sem alterar valores já gravados.

@@ -26,6 +26,7 @@ use App\Models\Sale\SaleInstallment;
 use App\Services\APIResponse;
 use App\Services\Sale\SalePaymentService;
 use App\Services\Sale\SaleService;
+use App\Services\Security\PaymentChargeAttemptLimiter;
 use Illuminate\Http\Request;
 
 class SaleController extends Controller
@@ -35,6 +36,7 @@ class SaleController extends Controller
     public function __construct(
         private SaleService $service,
         private SalePaymentService $paymentService,
+        private PaymentChargeAttemptLimiter $paymentChargeAttemptLimiter,
     ) {}
 
     /**
@@ -58,13 +60,21 @@ class SaleController extends Controller
 
     public function paymentCharge(SalePaymentChargeRequest $request, Sale $sale)
     {
+        $this->paymentChargeAttemptLimiter->assertNotExceeded($sale->uuid);
+
         try {
             $payment = $this->paymentService->createChargeForOrder($sale, $request->validated());
         } catch (InvalidSaleStateException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_OPERATION_IN_PROGRESS');
         } catch (PaymentProviderException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
         }
 

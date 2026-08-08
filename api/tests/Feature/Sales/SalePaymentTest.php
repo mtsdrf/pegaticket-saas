@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Sales;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
@@ -9,9 +10,10 @@ use App\Models\Tenant\Tenant;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
+use Tests\Feature\Sales\Concerns\CreatesSaleFixtures;
 use Tests\TestCase;
 
 /**
@@ -22,9 +24,9 @@ use Tests\TestCase;
  */
 class SalePaymentTest extends TestCase
 {
+    use CreatesSaleFixtures;
     use RefreshDatabase;
     use SetsUpTenantScopedUser;
-    use CreatesSaleFixtures;
 
     protected function setUp(): void
     {
@@ -38,7 +40,7 @@ class SalePaymentTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     private function createConfirmedOrder(float $price = 40, int $qty = 1): array
@@ -46,7 +48,6 @@ class SalePaymentTest extends TestCase
         $this->grantPermission('sales', 'create');
         $client = $this->createClient($this->tenant->id);
         $product = $this->createProduct($this->tenant->id, ['price' => $price]);
-
 
         // Venda manual não parcelada nasce já paga — desfaz aqui pra
         // simular uma venda ainda não paga (pré-condição de
@@ -149,7 +150,7 @@ class SalePaymentTest extends TestCase
         // Webhook reporta 10.00 a menos do que o esperado (60.00).
         $result = app(SalePaymentService::class)->reconcileWebhookPayment($payment, 50.0);
 
-        $this->assertSame('divergent', $result->status);
+        $this->assertSame(PaymentStatus::Divergent, $result->status);
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'divergent']);
         // Venda NÃO é confirmado automaticamente numa divergência.
         $this->assertFalse((bool) Sale::where('uuid', $order['uuid'])->value('is_paid'));
@@ -163,9 +164,9 @@ class SalePaymentTest extends TestCase
         // Venda de OUTRO tenant, montado direto (o usuário autenticado é do
         // tenant do setUp).
         $otherTenant = Tenant::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'name' => 'Other Tenant',
-            'slug' => 'other-tenant-' . \Illuminate\Support\Str::random(8),
+            'slug' => 'other-tenant-'.Str::random(8),
             'is_active' => true,
             'trial_ends_at' => now()->addDays(30),
         ]);

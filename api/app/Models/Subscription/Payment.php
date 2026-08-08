@@ -2,6 +2,7 @@
 
 namespace App\Models\Subscription;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\BaseModel;
 use App\Models\Finance\Receivable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -27,6 +28,7 @@ class Payment extends BaseModel
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'status' => PaymentStatus::class,
         'paid_at' => 'datetime',
         'metadata' => 'array',
     ];

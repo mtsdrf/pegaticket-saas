@@ -252,6 +252,11 @@ class PaymentWebhookController extends Controller
                 'payload' => $this->sanitizedPayload($request),
             ]);
 
+            $this->pagBankTransactionLogger->metric('pagbank_webhooks_failed', [
+                'order_id' => $orderId !== '' ? $orderId : null,
+                'reason' => 'invalid_signature',
+            ]);
+
             return APIResponse::error(
                 __('messages.webhook.invalid_signature'),
                 401,
@@ -262,6 +267,10 @@ class PaymentWebhookController extends Controller
         $this->pagBankTransactionLogger->info('pagbank.webhook.received', [
             'order_id' => $orderId !== '' ? $orderId : null,
             'payload' => $this->sanitizedPayload($request),
+        ]);
+
+        $this->pagBankTransactionLogger->metric('pagbank_webhooks_received', [
+            'order_id' => $orderId !== '' ? $orderId : null,
         ]);
 
         if ($orderId === '') {
@@ -279,6 +288,9 @@ class PaymentWebhookController extends Controller
 
         if ($payment !== null && $payment->payable_type === Sale::class) {
             $remote = $pagBank->getPaymentForTenant($orderId, (int) $payment->payable->tenant_id);
+
+            $pagBank->captureActualFeeForSale($payment->payable, (array) ($remote['raw_payload'] ?? []));
+
             $this->orderPaymentService->reconcileRemotePayment(
                 $payment,
                 (string) ($remote['status'] ?? 'pending'),

@@ -2,10 +2,11 @@
 
 namespace App\Services\Payment;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Exceptions\Payment\PaymentIssueNotFoundException;
 use App\Exceptions\Payment\PaymentIssueNotReprocessableException;
-use App\Models\Sale\Sale;
 use App\Models\Payment\PaymentIdempotencyKey;
+use App\Models\Sale\Sale;
 use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\WebhookEvent;
@@ -28,8 +29,11 @@ use Illuminate\Support\Collection;
 class PaymentIssueService
 {
     public const TYPE_PAYMENT_DIVERGENT = 'payment_divergent';
+
     public const TYPE_IDEMPOTENCY_AMBIGUOUS = 'idempotency_ambiguous';
+
     public const TYPE_INVOICE_DISPUTED = 'invoice_disputed';
+
     public const TYPE_WEBHOOK_FAILED = 'webhook_failed';
 
     public const TYPES = [
@@ -52,8 +56,7 @@ class PaymentIssueService
 
     public function __construct(
         private PaymentReconciliationService $reconciliationService,
-    ) {
-    }
+    ) {}
 
     public function list(array $filters, int $perPage = 15, int $page = 1): LengthAwarePaginator
     {
@@ -130,7 +133,7 @@ class PaymentIssueService
                 reference: $payment->uuid,
                 tenant: $this->tenantSummary($tenants, $tenantId),
                 amount: (string) $payment->amount,
-                status: $payment->status,
+                status: $payment->status->value,
                 occurredAt: $payment->updated_at ?? $payment->created_at,
                 reprocessable: $reprocessable,
                 detail: [
@@ -217,7 +220,7 @@ class PaymentIssueService
 
         return $events->map(fn (WebhookEvent $event) => new PaymentIssueEntry(
             issueType: self::TYPE_WEBHOOK_FAILED,
-            reference: 'webhook-event:' . $event->id,
+            reference: 'webhook-event:'.$event->id,
             tenant: null,
             amount: null,
             status: 'unprocessed',
@@ -232,7 +235,7 @@ class PaymentIssueService
     }
 
     /**
-     * @param Collection<int, int|null> $tenantIds
+     * @param  Collection<int, int|null>  $tenantIds
      * @return Collection<int, Tenant>
      */
     private function tenantsFor(Collection $tenantIds): Collection
@@ -247,7 +250,7 @@ class PaymentIssueService
     }
 
     /**
-     * @param Collection<int, Tenant> $tenants
+     * @param  Collection<int, Tenant>  $tenants
      * @return array{uuid: string, name: string}|null
      */
     private function tenantSummary(Collection $tenants, ?int $tenantId): ?array
@@ -270,7 +273,7 @@ class PaymentIssueService
 
         if (
             $payment === null
-            || $payment->status !== 'divergent'
+            || $payment->status !== PaymentStatus::Divergent
             || $payment->provider !== 'mercadopago'
             || $payment->payable_type !== Sale::class
             || $payment->provider_charge_id === null
@@ -280,7 +283,7 @@ class PaymentIssueService
 
         $payment = $this->reconciliationService->reconcileOrderPayment($payment);
 
-        return ['reference' => $payment->uuid, 'status' => $payment->status];
+        return ['reference' => $payment->uuid, 'status' => $payment->status->value];
     }
 
     private function reprocessIdempotency(string $reference): array

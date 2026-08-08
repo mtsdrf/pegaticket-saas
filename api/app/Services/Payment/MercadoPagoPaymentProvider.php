@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Contracts\Payment\PaymentProviderInterface;
+use App\Enums\Payment\PaymentStatus;
 use App\Exceptions\Payment\PaymentOperationInProgressException;
 use App\Exceptions\Payment\PaymentProviderException;
 use App\Models\Sale\Sale;
@@ -478,7 +479,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
 
         return [
             'provider_charge_id' => (string) ($first['id'] ?? ''),
-            'status' => $this->mapStatus($transaction['status'] ?? $first['status'] ?? null),
+            'status' => $this->mapStatus($transaction['status'] ?? $first['status'] ?? null)->value,
             'amount' => Money::normalize((string) ($first['total_amount'] ?? 0)),
         ];
     }
@@ -598,7 +599,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
 
         return [
             'provider_charge_id' => (string) ($body['id'] ?? $providerChargeId),
-            'status' => $this->mapStatus($transaction['status'] ?? $body['status'] ?? null),
+            'status' => $this->mapStatus($transaction['status'] ?? $body['status'] ?? null)->value,
             'amount' => Money::normalize((string) ($body['total_amount'] ?? 0)),
             'raw_status' => $transaction['status'] ?? $body['status'] ?? null,
         ];
@@ -684,7 +685,7 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
             'provider_charge_id' => (string) ($body['id'] ?? ''),
             'method' => $method,
             'amount' => $amountString,
-            'status' => $this->mapStatus($this->extractTransactionStatus($body)),
+            'status' => $this->mapStatus($this->extractTransactionStatus($body))->value,
             'idempotency_key' => $idempotency->key(),
             'metadata' => $this->extractMetadata($body),
         ]);
@@ -840,13 +841,13 @@ class MercadoPagoPaymentProvider implements PaymentProviderInterface
      * Não confirmado contra uma notificação real de produção/sandbox nesta
      * sessão — primeiro ponto a revisar se o valor real divergir.
      */
-    private function mapStatus(?string $mpStatus): string
+    private function mapStatus(?string $mpStatus): PaymentStatus
     {
         return match ($mpStatus) {
-            'approved', 'processed' => 'paid',
-            'rejected', 'cancelled' => 'failed',
-            'refunded', 'charged_back' => 'refunded',
-            default => 'pending', // inclui action_required, pending, null
+            'approved', 'processed' => PaymentStatus::Paid,
+            'rejected', 'cancelled' => PaymentStatus::Failed,
+            'refunded', 'charged_back' => PaymentStatus::Refunded,
+            default => PaymentStatus::Pending, // inclui action_required, pending, null
         };
     }
 

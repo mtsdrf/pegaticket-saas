@@ -3,7 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
-import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { DateTimePickerField } from '../../components/form/DateTimePickerField'
 import { FormSection } from '../../components/form/FormSection'
 import * as ticketBatchService from '../../services/ticketBatchService'
 import * as ticketTypeService from '../../services/ticketTypeService'
@@ -167,23 +168,19 @@ export function TicketBatchFormPage() {
         </Box>
 
         <Box sx={FORM_GRID_2_SX}>
-          <TextField
+          <DateTimePickerField
             label="Início"
-            type="datetime-local"
             value={form.starts_at}
-            onChange={(event) => updateField('starts_at', event.target.value)}
+            onChange={(value) => updateField('starts_at', value)}
             error={Boolean(fieldErrors.starts_at)}
             helperText={fieldErrors.starts_at?.[0]}
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
-          <TextField
+          <DateTimePickerField
             label="Fim"
-            type="datetime-local"
             value={form.ends_at}
-            onChange={(event) => updateField('ends_at', event.target.value)}
+            onChange={(value) => updateField('ends_at', value)}
             error={Boolean(fieldErrors.ends_at)}
             helperText={fieldErrors.ends_at?.[0]}
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
         </Box>
       </FormSection>

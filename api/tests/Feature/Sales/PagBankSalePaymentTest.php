@@ -162,6 +162,53 @@ class PagBankSalePaymentTest extends TestCase
     }
 
     #[Test]
+    public function logs_orders_failed_metric_when_pagbank_rejects_the_order_creation(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response(['error_messages' => [['error' => 'invalid_parameter']]], 400),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'failed');
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_orders_total"', $contents);
+        $this->assertStringContainsString('"metric":"pagbank_orders_failed"', $contents);
+    }
+
+    #[Test]
+    public function logs_split_failed_metric_when_the_platform_is_configured_but_the_tenant_has_no_receiving_account(): void
+    {
+        PlatformFinanceSettings::create([
+            'platform_fee_fixed_amount' => 5,
+            'default_settlement_offset_days' => 1,
+            'settlement_reference' => 'event_end',
+            'split_custody_enabled' => true,
+            'extra_reserve_enabled' => false,
+            'pagbank_primary_account_id' => 'ACCO_PLATFORM_ONLY',
+        ]);
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_NOSPLIT_1',
+                'qr_codes' => [['id' => 'QRCO_1', 'text' => '00020126...']],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_split_failed"', $contents);
+    }
+
+    #[Test]
     public function returns_pagbank_checkout_config_with_public_key_and_three_ds_session(): void
     {
         Http::fake([
@@ -403,6 +450,131 @@ class PagBankSalePaymentTest extends TestCase
     }
 
     #[Test]
+    public function captures_the_real_pagbank_fee_and_computes_a_positive_platform_net_revenue(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_FEE_1',
+                'charges' => [[
+                    'id' => 'CHAR_FEE_1',
+                    'status' => 'PAID',
+                    // TODO: nome de campo não confirmado na doc oficial
+                    // (ver PagBankPaymentProvider::ACTUAL_FEE_CANDIDATE_PATHS)
+                    // — usado aqui só como fixture até a doc confirmar.
+                    'fees' => ['value' => 150],
+                    'payment_method' => ['type' => 'CREDIT_CARD'],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ])->assertStatus(201);
+
+        $sale = Sale::where('uuid', $order['uuid'])->firstOrFail();
+
+        $this->assertSame('1.50', (string) $sale->pagbank_fee_actual);
+        $this->assertNotNull($sale->pagbank_fee_actual_captured_at);
+        $this->assertSame('4.00', (string) $sale->platform_fee_total_amount);
+        $this->assertSame('2.50', $sale->platformNetRevenue());
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_fee_actual_captured"', $contents);
+        $this->assertStringNotContainsString('pagbank.margin.non_positive_net_revenue', $contents);
+    }
+
+    #[Test]
+    public function logs_a_margin_alert_when_the_real_pagbank_fee_makes_platform_net_revenue_non_positive(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_FEE_2',
+                'charges' => [[
+                    'id' => 'CHAR_FEE_2',
+                    'status' => 'PAID',
+                    'fees' => ['value' => 500],
+                    'payment_method' => ['type' => 'CREDIT_CARD'],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        // Preço baixo o bastante para a taxa de serviço cair no piso mínimo
+        // (R$3) e ficar abaixo do custo PagBank simulado acima (R$5).
+        $order = $this->createConfirmedOrder(price: 10, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ])->assertStatus(201);
+
+        $sale = Sale::where('uuid', $order['uuid'])->firstOrFail();
+
+        $this->assertSame('3.00', (string) $sale->platform_fee_total_amount);
+        $this->assertSame('5.00', (string) $sale->pagbank_fee_actual);
+        $this->assertSame('-2.00', $sale->platformNetRevenue());
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('pagbank.margin.non_positive_net_revenue', $contents);
+        $this->assertStringContainsString('"platform_net_revenue":"-2.00"', $contents);
+    }
+
+    #[Test]
+    public function logs_orders_total_and_payment_approved_metrics_for_a_successful_card_charge(): void
+    {
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_METRIC_APPROVED_1',
+                'charges' => [[
+                    'id' => 'CHAR_METRIC_APPROVED_1',
+                    'status' => 'PAID',
+                    'payment_method' => ['type' => 'CREDIT_CARD'],
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge", [
+            'method' => 'credit_card',
+            'payer_name' => 'Jose da Silva',
+            'payer_email' => 'mreisf.contato@gmail.com',
+            'payer_phone' => '11999999999',
+            'card' => [
+                'encrypted' => 'ENCRYPTED_CREDIT_CARD_PAYLOAD',
+                'holder_name' => 'Jose da Silva',
+                'holder_tax_id' => '65544332211',
+                'installments' => 1,
+            ],
+        ])->assertStatus(201);
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_orders_total"', $contents);
+        $this->assertStringContainsString('"metric":"pagbank_payment_approved"', $contents);
+    }
+
+    #[Test]
     public function creates_a_debit_card_order_via_pagbank_using_three_ds_authentication_id(): void
     {
         Http::fake([
@@ -520,6 +692,9 @@ class PagBankSalePaymentTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->url() === 'https://sandbox.api.pagseguro.com/charges/CHAR_1/cancel';
         });
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_refunds"', $contents);
     }
 
     #[Test]
@@ -533,6 +708,9 @@ class PagBankSalePaymentTest extends TestCase
 
         $response->assertStatus(401)->assertJsonPath('code', 'WEBHOOK_INVALID_SIGNATURE');
         $this->assertSame(0, WebhookEvent::where('provider', 'pagbank')->count());
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_webhooks_failed"', $contents);
     }
 
     #[Test]
@@ -588,6 +766,9 @@ class PagBankSalePaymentTest extends TestCase
             'provider' => 'pagbank',
             'external_id' => $orderId,
         ]);
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_webhooks_received"', $contents);
     }
 
     #[Test]
@@ -759,6 +940,9 @@ class PagBankSalePaymentTest extends TestCase
             'provider_charge_id' => 'ORDE_DECLINED_1',
             'status' => 'failed',
         ]);
+
+        $contents = File::get(storage_path('logs/pagbank-transactions.log'));
+        $this->assertStringContainsString('"metric":"pagbank_payment_declined"', $contents);
     }
 
     #[Test]

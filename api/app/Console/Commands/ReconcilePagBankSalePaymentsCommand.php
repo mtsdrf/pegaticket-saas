@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\Payment\PaymentStatus;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Services\Logging\ApplicationLogger;
 use App\Services\Payment\PagBankPaymentProvider;
+use App\Services\Payment\PagBankTransactionLogger;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Console\Command;
 
@@ -26,6 +28,7 @@ class ReconcilePagBankSalePaymentsCommand extends Command
     public function __construct(
         private PagBankPaymentProvider $provider,
         private SalePaymentService $orderPaymentService,
+        private PagBankTransactionLogger $pagBankTransactionLogger,
     ) {
         parent::__construct();
     }
@@ -64,11 +67,21 @@ class ReconcilePagBankSalePaymentsCommand extends Command
                     )
                     : $this->provider->getPayment((string) $payment->provider_charge_id);
 
-                $this->orderPaymentService->reconcileRemotePayment(
+                $reconciledPayment = $this->orderPaymentService->reconcileRemotePayment(
                     $payment,
                     (string) ($remote['status'] ?? 'pending'),
                     $remote['amount'] ?? (string) $payment->amount,
                 );
+
+                if ($reconciledPayment->status === PaymentStatus::Divergent) {
+                    $this->pagBankTransactionLogger->metric('pagbank_reconciliation_divergences', [
+                        'payment_uuid' => $payment->uuid,
+                        'provider_charge_id' => $payment->provider_charge_id,
+                        'sale_uuid' => $payment->payable instanceof Sale ? $payment->payable->uuid : null,
+                        'local_amount' => (string) $payment->amount,
+                        'remote_amount' => $remote['amount'] ?? null,
+                    ]);
+                }
 
                 $reconciled++;
             } catch (\Throwable $e) {

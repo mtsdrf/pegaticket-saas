@@ -85,6 +85,18 @@ class SalePaymentChargeRequest extends FormRequest
             ],
             'authentication_method.xid' => ['nullable', 'string', 'max:80'],
             'authentication_method.dstrans_id' => ['nullable', 'string', 'max:80'],
+
+            // Anti-bot (roadmap R4, gap 2.5) — ver App\Services\Security\
+            // AntiBotGuardService. Só verificado nas 2 rotas públicas
+            // (rastreio, portal); a rota de staff (SaleController) ignora
+            // estes campos. `website` é honeypot, `form_rendered_at` é o
+            // timestamp de carregamento do formulário de pagamento,
+            // `turnstile_token` é o token do widget Cloudflare Turnstile
+            // (nullable pois o frontend não renderiza o widget sem
+            // VITE_TURNSTILE_SITE_KEY configurado).
+            'website' => ['nullable', 'string', 'max:255'],
+            'form_rendered_at' => ['nullable', 'date'],
+            'turnstile_token' => ['nullable', 'string', 'max:2048'],
         ];
     }
 }

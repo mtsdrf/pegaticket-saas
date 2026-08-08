@@ -8,11 +8,13 @@ use App\Exceptions\Payment\PaymentProviderException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sale\SalePaymentChargeRequest;
 use App\Http\Requests\Sale\SalePaymentInstallmentOptionsRequest;
-use App\Http\Resources\Sale\SalePublicTrackingResource;
 use App\Http\Resources\Sale\SalePaymentResource;
+use App\Http\Resources\Sale\SalePublicTrackingResource;
 use App\Models\Sale\Sale;
 use App\Services\APIResponse;
 use App\Services\Sale\SalePaymentService;
+use App\Services\Security\AntiBotGuardService;
+use App\Services\Security\PaymentChargeAttemptLimiter;
 use App\Services\Ticket\TicketPdfService;
 
 /**
@@ -29,6 +31,8 @@ class SaleTrackingController extends Controller
     public function __construct(
         private TicketPdfService $ticketPdfService,
         private SalePaymentService $salePaymentService,
+        private AntiBotGuardService $antiBotGuard,
+        private PaymentChargeAttemptLimiter $paymentChargeAttemptLimiter,
     ) {}
 
     public function show(Sale $sale)
@@ -60,7 +64,7 @@ class SaleTrackingController extends Controller
         $pdf = $this->ticketPdfService->generateForSale($sale, $tickets);
 
         return response()->streamDownload(
-            fn () => print($pdf['content']),
+            fn () => print ($pdf['content']),
             $pdf['filename'],
             ['Content-Type' => 'application/pdf']
         );
@@ -105,15 +109,30 @@ class SaleTrackingController extends Controller
 
     public function paymentCharge(SalePaymentChargeRequest $request, Sale $sale)
     {
+        $this->antiBotGuard->assertHuman(
+            $request->validated('website'),
+            $request->validated('form_rendered_at'),
+            $request->validated('turnstile_token'),
+            $request->ip()
+        );
+
+        $this->paymentChargeAttemptLimiter->assertNotExceeded($sale->uuid);
+
         app()->instance('tenant_id', $sale->tenant_id);
 
         try {
             $payment = $this->salePaymentService->createChargeForOrder($sale, $request->validated());
         } catch (InvalidSaleStateException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->getMessage(), 422, 'INVALID_ORDER_STATE');
         } catch (PaymentOperationInProgressException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_OPERATION_IN_PROGRESS');
         } catch (PaymentProviderException $e) {
+            $this->paymentChargeAttemptLimiter->recordFailedAttempt($sale->uuid);
+
             return APIResponse::error($e->userMessage(), 422, 'PAYMENT_PROVIDER_UNAVAILABLE');
         }
 

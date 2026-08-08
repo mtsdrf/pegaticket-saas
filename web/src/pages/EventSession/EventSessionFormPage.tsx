@@ -2,7 +2,8 @@ import { Box, TextField } from '@mui/material'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
-import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { DateTimePickerField } from '../../components/form/DateTimePickerField'
 import { FormSection } from '../../components/form/FormSection'
 import * as eventService from '../../services/eventService'
 import * as eventSessionService from '../../services/eventSessionService'
@@ -158,37 +159,31 @@ export function EventSessionFormPage() {
 
       <FormSection title="Agenda e janelas" description="Configure a data principal da sessão, abertura de portões e a janela comercial de vendas.">
         <Box sx={FORM_GRID_2_SX}>
-          <TextField
+          <DateTimePickerField
             label="Início"
-            type="datetime-local"
             value={form.starts_at}
-            onChange={(event) => updateField('starts_at', event.target.value)}
+            onChange={(value) => updateField('starts_at', value)}
             error={Boolean(fieldErrors.starts_at)}
             helperText={fieldErrors.starts_at?.[0]}
             required
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
-          <TextField
+          <DateTimePickerField
             label="Término"
-            type="datetime-local"
             value={form.ends_at}
-            onChange={(event) => updateField('ends_at', event.target.value)}
+            onChange={(value) => updateField('ends_at', value)}
             error={Boolean(fieldErrors.ends_at)}
             helperText={fieldErrors.ends_at?.[0]}
             required
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
         </Box>
 
         <Box sx={FORM_GRID_2_SX}>
-          <TextField
+          <DateTimePickerField
             label="Abertura dos portões"
-            type="datetime-local"
             value={form.gate_opens_at}
-            onChange={(event) => updateField('gate_opens_at', event.target.value)}
+            onChange={(value) => updateField('gate_opens_at', value)}
             error={Boolean(fieldErrors.gate_opens_at)}
             helperText={fieldErrors.gate_opens_at?.[0]}
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
           <TextField
             label="Capacidade"
@@ -202,23 +197,19 @@ export function EventSessionFormPage() {
         </Box>
 
         <Box sx={FORM_GRID_2_SX}>
-          <TextField
+          <DateTimePickerField
             label="Início das vendas"
-            type="datetime-local"
             value={form.sales_start_at}
-            onChange={(event) => updateField('sales_start_at', event.target.value)}
+            onChange={(value) => updateField('sales_start_at', value)}
             error={Boolean(fieldErrors.sales_start_at)}
             helperText={fieldErrors.sales_start_at?.[0]}
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
-          <TextField
+          <DateTimePickerField
             label="Fim das vendas"
-            type="datetime-local"
             value={form.sales_end_at}
-            onChange={(event) => updateField('sales_end_at', event.target.value)}
+            onChange={(value) => updateField('sales_end_at', value)}
             error={Boolean(fieldErrors.sales_end_at)}
             helperText={fieldErrors.sales_end_at?.[0]}
-            slotProps={DATETIME_FIELD_SLOT_PROPS}
           />
         </Box>
       </FormSection>

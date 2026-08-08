@@ -174,7 +174,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/rastreio/{sale:uuid}/payment-installment-options', [SaleTrackingController::class, 'paymentInstallmentOptions'])
         ->middleware('throttle:30,1,sale-tracking-public-payment');
     Route::post('/rastreio/{sale:uuid}/payment-charge', [SaleTrackingController::class, 'paymentCharge'])
-        ->middleware('throttle:20,1,sale-tracking-public-payment');
+        ->middleware(['throttle:20,1,sale-tracking-public-payment', 'adaptive.throttle:3,60']);
 
     // Autoatendimento de convite/cortesia (roadmap Fase 4) — 100% público,
     // protegido pelo token individual imprevisível (mesmo padrão de
@@ -375,7 +375,7 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:30,1,portal-sales-payment-installment-options');
 
         Route::post('/sales/{uuid}/payment-charge', [PortalController::class, 'paymentCharge'])
-            ->middleware('throttle:20,1,portal-sales-payment-charge');
+            ->middleware(['throttle:20,1,portal-sales-payment-charge', 'adaptive.throttle:3,60']);
 
         // Web Push (VAPID) real (roadmap Delivery, Fase 4 — última fatia).
         // Ver App\Services\Storefront\PushSubscriptionService::subscribe().

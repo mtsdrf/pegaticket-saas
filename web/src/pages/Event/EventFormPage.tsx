@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
-import { DATETIME_FIELD_SLOT_PROPS, getBrowserCurrentCoordinates, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { getBrowserCurrentCoordinates, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
+import { DateTimePickerField } from '../../components/form/DateTimePickerField'
 import { FormSection } from '../../components/form/FormSection'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
 import { StoreLocationMap } from '../../components/storefront/StoreLocationMap'
@@ -63,7 +64,7 @@ const EMPTY_FORM: EventFormState = {
   reentry_cooldown_minutes: '',
 }
 
-/** Backend guarda `datetime` (`YYYY-MM-DD HH:mm:ss`) — `<input type="datetime-local">` usa `YYYY-MM-DDTHH:mm`. */
+/** Backend guarda `datetime` (`YYYY-MM-DD HH:mm:ss`) — o picker trabalha em `YYYY-MM-DDTHH:mm`. */
 function toDateTimeLocal(value: string | null | undefined): string {
   if (!value) return ''
   return value.replace(' ', 'T').slice(0, 16)
@@ -314,25 +315,21 @@ export function EventFormPage() {
       </Box>
 
       <Box sx={FORM_GRID_2_SX}>
-        <TextField
+        <DateTimePickerField
           label="Início"
-          type="datetime-local"
           value={form.starts_at}
-          onChange={(event) => updateField('starts_at', event.target.value)}
+          onChange={(value) => updateField('starts_at', value)}
           error={Boolean(fieldErrors.starts_at)}
           helperText={fieldErrors.starts_at?.[0]}
           required
-          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
-        <TextField
+        <DateTimePickerField
           label="Término"
-          type="datetime-local"
           value={form.ends_at}
-          onChange={(event) => updateField('ends_at', event.target.value)}
+          onChange={(value) => updateField('ends_at', value)}
           error={Boolean(fieldErrors.ends_at)}
           helperText={fieldErrors.ends_at?.[0]}
           required
-          slotProps={DATETIME_FIELD_SLOT_PROPS}
         />
       </Box>
       </FormSection>

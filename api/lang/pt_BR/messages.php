@@ -844,6 +844,7 @@ return [
 
     'security' => [
         'suspicious_submission' => 'Não foi possível processar sua solicitação. Tente novamente.',
+        'payment_charge_attempts_exceeded' => 'Muitas tentativas de cobrança para esta venda. Aguarde alguns minutos e tente novamente.',
     ],
 
     'table_reservation' => [

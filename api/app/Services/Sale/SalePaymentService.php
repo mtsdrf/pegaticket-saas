@@ -3,11 +3,12 @@
 namespace App\Services\Sale;
 
 use App\Contracts\Payment\PaymentProviderInterface;
+use App\Enums\Payment\PaymentStatus;
 use App\Events\Sale\SaleApproved;
 use App\Events\Sale\SalePaid;
-use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SalePaymentCharged;
 use App\Events\Sale\SalePaymentRefundRequested;
+use App\Events\Sale\SaleRejected;
 use App\Exceptions\InvalidSaleStateException;
 use App\Models\Sale\Sale;
 use App\Models\Storefront\CouponRedemption;
@@ -15,6 +16,7 @@ use App\Models\Subscription\Payment;
 use App\Models\Subscription\Refund;
 use App\Services\Finance\ExternalReviewFinancialAdjustmentService;
 use App\Services\Logging\ApplicationLogger;
+use App\Services\Payment\PagBankTransactionLogger;
 use App\Support\Money;
 use App\Support\Payment\ExternalPaymentReviewRegistrar;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +43,7 @@ class SalePaymentService
         private PaymentProviderInterface $paymentProvider,
         private ExternalPaymentReviewRegistrar $externalReviewRegistrar,
         private ExternalReviewFinancialAdjustmentService $externalReviewFinancialAdjustmentService,
+        private PagBankTransactionLogger $pagBankTransactionLogger,
     ) {}
 
     /**
@@ -96,8 +99,8 @@ class SalePaymentService
 
         $payment = Payment::where('uuid', $result['payment_uuid'])->firstOrFail();
 
-        if ($payment->status !== 'pending') {
-            $this->reconcileRemotePayment($payment, (string) $payment->status, (string) $payment->amount, $payment->metadata ?? []);
+        if ($payment->status !== PaymentStatus::Pending) {
+            $this->reconcileRemotePayment($payment, $payment->status->value, (string) $payment->amount, $payment->metadata ?? []);
             $payment->refresh();
         }
 
@@ -187,18 +190,18 @@ class SalePaymentService
         return DB::transaction(function () use ($payment, $reportedAmount) {
             $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-            if ($payment->status !== 'pending') {
+            if ($payment->status !== PaymentStatus::Pending) {
                 return $payment;
             }
 
             if (! Money::equals((string) $payment->amount, $reportedAmount)) {
-                $payment->status = 'divergent';
+                $payment->status = PaymentStatus::Divergent;
                 $payment->save();
 
                 return $payment;
             }
 
-            $payment->status = 'paid';
+            $payment->status = PaymentStatus::Paid;
             $payment->paid_at = now();
             $payment->save();
 
@@ -226,19 +229,19 @@ class SalePaymentService
 
             if ($remoteStatus === 'paid') {
                 if (! Money::equals((string) $payment->amount, $reportedAmount)) {
-                    $payment->status = 'divergent';
+                    $payment->status = PaymentStatus::Divergent;
                     $payment->save();
 
                     return $payment;
                 }
 
-                $shouldPersistPaid = $payment->status !== 'paid' || $payment->paid_at === null;
+                $shouldPersistPaid = $payment->status !== PaymentStatus::Paid || $payment->paid_at === null;
                 $order = $payment->payable instanceof Sale ? $payment->payable : null;
                 $shouldConfirmSale = $order instanceof Sale
                     && ($order->status === 'pending_approval' || ! $order->is_paid);
 
                 if ($shouldPersistPaid) {
-                    $payment->status = 'paid';
+                    $payment->status = PaymentStatus::Paid;
                     $payment->paid_at ??= now();
                     $payment->save();
                 }
@@ -251,8 +254,8 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'authorized') {
-                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
-                    $payment->status = 'authorized';
+                if (! in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::Refunded], true)) {
+                    $payment->status = PaymentStatus::Authorized;
                     $payment->save();
                 }
 
@@ -260,8 +263,8 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'in_analysis') {
-                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
-                    $payment->status = 'in_analysis';
+                if (! in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::Refunded], true)) {
+                    $payment->status = PaymentStatus::InAnalysis;
                     $payment->save();
                 }
 
@@ -269,8 +272,8 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'canceled') {
-                if (! in_array($payment->status, ['paid', 'refunded'], true)) {
-                    $payment->status = 'canceled';
+                if (! in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::Refunded], true)) {
+                    $payment->status = PaymentStatus::Canceled;
                     $payment->save();
                 }
 
@@ -278,16 +281,16 @@ class SalePaymentService
             }
 
             if ($remoteStatus === 'refunded') {
-                if ($payment->status !== 'refunded') {
-                    $payment->status = 'refunded';
+                if ($payment->status !== PaymentStatus::Refunded) {
+                    $payment->status = PaymentStatus::Refunded;
                     $payment->save();
                 }
 
                 return $payment;
             }
 
-            if ($remoteStatus === 'failed' && ! in_array($payment->status, ['paid', 'refunded'], true)) {
-                $payment->status = 'failed';
+            if ($remoteStatus === 'failed' && ! in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::Refunded], true)) {
+                $payment->status = PaymentStatus::Failed;
                 $payment->save();
 
                 $this->markStorefrontOrderRejectedFromPayment($payment);
@@ -332,6 +335,16 @@ class SalePaymentService
                     'amount' => $providerRefund['amount'] ?? $refund->amount,
                 ]);
                 $refund->save();
+
+                if ($payment->provider === 'pagbank') {
+                    $this->pagBankTransactionLogger->metric('pagbank_refunds', [
+                        'sale_uuid' => $order->uuid,
+                        'tenant_id' => $order->tenant_id,
+                        'payment_uuid' => $payment->uuid,
+                        'refund_protocol' => $refund->protocol,
+                        'status' => $refund->status,
+                    ]);
+                }
             } catch (\Throwable $e) {
                 $refund->fill(['status' => 'failed']);
                 $refund->save();

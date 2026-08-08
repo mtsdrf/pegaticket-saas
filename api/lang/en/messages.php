@@ -837,6 +837,7 @@ return [
 
     'security' => [
         'suspicious_submission' => 'We could not process your request. Please try again.',
+        'payment_charge_attempts_exceeded' => 'Too many payment attempts for this order. Please wait a few minutes and try again.',
     ],
 
     'table_reservation' => [
