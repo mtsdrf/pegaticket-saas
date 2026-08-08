@@ -40,6 +40,7 @@ use App\Http\Controllers\Health\HealthController;
 use App\Http\Controllers\Legal\LegalDocumentController;
 use App\Http\Controllers\Legal\ReleaseNoteController;
 use App\Http\Controllers\Onboarding\OnboardingController;
+use App\Http\Controllers\Payment\PagBankConnectController;
 use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Plan\PlanController;
 use App\Http\Controllers\Plan\PlanFunctionalityController;
@@ -143,6 +144,14 @@ Route::prefix('v1')->group(function () {
     // Ver PaymentWebhookController.
     Route::post('/webhooks/payments/{provider}', [PaymentWebhookController::class, 'handle'])
         ->middleware('throttle:120,1,payments-webhook');
+
+    // Callback do fluxo OAuth PagBank Connect (roadmap fase R2) — 100%
+    // público (fora de jwt/tenant/perm): o navegador do usuário é
+    // redirecionado aqui pelo PagBank sem sessão da API, protegido só pela
+    // validação de `state` contra o registro pendente (CSRF). Ver
+    // PagBankConnectController::callback/PagBankConnectService::handleCallback.
+    Route::get('/pagbank-connect/callback', [PagBankConnectController::class, 'callback'])
+        ->middleware('throttle:30,1,pagbank-connect-callback');
 
     // Acompanhamento público da venda (roadmap 5.1) — 100% público, sem
     // jwt/tenant/perm, protegido só pelo uuid da venda ser imprevisível
@@ -654,6 +663,32 @@ Route::prefix('v1')->group(function () {
 
             Route::put('/', [TenantSettingsController::class, 'update'])
                 ->middleware(['tenant', 'perm:tenant_settings,update', 'throttle:30,1,tenant-settings-update']);
+        });
+
+        // Conexão PagBank via OAuth Connect + Account/Cadastro (roadmap fase
+        // R2). Permissão dedicada `financial_receiving` (decisão R2.3,
+        // seção 9.5.9): R2.1/R2.2 reaproveitaram tenant_settings,{read,update}
+        // por conveniência inicial, mas o subdomínio já é grande o
+        // suficiente (elegibilidade + Connect + Account) pra não ficar
+        // atrás de uma permissão genérica de "configurações" — evita que
+        // qualquer grupo com acesso a config básica ganhe acesso a
+        // operações financeiras sensíveis.
+        Route::prefix('tenant-tools/pagbank-connect')->group(function () {
+            Route::get('/authorize-url', [PagBankConnectController::class, 'authorizeUrl'])
+                ->middleware(['tenant', 'perm:financial_receiving,update', 'throttle:20,1,pagbank-connect-authorize-url']);
+
+            Route::get('/status', [PagBankConnectController::class, 'status'])
+                ->middleware(['tenant', 'perm:financial_receiving,read', 'throttle:60,1,pagbank-connect-status']);
+
+            Route::post('/disconnect', [PagBankConnectController::class, 'disconnect'])
+                ->middleware(['tenant', 'perm:financial_receiving,update', 'throttle:20,1,pagbank-connect-disconnect']);
+
+            // Caminho Account/Cadastro (R2.2) — cria conta SELLER nova.
+            // Throttle baixo: idempotência já é garantida no Service
+            // (lockForUpdate), mas o limite reduz superfície de
+            // duplo-submit/abuso na própria chamada HTTP.
+            Route::post('/create-account', [PagBankConnectController::class, 'createAccount'])
+                ->middleware(['tenant', 'perm:financial_receiving,update', 'throttle:10,1,pagbank-connect-create-account']);
         });
 
         // Templates de e-mail configuráveis (só os types tenant-scoped, ver

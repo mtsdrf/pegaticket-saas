@@ -105,6 +105,14 @@ Schedule::command('payments:reconcile-idempotency --limit=100')->everyFiveMinute
 // evento. Ver AdmitVirtualQueueEntriesCommand.
 Schedule::command('storefront:admit-virtual-queue-entries')->everyMinute();
 
+// Sincronização periódica do caminho Account/Cadastro do PagBank
+// (roadmap R2.5, seção 9.5.5) — reconsulta status de conexões
+// submitted/pending_kyc/under_review; sem isso, uma aprovação de KYC no
+// PagBank só chegaria à plataforma se o tenant reabrisse a tela
+// manualmente. 30 minutos evita polling agressivo sobre a API do PagBank
+// (requisito explícito do roadmap) sem deixar o tenant esperando demais.
+Schedule::command('pagbank:sync-receiving-accounts --limit=100')->everyThirtyMinutes();
+
 // Lista de espera de TicketType esgotado (roadmap inventário) —
 // disponibilidade é calculada dinamicamente (não é coluna), então a
 // notificação de "voltou a ter vaga" é varredura periódica, mesmo padrão

@@ -118,6 +118,14 @@ return [
         'token' => env('PAGBANK_ENVIRONMENT', 'sandbox') === 'production'
             ? env('PAGBANK_TOKEN_PROD')
             : env('PAGBANK_TOKEN_SANDBOX'),
+
+        // Connect (OAuth, roadmap fase R2) — credenciais da APLICAÇÃO
+        // PegaTicket cadastrada no PagBank (client_id/client_secret),
+        // distintas do token de seller acima. redirect_uri precisa bater
+        // exatamente com o cadastrado no painel do PagBank por ambiente.
+        'connect_client_id' => env('PAGBANK_CONNECT_CLIENT_ID'),
+        'connect_client_secret' => env('PAGBANK_CONNECT_CLIENT_SECRET'),
+        'connect_redirect_uri' => env('PAGBANK_CONNECT_REDIRECT_URI'),
     ],
 
     /*

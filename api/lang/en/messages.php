@@ -594,6 +594,34 @@ return [
         'no_fulfillment_method_enabled' => 'The company must accept at least one fulfillment method: on-site pickup or delivery.',
     ],
 
+    'pagbank_connect' => [
+        'authorize_url_generated' => 'PagBank authorization URL generated successfully.',
+        'status_shown' => 'PagBank connection status.',
+        'disconnected' => 'PagBank account disconnected successfully.',
+        'not_connected' => 'No PagBank account connected.',
+        'invalid_state' => 'Invalid or expired PagBank authorization. Please try connecting again.',
+        'token_exchange_failed' => 'Could not complete the PagBank connection. Please try again.',
+        'refresh_failed' => 'Could not renew PagBank access. Please reconnect the account.',
+        'revoke_failed' => 'Could not revoke PagBank access.',
+        'unavailable' => 'PagBank Connect is currently unavailable. Please try again shortly.',
+        'account_not_enabled' => 'Connect and enable a PagBank account before publishing this event.',
+    ],
+
+    'pagbank_account' => [
+        'created' => 'PagBank account application submitted successfully.',
+        'already_submitted' => 'A PagBank account is already in progress or enabled for this company.',
+        'creation_failed' => 'Could not complete the PagBank account application. Please try again.',
+        'sync_failed' => 'Could not check the PagBank account status right now.',
+        'no_account' => 'No PagBank account has been created for this company yet.',
+        'unavailable' => 'PagBank account signup is currently unavailable. Please try again shortly.',
+        'invalid_document' => 'Invalid CPF or CNPJ.',
+    ],
+
+    'pagbank_receiving' => [
+        'enabled_mail_subject' => 'Your payouts are ready',
+        'pending_mail_subject' => 'We need some information',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Onboarding checklist — roadmap A2

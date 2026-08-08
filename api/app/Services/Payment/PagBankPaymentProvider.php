@@ -13,6 +13,7 @@ use App\Models\Subscription\Invoice;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\Subscription;
 use App\Models\Tenant\TenantSettings;
+use App\Repositories\Contracts\TenantPagBankConnectionRepositoryInterface;
 use App\Support\Money;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
@@ -67,6 +68,8 @@ class PagBankPaymentProvider implements PaymentProviderInterface
 
     public function __construct(
         private PagBankTransactionLogger $transactionLogger,
+        private TenantReceivingEligibilityService $receivingEligibility,
+        private TenantPagBankConnectionRepositoryInterface $pagBankConnectionRepository,
     ) {}
 
     public function createPixCharge(Invoice $invoice): array
@@ -726,6 +729,8 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     {
         $settings = $this->resolveSplitSettings((int) $sale->tenant_id);
 
+        $this->persistReceiverSnapshot($sale, $settings);
+
         if ($settings === null) {
             return null;
         }
@@ -797,7 +802,7 @@ class PagBankPaymentProvider implements PaymentProviderInterface
     }
 
     /**
-     * @return array{platform_account_id:string,tenant_account_id:string,platform_fee_fixed_amount:string,default_settlement_offset_days:int,split_custody_enabled:bool}|null
+     * @return array{platform_account_id:string,tenant_account_id:string,tenant_account_source:string,platform_fee_fixed_amount:string,default_settlement_offset_days:int,split_custody_enabled:bool}|null
      */
     private function resolveSplitSettings(int $tenantId): ?array
     {
@@ -805,25 +810,118 @@ class PagBankPaymentProvider implements PaymentProviderInterface
             ->whereNull('deleted_at')
             ->first();
 
-        $tenantSettings = TenantSettings::query()
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->first();
-
         $platformAccountId = trim((string) ($platformSettings?->pagbank_primary_account_id ?? ''));
-        $tenantAccountId = trim((string) ($tenantSettings?->pagbank_receiver_account_id ?? ''));
 
-        if ($platformAccountId === '' || $tenantAccountId === '') {
+        if ($platformAccountId === '') {
+            return null;
+        }
+
+        // Fonte primária (roadmap R2.3, gap 2.2): TenantPagBankConnection
+        // é a fonte de verdade de elegibilidade financeira (mesmo critério
+        // de TenantReceivingEligibilityService::canReceivePayments — enabled
+        // via Connect ou verified via Account/Cadastro). Só cai no fluxo
+        // legado (tenant_settings.pagbank_receiver_account_id) quando o
+        // tenant não tem conexão elegível, para não quebrar quem ainda
+        // está no caminho manual antigo e não migrou.
+        //
+        // Garantia NÃO 100%: um evento publicado ANTES de R2.1 existir, ou
+        // um tenant cuja conexão foi restringida/desconectada DEPOIS de
+        // publicar, pode chegar aqui sem conexão elegível — nesse caso cai
+        // no fallback legado (ou em null, se também não houver
+        // configuração manual), exatamente como acontecia antes desta
+        // mudança. EventService::publish() bloqueia a entrada nesse estado
+        // para publicações novas, mas não reavalia eventos já publicados.
+        $tenantAccountId = '';
+        // Origem do tenant_account_id resolvido, exposta para o chamador
+        // gravar o snapshot por venda (roadmap R2.6, gap 9.5.8) — não
+        // altera a prioridade Connect > legado > null decidida em R2.3,
+        // só rastreia de onde o valor final veio.
+        $tenantAccountSource = 'none';
+
+        if ($this->receivingEligibility->canReceivePayments($tenantId)) {
+            $connection = $this->pagBankConnectionRepository->findForTenant($tenantId);
+            $tenantAccountId = trim((string) ($connection?->account_id ?? ''));
+
+            if ($tenantAccountId !== '') {
+                $tenantAccountSource = 'tenant_pagbank_connection';
+            }
+        }
+
+        if ($tenantAccountId === '') {
+            $tenantSettings = TenantSettings::query()
+                ->where('tenant_id', $tenantId)
+                ->whereNull('deleted_at')
+                ->first();
+
+            $tenantAccountId = trim((string) ($tenantSettings?->pagbank_receiver_account_id ?? ''));
+
+            if ($tenantAccountId !== '') {
+                $tenantAccountSource = 'legacy_tenant_settings';
+            }
+        }
+
+        if ($tenantAccountId === '') {
             return null;
         }
 
         return [
             'platform_account_id' => $platformAccountId,
             'tenant_account_id' => $tenantAccountId,
+            'tenant_account_source' => $tenantAccountSource,
             'platform_fee_fixed_amount' => (string) ($platformSettings?->platform_fee_fixed_amount ?? '0'),
             'default_settlement_offset_days' => (int) ($platformSettings?->default_settlement_offset_days ?? 1),
             'split_custody_enabled' => (bool) ($platformSettings?->split_custody_enabled ?? true),
         ];
+    }
+
+    /**
+     * Grava, na própria Sale, qual receptor foi efetivamente usado nesta
+     * tentativa de cobrança (roadmap R2.6, gap 9.5.8) — mesmo princípio já
+     * aplicado à taxa de serviço (`platform_fee_*_snapshot`): resolveSplit
+     * Settings() é reconsultado a cada tentativa a partir da config
+     * ATUAL, então sem esse snapshot uma reconciliação futura não saberia
+     * reconstruir quem recebeu o split desta venda específica se a config
+     * do tenant mudar depois (reconectar outra conta, por exemplo).
+     *
+     * Decisão de sobrescrita: enquanto a venda não estiver paga
+     * (`is_paid=false`), toda nova tentativa de cobrança sobrescreve o
+     * snapshot anterior — tentativas pré-pagamento (cartão recusado,
+     * tentar de novo) não têm valor histórico ainda, só a config vigente
+     * na tentativa que efetivamente for paga importa. Uma vez
+     * `is_paid=true`, o snapshot vira imutável (mesma postura de
+     * imutabilidade pós-pagamento já usada na taxa de serviço) — nenhuma
+     * chamada subsequente (reemissão de QR code expirado, nova tentativa
+     * de outro método após a venda já estar paga por outro meio, etc.)
+     * pode reescrever o que já foi de fato cobrado.
+     *
+     * $settings===null (sem split configurado) grava
+     * tenant_receiver_source_snapshot='none' e os outros dois campos
+     * null — não é "erro", é o estado legítimo de venda sem split (sem
+     * PlatformFinanceSettings ou sem nenhuma conta de tenant configurada).
+     */
+    private function persistReceiverSnapshot(Sale $sale, ?array $settings): void
+    {
+        if ($sale->is_paid) {
+            return;
+        }
+
+        $provider = $settings !== null ? 'pagbank' : null;
+        $accountId = $settings['tenant_account_id'] ?? null;
+        $source = $settings['tenant_account_source'] ?? 'none';
+
+        if (
+            $sale->tenant_receiver_provider === $provider
+            && $sale->tenant_receiver_account_id_snapshot === $accountId
+            && $sale->tenant_receiver_source_snapshot === $source
+        ) {
+            return;
+        }
+
+        $sale->forceFill([
+            'tenant_receiver_provider' => $provider,
+            'tenant_receiver_account_id_snapshot' => $accountId,
+            'tenant_receiver_source_snapshot' => $source,
+        ])->save();
     }
 
     /**

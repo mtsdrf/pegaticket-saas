@@ -42,6 +42,17 @@ class FunctionalitiesSeeder extends Seeder
             ['name' => 'Comunicação', 'slug' => 'communication_logs', 'description' => 'Consulta ao tracking unificado de e-mail transacional (hub de comunicação)', 'is_active' => true],
             ['name' => 'Templates de E-mail', 'slug' => 'email_templates', 'description' => 'Personalização de assunto/corpo dos e-mails transacionais customizáveis por empresa (ticket_delivery, event_reminder, recompra_nudge, waitlist_available, tenant_user_invite)', 'is_active' => true],
             ['name' => 'Configurações', 'slug' => 'tenant_settings', 'description' => 'Gestão das configurações da empresa', 'is_active' => true],
+            // Onboarding financeiro do tenant (Connect + Account/Cadastro
+            // PagBank, roadmap R2.3 seção 9.5.9). Funcionalidade própria,
+            // separada de tenant_settings: R2.1/R2.2 reaproveitaram
+            // tenant_settings,{read,update} por conveniência inicial, mas o
+            // subdomínio já cobre elegibilidade, Connect e Account/Cadastro
+            // — grande o suficiente pra ter permissão dedicada, evitando que
+            // qualquer grupo com acesso a "configurações" genéricas ganhe
+            // acesso a operações financeiras sensíveis (conectar/desconectar
+            // conta PagBank, submeter CPF/CNPJ). Reaproveita as Actions
+            // read/update já existentes (sem Action nova).
+            ['name' => 'Recebimentos', 'slug' => 'financial_receiving', 'description' => 'Onboarding financeiro do tenant: conexão PagBank (Connect) e criação de conta de recebimento (Account/Cadastro)', 'is_active' => true],
             ['name' => 'Perfil da Empresa', 'slug' => 'tenant-profile', 'description' => 'Edição de nome e logo da própria empresa pelo dono', 'is_active' => true],
             ['name' => 'Bilheteria Online', 'slug' => 'storefront', 'description' => 'Catálogo público de eventos e checkout da bilheteria online do tenant', 'is_active' => true],
             ['name' => 'Assinatura', 'slug' => 'subscription', 'description' => 'Assinatura do plano da empresa (cobrança, faturas, cancelamento, arrependimento)', 'is_active' => true],

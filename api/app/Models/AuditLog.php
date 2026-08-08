@@ -88,6 +88,8 @@ class AuditLog extends Model
                 'client_secret',
                 'authorization_code',
                 'access_token',
+                'document_encrypted',
+                'tax_id',
             ];
 
             if (is_array($old)) {

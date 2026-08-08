@@ -195,6 +195,9 @@ const SettingsBlockPage = lazy(() =>
 const SubscriptionPage = lazy(() =>
   import('../pages/Settings/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })),
 )
+const ReceivingSetupPage = lazy(() =>
+  import('../pages/Settings/ReceivingSetupPage').then((m) => ({ default: m.ReceivingSetupPage })),
+)
 const LegalDocumentPage = lazy(() =>
   import('../pages/Legal/LegalDocumentPage').then((m) => ({ default: m.LegalDocumentPage })),
 )
@@ -378,6 +381,17 @@ export function AppRoutes() {
                 element={
                   <PermissionRoute requirement={ACCESS.subscriptionRead} requireOwner ownerBypassesAccess>
                     <SubscriptionPage />
+                  </PermissionRoute>
+                }
+              />
+              {/* Destino fixo do redirect do callback OAuth PagBank
+                  (`PagBankConnectController::callback`) — não mudar de path
+                  sem coordenar com o backend (roadmap fase R2.4). */}
+              <Route
+                path="pagbank-connect"
+                element={
+                  <PermissionRoute requirement={ACCESS.financialReceivingRead}>
+                    <ReceivingSetupPage />
                   </PermissionRoute>
                 }
               />

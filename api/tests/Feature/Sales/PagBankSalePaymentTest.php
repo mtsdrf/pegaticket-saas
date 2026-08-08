@@ -6,12 +6,14 @@ use App\Models\Finance\PlatformFinanceSettings;
 use App\Models\Sale\Sale;
 use App\Models\Subscription\Payment;
 use App\Models\Subscription\WebhookEvent;
+use App\Models\Tenant\TenantPagBankConnection;
 use App\Models\Tenant\TenantSettings;
 use App\Services\Sale\SalePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\Permissions\Concerns\SetsUpTenantScopedUser;
@@ -85,6 +87,19 @@ class PagBankSalePaymentTest extends TestCase
                 'pagbank_access_token' => $token,
             ]
         );
+    }
+
+    private function createEnabledPagBankConnection(string $accountId, string $status = TenantPagBankConnection::STATUS_ENABLED): void
+    {
+        TenantPagBankConnection::create([
+            'uuid' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'provider' => 'pagbank',
+            'status' => $status,
+            'account_id' => $accountId,
+            'environment' => 'sandbox',
+            'connected_at' => now(),
+        ]);
     }
 
     private function configureSplitAccounts(string $platformAccountId, string $tenantAccountId, float $platformFee = 5): void
@@ -1015,5 +1030,276 @@ class PagBankSalePaymentTest extends TestCase
                 && ($receivers[1]['account']['id'] ?? null) === 'ACCO_TENANT_1'
                 && ($receivers[1]['amount']['value'] ?? null) === 6700;
         });
+    }
+
+    /**
+     * Roadmap R2.3 (gap 2.2, "religar consumidores"): quando o tenant tem
+     * uma TenantPagBankConnection elegível (enabled), o split usa o
+     * account_id dela — não o legado tenant_settings.pagbank_receiver_
+     * account_id — mesmo que os dois estejam configurados ao mesmo tempo.
+     */
+    #[Test]
+    public function split_configuration_prefers_the_tenant_pagbank_connection_over_the_legacy_tenant_settings(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_LEGACY_TENANT', 5);
+        $this->createEnabledPagBankConnection('ACCO_CONNECT_TENANT');
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_PLATFORM',
+                'public_key' => 'PLATFORM_PUBLIC_KEY',
+            ], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'PLATFORM_3DS_SESSION',
+            ], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_CONNECT_SPLIT_1',
+                'charges' => [[
+                    'links' => [[
+                        'rel' => 'SPLIT',
+                        'href' => 'https://sandbox.api.pagseguro.com/splits/SPLI_CONNECT_SPLIT_1',
+                    ]],
+                ]],
+                'qr_codes' => [[
+                    'id' => 'QRCO_CONNECT_SPLIT_1',
+                    'text' => '00020126...connectsplit...6304ABCD',
+                    'expiration_date' => '2026-08-03T12:00:00-03:00',
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 2);
+        Sale::where('uuid', $order['uuid'])->update(['platform_fee_payer_snapshot' => 'buyer']);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'pending');
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://sandbox.api.pagseguro.com/orders') {
+                return false;
+            }
+
+            $receivers = $request['qr_codes'][0]['splits']['receivers'] ?? [];
+
+            return ($receivers[1]['account']['id'] ?? null) === 'ACCO_CONNECT_TENANT'
+                && ($receivers[1]['account']['id'] ?? null) !== 'ACCO_LEGACY_TENANT';
+        });
+    }
+
+    /**
+     * `verified` (caminho Account/Cadastro) conta como elegível no mesmo
+     * pé que `enabled` (decisão documentada em
+     * TenantReceivingEligibilityService) — o split também deve usar essa
+     * conexão como fonte primária.
+     */
+    #[Test]
+    public function split_configuration_uses_a_verified_account_cadastro_connection_as_well(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->createEnabledPagBankConnection('ACCO_VERIFIED_TENANT', TenantPagBankConnection::STATUS_VERIFIED);
+
+        PlatformFinanceSettings::create([
+            'platform_fee_fixed_amount' => 0,
+            'default_settlement_offset_days' => 1,
+            'settlement_reference' => 'event_end',
+            'split_custody_enabled' => true,
+            'extra_reserve_enabled' => false,
+            'pagbank_primary_account_id' => 'ACCO_PLATFORM_1',
+        ]);
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_PLATFORM',
+                'public_key' => 'PLATFORM_PUBLIC_KEY',
+            ], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'PLATFORM_3DS_SESSION',
+            ], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_VERIFIED_SPLIT_1',
+                'charges' => [[
+                    'links' => [[
+                        'rel' => 'SPLIT',
+                        'href' => 'https://sandbox.api.pagseguro.com/splits/SPLI_VERIFIED_SPLIT_1',
+                    ]],
+                ]],
+                'qr_codes' => [[
+                    'id' => 'QRCO_VERIFIED_SPLIT_1',
+                    'text' => '00020126...verifiedsplit...6304ABCD',
+                    'expiration_date' => '2026-08-03T12:00:00-03:00',
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 2);
+        Sale::where('uuid', $order['uuid'])->update(['platform_fee_payer_snapshot' => 'buyer']);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'pending');
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://sandbox.api.pagseguro.com/orders') {
+                return false;
+            }
+
+            $receivers = $request['qr_codes'][0]['splits']['receivers'] ?? [];
+
+            return ($receivers[0]['account']['id'] ?? null) === 'ACCO_VERIFIED_TENANT';
+        });
+    }
+
+    /**
+     * Roadmap R2.6 (gap 9.5.8): snapshot por venda do receptor efetivamente
+     * usado no split — `resolveSplitSettings()` é reconsultado a cada
+     * tentativa de cobrança a partir da config ATUAL, então sem esse
+     * snapshot uma reconciliação futura não saberia reconstruir quem
+     * recebeu o split desta venda específica se a config do tenant mudar
+     * depois.
+     */
+    #[Test]
+    public function receiver_snapshot_records_the_tenant_pagbank_connection_as_source_when_eligible(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_LEGACY_TENANT', 5);
+        $this->createEnabledPagBankConnection('ACCO_CONNECT_TENANT');
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response(['id' => 'PUBKEY_1', 'public_key' => 'PK'], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response(['session' => 'SESSION'], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_SNAPSHOT_CONNECT_1',
+                'qr_codes' => [['id' => 'QRCO_1', 'text' => '00020126...6304ABCD']],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+        Sale::where('uuid', $order['uuid'])->update(['platform_fee_payer_snapshot' => 'buyer']);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+
+        $this->assertDatabaseHas('sales', [
+            'uuid' => $order['uuid'],
+            'tenant_receiver_provider' => 'pagbank',
+            'tenant_receiver_account_id_snapshot' => 'ACCO_CONNECT_TENANT',
+            'tenant_receiver_source_snapshot' => 'tenant_pagbank_connection',
+        ]);
+    }
+
+    #[Test]
+    public function receiver_snapshot_records_the_legacy_tenant_settings_as_source_when_no_connection_exists(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_LEGACY_TENANT', 5);
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response(['id' => 'PUBKEY_1', 'public_key' => 'PK'], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response(['session' => 'SESSION'], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_SNAPSHOT_LEGACY_1',
+                'qr_codes' => [['id' => 'QRCO_1', 'text' => '00020126...6304ABCD']],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+        Sale::where('uuid', $order['uuid'])->update(['platform_fee_payer_snapshot' => 'buyer']);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+
+        $this->assertDatabaseHas('sales', [
+            'uuid' => $order['uuid'],
+            'tenant_receiver_provider' => 'pagbank',
+            'tenant_receiver_account_id_snapshot' => 'ACCO_LEGACY_TENANT',
+            'tenant_receiver_source_snapshot' => 'legacy_tenant_settings',
+        ]);
+    }
+
+    #[Test]
+    public function receiver_snapshot_records_none_when_there_is_no_split_configured(): void
+    {
+        // Sem PlatformFinanceSettings/tenant_settings pagbank configurados
+        // -> resolveSplitSettings() retorna null (cai no stub sem
+        // credenciais, mesmo assim buildSplitPayload roda antes do envio).
+        Http::fake([
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_SNAPSHOT_NONE_1',
+                'qr_codes' => [['id' => 'QRCO_1', 'text' => '00020126...6304ABCD']],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+
+        $this->assertDatabaseHas('sales', [
+            'uuid' => $order['uuid'],
+            'tenant_receiver_provider' => null,
+            'tenant_receiver_account_id_snapshot' => null,
+            'tenant_receiver_source_snapshot' => 'none',
+        ]);
+    }
+
+    #[Test]
+    public function receiver_snapshot_is_overwritten_by_a_new_attempt_while_the_sale_is_not_paid_but_frozen_once_paid(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_LEGACY_TENANT', 5);
+        $this->createEnabledPagBankConnection('ACCO_CONNECT_TENANT');
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response(['id' => 'PUBKEY_1', 'public_key' => 'PK'], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response(['session' => 'SESSION'], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_SNAPSHOT_RETRY_1',
+                'qr_codes' => [['id' => 'QRCO_1', 'text' => '00020126...6304ABCD']],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        $order = $this->createConfirmedOrder(price: 40, qty: 1);
+        $sale = Sale::where('uuid', $order['uuid'])->firstOrFail();
+        $sale->update(['platform_fee_payer_snapshot' => 'buyer']);
+
+        // Primeira tentativa: resolve via TenantPagBankConnection.
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+        $sale->refresh();
+        $this->assertSame('ACCO_CONNECT_TENANT', $sale->tenant_receiver_account_id_snapshot);
+        $this->assertSame('tenant_pagbank_connection', $sale->tenant_receiver_source_snapshot);
+
+        // Simula tentativa anterior falha (ex.: cartão recusado) para não
+        // esbarrar no guard de "cobrança pendente já ativa" do
+        // SalePaymentService — cenário realista de nova tentativa.
+        Payment::where('payable_id', $sale->id)->where('payable_type', Sale::class)->update(['status' => 'failed']);
+
+        // Config do tenant muda (reconecta outra conta) ANTES de a venda
+        // ser paga -> nova tentativa deve sobrescrever o snapshot.
+        TenantPagBankConnection::where('tenant_id', $this->tenant->id)
+            ->update(['account_id' => 'ACCO_CONNECT_TENANT_NEW']);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(201);
+        $sale->refresh();
+        $this->assertSame('ACCO_CONNECT_TENANT_NEW', $sale->tenant_receiver_account_id_snapshot);
+
+        // Venda agora paga: snapshot deve congelar, mesmo que a config
+        // mude de novo e uma nova tentativa de cobrança seja feita.
+        Payment::where('payable_id', $sale->id)->where('payable_type', Sale::class)->update(['status' => 'failed']);
+        $sale->update(['is_paid' => true, 'paid_at' => now()]);
+        TenantPagBankConnection::where('tenant_id', $this->tenant->id)
+            ->update(['account_id' => 'ACCO_CONNECT_TENANT_AFTER_PAID']);
+
+        // Venda já paga -> SalePaymentService rejeita nova cobrança antes
+        // de chegar no provider (already_paid); confirma que o snapshot
+        // permanece o da última tentativa pré-pagamento.
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")->assertStatus(422);
+        $sale->refresh();
+        $this->assertSame('ACCO_CONNECT_TENANT_NEW', $sale->tenant_receiver_account_id_snapshot);
+        $this->assertSame('tenant_pagbank_connection', $sale->tenant_receiver_source_snapshot);
     }
 }

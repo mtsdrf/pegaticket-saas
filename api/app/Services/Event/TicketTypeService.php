@@ -5,13 +5,14 @@ namespace App\Services\Event;
 use App\DTOs\Event\CreateTicketTypeDTO;
 use App\DTOs\Event\UpdateTicketTypeDTO;
 use App\Events\Event\TicketTypeCreated;
-use App\Events\Event\TicketTypeUpdated;
 use App\Events\Event\TicketTypeDeleted;
+use App\Events\Event\TicketTypeUpdated;
 use App\Models\Event\Event;
 use App\Models\Event\TicketType;
 use App\Models\Tenant\Tenant;
 use App\Repositories\Contracts\TicketTypeRepositoryInterface;
 use App\Services\Media\MediaStorageService;
+use App\Services\Payment\TenantReceivingEligibilityService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,15 @@ class TicketTypeService
     public const DETAIL_RELATIONS = ['event'];
 
     /**
+     * Espelha Event::STATUS_PUBLICADO (privado em EventService) — usado só
+     * para o gate do roadmap R2.3 (seção 9.3): ingresso virando pago em
+     * evento já publicado.
+     */
+    private const EVENT_STATUS_PUBLICADO = 'publicado';
+
+    private const TICKET_TYPE_STATUS_ATIVO = 'ativo';
+
+    /**
      * Colunas de `ticket_types` exceto `image_data` (LONGBLOB) — mesmo
      * cuidado de ProductService::listColumns() (herdado do domínio antigo).
      * Reaproveitado por StorefrontCatalogService (catálogo público).
@@ -33,16 +43,16 @@ class TicketTypeService
         static $columns;
 
         return $columns ??= array_map(
-            fn($c) => "ticket_types.$c",
+            fn ($c) => "ticket_types.$c",
             array_diff(Schema::getColumnListing('ticket_types'), ['image_data'])
         );
     }
 
     public function __construct(
         private TicketTypeRepositoryInterface $repository,
-        private MediaStorageService $mediaStorage
-    ) {
-    }
+        private MediaStorageService $mediaStorage,
+        private TenantReceivingEligibilityService $receivingEligibility
+    ) {}
 
     public function find(TicketType $ticketType): TicketType
     {
@@ -70,15 +80,15 @@ class TicketTypeService
             ->whereNull('ticket_types.deleted_at')
             ->with(self::EAGER_RELATIONS);
 
-        if (!empty($filters['name'])) {
-            $query->where('ticket_types.name', 'like', '%' . $filters['name'] . '%');
+        if (! empty($filters['name'])) {
+            $query->where('ticket_types.name', 'like', '%'.$filters['name'].'%');
         }
 
-        if (!empty($filters['event_uuid'])) {
-            $query->whereHas('event', fn($q) => $q->where('uuid', $filters['event_uuid']));
+        if (! empty($filters['event_uuid'])) {
+            $query->whereHas('event', fn ($q) => $q->where('uuid', $filters['event_uuid']));
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('ticket_types.status', $filters['status']);
         }
 
@@ -90,11 +100,11 @@ class TicketTypeService
             $query->where('ticket_types.price', '<=', $filters['price_max']);
         }
 
-        if (!empty($filters['q'])) {
+        if (! empty($filters['q'])) {
             $term = $filters['q'];
             $query->where(function ($sub) use ($term) {
-                $sub->where('ticket_types.name', 'like', '%' . $term . '%')
-                    ->orWhereHas('event', fn($r) => $r->where('name', 'like', '%' . $term . '%'));
+                $sub->where('ticket_types.name', 'like', '%'.$term.'%')
+                    ->orWhereHas('event', fn ($r) => $r->where('name', 'like', '%'.$term.'%'));
             });
         }
 
@@ -124,6 +134,13 @@ class TicketTypeService
                     ->where('tenant_id', $dto->tenantId)
                     ->whereNull('deleted_at')
                     ->firstOrFail();
+
+                $this->assertPaidTransitionAllowed(
+                    tenantId: $dto->tenantId,
+                    eventStatus: $event->status,
+                    willBeSellablePaid: $dto->status === self::TICKET_TYPE_STATUS_ATIVO && $dto->price > 0,
+                    wasSellablePaid: false
+                );
 
                 $ticketType = $this->repository->create([
                     'tenant_id' => $dto->tenantId,
@@ -198,7 +215,7 @@ class TicketTypeService
                     'barcode' => $dto->barcode,
                     'brand' => $dto->brand,
                     'unit' => $dto->unit,
-                ], fn($v) => !is_null($v));
+                ], fn ($v) => ! is_null($v));
 
                 if ($dto->eventUuid) {
                     $event = Event::where('uuid', $dto->eventUuid)
@@ -207,7 +224,21 @@ class TicketTypeService
                         ->firstOrFail();
 
                     $data['event_id'] = $event->id;
+                } else {
+                    $event = Event::find($ticketType->event_id);
                 }
+
+                $wasSellablePaid = $ticketType->status === self::TICKET_TYPE_STATUS_ATIVO
+                    && (float) $ticketType->price > 0;
+                $willBeSellablePaid = ($dto->status ?? $ticketType->status) === self::TICKET_TYPE_STATUS_ATIVO
+                    && ($dto->price ?? (float) $ticketType->price) > 0;
+
+                $this->assertPaidTransitionAllowed(
+                    tenantId: (int) $ticketType->tenant_id,
+                    eventStatus: $event?->status,
+                    willBeSellablePaid: $willBeSellablePaid,
+                    wasSellablePaid: $wasSellablePaid
+                );
 
                 if ($newMedia) {
                     $data['image_path'] = $newMedia['path'];
@@ -216,17 +247,17 @@ class TicketTypeService
                     $data['image_updated_at'] = $newMedia['updated_at'];
                 }
 
-                if (!empty($data)) {
+                if (! empty($data)) {
                     $ticketType = $this->repository->update($ticketType, $data);
                 }
 
                 if ($newMedia && $oldPath && $oldPath !== $newMedia['path']) {
-                    DB::afterCommit(fn() => $this->mediaStorage->deletePublicMedia($oldPath, 'ticket_type'));
+                    DB::afterCommit(fn () => $this->mediaStorage->deletePublicMedia($oldPath, 'ticket_type'));
                 }
 
                 $changes = array_diff_assoc($ticketType->getAttributes(), $original);
 
-                if (!empty($changes)) {
+                if (! empty($changes)) {
                     event(new TicketTypeUpdated(
                         ticketTypeUuid: $ticketType->uuid,
                         actorId: Auth::id(),
@@ -278,6 +309,37 @@ class TicketTypeService
     {
         if ((int) $ticketType->tenant_id !== (int) app('tenant_id')) {
             abort(404);
+        }
+    }
+
+    /**
+     * Gate do roadmap R2.3 (seção 9.3): R2.1 só bloqueou a PUBLICAÇÃO do
+     * evento. Falta cobrir o caso de um evento JÁ publicado (só com
+     * ingressos gratuitos até então) receber um ingresso pago novo, ou um
+     * ingresso existente virar pago — sem isso, o ingresso ficaria
+     * vendável mesmo sem o tenant poder receber o dinheiro. Só bloqueia a
+     * TRANSIÇÃO para vendável+pago (`$wasSellablePaid` false ->
+     * `$willBeSellablePaid` true); não bloqueia criação de ingresso
+     * gratuito nem edições que não envolvam tornar algo pago. Reaproveita
+     * a mesma mensagem de erro de EventService::publish() (R2.1) —
+     * mesmo requisito de negócio, mesmo texto ao usuário.
+     */
+    private function assertPaidTransitionAllowed(
+        int $tenantId,
+        ?string $eventStatus,
+        bool $willBeSellablePaid,
+        bool $wasSellablePaid
+    ): void {
+        if ($wasSellablePaid || ! $willBeSellablePaid) {
+            return;
+        }
+
+        if ($eventStatus !== self::EVENT_STATUS_PUBLICADO) {
+            return;
+        }
+
+        if (! $this->receivingEligibility->canPublishPaidEvents($tenantId)) {
+            abort(422, __('messages.pagbank_connect.account_not_enabled'));
         }
     }
 

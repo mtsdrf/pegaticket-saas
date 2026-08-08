@@ -38,6 +38,7 @@ use App\Repositories\Contracts\ScheduledReportSubscriptionRepositoryInterface;
 use App\Repositories\Contracts\SeatRepositoryInterface;
 use App\Repositories\Contracts\SubscriptionRepositoryInterface;
 use App\Repositories\Contracts\TenantFeatureOverrideRepositoryInterface;
+use App\Repositories\Contracts\TenantPagBankConnectionRepositoryInterface;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Repositories\Contracts\TenantRolePermissionRepositoryInterface;
 use App\Repositories\Contracts\TenantRoleRepositoryInterface;
@@ -87,6 +88,7 @@ use App\Repositories\Eloquent\ScheduledReportSubscriptionRepository;
 use App\Repositories\Eloquent\SeatRepository;
 use App\Repositories\Eloquent\SubscriptionRepository;
 use App\Repositories\Eloquent\TenantFeatureOverrideRepository;
+use App\Repositories\Eloquent\TenantPagBankConnectionRepository;
 use App\Repositories\Eloquent\TenantRepository;
 use App\Repositories\Eloquent\TenantRolePermissionRepository;
 use App\Repositories\Eloquent\TenantRoleRepository;
@@ -401,6 +403,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TenantSettingsRepositoryInterface::class,
             TenantSettingsRepository::class
+        );
+
+        // Tenant PagBank Connection Repository (Connect OAuth, fase R2)
+        $this->app->bind(
+            TenantPagBankConnectionRepositoryInterface::class,
+            TenantPagBankConnectionRepository::class
         );
 
         // Coupon Repository (Delivery Fase 3)

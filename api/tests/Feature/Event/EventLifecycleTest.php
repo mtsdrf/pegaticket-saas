@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Event;
 
-use App\Models\AuditLog;
 use App\Models\Event\Event;
 use App\Models\Event\EventCategory;
 use App\Models\Event\TicketType;
+use App\Models\Tenant\TenantPagBankConnection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,7 +29,7 @@ class EventLifecycleTest extends TestCase
 
     protected function auth()
     {
-        return $this->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $this->withHeader('Authorization', 'Bearer '.$this->token);
     }
 
     #[Test]
@@ -37,9 +37,10 @@ class EventLifecycleTest extends TestCase
     {
         $event = $this->createEvent('rascunho');
         $this->createActiveTicketType($event);
+        $this->createEnabledPagBankConnection();
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/publish')
+            ->postJson('/api/v1/events/'.$event->uuid.'/publish')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'publicado');
 
@@ -57,9 +58,26 @@ class EventLifecycleTest extends TestCase
     public function it_rejects_publish_without_active_sellable_inventory(): void
     {
         $event = $this->createEvent('rascunho');
+        $this->createEnabledPagBankConnection();
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/publish')
+            ->postJson('/api/v1/events/'.$event->uuid.'/publish')
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'status' => 'rascunho',
+        ]);
+    }
+
+    #[Test]
+    public function it_rejects_publish_without_an_enabled_pagbank_connection(): void
+    {
+        $event = $this->createEvent('rascunho');
+        $this->createActiveTicketType($event);
+
+        $this->auth()
+            ->postJson('/api/v1/events/'.$event->uuid.'/publish')
             ->assertStatus(422);
 
         $this->assertDatabaseHas('events', [
@@ -74,12 +92,12 @@ class EventLifecycleTest extends TestCase
         $event = $this->createEvent('publicado');
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/pause-sales')
+            ->postJson('/api/v1/events/'.$event->uuid.'/pause-sales')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'vendas_pausadas');
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/resume-sales')
+            ->postJson('/api/v1/events/'.$event->uuid.'/resume-sales')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'publicado');
     }
@@ -90,12 +108,12 @@ class EventLifecycleTest extends TestCase
         $event = $this->createEvent('publicado');
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/close-sales')
+            ->postJson('/api/v1/events/'.$event->uuid.'/close-sales')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'encerrado');
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/archive')
+            ->postJson('/api/v1/events/'.$event->uuid.'/archive')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'arquivado');
     }
@@ -106,11 +124,11 @@ class EventLifecycleTest extends TestCase
         $event = $this->createEvent('agendado');
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/archive')
+            ->postJson('/api/v1/events/'.$event->uuid.'/archive')
             ->assertStatus(422);
 
         $this->auth()
-            ->postJson('/api/v1/events/' . $event->uuid . '/cancel')
+            ->postJson('/api/v1/events/'.$event->uuid.'/cancel')
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'cancelado');
     }
@@ -120,7 +138,7 @@ class EventLifecycleTest extends TestCase
         $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
-            'name' => 'Categoria ' . Str::random(6),
+            'name' => 'Categoria '.Str::random(6),
             'is_active' => true,
         ]);
 
@@ -128,13 +146,26 @@ class EventLifecycleTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'event_category_id' => $category->id,
-            'name' => 'Evento ' . Str::random(6),
-            'slug' => 'evento-' . Str::random(10),
+            'name' => 'Evento '.Str::random(6),
+            'slug' => 'evento-'.Str::random(10),
             'type' => 'ingresso',
             'starts_at' => now()->addDays(15),
             'ends_at' => now()->addDays(15)->addHours(5),
             'visibility' => 'public',
             'status' => $status,
+        ]);
+    }
+
+    private function createEnabledPagBankConnection(): void
+    {
+        TenantPagBankConnection::create([
+            'uuid' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'provider' => 'pagbank',
+            'status' => TenantPagBankConnection::STATUS_ENABLED,
+            'account_id' => 'ACCO_'.Str::random(10),
+            'environment' => 'sandbox',
+            'connected_at' => now(),
         ]);
     }
 

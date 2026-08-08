@@ -18,6 +18,12 @@ class SaleResource extends JsonResource
             'discount_amount' => (float) $this->discount_amount,
             'platform_fee_total_amount' => (float) $this->platform_fee_total_amount,
             'platform_fee_payer_snapshot' => $this->platform_fee_payer_snapshot,
+            // Snapshot do receptor do split usado na cobrança (roadmap
+            // R2.6) — auditoria/debug pro staff, nunca exposto pro
+            // comprador (mesmo cuidado do bloco de risco/afiliado acima).
+            'tenant_receiver_provider' => $this->tenant_receiver_provider,
+            'tenant_receiver_account_id_snapshot' => $this->tenant_receiver_account_id_snapshot,
+            'tenant_receiver_source_snapshot' => $this->tenant_receiver_source_snapshot,
             'coupon_code' => $this->whenLoaded('coupon', fn () => $this->coupon?->code),
             'paid_amount' => $this->paid_amount !== null ? (float) $this->paid_amount : null,
             'is_paid' => $this->is_paid,

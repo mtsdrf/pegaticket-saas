@@ -601,6 +601,34 @@ return [
         'no_fulfillment_method_enabled' => 'A empresa precisa aceitar pelo menos uma forma de atendimento: retirada presencial ou entrega.',
     ],
 
+    'pagbank_connect' => [
+        'authorize_url_generated' => 'URL de autorização do PagBank gerada com sucesso.',
+        'status_shown' => 'Status da conexão com o PagBank.',
+        'disconnected' => 'Conta PagBank desconectada com sucesso.',
+        'not_connected' => 'Nenhuma conta PagBank conectada.',
+        'invalid_state' => 'Autorização do PagBank inválida ou expirada. Tente conectar novamente.',
+        'token_exchange_failed' => 'Não foi possível concluir a conexão com o PagBank. Tente novamente.',
+        'refresh_failed' => 'Não foi possível renovar o acesso ao PagBank. Reconecte a conta.',
+        'revoke_failed' => 'Não foi possível revogar o acesso ao PagBank.',
+        'unavailable' => 'PagBank Connect indisponível no momento. Tente novamente em instantes.',
+        'account_not_enabled' => 'Conecte e habilite uma conta PagBank antes de publicar este evento.',
+    ],
+
+    'pagbank_account' => [
+        'created' => 'Cadastro da conta PagBank enviado com sucesso.',
+        'already_submitted' => 'Já existe uma conta PagBank em andamento ou habilitada para esta empresa.',
+        'creation_failed' => 'Não foi possível concluir o cadastro da conta PagBank. Tente novamente.',
+        'sync_failed' => 'Não foi possível consultar o status da conta PagBank no momento.',
+        'no_account' => 'Nenhuma conta PagBank foi criada para esta empresa ainda.',
+        'unavailable' => 'Cadastro PagBank indisponível no momento. Tente novamente em instantes.',
+        'invalid_document' => 'CPF ou CNPJ inválido.',
+    ],
+
+    'pagbank_receiving' => [
+        'enabled_mail_subject' => 'Seus recebimentos estão prontos',
+        'pending_mail_subject' => 'Precisamos de uma informação',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Checklist de implantação (onboarding) — roadmap A2

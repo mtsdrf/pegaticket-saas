@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 class PagBankTransactionLogger
 {
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function info(string $event, array $context = []): void
     {
@@ -15,7 +15,7 @@ class PagBankTransactionLogger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function error(string $event, array $context = []): void
     {
@@ -23,7 +23,7 @@ class PagBankTransactionLogger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function warning(string $event, array $context = []): void
     {
@@ -31,7 +31,24 @@ class PagBankTransactionLogger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * Ponto único de instrumentação do subdomínio de recebimentos
+     * (roadmap R2.5, seção 9.9) — projeto não tem Prometheus/StatsD, só
+     * log estruturado (ver métodos acima), então cada métrica vira uma
+     * linha `pagbank_metric` no mesmo canal `pagbank_transactions`, com o
+     * nome da métrica e contexto (sempre incluir `tenant_id` quando
+     * disponível). Nenhuma agregação acontece aqui — só o ponto de
+     * instrumentação; dashboard/alerta ficam para quando o projeto tiver
+     * um coletor de métricas de verdade.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function metric(string $name, array $context = []): void
+    {
+        Log::channel('pagbank_transactions')->info('pagbank_metric', $this->sanitize(array_merge(['metric' => $name], $context)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
     private function sanitize(array $context): array
@@ -60,20 +77,21 @@ class PagBankTransactionLogger
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param array<int, int|string> $path
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, int|string>  $path
      */
     private function maskPath(array &$payload, array $path): void
     {
         $cursor = &$payload;
 
         foreach ($path as $index => $segment) {
-            if (!is_array($cursor) || !array_key_exists($segment, $cursor)) {
+            if (! is_array($cursor) || ! array_key_exists($segment, $cursor)) {
                 return;
             }
 
             if ($index === array_key_last($path)) {
                 $cursor[$segment] = '***';
+
                 return;
             }
 

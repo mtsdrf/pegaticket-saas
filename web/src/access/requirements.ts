@@ -93,6 +93,9 @@ export const ACCESS = {
   tenantUsersDelete: tenant('tenant_users', 'delete'),
   tenantSettingsRead: tenant('tenant_settings', 'read'),
   tenantSettingsUpdate: tenant('tenant_settings', 'update'),
+  /** Onboarding financeiro/Connect PagBank (roadmap fase R2, seção 9.5.9) — functionality própria `financial_receiving`, substitui o reaproveitamento inicial de `tenant_settings`. */
+  financialReceivingRead: tenant('financial_receiving', 'read'),
+  financialReceivingUpdate: tenant('financial_receiving', 'update'),
   /** "Minha assinatura" — tela sempre acessível (backend nunca a bloqueia por assinatura suspensa). */
   subscriptionRead: tenant('subscription', 'read'),
   subscriptionUpdate: tenant('subscription', 'update'),

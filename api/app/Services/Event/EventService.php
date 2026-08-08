@@ -17,6 +17,7 @@ use App\Models\Venue\Venue;
 use App\Models\Venue\VenueMapVersion;
 use App\Repositories\Contracts\EventRepositoryInterface;
 use App\Services\Media\MediaStorageService;
+use App\Services\Payment\TenantReceivingEligibilityService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,7 +61,8 @@ class EventService
 
     public function __construct(
         private EventRepositoryInterface $repository,
-        private MediaStorageService $mediaStorage
+        private MediaStorageService $mediaStorage,
+        private TenantReceivingEligibilityService $receivingEligibility
     ) {}
 
     public function find(Event $event): Event
@@ -297,7 +299,8 @@ class EventService
             $event,
             self::STATUS_PUBLICADO,
             [self::STATUS_RASCUNHO, self::STATUS_AGENDADO, self::STATUS_VENDAS_PAUSADAS],
-            true
+            requiresSellableItem: true,
+            requiresPagBankConnection: true
         );
     }
 
@@ -364,11 +367,12 @@ class EventService
         Event $event,
         string $targetStatus,
         array $allowedFrom,
-        bool $requiresSellableItem = false
+        bool $requiresSellableItem = false,
+        bool $requiresPagBankConnection = false
     ): Event {
         $this->assertBelongsToCurrentTenant($event);
 
-        return DB::transaction(function () use ($event, $targetStatus, $allowedFrom, $requiresSellableItem) {
+        return DB::transaction(function () use ($event, $targetStatus, $allowedFrom, $requiresSellableItem, $requiresPagBankConnection) {
             /** @var Event $locked */
             $locked = Event::query()
                 ->whereKey($event->id)
@@ -385,6 +389,10 @@ class EventService
 
             if ($requiresSellableItem && ! $this->hasSellableInventory($locked)) {
                 abort(422, __('messages.event.publish_requires_sellable_item'));
+            }
+
+            if ($requiresPagBankConnection && ! $this->hasEnabledPagBankConnection($locked)) {
+                abort(422, __('messages.pagbank_connect.account_not_enabled'));
             }
 
             $fromStatus = (string) $locked->status;
@@ -427,6 +435,20 @@ class EventService
             ->whereNull('deleted_at')
             ->where('status', 'ativo')
             ->exists();
+    }
+
+    /**
+     * Bloqueio de produto (roadmap fase R2, religado à fonte única de
+     * verdade em R2.3): sem uma conta PagBank habilitada para receber
+     * (Connect ou Account/Cadastro verificado), não há para onde a
+     * plataforma direcionar o split do repasse ao organizador — o evento
+     * não pode ficar vendável. Nunca reimplementar essa checagem aqui —
+     * ver TenantReceivingEligibilityService para a decisão de quais
+     * status contam como habilitados.
+     */
+    private function hasEnabledPagBankConnection(Event $event): bool
+    {
+        return $this->receivingEligibility->canPublishPaidEvents((int) $event->tenant_id);
     }
 
     private function resolveVenueMapVersionId(int $tenantId, ?string $venueUuid): ?int

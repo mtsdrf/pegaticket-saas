@@ -80,15 +80,16 @@ use App\Events\Legal\ReleaseNoteCreated;
 */
 use App\Events\Legal\ReleaseNoteDeleted;
 use App\Events\Legal\ReleaseNoteUpdated;
+use App\Events\Payment\TenantPagBankConnectionStatusChanged;
 use App\Events\Plan\PlanCreated;
 use App\Events\Plan\PlanDeleted;
 use App\Events\Plan\PlanFunctionalitiesSynced;
-use App\Events\Plan\PlanUpdated;
 /*
 |--------------------------------------------------------------------------
 | Tenant Role Permissions
 |--------------------------------------------------------------------------
 */
+use App\Events\Plan\PlanUpdated;
 use App\Events\Portal\FinalCustomerRegistered;
 use App\Events\Portal\PortalLinkConfirmed;
 use App\Events\Portal\PortalOtpRequested;
@@ -100,23 +101,23 @@ use App\Events\Report\CustomReportDefinitionUpdated;
 use App\Events\Report\ScheduledReportSubscriptionCancelled;
 use App\Events\Report\ScheduledReportSubscriptionCreated;
 use App\Events\Sale\SaleApproved;
-use App\Events\Sale\SaleCancellationApproved;
 /*
 |--------------------------------------------------------------------------
 | Tenant User
 |--------------------------------------------------------------------------
 */
+use App\Events\Sale\SaleCancellationApproved;
 use App\Events\Sale\SaleCancellationRejected;
 use App\Events\Sale\SaleCancellationRequested;
 use App\Events\Sale\SaleCancelled;
 use App\Events\Sale\SaleCreated;
 use App\Events\Sale\SaleInstallmentCreated;
-use App\Events\Sale\SaleInstallmentDeleted;
 /*
 |--------------------------------------------------------------------------
 | Tenant User Invite
 |--------------------------------------------------------------------------
 */
+use App\Events\Sale\SaleInstallmentDeleted;
 use App\Events\Sale\SaleInstallmentPaid;
 use App\Events\Sale\SaleInstallmentUnpaid;
 use App\Events\Sale\SaleInstallmentUpdated;
@@ -128,23 +129,23 @@ use App\Events\Sale\SaleRefundCreated;
 use App\Events\Sale\SaleRejected;
 use App\Events\Sale\SaleUnpaid;
 use App\Events\Storefront\CouponCreated;
-use App\Events\Storefront\CouponDeleted;
 /*
 |--------------------------------------------------------------------------
 | Event Category
 |--------------------------------------------------------------------------
 */
+use App\Events\Storefront\CouponDeleted;
 use App\Events\Storefront\CouponUpdated;
 use App\Events\Subscription\SubscriptionCanceled;
 use App\Events\Subscription\SubscriptionCreated;
 use App\Events\Subscription\SubscriptionPlanChanged;
 use App\Events\Subscription\SubscriptionWithdrawalRequested;
-use App\Events\Support\HelpRequestCreated;
 /*
 |--------------------------------------------------------------------------
 | Event
 |--------------------------------------------------------------------------
 */
+use App\Events\Support\HelpRequestCreated;
 use App\Events\Tenant\TenantCreated;
 use App\Events\Tenant\TenantDataExported;
 use App\Events\Tenant\TenantDeleted;
@@ -152,12 +153,12 @@ use App\Events\Tenant\TenantFeatureOverridesSynced;
 use App\Events\Tenant\TenantRoleCreated;
 use App\Events\Tenant\TenantRoleDeleted;
 use App\Events\Tenant\TenantRolePermissionsSynced;
-use App\Events\Tenant\TenantRoleUpdated;
 /*
 |--------------------------------------------------------------------------
 | Ticket Type
 |--------------------------------------------------------------------------
 */
+use App\Events\Tenant\TenantRoleUpdated;
 use App\Events\Tenant\TenantUpdated;
 use App\Events\Tenant\TenantUserCreated;
 use App\Events\Tenant\TenantUserDeleted;
@@ -267,6 +268,8 @@ use App\Listeners\GuestList\AuditGuestListEntryRedeemed;
 use App\Listeners\Legal\AuditReleaseNoteCreated;
 use App\Listeners\Legal\AuditReleaseNoteDeleted;
 use App\Listeners\Legal\AuditReleaseNoteUpdated;
+use App\Listeners\Payment\AuditTenantPagBankConnectionStatusChanged;
+use App\Listeners\Payment\NotifyTenantPagBankConnectionStatusChanged;
 use App\Listeners\Plan\AuditPlanCreated;
 use App\Listeners\Plan\AuditPlanDeleted;
 use App\Listeners\Plan\AuditPlanFunctionalitiesSynced;
@@ -647,6 +650,10 @@ class EventServiceProvider extends ServiceProvider
         |--------------------------------------------------------------------------
         */
         TenantSettingsUpdated::class => [AuditTenantSettingsUpdated::class],
+        TenantPagBankConnectionStatusChanged::class => [
+            AuditTenantPagBankConnectionStatusChanged::class,
+            NotifyTenantPagBankConnectionStatusChanged::class,
+        ],
 
         /*
         |--------------------------------------------------------------------------
