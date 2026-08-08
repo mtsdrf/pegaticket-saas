@@ -142,6 +142,30 @@ class TenantSettingsTest extends TestCase
     }
 
     #[Test]
+    public function update_with_payment_methods_array_and_manual_receiving_does_not_break_change_detection(): void
+    {
+        $this->grantPermission('tenant_settings', 'update');
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->putJson('/api/v1/tenant-settings', [
+                'storefront_enabled' => true,
+                'catalog_layout' => 'list',
+                'accepted_payment_methods' => ['pix', 'credit_card', 'debit_card'],
+                'payment_receiving_method' => 'manual',
+                'payment_pix_key' => null,
+                'pagbank_integration_mode' => 'disabled',
+                'pagbank_environment' => 'sandbox',
+                'pagbank_access_token' => null,
+                'pagbank_receiver_account_id' => null,
+            ])
+            ->assertStatus(200);
+
+        $response->assertJsonPath('data.accepted_payment_methods', ['pix', 'credit_card', 'debit_card']);
+        $response->assertJsonPath('data.payment_receiving_method', 'manual');
+        $response->assertJsonPath('data.pagbank_integration_mode', 'disabled');
+    }
+
+    #[Test]
     public function tenants_are_isolated_from_each_other(): void
     {
         $this->grantPermission('tenant_settings', 'read');

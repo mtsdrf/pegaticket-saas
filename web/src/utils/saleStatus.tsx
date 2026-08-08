@@ -42,6 +42,23 @@ export interface SaleStatusSource {
   } | null
 }
 
+const SUCCESS_PAYMENT_STATUSES = new Set(['paid', 'completed', 'succeeded', 'success'])
+const SUCCESS_PROVIDER_STATUSES = new Set(['PAID', 'COMPLETED', 'SUCCEEDED', 'SUCCESS'])
+const RETRYABLE_PAYMENT_METHODS = new Set(['pix', 'credit_card', 'debit_card'])
+
+export function isSuccessfulSaleTrackingState(sale: SaleStatusSource): boolean {
+  const paymentStatus = sale.latest_payment?.status?.toLowerCase() ?? null
+  const providerStatus = sale.latest_payment?.provider_status?.toUpperCase() ?? null
+
+  return sale.is_paid || (paymentStatus ? SUCCESS_PAYMENT_STATUSES.has(paymentStatus) : false) || (providerStatus ? SUCCESS_PROVIDER_STATUSES.has(providerStatus) : false)
+}
+
+export function canRetrySalePayment(sale: SaleStatusSource): boolean {
+  const method = sale.latest_payment?.method?.toLowerCase() ?? null
+
+  return !sale.is_cancelled && !isSuccessfulSaleTrackingState(sale) && Boolean(method && RETRYABLE_PAYMENT_METHODS.has(method))
+}
+
 /**
  * Não existe campo pronto de "status" na API — é derivado de
  * `is_cancelled`/`is_paid`/`status`. Finalização é sempre automática:

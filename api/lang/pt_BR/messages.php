@@ -612,6 +612,7 @@ return [
         'revoke_failed' => 'Não foi possível revogar o acesso ao PagBank.',
         'unavailable' => 'PagBank Connect indisponível no momento. Tente novamente em instantes.',
         'account_not_enabled' => 'Conecte e habilite uma conta PagBank antes de publicar este evento.',
+        'challenge_key_unavailable' => 'Chave pública do Connect Challenge não configurada neste servidor.',
     ],
 
     'pagbank_account' => [

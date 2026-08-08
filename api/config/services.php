@@ -126,6 +126,16 @@ return [
         'connect_client_id' => env('PAGBANK_CONNECT_CLIENT_ID'),
         'connect_client_secret' => env('PAGBANK_CONNECT_CLIENT_SECRET'),
         'connect_redirect_uri' => env('PAGBANK_CONNECT_REDIRECT_URI'),
+
+        // Connect Challenge (pré-requisito pra existir client_id/secret
+        // acima — ver docs/pagbank/homologacao/README.md e
+        // developer.pagbank.com.br/docs/connect-challenge). Par de chaves
+        // RSA local: a privada NUNCA sai deste servidor (usada só pra
+        // decifrar o challenge que o PagBank envia), a pública é servida
+        // publicamente pela rota GET /pagbank-connect/public-key, que o
+        // PagBank precisa poder buscar para aprovar o cadastro. Arquivo
+        // gitignored (padrão /api/storage/*.key já existente).
+        'connect_challenge_private_key_path' => storage_path('pagbank_connect_challenge_private.key'),
     ],
 
     /*

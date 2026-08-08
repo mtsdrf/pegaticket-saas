@@ -605,6 +605,7 @@ return [
         'revoke_failed' => 'Could not revoke PagBank access.',
         'unavailable' => 'PagBank Connect is currently unavailable. Please try again shortly.',
         'account_not_enabled' => 'Connect and enable a PagBank account before publishing this event.',
+        'challenge_key_unavailable' => 'Connect Challenge public key is not configured on this server.',
     ],
 
     'pagbank_account' => [

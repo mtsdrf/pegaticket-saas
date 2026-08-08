@@ -40,6 +40,7 @@ use App\Http\Controllers\Health\HealthController;
 use App\Http\Controllers\Legal\LegalDocumentController;
 use App\Http\Controllers\Legal\ReleaseNoteController;
 use App\Http\Controllers\Onboarding\OnboardingController;
+use App\Http\Controllers\Payment\PagBankConnectChallengeController;
 use App\Http\Controllers\Payment\PagBankConnectController;
 use App\Http\Controllers\Payment\PaymentIssueController;
 use App\Http\Controllers\Plan\PlanController;
@@ -152,6 +153,13 @@ Route::prefix('v1')->group(function () {
     // PagBankConnectController::callback/PagBankConnectService::handleCallback.
     Route::get('/pagbank-connect/callback', [PagBankConnectController::class, 'callback'])
         ->middleware('throttle:30,1,pagbank-connect-callback');
+
+    // Connect Challenge (roadmap fase R2.7) — 100% público: o próprio
+    // PagBank busca esta URL pra validar a chave pública antes de aprovar
+    // o cadastro da aplicação Connect em Sandbox. Nunca expõe a chave
+    // PRIVADA. Ver PagBankConnectChallengeController.
+    Route::get('/pagbank-connect/public-key', [PagBankConnectChallengeController::class, 'publicKey'])
+        ->middleware('throttle:60,1,pagbank-connect-public-key');
 
     // Acompanhamento público da venda (roadmap 5.1) — 100% público, sem
     // jwt/tenant/perm, protegido só pelo uuid da venda ser imprevisível

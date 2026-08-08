@@ -16,7 +16,7 @@ import {
 } from '@mui/material'
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { TurnstileWidget } from '../../components/security/TurnstileWidget'
 import { Logo } from '../../components/ui/Logo'
 import { useCartAbandonmentTelemetry } from '../../hooks/useCartAbandonmentTelemetry'
@@ -45,6 +45,13 @@ import {
   type StorefrontInventoryHold,
 } from '../../types/storefront'
 import { formatCurrency } from '../../utils/format'
+import {
+  loadStorefrontPaymentRecoveryDraft,
+  saveStorefrontPaymentRecoveryDraft,
+  updateStorefrontPaymentRecoveryDraft,
+  type RecoveryPaymentFlowMethod,
+  type StorefrontPaymentRecoveryDraft,
+} from '../../utils/storefrontPaymentRecovery'
 type CouponStatus = 'idle' | 'loading' | 'applied' | 'invalid'
 type PaymentFlowMethod = 'pix' | 'credit_card' | 'debit_card'
 
@@ -63,6 +70,10 @@ type PaymentFlowState = {
   slug: string
   eventSlug: string | null
   sessionId: string
+}
+
+type CheckoutRetryLocationState = {
+  retrySaleUuid?: string
 }
 
 type PagSeguroEncryptResult = {
@@ -604,11 +615,13 @@ function PageShell({ slug, children }: { slug: string; children: React.ReactNode
  */
 function PixPaymentPanel({
   saleUuid,
+  payer,
   slug,
   eventSlug,
   sessionId,
 }: {
   saleUuid: string
+  payer: PaymentFlowPayer
   slug: string
   eventSlug: string | null
   sessionId: string
@@ -626,7 +639,12 @@ function PixPaymentPanel({
     setErrorMessage(null)
     setCheckMessage(null)
     storefrontSalePaymentService
-      .createSalePixCharge(saleUuid)
+      .createSalePixCharge(saleUuid, {
+        payer_tax_id: payer.taxId.replace(/\D+/g, ''),
+        payer_name: payer.name,
+        payer_email: payer.email,
+        payer_phone: payer.phone,
+      })
       .then((result) => {
         setPayment(result)
         setStatus('ready')
@@ -635,7 +653,7 @@ function PixPaymentPanel({
         setStatus('error')
         setErrorMessage(getApiErrorMessage(error, 'Não foi possível gerar a cobrança Pix agora.'))
       })
-  }, [saleUuid])
+  }, [saleUuid, payer])
 
   useEffect(() => {
     loadCharge()
@@ -792,14 +810,15 @@ function CreditCardPaymentPanel({
   const [configError, setConfigError] = useState<string | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
 
-  const [payerTaxId, setPayerTaxId] = useState(payer.taxId)
-  const [holderName, setHolderName] = useState(payer.name)
-  const [holderTaxId, setHolderTaxId] = useState(payer.taxId)
+  const recoveryDraft = useMemo(() => loadStorefrontPaymentRecoveryDraft(saleUuid), [saleUuid])
+  const [payerTaxId, setPayerTaxId] = useState(recoveryDraft?.creditCardForm?.payerTaxId ?? payer.taxId)
+  const [holderName, setHolderName] = useState(recoveryDraft?.creditCardForm?.holderName ?? payer.name)
+  const [holderTaxId, setHolderTaxId] = useState(recoveryDraft?.creditCardForm?.holderTaxId ?? payer.taxId)
   const [cardNumber, setCardNumber] = useState('')
   const [expMonth, setExpMonth] = useState('')
   const [expYear, setExpYear] = useState('')
   const [securityCode, setSecurityCode] = useState('')
-  const [installments, setInstallments] = useState('1')
+  const [installments, setInstallments] = useState(recoveryDraft?.creditCardForm?.installments ?? '1')
   const [installmentOptions, setInstallmentOptions] = useState<SalePaymentInstallmentOption[]>([])
   const [isLoadingInstallmentOptions, setIsLoadingInstallmentOptions] = useState(false)
   const [installmentOptionsError, setInstallmentOptionsError] = useState<string | null>(null)
@@ -890,6 +909,54 @@ function CreditCardPaymentPanel({
       cancelled = true
     }
   }, [amount, cardBin, config?.available, fallbackInstallmentOptions, saleUuid, sdkReady])
+
+  useEffect(() => {
+    updateStorefrontPaymentRecoveryDraft(saleUuid, (current) =>
+      current
+        ? {
+            ...current,
+            creditCardForm: {
+              payerTaxId,
+              holderName,
+              holderTaxId,
+              installments,
+            },
+          }
+        : {
+            saleUuid,
+            slug,
+            savedAt: Date.now(),
+            clientName: '',
+            clientLastName: '',
+            clientEmail: payer.email,
+            clientPhone: payer.phone,
+            clientTaxId: payerTaxId,
+            notes: '',
+            intendedPaymentMethod: 'credit_card',
+            needsChange: false,
+            changeForAmount: '',
+            couponCode: '',
+            appliedCouponCode: null,
+            appliedDiscount: 0,
+            participantsByItem: {},
+            paymentFlow: {
+              saleUuid,
+              method: 'credit_card',
+              amount,
+              payer,
+              slug,
+              eventSlug,
+              sessionId,
+            },
+            creditCardForm: {
+              payerTaxId,
+              holderName,
+              holderTaxId,
+              installments,
+            },
+          },
+    )
+  }, [saleUuid, payerTaxId, holderName, holderTaxId, installments, slug, amount, payer, eventSlug, sessionId])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1413,21 +1480,22 @@ function DebitCardPaymentPanel({
   const [configError, setConfigError] = useState<string | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
 
-  const [payerTaxId, setPayerTaxId] = useState(payer.taxId)
-  const [holderName, setHolderName] = useState(payer.name)
-  const [holderTaxId, setHolderTaxId] = useState(payer.taxId)
-  const [payerPhone, setPayerPhone] = useState(payer.phone)
+  const recoveryDraft = useMemo(() => loadStorefrontPaymentRecoveryDraft(saleUuid), [saleUuid])
+  const [payerTaxId, setPayerTaxId] = useState(recoveryDraft?.debitCardForm?.payerTaxId ?? payer.taxId)
+  const [holderName, setHolderName] = useState(recoveryDraft?.debitCardForm?.holderName ?? payer.name)
+  const [holderTaxId, setHolderTaxId] = useState(recoveryDraft?.debitCardForm?.holderTaxId ?? payer.taxId)
+  const [payerPhone, setPayerPhone] = useState(recoveryDraft?.debitCardForm?.payerPhone ?? payer.phone)
   const [cardNumber, setCardNumber] = useState('')
   const [expMonth, setExpMonth] = useState('')
   const [expYear, setExpYear] = useState('')
   const [securityCode, setSecurityCode] = useState('')
-  const [addressLine1, setAddressLine1] = useState('')
-  const [addressNumber, setAddressNumber] = useState('')
-  const [addressComplement, setAddressComplement] = useState('')
-  const [addressDistrict, setAddressDistrict] = useState('')
-  const [addressCity, setAddressCity] = useState('')
-  const [addressState, setAddressState] = useState('')
-  const [addressZipCode, setAddressZipCode] = useState('')
+  const [addressLine1, setAddressLine1] = useState(recoveryDraft?.debitCardForm?.addressLine1 ?? '')
+  const [addressNumber, setAddressNumber] = useState(recoveryDraft?.debitCardForm?.addressNumber ?? '')
+  const [addressComplement, setAddressComplement] = useState(recoveryDraft?.debitCardForm?.addressComplement ?? '')
+  const [addressDistrict, setAddressDistrict] = useState(recoveryDraft?.debitCardForm?.addressDistrict ?? '')
+  const [addressCity, setAddressCity] = useState(recoveryDraft?.debitCardForm?.addressCity ?? '')
+  const [addressState, setAddressState] = useState(recoveryDraft?.debitCardForm?.addressState ?? '')
+  const [addressZipCode, setAddressZipCode] = useState(recoveryDraft?.debitCardForm?.addressZipCode ?? '')
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -1462,6 +1530,68 @@ function DebitCardPaymentPanel({
       })
       .finally(() => setIsLoadingConfig(false))
   }, [saleUuid])
+
+  useEffect(() => {
+    updateStorefrontPaymentRecoveryDraft(saleUuid, (current) =>
+      current
+        ? {
+            ...current,
+            debitCardForm: {
+              payerTaxId,
+              holderName,
+              holderTaxId,
+              payerPhone,
+              addressLine1,
+              addressNumber,
+              addressComplement,
+              addressDistrict,
+              addressCity,
+              addressState,
+              addressZipCode,
+            },
+          }
+        : {
+            saleUuid,
+            slug,
+            savedAt: Date.now(),
+            clientName: '',
+            clientLastName: '',
+            clientEmail: payer.email,
+            clientPhone: payer.phone,
+            clientTaxId: payerTaxId,
+            notes: '',
+            intendedPaymentMethod: 'debit_card',
+            needsChange: false,
+            changeForAmount: '',
+            couponCode: '',
+            appliedCouponCode: null,
+            appliedDiscount: 0,
+            participantsByItem: {},
+            paymentFlow: {
+              saleUuid,
+              method: 'debit_card',
+              amount,
+              payer,
+              slug,
+              eventSlug,
+              sessionId,
+            },
+            debitCardForm: {
+              payerTaxId,
+              holderName,
+              holderTaxId,
+              payerPhone,
+              addressLine1,
+              addressNumber,
+              addressComplement,
+              addressDistrict,
+              addressCity,
+              addressState,
+              addressZipCode,
+            },
+          },
+    )
+  }, [saleUuid, payerTaxId, holderName, holderTaxId, payerPhone, addressLine1, addressNumber, addressComplement, addressDistrict, addressCity, addressState, addressZipCode, slug, amount, payer, eventSlug, sessionId])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1672,6 +1802,7 @@ function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
     return (
       <PixPaymentPanel
         saleUuid={flow.saleUuid}
+        payer={flow.payer}
         slug={flow.slug}
         eventSlug={flow.eventSlug}
         sessionId={flow.sessionId}
@@ -1705,10 +1836,11 @@ function PaymentStepPanel({ flow }: { flow: PaymentFlowState }) {
 }
 
 /** Passo 2: dados de contato + resumo + confirmação. */
-function DetailsAndReviewStep({ slug }: { slug: string }) {
+function DetailsAndReviewStep({ slug, retrySaleUuid }: { slug: string; retrySaleUuid?: string | null }) {
   const navigate = useNavigate()
   const { items, totalAmount, clear, sessionId } = useStorefrontCart()
   const { markCompleted } = useCartAbandonmentTelemetry(slug)
+  const recoveryDraft = useMemo(() => (retrySaleUuid ? loadStorefrontPaymentRecoveryDraft(retrySaleUuid) : null), [retrySaleUuid])
 
   // Funil de conversão (roadmap A2) — "iniciou checkout" dispara uma vez ao
   // entrar neste passo, para o primeiro evento presente no carrinho.
@@ -1723,51 +1855,60 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, sessionId, items])
 
-  const [clientName, setClientName] = useState('')
-  const [clientLastName, setClientLastName] = useState('')
-  const [clientEmail, setClientEmail] = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [notes, setNotes] = useState('')
+  const [clientName, setClientName] = useState(recoveryDraft?.clientName ?? '')
+  const [clientLastName, setClientLastName] = useState(recoveryDraft?.clientLastName ?? '')
+  const [clientEmail, setClientEmail] = useState(recoveryDraft?.clientEmail ?? '')
+  const [clientPhone, setClientPhone] = useState(recoveryDraft?.clientPhone ?? '')
+  const [clientTaxId, setClientTaxId] = useState(recoveryDraft?.clientTaxId ?? '')
+  const [notes, setNotes] = useState(recoveryDraft?.notes ?? '')
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [couponCode, setCouponCode] = useState('')
+  const [couponCode, setCouponCode] = useState(recoveryDraft?.couponCode ?? '')
   const [couponStatus, setCouponStatus] = useState<CouponStatus>('idle')
   const [couponMessage, setCouponMessage] = useState<string | null>(null)
-  const [appliedDiscount, setAppliedDiscount] = useState(0)
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null)
+  const [appliedDiscount, setAppliedDiscount] = useState(recoveryDraft?.appliedDiscount ?? 0)
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(recoveryDraft?.appliedCouponCode ?? null)
 
   // O checkout público já persiste `payment_method` na venda e o backend
   // expõe endpoints próprios para configuração/cobrança do PSP por venda.
   // Aqui a UI decide se segue direto pro rastreio (dinheiro) ou se abre o
   // passo de pagamento online (Pix/crédito/débito).
   const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<PaymentMethod[]>([])
-  const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState | null>(null)
+  const [paymentFlow, setPaymentFlow] = useState<PaymentFlowState | null>(
+    recoveryDraft?.paymentFlow
+      ? {
+          ...recoveryDraft.paymentFlow,
+          method: recoveryDraft.paymentFlow.method as PaymentFlowMethod,
+        }
+      : null,
+  )
 
   // Meio de pagamento pretendido (roadmap cupom por meio de pagamento) —
   // distinto do `paymentMethod` acima (que só decide "pagar Pix agora" vs
   // "combinar na entrega"): este campo é enviado ao backend pra validar
   // cupons restritos a um meio específico (`allowed_payment_methods`).
-  const [intendedPaymentMethod, setIntendedPaymentMethod] = useState<PaymentMethod | ''>('')
+  const [intendedPaymentMethod, setIntendedPaymentMethod] = useState<PaymentMethod | ''>(recoveryDraft?.intendedPaymentMethod ?? '')
 
   // Troco (roadmap "Método de pagamento + troco") — só faz sentido quando o
   // cliente pretende pagar em dinheiro; `changeForAmount` fica em string pra
   // permitir digitação livre, convertido só no payload do checkout.
-  const [needsChange, setNeedsChange] = useState(false)
-  const [changeForAmount, setChangeForAmount] = useState('')
+  const [needsChange, setNeedsChange] = useState(recoveryDraft?.needsChange ?? false)
+  const [changeForAmount, setChangeForAmount] = useState(recoveryDraft?.changeForAmount ?? '')
   // Participantes por item de ingresso (spec 5.10 Etapa 2) — opcional,
   // "participante 1, 2, 3..." conforme a quantidade de cada ticket_type no
   // carrinho. Só faz sentido para ticket_type_uuid (adicional/estacionamento
   // não tem participante). Chave = StorefrontCartItem.id.
-  const [participantsByItem, setParticipantsByItem] = useState<
-    Record<string, Array<{ name: string; document: string }>>
-  >({})
+  const [participantsByItem, setParticipantsByItem] = useState<Record<string, Array<{ name: string; document: string }>>>(
+    recoveryDraft?.participantsByItem ?? {},
+  )
   const ticketParticipantItems = useMemo(
     () => items.filter((item): item is StorefrontCartItem & { ticket_type_uuid: string } => Boolean(item.ticket_type_uuid)),
     [items],
   )
+  const recoverySaleUuid = paymentFlow?.saleUuid ?? retrySaleUuid ?? null
 
   function getParticipant(itemId: string, index: number): { name: string; document: string } {
     return participantsByItem[itemId]?.[index] ?? { name: '', document: '' }
@@ -1877,6 +2018,79 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
       cancelled = true
     }
   }, [slug])
+
+  useEffect(() => {
+    if (!recoverySaleUuid) return
+
+    const resolvedMethod =
+      paymentFlow?.method ??
+      (intendedPaymentMethod === 'pix' || intendedPaymentMethod === 'credit_card' || intendedPaymentMethod === 'debit_card'
+        ? (intendedPaymentMethod as RecoveryPaymentFlowMethod)
+        : null)
+
+    const nextDraft: StorefrontPaymentRecoveryDraft = {
+      saleUuid: recoverySaleUuid,
+      slug,
+      savedAt: Date.now(),
+      clientName,
+      clientLastName,
+      clientEmail,
+      clientPhone,
+      clientTaxId,
+      notes,
+      intendedPaymentMethod,
+      needsChange,
+      changeForAmount,
+      couponCode,
+      appliedCouponCode,
+      appliedDiscount,
+      participantsByItem,
+      paymentFlow:
+        paymentFlow ?? (resolvedMethod
+          ? {
+              saleUuid: recoverySaleUuid,
+              method: resolvedMethod,
+              amount: String(Math.max(0, totalAmount - (couponStatus === 'applied' ? appliedDiscount : 0))),
+              payer: {
+                name: `${clientName.trim()} ${clientLastName.trim()}`.trim(),
+                email: clientEmail.trim().toLowerCase(),
+                phone: normalizeDigits(clientPhone),
+                taxId: normalizeDigits(clientTaxId),
+              },
+              slug,
+              eventSlug: items.find((item) => item.event_slug)?.event_slug ?? null,
+              sessionId,
+            }
+          : null),
+      creditCardForm: recoveryDraft?.creditCardForm,
+      debitCardForm: recoveryDraft?.debitCardForm,
+    }
+
+    saveStorefrontPaymentRecoveryDraft(nextDraft)
+  }, [
+    recoverySaleUuid,
+    slug,
+    clientName,
+    clientLastName,
+    clientEmail,
+    clientPhone,
+    clientTaxId,
+    notes,
+    intendedPaymentMethod,
+    needsChange,
+    changeForAmount,
+    couponCode,
+    appliedCouponCode,
+    appliedDiscount,
+    participantsByItem,
+    paymentFlow,
+    totalAmount,
+    couponStatus,
+    items,
+    sessionId,
+    recoveryDraft?.creditCardForm,
+    recoveryDraft?.debitCardForm,
+  ])
 
   useEffect(() => {
     shouldReleaseHoldRef.current = true
@@ -2071,6 +2285,12 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
     if (clientLastName.trim().length < 1) errors.client_last_name = ['Informe seu sobrenome.']
     if (!isValidCheckoutEmail(clientEmail)) errors.client_email = ['Informe um e-mail válido.']
     if (!isValidBrazilPhone(clientPhone)) errors.client_phone = ['Informe um telefone com DDD e 8 ou 9 dígitos.']
+    if (
+      (intendedPaymentMethod === 'pix' || intendedPaymentMethod === 'credit_card' || intendedPaymentMethod === 'debit_card') &&
+      !isValidCpfCnpj(clientTaxId)
+    ) {
+      errors.client_tax_id = ['Informe um CPF ou CNPJ válido para o pagamento online.']
+    }
     if (acceptedPaymentMethods.length > 0 && !intendedPaymentMethod) {
       errors.payment_method = ['Selecione uma forma de pagamento.']
     }
@@ -2150,7 +2370,7 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             name: `${clientName.trim()} ${clientLastName.trim()}`.trim(),
             email: clientEmail.trim().toLowerCase(),
             phone: normalizeDigits(clientPhone),
-            taxId: '',
+            taxId: normalizeDigits(clientTaxId),
           },
           slug,
           eventSlug: funnelEventSlug,
@@ -2316,6 +2536,16 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
             helperText={fieldErrors.client_email?.[0]}
             inputMode="email"
             required
+            fullWidth
+          />
+          <TextField
+            label="CPF/CNPJ do pagador"
+            value={clientTaxId}
+            onChange={(event) => setClientTaxId(formatCpfCnpj(event.target.value))}
+            error={Boolean(fieldErrors.client_tax_id)}
+            helperText={fieldErrors.client_tax_id?.[0] ?? 'Obrigatório para Pix e cartão.'}
+            inputMode="numeric"
+            required={intendedPaymentMethod === 'pix' || intendedPaymentMethod === 'credit_card' || intendedPaymentMethod === 'debit_card'}
             fullWidth
           />
         </Stack>
@@ -2540,12 +2770,16 @@ function DetailsAndReviewStep({ slug }: { slug: string }) {
 
 export function StorefrontCheckoutPage() {
   const { slug } = useParams<{ slug: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const { items } = useStorefrontCart()
+  const retrySaleUuid = (location.state as CheckoutRetryLocationState | null)?.retrySaleUuid ?? null
+  const retryDraft = useMemo(() => (retrySaleUuid ? loadStorefrontPaymentRecoveryDraft(retrySaleUuid) : null), [retrySaleUuid])
+  const hasRetryPaymentFlow = Boolean(retryDraft?.paymentFlow)
 
   if (!slug) return null
 
-  if (items.length === 0) {
+  if (items.length === 0 && !hasRetryPaymentFlow) {
     return (
       <PageShell slug={slug}>
         <Paper elevation={0} sx={{ ...ELEVATED_SURFACE_SX, p: 4, textAlign: 'center' }}>
@@ -2563,7 +2797,7 @@ export function StorefrontCheckoutPage() {
 
   return (
     <PageShell slug={slug}>
-      <DetailsAndReviewStep slug={slug} />
+      <DetailsAndReviewStep slug={slug} retrySaleUuid={retrySaleUuid} />
     </PageShell>
   )
 }

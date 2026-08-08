@@ -8,8 +8,11 @@ import type {
   SalePaymentInstallmentOptions,
 } from '../types/sale'
 
-export function createSalePixCharge(saleUuid: string): Promise<SalePayment> {
-  return createSalePaymentCharge(saleUuid, { method: 'pix' })
+export function createSalePixCharge(
+  saleUuid: string,
+  payload?: Pick<SalePaymentChargePayload, 'payer_tax_id' | 'payer_name' | 'payer_email' | 'payer_phone'>,
+): Promise<SalePayment> {
+  return createSalePaymentCharge(saleUuid, { method: 'pix', ...payload })
 }
 
 export function getSalePaymentCheckoutConfig(saleUuid: string): Promise<SalePaymentCheckoutConfig> {

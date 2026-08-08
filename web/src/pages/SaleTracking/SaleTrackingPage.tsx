@@ -18,8 +18,9 @@ import { rateSale, type SaleRatingResult } from '../../services/saleRatingServic
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
 import type { PortalTicket } from '../../types/portal'
 import type { SaleTracking } from '../../types/saleTracking'
-import { deriveSaleStatus, STATUS_TONE_COLORS } from '../../utils/saleStatus'
+import { canRetrySalePayment, deriveSaleStatus, isSuccessfulSaleTrackingState, STATUS_TONE_COLORS } from '../../utils/saleStatus'
 import { formatCurrency, formatDateBR, formatItemQuantity } from '../../utils/format'
+import { clearStorefrontPaymentRecoveryDraft, loadStorefrontPaymentRecoveryDraft } from '../../utils/storefrontPaymentRecovery'
 
 function StatusBanner({ sale }: { sale: SaleTracking }) {
   const status = deriveSaleStatus(sale)
@@ -517,10 +518,12 @@ function TicketsSection({ saleUuid }: { saleUuid: string }) {
 export function SaleTrackingPage() {
   const { uuid } = useParams<{ uuid: string }>()
   const { isAuthenticated: isPortalAuthenticated } = usePortalAuth()
+  const navigate = useNavigate()
 
   const [sale, setSale] = useState<SaleTracking | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false)
 
   const REFRESH_INTERVAL_MS = 30000
 
@@ -571,6 +574,33 @@ export function SaleTrackingPage() {
     }
   }, [uuid])
 
+  useEffect(() => {
+    if (!sale) return
+
+    if (isSuccessfulSaleTrackingState(sale)) {
+      clearStorefrontPaymentRecoveryDraft(sale.uuid)
+      setIsRedirectingToPayment(false)
+      return
+    }
+
+    if (!sale.tenant_slug || !canRetrySalePayment(sale)) {
+      setIsRedirectingToPayment(false)
+      return
+    }
+
+    const draft = loadStorefrontPaymentRecoveryDraft(sale.uuid)
+    if (!draft || draft.slug !== sale.tenant_slug || !draft.paymentFlow) {
+      setIsRedirectingToPayment(false)
+      return
+    }
+
+    setIsRedirectingToPayment(true)
+    navigate(`/eventos/${sale.tenant_slug}/checkout`, {
+      replace: true,
+      state: { retrySaleUuid: sale.uuid },
+    })
+  }, [navigate, sale])
+
   return (
     <Box
       component="main"
@@ -602,7 +632,7 @@ export function SaleTrackingPage() {
 
         {!isLoading && errorMessage && !sale && <NotFoundState message={errorMessage} />}
 
-        {!isLoading && sale && (
+        {!isLoading && sale && !isRedirectingToPayment && (
           <Stack spacing={2.5}>
             <StatusBanner sale={sale} />
 

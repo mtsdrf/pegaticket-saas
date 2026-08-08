@@ -45,7 +45,7 @@ class TenantSettingsService
                 'google_analytics_id' => $dto->googleAnalyticsId,
             ]);
 
-            $changes = array_diff_assoc($settings->getAttributes(), $original);
+            $changes = $this->detectChangedAttributes($settings->getAttributes(), $original);
 
             if (! empty($changes)) {
                 event(new TenantSettingsUpdated(
@@ -57,5 +57,37 @@ class TenantSettingsService
 
             return $settings;
         });
+    }
+
+    /**
+     * `array_diff_assoc()` quebra com atributos array/JSON como
+     * `accepted_payment_methods`. Aqui normalizamos esses valores para uma
+     * comparação estável sem perder quais chaves mudaram.
+     *
+     * @return array<string, mixed>
+     */
+    private function detectChangedAttributes(array $current, array $original): array
+    {
+        $changes = [];
+
+        foreach ($current as $key => $value) {
+            $normalizedCurrent = $this->normalizeAttributeValue($value);
+            $normalizedOriginal = $this->normalizeAttributeValue($original[$key] ?? null);
+
+            if ($normalizedCurrent !== $normalizedOriginal) {
+                $changes[$key] = $value;
+            }
+        }
+
+        return $changes;
+    }
+
+    private function normalizeAttributeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+
+        return $value;
     }
 }
