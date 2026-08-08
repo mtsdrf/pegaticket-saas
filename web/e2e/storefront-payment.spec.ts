@@ -198,6 +198,7 @@ async function fillCheckoutDetails(page: Parameters<typeof test>[0]['page'], pay
   await page.getByLabel('Sobrenome').fill('Reis')
   await page.getByLabel('Telefone (com DDD)').fill('11999999999')
   await page.getByLabel('E-mail').fill('maria.reis@test.com')
+  await page.getByLabel('CPF/CNPJ do pagador').fill('12345678909')
   await page.getByLabel('Como você pretende pagar').click()
   await page.getByRole('option', { name: paymentMethodLabel }).click()
 }
