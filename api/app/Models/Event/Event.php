@@ -34,6 +34,7 @@ class Event extends BaseModel
         'ends_at',
         'visibility',
         'status',
+        'service_fee_payer',
         'reentry_enabled',
         'max_reentries',
         'reentry_cooldown_minutes',

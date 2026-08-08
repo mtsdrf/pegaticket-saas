@@ -25,12 +25,19 @@ use Illuminate\Support\Facades\Schema;
 class EventService
 {
     private const STATUS_RASCUNHO = 'rascunho';
+
     private const STATUS_AGENDADO = 'agendado';
+
     private const STATUS_PUBLICADO = 'publicado';
+
     private const STATUS_VENDAS_PAUSADAS = 'vendas_pausadas';
+
     private const STATUS_ESGOTADO = 'esgotado';
+
     private const STATUS_ENCERRADO = 'encerrado';
+
     private const STATUS_CANCELADO = 'cancelado';
+
     private const STATUS_ARQUIVADO = 'arquivado';
 
     public const EAGER_RELATIONS = ['category', 'venueMapVersion.venue'];
@@ -46,7 +53,7 @@ class EventService
         static $columns;
 
         return $columns ??= array_map(
-            fn($c) => "events.$c",
+            fn ($c) => "events.$c",
             array_diff(Schema::getColumnListing('events'), ['cover_image_data'])
         );
     }
@@ -54,8 +61,7 @@ class EventService
     public function __construct(
         private EventRepositoryInterface $repository,
         private MediaStorageService $mediaStorage
-    ) {
-    }
+    ) {}
 
     public function find(Event $event): Event
     {
@@ -83,31 +89,31 @@ class EventService
             ->whereNull('events.deleted_at')
             ->with(self::EAGER_RELATIONS);
 
-        if (!empty($filters['name'])) {
-            $query->where('events.name', 'like', '%' . $filters['name'] . '%');
+        if (! empty($filters['name'])) {
+            $query->where('events.name', 'like', '%'.$filters['name'].'%');
         }
 
-        if (!empty($filters['event_category_uuid'])) {
-            $query->whereHas('category', fn($q) => $q->where('uuid', $filters['event_category_uuid']));
+        if (! empty($filters['event_category_uuid'])) {
+            $query->whereHas('category', fn ($q) => $q->where('uuid', $filters['event_category_uuid']));
         }
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->where('events.type', $filters['type']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('events.status', $filters['status']);
         }
 
-        if (!empty($filters['visibility'])) {
+        if (! empty($filters['visibility'])) {
             $query->where('events.visibility', $filters['visibility']);
         }
 
-        if (!empty($filters['q'])) {
+        if (! empty($filters['q'])) {
             $term = $filters['q'];
             $query->where(function ($sub) use ($term) {
-                $sub->where('events.name', 'like', '%' . $term . '%')
-                    ->orWhere('events.location_name', 'like', '%' . $term . '%');
+                $sub->where('events.name', 'like', '%'.$term.'%')
+                    ->orWhere('events.location_name', 'like', '%'.$term.'%');
             });
         }
 
@@ -162,14 +168,15 @@ class EventService
                     'location_address' => $dto->locationAddress,
                     'location_lat' => $dto->locationLat,
                     'location_lng' => $dto->locationLng,
-                'starts_at' => $dto->startsAt,
-                'ends_at' => $dto->endsAt,
-                'visibility' => $dto->visibility,
-                'status' => $dto->status,
-                'reentry_enabled' => $dto->reentryEnabled,
-                'max_reentries' => $dto->maxReentries,
-                'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
-            ]);
+                    'starts_at' => $dto->startsAt,
+                    'ends_at' => $dto->endsAt,
+                    'visibility' => $dto->visibility,
+                    'status' => $dto->status,
+                    'service_fee_payer' => $dto->serviceFeePayer,
+                    'reentry_enabled' => $dto->reentryEnabled,
+                    'max_reentries' => $dto->maxReentries,
+                    'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
+                ]);
 
                 event(new EventCreated(
                     eventUuid: $event->uuid,
@@ -212,14 +219,15 @@ class EventService
                     'location_address' => $dto->locationAddress,
                     'location_lat' => $dto->locationLat,
                     'location_lng' => $dto->locationLng,
-                'starts_at' => $dto->startsAt,
-                'ends_at' => $dto->endsAt,
-                'visibility' => $dto->visibility,
-                'status' => $dto->status,
-                'reentry_enabled' => $dto->reentryEnabled,
-                'max_reentries' => $dto->maxReentries,
-                'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
-            ], fn($v) => !is_null($v));
+                    'starts_at' => $dto->startsAt,
+                    'ends_at' => $dto->endsAt,
+                    'visibility' => $dto->visibility,
+                    'status' => $dto->status,
+                    'service_fee_payer' => $dto->serviceFeePayer,
+                    'reentry_enabled' => $dto->reentryEnabled,
+                    'max_reentries' => $dto->maxReentries,
+                    'reentry_cooldown_minutes' => $dto->reentryCooldownMinutes,
+                ], fn ($v) => ! is_null($v));
 
                 if ($dto->eventCategoryUuid) {
                     $data['event_category_id'] = EventCategory::where('uuid', $dto->eventCategoryUuid)
@@ -240,17 +248,17 @@ class EventService
                     $data['cover_image_updated_at'] = $newMedia['updated_at'];
                 }
 
-                if (!empty($data)) {
+                if (! empty($data)) {
                     $event = $this->repository->update($event, $data);
                 }
 
                 if ($newMedia && $oldPath && $oldPath !== $newMedia['path']) {
-                    DB::afterCommit(fn() => $this->mediaStorage->deletePublicMedia($oldPath, 'event'));
+                    DB::afterCommit(fn () => $this->mediaStorage->deletePublicMedia($oldPath, 'event'));
                 }
 
                 $changes = array_diff_assoc($event->getAttributes(), $original);
 
-                if (!empty($changes)) {
+                if (! empty($changes)) {
                     event(new EventUpdated(
                         eventUuid: $event->uuid,
                         actorId: Auth::id(),
@@ -371,11 +379,11 @@ class EventService
                 return $locked;
             }
 
-            if (!in_array($locked->status, $allowedFrom, true)) {
+            if (! in_array($locked->status, $allowedFrom, true)) {
                 abort(422, __('messages.event.invalid_status_transition'));
             }
 
-            if ($requiresSellableItem && !$this->hasSellableInventory($locked)) {
+            if ($requiresSellableItem && ! $this->hasSellableInventory($locked)) {
                 abort(422, __('messages.event.publish_requires_sellable_item'));
             }
 
@@ -423,7 +431,7 @@ class EventService
 
     private function resolveVenueMapVersionId(int $tenantId, ?string $venueUuid): ?int
     {
-        if (!$venueUuid) {
+        if (! $venueUuid) {
             return null;
         }
 
@@ -441,7 +449,7 @@ class EventService
             ->orderByDesc('version_number')
             ->first();
 
-        if (!$publishedVersion) {
+        if (! $publishedVersion) {
             abort(422, __('messages.event.venue_requires_published_map'));
         }
 

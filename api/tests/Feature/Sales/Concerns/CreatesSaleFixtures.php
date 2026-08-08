@@ -29,7 +29,7 @@ trait CreatesSaleFixtures
         $category = EventCategory::create([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
-            'name' => 'Category ' . Str::random(6),
+            'name' => 'Category '.Str::random(6),
             'is_active' => true,
         ]);
 
@@ -37,20 +37,27 @@ trait CreatesSaleFixtures
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'event_category_id' => $category->id,
-            'name' => 'Event ' . Str::random(6),
-            'slug' => 'event-' . Str::random(10),
+            'name' => 'Event '.Str::random(6),
+            'slug' => 'event-'.Str::random(10),
             'type' => 'ingresso',
             'starts_at' => now()->addDays(10),
             'ends_at' => now()->addDays(10)->addHours(4),
             'visibility' => 'public',
             'status' => 'publicado',
+            // Taxa de serviço PegaTicket (2026-08-12): fixture usa
+            // 'producer' de propósito — não altera total_amount (só
+            // retido no split), preservando as dezenas de asserções de
+            // total_amount já existentes na suíte que não sabem da taxa.
+            // Testes que precisam do caso 'buyer' (SaleServiceFeeTest)
+            // criam seu próprio Event com service_fee_payer explícito.
+            'service_fee_payer' => 'producer',
         ]);
 
         return TicketType::create(array_merge([
             'uuid' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'event_id' => $event->id,
-            'name' => 'Ticket Type ' . Str::random(6),
+            'name' => 'Ticket Type '.Str::random(6),
             'price' => 10,
             'status' => 'ativo',
             'unit' => 'un',
@@ -69,8 +76,8 @@ trait CreatesSaleFixtures
     {
         $finalCustomer = FinalCustomer::create([
             'uuid' => (string) Str::uuid(),
-            'name' => 'Client ' . Str::random(6),
-            'email' => 'client-' . Str::random(10) . '@test.com',
+            'name' => 'Client '.Str::random(6),
+            'email' => 'client-'.Str::random(10).'@test.com',
         ]);
 
         FinalCustomerTenantLink::create([

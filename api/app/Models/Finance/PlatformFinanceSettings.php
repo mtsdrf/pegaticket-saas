@@ -17,6 +17,11 @@ class PlatformFinanceSettings extends BaseModel
         'extra_reserve_percentage',
         'extra_reserve_release_offset_days',
         'pagbank_primary_account_id',
+        'service_fee_percentage',
+        'service_fee_minimum_amount',
+        'service_fee_rule_version',
+        'estimated_pix_processing_percentage',
+        'estimated_card_processing_percentage_by_installment',
     ];
 
     protected $casts = [
@@ -26,6 +31,11 @@ class PlatformFinanceSettings extends BaseModel
         'extra_reserve_enabled' => 'boolean',
         'extra_reserve_percentage' => 'decimal:2',
         'extra_reserve_release_offset_days' => 'integer',
+        'service_fee_percentage' => 'decimal:2',
+        'service_fee_minimum_amount' => 'decimal:2',
+        'service_fee_rule_version' => 'integer',
+        'estimated_pix_processing_percentage' => 'decimal:2',
+        'estimated_card_processing_percentage_by_installment' => 'array',
     ];
 
     protected $hidden = [

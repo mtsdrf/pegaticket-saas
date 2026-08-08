@@ -137,4 +137,7 @@ export const ACCESS = {
   adminPaymentIssuesRead: global('payment_admin', 'read'),
   adminPaymentIssuesUpdate: global('payment_admin', 'update'),
   adminFinanceRead: global('payment_admin', 'read'),
+  /** Configurações financeiras globais da plataforma (taxa de serviço, split/custódia) — mesma functionality `payment_admin`, ação `update`. */
+  adminFinanceSettingsRead: global('payment_admin', 'read'),
+  adminFinanceSettingsUpdate: global('payment_admin', 'update'),
 } as const

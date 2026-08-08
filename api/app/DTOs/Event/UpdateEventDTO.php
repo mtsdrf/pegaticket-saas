@@ -24,11 +24,11 @@ class UpdateEventDTO
         public readonly ?string $endsAt,
         public readonly ?string $visibility,
         public readonly ?string $status,
+        public readonly ?string $serviceFeePayer,
         public readonly ?bool $reentryEnabled,
         public readonly ?int $maxReentries,
         public readonly ?int $reentryCooldownMinutes,
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -50,6 +50,7 @@ class UpdateEventDTO
             endsAt: $data['ends_at'] ?? null,
             visibility: $data['visibility'] ?? null,
             status: $data['status'] ?? null,
+            serviceFeePayer: $data['service_fee_payer'] ?? null,
             reentryEnabled: array_key_exists('reentry_enabled', $data) ? (bool) $data['reentry_enabled'] : null,
             maxReentries: array_key_exists('max_reentries', $data) ? ($data['max_reentries'] !== null ? (int) $data['max_reentries'] : null) : null,
             reentryCooldownMinutes: array_key_exists('reentry_cooldown_minutes', $data) ? ($data['reentry_cooldown_minutes'] !== null ? (int) $data['reentry_cooldown_minutes'] : null) : null,

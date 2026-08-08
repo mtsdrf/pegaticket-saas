@@ -31,6 +31,7 @@ use App\Http\Controllers\Finance\FinanceOperationsController;
 use App\Http\Controllers\Finance\PlatformFinanceSettingsController;
 use App\Http\Controllers\Finance\ReconciliationController;
 use App\Http\Controllers\Finance\SettlementAdjustmentController;
+use App\Http\Controllers\Finance\TicketFeeSimulationController;
 use App\Http\Controllers\Functionality\FunctionalityController;
 use App\Http\Controllers\Group\GroupController;
 use App\Http\Controllers\GuestList\GuestInviteController;
@@ -877,6 +878,20 @@ Route::prefix('v1')->group(function () {
             // App\Services\TicketTypeWaitlist\TicketTypeWaitlistService.
             Route::get('/{ticketType}/lista-espera', [TicketTypeWaitlistController::class, 'index'])
                 ->middleware(['tenant', 'perm:ticket_waitlist,read', 'throttle:100,1,ticket-types-waitlist-list']);
+        });
+
+        // Simulador de taxa de serviço PegaTicket (10%/mínimo) — reaproveita
+        // a permissão já usada pra criar/editar tipo de ingresso, sem
+        // Functionality/Action nova (é parte de "gerenciar precificação de
+        // ingresso", não um recurso próprio).
+        Route::prefix('tenant-tools/ticket-pricing')->group(function () {
+            // `ticket_types,read` (não `create`) — simulação não muta nada e
+            // é usada tanto ao criar quanto ao editar um ingresso, então não
+            // deve exigir a permissão mais restrita de criação.
+            Route::post('/simulate', [TicketFeeSimulationController::class, 'simulate'])
+                ->middleware(['tenant', 'perm:ticket_types,read', 'throttle:60,1,ticket-pricing-simulate']);
+            Route::get('/rule', [TicketFeeSimulationController::class, 'rule'])
+                ->middleware(['tenant', 'perm:ticket_types,read', 'throttle:100,1,ticket-pricing-rule']);
         });
 
         Route::prefix('ticket-types/{ticketType}/batches')->group(function () {

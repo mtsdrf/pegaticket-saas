@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Checkbox,
   FormControlLabel,
   FormHelperText,
@@ -12,19 +13,24 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CrudFormShell } from '../../components/crud/CrudFormShell'
 import { LocalAutocomplete } from '../../components/crud/LocalAutocomplete'
 import { DATETIME_FIELD_SLOT_PROPS, sanitizePositiveIntegerInput } from '../../components/form/fieldHelpers'
 import { FormSection } from '../../components/form/FormSection'
 import { ImageUploadField } from '../../components/shared/ImageUploadField'
+import { TicketFeeSimulationDialog } from '../../components/ticketType/TicketFeeSimulationDialog'
 import * as eventService from '../../services/eventService'
+import * as ticketFeeService from '../../services/ticketFeeService'
 import * as ticketTypeService from '../../services/ticketTypeService'
-import { FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
+import { UI_RADIUS, FORM_GRID_2_SX, FORM_GRID_3_SX } from '../../styles/layoutStandards'
 import { SOFT_PANEL_SX } from '../../styles/surfaces'
 import { ApiRequestError, getApiErrorMessage } from '../../types/api'
+import type { Event } from '../../types/event'
+import { computeTicketFeePreview, type TicketFeePayer, type TicketFeeRule } from '../../types/ticketFee'
 import { TICKET_TYPE_STATUS_OPTIONS, type TicketTypeStatus } from '../../types/ticketType'
+import { formatCurrency } from '../../utils/format'
 
 interface TicketTypeFormState {
   event_uuid: string
@@ -86,12 +92,31 @@ export function TicketTypeFormPage() {
   const [form, setForm] = useState<TicketTypeFormState>(EMPTY_FORM)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
-  const [eventOptions, setEventOptions] = useState<{ value: string; label: string }[]>([])
+  const [events, setEvents] = useState<Event[]>([])
   const [isLoadingForm, setIsLoadingForm] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [feeRule, setFeeRule] = useState<TicketFeeRule | null>(null)
+  const [isSimulationOpen, setIsSimulationOpen] = useState(false)
+
+  const eventOptions = useMemo(() => events.map((event) => ({ value: event.uuid, label: event.name })), [events])
+  const selectedEvent = useMemo(() => events.find((event) => event.uuid === form.event_uuid) ?? null, [events, form.event_uuid])
+  /** Se o evento selecionado ainda não foi carregado na lista (ex.: fora dos primeiros 100), assume `buyer` com nota explícita — nunca inventa um seletor aqui. */
+  const feePayer: TicketFeePayer = selectedEvent?.service_fee_payer ?? 'buyer'
+  const feePayerIsAssumed = selectedEvent === null
+
+  const feePreview = useMemo(() => {
+    if (!feeRule) return null
+    const priceReais = Number(form.price)
+    if (!Number.isFinite(priceReais) || priceReais <= 0) return null
+    return { priceReais, ...computeTicketFeePreview(priceReais, feeRule) }
+  }, [feeRule, form.price])
+
+  useEffect(() => {
+    ticketFeeService.getTicketFeeRule().then(setFeeRule).catch(() => setFeeRule(null))
+  }, [])
 
   useEffect(() => {
     setIsLoadingForm(true)
@@ -101,8 +126,8 @@ export function TicketTypeFormPage() {
     const recordPromise = uuid ? ticketTypeService.getTicketType(uuid) : Promise.resolve(null)
 
     Promise.all([eventsPromise, recordPromise])
-      .then(([events, record]) => {
-        setEventOptions(events.items.map((event) => ({ value: event.uuid, label: event.name })))
+      .then(([eventsResult, record]) => {
+        setEvents(eventsResult.items)
 
         if (record) {
           setForm({
@@ -230,7 +255,83 @@ export function TicketTypeFormPage() {
           htmlInput: { min: 0, step: '0.01' },
         }}
       />
+
+      <Box
+        sx={{
+          border: '1px solid var(--pt-divider)',
+          borderRadius: UI_RADIUS.md,
+          p: 2,
+          background: 'var(--pt-form-section-bg)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+        }}
+      >
+        {!feeRule ? (
+          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+            Carregando taxa de serviço vigente…
+          </Typography>
+        ) : !feePreview ? (
+          <Typography sx={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+            Informe o preço para ver o resumo da taxa PegaTicket ({feeRule.percentage}%, mínimo{' '}
+            {formatCurrency(feeRule.minimum_amount)}).
+          </Typography>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+              <span>Preço do ingresso</span>
+              <strong>{formatCurrency(feePreview.priceReais)}</strong>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+              <span>Taxa PegaTicket ({feeRule.percentage}%)</span>
+              <strong>{formatCurrency(feePreview.feeAmount)}</strong>
+            </Box>
+            <Box sx={{ borderTop: '1px dashed var(--pt-divider)', my: 0.5 }} />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+              <span>Comprador pagará</span>
+              <strong>
+                {formatCurrency(feePayer === 'buyer' ? feePreview.priceReais + feePreview.feeAmount : feePreview.priceReais)}
+              </strong>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+              <span>Você receberá aproximadamente</span>
+              <strong>
+                {formatCurrency(feePayer === 'buyer' ? feePreview.priceReais : feePreview.priceReais - feePreview.feeAmount)}
+              </strong>
+            </Box>
+            {feePreview.isMinimumApplied && (
+              <Typography sx={{ fontSize: 12.5, color: 'var(--pt-muted)' }}>
+                Taxa mínima de {formatCurrency(feeRule.minimum_amount)} aplicada.
+              </Typography>
+            )}
+            <Typography sx={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+              {feePayerIsAssumed
+                ? 'Quem paga a taxa é definido no evento — exibindo cenário padrão (comprador paga) até o evento ser identificado.'
+                : `Conforme configuração do evento: ${feePayer === 'buyer' ? 'comprador paga a taxa' : 'produtor paga a taxa'}.`}
+            </Typography>
+          </>
+        )}
+
+        <Button
+          onClick={() => setIsSimulationOpen(true)}
+          size="small"
+          variant="outlined"
+          disabled={!feeRule}
+          sx={{ alignSelf: 'flex-start', mt: 0.5 }}
+        >
+          Simular recebimento
+        </Button>
+      </Box>
       </FormSection>
+
+      <TicketFeeSimulationDialog
+        open={isSimulationOpen}
+        onClose={() => setIsSimulationOpen(false)}
+        rule={feeRule}
+        initialPriceReais={Number(form.price) || 0}
+        initialFeePayer={feePayer}
+        onUsePrice={(priceReais) => updateField('price', String(priceReais))}
+      />
 
       <FormSection title="Regras de venda" description="Controle capacidade, limites por pedido, agenda de venda e status operacional.">
       <Box sx={FORM_GRID_3_SX}>

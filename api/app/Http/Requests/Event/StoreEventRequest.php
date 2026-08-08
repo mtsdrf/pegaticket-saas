@@ -50,6 +50,7 @@ class StoreEventRequest extends FormRequest
             'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
             'visibility' => ['nullable', 'string', Rule::in(['public', 'hidden', 'private', 'exclusive'])],
             'status' => ['nullable', 'string', Rule::in(['rascunho', 'agendado', 'publicado', 'vendas_pausadas', 'esgotado', 'encerrado', 'cancelado', 'arquivado'])],
+            'service_fee_payer' => ['nullable', 'string', Rule::in(['buyer', 'producer'])],
             'reentry_enabled' => ['nullable', 'boolean'],
             'max_reentries' => ['nullable', 'integer', 'min:0'],
             'reentry_cooldown_minutes' => ['nullable', 'integer', 'min:0'],

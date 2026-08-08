@@ -19,6 +19,11 @@ class PlatformFinanceSettingsResource extends JsonResource
             'extra_reserve_percentage' => (float) $this->extra_reserve_percentage,
             'extra_reserve_release_offset_days' => (int) $this->extra_reserve_release_offset_days,
             'pagbank_primary_account_id' => $this->pagbank_primary_account_id,
+            'service_fee_percentage' => (float) $this->service_fee_percentage,
+            'service_fee_minimum_amount' => (float) $this->service_fee_minimum_amount,
+            'service_fee_rule_version' => (int) $this->service_fee_rule_version,
+            'estimated_pix_processing_percentage' => $this->estimated_pix_processing_percentage !== null ? (float) $this->estimated_pix_processing_percentage : null,
+            'estimated_card_processing_percentage_by_installment' => $this->estimated_card_processing_percentage_by_installment,
         ];
     }
 }

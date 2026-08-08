@@ -32,6 +32,7 @@ use App\Models\Sale\SalePrepLink;
 use App\Models\Storefront\CouponRedemption;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Event\TicketTypeChannelQuotaService;
+use App\Services\Finance\PlatformFinanceSettingsService;
 use App\Services\Permission\PermissionService;
 use App\Services\Storefront\StorefrontHoldService;
 use App\Services\Workflow\WorkflowTransitionLogger;
@@ -73,6 +74,8 @@ class SaleService
         private WorkflowTransitionLogger $workflowTransitionLogger,
         private StorefrontHoldService $holdService,
         private TicketTypeChannelQuotaService $channelQuotaService,
+        private TicketFeeCalculator $feeCalculator,
+        private PlatformFinanceSettingsService $platformFinanceSettingsService,
     ) {}
 
     public function find(Sale $order): Sale
@@ -252,6 +255,13 @@ class SaleService
             $totalCents = 0;
             $channel = Sale::resolveChannel($dto->affiliateId, $dto->origin);
 
+            // Regra vigente da taxa de serviço PegaTicket resolvida uma
+            // única vez fora do loop (não por item) — ver
+            // PlatformFinanceSettingsService::getCurrentServiceFeeRule().
+            $feeRule = $this->platformFinanceSettingsService->getCurrentServiceFeeRule();
+            $platformFeeTotalCents = 0;
+            $feePayer = null;
+
             foreach ($dto->items as $item) {
                 $sellable = $this->resolveSellable($item, $dto->tenantId);
 
@@ -259,10 +269,57 @@ class SaleService
 
                 if ($sellable instanceof TicketType) {
                     $this->assertWithinChannelQuota($sellable, $channel, (int) round($line['quantity']));
+
+                    // fee_payer vive no Event (herdado por todos os
+                    // TicketType do mesmo evento) — resolvido a partir do
+                    // primeiro item de ingresso encontrado. Premissa: toda
+                    // venda pertence a um único evento (confirmado no
+                    // fluxo atual de criação de venda, staff e
+                    // storefront); venda multi-evento não é suportada
+                    // hoje, não há guard explícito para esse caso.
+                    if ($feePayer === null) {
+                        $feePayer = $sellable->event?->service_fee_payer ?? 'buyer';
+                    }
+
+                    $unitFeeCents = $this->feeCalculator->computeUnitFeeCents(
+                        $line['unit_price_cents'],
+                        $feeRule['percentage'],
+                        $feeRule['minimum_cents']
+                    );
+                    $lineFeeCents = $unitFeeCents * (int) round($line['quantity']);
+
+                    $line['platform_fee_unit_cents'] = $unitFeeCents;
+                    $line['platform_fee_line_cents'] = $lineFeeCents;
+                    $line['platform_fee_percentage_snapshot'] = $feeRule['percentage'];
+                    $line['platform_fee_minimum_snapshot'] = $feeRule['minimum_cents'];
+                    $line['platform_fee_rule_version_snapshot'] = $feeRule['version'];
+
+                    $platformFeeTotalCents += $lineFeeCents;
+                } else {
+                    // EventProduct (adicional/estacionamento) não é
+                    // ingresso — a taxa PegaTicket (10%/mínimo) é definida
+                    // por ingresso, não se aplica a esses itens.
+                    $line['platform_fee_unit_cents'] = 0;
+                    $line['platform_fee_line_cents'] = 0;
+                    $line['platform_fee_percentage_snapshot'] = null;
+                    $line['platform_fee_minimum_snapshot'] = null;
+                    $line['platform_fee_rule_version_snapshot'] = null;
                 }
 
                 $totalCents += $line['line_total_cents'];
                 $lines[] = $line;
+            }
+
+            $feePayer ??= 'buyer';
+
+            // Comprador paga: soma ao total ANTES do desconto do cabeçalho
+            // ser subtraído (a taxa não é descontada pelo cupom do
+            // cabeçalho — o desconto por linha, se houver, já reduziu a
+            // base do cálculo da taxa acima). Produtor paga: a taxa é só
+            // retida no split (ver PagBankPaymentProvider), não soma ao
+            // total cobrado do comprador.
+            if ($feePayer === 'buyer') {
+                $totalCents += $platformFeeTotalCents;
             }
 
             // Taxa de serviço do fluxo presencial legado — acréscimo somado
@@ -313,6 +370,8 @@ class SaleService
                 'origin' => $dto->origin,
                 'channel' => $channel,
                 'purchaser_ip' => $dto->purchaserIp,
+                'platform_fee_total_amount' => $this->centsToDecimal($platformFeeTotalCents),
+                'platform_fee_payer_snapshot' => $feePayer,
             ]);
 
             foreach ($lines as $line) {
@@ -326,6 +385,13 @@ class SaleService
                     'line_total' => $this->centsToDecimal($line['line_total_cents']),
                     'notes' => $line['notes'],
                     'attendee_data' => $line['attendee_data'],
+                    'platform_fee_unit_amount' => $this->centsToDecimal($line['platform_fee_unit_cents']),
+                    'platform_fee_amount' => $this->centsToDecimal($line['platform_fee_line_cents']),
+                    'platform_fee_percentage_snapshot' => $line['platform_fee_percentage_snapshot'],
+                    'platform_fee_minimum_snapshot' => $line['platform_fee_minimum_snapshot'] !== null
+                        ? $this->centsToDecimal($line['platform_fee_minimum_snapshot'])
+                        : null,
+                    'platform_fee_rule_version_snapshot' => $line['platform_fee_rule_version_snapshot'],
                 ]);
             }
 
@@ -363,6 +429,12 @@ class SaleService
      * Venda parcelado: total_amount muda mas as installments NÃO são
      * recalculadas automaticamente aqui (decisão intencional — usuário
      * ajusta via PUT /sales/{order}/installments depois).
+     *
+     * Taxa de serviço PegaTicket (platform_fee_*) também NÃO é
+     * recalculada aqui de propósito — é um snapshot da regra vigente no
+     * momento da criação (create()), igual ao preço/desconto já
+     * congelados nesse fluxo; reabrir o cálculo na edição pós-criação
+     * fugiria do escopo já deliberadamente limitado deste método.
      */
     public function updateItems(Sale $order, UpdateSaleItemsDTO $dto): Sale
     {

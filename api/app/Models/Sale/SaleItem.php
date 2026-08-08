@@ -6,8 +6,8 @@ use App\Models\BaseModel;
 use App\Models\Event\EventProduct;
 use App\Models\Event\TicketBatch;
 use App\Models\Event\TicketType;
-use App\Models\Ticket\Ticket;
 use App\Models\Tenant\Tenant;
+use App\Models\Ticket\Ticket;
 use App\Models\Venue\Seat;
 
 /**
@@ -36,6 +36,11 @@ class SaleItem extends BaseModel
         'line_total',
         'notes',
         'attendee_data',
+        'platform_fee_unit_amount',
+        'platform_fee_amount',
+        'platform_fee_percentage_snapshot',
+        'platform_fee_minimum_snapshot',
+        'platform_fee_rule_version_snapshot',
     ];
 
     protected $casts = [
@@ -43,6 +48,11 @@ class SaleItem extends BaseModel
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
         'attendee_data' => 'array',
+        'platform_fee_unit_amount' => 'decimal:2',
+        'platform_fee_amount' => 'decimal:2',
+        'platform_fee_percentage_snapshot' => 'decimal:2',
+        'platform_fee_minimum_snapshot' => 'decimal:2',
+        'platform_fee_rule_version_snapshot' => 'integer',
     ];
 
     protected $hidden = [

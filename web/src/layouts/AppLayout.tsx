@@ -128,6 +128,7 @@ const NAV_ITEMS: NavItem[] = [
       { to: '/admin/tenant-users', label: 'Usuários da empresa', access: ACCESS.tenantUsersRead },
       { to: '/admin/auditoria', label: 'Auditoria', access: ACCESS.adminAuditLogsRead },
       { to: '/admin/financeiro', label: 'Financeiro admin', access: ACCESS.adminFinanceRead },
+      { to: '/admin/configuracoes-financeiras', label: 'Taxa de serviço', access: ACCESS.adminFinanceSettingsRead },
       { to: '/admin/pagamentos-pendencias', label: 'Pendências de pagamento', access: ACCESS.adminPaymentIssuesRead },
     ],
   },

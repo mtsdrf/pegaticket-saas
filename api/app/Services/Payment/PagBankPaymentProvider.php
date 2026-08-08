@@ -731,6 +731,20 @@ class PagBankPaymentProvider implements PaymentProviderInterface
         }
 
         $platformFeeAmountCents = min($grossAmountCents, Money::toMinor((string) $settings['platform_fee_fixed_amount']));
+
+        // Taxa de serviço PegaTicket (10%/mínimo) retida no split SOMENTE
+        // quando o produtor paga a taxa (fee_payer='producer') — usa
+        // sempre o valor JÁ PERSISTIDO na Sale (snapshot da regra vigente
+        // na criação), nunca recalculado a partir da config atual, para
+        // honrar o que foi cobrado/combinado mesmo se o admin mudar a
+        // config depois.
+        if ($sale->platform_fee_payer_snapshot === 'producer') {
+            $platformFeeAmountCents = min(
+                $grossAmountCents,
+                $platformFeeAmountCents + Money::toMinor((string) $sale->platform_fee_total_amount)
+            );
+        }
+
         $tenantNetAmountCents = max(0, $grossAmountCents - $platformFeeAmountCents);
         $releaseScheduled = $this->resolveSplitReleaseAt($sale, (int) $settings['default_settlement_offset_days']);
 

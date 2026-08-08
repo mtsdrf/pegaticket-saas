@@ -17,7 +17,7 @@ class Money
         if (is_string($value)) {
             $normalized = str_replace(',', '.', trim($value));
 
-            if ($normalized === '' || !is_numeric($normalized)) {
+            if ($normalized === '' || ! is_numeric($normalized)) {
                 throw new InvalidArgumentException('Invalid monetary amount.');
             }
 
@@ -62,5 +62,19 @@ class Money
             'discount' => self::normalize($discountCents / $divisor, $scale),
             'net' => self::normalize($netCents / $divisor, $scale),
         ];
+    }
+
+    /**
+     * Aplica um percentual sobre um valor em centavos com piso mínimo
+     * (regra da taxa de serviço PegaTicket: `max(round(valor*percentual/100), piso)`).
+     * Valor <= 0 sempre resulta em 0 (sem taxa sobre item gratuito).
+     */
+    public static function applyPercentWithFloor(int $amountCents, float $percentage, int $floorCents): int
+    {
+        if ($amountCents <= 0) {
+            return 0;
+        }
+
+        return max((int) round($amountCents * $percentage / 100), $floorCents);
     }
 }

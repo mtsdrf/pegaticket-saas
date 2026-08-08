@@ -139,6 +139,9 @@ const FinanceOperationsPage = lazy(() =>
 const AdminFinanceOperationsPage = lazy(() =>
   import('../pages/Admin/AdminFinanceOperationsPage').then((m) => ({ default: m.AdminFinanceOperationsPage })),
 )
+const PlatformFinanceSettingsPage = lazy(() =>
+  import('../pages/Admin/PlatformFinanceSettingsPage').then((m) => ({ default: m.PlatformFinanceSettingsPage })),
+)
 const UserListPage = lazy(() => import('../pages/Admin/UserListPage').then((m) => ({ default: m.UserListPage })))
 const UserFormPage = lazy(() => import('../pages/Admin/UserFormPage').then((m) => ({ default: m.UserFormPage })))
 const GroupListPage = lazy(() => import('../pages/Admin/GroupListPage').then((m) => ({ default: m.GroupListPage })))
@@ -349,6 +352,7 @@ export function AppRoutes() {
             <Route path="/admin/tenant-users/:uuid/editar" element={<PermissionRoute requirement={ACCESS.tenantUsersUpdate}><TenantUserFormPage /></PermissionRoute>} />
             <Route path="/admin/auditoria" element={<PermissionRoute requirement={ACCESS.adminAuditLogsRead}><AuditLogListPage /></PermissionRoute>} />
             <Route path="/admin/financeiro" element={<PermissionRoute requirement={ACCESS.adminFinanceRead}><AdminFinanceOperationsPage /></PermissionRoute>} />
+            <Route path="/admin/configuracoes-financeiras" element={<PermissionRoute requirement={ACCESS.adminFinanceSettingsRead}><PlatformFinanceSettingsPage /></PermissionRoute>} />
             <Route path="/admin/pagamentos-pendencias" element={<PermissionRoute requirement={ACCESS.adminPaymentIssuesRead}><PaymentIssuesListPage /></PermissionRoute>} />
             {/* Hub de Configurações (2026-07-24) — índice + drill-down por bloco,
                 cada bloco gated pela própria permissão (não pela página

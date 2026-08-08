@@ -418,6 +418,11 @@ return [
         'status_updated' => 'Ticket type status updated successfully.',
     ],
 
+    'ticket_fee_simulation' => [
+        'simulated' => 'Fee simulation calculated successfully.',
+        'rule_loaded' => 'Service fee rule loaded successfully.',
+    ],
+
     'ticket_batch' => [
         'list' => 'Ticket batches list.',
         'show' => 'Ticket batch shown successfully.',

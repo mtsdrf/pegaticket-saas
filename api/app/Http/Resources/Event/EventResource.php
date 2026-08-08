@@ -18,7 +18,7 @@ class EventResource extends JsonResource
             'cover_image_url' => MediaUrl::resolvePublic(
                 $this->cover_image_path,
                 $this->cover_image_data ?? $this->cover_image_mime,
-                '/api/v1/events/' . $this->uuid . '/image',
+                '/api/v1/events/'.$this->uuid.'/image',
                 $this->cover_image_updated_at,
                 'event'
             ),
@@ -31,15 +31,16 @@ class EventResource extends JsonResource
             'ends_at' => $this->ends_at,
             'visibility' => $this->visibility,
             'status' => $this->status,
+            'service_fee_payer' => $this->service_fee_payer,
             'reentry_enabled' => (bool) $this->reentry_enabled,
             'max_reentries' => $this->max_reentries,
             'reentry_cooldown_minutes' => $this->reentry_cooldown_minutes,
-            'category' => $this->whenLoaded('category', fn() => $this->category ? [
+            'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'uuid' => $this->category->uuid,
                 'name' => $this->category->name,
             ] : null),
             'venue' => $this->whenLoaded('venueMapVersion', function () {
-                if (!$this->venueMapVersion || !$this->venueMapVersion->relationLoaded('venue') || !$this->venueMapVersion->venue) {
+                if (! $this->venueMapVersion || ! $this->venueMapVersion->relationLoaded('venue') || ! $this->venueMapVersion->venue) {
                     return null;
                 }
 
@@ -50,13 +51,13 @@ class EventResource extends JsonResource
                     'map_version_number' => $this->venueMapVersion->version_number,
                 ];
             }),
-            'ticket_types' => $this->whenLoaded('ticketTypes', fn() => \App\Http\Resources\Event\TicketTypeResource::collection($this->ticketTypes)),
-            'event_products' => $this->whenLoaded('eventProducts', fn() => \App\Http\Resources\Event\EventProductResource::collection($this->eventProducts)),
+            'ticket_types' => $this->whenLoaded('ticketTypes', fn () => TicketTypeResource::collection($this->ticketTypes)),
+            'event_products' => $this->whenLoaded('eventProducts', fn () => EventProductResource::collection($this->eventProducts)),
             // Atributo dinâmico (setAttribute), setado por
             // StorefrontCatalogService::paginateEvents() (customer.jwt.optional)
             // e EventFavoriteService::list() — só aparece quando o chamador
             // populou explicitamente, nunca como false por omissão.
-            'is_favorited' => $this->when($this->resource->offsetExists('is_favorited'), fn() => $this->is_favorited),
+            'is_favorited' => $this->when($this->resource->offsetExists('is_favorited'), fn () => $this->is_favorited),
             'created_at' => $this->created_at,
         ];
     }

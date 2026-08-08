@@ -251,6 +251,14 @@ class PagBankSalePaymentTest extends TestCase
         $this->grantPermission('sales', 'update');
         $order = $this->createConfirmedOrder(price: 40, qty: 2);
 
+        // Este teste cobre especificamente a retenção da taxa FIXA da
+        // plataforma (platform_fee_fixed_amount), pré-existente à taxa de
+        // serviço PegaTicket (10%/mínimo) — força fee_payer='buyer' pra
+        // isolar o cenário (produtor não paga taxa de serviço aqui, só a
+        // fixa). O caso 'producer' (as duas taxas somadas no split) tem
+        // teste dedicado: split_retains_the_platform_service_fee_when_the_producer_pays_it.
+        Sale::where('uuid', $order['uuid'])->update(['platform_fee_payer_snapshot' => 'buyer']);
+
         $this->auth()
             ->getJson("/api/v1/sales/{$order['uuid']}/payment-checkout-config")
             ->assertStatus(200)
@@ -935,5 +943,77 @@ class PagBankSalePaymentTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.available', true)
             ->assertJsonPath('data.options', []);
+    }
+
+    /**
+     * Taxa de serviço PegaTicket (10%/mínimo R$3, 2026-08-12): quando
+     * fee_payer='producer' (default do fixture createProduct(), ver
+     * CreatesSaleFixtures), o split retém a taxa persistida na Sale
+     * (platform_fee_total_amount) ALÉM da taxa fixa já existente da
+     * plataforma — sempre a partir do snapshot já gravado, nunca
+     * recalculado a partir da config atual.
+     */
+    #[Test]
+    public function split_retains_the_platform_service_fee_when_the_producer_pays_it(): void
+    {
+        $this->configureTenantPagBankDirect('tenant-token-123', 'production');
+        $this->configureSplitAccounts('ACCO_PLATFORM_1', 'ACCO_TENANT_1', 5);
+
+        Http::fake([
+            'sandbox.api.pagseguro.com/public-keys' => Http::response([
+                'id' => 'PUBKEY_PLATFORM',
+                'public_key' => 'PLATFORM_PUBLIC_KEY',
+            ], 201),
+            'sandbox.sdk.pagseguro.com/checkout-sdk/sessions' => Http::response([
+                'session' => 'PLATFORM_3DS_SESSION',
+            ], 200),
+            'sandbox.api.pagseguro.com/orders' => Http::response([
+                'id' => 'ORDE_FEE_SPLIT_1',
+                'charges' => [[
+                    'links' => [[
+                        'rel' => 'SPLIT',
+                        'href' => 'https://sandbox.api.pagseguro.com/splits/SPLI_FEE_SPLIT_1',
+                    ]],
+                ]],
+                'qr_codes' => [[
+                    'id' => 'QRCO_FEE_SPLIT_1',
+                    'text' => '00020126...feesplit...6304ABCD',
+                    'expiration_date' => '2026-08-03T12:00:00-03:00',
+                ]],
+            ], 201),
+        ]);
+
+        $this->grantPermission('sales', 'update');
+        // price=40, qty=2 -> taxa unitaria max(40*10%=4.00,3.00)=4.00,
+        // taxa total = 4.00*2 = 8.00 (800 centavos). fee_payer='producer'
+        // (default do fixture) -> nao entra no total_amount do comprador,
+        // so retida no split.
+        $order = $this->createConfirmedOrder(price: 40, qty: 2);
+
+        $sale = Sale::where('uuid', $order['uuid'])->firstOrFail();
+        $this->assertSame('producer', $sale->platform_fee_payer_snapshot);
+        $this->assertSame('8.00', $sale->platform_fee_total_amount);
+        $this->assertSame('80.00', $sale->total_amount);
+
+        $this->auth()->postJson("/api/v1/sales/{$order['uuid']}/payment-charge")
+            ->assertStatus(201)
+            ->assertJsonPath('data.status', 'pending');
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://sandbox.api.pagseguro.com/orders') {
+                return false;
+            }
+
+            $receivers = $request['qr_codes'][0]['splits']['receivers'] ?? [];
+
+            // Taxa fixa da plataforma (R$5,00 = 500) + taxa de serviço
+            // PegaTicket retida (R$8,00 = 800) = 1300 centavos pro
+            // recebedor da plataforma; o restante (8000-1300=6700) pro
+            // organizador.
+            return ($receivers[0]['account']['id'] ?? null) === 'ACCO_PLATFORM_1'
+                && ($receivers[0]['amount']['value'] ?? null) === 1300
+                && ($receivers[1]['account']['id'] ?? null) === 'ACCO_TENANT_1'
+                && ($receivers[1]['amount']['value'] ?? null) === 6700;
+        });
     }
 }

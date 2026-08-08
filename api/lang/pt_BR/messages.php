@@ -425,6 +425,11 @@ return [
         'status_updated' => 'Status do tipo de ingresso atualizado com sucesso.',
     ],
 
+    'ticket_fee_simulation' => [
+        'simulated' => 'Simulação de taxa calculada com sucesso.',
+        'rule_loaded' => 'Regra de taxa de serviço carregada com sucesso.',
+    ],
+
     'ticket_batch' => [
         'list' => 'Lista de lotes.',
         'show' => 'Lote exibido com sucesso.',

@@ -16,6 +16,8 @@ class SaleResource extends JsonResource
             'total_amount' => $this->total_amount,
             'service_fee' => (float) $this->service_fee,
             'discount_amount' => (float) $this->discount_amount,
+            'platform_fee_total_amount' => (float) $this->platform_fee_total_amount,
+            'platform_fee_payer_snapshot' => $this->platform_fee_payer_snapshot,
             'coupon_code' => $this->whenLoaded('coupon', fn () => $this->coupon?->code),
             'paid_amount' => $this->paid_amount !== null ? (float) $this->paid_amount : null,
             'is_paid' => $this->is_paid,
@@ -78,6 +80,8 @@ class SaleResource extends JsonResource
                 'unit_price' => $item->unit_price,
                 'line_total' => $item->line_total,
                 'notes' => $item->notes,
+                'platform_fee_unit_amount' => (float) $item->platform_fee_unit_amount,
+                'platform_fee_amount' => (float) $item->platform_fee_amount,
             ])),
             'installments' => $this->when(
                 $this->is_installment,

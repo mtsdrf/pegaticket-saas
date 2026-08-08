@@ -79,6 +79,8 @@ export interface Event {
   reentry_enabled: boolean
   max_reentries: number | null
   reentry_cooldown_minutes: number | null
+  /** Quem paga a taxa de serviço PegaTicket (10%/mín. R$3) dos ingressos deste evento. */
+  service_fee_payer: 'buyer' | 'producer'
   category: EventCategoryRef | null
   venue: EventVenueRef | null
   /** Só presente quando o registro é carregado com o detalhe completo (relação `ticketTypes` carregada). */

@@ -3,6 +3,7 @@
 namespace App\Services\Finance;
 
 use App\Models\Finance\PlatformFinanceSettings;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 class PlatformFinanceSettingsService
@@ -25,7 +26,31 @@ class PlatformFinanceSettingsService
                 'extra_reserve_percentage' => 5,
                 'extra_reserve_release_offset_days' => 30,
                 'pagbank_primary_account_id' => null,
+                'service_fee_percentage' => 10.00,
+                'service_fee_minimum_amount' => 3.00,
+                'service_fee_rule_version' => 1,
+                'estimated_pix_processing_percentage' => null,
+                'estimated_card_processing_percentage_by_installment' => null,
             ]);
+    }
+
+    /**
+     * Regra vigente da taxa de serviço PegaTicket (roadmap taxa 10%/mínimo
+     * R$3) — chamado uma vez por operação (ex.: fora do loop de itens em
+     * SaleService::create()), nunca por linha, para não repetir a mesma
+     * query.
+     *
+     * @return array{percentage: float, minimum_cents: int, version: int}
+     */
+    public function getCurrentServiceFeeRule(): array
+    {
+        $settings = $this->getCurrent();
+
+        return [
+            'percentage' => (float) $settings->service_fee_percentage,
+            'minimum_cents' => Money::toMinor((string) $settings->service_fee_minimum_amount),
+            'version' => (int) $settings->service_fee_rule_version,
+        ];
     }
 
     /**
@@ -35,7 +60,21 @@ class PlatformFinanceSettingsService
     {
         return DB::transaction(function () use ($attributes) {
             $settings = $this->getCurrent();
+
+            $previousPercentage = (string) $settings->service_fee_percentage;
+            $previousMinimum = (string) $settings->service_fee_minimum_amount;
+
             $settings->fill($attributes);
+
+            $percentageChanged = array_key_exists('service_fee_percentage', $attributes)
+                && ! Money::equals($previousPercentage, (string) $settings->service_fee_percentage, 2);
+            $minimumChanged = array_key_exists('service_fee_minimum_amount', $attributes)
+                && ! Money::equals($previousMinimum, (string) $settings->service_fee_minimum_amount, 2);
+
+            if ($percentageChanged || $minimumChanged) {
+                $settings->service_fee_rule_version = ((int) $settings->service_fee_rule_version) + 1;
+            }
+
             $settings->save();
 
             return $settings->fresh();
